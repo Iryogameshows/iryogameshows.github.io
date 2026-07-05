@@ -78,6 +78,11 @@
     <div class="hint" id="hint"></div>
   </div>
 
+  <div id="screen-blocked" class="screen">
+    <h1>🔒 Spiel läuft schon</h1>
+    <div class="lobby-sub">Das Spiel hat bereits begonnen — neue Beitritte sind gerade nicht möglich.<br>Wenn du schon vorher dabei warst, gib genau den gleichen Namen wie vorhin ein.</div>
+  </div>
+
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBuXYp1w65nR8tqJIKFS_v_9QSD7_0kR20",
@@ -102,10 +107,13 @@
 
   let live = false, armed = false, buzzedThisRound = false, lastRound = 0, results = [], lockUntil = 0, excludedSet = {};
   let myTeam = null, teamNames = [], presenceCount = 0;
+  let joinLocked = false, lockedNames = [];
 
   function myName(){ return (nameEl.value || '').trim(); }
   function locked(){ return Date.now() < lockUntil; }
   function amExcluded(){ const n = myName(); return !!n && !!excludedSet[n]; }
+  // Nach Spielstart dürfen nur noch Namen rein, die vorher schon in der Lobby waren
+  function nameAllowed(){ return !joinLocked || lockedNames.includes(myName()); }
 
   function showScreen(id){
     document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
@@ -114,6 +122,7 @@
   function refreshRoot(){
     const hasName = myName().length > 0;
     if (!hasName) { showScreen('screen-name'); return; }
+    if (!nameAllowed()) { showScreen('screen-blocked'); return; }
     if (myTeam === null || myTeam === undefined) {
       showScreen('screen-lobby');
       lobbyCount.textContent = presenceCount > 1 ? `${presenceCount} Leute warten gerade` : '';
@@ -172,6 +181,8 @@
   setInterval(() => { if (locked()) refreshBuzz(); }, 250);
 
   ref.child('teamNames').on('value', (snap) => { teamNames = snap.val() || []; refreshRoot(); });
+  ref.child('joinLocked').on('value', (snap) => { joinLocked = !!snap.val(); refreshRoot(); });
+  ref.child('lockedNames').on('value', (snap) => { lockedNames = snap.val() || []; refreshRoot(); });
 
   // ── Presence + Team-Zuteilung: der Host weist hier Teams zu ──
   let clientId = localStorage.getItem('buzzClientId');
@@ -179,9 +190,10 @@
   const presenceRef = firebase.database().ref('buzzer/presence/' + clientId);
   function updatePresence(){
     const n = myName();
+    if (!n) { presenceRef.remove().catch(()=>{}); return; }
+    if (!nameAllowed()) return; // Spiel gesperrt und Name nicht schon vorher dabei - kein neuer Eintrag
     // update() statt set(), damit ein vom Host gesetztes "team"-Feld erhalten bleibt
-    if (n) presenceRef.update({ name: n, ts: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
-    else presenceRef.remove().catch(()=>{});
+    presenceRef.update({ name: n, ts: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
   }
   presenceRef.on('value', (snap) => {
     const v = snap.val() || {};

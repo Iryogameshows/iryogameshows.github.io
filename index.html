@@ -1119,6 +1119,19 @@ body {
   .wwm-ladder{width:100%;flex-direction:column-reverse;}
   .wwm-answers{grid-template-columns:1fr;}
 }
+
+/* ── Setup-Lobby (Team-Zuteilung vor Spielstart) ── */
+.setup-lobby{width:100%;max-width:520px;margin:18px auto 0;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 16px;}
+.setup-lobby .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px;}
+.setup-lobby .badge{background:rgba(34,197,94,.18);color:#4ADE80;border-radius:99px;padding:2px 10px;font-size:.75rem;}
+.setup-lobby .pr-list{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;margin-bottom:10px;}
+.setup-lobby .pr-row{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;padding:5px 4px;flex-wrap:wrap;}
+.setup-lobby .pr-dot{width:8px;height:8px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
+@keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.setup-lobby .pr-empty{font-size:.8rem;color:rgba(255,255,255,.35);padding:6px 0;}
+.setup-lobby .pr-team-btn{padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.7rem;font-weight:700;cursor:pointer;}
+.setup-lobby .pr-team-btn:hover{filter:brightness(1.2);}
+.setup-lobby .pr-team-btn.active{background:rgba(255,210,63,.25);border-color:#FFD23F;color:#FFD23F;}
 </style>
 </head>
 <body>
@@ -1170,6 +1183,7 @@ body {
     <input type="checkbox" id="enable-gameshow-intro">
     <label for="enable-gameshow-intro">Gameshow-Intro abspielen</label>
   </div>
+  <div class="setup-lobby" id="feud-setup-lobby"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startGame()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('edit-screen')">Fragen bearbeiten</button>
@@ -1268,6 +1282,7 @@ body {
     <input type="checkbox" id="enable-jeopardy-intro">
     <label for="enable-jeopardy-intro">Finale-Intro (Tag 2) abspielen</label>
   </div>
+  <div class="setup-lobby" id="jeopardy-setup-lobby"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startJeopardy()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('jeopardy-edit-screen')">Fragen bearbeiten</button>
@@ -1529,6 +1544,8 @@ function showScreen(id) {
   if (id === 'edit-screen') renderQuestionList();
   if (id === 'jeopardy-edit-screen') renderJeopardyEditor();
   if (id === 'wwm-edit-screen') renderWwmEditor();
+  if (id === 'setup-screen') ensureFeudLobbyConnected();
+  if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   // Logo per context
   if (id === 'menu-screen') renderLogo('KELLER', 'GAMESHOWS', 30);
   else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, true);
@@ -1683,7 +1700,9 @@ function startGame() {
   document.body.appendChild(bd);
 
   openGamemaster(); // schon jetzt öffnen, damit Intro/Tutorial vom GM-Fenster aus steuerbar sind
+  activeBuzzerContext = 'feud';
   feudBuzzConnect();
+  lockBuzzerJoins(feudBuzzer);
   showIntro();
 }
 
@@ -2445,7 +2464,7 @@ function updateGamemaster() {
 
   const feudPresenceCount = feudBuzzer.presence.length;
   const feudPresenceRows = feudBuzzer.presence.length
-    ? feudBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, state.teamNames)}</div>`).join('')
+    ? feudBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, state.teamNames, 'opener.')}</div>`).join('')
     : `<div class="pr-empty">Noch niemand verbunden</div>`;
   const feudConnChip = feudBuzzer.connected
     ? `<span class="chip chip-ok">● Server verbunden</span>`
@@ -2689,7 +2708,7 @@ function updateGamemasterJeopardy() {
   // ── Verbunden-Panel (Presence) + Steuerung — immer sichtbar, unabhängig vom Frage-Status ──
   const presenceCount = jeopardyBuzzer.presence.length;
   const presenceRows = jeopardyBuzzer.presence.length
-    ? jeopardyBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, jeopardyState.teamNames)}</div>`).join('')
+    ? jeopardyBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, jeopardyState.teamNames, 'opener.')}</div>`).join('')
     : `<div class="pr-empty">Noch niemand verbunden</div>`;
   const connChip = jeopardyBuzzer.connected
     ? `<span class="chip chip-ok">● Server verbunden</span>`
@@ -3249,7 +3268,9 @@ function startJeopardy() {
   jeopardyHistory = [];
   jeopardyBuzzer.hidden = false;
   jeopardyBuzzer.poppedForQuestion = false;
+  activeBuzzerContext = 'jeopardy';
   jeopardyBuzzConnect();
+  lockBuzzerJoins(jeopardyBuzzer);
 
   // Hide screens behind a black backdrop, then play intro
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -3593,13 +3614,31 @@ function jeopardyBuzzInitFirebase(){
 // ── LOBBY / TEAM-ZUTEILUNG (gemeinsam für Jeopardy- und Family-Feud-Buzzer) ──
 // Sendet die aktuellen Teamnamen an alle verbundenen Handys, damit sie ihren
 // zugeteilten Team-Namen/Farbe anzeigen können.
+// Welcher Buzzer (Family Feud oder Jeopardy) gerade gemeint ist - explizit
+// gesetzt beim Betreten der jeweiligen Setup- und Spiel-Screens. Verlässt
+// sich NICHT auf jeopardyState.active, weil das auf den Setup-Screens vor
+// dem eigentlichen Spielstart noch gar nicht gesetzt ist.
+let activeBuzzerContext = 'feud';
+function currentBuzzer(){ return activeBuzzerContext === 'jeopardy' ? jeopardyBuzzer : feudBuzzer; }
+
+// Beim tatsächlichen Spielstart: alle bis dahin gejointen Namen einfrieren.
+// Neue Namen können sich ab jetzt nicht mehr über /buzzer/ eintragen - nur
+// wer schon in der Lobby war, darf (z.B. nach Reload) mit demselben Namen
+// wieder reinkommen.
+function lockBuzzerJoins(buzzer){
+  if (!buzzer.fbRef) return;
+  const names = buzzer.presence.map(p => p.name);
+  buzzer.fbRef.update({ joinLocked: true, lockedNames: names }).catch(()=>{});
+}
+
 function buzzerBroadcastTeams(names){
-  const ref = jeopardyState.active ? jeopardyBuzzer.fbRef : feudBuzzer.fbRef;
+  const ref = currentBuzzer().fbRef;
   if (ref) ref.child('teamNames').set(names || []).catch(()=>{});
 }
 // Setzt bei allen aktuell verbundenen Spielern die Team-Zuteilung zurück -
 // so startet jedes neue Spiel mit einer sauberen Lobby statt alter Teams.
-function buzzerResetTeamAssignments(presenceRef){
+function buzzerResetTeamAssignments(){
+  const presenceRef = currentBuzzer().presenceRef;
   if (!presenceRef) return;
   presenceRef.once('value').then(snap => {
     const updates = {};
@@ -3607,15 +3646,40 @@ function buzzerResetTeamAssignments(presenceRef){
     if (Object.keys(updates).length) presenceRef.update(updates).catch(()=>{});
   }).catch(()=>{});
 }
-// Vom GM-Fenster aufgerufen: weist einen Spieler (per Presence-ID) einem Team zu.
+// Vom GM-Fenster oder Setup-Screen aufgerufen: weist einen Spieler (per
+// Presence-ID) einem Team zu.
 function assignPlayerTeam(id, teamIdx){
-  const presenceRef = jeopardyState.active ? jeopardyBuzzer.presenceRef : feudBuzzer.presenceRef;
+  const presenceRef = currentBuzzer().presenceRef;
   if (!presenceRef) return;
   presenceRef.child(id).update({ team: teamIdx }).catch(()=>{});
 }
 // Baut die kleinen Team-Zuweisungs-Buttons neben einem Spieler in der GM-Präsenzliste.
-function playerTeamButtonsHtml(p, teamNames){
-  return teamNames.map((name, i) => `<button class="pr-team-btn ${p.team===i?'active':''}" onclick="opener.assignPlayerTeam('${p.id}',${i})">${name}</button>`).join('');
+// prefix ist 'opener.' innerhalb der GM-Popup-Vorlagen, oder leer, wenn direkt
+// auf der Hauptseite gerendert (z.B. im Setup-Screen-Lobby-Panel).
+function playerTeamButtonsHtml(p, teamNames, prefix){
+  prefix = prefix || '';
+  return teamNames.map((name, i) => `<button class="pr-team-btn ${p.team===i?'active':''}" onclick="${prefix}assignPlayerTeam('${p.id}',${i})">${name}</button>`).join('');
+}
+
+// Rendert die Lobby-Liste direkt auf dem Setup-Screen (nicht im GM-Popup) -
+// game ist 'feud' oder 'jeopardy', bestimmt welchen Buzzer/Teamnamen-Satz wir zeigen.
+function renderSetupLobby(game){
+  const isJeopardy = game === 'jeopardy';
+  const container = document.getElementById(isJeopardy ? 'jeopardy-setup-lobby' : 'feud-setup-lobby');
+  if (!container) return;
+  const buzzer = isJeopardy ? jeopardyBuzzer : feudBuzzer;
+  const teamNames = isJeopardy
+    ? [document.getElementById('jt1-name').value || 'Team 1', document.getElementById('jt2-name').value || 'Team 2']
+    : [document.getElementById('team1-name').value || 'Team 1', document.getElementById('team2-name').value || 'Team 2'];
+  const team3On = document.getElementById(isJeopardy ? 'jeopardy-enable-team3' : 'enable-team3').checked;
+  if (team3On) teamNames.push(document.getElementById(isJeopardy ? 'jt3-name' : 'team3-name').value || 'Team 3');
+  const rows = buzzer.presence.length
+    ? buzzer.presence.map(p => `<div class="pr-row"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, teamNames)}</div>`).join('')
+    : `<div class="pr-empty">Noch niemand verbunden — QR-Code scannen zum Beitreten</div>`;
+  container.innerHTML = `
+    <div class="panel-head"><span>👥 Lobby</span><span class="badge">${buzzer.presence.length}</span></div>
+    <div class="pr-list">${rows}</div>
+    <button class="btn btn-secondary" onclick="toggleJeopardyQR()">📱 QR-Code zeigen</button>`;
 }
 
 function jeopardyBuzzConnect(){
@@ -3629,6 +3693,12 @@ function jeopardyBuzzConnect(){
     // deaktiviert sein - auch wenn von einer vorherigen Session noch "live"
     // in Firebase hängengeblieben ist.
     jeopardyBuzzer.fbRef.update({ live: false, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
+    if (jeopardyBuzzer.presenceRef) {
+      // Schon verbunden (z.B. seit dem Setup-Screen) - keine zweiten Listener anhängen.
+      renderBuzzer();
+      updateGamemaster();
+      return;
+    }
     jeopardyBuzzer.fbRef.on('value', (snap) => {
       const v = snap.val() || {};
       const armStart = v.armStart || 0;
@@ -3654,10 +3724,9 @@ function jeopardyBuzzConnect(){
         .filter(([id, p]) => p && p.name)
         .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team) }))
         .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      renderSetupLobby('jeopardy');
       updateGamemaster();
     });
-    buzzerBroadcastTeams(jeopardyState.teamNames);
-    buzzerResetTeamAssignments(jeopardyBuzzer.presenceRef);
     renderBuzzer();
     updateGamemaster();
     return;
@@ -3691,6 +3760,10 @@ function jeopardyBuzzDisconnect(){
   jeopardyBuzzer.connected = false;
   jeopardyBuzzer.mode = 'none';
   jeopardyBuzzer.presence = [];
+  // Refs zurücksetzen, damit ein späterer connect() wieder frische Listener anhängt
+  // (sonst hält das idempotente Connect-Guard fälschlich für "schon verbunden").
+  jeopardyBuzzer.fbRef = null;
+  jeopardyBuzzer.presenceRef = null;
 }
 
 // ── FAMILY FEUD BUZZER ──
@@ -3705,6 +3778,15 @@ let feudBuzzer = {
 };
 
 function feudBuzzConnect(){
+  if (feudBuzzer.fbRef) {
+    // Schon verbunden (z.B. seit dem Setup-Screen) - nur den Buzzer für die
+    // neue Runde sauber zurücksetzen, keine zweiten Firebase-Listener anhängen.
+    feudBuzzer.connected = true;
+    feudBuzzer.fbRef.update({ live: false, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
+    renderFeudBuzzer();
+    updateGamemaster();
+    return;
+  }
   if (!jeopardyBuzzInitFirebase()){ feudBuzzer.connected = false; return; }
   feudBuzzer.connected = true;
   feudBuzzer.fbRef = firebase.database().ref('buzzer');
@@ -3749,12 +3831,57 @@ function feudBuzzConnect(){
       .filter(([id, p]) => p && p.name)
       .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team) }))
       .sort((a, b) => (a.ts||0) - (b.ts||0));
+    renderSetupLobby('feud');
     updateGamemaster();
   });
-  buzzerBroadcastTeams(state.teamNames);
-  buzzerResetTeamAssignments(feudBuzzer.presenceRef);
   renderFeudBuzzer();
   updateGamemaster();
+}
+
+// Aufgerufen, sobald der Family-Feud-Setup-Screen erscheint: verbindet die
+// Lobby schon vor dem eigentlichen Spielstart, damit Spieler per QR-Code
+// beitreten und der Host sie schon hier den Teams zuteilen kann.
+function ensureFeudLobbyConnected(){
+  activeBuzzerContext = 'feud';
+  const isFresh = !feudBuzzer.fbRef;
+  feudBuzzConnect();
+  if (isFresh) {
+    buzzerResetTeamAssignments();
+    feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
+  }
+  broadcastFeudSetupTeamNames();
+  renderSetupLobby('feud');
+}
+function broadcastFeudSetupTeamNames(){
+  const names = [
+    document.getElementById('team1-name').value || 'Team 1',
+    document.getElementById('team2-name').value || 'Team 2',
+  ];
+  if (document.getElementById('enable-team3').checked) names.push(document.getElementById('team3-name').value || 'Team 3');
+  buzzerBroadcastTeams(names);
+  renderSetupLobby('feud');
+}
+
+// Aufgerufen, sobald der Jeopardy-Setup-Screen erscheint (siehe Family-Feud-Pendant oben).
+function ensureJeopardyLobbyConnected(){
+  activeBuzzerContext = 'jeopardy';
+  const isFresh = !jeopardyBuzzer.presenceRef;
+  jeopardyBuzzConnect();
+  if (isFresh) {
+    buzzerResetTeamAssignments();
+    jeopardyBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
+  }
+  broadcastJeopardySetupTeamNames();
+  renderSetupLobby('jeopardy');
+}
+function broadcastJeopardySetupTeamNames(){
+  const names = [
+    document.getElementById('jt1-name').value || 'Team 1',
+    document.getElementById('jt2-name').value || 'Team 2',
+  ];
+  if (document.getElementById('jeopardy-enable-team3').checked) names.push(document.getElementById('jt3-name').value || 'Team 3');
+  buzzerBroadcastTeams(names);
+  renderSetupLobby('jeopardy');
 }
 
 function feudBuzzDisconnect(){
@@ -3764,6 +3891,10 @@ function feudBuzzDisconnect(){
   feudBuzzer.presence = [];
   const el = document.getElementById('feud-buzzer');
   if (el) el.remove();
+  // Refs zurücksetzen, damit ein späterer connect() wieder frische Listener anhängt
+  // (sonst hält das idempotente Connect-Guard fälschlich für "schon verbunden").
+  feudBuzzer.fbRef = null;
+  feudBuzzer.presenceRef = null;
 }
 
 // Neue Runde geladen, Frage noch verdeckt - Buzzer live, aber noch nicht scharf
@@ -4101,6 +4232,17 @@ function ensureHostGate(){
   setTimeout(() => input.focus(), 50);
 }
 ensureHostGate();
+
+// Team-Namen-Felder auf den Setup-Screens: bei jeder Änderung sofort an die
+// Lobby (Handys + Setup-Panel) weitergeben, auch das 3.-Team-Kästchen.
+['team1-name','team2-name','team3-name'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { if (feudBuzzer.fbRef) broadcastFeudSetupTeamNames(); });
+});
+document.getElementById('enable-team3').addEventListener('change', () => { if (feudBuzzer.fbRef) broadcastFeudSetupTeamNames(); });
+['jt1-name','jt2-name','jt3-name'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { if (jeopardyBuzzer.presenceRef) broadcastJeopardySetupTeamNames(); });
+});
+document.getElementById('jeopardy-enable-team3').addEventListener('change', () => { if (jeopardyBuzzer.presenceRef) broadcastJeopardySetupTeamNames(); });
 
 function jeopardyToggleAnswer() {
   if (!jeopardyState.currentClue) return;
