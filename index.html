@@ -1132,6 +1132,7 @@ body {
 .setup-lobby .pr-team-btn{padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.7rem;font-weight:700;cursor:pointer;}
 .setup-lobby .pr-team-btn:hover{filter:brightness(1.2);}
 .setup-lobby .pr-team-btn.active{background:rgba(255,210,63,.25);border-color:#FFD23F;color:#FFD23F;}
+.setup-lobby .panel-row{display:flex;gap:8px;flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -1409,13 +1410,13 @@ function renderLogo(line1, line2, size2, danger) {
         </linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <g transform="translate(8,15) scale(0.75)">
+      <g transform="translate(121.8,0) scale(0.6)">
         <polygon points="10,18 10,80 24,84 24,14" fill="#3a3f6b"/>
         <polygon points="30,20 30,82 44,86 44,16" fill="url(#goldGrad)"/>
         <polygon points="50,22 50,84 64,88 64,18" fill="#3a3f6b"/>
         <polygon points="70,24 70,86 84,90 84,20" fill="#3a3f6b"/>
       </g>
-      <text x="190" y="70" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="34" fill="url(#goldText)" filter="url(#glow)" letter-spacing="2">${line1}</text>
+      <text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="32" fill="url(#goldText)" filter="url(#glow)" letter-spacing="2">${line1}</text>
     </svg>`;
   } else {
     inner = `<svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
@@ -1428,15 +1429,15 @@ function renderLogo(line1, line2, size2, danger) {
         </linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <g transform="translate(8,10)">
+      <g transform="translate(127,6) scale(0.575)">
         <rect x="0" y="0" width="80" height="20" rx="5" fill="url(#goldGrad)"/>
-        <rect x="0" y="30" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
-        <rect x="0" y="60" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
+        <rect x="0" y="30" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
+        <rect x="0" y="60" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
       </g>
       ${line2
-        ? `<text x="190" y="56" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
-           <text x="190" y="92" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
-        : `<text x="190" y="80" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
+        ? `<text x="150" y="80" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
+           <text x="150" y="110" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
+        : `<text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
       }
     </svg>`;
   }
@@ -2488,6 +2489,7 @@ function updateGamemaster() {
       <div class="pr-list">${feudPresenceRows}</div>
       <div class="panel-row">
         <button class="gm-btn gray sm" onclick="opener.toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
+        <button class="gm-btn gray sm" onclick="opener.popOutQR()">🗗 QR als Fenster</button>
         <button class="gm-btn gray sm" onclick="opener.feudBuzzToggleHidden();opener.updateGamemaster();">${feudBuzzer.hidden ? '👁 Anzeige einblenden' : '🙈 Anzeige ausblenden'}</button>
       </div>
     </div>`;
@@ -2732,6 +2734,7 @@ function updateGamemasterJeopardy() {
       <div class="pr-list">${presenceRows}</div>
       <div class="panel-row">
         <button class="gm-btn gray sm" onclick="opener.toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
+        <button class="gm-btn gray sm" onclick="opener.popOutQR()">🗗 QR als Fenster</button>
         <button class="gm-btn gray sm" onclick="opener.jeopardyBuzzToggleHidden();opener.updateGamemaster();">${jeopardyBuzzer.hidden ? '👁 Anzeige einblenden' : '🙈 Anzeige ausblenden'}</button>
       </div>
     </div>`;
@@ -3689,7 +3692,10 @@ function renderSetupLobby(game){
   container.innerHTML = `
     <div class="panel-head"><span>👥 Lobby</span><span class="badge">${buzzer.presence.length}</span></div>
     <div class="pr-list">${rows}</div>
-    <button class="btn btn-secondary" onclick="toggleJeopardyQR()">📱 QR-Code zeigen</button>`;
+    <div class="panel-row">
+      <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code zeigen'}</button>
+      <button class="btn btn-secondary" onclick="popOutQR()">🗗 QR als Fenster</button>
+    </div>`;
 }
 
 function jeopardyBuzzConnect(){
@@ -3987,7 +3993,7 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'jeopardyAnnounceDaily','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyUndo','nextRound','openJeopardyClue',
-  'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','switchTeam',
+  'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect',
 ]);
 
@@ -4220,6 +4226,45 @@ function closeJeopardyQR(){
 function toggleJeopardyQR(){
   if (document.getElementById('qr-overlay')) closeJeopardyQR();
   else showJeopardyQR();
+}
+
+// Öffnet den QR-Code als eigenes, verschiebbares Fenster (z.B. für einen
+// zweiten Bildschirm/Beamer) - zusätzlich zum Vollbild-Overlay auf der Hauptseite.
+let qrPopoutWin = null;
+function popOutQR(){
+  if (qrPopoutWin && !qrPopoutWin.closed) { qrPopoutWin.focus(); return; }
+  const url = jeopardyJoinUrl();
+  qrPopoutWin = window.open('', 'QRCode', 'width=380,height=480,resizable=yes');
+  if (!qrPopoutWin) return; // vom Browser blockiert (kein direkter Klick als Auslöser)
+  qrPopoutWin.document.open();
+  qrPopoutWin.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<title>QR-Code</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+<style>
+  :root{color-scheme:dark;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#0b0e2c;color:#fff;font-family:'Inter',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;padding:20px;text-align:center;}
+  h2{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;color:#FFD23F;text-transform:uppercase;margin:0;}
+  #qr-box{background:#fff;padding:16px;border-radius:16px;line-height:0;}
+  .url{color:#FFD23F;font-weight:700;word-break:break-all;font-size:.9rem;}
+</style></head><body>
+  <h2>Scan zum Mitspielen</h2>
+  <div id="qr-box"></div>
+  <div class="url">${url || '(Seite lokal geöffnet)'}</div>
+<script>
+  if (window.QRCode) {
+    new QRCode(document.getElementById('qr-box'), {
+      text: ${JSON.stringify(url)},
+      width: 260, height: 260,
+      colorDark: '#0b0e2c', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  }
+<\/script>
+</body></html>`);
+  qrPopoutWin.document.close();
 }
 
 // ── PASSWORT-GATE (nur Host-Seite; die /buzzer-Seite ist NICHT geschützt) ──
