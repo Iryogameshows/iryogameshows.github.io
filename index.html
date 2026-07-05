@@ -2014,14 +2014,12 @@ function addStrike() {
   updateStrikes();
   showStrikeOverlay();
   updateGamemaster();
-  if (state.teamStrikes[t] >= 3) {
-    setTimeout(() => {
-      if (!switchTeam()) {
-        updateStrikes();
-        updateGamemaster();
-      }
-    }, 750);
-  }
+  // Jeder Strike gibt sofort ans nächste noch nicht ausgeschiedene Team weiter
+  // (switchTeam() überspringt bereits 3x gestrikte Teams von selbst).
+  setTimeout(() => {
+    if (!switchTeam()) updateStrikes();
+    updateGamemaster();
+  }, 750);
 }
 function showStrikeOverlay(){
   const o=document.createElement('div');o.className='strike-overlay';
@@ -3731,9 +3729,14 @@ function feudBuzzConnect(){
       // Team des Spielers, der zuerst gebuzzert hat, ist schon bekannt (vom
       // Host zugeteilt) → automatisch als Startteam übernehmen, kein
       // manueller GM-Klick nötig, keine Verwechslungsgefahr bei den Strikes.
+      // Kurze Verzögerung, damit das Buzzer-Zeiten-Fenster erst sichtbar wird,
+      // statt sofort wieder zu verschwinden.
       const winnerTeam = feudBuzzer.results[0].team;
       if (winnerTeam !== undefined && winnerTeam !== null && winnerTeam >= 0 && winnerTeam < state.teamNames.length) {
-        feudSetStartTeam(winnerTeam);
+        setTimeout(() => {
+          if (!feudBuzzer.armed) return; // GM hat inzwischen manuell zugewiesen/geschlossen
+          feudSetStartTeam(winnerTeam);
+        }, 2000);
       }
     }
     renderFeudBuzzer();
