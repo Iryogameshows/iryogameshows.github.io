@@ -3811,14 +3811,11 @@ function feudBuzzConnect(){
       // Team des Spielers, der zuerst gebuzzert hat, ist schon bekannt (vom
       // Host zugeteilt) → automatisch als Startteam übernehmen, kein
       // manueller GM-Klick nötig, keine Verwechslungsgefahr bei den Strikes.
-      // Kurze Verzögerung, damit das Buzzer-Zeiten-Fenster erst sichtbar wird,
-      // statt sofort wieder zu verschwinden.
+      // Schließt den Buzzer NICHT - das Zeiten-Fenster bleibt stehen, bis die
+      // nächste Runde vorbereitet wird (feudBuzzPrepare() setzt es dann zurück).
       const winnerTeam = feudBuzzer.results[0].team;
       if (winnerTeam !== undefined && winnerTeam !== null && winnerTeam >= 0 && winnerTeam < state.teamNames.length) {
-        setTimeout(() => {
-          if (!feudBuzzer.armed) return; // GM hat inzwischen manuell zugewiesen/geschlossen
-          feudSetStartTeam(winnerTeam);
-        }, 2000);
+        feudAutoSetStartTeam(winnerTeam);
       }
     }
     renderFeudBuzzer();
@@ -3935,6 +3932,19 @@ function feudSetStartTeam(i){
   saveSnapshot();
   state.currentTeam = i;
   feudBuzzClose();
+  updateActiveTeam();
+  updateGamemaster();
+}
+
+// Wie feudSetStartTeam(), aber ohne den Buzzer zu schließen - das Buzzer-
+// Zeiten-Fenster bleibt sichtbar stehen, bis die nächste Frage vorbereitet
+// wird (feudBuzzPrepare() setzt Ergebnisse/Anzeige dann zurück).
+function feudAutoSetStartTeam(i){
+  if (state.currentTeam === i) return; // schon gesetzt, z.B. durch GM-Klick
+  saveSnapshot();
+  state.currentTeam = i;
+  feudBuzzer.armed = false; // Duell entschieden, keine weiteren Buzzes werten
+  if (feudBuzzer.fbRef) feudBuzzer.fbRef.update({ armed: false }).catch(()=>{});
   updateActiveTeam();
   updateGamemaster();
 }
