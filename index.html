@@ -1487,6 +1487,8 @@ let finaleState = {
 };
 
 let gamemasterWin = null;
+let gmFeudTab = 'question'; // 'question' oder 'order' - welcher Tab im Family-Feud-GM-Fenster aktiv ist
+function setGmFeudTab(tab) { gmFeudTab = tab; updateGamemaster(); }
 
 function toggleTeam3() {
   const on = document.getElementById('enable-team3').checked;
@@ -2325,27 +2327,37 @@ function endFinale() {
 // ── GAMEMASTER ──
 function openGamemaster() {
   if (gamemasterWin && !gamemasterWin.closed) { updateGamemaster(); gamemasterWin.focus(); return; }
-  gamemasterWin = window.open('', 'Gamemaster', 'width=420,height=600,resizable=yes');
+  const GM_W = 420, GM_H = 600;
+  const guess = guessSecondScreenPosition(GM_W, GM_H);
+  const features = `width=${GM_W},height=${GM_H},resizable=yes${guess ? `,left=${guess.left},top=${guess.top}` : ''}`;
+  gamemasterWin = window.open('', 'Gamemaster', features);
   updateGamemaster();
-  moveGamemasterToSecondScreen();
+  refineGamemasterPosition(GM_W, GM_H);
 }
-// Verschiebt das Gamemaster-Fenster auf den zweiten Bildschirm, falls vorhanden.
-// Nutzt die Window Management API (nur Chrome/Edge, HTTPS nötig) - ohne Unterstützung
-// oder ohne zweiten Bildschirm bleibt das Fenster einfach dort, wo der Browser es platziert.
-async function moveGamemasterToSecondScreen() {
+// Grobe, berechtigungsfreie Vermutung: liegt ein zweiter Bildschirm rechts vom aktuellen
+// (Standard-Anordnung bei den meisten Dual-Monitor-Setups), platziere das Fenster dort.
+// Funktioniert in allen Browsern, weil es nur normale window.open-Positionsangaben nutzt.
+function guessSecondScreenPosition(width, height) {
+  if (window.screen.isExtended === false) return null; // Browser weiß sicher: kein 2. Bildschirm
+  const baseLeft = (window.screenLeft ?? window.screenX ?? 0);
+  const baseTop = (window.screenTop ?? window.screenY ?? 0);
+  return { left: baseLeft + window.screen.width, top: baseTop + 40 };
+}
+// Verfeinert die Position, falls die Window Management API verfügbar & erlaubt ist
+// (Chrome/Edge, HTTPS) - liefert die exakte Bildschirmmitte statt der groben Vermutung.
+async function refineGamemasterPosition(width, height) {
   if (!gamemasterWin || gamemasterWin.closed) return;
   if (!('getScreenDetails' in window)) return;
   try {
     const details = await window.getScreenDetails();
     if (details.screens.length < 2) return;
     const target = details.screens.find(s => s !== details.currentScreen) || details.screens[1];
-    const width = 420, height = 600;
     const left = target.availLeft + Math.max(0, (target.availWidth - width) / 2);
     const top = target.availTop + Math.max(0, (target.availHeight - height) / 2);
     gamemasterWin.moveTo(left, top);
     gamemasterWin.resizeTo(width, height);
   } catch (e) {
-    // Berechtigung verweigert oder nicht unterstützt - Fenster bleibt an Standardposition
+    // Berechtigung verweigert oder nicht unterstützt - grobe Vermutung bleibt bestehen
   }
 }
 function updateGamemaster() {
@@ -2394,9 +2406,28 @@ function updateGamemaster() {
   .gm-btn.blue{background:linear-gradient(180deg,#3B82F6,#1D4ED8);color:#fff;}
   .gm-btn.orange{background:linear-gradient(180deg,#F97316,#C2410C);color:#fff;}
   .active-team-label{font-size:.7rem;color:#FFD23F;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+  .gm-tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .gm-tab{flex:1;padding:8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+  .gm-tab.active{background:rgba(255,210,63,.12);border-color:rgba(255,210,63,.35);color:#FFD23F;}
+  .order-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
+  .order-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.06);font-size:.85rem;}
+  .order-item.current{background:rgba(255,210,63,.1);border-color:rgba(255,210,63,.3);}
+  .order-item.done{opacity:.4;text-decoration:line-through;}
+  .order-num{color:#FFD23F;font-weight:700;min-width:1.4em;}
 </style></head><body>
   <h2>Gamemaster</h2>
   <div class="round-label">Runde ${state.currentRound+1} / ${state.roundQuestions.length}</div>
+  <div class="gm-tabs">
+    <button class="gm-tab ${gmFeudTab==='question'?'active':''}" onclick="opener.setGmFeudTab('question')">Aktuelle Frage</button>
+    <button class="gm-tab ${gmFeudTab==='order'?'active':''}" onclick="opener.setGmFeudTab('order')">Reihenfolge</button>
+  </div>
+  ${gmFeudTab === 'order' ? `
+  <div class="order-list">
+    ${state.roundQuestions.map((rq,i) => `<div class="order-item ${i===state.currentRound?'current':(i<state.currentRound?'done':'')}">
+      <span class="order-num">${i+1}.</span> <span>${rq.question}</span>
+    </div>`).join('')}
+  </div>
+  ` : `
   <div class="active-team-label">${state.allOut ? '⚠ Alle Teams out' : 'Am Zug: ' + state.teamNames[state.currentTeam]}</div>
   <div class="strikes-section">${strikesHtml}</div>
   <div class="question" onclick="opener.revealQuestion()" style="cursor:pointer;">${q.question}</div>
@@ -2411,6 +2442,7 @@ function updateGamemaster() {
     <button class="gm-btn orange" onclick="opener.undoLast()">↩ Undo</button>
     <button class="gm-btn gold" onclick="opener.nextRound()">Nächste Runde</button>
   </div>
+  `}
 </body></html>`);
   gamemasterWin.document.close();
 }
@@ -2624,7 +2656,7 @@ function updateGamemasterJeopardy() {
       <div class="clue-box">
         ${clue.q?`<div class="clue-q">${clue.q}</div>`:''}
         ${media?`<div class="media-row">${media}</div>`:''}
-        <div class="clue-a ${jeopardyState.answerShown ? '' : 'masked'}">Lösung: <strong>${clue.a||'(nur Bild)'}</strong></div>
+        <div class="clue-a">Lösung: <strong>${clue.a||'(nur Bild)'}</strong></div>
       </div>
       ${!revealed ? `
         <div class="info-card">
@@ -2731,7 +2763,6 @@ function updateGamemasterJeopardy() {
   .tag-green{background:rgba(34,197,94,.15);color:#86EFAC;}
   .tag-purple{background:rgba(139,92,246,.18);color:#C4B5FD;}
   .clue-a{font-size:.92rem;color:#4ADE80;font-weight:700;padding-top:10px;border-top:1px dashed rgba(255,255,255,.1);}
-  .clue-a.masked{filter:blur(6px);user-select:none;}
 
   .info-card{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:11px 13px;font-size:.76rem;color:rgba(255,255,255,.8);text-align:center;line-height:1.55;}
   .hint-ok{font-size:.76rem;color:#4ADE80;font-weight:700;align-self:center;}
