@@ -1370,22 +1370,26 @@ body {
 <div class="gm-bar" id="gm-bar"></div>
 
 <script>
+// Drei Balken: der oberste voll golden (metallischer Verlauf), die zwei
+// darunter nur mit goldenem Rand - das Family-Feud-Logo.
 const STAR_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
   <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#FFE066"/><stop offset="50%" stop-color="#FFD23F"/><stop offset="100%" stop-color="#C6930A"/>
+    <stop offset="0%" stop-color="#FFF6E0"/><stop offset="9%" stop-color="#F5CD5E"/><stop offset="45%" stop-color="#DDA828"/><stop offset="100%" stop-color="#A97A10"/>
   </linearGradient></defs>
-  <polygon points="50,5 61,38 96,38 68,58 79,91 50,72 21,91 32,58 4,38 39,38" fill="url(#sg)" opacity=".9"/>
+  <rect x="10" y="10" width="80" height="20" rx="5" fill="url(#sg)"/>
+  <rect x="10" y="40" width="80" height="20" rx="5" fill="none" stroke="url(#sg)" stroke-width="4"/>
+  <rect x="10" y="70" width="80" height="20" rx="5" fill="none" stroke="url(#sg)" stroke-width="4"/>
 </svg>`;
 
-// Gefahrenverkehrsschild (danger warning triangle) — "Jeopardy" = Gefahr
+// Vier perspektivische 3D-Spalten, eine leuchtet golden - das Jeopardy-Logo.
 const DANGER_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
   <defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="#FFE066"/><stop offset="100%" stop-color="#F0B800"/>
   </linearGradient></defs>
-  <polygon points="50,8 94,86 6,86" fill="url(#dg)" stroke="#1a1200" stroke-width="4" stroke-linejoin="round"/>
-  <polygon points="50,20 84,80 16,80" fill="none" stroke="#1a1200" stroke-width="2.5" stroke-linejoin="round" opacity=".25"/>
-  <rect x="45.5" y="38" width="9" height="26" rx="2.5" fill="#1a1200"/>
-  <circle cx="50" cy="73" r="5" fill="#1a1200"/>
+  <polygon points="10,18 10,80 24,84 24,14" fill="#3a3f6b"/>
+  <polygon points="30,20 30,82 44,86 44,16" fill="url(#dg)"/>
+  <polygon points="50,22 50,84 64,88 64,18" fill="#3a3f6b"/>
+  <polygon points="70,24 70,86 84,90 84,20" fill="#3a3f6b"/>
 </svg>`;
 
 const TEAM_COLORS = ['red','blue','green'];
@@ -1405,28 +1409,34 @@ function renderLogo(line1, line2, size2, danger) {
         </linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <polygon points="150,10 206,108 94,108" fill="url(#goldGrad)" stroke="#1a1200" stroke-width="4" stroke-linejoin="round"/>
-      <rect x="143" y="34" width="14" height="38" rx="3.5" fill="#1a1200"/>
-      <circle cx="150" cy="88" r="7" fill="#1a1200"/>
-      <text x="150" y="96" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="30" fill="url(#goldText)" filter="url(#glow)" letter-spacing="2">${line1}</text>
+      <g transform="translate(8,15) scale(0.75)">
+        <polygon points="10,18 10,80 24,84 24,14" fill="#3a3f6b"/>
+        <polygon points="30,20 30,82 44,86 44,16" fill="url(#goldGrad)"/>
+        <polygon points="50,22 50,84 64,88 64,18" fill="#3a3f6b"/>
+        <polygon points="70,24 70,86 84,90 84,20" fill="#3a3f6b"/>
+      </g>
+      <text x="190" y="70" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="34" fill="url(#goldText)" filter="url(#glow)" letter-spacing="2">${line1}</text>
     </svg>`;
   } else {
     inner = `<svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#FFE066"/><stop offset="50%" stop-color="#FFD23F"/><stop offset="100%" stop-color="#C6930A"/>
+          <stop offset="0%" stop-color="#FFF6E0"/><stop offset="9%" stop-color="#F5CD5E"/><stop offset="45%" stop-color="#DDA828"/><stop offset="100%" stop-color="#A97A10"/>
         </linearGradient>
         <linearGradient id="goldText" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#FFF"/><stop offset="100%" stop-color="#FFE8A0"/>
         </linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <polygon points="150,8 170,48 214,48 178,72 192,114 150,90 108,114 122,72 86,48 130,48" fill="url(#goldGrad)" opacity=".9"/>
-      <polygon points="150,14 167,48 206,48 174,70 186,106 150,85 114,106 126,70 94,48 133,48" fill="none" stroke="rgba(255,255,255,.3)" stroke-width=".5"/>
+      <g transform="translate(8,10)">
+        <rect x="0" y="0" width="80" height="20" rx="5" fill="url(#goldGrad)"/>
+        <rect x="0" y="30" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
+        <rect x="0" y="60" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
+      </g>
       ${line2
-        ? `<text x="150" y="56" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
-           <text x="150" y="92" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
-        : `<text x="150" y="80" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
+        ? `<text x="190" y="56" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
+           <text x="190" y="92" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
+        : `<text x="190" y="80" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
       }
     </svg>`;
   }
