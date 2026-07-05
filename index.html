@@ -2327,6 +2327,26 @@ function openGamemaster() {
   if (gamemasterWin && !gamemasterWin.closed) { updateGamemaster(); gamemasterWin.focus(); return; }
   gamemasterWin = window.open('', 'Gamemaster', 'width=420,height=600,resizable=yes');
   updateGamemaster();
+  moveGamemasterToSecondScreen();
+}
+// Verschiebt das Gamemaster-Fenster auf den zweiten Bildschirm, falls vorhanden.
+// Nutzt die Window Management API (nur Chrome/Edge, HTTPS nötig) - ohne Unterstützung
+// oder ohne zweiten Bildschirm bleibt das Fenster einfach dort, wo der Browser es platziert.
+async function moveGamemasterToSecondScreen() {
+  if (!gamemasterWin || gamemasterWin.closed) return;
+  if (!('getScreenDetails' in window)) return;
+  try {
+    const details = await window.getScreenDetails();
+    if (details.screens.length < 2) return;
+    const target = details.screens.find(s => s !== details.currentScreen) || details.screens[1];
+    const width = 420, height = 600;
+    const left = target.availLeft + Math.max(0, (target.availWidth - width) / 2);
+    const top = target.availTop + Math.max(0, (target.availHeight - height) / 2);
+    gamemasterWin.moveTo(left, top);
+    gamemasterWin.resizeTo(width, height);
+  } catch (e) {
+    // Berechtigung verweigert oder nicht unterstützt - Fenster bleibt an Standardposition
+  }
 }
 function updateGamemaster() {
   updateGMBar();
