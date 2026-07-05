@@ -922,8 +922,8 @@ body {
   animation: jsfxBounce .9s ease-in-out infinite;
 }
 @keyframes jsfxBounce { 0%,100%{height:22px;} 50%{height:120px;} }
-/* Buzzer corner widget */
-#jeopardy-buzzer {
+/* Buzzer corner widget (Jeopardy und Family Feud teilen sich das Aussehen) */
+#jeopardy-buzzer, #feud-buzzer {
   position: fixed; top: 14px; right: 14px; z-index: 1300; width: 236px;
   background: rgba(10,13,40,.88); border: 1px solid rgba(255,255,255,.12);
   border-radius: 12px; padding: 12px; backdrop-filter: blur(8px);
@@ -1683,6 +1683,7 @@ function startGame() {
   document.body.appendChild(bd);
 
   openGamemaster(); // schon jetzt öffnen, damit Intro/Tutorial vom GM-Fenster aus steuerbar sind
+  feudBuzzConnect();
   showIntro();
 }
 
@@ -1937,6 +1938,8 @@ function revealQuestion() {
   const el = document.getElementById('question-display');
   if (!el.classList.contains('hidden-q')) return;
   el.classList.remove('hidden-q');
+  state.questionRevealed = true;
+  feudBuzzArm(); // Buzzer-Duell scharf: wer zuerst buzzert, darf antworten
 }
 
 function loadRound() {
@@ -1955,6 +1958,7 @@ function loadRound() {
   qEl.classList.add('hidden-q');
   qEl.querySelector('.q-inner').textContent = q.question;
 
+  feudBuzzPrepare(); // Buzzer live, aber noch nicht scharf - Frage ist ja noch verdeckt
   updateScores(); updateRoundPts(); updateStrikes(); renderBoard(); updateActiveTeam(); updateGamemaster();
 }
 
@@ -2075,6 +2079,7 @@ function nextRound() {
 
 function endGame() {
   document.getElementById('gm-bar').classList.remove('visible');
+  feudBuzzDisconnect(); // ab jetzt läuft das Finale, kein Buzzer mehr nötig
   if (state.teamCount === 3) {
     const sorted = state.scores.map((s,i) => ({score:s, idx:i})).sort((a,b) => b.score - a.score);
     finaleState.teams = [sorted[0].idx, sorted[1].idx];
@@ -2440,6 +2445,36 @@ function updateGamemaster() {
     </div>`;
   }).join('');
 
+  const feudPresenceCount = feudBuzzer.presence.length;
+  const feudPresenceRows = feudBuzzer.presence.length
+    ? feudBuzzer.presence.map(p => `<div class="pr-row"><span class="pr-dot"></span>${p.name}</div>`).join('')
+    : `<div class="pr-empty">Noch niemand verbunden</div>`;
+  const feudConnChip = feudBuzzer.connected
+    ? `<span class="chip chip-ok">● Server verbunden</span>`
+    : `<span class="chip chip-bad">● Offline</span>`;
+  const feudConnectPanel = `
+    <div class="panel">
+      <div class="panel-head">
+        <span>👥 Verbunden</span>
+        <span class="badge">${feudPresenceCount}</span>
+      </div>
+      <div class="pr-list">${feudPresenceRows}</div>
+      <div class="panel-row">
+        <button class="gm-btn gray sm" onclick="opener.toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
+        <button class="gm-btn gray sm" onclick="opener.feudBuzzToggleHidden();opener.updateGamemaster();">${feudBuzzer.hidden ? '👁 Anzeige einblenden' : '🙈 Anzeige ausblenden'}</button>
+      </div>
+    </div>`;
+  const feudBuzzPanel = `
+    <div class="panel">
+      <div class="panel-head"><span>🔔 Buzzer-Duell</span>${feudConnChip}</div>
+      ${feudBuzzer.results.length
+        ? feudBuzzer.results.map((r,idx) => `<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${r.name}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')
+        : `<div class="hint-line">🔔 Buzzer ${feudBuzzer.armed?'scharf — warte auf Buzz…':'aus'}</div>`}
+      <div class="panel-row" style="margin-top:8px;">
+        ${state.teamNames.map((name,i) => `<button class="gm-btn gray sm" onclick="opener.feudSetStartTeam(${i})">→ ${name} beginnt</button>`).join('')}
+      </div>
+    </div>`;
+
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
@@ -2476,6 +2511,24 @@ function updateGamemaster() {
   .order-item.current{background:rgba(255,210,63,.1);border-color:rgba(255,210,63,.3);}
   .order-item.done{opacity:.4;text-decoration:line-through;}
   .order-num{color:#FFD23F;font-weight:700;min-width:1.4em;}
+  .chip{font-size:.62rem;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:99px;white-space:nowrap;}
+  .chip-ok{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.35);}
+  .chip-bad{background:rgba(232,69,60,.15);color:#FF8A80;border:1px solid rgba(232,69,60,.35);}
+  .panel{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;margin-bottom:12px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;}
+  .badge{background:rgba(34,197,94,.18);color:#4ADE80;border-radius:99px;padding:1px 8px;font-size:.68rem;}
+  .pr-list{display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;margin-bottom:8px;}
+  .pr-row{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;padding:3px 2px;}
+  .pr-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
+  @keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .pr-empty{font-size:.72rem;color:rgba(255,255,255,.35);padding:4px 0;}
+  .panel-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .buzz-row{justify-content:flex-start;background:rgba(255,255,255,.03);border-radius:6px;padding:5px 8px;}
+  .buzz-row.first{background:rgba(255,210,63,.12);box-shadow:inset 0 0 0 1px rgba(255,210,63,.3);}
+  .pr-rank{color:#FFD23F;font-family:'Bebas Neue',sans-serif;font-size:1rem;width:18px;}
+  .buzz-time{margin-left:auto;font-family:'Bebas Neue',sans-serif;font-size:1rem;}
+  .gm-btn.sm{padding:7px 10px;font-size:.68rem;flex:1;}
+  .hint-line{font-size:.72rem;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 </style></head><body>
   <h2>Gamemaster</h2>
   <div class="round-label">Runde ${state.currentRound+1} / ${state.roundQuestions.length}</div>
@@ -2492,6 +2545,8 @@ function updateGamemaster() {
   ` : `
   <div class="active-team-label">${state.allOut ? '⚠ Alle Teams out' : 'Am Zug: ' + state.teamNames[state.currentTeam]}</div>
   <div class="strikes-section">${strikesHtml}</div>
+  ${feudBuzzPanel}
+  ${feudConnectPanel}
   <div class="question" onclick="opener.revealQuestion()" style="cursor:pointer;">${q.question}</div>
   ${q.answers.map((a,i) => `<div class="answer ${state.revealed[i]?'shown':'hidden'}" ${!state.revealed[i] ? `onclick="opener.revealAnswer(${i})"` : ''}>
     <span><span class="num">${i+1}.</span> <span class="text">${a.text}</span></span>
@@ -2647,7 +2702,7 @@ function updateGamemasterJeopardy() {
       </div>
       <div class="pr-list">${presenceRows}</div>
       <div class="panel-row">
-        <button class="gm-btn gray sm" onclick="opener.showJeopardyQR()">📱 QR-Code</button>
+        <button class="gm-btn gray sm" onclick="opener.toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
         <button class="gm-btn gray sm" onclick="opener.jeopardyBuzzToggleHidden();opener.updateGamemaster();">${jeopardyBuzzer.hidden ? '👁 Anzeige einblenden' : '🙈 Anzeige ausblenden'}</button>
       </div>
     </div>`;
@@ -3540,6 +3595,10 @@ function jeopardyBuzzConnect(){
     jeopardyBuzzer.connected = true;
     const origin = (location.origin && location.origin !== 'null') ? location.origin : '';
     jeopardyBuzzer.joinUrl = origin ? origin + '/buzzer' : '(deine Netlify-Seite)/buzzer';
+    // Sauberer Start: Board ist sichtbar, also muss der Buzzer beim Verbinden
+    // deaktiviert sein - auch wenn von einer vorherigen Session noch "live"
+    // in Firebase hängengeblieben ist.
+    jeopardyBuzzer.fbRef.update({ live: false, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
     jeopardyBuzzer.fbRef.on('value', (snap) => {
       const v = snap.val() || {};
       const armStart = v.armStart || 0;
@@ -3601,16 +3660,131 @@ function jeopardyBuzzDisconnect(){
   jeopardyBuzzer.presence = [];
 }
 
+// ── FAMILY FEUD BUZZER ──
+// Nutzt dieselbe Firebase-"buzzer"-Anbindung und dieselbe /buzzer-Beitrittsseite
+// wie Jeopardy - entscheidet, welches Team pro Runde zuerst antworten darf.
+let feudBuzzer = {
+  armed: false, results: [], connected: false, joinUrl: '', fbRef: null, round: 0,
+  excluded: [],       // wer bei diesem Buzz-Duell schon draußen ist (falls neu geöffnet wird)
+  presenceRef: null, presence: [],
+  hidden: false,      // manuell vom GM ausgeblendet
+  poppedForQuestion: false,
+};
+
+function feudBuzzConnect(){
+  if (!jeopardyBuzzInitFirebase()){ feudBuzzer.connected = false; return; }
+  feudBuzzer.connected = true;
+  feudBuzzer.fbRef = firebase.database().ref('buzzer');
+  const origin = (location.origin && location.origin !== 'null') ? location.origin : '';
+  feudBuzzer.joinUrl = origin ? origin + '/buzzer' : '(deine Netlify-Seite)/buzzer';
+  // Sauberer Start: neue Runde beginnt immer mit deaktiviertem Buzzer.
+  feudBuzzer.fbRef.update({ live: false, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
+  feudBuzzer.fbRef.on('value', (snap) => {
+    const v = snap.val() || {};
+    const armStart = v.armStart || 0;
+    feudBuzzer.armed = !!v.armed;
+    feudBuzzer.excluded = Object.keys(v.excluded || {});
+    const seen = {};
+    const wasEmpty = feudBuzzer.results.length === 0;
+    feudBuzzer.results = Object.values(v.buzzes || {})
+      .filter(b => b && b.name && b.ts)
+      .sort((a, b) => a.ts - b.ts)
+      .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
+      .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000) }));
+    if (wasEmpty && feudBuzzer.results.length > 0) feudBuzzer.poppedForQuestion = true;
+    renderFeudBuzzer();
+    updateGamemaster();
+  });
+  feudBuzzer.presenceRef = firebase.database().ref('buzzer/presence');
+  feudBuzzer.presenceRef.on('value', (snap) => {
+    const v = snap.val() || {};
+    feudBuzzer.presence = Object.values(v).filter(p => p && p.name).sort((a, b) => (a.ts||0) - (b.ts||0));
+    updateGamemaster();
+  });
+  renderFeudBuzzer();
+  updateGamemaster();
+}
+
+function feudBuzzDisconnect(){
+  if (feudBuzzer.fbRef) { try { feudBuzzer.fbRef.off(); } catch {} }
+  if (feudBuzzer.presenceRef) { try { feudBuzzer.presenceRef.off(); } catch {} }
+  feudBuzzer.connected = false;
+  feudBuzzer.presence = [];
+  const el = document.getElementById('feud-buzzer');
+  if (el) el.remove();
+}
+
+// Neue Runde geladen, Frage noch verdeckt - Buzzer live, aber noch nicht scharf
+function feudBuzzPrepare(){
+  feudBuzzer.round++;
+  feudBuzzer.excluded = [];
+  feudBuzzer.poppedForQuestion = false;
+  if (feudBuzzer.fbRef) feudBuzzer.fbRef.update({ round: feudBuzzer.round, live: true, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
+  feudBuzzer.armed = false; feudBuzzer.results = [];
+  renderFeudBuzzer();
+}
+
+// GM deckt die Frage auf → Buzzer-Duell scharf: wer zuerst buzzert, darf antworten
+function feudBuzzArm(){
+  if (feudBuzzer.fbRef) feudBuzzer.fbRef.update({ round: feudBuzzer.round, live: true, armed: true, armStart: firebase.database.ServerValue.TIMESTAMP, buzzes: null }).catch(()=>{});
+  feudBuzzer.armed = true; feudBuzzer.results = [];
+  renderFeudBuzzer();
+  updateGamemaster();
+}
+
+// Runde vorbei - Buzzer wieder aus
+function feudBuzzClose(){
+  feudBuzzer.excluded = [];
+  feudBuzzer.poppedForQuestion = false;
+  if (feudBuzzer.fbRef) feudBuzzer.fbRef.update({ live: false, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
+  feudBuzzer.armed = false; feudBuzzer.results = [];
+  renderFeudBuzzer();
+}
+
+function feudBuzzToggleHidden(){
+  feudBuzzer.hidden = !feudBuzzer.hidden;
+  renderFeudBuzzer();
+  updateGamemaster();
+}
+
+// GM entscheidet anhand der Buzz-Reihenfolge, welches Team zuerst antwortet
+function feudSetStartTeam(i){
+  saveSnapshot();
+  state.currentTeam = i;
+  feudBuzzClose();
+  updateActiveTeam();
+  updateGamemaster();
+}
+
+function renderFeudBuzzer(){
+  let el = document.getElementById('feud-buzzer');
+  const boardShown = document.getElementById('game-screen').classList.contains('active');
+  const shouldShow = state.roundQuestions && state.roundQuestions.length && boardShown
+    && !feudBuzzer.hidden && feudBuzzer.poppedForQuestion;
+  if (!shouldShow) { if (el) el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'feud-buzzer'; document.body.appendChild(el); }
+  const rows = feudBuzzer.results.map((r, idx) => `
+    <div class="jbz-row ${idx === 0 ? 'first' : ''}">
+      <span class="jbz-rank">${idx + 1}</span>
+      <span class="jbz-name">${r.name}</span>
+      <span class="jbz-time">${r.t.toFixed(2)}s</span>
+    </div>`).join('');
+  el.innerHTML = `
+    <div class="jbz-title"><span>🔔 Buzzer</span><span class="${feudBuzzer.armed ? 'jbz-armed' : 'jbz-idle'}">${feudBuzzer.armed ? '● SCHARF' : '○ AUS'}</span></div>
+    ${rows || '<div style="font-size:.7rem;color:rgba(255,255,255,.35);text-align:center;padding:6px 0;">Noch niemand</div>'}`;
+}
+
 // ── GM-GAMEPAD (Handy-Fernbedienung für das Gamemaster-Fenster) ──
 // Spiegelt den Inhalt des GM-Popups per Firebase auf /gm/ (Handy), und nimmt
 // von dort Befehle entgegen. Nur Funktionen aus dieser Liste dürfen per
 // Fernbefehl ausgeführt werden (kein beliebiger window[name]-Aufruf).
 const GM_REMOTE_ALLOWED_FNS = new Set([
-  'addStrike','finaleMarkMiss','finaleNextReveal','finalePickAnswer','gmAdvance','gmSkipTutorial',
+  'addStrike','feudBuzzToggleHidden','feudSetStartTeam','finaleMarkMiss','finaleNextReveal',
+  'finalePickAnswer','gmAdvance','gmSkipTutorial',
   'jeopardyAnnounceDaily','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyUndo','nextRound','openJeopardyClue',
-  'revealAll','revealAnswer','revealQuestion','setGmFeudTab','showJeopardyQR','switchTeam',
+  'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect',
 ]);
 
@@ -3824,7 +3998,7 @@ function showJeopardyQR(){
     <div class="qr-hint">Klicken zum Schließen</div>
   </div>`;
   document.body.appendChild(ov);
-  ov.addEventListener('click', () => ov.remove());
+  ov.addEventListener('click', () => closeJeopardyQR());
   if (url && window.QRCode){
     const size = Math.min(window.innerWidth, window.innerHeight) * 0.62;
     new QRCode(document.getElementById('qr-box'), {
@@ -3833,6 +4007,16 @@ function showJeopardyQR(){
       correctLevel: QRCode.CorrectLevel.M,
     });
   }
+  updateGamemaster();
+}
+function closeJeopardyQR(){
+  const ov = document.getElementById('qr-overlay');
+  if (ov) { ov.remove(); updateGamemaster(); }
+}
+// Ein Button im GM-Fenster für auf/zu, statt getrennter show/close-Aktionen
+function toggleJeopardyQR(){
+  if (document.getElementById('qr-overlay')) closeJeopardyQR();
+  else showJeopardyQR();
 }
 
 // ── PASSWORT-GATE (nur Host-Seite; die /buzzer-Seite ist NICHT geschützt) ──
