@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>Keller Buzzer</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  :root{color-scheme:dark;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{background:#0b0e2c;}
+  body{font-family:system-ui,sans-serif;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px;overflow:hidden;}
+  h1{font-size:1rem;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:800;}
+  #name{width:100%;max-width:320px;padding:14px 16px;border-radius:12px;border:2px solid rgba(255,255,255,.15);background:rgba(0,0,0,.3);color:#fff;font-size:1.1rem;text-align:center;font-weight:700;outline:none;-webkit-appearance:none;appearance:none;}
+  #buzz{width:80vw;max-width:340px;height:80vw;max-height:340px;border-radius:50%;border:none;font-size:2.4rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#fff;cursor:pointer;transition:transform .06s,filter .15s;background:radial-gradient(circle at 50% 35%,#FF6B5E,#E8453C 65%,#B8241C);box-shadow:0 12px 0 #7a140e,0 18px 40px rgba(0,0,0,.5);-webkit-appearance:none;appearance:none;}
+  #buzz:active{transform:translateY(8px);box-shadow:0 4px 0 #7a140e,0 8px 20px rgba(0,0,0,.5);}
+  #buzz:disabled{filter:grayscale(.7) brightness(.7);cursor:default;box-shadow:0 12px 0 #333,0 18px 40px rgba(0,0,0,.4);}
+  #status{font-size:1rem;font-weight:700;min-height:24px;text-align:center;color:#FFD23F;}
+  .hint{font-size:.8rem;color:rgba(255,255,255,.35);text-align:center;}
+</style></head><body>
+  <h1>🔔 Keller Buzzer</h1>
+  <input id="name" placeholder="Dein Name / Team" autocomplete="off">
+  <button id="buzz" disabled>Buzz</button>
+  <div id="status">Name eingeben…</div>
+  <div class="hint" id="hint"></div>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBuXYp1w65nR8tqJIKFS_v_9QSD7_0kR20",
+    authDomain: "keller-buzzer.firebaseapp.com",
+    databaseURL: "https://keller-buzzer-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "keller-buzzer",
+    storageBucket: "keller-buzzer.firebasestorage.app",
+    messagingSenderId: "589064661958",
+    appId: "1:589064661958:web:1c1024eab161ad8e53e0c7",
+  };
+  firebase.initializeApp(firebaseConfig);
+  const ref = firebase.database().ref('buzzer');
+
+  const nameEl = document.getElementById('name');
+  const buzz = document.getElementById('buzz');
+  const status = document.getElementById('status');
+  const hint = document.getElementById('hint');
+  nameEl.value = localStorage.getItem('buzzName') || '';
+
+  let live = false, armed = false, buzzedThisRound = false, lastRound = 0, results = [], lockUntil = 0, excludedSet = {};
+
+  function myName(){ return (nameEl.value || '').trim(); }
+  function locked(){ return Date.now() < lockUntil; }
+  function amExcluded(){ const n = myName(); return !!n && !!excludedSet[n]; }
+  function refresh(){
+    const ready = myName().length > 0;
+    buzz.disabled = !(ready && live && !buzzedThisRound && !locked() && !amExcluded());
+    if (!ready) { status.textContent = 'Name eingeben…'; status.style.color='rgba(255,255,255,.5)'; }
+    else if (amExcluded()) { status.textContent = 'Für diese Frage gesperrt 🚫'; status.style.color='#FF6B6B'; }
+    else if (locked()) { status.textContent = 'Zu früh! Gesperrt ' + Math.ceil((lockUntil-Date.now())/1000) + 's'; status.style.color='#FF6B6B'; }
+    else if (buzzedThisRound) { status.textContent = 'Gebuzzert! ✔'; status.style.color='#22C55E'; }
+    else if (armed) { status.textContent = 'BEREIT — jetzt buzzern!'; status.style.color='#FFD23F'; }
+    else if (live) { status.textContent = 'Achtung — noch NICHT buzzern!'; status.style.color='#FF8A80'; }
+    else { status.textContent = 'Warte auf die Frage…'; status.style.color='rgba(255,255,255,.5)'; }
+    const pos = results.findIndex(b => b.name === myName());
+    hint.textContent = pos >= 0 ? ('Platz ' + (pos+1)) : '';
+  }
+  nameEl.addEventListener('input', () => { localStorage.setItem('buzzName', nameEl.value); updatePresence(); refresh(); });
+
+  buzz.addEventListener('click', () => {
+    if (buzz.disabled) return;
+    if (!armed) {
+      // Zu früh gebuzzert → 3 Sekunden Sperre
+      lockUntil = Date.now() + 3000;
+      if (navigator.vibrate) navigator.vibrate([40,60,40]);
+      refresh();
+      return;
+    }
+    buzzedThisRound = true; refresh();
+    ref.child('buzzes').push({ name: myName(), ts: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
+    if (navigator.vibrate) navigator.vibrate(60);
+  });
+
+  ref.on('value', (snap) => {
+    const v = snap.val() || {};
+    live = !!v.live;
+    armed = !!v.armed;
+    excludedSet = v.excluded || {};
+    const round = v.round || 0;
+    if (round !== lastRound) { lastRound = round; buzzedThisRound = false; lockUntil = 0; } // neue Runde (neue Frage ODER Wiedereröffnung)
+    const seen = {};
+    results = Object.values(v.buzzes || {})
+      .filter(b => b && b.name && b.ts)
+      .sort((a,b)=>a.ts-b.ts)
+      .filter(b => { if (seen[b.name]) return false; seen[b.name]=1; return true; });
+    if (results.some(b => b.name === myName())) buzzedThisRound = true;
+    refresh();
+  });
+  setInterval(() => { if (locked()) refresh(); }, 250); // Sperr-Countdown aktualisieren
+
+  // ── Presence: damit der Gamemaster sieht, wer verbunden ist (und wer disconnected) ──
+  let clientId = localStorage.getItem('buzzClientId');
+  if (!clientId) { clientId = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('buzzClientId', clientId); }
+  const presenceRef = firebase.database().ref('buzzer/presence/' + clientId);
+  function updatePresence(){
+    const n = myName();
+    if (n) presenceRef.set({ name: n, ts: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
+    else presenceRef.remove().catch(()=>{});
+  }
+  firebase.database().ref('.info/connected').on('value', (snap) => {
+    if (snap.val() === true) {
+      presenceRef.onDisconnect().remove();
+      updatePresence();
+    }
+  });
+
+  refresh();
+</script></body></html>
