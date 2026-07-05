@@ -1490,6 +1490,34 @@ let gamemasterWin = null;
 let gmFeudTab = 'question'; // 'question' oder 'order' - welcher Tab im Family-Feud-GM-Fenster aktiv ist
 function setGmFeudTab(tab) { gmFeudTab = tab; updateGamemaster(); }
 
+// ── GM-FERNSTEUERUNG FÜR KLICK-OVERLAYS (Intro/Tutorial/Zwischensequenzen) ──
+// Alle "Klicken zum Fortfahren"-Overlays im Spiel tragen eine dieser Klassen/IDs.
+// Der GM-Button simuliert einfach einen echten Klick darauf - kein Umbau der
+// einzelnen Overlay-Funktionen nötig, deckt auch künftige Overlays automatisch ab.
+const GM_OVERLAY_SELECTOR = '.intro-overlay, .welcome-overlay, .tut-overlay, .elim-overlay, #kg-overlay, .finale-click-overlay';
+function gmActiveOverlay() { return document.querySelector(GM_OVERLAY_SELECTOR); }
+function gmAdvance() { const el = gmActiveOverlay(); if (el) el.click(); }
+function gmSkipTutorial() {
+  const btn = document.querySelector('.tut-overlay .tut-skip, .tut-overlay #tut-skip-btn');
+  if (btn) btn.click();
+}
+let gmPollerStarted = false;
+let gmLastOverlayPresent = false;
+// Overlays erscheinen/verschwinden durch normale DOM-Operationen ohne updateGamemaster()
+// aufzurufen - ein leichter Poller hält das GM-Fenster trotzdem synchron.
+function startGmPoller() {
+  if (gmPollerStarted) return;
+  gmPollerStarted = true;
+  setInterval(() => {
+    if (!gamemasterWin || gamemasterWin.closed) return;
+    const present = !!gmActiveOverlay();
+    if (present !== gmLastOverlayPresent) {
+      gmLastOverlayPresent = present;
+      updateGamemaster();
+    }
+  }, 250);
+}
+
 function toggleTeam3() {
   const on = document.getElementById('enable-team3').checked;
   document.getElementById('team3-card').style.display = on ? '' : 'none';
@@ -1654,6 +1682,7 @@ function startGame() {
   bd.className = 'black-backdrop';
   document.body.appendChild(bd);
 
+  openGamemaster(); // schon jetzt öffnen, damit Intro/Tutorial vom GM-Fenster aus steuerbar sind
   showIntro();
 }
 
@@ -2090,6 +2119,7 @@ function showFinaleIntroScreen(onDone) {
   let old = document.querySelector('.black-backdrop');
   if (!old) { const bd = document.createElement('div'); bd.className = 'black-backdrop'; document.body.appendChild(bd); }
   const ov = document.createElement('div');
+  ov.className = 'finale-click-overlay';
   ov.style.cssText = 'position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;user-select:none;background:#000;';
   ov.innerHTML = `
     <div class="welcome-star">${STAR_SVG}</div>
@@ -2107,6 +2137,7 @@ function showFinaleIntroScreen(onDone) {
 
 function showFinaleMatchup() {
   const ov = document.createElement('div');
+  ov.className = 'finale-click-overlay';
   ov.style.cssText = 'position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;user-select:none;background:#000;';
   ov.innerHTML = `
     <div class="welcome-star">${STAR_SVG}</div>
@@ -2333,6 +2364,8 @@ function openGamemaster() {
   gamemasterWin = window.open('', 'Gamemaster', features);
   updateGamemaster();
   refineGamemasterPosition(GM_W, GM_H);
+  startGmPoller();
+  startGmRemoteCommandListener();
 }
 // Grobe, berechtigungsfreie Vermutung: liegt ein zweiter Bildschirm rechts vom aktuellen
 // (Standard-Anordnung bei den meisten Dual-Monitor-Setups), platziere das Fenster dort.
@@ -2360,9 +2393,36 @@ async function refineGamemasterPosition(width, height) {
     // Berechtigung verweigert oder nicht unterstützt - grobe Vermutung bleibt bestehen
   }
 }
+// Wird gezeigt, solange ein "Klicken zum Fortfahren"-Overlay (Intro, Tutorial,
+// Zwischensequenz) den Hauptbildschirm blockiert - der Host muss dafür nicht
+// an den Hauptbildschirm, sondern klickt hier "Weiter".
+function updateGamemasterOverlay() {
+  const hasTutSkip = !!document.querySelector('.tut-overlay .tut-skip, .tut-overlay #tut-skip-btn');
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root{color-scheme:dark;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;background:#0b0e2c;color:#fff;padding:20px;display:flex;flex-direction:column;min-height:100vh;align-items:center;justify-content:center;gap:20px;text-align:center;}
+  h2{font-size:.65rem;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.4);}
+  .intro-hint{font-size:.85rem;color:rgba(255,255,255,.5);max-width:280px;line-height:1.5;}
+  .gm-btn{padding:16px 30px;border:none;border-radius:10px;font-family:'Inter',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1.5px;}
+  .gm-btn.gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
+  .gm-btn.gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
+</style></head><body>
+  <h2>Zwischensequenz läuft</h2>
+  <div class="intro-hint">Die Zuschauer sehen gerade eine Einleitung oder Zwischensequenz. Du musst den Hauptbildschirm nicht anfassen — steuere hier weiter.</div>
+  <button class="gm-btn gold" onclick="opener.gmAdvance()">Weiter ▶</button>
+  ${hasTutSkip ? `<button class="gm-btn gray" onclick="opener.gmSkipTutorial()">Tutorial überspringen</button>` : ''}
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
+}
 function updateGamemaster() {
   updateGMBar();
   if (!gamemasterWin || gamemasterWin.closed) return;
+  if (gmActiveOverlay()) return updateGamemasterOverlay();
   if (wwmState.active) return updateGamemasterWwm();
   if (jeopardyState.active) return updateGamemasterJeopardy();
   if (finaleState.active) return updateGamemasterFinale();
@@ -2377,8 +2437,7 @@ function updateGamemaster() {
     </div>`;
   }).join('');
 
-  gamemasterWin.document.open();
-  gamemasterWin.document.write(`<!DOCTYPE html>
+  const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -2443,8 +2502,8 @@ function updateGamemaster() {
     <button class="gm-btn gold" onclick="opener.nextRound()">Nächste Runde</button>
   </div>
   `}
-</body></html>`);
-  gamemasterWin.document.close();
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
 }
 
 function updateGamemasterFinale() {
@@ -2475,8 +2534,7 @@ function updateGamemasterFinale() {
       </div>`;
   }).join('');
 
-  gamemasterWin.document.open();
-  gamemasterWin.document.write(`<!DOCTYPE html>
+  const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -2506,8 +2564,8 @@ function updateGamemasterFinale() {
   <div class="controls">
     <button class="gm-btn red" onclick="opener.finaleMarkMiss()">Nicht auf dem Board</button>
   </div>
-</body></html>`);
-  gamemasterWin.document.close();
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
 }
 
 function updateGamemasterFinaleReveal() {
@@ -2526,8 +2584,7 @@ function updateGamemasterFinaleReveal() {
       ${state.teamNames[t]}: ${finaleState.scores[idx]}
     </span>`).join(' · ');
 
-  gamemasterWin.document.open();
-  gamemasterWin.document.write(`<!DOCTYPE html>
+  const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -2559,8 +2616,8 @@ function updateGamemasterFinaleReveal() {
   <div class="controls">
     <button class="gm-btn gold" onclick="opener.finaleNextReveal()">Nächste Frage</button>
   </div>
-</body></html>`);
-  gamemasterWin.document.close();
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
 }
 
 function updateGamemasterJeopardy() {
@@ -2709,8 +2766,7 @@ function updateGamemasterJeopardy() {
       </div>`;
   }
 
-  gamemasterWin.document.open();
-  gamemasterWin.document.write(`<!DOCTYPE html>
+  const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -2803,8 +2859,8 @@ function updateGamemasterJeopardy() {
   <div class="gm-body">
     ${body}
   </div>
-</body></html>`);
-  gamemasterWin.document.close();
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
 }
 
 function confetti(){
@@ -3142,6 +3198,7 @@ function startJeopardy() {
   const bd = document.createElement('div');
   bd.className = 'black-backdrop';
   document.body.appendChild(bd);
+  openGamemaster(); // schon jetzt öffnen, damit Intro vom GM-Fenster aus steuerbar ist
   showJeopardyIntro();
 }
 
@@ -3354,11 +3411,13 @@ function jeopardyStageHtml(clue){
   </div>`;
 }
 
-// Renders the clue overlay on the MAIN screen from state (re-entrant)
+// Renders the clue overlay on the MAIN screen from state (re-entrant).
+// Updates an already-open overlay in place instead of destroying and
+// recreating it, so the entrance animation doesn't restart and flash
+// the board underneath on every reveal/toggle.
 function renderJeopardyClueOverlay() {
-  closeJeopardyClue();
-  if (!jeopardyState.currentClue) return;
-  if (jeopardyState.ddPending) return; // warning phase — nothing on the main screen yet
+  if (!jeopardyState.currentClue) { closeJeopardyClue(); return; }
+  if (jeopardyState.ddPending) { closeJeopardyClue(); return; } // warning phase — nothing on the main screen yet
   const { col, row } = jeopardyState.currentClue;
   const cat = jBoard()[col];
   const clue = cat.clues[row];
@@ -3374,9 +3433,13 @@ function renderJeopardyClueOverlay() {
        ${staged ? jeopardyStageHtml(clue) : qImgHtml}`
     : `<div class="jeopardy-clue-blank">Frage verdeckt</div>`;
 
-  const ov = document.createElement('div');
-  ov.className = 'jeopardy-clue-overlay';
-  ov.id = 'jeopardy-clue-ov';
+  let ov = document.getElementById('jeopardy-clue-ov');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.className = 'jeopardy-clue-overlay';
+    ov.id = 'jeopardy-clue-ov';
+    document.body.appendChild(ov);
+  }
   ov.innerHTML = `
     ${jeopardyState.currentIsDaily ? `<div class="jeopardy-dd-banner">★ DAILY DOUBLE ★</div>` : ''}
     <div class="jeopardy-clue-cat">${cat.name}</div>
@@ -3385,7 +3448,6 @@ function renderJeopardyClueOverlay() {
     <div class="jeopardy-answer-text ${jeopardyState.answerShown?'visible':''}">${clue.a || ''}</div>
     ${revealed ? aImgHtml : ''}
   `;
-  document.body.appendChild(ov);
   renderJeopardyControls();
 }
 
@@ -3534,6 +3596,89 @@ function jeopardyBuzzDisconnect(){
   jeopardyBuzzer.connected = false;
   jeopardyBuzzer.mode = 'none';
   jeopardyBuzzer.presence = [];
+}
+
+// ── GM-GAMEPAD (Handy-Fernbedienung für das Gamemaster-Fenster) ──
+// Spiegelt den Inhalt des GM-Popups per Firebase auf /gm/ (Handy), und nimmt
+// von dort Befehle entgegen. Nur Funktionen aus dieser Liste dürfen per
+// Fernbefehl ausgeführt werden (kein beliebiger window[name]-Aufruf).
+const GM_REMOTE_ALLOWED_FNS = new Set([
+  'addStrike','finaleMarkMiss','finaleNextReveal','finalePickAnswer','gmAdvance','gmSkipTutorial',
+  'jeopardyAnnounceDaily','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
+  'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
+  'jeopardyStopSound','jeopardyToggleAnswer','jeopardyUndo','nextRound','openJeopardyClue',
+  'revealAll','revealAnswer','revealQuestion','setGmFeudTab','showJeopardyQR','switchTeam',
+  'undoLast','updateActiveTeam','updateGamemaster','wwmSelect',
+]);
+
+function gmRemoteInitFirebase() {
+  if (!window.firebase || !FIREBASE_CONFIG.databaseURL) return false;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    return true;
+  } catch { return false; }
+}
+
+let gmRemoteHtmlRef = null;
+function gmRemoteRef() {
+  if (!gmRemoteHtmlRef) { gmRemoteInitFirebase(); gmRemoteHtmlRef = firebase.database().ref('gmremote/html'); }
+  return gmRemoteHtmlRef;
+}
+
+// Baut das Skript, das die per Firebase empfangene GM-Seite auf dem Handy
+// lauffähig macht: läuft dort kein window.opener (kein echtes Popup), wird
+// ein Proxy eingesetzt, der jeden "opener.xxx(...)"-Aufruf per Firebase an
+// den Host zurücksendet - die GM-HTML selbst bleibt dadurch unverändert.
+function gmRemoteBridgeScript() {
+  return `
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"><\/script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"><\/script>
+<script>
+(function(){
+  if (window.opener) return;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(${JSON.stringify(FIREBASE_CONFIG)});
+    const cmdRef = firebase.database().ref('gmremote/commands');
+    window.opener = new Proxy({}, { get(t, prop) {
+      return function(...args) { cmdRef.push({ fn: String(prop), args, t: Date.now() }); };
+    }});
+  } catch(e) {}
+})();
+<\/script>`;
+}
+
+function pushGamemasterHtmlToFirebase(html) {
+  if (!gmRemoteInitFirebase()) return;
+  try {
+    const withBridge = html.replace('<head>', '<head>' + gmRemoteBridgeScript());
+    gmRemoteRef().set(withBridge);
+  } catch (e) {}
+}
+
+// Ersetzt document.open()/write()/close() an allen GM-Render-Stellen: schreibt
+// wie bisher ins Popup UND spiegelt dieselbe HTML nach Firebase fürs Handy.
+function commitGamemasterHtml(html) {
+  gamemasterWin.document.open();
+  gamemasterWin.document.write(html);
+  gamemasterWin.document.close();
+  pushGamemasterHtmlToFirebase(html);
+}
+
+let gmRemoteListenerStarted = false;
+function startGmRemoteCommandListener() {
+  if (gmRemoteListenerStarted) return;
+  if (!gmRemoteInitFirebase()) return;
+  gmRemoteListenerStarted = true;
+  const startedAt = Date.now();
+  const ref = firebase.database().ref('gmremote/commands');
+  ref.on('child_added', (snap) => {
+    const cmd = snap.val();
+    snap.ref.remove().catch(() => {});
+    if (!cmd || !cmd.fn || !cmd.t || cmd.t < startedAt - 5000) return;
+    if (!GM_REMOTE_ALLOWED_FNS.has(cmd.fn)) return;
+    const fn = window[cmd.fn];
+    if (typeof fn === 'function') { try { fn(...(cmd.args || [])); } catch (e) {} }
+  });
 }
 
 // Question loaded but NOT armed yet — buzzers are live, an early buzz = penalty
@@ -4205,8 +4350,7 @@ function updateGamemasterWwm(){
     ? `<div style="font-size:.8rem;margin-bottom:10px;color:rgba(255,255,255,.7);">Publikum: ${q.answers.map((a,i)=>wwmState.removed.includes(i)?'':`${WWM_LETTERS[i]} ${wwmState.audienceData[i]}%`).filter(Boolean).join(' · ')}</div>`
     : '';
 
-  gamemasterWin.document.open();
-  gamemasterWin.document.write(`<!DOCTYPE html>
+  const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -4243,8 +4387,8 @@ function updateGamemasterWwm(){
     ${wwmState.locked ? (wwmState.revealed ? 'Aufgelöst.' : 'Geloggt — jetzt auflösen.') : (wwmState.selected!==null ? 'Antwort '+WWM_LETTERS[wwmState.selected]+' gewählt.' : 'Keine Antwort gewählt.')}
   </div>
   <div class="controls">${wwmControlsHtml('opener.')}</div>
-</body></html>`);
-  gamemasterWin.document.close();
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
 }
 
 // ── WWM EDIT ──

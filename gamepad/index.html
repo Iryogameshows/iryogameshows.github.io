@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="color-scheme" content="dark">
+<title>Gamemaster Gamepad</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  :root{color-scheme:dark;}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{background:#0b0e2c;height:100%;}
+  body{font-family:system-ui,sans-serif;color:#fff;overflow:hidden;}
+  #status{
+    position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;padding:24px;text-align:center;
+  }
+  #status h1{font-size:1.1rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.6);}
+  #status p{font-size:.85rem;color:rgba(255,255,255,.4);max-width:320px;line-height:1.5;}
+  #gmFrame{position:fixed;inset:0;width:100%;height:100%;border:none;display:none;}
+</style>
+</head>
+<body>
+  <div id="status">
+    <h1>Gamemaster Gamepad</h1>
+    <p id="status-text">Verbinde…</p>
+  </div>
+  <iframe id="gmFrame"></iframe>
+<script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBuXYp1w65nR8tqJIKFS_v_9QSD7_0kR20",
+  authDomain: "keller-buzzer.firebaseapp.com",
+  databaseURL: "https://keller-buzzer-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "keller-buzzer",
+  storageBucket: "keller-buzzer.firebasestorage.app",
+  messagingSenderId: "589064661958",
+  appId: "1:589064661958:web:1c1024eab161ad8e53e0c7",
+};
+
+const statusEl = document.getElementById('status');
+const statusText = document.getElementById('status-text');
+const frame = document.getElementById('gmFrame');
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const ref = firebase.database().ref('gmremote/html');
+
+ref.on('value', (snap) => {
+  const html = snap.val();
+  if (!html) {
+    frame.style.display = 'none';
+    statusEl.style.display = 'flex';
+    statusText.textContent = 'Warte auf ein laufendes Spiel — öffne das Gamemaster-Fenster am Hauptrechner.';
+    return;
+  }
+  statusEl.style.display = 'none';
+  frame.style.display = 'block';
+  frame.srcdoc = html;
+}, () => {
+  statusText.textContent = 'Keine Verbindung — bitte Internet prüfen.';
+});
+</script>
+</body>
+</html>
