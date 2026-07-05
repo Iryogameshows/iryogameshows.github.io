@@ -2447,7 +2447,7 @@ function updateGamemaster() {
 
   const feudPresenceCount = feudBuzzer.presence.length;
   const feudPresenceRows = feudBuzzer.presence.length
-    ? feudBuzzer.presence.map(p => `<div class="pr-row"><span class="pr-dot"></span>${p.name}</div>`).join('')
+    ? feudBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, state.teamNames)}</div>`).join('')
     : `<div class="pr-empty">Noch niemand verbunden</div>`;
   const feudConnChip = feudBuzzer.connected
     ? `<span class="chip chip-ok">● Server verbunden</span>`
@@ -2520,6 +2520,8 @@ function updateGamemaster() {
   .pr-list{display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;margin-bottom:8px;}
   .pr-row{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;padding:3px 2px;}
   .pr-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
+  .pr-team-btn{padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.62rem;font-weight:700;cursor:pointer;}
+  .pr-team-btn.active{background:rgba(255,210,63,.25);border-color:#FFD23F;color:#FFD23F;}
   @keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.4}}
   .pr-empty{font-size:.72rem;color:rgba(255,255,255,.35);padding:4px 0;}
   .panel-row{display:flex;gap:6px;flex-wrap:wrap;}
@@ -2689,7 +2691,7 @@ function updateGamemasterJeopardy() {
   // ── Verbunden-Panel (Presence) + Steuerung — immer sichtbar, unabhängig vom Frage-Status ──
   const presenceCount = jeopardyBuzzer.presence.length;
   const presenceRows = jeopardyBuzzer.presence.length
-    ? jeopardyBuzzer.presence.map(p => `<div class="pr-row"><span class="pr-dot"></span>${p.name}</div>`).join('')
+    ? jeopardyBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, jeopardyState.teamNames)}</div>`).join('')
     : `<div class="pr-empty">Noch niemand verbunden</div>`;
   const connChip = jeopardyBuzzer.connected
     ? `<span class="chip chip-ok">● Server verbunden</span>`
@@ -2889,6 +2891,8 @@ function updateGamemasterJeopardy() {
   .pr-list{display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;margin-bottom:8px;}
   .pr-row{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;padding:3px 2px;}
   .pr-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
+  .pr-team-btn{padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.62rem;font-weight:700;cursor:pointer;}
+  .pr-team-btn.active{background:rgba(255,210,63,.25);border-color:#FFD23F;color:#FFD23F;}
   @keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.4}}
   .pr-empty{font-size:.72rem;color:rgba(255,255,255,.35);padding:4px 0;}
   .panel-row{display:flex;gap:6px;}
@@ -3588,6 +3592,34 @@ function jeopardyBuzzInitFirebase(){
   } catch { return false; }
 }
 
+// ── LOBBY / TEAM-ZUTEILUNG (gemeinsam für Jeopardy- und Family-Feud-Buzzer) ──
+// Sendet die aktuellen Teamnamen an alle verbundenen Handys, damit sie ihren
+// zugeteilten Team-Namen/Farbe anzeigen können.
+function buzzerBroadcastTeams(names){
+  const ref = jeopardyState.active ? jeopardyBuzzer.fbRef : feudBuzzer.fbRef;
+  if (ref) ref.child('teamNames').set(names || []).catch(()=>{});
+}
+// Setzt bei allen aktuell verbundenen Spielern die Team-Zuteilung zurück -
+// so startet jedes neue Spiel mit einer sauberen Lobby statt alter Teams.
+function buzzerResetTeamAssignments(presenceRef){
+  if (!presenceRef) return;
+  presenceRef.once('value').then(snap => {
+    const updates = {};
+    snap.forEach(child => { updates[child.key + '/team'] = null; });
+    if (Object.keys(updates).length) presenceRef.update(updates).catch(()=>{});
+  }).catch(()=>{});
+}
+// Vom GM-Fenster aufgerufen: weist einen Spieler (per Presence-ID) einem Team zu.
+function assignPlayerTeam(id, teamIdx){
+  const presenceRef = jeopardyState.active ? jeopardyBuzzer.presenceRef : feudBuzzer.presenceRef;
+  if (!presenceRef) return;
+  presenceRef.child(id).update({ team: teamIdx }).catch(()=>{});
+}
+// Baut die kleinen Team-Zuweisungs-Buttons neben einem Spieler in der GM-Präsenzliste.
+function playerTeamButtonsHtml(p, teamNames){
+  return teamNames.map((name, i) => `<button class="pr-team-btn ${p.team===i?'active':''}" onclick="opener.assignPlayerTeam('${p.id}',${i})">${name}</button>`).join('');
+}
+
 function jeopardyBuzzConnect(){
   // 1) Firebase
   if (jeopardyBuzzInitFirebase()){
@@ -3610,21 +3642,24 @@ function jeopardyBuzzConnect(){
         .filter(b => b && b.name && b.ts)
         .sort((a, b) => a.ts - b.ts)
         .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
-        .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000) }));
+        .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team }));
       // Sobald der Erste buzzert, ploppt die Anzeige auf
       if (wasEmpty && jeopardyBuzzer.results.length > 0) jeopardyBuzzer.poppedForQuestion = true;
       renderBuzzer();
       updateGamemaster();
     });
-    // Presence: welche Handys sind gerade verbunden
+    // Presence: welche Handys sind gerade verbunden (inkl. Team-Zuteilung)
     jeopardyBuzzer.presenceRef = firebase.database().ref('buzzer/presence');
     jeopardyBuzzer.presenceRef.on('value', (snap) => {
       const v = snap.val() || {};
-      jeopardyBuzzer.presence = Object.values(v)
-        .filter(p => p && p.name)
+      jeopardyBuzzer.presence = Object.entries(v)
+        .filter(([id, p]) => p && p.name)
+        .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team) }))
         .sort((a, b) => (a.ts || 0) - (b.ts || 0));
       updateGamemaster();
     });
+    buzzerBroadcastTeams(jeopardyState.teamNames);
+    buzzerResetTeamAssignments(jeopardyBuzzer.presenceRef);
     renderBuzzer();
     updateGamemaster();
     return;
@@ -3690,17 +3725,31 @@ function feudBuzzConnect(){
       .filter(b => b && b.name && b.ts)
       .sort((a, b) => a.ts - b.ts)
       .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
-      .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000) }));
-    if (wasEmpty && feudBuzzer.results.length > 0) feudBuzzer.poppedForQuestion = true;
+      .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team }));
+    if (wasEmpty && feudBuzzer.results.length > 0) {
+      feudBuzzer.poppedForQuestion = true;
+      // Team des Spielers, der zuerst gebuzzert hat, ist schon bekannt (vom
+      // Host zugeteilt) → automatisch als Startteam übernehmen, kein
+      // manueller GM-Klick nötig, keine Verwechslungsgefahr bei den Strikes.
+      const winnerTeam = feudBuzzer.results[0].team;
+      if (winnerTeam !== undefined && winnerTeam !== null && winnerTeam >= 0 && winnerTeam < state.teamNames.length) {
+        feudSetStartTeam(winnerTeam);
+      }
+    }
     renderFeudBuzzer();
     updateGamemaster();
   });
   feudBuzzer.presenceRef = firebase.database().ref('buzzer/presence');
   feudBuzzer.presenceRef.on('value', (snap) => {
     const v = snap.val() || {};
-    feudBuzzer.presence = Object.values(v).filter(p => p && p.name).sort((a, b) => (a.ts||0) - (b.ts||0));
+    feudBuzzer.presence = Object.entries(v)
+      .filter(([id, p]) => p && p.name)
+      .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team) }))
+      .sort((a, b) => (a.ts||0) - (b.ts||0));
     updateGamemaster();
   });
+  buzzerBroadcastTeams(state.teamNames);
+  buzzerResetTeamAssignments(feudBuzzer.presenceRef);
   renderFeudBuzzer();
   updateGamemaster();
 }
@@ -3779,7 +3828,7 @@ function renderFeudBuzzer(){
 // von dort Befehle entgegen. Nur Funktionen aus dieser Liste dürfen per
 // Fernbefehl ausgeführt werden (kein beliebiger window[name]-Aufruf).
 const GM_REMOTE_ALLOWED_FNS = new Set([
-  'addStrike','feudBuzzToggleHidden','feudSetStartTeam','finaleMarkMiss','finaleNextReveal',
+  'addStrike','assignPlayerTeam','feudBuzzToggleHidden','feudSetStartTeam','finaleMarkMiss','finaleNextReveal',
   'finalePickAnswer','gmAdvance','gmSkipTutorial',
   'jeopardyAnnounceDaily','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
