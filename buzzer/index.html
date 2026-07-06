@@ -13,8 +13,8 @@
   body{font-family:system-ui,sans-serif;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px;overflow:hidden;}
   h1{font-size:1rem;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:800;}
   #name{width:100%;max-width:320px;padding:14px 16px;border-radius:12px;border:2px solid rgba(255,255,255,.15);background:rgba(0,0,0,.3);color:#fff;font-size:1.1rem;text-align:center;font-weight:700;outline:none;-webkit-appearance:none;appearance:none;}
-  #buzz{width:80vw;max-width:340px;height:80vw;max-height:340px;border-radius:50%;border:none;font-size:2.4rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#fff;cursor:pointer;transition:transform .06s,filter .15s;background:radial-gradient(circle at 50% 35%,#FF6B5E,#E8453C 65%,#B8241C);box-shadow:0 12px 0 #7a140e,0 18px 40px rgba(0,0,0,.5);-webkit-appearance:none;appearance:none;}
-  #buzz:active{transform:translateY(8px);box-shadow:0 4px 0 #7a140e,0 8px 20px rgba(0,0,0,.5);}
+  #buzz{width:80vw;max-width:340px;height:80vw;max-height:340px;border-radius:50%;border:none;font-size:2.4rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#fff;cursor:pointer;transition:transform .06s,filter .15s,background .3s;background:radial-gradient(circle at 50% 35%,var(--buzz-light,#FF6B5E),var(--buzz-mid,#E8453C) 65%,var(--buzz-dark,#B8241C));box-shadow:0 12px 0 var(--buzz-shadow,#7a140e),0 18px 40px rgba(0,0,0,.5);-webkit-appearance:none;appearance:none;}
+  #buzz:active{transform:translateY(8px);box-shadow:0 4px 0 var(--buzz-shadow,#7a140e),0 8px 20px rgba(0,0,0,.5);}
   #buzz:disabled{filter:grayscale(.7) brightness(.7);cursor:default;box-shadow:0 12px 0 #333,0 18px 40px rgba(0,0,0,.4);}
   #status{font-size:1rem;font-weight:700;min-height:24px;text-align:center;color:#FFD23F;}
   .hint{font-size:.8rem;color:rgba(255,255,255,.35);text-align:center;}
@@ -96,6 +96,20 @@
   firebase.initializeApp(firebaseConfig);
   const ref = firebase.database().ref('buzzer');
   const TEAM_COLORS_HEX = ['#E8453C', '#3B82F6', '#22C55E'];
+  // light / mid / dark / shadow — je Team ein eigener Buzz-Button-Verlauf
+  const BUZZ_GRADIENTS = [
+    { light: '#FF6B5E', mid: '#E8453C', dark: '#B8241C', shadow: '#7a140e' }, // Rot
+    { light: '#6FA8FF', mid: '#3B82F6', dark: '#1D4ED8', shadow: '#123a8f' }, // Blau
+    { light: '#6EE7A0', mid: '#22C55E', dark: '#15803D', shadow: '#0d5c2c' }, // Grün
+  ];
+  function applyBuzzColor(team){
+    const g = BUZZ_GRADIENTS[team] || BUZZ_GRADIENTS[0];
+    const root = document.documentElement.style;
+    root.setProperty('--buzz-light', g.light);
+    root.setProperty('--buzz-mid', g.mid);
+    root.setProperty('--buzz-dark', g.dark);
+    root.setProperty('--buzz-shadow', g.shadow);
+  }
 
   const nameEl = document.getElementById('name');
   const buzz = document.getElementById('buzz');
@@ -132,6 +146,7 @@
     const label = teamNames[myTeam] || ('Team ' + (myTeam + 1));
     teamChip.textContent = label;
     teamChip.style.background = TEAM_COLORS_HEX[myTeam] || '#888';
+    applyBuzzColor(myTeam);
     refreshBuzz();
   }
 
