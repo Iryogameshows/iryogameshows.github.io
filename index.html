@@ -750,6 +750,19 @@ body {
 #gm-embed-overlay.visible { display: block; }
 #gm-embed-frame { width: 100%; height: 100%; border: none; }
 
+/* ── Einblendungen: Editor-Slots (Fragen bearbeiten) ── */
+.media-slots { display: flex; gap: 10px; margin-bottom: 14px; }
+.media-slot { width: 84px; height: 84px; border-radius: 10px; flex-shrink: 0; position: relative; overflow: hidden; }
+.media-slot.empty { display: flex; align-items: center; justify-content: center; border: 2px dashed rgba(255,255,255,.15); color: rgba(255,255,255,.3); font-size: 1.6rem; cursor: pointer; }
+.media-slot.empty:hover { border-color: #FFD23F; color: #FFD23F; }
+.media-slot.filled { border: 2px solid rgba(255,255,255,.15); }
+.media-slot.filled img, .media-slot.filled video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.media-slot-remove { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(0,0,0,.6); color: #FF8A80; font-weight: 700; cursor: pointer; }
+
+/* ── Einblendungen: Anzeige auf dem Gamescreen ── */
+#media-overlay { position: fixed; inset: 0; z-index: 4300; background: rgba(5,8,26,.94); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 40px; }
+#media-overlay img, #media-overlay video { max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 24px 70px rgba(0,0,0,.6); }
+
 @media (max-width: 600px) {
   .logo svg { width: 200px; }
   .team-panel .t-score { font-size: 2.2rem; }
@@ -1238,6 +1251,8 @@ body {
     <input type="text" id="edit-question" placeholder="z.B. Nenne etwas, das man im Kühlschrank findet">
     <label>Antworten (max. 8)</label>
     <div id="answer-fields"></div>
+    <label>Einblendungen (0-3 Bilder/Videos)</label>
+    <div id="feud-media-slots"></div>
     <div class="editor-actions">
       <button class="btn btn-secondary" onclick="addAnswerField()">+ Antwort</button>
       <button class="btn btn-primary" onclick="saveQuestion()">Speichern</button>
@@ -1576,6 +1591,7 @@ let state = {
   roundQuestions: [],
   editingIndex: -1,
   editingFinale: false,
+  editingMedia: [],
   allOut: false,
 };
 
@@ -1686,6 +1702,71 @@ function closeOverlay(overlay, onDone) {
   }, { once: true });
 }
 
+// ── EINBLENDUNGEN (0-3 Bilder/Videos pro Frage, für alle drei Spiele) ──
+// arr ist das media-Array direkt auf der Frage/Clue (per Referenz mutiert,
+// daher funktioniert das gleich für ein Live-Objekt wie für ein Temp-Array).
+function setMediaSlot(arr, slot, input, afterFn) {
+  if (!input) { arr[slot] = null; afterFn(); return; }
+  const f = input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    arr[slot] = { type: f.type.startsWith('video') ? 'video' : 'image', data: r.result };
+    afterFn();
+  };
+  r.readAsDataURL(f);
+}
+// buildOnClick(slot, inputExpr) liefert den onclick/onchange-Ausdruck als
+// String - so kann jeder Editor (Feud/Jeopardy/WWM) seine eigene Adressierung
+// (Temp-Array, Board/Spalte/Reihe, Fragen-Index...) mit einbacken.
+function mediaSlotsHtml(arr, buildOnClick) {
+  let html = '<div class="media-slots">';
+  for (let i = 0; i < 3; i++) {
+    const m = arr[i];
+    html += m
+      ? `<div class="media-slot filled">${m.type === 'video' ? `<video src="${m.data}" muted></video>` : `<img src="${m.data}">`}<button type="button" class="media-slot-remove" onclick="${buildOnClick(i, 'null')}">✕</button></div>`
+      : `<label class="media-slot empty">+<input type="file" accept="image/*,video/*" style="display:none;" onchange="${buildOnClick(i, 'this')}"></label>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+// Welcher Slot (0-2) gerade auf dem Gamescreen gezeigt wird, spielübergreifend
+// - wird bei jeder neuen Frage/jedem neuen Clue zurückgesetzt.
+let activeMediaSlot = null;
+function renderMediaOverlay(media) {
+  let el = document.getElementById('media-overlay');
+  if (activeMediaSlot === null || !media || !media[activeMediaSlot]) {
+    if (el) el.remove();
+    return;
+  }
+  const m = media[activeMediaSlot];
+  if (!el) { el = document.createElement('div'); el.id = 'media-overlay'; document.body.appendChild(el); }
+  el.innerHTML = m.type === 'video' ? `<video src="${m.data}" autoplay controls></video>` : `<img src="${m.data}">`;
+}
+// Klick auf denselben Slot blendet wieder aus, ein anderer Slot wechselt direkt um.
+function toggleMediaSlot(media, slot) {
+  activeMediaSlot = (activeMediaSlot === slot) ? null : slot;
+  renderMediaOverlay(media);
+  updateGamemaster();
+}
+function resetMediaOverlay() {
+  activeMediaSlot = null;
+  const el = document.getElementById('media-overlay');
+  if (el) el.remove();
+}
+// Baut die kleinen Umschalt-Buttons fürs GM-Panel - nur für tatsächlich
+// befüllte Slots, aktiver Slot hervorgehoben.
+function mediaControlButtonsHtml(media, togglerName) {
+  const filled = (media || []).map((m, i) => m ? i : -1).filter(i => i >= 0);
+  if (!filled.length) return '';
+  return `<div class="panel">
+    <div class="panel-head"><span>🖼 Einblendungen</span></div>
+    <div class="panel-row">
+      ${filled.map(i => `<button class="gm-btn ${activeMediaSlot === i ? 'gold' : 'gray'} sm" onclick="opener.${togglerName}(${i})">${activeMediaSlot === i ? '✕ ' : ''}${i + 1}</button>`).join('')}
+    </div>
+  </div>`;
+}
+
 // ── EDIT ──
 function renderQuestionList() {
   document.getElementById('question-list').innerHTML = questions.map((q,i) => `
@@ -1712,6 +1793,8 @@ function newQuestion(isFinale) {
   document.getElementById('answer-fields').innerHTML = '';
   for (let i = 0; i < 5; i++) addAnswerField();
   document.getElementById('edit-question').focus();
+  state.editingMedia = [];
+  renderFeudMediaSlots();
 }
 function editQuestion(i, isFinale) {
   state.editingIndex = i;
@@ -1721,6 +1804,12 @@ function editQuestion(i, isFinale) {
   document.getElementById('answer-fields').innerHTML = '';
   list[i].answers.forEach(a => addAnswerField(a.text, a.points));
   document.getElementById('edit-question').focus();
+  state.editingMedia = (list[i].media || []).slice();
+  renderFeudMediaSlots();
+}
+function feudEditMedia(slot, input) { setMediaSlot(state.editingMedia, slot, input, renderFeudMediaSlots); }
+function renderFeudMediaSlots() {
+  document.getElementById('feud-media-slots').innerHTML = mediaSlotsHtml(state.editingMedia, (slot, inputExpr) => `feudEditMedia(${slot},${inputExpr})`);
 }
 function addAnswerField(text='', points='') {
   const f = document.getElementById('answer-fields');
@@ -1744,15 +1833,17 @@ function saveQuestion() {
     answers.sort((a,b) => b.points - a.points);
     const isFinale = state.editingFinale;
     const list = isFinale ? finaleQuestions : questions;
-    if (state.editingIndex >= 0) list[state.editingIndex] = {question, answers};
-    else list.push({question, answers});
+    const media = (state.editingMedia || []).filter(m => m);
+    if (state.editingIndex >= 0) list[state.editingIndex] = {question, answers, media};
+    else list.push({question, answers, media});
     saveToStorage(); renderQuestionList();
-    state.editingIndex = -1; state.editingFinale = false;
+    state.editingIndex = -1; state.editingFinale = false; state.editingMedia = [];
     document.getElementById('edit-question').value = '';
     document.getElementById('answer-fields').innerHTML = '';
+    renderFeudMediaSlots();
   } catch(err) { alert('Fehler beim Speichern: ' + err.message); }
 }
-function cancelEdit() { state.editingIndex = -1; state.editingFinale = false; }
+function cancelEdit() { state.editingIndex = -1; state.editingFinale = false; state.editingMedia = []; renderFeudMediaSlots(); }
 function deleteQuestion(i, isFinale) { if(confirm('Löschen?')){(isFinale?finaleQuestions:questions).splice(i,1);saveToStorage();renderQuestionList();} }
 function downloadJSON(data, filename) {
   const a = document.createElement('a');
@@ -2355,6 +2446,7 @@ function loadRound() {
   state.questionRevealed = false;
   state.allOut = false;
   actionHistory = [];
+  resetMediaOverlay();
 
   document.getElementById('round-info').textContent = `Runde ${state.currentRound+1} / ${state.roundQuestions.length}`;
 
@@ -3049,6 +3141,7 @@ function updateGamemaster() {
   <div class="strikes-section">${strikesHtml}</div>
   ${feudBuzzPanel}
   ${feudConnectPanel}
+  ${mediaControlButtonsHtml(q.media, 'feudToggleMedia')}
   <div class="question" onclick="opener.revealQuestion()" style="cursor:pointer;">${q.question}</div>
   ${q.answers.map((a,i) => `<div class="answer ${state.revealed[i]?'shown':'hidden'}" ${!state.revealed[i] ? `onclick="opener.revealAnswer(${i})"` : ''}>
     <span><span class="num">${i+1}.</span> <span class="text">${a.text}</span></span>
@@ -3276,6 +3369,7 @@ function updateGamemasterJeopardy() {
         ${media?`<div class="media-row">${media}</div>`:''}
         <div class="clue-a">Lösung: <strong>${clue.a||'(nur Bild)'}</strong></div>
       </div>
+      ${mediaControlButtonsHtml(clue.media, 'jeopardyToggleMedia')}
       ${!revealed ? `
         <div class="info-card">
           Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.
@@ -3940,6 +4034,7 @@ function openJeopardyClue(col, row) {
   jeopardyState.answerShown = false;
   jeopardyState.stageRevealed = [];
   jeopardyState.questionRevealed = false;
+  resetMediaOverlay();
   if (jeopardyIsDaily(col, row)) {
     // Daily Double: the question does NOT pop yet. The GM gets a private
     // warning so it can be announced, then revealed.
@@ -4036,6 +4131,12 @@ function renderJeopardyClueOverlay() {
 }
 
 // Reveal one more tile of a staged image
+function jeopardyToggleMedia(slot) {
+  if (!jeopardyState.currentClue) return;
+  const { col, row } = jeopardyState.currentClue;
+  const clue = jBoard()[col].clues[row];
+  toggleMediaSlot(clue.media || [], slot);
+}
 function jeopardyStageReveal() {
   if (!jeopardyState.currentClue) return;
   const { col, row } = jeopardyState.currentClue;
@@ -4446,6 +4547,12 @@ function feudSetStartTeam(i){
   updateGamemaster();
 }
 
+function feudToggleMedia(slot) {
+  const q = state.roundQuestions[state.currentRound];
+  if (!q) return;
+  toggleMediaSlot(q.media || [], slot);
+}
+
 // Wie feudSetStartTeam(), aber ohne den Buzzer zu schließen - das Buzzer-
 // Zeiten-Fenster bleibt sichtbar stehen, bis die nächste Frage vorbereitet
 // wird (feudBuzzPrepare() setzt Ergebnisse/Anzeige dann zurück).
@@ -4482,13 +4589,13 @@ function renderFeudBuzzer(){
 // von dort Befehle entgegen. Nur Funktionen aus dieser Liste dürfen per
 // Fernbefehl ausgeführt werden (kein beliebiger window[name]-Aufruf).
 const GM_REMOTE_ALLOWED_FNS = new Set([
-  'addStrike','assignPlayerTeam','feudBuzzToggleHidden','feudSetStartTeam','finaleMarkMiss','finaleNextReveal',
+  'addStrike','assignPlayerTeam','feudBuzzToggleHidden','feudSetStartTeam','feudToggleMedia','finaleMarkMiss','finaleNextReveal',
   'finalePickAnswer','gmAdvance','gmSkipTutorial',
   'jeopardyAnnounceDaily','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
-  'jeopardyStopSound','jeopardyToggleAnswer','jeopardyUndo','nextRound','openJeopardyClue',
+  'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','nextRound','openJeopardyClue',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
-  'undoLast','updateActiveTeam','updateGamemaster','wwmSelect',
+  'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia',
 ]);
 
 function gmRemoteInitFirebase() {
@@ -4794,6 +4901,7 @@ function ensureHostGate(){
   setTimeout(() => input.focus(), 50);
 }
 ensureHostGate();
+renderFeudMediaSlots();
 
 // Team-Namen-Felder auf den Setup-Screens: bei jeder Änderung sofort an die
 // Lobby (Handys + Setup-Panel) weitergeben, auch das 3.-Team-Kästchen.
@@ -4946,6 +5054,11 @@ function showJeopardyResults() {
 
 // ── JEOPARDY EDIT ──
 function jeopardyClue(b,col,row){ return jeopardyData.boards[b].categories[col].clues[row]; }
+function jeopardyEditMedia(b,col,row,slot,input){
+  const c = jeopardyClue(b,col,row);
+  c.media = c.media || [];
+  setMediaSlot(c.media, slot, input, renderJeopardyEditor);
+}
 function jeopardyEditImg(b,col,row,field,input){
   const f = input.files[0]; if(!f) return;
   const r = new FileReader();
@@ -5000,6 +5113,8 @@ function renderJeopardyEditor() {
                 </select>
               `:''}
             </div>
+            <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
+            ${mediaSlotsHtml(clue.media || (clue.media = []), (slot, inputExpr) => `jeopardyEditMedia(${b},${col},${row},${slot},${inputExpr})`)}
           </div>`).join('')}
       </div>`;
     });
@@ -5097,8 +5212,14 @@ function loadWwmQuestion(){
   wwmState.audienceShown = false;
   wwmState.audienceData = null;
   document.getElementById('wwm-audience').style.display = 'none';
+  resetMediaOverlay();
   renderWwm();
   updateGamemaster();
+}
+function wwmToggleMedia(slot) {
+  const q = wwmData.questions[wwmState.currentQ];
+  if (!q) return;
+  toggleMediaSlot(q.media || [], slot);
 }
 
 function renderWwm(){
@@ -5327,12 +5448,19 @@ function updateGamemasterWwm(){
   .gm-btn.gm-gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
   .gm-btn.gm-gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
   .gm-btn.gm-blue{background:linear-gradient(180deg,#3B82F6,#1D4ED8);color:#fff;}
+  .gm-btn.gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
+  .gm-btn.gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
+  .gm-btn.sm{padding:7px 10px;font-size:.68rem;flex:1;}
+  .panel{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;margin-bottom:12px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;}
+  .panel-row{display:flex;gap:6px;flex-wrap:wrap;}
 </style></head><body>
   <h2>Gamemaster · Millionär</h2>
   <div class="round-label">Frage ${wwmState.currentQ+1} / ${wwmData.questions.length}</div>
   <div class="money"><span>Frage um: <strong>${wwmMoney(amtNow)}</strong></span><span>Sicher: <strong>${wwmMoney(secured)}</strong></span></div>
   <div class="ll">Joker: 50:50 <b>${wwmState.lifelines.fifty?'✗':'✓'}</b> · Telefon <b>${wwmState.lifelines.phone?'✗':'✓'}</b> · Publikum <b>${wwmState.lifelines.audience?'✗':'✓'}</b></div>
   ${audHtml}
+  ${mediaControlButtonsHtml(q.media, 'wwmToggleMedia')}
   <div class="question">${q.q}</div>
   ${answersHtml}
   <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:8px;">
@@ -5359,7 +5487,14 @@ function renderWwmEditor(){
           </label>
           <input type="text" value="${(a||'').replace(/"/g,'&quot;')}" onchange="wwmData.questions[${i}].answers[${j}]=this.value" style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;">
         </div>`).join('')}
+      <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
+      ${mediaSlotsHtml(q.media || (q.media = []), (slot, inputExpr) => `wwmEditMedia(${i},${slot},${inputExpr})`)}
     </div>`).join('');
+}
+function wwmEditMedia(i,slot,input){
+  const q = wwmData.questions[i];
+  q.media = q.media || [];
+  setMediaSlot(q.media, slot, input, renderWwmEditor);
 }
 
 function wwmAddQuestion(){
