@@ -374,26 +374,6 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.title-star-big {
-  opacity: 0;
-  animation: titleStarIn 1s ease-out .2s forwards;
-}
-.title-star-big svg {
-  width: 200px; height: auto;
-  filter: drop-shadow(0 0 50px rgba(255,200,0,.5));
-}
-@keyframes titleStarIn {
-  from { opacity: 0; transform: scale(.4) rotate(-20deg); }
-  to { opacity: 1; transform: scale(1) rotate(0); }
-}
-.title-name {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 6rem; letter-spacing: 8px;
-  color: #FFD23F;
-  text-shadow: 0 0 60px rgba(255,210,63,.35);
-  opacity: 0;
-  animation: welcomeTextIn .8s ease-out .6s forwards;
-}
 
 
 /* ── TUTORIAL INTRO ── */
@@ -1696,10 +1676,23 @@ function closeOverlay(overlay, onDone) {
   overlay.dataset.closing = 'true';
   overlay.style.pointerEvents = 'none';
   overlay.style.animation = 'introOut .5s ease-in forwards';
-  overlay.addEventListener('animationend', () => {
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
     overlay.remove();
     if (typeof onDone === 'function') onDone();
-  }, { once: true });
+  };
+  // Child elements (star SVGs, tile reveals, strike pops, etc.) have their own
+  // finite CSS animations whose animationend bubbles up here too — ignore those,
+  // only the overlay's own fade-out should trigger the close.
+  overlay.addEventListener('animationend', (e) => {
+    if (e.target !== overlay) return;
+    finish();
+  });
+  // Safety net: if animationend never fires (tab backgrounded, reduced-motion, etc.)
+  // don't leave the overlay stuck forever.
+  setTimeout(finish, 700);
 }
 
 // ── EINBLENDUNGEN (0-3 Bilder/Videos pro Frage, für alle drei Spiele) ──
@@ -2282,7 +2275,20 @@ function showGameshowIntro(onDone) {
     if (done) return;
     done = true;
     overlay.classList.add('leaving');
-    overlay.addEventListener('animationend', () => { overlay.remove(); if (onDone) onDone(); }, { once: true });
+    let finished = false;
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+      overlay.remove();
+      if (onDone) onDone();
+    };
+    // Screens inside the sequence (.s1-.s7) have their own finite kgBeat
+    // animations whose animationend bubbles up here too — ignore those.
+    overlay.addEventListener('animationend', (e) => {
+      if (e.target !== overlay) return;
+      cleanup();
+    });
+    setTimeout(cleanup, 900); // kgFadeOut is .8s; safety net if animationend is missed
   }
   // No auto-advance — the host must click to continue after the last statement
   let canSkip = false;
@@ -2385,23 +2391,7 @@ function showBlackPause() {
   ov.className = 'intro-overlay overlay-enter';
   ov.style.cursor = 'pointer';
   document.body.appendChild(ov);
-  ov.addEventListener('click', () => closeOverlay(ov, showTitleCard));
-}
-
-function showTitleCard() {
-  const ov = document.createElement('div');
-  ov.className = 'welcome-overlay overlay-enter';
-  ov.innerHTML = `
-    <div class="title-star-big">${STAR_SVG}</div>
-    <div class="title-name">Keller Feud</div>
-  `;
-  document.body.appendChild(ov);
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 1500);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, showWelcome);
-  });
+  ov.addEventListener('click', () => closeOverlay(ov, showWelcome));
 }
 
 function showWelcome() {
@@ -3945,7 +3935,20 @@ function showGameshowIntroTag2(onDone) {
     if (done) return;
     done = true;
     overlay.classList.add('leaving');
-    overlay.addEventListener('animationend', () => { overlay.remove(); if (onDone) onDone(); }, { once: true });
+    let finished = false;
+    const cleanup = () => {
+      if (finished) return;
+      finished = true;
+      overlay.remove();
+      if (onDone) onDone();
+    };
+    // Screens inside the sequence (.s1-.s7) have their own finite kgBeat
+    // animations whose animationend bubbles up here too — ignore those.
+    overlay.addEventListener('animationend', (e) => {
+      if (e.target !== overlay) return;
+      cleanup();
+    });
+    setTimeout(cleanup, 900); // kgFadeOut is .8s; safety net if animationend is missed
   }
   let canSkip = false;
   setTimeout(() => { canSkip = true; }, 1500);
