@@ -1169,7 +1169,25 @@ body {
       <div class="menu-card-title">Wer wird Millionär</div>
       <div class="menu-card-sub">15 Fragen, 4 Antworten, Joker</div>
     </div>
+    <div class="menu-card" onclick="showScreen('tournament-screen')">
+      <div class="menu-card-icon">🏆</div>
+      <div class="menu-card-title">Turnier</div>
+      <div class="menu-card-sub">Mehrtägig, gleiche Teams, Gewichtung</div>
+    </div>
   </div>
+  <div class="menu-cards" style="margin-top:14px;">
+    <div class="menu-card" style="max-width:220px;" onclick="showScreen('reaction-board-screen')">
+      <div class="menu-card-icon">⚡</div>
+      <div class="menu-card-title" style="font-size:1.4rem;">Bestenliste</div>
+      <div class="menu-card-sub">Schnellste Buzzer-Zeiten</div>
+    </div>
+    <div class="menu-card" style="max-width:220px;" onclick="showScreen('host-notes-screen')">
+      <div class="menu-card-icon">📋</div>
+      <div class="menu-card-title" style="font-size:1.4rem;">Notizen</div>
+      <div class="menu-card-sub">Ablaufplan für den Host</div>
+    </div>
+  </div>
+  <button class="btn btn-secondary" id="sfx-toggle" style="margin-top:18px;" onclick="this.textContent = SFX.toggle() ? '🔊 Sound an' : '🔇 Sound aus'"></button>
 </div>
 
 <!-- SETUP -->
@@ -1375,14 +1393,77 @@ body {
     <div class="result-scores" id="final-scores"></div>
   </div>
   <div class="result-btns">
+    <button class="btn btn-accent" id="tour-record-btn" style="display:none;" onclick="tournamentRecordPending()">🏆 Ins Turnier übernehmen</button>
     <button class="btn btn-primary" onclick="startGame()">Nochmal spielen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>
+  </div>
+</div>
+
+<!-- REAKTIONS-BESTENLISTE -->
+<div id="reaction-board-screen" class="screen">
+  <div class="page-title"><em>⚡ Buzzer</em>-Bestenliste</div>
+  <div class="q-list" id="reaction-board-list"></div>
+  <div class="edit-bar" style="margin-top:12px;">
+    <button class="btn btn-danger" onclick="resetReactionBoard()">Liste löschen</button>
+    <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zum Menü</button>
+  </div>
+</div>
+
+<!-- HOST-NOTIZEN -->
+<div id="host-notes-screen" class="screen">
+  <div class="page-title"><em>📋 Host</em>-Notizen</div>
+  <div class="editor-card" style="width:100%;">
+    <label>Ablaufplan / Notizen (wird automatisch gespeichert)</label>
+    <textarea id="host-notes-text" placeholder="z.B.&#10;20:00  Begrüßung + Intro&#10;20:10  Family Feud (5 Runden)&#10;21:00  Pause&#10;21:15  Finale&#10;…" oninput="saveHostNotes()" style="width:100%;min-height:320px;padding:14px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.95rem;line-height:1.7;outline:none;resize:vertical;"></textarea>
+  </div>
+  <div class="edit-bar" style="margin-top:12px;">
+    <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zum Menü</button>
+  </div>
+</div>
+
+<!-- TURNIER -->
+<div id="tournament-screen" class="screen">
+  <div class="page-title"><em>🏆 Turnier</em>-Modus</div>
+  <div id="tournament-content" style="width:100%;"></div>
+  <div class="edit-bar" style="margin-top:12px;">
+    <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zum Menü</button>
   </div>
 </div>
 
 <div class="gm-bar" id="gm-bar"></div>
 
 <script>
+// ── SFX ── Synthetisierte Soundeffekte (Web Audio API, keine externen Dateien nötig)
+const SFX = (() => {
+  let ctx = null;
+  function ac(){ if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); return ctx; }
+  function tone(freq, start, dur, type, gain, glideTo){
+    const c = ac(); const o = c.createOscillator(); const g = c.createGain();
+    o.type = type || 'sine'; o.frequency.setValueAtTime(freq, c.currentTime + start);
+    if (glideTo) o.frequency.exponentialRampToValueAtTime(glideTo, c.currentTime + start + dur);
+    g.gain.setValueAtTime(0.0001, c.currentTime + start);
+    g.gain.exponentialRampToValueAtTime(gain || 0.18, c.currentTime + start + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + start + dur);
+    o.connect(g); g.connect(c.destination);
+    o.start(c.currentTime + start); o.stop(c.currentTime + start + dur + 0.05);
+  }
+  let enabled = localStorage.getItem('sfxEnabled') !== 'off';
+  return {
+    get enabled(){ return enabled; },
+    toggle(){ enabled = !enabled; localStorage.setItem('sfxEnabled', enabled ? 'on' : 'off'); return enabled; },
+    buzz(){ if(!enabled) return; tone(880, 0, .09, 'square', .12); },
+    point(){ if(!enabled) return; tone(660, 0, .07, 'triangle', .14); tone(990, .06, .09, 'triangle', .12); },
+    correct(){ if(!enabled) return; tone(523, 0, .11, 'triangle', .16); tone(659, .09, .11, 'triangle', .16); tone(880, .18, .18, 'triangle', .16); },
+    wrong(){ if(!enabled) return; tone(220, 0, .22, 'sawtooth', .16, 110); },
+    tick(){ if(!enabled) return; tone(1200, 0, .04, 'square', .07); },
+    fanfare(big){ if(!enabled) return;
+      const notes = big ? [523,659,784,1047,1319,1568] : [523,659,784,1047];
+      notes.forEach((f,i) => tone(f, i*.13, .3, 'triangle', big ? .2 : .16));
+      if (big) tone(1568, notes.length*.13, .6, 'square', .1);
+    },
+  };
+})();
+
 // Drei Balken: der oberste voll golden (metallischer Verlauf), die zwei
 // darunter nur mit goldenem Rand - das Family-Feud-Logo.
 const STAR_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -1569,8 +1650,11 @@ function showScreen(id) {
   if (id === 'wwm-edit-screen') renderWwmEditor();
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
+  if (id === 'reaction-board-screen') renderReactionBoard();
+  if (id === 'tournament-screen') renderTournament();
   // Logo per context
   if (id === 'menu-screen') renderLogo('KELLER', 'GAMESHOWS', 30);
+  else if (id === 'tournament-screen') renderLogo('TURNIER', null, null);
   else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, true);
   else if (id.startsWith('wwm')) renderLogo('MILLIONÄR', null, null);
   else renderLogo('KELLER', 'FEUD');
@@ -1689,6 +1773,266 @@ function saveToStorage(){
 function loadFromStorage(){
   try { const s=localStorage.getItem('familyFeudQuestions');if(s){questions=JSON.parse(s);} } catch {}
   try { const f=localStorage.getItem('familyFeudFinaleQuestions');if(f){finaleQuestions=JSON.parse(f);} } catch {}
+}
+
+// ── REAKTIONSZEIT-BESTENLISTE ── (übers ganze Event hinweg, geräteseitig gespeichert)
+let reactionBoard = [];
+function loadReactionBoard(){
+  try { const s = localStorage.getItem('reactionBoard'); reactionBoard = s ? JSON.parse(s) : []; } catch { reactionBoard = []; }
+}
+function saveReactionBoard(){
+  try { localStorage.setItem('reactionBoard', JSON.stringify(reactionBoard.slice(0, 300))); } catch {}
+}
+function recordReaction(name, t, game){
+  if (!name || !(t >= 0)) return;
+  reactionBoard.push({ name, t, game, ts: Date.now() });
+  reactionBoard.sort((a,b) => a.t - b.t);
+  saveReactionBoard();
+  if (document.getElementById('reaction-board-screen').classList.contains('active')) renderReactionBoard();
+}
+function resetReactionBoard(){
+  if (!confirm('Bestenliste wirklich löschen?')) return;
+  reactionBoard = [];
+  saveReactionBoard();
+  renderReactionBoard();
+}
+function renderReactionBoard(){
+  const list = document.getElementById('reaction-board-list');
+  if (!reactionBoard.length){
+    list.innerHTML = `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Buzzer-Zeiten aufgezeichnet.</div>`;
+    return;
+  }
+  const medals = ['🥇','🥈','🥉'];
+  list.innerHTML = reactionBoard.slice(0, 30).map((r, i) => `
+    <div class="q-list-item">
+      <span class="q-label"><span class="q-num">${medals[i] || (i+1)+'.'}</span>${r.name}<span class="q-meta">${r.game}</span></span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#FFD23F;">${r.t.toFixed(2)}s</span>
+    </div>`).join('');
+}
+// Neue Buzzes seit dem letzten Snapshot erkennen und in die Bestenliste aufnehmen
+function noteNewBuzzes(prevResults, newResults, game){
+  const prevNames = new Set(prevResults.map(r => r.name));
+  let any = false;
+  newResults.forEach(r => {
+    if (!prevNames.has(r.name)){ recordReaction(r.name, r.t, game); any = true; }
+  });
+  if (any) SFX.buzz();
+}
+
+// ── HOST-NOTIZEN ── (automatisch gespeichert, geräteseitig)
+function loadHostNotes(){
+  try { document.getElementById('host-notes-text').value = localStorage.getItem('hostNotes') || ''; } catch {}
+}
+function saveHostNotes(){
+  try { localStorage.setItem('hostNotes', document.getElementById('host-notes-text').value); } catch {}
+}
+
+// ── TURNIER ── Mehrtägige Gameshow: gleiche Teams, gewichtete Spiele, Gesamtwertung.
+// Gespeichert wird alles in Firebase unter 'tournament', damit es über mehrere
+// Geräte und Tage hinweg synchron bleibt (localStorage nur als Offline-Fallback).
+let tournament = null; // { name, teams:[..], games:[{game, weight, date, scores:[..], done}] }
+let tournamentRef = null;
+
+function tournamentConnect(){
+  if (tournamentRef || !window.firebase) return;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    tournamentRef = firebase.database().ref('tournament');
+    tournamentRef.on('value', (snap) => {
+      tournament = snap.val() || null;
+      if (tournament && !Array.isArray(tournament.games)) tournament.games = [];
+      try { localStorage.setItem('tournamentCache', JSON.stringify(tournament)); } catch {}
+      if (document.getElementById('tournament-screen').classList.contains('active')) renderTournament();
+    });
+  } catch {}
+}
+function loadTournament(){
+  try { const s = localStorage.getItem('tournamentCache'); tournament = s ? JSON.parse(s) : null; } catch { tournament = null; }
+  tournamentConnect();
+}
+function saveTournament(){
+  try { localStorage.setItem('tournamentCache', JSON.stringify(tournament)); } catch {}
+  if (tournamentRef) tournamentRef.set(tournament).catch(()=>{});
+  renderTournament();
+}
+
+function tournamentCreate(){
+  const name = document.getElementById('tour-name').value.trim() || 'Keller-Turnier';
+  const teams = [1,2,3].map(i => document.getElementById('tour-team'+i).value.trim()).filter(Boolean);
+  if (teams.length < 2) return alert('Mindestens 2 Teams eingeben!');
+  tournament = { name, teams, games: [], created: Date.now() };
+  saveTournament();
+}
+function tournamentAddGame(){
+  const game = document.getElementById('tour-game-type').value;
+  const weight = Math.max(1, parseInt(document.getElementById('tour-game-weight').value) || 1);
+  const date = document.getElementById('tour-game-date').value.trim();
+  tournament.games.push({ game, weight, date, scores: null, done: false });
+  saveTournament();
+}
+function tournamentRemoveGame(i){
+  if (!confirm('Dieses Spiel aus dem Turnier entfernen?')) return;
+  tournament.games.splice(i, 1);
+  saveTournament();
+}
+function tournamentDelete(){
+  if (!confirm('Turnier wirklich komplett löschen? Alle Ergebnisse gehen verloren.')) return;
+  tournament = null;
+  try { localStorage.removeItem('tournamentCache'); } catch {}
+  if (tournamentRef) tournamentRef.remove().catch(()=>{});
+  renderTournament();
+}
+function tournamentEnterResult(i){
+  const g = tournament.games[i];
+  const scores = [];
+  for (const t of tournament.teams){
+    const v = prompt(`Punkte für "${t}" in ${g.game}:`, '0');
+    if (v === null) return; // abgebrochen
+    scores.push(Number(v) || 0);
+  }
+  g.scores = scores; g.done = true;
+  saveTournament();
+}
+
+// Turnierpunkte pro Spiel: Platz 1 bekommt weight × Teamanzahl Punkte, Platz 2 eins
+// weniger usw. Bei Punktgleichheit teilen sich Teams den besseren Rang.
+function tournamentGamePoints(g, teamCount){
+  if (!g.done || !g.scores) return new Array(teamCount).fill(0);
+  const ranked = g.scores.map((s, i) => ({ s, i })).sort((a, b) => b.s - a.s);
+  const pts = new Array(teamCount).fill(0);
+  let rank = 0;
+  for (let k = 0; k < ranked.length; k++){
+    if (k > 0 && ranked[k].s < ranked[k-1].s) rank = k;
+    pts[ranked[k].i] = (teamCount - rank) * g.weight;
+  }
+  return pts;
+}
+function tournamentTotals(){
+  const totals = new Array(tournament.teams.length).fill(0);
+  tournament.games.forEach(g => {
+    tournamentGamePoints(g, tournament.teams.length).forEach((p, i) => totals[i] += p);
+  });
+  return totals;
+}
+
+function renderTournament(){
+  const el = document.getElementById('tournament-content');
+  if (!el) return;
+  if (!tournament){
+    // Setup-Formular: neues Turnier anlegen
+    el.innerHTML = `
+      <div class="editor-card">
+        <label>Turniername</label>
+        <input type="text" id="tour-name" placeholder="z.B. Die große Keller Gameshow 2026">
+        <label>Teams (feste Teams für alle Tage, min. 2)</label>
+        <input type="text" id="tour-team1" placeholder="Team 1">
+        <input type="text" id="tour-team2" placeholder="Team 2">
+        <input type="text" id="tour-team3" placeholder="Team 3 (optional)">
+        <div class="editor-actions">
+          <button class="btn btn-primary" onclick="tournamentCreate()">Turnier anlegen</button>
+        </div>
+      </div>`;
+    return;
+  }
+  const totals = tournamentTotals();
+  const maxT = Math.max(...totals, 1);
+  const order = totals.map((t, i) => ({ t, i })).sort((a, b) => b.t - a.t);
+  const medals = ['🥇','🥈','🥉'];
+  const standings = order.map((o, rank) => `
+    <div class="q-list-item" style="${rank===0 && o.t>0 ? 'border-color:rgba(255,210,63,.35);background:rgba(255,210,63,.06);' : ''}">
+      <span class="q-label"><span class="q-num">${medals[rank]||rank+1+'.'}</span><strong>${tournament.teams[o.i]}</strong></span>
+      <div style="display:flex;align-items:center;gap:12px;flex:1;max-width:50%;">
+        <div style="flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;">
+          <div style="width:${Math.round(o.t/maxT*100)}%;height:100%;background:linear-gradient(90deg,#FFD23F,#F0B800);border-radius:5px;transition:width .5s;"></div>
+        </div>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#FFD23F;min-width:36px;text-align:right;">${o.t}</span>
+      </div>
+    </div>`).join('');
+
+  const gamesHtml = tournament.games.map((g, i) => {
+    const pts = tournamentGamePoints(g, tournament.teams.length);
+    const result = g.done
+      ? tournament.teams.map((t, ti) => `${t}: ${g.scores[ti]} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')
+      : '<span style="color:rgba(255,255,255,.35);">Noch nicht gespielt</span>';
+    return `
+      <div class="q-list-item" style="flex-wrap:wrap;gap:6px;">
+        <span class="q-label"><span class="q-num">${i+1}.</span><strong>${g.game}</strong>${g.date ? `<span class="q-meta">${g.date}</span>` : ''}<span class="q-meta" style="color:#FFD23F;">Gewichtung ×${g.weight}</span></span>
+        <div class="q-btns">
+          <button class="btn btn-secondary" onclick="tournamentEnterResult(${i})">${g.done ? 'Ergebnis ändern' : 'Ergebnis eintragen'}</button>
+          <button class="btn btn-danger" onclick="tournamentRemoveGame(${i})">Del</button>
+        </div>
+        <div style="width:100%;font-size:.78rem;color:rgba(255,255,255,.6);">${result}</div>
+      </div>`;
+  }).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spiele geplant.</div>`;
+
+  const allDone = tournament.games.length > 0 && tournament.games.every(g => g.done);
+  el.innerHTML = `
+    <div class="page-title" style="margin-bottom:10px;"><em>${tournament.name}</em></div>
+    <div class="q-list" style="margin-bottom:20px;">${standings}</div>
+    ${allDone ? `<div class="edit-bar" style="margin-bottom:20px;"><button class="btn btn-primary" onclick="tournamentCelebrate()">🏆 Sieger feiern!</button></div>` : ''}
+    <div class="page-title" style="font-size:.9rem;margin-bottom:8px;">Spielplan</div>
+    <div class="q-list" style="margin-bottom:14px;">${gamesHtml}</div>
+    <div class="editor-card">
+      <label>Spiel hinzufügen</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <select id="tour-game-type" style="flex:2;min-width:150px;padding:11px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;outline:none;">
+          <option>Family Feud</option>
+          <option>Jeopardy</option>
+          <option>Wer wird Millionär</option>
+          <option>Sonstiges</option>
+        </select>
+        <input type="number" id="tour-game-weight" value="1" min="1" title="Gewichtung" style="flex:0 0 80px;margin-bottom:0;text-align:center;" placeholder="×">
+        <input type="text" id="tour-game-date" placeholder="z.B. Freitag" style="flex:1;min-width:110px;margin-bottom:0;">
+        <button class="btn btn-accent" onclick="tournamentAddGame()">+ Hinzufügen</button>
+      </div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,.35);margin-top:8px;">Gewichtung = wie viel das Spiel zählt. Platz 1 bekommt (Teamanzahl × Gewichtung) Turnierpunkte, Platz 2 entsprechend weniger.</div>
+    </div>
+    <div class="edit-bar" style="margin-top:12px;">
+      <button class="btn btn-danger" onclick="tournamentDelete()">Turnier löschen</button>
+    </div>`;
+}
+
+function tournamentCelebrate(){
+  const totals = tournamentTotals();
+  const max = Math.max(...totals);
+  const winners = tournament.teams.filter((_, i) => totals[i] === max);
+  document.getElementById('winner-text').textContent = winners.length > 1
+    ? 'Unentschieden im Turnier!'
+    : `${winners[0]} gewinnt das Turnier! 🏆`;
+  document.getElementById('final-scores').innerHTML = tournament.teams
+    .map((t, i) => `${t}: <strong>${totals[i]}</strong> Turnierpunkte`).join('<br>');
+  document.getElementById('tour-record-btn').style.display = 'none';
+  showScreen('result-screen');
+  confetti(true);
+}
+
+// Nach Spielende: passt das Ergebnis zu einem offenen Turnier-Spiel? Dann Button zeigen.
+let pendingTournamentResult = null;
+function offerTournamentResult(gameName, gameTeamNames, gameScores){
+  const btn = document.getElementById('tour-record-btn');
+  btn.style.display = 'none';
+  pendingTournamentResult = null;
+  if (!tournament) return;
+  const gi = tournament.games.findIndex(g => !g.done && g.game === gameName);
+  if (gi < 0) return;
+  // Punkte den Turnier-Teams zuordnen: erst über Namensgleichheit, sonst über die Reihenfolge
+  const scores = tournament.teams.map((t, i) => {
+    const byName = gameTeamNames.findIndex(n => n.trim().toLowerCase() === t.trim().toLowerCase());
+    const src = byName >= 0 ? byName : i;
+    return Number(gameScores[src]) || 0;
+  });
+  pendingTournamentResult = { gi, scores };
+  btn.style.display = '';
+}
+function tournamentRecordPending(){
+  if (!pendingTournamentResult || !tournament) return;
+  const { gi, scores } = pendingTournamentResult;
+  tournament.games[gi].scores = scores;
+  tournament.games[gi].done = true;
+  saveTournament();
+  pendingTournamentResult = null;
+  document.getElementById('tour-record-btn').style.display = 'none';
+  showScreen('tournament-screen');
 }
 
 // ── GAME ──
@@ -2033,6 +2377,7 @@ function revealAnswer(i) {
   const q = state.roundQuestions[state.currentRound];
   state.revealed[i] = true;
   state.roundPoints += q.answers[i].points;
+  SFX.point();
   updateRoundPts(); renderBoard(); showFlash(); updateGamemaster();
   if (state.revealed.every(Boolean)) {
     state.scores[state.currentTeam] += state.roundPoints;
@@ -2056,6 +2401,7 @@ function addStrike() {
   if (state.teamStrikes[t] >= 3) return;
   saveSnapshot();
   state.teamStrikes[t]++;
+  SFX.wrong();
   updateStrikes();
   showStrikeOverlay();
   updateGamemaster();
@@ -2141,6 +2487,7 @@ function showResults() {
   ).join('<br>');
   document.getElementById('winner-text').textContent =
     winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
+  offerTournamentResult('Family Feud', state.teamNames, state.scores);
   showScreen('result-screen');
   if (winners.length === 1) confetti();
 }
@@ -3038,12 +3385,24 @@ function updateGamemasterJeopardy() {
   commitGamemasterHtml(gmHtml);
 }
 
-function confetti(){
+function confetti(big){
+  SFX.fanfare(big);
   const c=['#FFD23F','#E8453C','#3B82F6','#22C55E','#F97316','#fff'];
-  for(let i=0;i<80;i++){
+  const count = big ? 160 : 80;
+  for(let i=0;i<count;i++){
     const p=document.createElement('div');p.className='confetti-p';
-    p.style.cssText=`left:${Math.random()*100}vw;width:${5+Math.random()*8}px;height:${5+Math.random()*8}px;background:${c[Math.floor(Math.random()*c.length)]};animation-duration:${1.5+Math.random()*2.5}s;animation-delay:${Math.random()}s;border-radius:${Math.random()>.5?'50%':'2px'}`;
+    p.style.cssText=`left:${Math.random()*100}vw;width:${5+Math.random()*8}px;height:${5+Math.random()*8}px;background:${c[Math.floor(Math.random()*c.length)]};animation-duration:${1.5+Math.random()*2.5}s;animation-delay:${Math.random()*(big?1.2:1)}s;border-radius:${Math.random()>.5?'50%':'2px'}`;
     document.body.appendChild(p);p.addEventListener('animationend',()=>p.remove());
+  }
+  if (big){
+    // Zweite Konfetti-Welle für den großen Moment (Jackpot / Turniersieger)
+    setTimeout(() => {
+      for(let i=0;i<100;i++){
+        const p=document.createElement('div');p.className='confetti-p';
+        p.style.cssText=`left:${Math.random()*100}vw;width:${5+Math.random()*8}px;height:${5+Math.random()*8}px;background:${c[Math.floor(Math.random()*c.length)]};animation-duration:${1.5+Math.random()*2.5}s;animation-delay:${Math.random()}s;border-radius:${Math.random()>.5?'50%':'2px'}`;
+        document.body.appendChild(p);p.addEventListener('animationend',()=>p.remove());
+      }
+    }, 500);
   }
 }
 
@@ -3254,7 +3613,11 @@ function updateGMBar() {
 }
 
 loadFromStorage();
+loadReactionBoard();
+loadHostNotes();
+loadTournament();
 renderLogo('KELLER', 'GAMESHOWS', 30);
+document.getElementById('sfx-toggle').textContent = SFX.enabled ? '🔊 Sound an' : '🔇 Sound aus';
 
 // ── MENU ──
 function handleLogoClick() {
@@ -3808,11 +4171,13 @@ function jeopardyBuzzConnect(){
       jeopardyBuzzer.excluded = Object.keys(v.excluded || {});
       const seen = {};
       const wasEmpty = jeopardyBuzzer.results.length === 0;
+      const prevResults = jeopardyBuzzer.results;
       jeopardyBuzzer.results = Object.values(v.buzzes || {})
         .filter(b => b && b.name && b.ts)
         .sort((a, b) => a.ts - b.ts)
         .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
         .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team }));
+      noteNewBuzzes(prevResults, jeopardyBuzzer.results, 'Jeopardy');
       // Sobald der Erste buzzert, ploppt die Anzeige auf
       if (wasEmpty && jeopardyBuzzer.results.length > 0) jeopardyBuzzer.poppedForQuestion = true;
       renderBuzzer();
@@ -3903,11 +4268,13 @@ function feudBuzzConnect(){
     feudBuzzer.excluded = Object.keys(v.excluded || {});
     const seen = {};
     const wasEmpty = feudBuzzer.results.length === 0;
+    const prevResults = feudBuzzer.results;
     feudBuzzer.results = Object.values(v.buzzes || {})
       .filter(b => b && b.name && b.ts)
       .sort((a, b) => a.ts - b.ts)
       .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
       .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team }));
+    noteNewBuzzes(prevResults, feudBuzzer.results, 'Family Feud');
     if (wasEmpty && feudBuzzer.results.length > 0) {
       feudBuzzer.poppedForQuestion = true;
       // Team des Spielers, der zuerst gebuzzert hat, ist schon bekannt (vom
@@ -4247,7 +4614,10 @@ function jeopardyKeyHandler(e){
   const name = jeopardyState.teamNames[team];
   if (jeopardyBuzzer.excluded.includes(name)) return;
   if (jeopardyBuzzer.results.some(r => r.name === name)) return;
-  jeopardyBuzzer.results.push({ name, t: (performance.now() - jeopardyBuzzer.start) / 1000 });
+  const rt = (performance.now() - jeopardyBuzzer.start) / 1000;
+  jeopardyBuzzer.results.push({ name, t: rt });
+  recordReaction(name, rt, 'Jeopardy');
+  SFX.buzz();
   if (jeopardyBuzzer.results.length === 1) jeopardyBuzzer.poppedForQuestion = true;
   renderBuzzer();
   updateGamemaster();
@@ -4414,6 +4784,7 @@ function jeopardyScore(teamIdx) {
   jeopardyState.currentIsDaily = false;
   jeopardyState.ddPending = false;
   jeopardyState.questionRevealed = false;
+  SFX.correct();
   jeopardyStopSound(true);
   jeopardyBuzzClose();
   closeJeopardyClue();
@@ -4429,6 +4800,7 @@ function jeopardyDeduct(teamIdx) {
   jeopardySnapshot();
   const { row } = jeopardyState.currentClue;
   jeopardyState.scores[teamIdx] -= Math.round(JEOPARDY_VALUES[row] / 2);
+  SFX.wrong();
   renderJeopardyScores();
   updateGamemaster();
 }
@@ -4525,6 +4897,7 @@ function showJeopardyResults() {
     winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
   jeopardyState.active = false;
   closeJeopardyClue();
+  offerTournamentResult('Jeopardy', jeopardyState.teamNames, jeopardyState.scores);
   showScreen('result-screen');
   updateGamemaster();
   if (winners.length === 1) confetti();
@@ -4749,6 +5122,8 @@ function wwmLock(){
 function wwmReveal(){
   if (!wwmState.locked || wwmState.revealed) return;
   wwmState.revealed = true;
+  const q = wwmData.questions[wwmState.currentQ];
+  if (wwmState.selected === q.correct) SFX.correct(); else SFX.wrong();
   renderWwm();
   updateGamemaster();
 }
@@ -4788,9 +5163,10 @@ function wwmEnd(amount, jackpot){
     ? `${wwmState.name} ist Millionär! 🎉`
     : `${wwmState.name} gewinnt ${wwmMoney(amount)}`;
   document.getElementById('final-scores').innerHTML = `Gewonnen: <strong>${wwmMoney(amount)}</strong>`;
+  document.getElementById('tour-record-btn').style.display = 'none';
   showScreen('result-screen');
   updateGamemaster();
-  if (amount > 0) confetti();
+  if (amount > 0) confetti(jackpot);
 }
 
 // ── LIFELINES ──
