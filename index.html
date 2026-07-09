@@ -577,6 +577,8 @@ body {
 .q-list-item .q-label { flex: 1; font-size: .85rem; color: rgba(255,255,255,.6); }
 .q-list-item .q-num { color: #FFD23F; font-weight: 700; margin-right: 8px; }
 .q-list-item .q-meta { color: rgba(255,255,255,.25); font-size: .75rem; margin-left: 6px; }
+.tour-icon-svg { display: inline-flex; vertical-align: middle; margin-right: 2px; }
+.tour-icon-svg svg { width: 22px; height: 22px; }
 .q-btns { display: flex; gap: 4px; }
 .q-btns .btn { padding: 6px 14px; font-size: .7rem; }
 .edit-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -961,18 +963,6 @@ body {
 #host-gate.err input { border-color: #E8453C; animation: hgShake .3s; }
 @keyframes hgShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
 #jeopardy-setup-screen { gap: 24px; margin-top: 10px; }
-
-/* ── Bildschirm-Auswahl für das Board-Popout ── */
-#screen-picker { position: fixed; inset: 0; z-index: 5000; background: #0b0e2c;
-  background-image: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(30,50,140,.5) 0%, transparent 60%);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px; text-align: center; }
-#screen-picker .sp-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: #FFD23F; letter-spacing: 4px; }
-#screen-picker .sp-sub { color: rgba(255,255,255,.5); font-size: .9rem; max-width: 380px; line-height: 1.5; }
-#screen-picker .sp-list { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 560px; }
-#screen-picker .sp-btn { padding: 18px 26px; border-radius: 14px; border: 2px solid rgba(255,255,255,.15); background: rgba(255,255,255,.06); color: #fff; font-family: 'Inter', sans-serif; font-weight: 700; cursor: pointer; transition: all .12s; }
-#screen-picker .sp-btn:hover { border-color: #FFD23F; background: rgba(255,210,63,.1); transform: translateY(-2px); }
-#screen-picker .sp-btn span { display: block; font-size: .72rem; font-weight: 500; color: rgba(255,255,255,.4); margin-top: 4px; }
-#screen-picker .sp-skip { background: none; border: none; color: rgba(255,255,255,.35); font-size: .8rem; text-decoration: underline; cursor: pointer; font-family: 'Inter', sans-serif; }
 
 /* ── GAMESHOW INTRO ── */
 #kg-overlay{position:fixed;inset:0;z-index:4000;background:#141420;cursor:pointer;user-select:none;animation:kgFadeIn .8s ease both;}
@@ -1663,7 +1653,7 @@ function showScreen(id) {
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
-  if (id === 'tournament-screen') renderTournament();
+  if (id === 'tournament-screen') { renderTournament(); updateGamemaster(); }
   if (id === 'result-screen') renderResultLeaderboard();
   // Eingebettetes GM-Panel nur beim echten Rücksprung zum Hauptmenü wieder
   // ausblenden - bleibt bei internen Übergängen (z.B. Feud → Finale) sichtbar,
@@ -1677,6 +1667,19 @@ function showScreen(id) {
   else renderLogo('KELLER', 'FEUD');
 }
 
+// Blendet einen .black-backdrop aus und entfernt ihn danach. Wie closeOverlay
+// unten: wartet NICHT blind auf animationend, weil Browser CSS-Animationen auf
+// Fenstern drosseln/pausieren, die gerade im Hintergrund sind (z.B. wenn der
+// Host gerade auf den Gamescreen-Popout statt den Mainscreen schaut) - dann
+// feuert animationend nie und der Backdrop bleibt für immer schwarz stehen.
+function fadeOutBackdrop(bd) {
+  if (!bd) return;
+  let finished = false;
+  const finish = () => { if (finished) return; finished = true; bd.remove(); };
+  bd.classList.add('fade-out');
+  bd.addEventListener('animationend', (e) => { if (e.target === bd) finish(); });
+  setTimeout(finish, 700);
+}
 function closeOverlay(overlay, onDone) {
   if (!overlay || overlay.dataset.closing === 'true') return;
   overlay.dataset.closing = 'true';
@@ -1853,10 +1856,14 @@ const GM_SHARED_CSS = `
   .order-item.done{opacity:.4;text-decoration:line-through;}
   .order-num{color:#FFD23F;font-weight:700;min-width:1.4em;}
   .active-team-label{font-size:.7rem;color:#FFD23F;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
-  .notes-panel summary{cursor:pointer;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);list-style:none;display:flex;align-items:center;justify-content:space-between;}
-  .notes-panel summary::-webkit-details-marker{display:none;}
-  .notes-panel .car{transition:transform .15s;font-size:.7rem;}
-  .notes-panel[open] .car{transform:rotate(90deg);}
+  .top-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  /* Zugeklappte Panels (Notizen, Buzzer, Verbunden, …) - halten das Panel auf
+     den ersten Blick kurz, Details sind trotzdem nur einen Klick entfernt. */
+  summary.panel-head{cursor:pointer;list-style:none;}
+  summary.panel-head::-webkit-details-marker{display:none;}
+  details.panel:not([open]) > summary.panel-head{margin-bottom:0;}
+  .car{transition:transform .15s;font-size:.7rem;color:rgba(255,255,255,.3);flex-shrink:0;}
+  details[open] > summary.panel-head .car{transform:rotate(90deg);}
   .notes-panel textarea{margin-top:8px;width:100%;min-height:90px;padding:10px 11px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.82rem;line-height:1.6;outline:none;resize:vertical;}
 `;
 function gmHeaderHtml(title, subtitle, chip) {
@@ -1872,7 +1879,7 @@ function gmNotesPanelHtml() {
   let notes = '';
   try { notes = localStorage.getItem('hostNotes') || ''; } catch {}
   return `<details class="panel notes-panel">
-    <summary>📋 Notizen <span class="car">▸</span></summary>
+    <summary class="panel-head"><span>📋 Notizen</span><span class="car">▸</span></summary>
     <textarea placeholder="Ablaufplan / Notizen…" oninput="opener.saveHostNotesRemote(this.value)">${escapeHtml(notes)}</textarea>
   </details>`;
 }
@@ -2093,14 +2100,18 @@ function saveTournament(){
   try { localStorage.setItem('tournamentCache', JSON.stringify(tournament)); } catch {}
   if (tournamentRef) tournamentRef.set(tournament).catch(()=>{});
   renderTournament();
+  if (gamemasterWin && !gamemasterWin.closed) updateGamemaster();
 }
 
 // Welche Turnierspiele die App selbst starten kann (führt direkt in den
 // jeweiligen Setup-/Lobby-Screen), und welches Icon dafür in der Übersicht steht.
 const TOURNAMENT_STARTABLE = { 'Family Feud': 'setup-screen', 'Jeopardy': 'jeopardy-setup-screen', 'Wer wird Millionär': 'wwm-setup-screen' };
-function tournamentGameIcon(name){
-  if (name === 'Family Feud') return '🎯';
-  if (name === 'Jeopardy') return '📺';
+// Nutzt die echten, handgezeichneten Logos (STAR_SVG/DANGER_SVG) statt
+// generischer Emoji - jede Einbindung braucht aber eine eigene Gradient-ID,
+// sonst kollidieren mehrere Zeilen im Spielplan auf dieselbe id="sg"/"dg".
+function tournamentGameIcon(name, uid){
+  if (name === 'Family Feud') return `<span class="tour-icon-svg">${STAR_SVG.replace('id="sg"', `id="sg-t${uid}"`).replace('url(#sg)', `url(#sg-t${uid})`)}</span>`;
+  if (name === 'Jeopardy') return `<span class="tour-icon-svg">${DANGER_SVG.replace('id="dg"', `id="dg-t${uid}"`).replace('url(#dg)', `url(#dg-t${uid})`)}</span>`;
   if (name === 'Wer wird Millionär') return '💰';
   return '🎮';
 }
@@ -2108,6 +2119,13 @@ function tournamentGameIcon(name){
 // starten" im Spielplan gestartet) - beim Spielende wird sein Ergebnis
 // automatisch in dieses Spielplan-Feld eingetragen, keine manuelle Eingabe nötig.
 let activeTournamentGameIndex = null;
+// Deckt ein geheimes Spiel vorzeitig auf - vom GM-Panel aus bedienbar, während
+// die Turnierübersicht (für die Zuschauer) offen ist.
+function tournamentRevealSecret(i){
+  if (!tournament || !tournament.games[i]) return;
+  tournament.games[i].secret = false;
+  saveTournament(); // rendert Turnierübersicht + GM-Panel neu
+}
 function tournamentStartGame(i){
   if (!tournament || !tournament.games[i]) return;
   const g = tournament.games[i];
@@ -2233,7 +2251,7 @@ function renderTournament(){
   const gamesHtml = tournament.games.map((g, i) => {
     const pts = tournamentGamePoints(g, tournament.teams.length);
     const hidden = g.secret && !g.done;
-    const icon = hidden ? '❓' : tournamentGameIcon(g.game);
+    const icon = hidden ? '❓' : tournamentGameIcon(g.game, i);
     const label = hidden ? '???' : g.game;
     const result = g.done
       ? tournament.teams.map((t, ti) => `${t}: ${g.scores[ti]} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')
@@ -2327,7 +2345,8 @@ function tournamentRecordPending(){
 // ── GAME ──
 function startGame() {
   if(!questions.length) return alert('Keine Fragen!');
-  showScreenPicker(screen => { openBoardPopout(screen); startGameActual(); });
+  openBoardPopout();
+  startGameActual();
 }
 function startGameActual() {
   jeopardyState.active = false;
@@ -2602,8 +2621,7 @@ function showWelcome() {
       showScreen('game-screen');
       loadRound();
       setTimeout(() => openGamemaster(), 120);
-      const bd = document.querySelector('.black-backdrop');
-      if (bd) { bd.classList.add('fade-out'); bd.addEventListener('animationend', () => bd.remove()); }
+      fadeOutBackdrop(document.querySelector('.black-backdrop'));
     });
   });
 }
@@ -2853,8 +2871,7 @@ function startFinale() {
   document.getElementById('finale-timer').style.display = 'none';
   renderFinaleScores();
   loadFinaleQuestion();
-  const bd = document.querySelector('.black-backdrop');
-  if (bd) { bd.classList.add('fade-out'); bd.addEventListener('animationend', () => bd.remove()); }
+  fadeOutBackdrop(document.querySelector('.black-backdrop'));
   if (gamemasterWin && !gamemasterWin.closed) updateGamemaster();
 }
 
@@ -2930,8 +2947,7 @@ function startFinaleReveal() {
       showScreen('finale-screen');
       document.getElementById('finale-team-label').textContent = 'Auflösung';
       loadRevealQuestion();
-      bd.classList.add('fade-out');
-      bd.addEventListener('animationend', () => bd.remove());
+      fadeOutBackdrop(bd);
     });
   });
 }
@@ -3029,8 +3045,7 @@ function showFinaleSwitch() {
     closeOverlay(ov, () => {
       showScreen('finale-screen');
       loadFinaleQuestion();
-      bd.classList.add('fade-out');
-      bd.addEventListener('animationend', () => bd.remove());
+      fadeOutBackdrop(bd);
     });
   });
 }
@@ -3039,89 +3054,25 @@ function endFinale() {
   showFinaleResults();
 }
 
-// ── BOARD-POPOUT (Zuschauer-Bildschirm als eigenes Fenster) ──
-// Fragt beim Spielstart, auf welchem Bildschirm das Board erscheinen soll,
-// öffnet dort ein Vollbild-Popout und spiegelt danach automatisch alles, was
-// im Hauptfenster passiert (Boards, Overlays, Konfetti, Buzzer-Anzeige) hinein -
-// ohne dass jede einzelne Render-Funktion angefasst werden muss. Das
-// Hauptfenster bleibt dabei für den Host nutzbar (Menü, GM-Fenster öffnen etc.).
-function showScreenPicker(onChoose) {
-  // Chrome/Edge/Opera: echte Bildschirmliste per Window Management API.
-  if ('getScreenDetails' in window) {
-    window.getScreenDetails().then(details => {
-      if (details.screens.length < 2) { onChoose(null); return; } // nur ein Bildschirm - kein Popout nötig
-      showRealScreenPicker(details, onChoose);
-    }).catch(() => showManualScreenPicker(onChoose));
-    return;
-  }
-  // Firefox/Zen/Safari & Co: die API existiert dort nicht (und wird von
-  // Mozilla aus Datenschutzgründen wohl auch nie kommen) - trotzdem soll
-  // die Abfrage erscheinen, nur eben ohne echte Bildschirmnamen/-auflösung.
-  showManualScreenPicker(onChoose);
-}
-
-function showRealScreenPicker(details, onChoose) {
-  const picker = document.createElement('div');
-  picker.id = 'screen-picker';
-  picker.innerHTML = `
-    <div class="sp-title">🖥 Board-Bildschirm wählen</div>
-    <div class="sp-sub">Auf welchem Bildschirm soll das Spielfeld für die Zuschauer als eigenes Fenster erscheinen?</div>
-    <div class="sp-list">
-      ${details.screens.map((s, i) => `<button class="sp-btn" data-i="${i}">Bildschirm ${i + 1}<span>${s.width}×${s.height}${s === details.currentScreen ? ' · aktuell' : ''}</span></button>`).join('')}
-    </div>
-    <button class="sp-skip">Ohne Popout fortfahren</button>`;
-  document.body.appendChild(picker);
-  picker.querySelectorAll('.sp-btn').forEach(btn => {
-    btn.addEventListener('click', () => { picker.remove(); onChoose(details.screens[+btn.dataset.i]); });
-  });
-  picker.querySelector('.sp-skip').addEventListener('click', () => { picker.remove(); onChoose(null); });
-}
-
-// Ohne Window Management API kennen wir die echten Bildschirme nicht - der
-// Host wählt stattdessen eine Richtung/Anzahl relativ zum aktuellen
-// Bildschirm ("2 Bildschirme nach links" usw.), und wir schätzen die
-// Position anhand der Bildschirmbreite (funktioniert in jedem Browser,
-// solange die Monitore nebeneinander in einer Reihe angeordnet sind).
-function showManualScreenPicker(onChoose) {
-  const picker = document.createElement('div');
-  picker.id = 'screen-picker';
-  const offsets = [
-    { label: 'Aktueller Bildschirm', n: 0 },
-    { label: '1 Bildschirm ← links', n: -1 },
-    { label: '2 Bildschirme ← links', n: -2 },
-    { label: '1 Bildschirm rechts →', n: 1 },
-    { label: '2 Bildschirme rechts →', n: 2 },
-  ];
-  picker.innerHTML = `
-    <div class="sp-title">🖥 Board-Bildschirm wählen</div>
-    <div class="sp-sub">Dieser Browser kann Bildschirme nicht automatisch erkennen - wähle, wohin das Spielfeld-Fenster relativ zum aktuellen Bildschirm soll.</div>
-    <div class="sp-list">
-      ${offsets.map((o, i) => `<button class="sp-btn" data-i="${i}">${o.label}</button>`).join('')}
-    </div>
-    <button class="sp-skip">Ohne Popout fortfahren</button>`;
-  document.body.appendChild(picker);
-  picker.querySelectorAll('.sp-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      picker.remove();
-      const n = offsets[+btn.dataset.i].n;
-      const baseLeft = window.screenLeft ?? window.screenX ?? 0;
-      const baseTop = window.screenTop ?? window.screenY ?? 0;
-      const w = window.screen.width, h = window.screen.height;
-      onChoose({ availLeft: baseLeft + w * n, availTop: baseTop, availWidth: w, availHeight: h });
-    });
-  });
-  picker.querySelector('.sp-skip').addEventListener('click', () => { picker.remove(); onChoose(null); });
-}
-
+// ── GAMESCREEN (Zuschauer-Bildschirm als eigenes Fenster) ──
+// Öffnet beim Spielstart ein zweites, ganz normales Browserfenster und
+// spiegelt danach automatisch alles, was im Hauptfenster passiert (Boards,
+// Overlays, Konfetti, Buzzer-Anzeige) hinein - ohne dass jede einzelne
+// Render-Funktion angefasst werden muss. Das Hauptfenster bleibt dabei für
+// den Host nutzbar (Menü, GM-Panel usw.).
 let boardWin = null;
 let boardMirrorObserver = null;
 let boardMirrorScheduled = false;
 
-function openBoardPopout(screen) {
-  if (!screen) return; // keine Auswahl / nicht unterstützt - Board bleibt im Hauptfenster
-  const left = screen.availLeft, top = screen.availTop, width = screen.availWidth, height = screen.availHeight;
-  boardWin = window.open('', 'Board', `left=${left},top=${top},width=${width},height=${height}`);
-  if (!boardWin) return; // vom Browser blockiert
+// Der Gamescreen ist einfach ein zweites, ganz normales Browserfenster - der
+// Host zieht es selbst auf den Zuschauer-Bildschirm und macht es bei Bedarf
+// per F11 im Browser fullscreen. Frühere Versionen haben versucht, Position/
+// Größe/Vollbild per JS zu erzwingen (Window-Management-API, moveTo/resizeTo,
+// requestFullscreen) - das war je nach Browser/Fenstermanager unzuverlässig
+// und hat mehr Probleme verursacht als gelöst.
+function openBoardPopout() {
+  boardWin = window.open('', 'Board', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+  if (!boardWin) return; // vom Browser blockiert (Pop-up-Blocker)
   const styleContent = document.querySelector('head style').textContent;
   boardWin.document.open();
   boardWin.document.write(`<!DOCTYPE html>
@@ -3130,11 +3081,9 @@ function openBoardPopout(screen) {
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&display=swap" rel="stylesheet">
 <style>${styleContent}
 body{pointer-events:none;}
-#gm-bar,#gm-embed-overlay,#host-gate,#screen-picker,#menu-screen,#setup-screen,#jeopardy-setup-screen,#wwm-setup-screen,#edit-screen,#jeopardy-edit-screen,#wwm-edit-screen,#qr-overlay{display:none!important;}
+#gm-bar,#gm-embed-overlay,#host-gate,#menu-screen,#setup-screen,#jeopardy-setup-screen,#wwm-setup-screen,#edit-screen,#jeopardy-edit-screen,#wwm-edit-screen,#qr-overlay{display:none!important;}
 </style></head><body></body></html>`);
   boardWin.document.close();
-  try { boardWin.moveTo(left, top); boardWin.resizeTo(width, height); } catch (e) {}
-  try { boardWin.document.documentElement.requestFullscreen && boardWin.document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
   startBoardMirror();
 }
 
@@ -3244,6 +3193,32 @@ function updateGamemasterOverlay() {
 </body></html>`;
   commitGamemasterHtml(gmHtml);
 }
+// Solange die Turnierübersicht offen ist, kann der Host geheime Spiele im
+// Spielplan vom GM-Panel aus live für die Zuschauer aufdecken.
+function updateGamemasterTournament() {
+  const rows = !tournament ? '' : tournament.games.map((g, i) => {
+    const hidden = g.secret && !g.done;
+    const label = hidden ? '??? (geheim)' : g.game;
+    return `<div class="panel-row" style="justify-content:space-between;align-items:center;">
+      <span>${i+1}. ${label}${g.done ? ' ✓' : ''}</span>
+      ${hidden ? `<button class="gm-btn gold sm" onclick="opener.tournamentRevealSecret(${i})">🔓 Aufdecken</button>` : ''}
+    </div>`;
+  }).join('');
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}</style></head><body>
+  ${gmHeaderHtml('Gamemaster', tournament ? `Turnier · ${tournament.name}` : 'Turnier')}
+  <div class="gm-body">
+  ${gmNotesPanelHtml()}
+  ${tournament
+    ? `<div class="panel"><div class="panel-head"><span>📋 Spielplan</span></div>${rows || '<div class="hint-line">Noch keine Spiele geplant.</div>'}</div>`
+    : `<div class="hint-line">Noch kein Turnier angelegt.</div>`}
+  </div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
+}
 function updateGamemaster() {
   updateGMBar();
   if (!gamemasterWin || gamemasterWin.closed) return;
@@ -3251,6 +3226,7 @@ function updateGamemaster() {
   if (wwmState.active) return updateGamemasterWwm();
   if (jeopardyState.active) return updateGamemasterJeopardy();
   if (finaleState.active) return updateGamemasterFinale();
+  if (document.getElementById('tournament-screen').classList.contains('active')) return updateGamemasterTournament();
   const q = state.roundQuestions[state.currentRound];
   if (!q) return;
 
@@ -3270,28 +3246,31 @@ function updateGamemaster() {
     ? `<span class="chip chip-ok">● Server verbunden</span>`
     : `<span class="chip chip-bad">● Offline</span>`;
   const feudConnectPanel = `
-    <div class="panel">
-      <div class="panel-head">
+    <details class="panel">
+      <summary class="panel-head">
         <span>👥 Verbunden</span>
         <span class="badge">${feudPresenceCount}</span>
-      </div>
-      <div class="pr-list">${feudPresenceRows}</div>
+        <span class="car">▸</span>
+      </summary>
+      <div class="pr-list" style="margin-top:8px;">${feudPresenceRows}</div>
       <div class="panel-row">
         <button class="gm-btn gray sm" onclick="opener.toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
         <button class="gm-btn gray sm" onclick="opener.popOutQR()">🗗 QR als Fenster</button>
         <button class="gm-btn gray sm" onclick="opener.feudBuzzToggleHidden();opener.updateGamemaster();">${feudBuzzer.hidden ? '👁 Anzeige einblenden' : '🙈 Anzeige ausblenden'}</button>
       </div>
-    </div>`;
+    </details>`;
   const feudBuzzPanel = `
-    <div class="panel">
-      <div class="panel-head"><span>🔔 Buzzer-Duell</span>${feudConnChip}</div>
+    <details class="panel" ${feudBuzzer.results.length ? 'open' : ''}>
+      <summary class="panel-head"><span>🔔 Buzzer-Duell</span>${feudConnChip}<span class="car">▸</span></summary>
+      <div style="margin-top:8px;">
       ${feudBuzzer.results.length
         ? feudBuzzer.results.map((r,idx) => `<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${r.name}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')
         : `<div class="hint-line">🔔 Buzzer ${feudBuzzer.armed?'scharf — warte auf Buzz…':'aus'}</div>`}
       <div class="panel-row" style="margin-top:8px;">
         ${state.teamNames.map((name,i) => `<button class="gm-btn gray sm" onclick="opener.feudSetStartTeam(${i})">→ ${name} beginnt</button>`).join('')}
       </div>
-    </div>`;
+      </div>
+    </details>`;
 
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
@@ -3446,18 +3425,19 @@ function updateGamemasterJeopardy() {
     ? `<span class="chip chip-ok">● Server verbunden</span>`
     : `<span class="chip chip-bad">● Offline</span>`;
   const connectPanel = `
-    <div class="panel">
-      <div class="panel-head">
+    <details class="panel">
+      <summary class="panel-head">
         <span>👥 Verbunden</span>
         <span class="badge">${presenceCount}</span>
-      </div>
-      <div class="pr-list">${presenceRows}</div>
+        <span class="car">▸</span>
+      </summary>
+      <div class="pr-list" style="margin-top:8px;">${presenceRows}</div>
       <div class="panel-row">
         <button class="gm-btn gray sm" onclick="opener.toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
         <button class="gm-btn gray sm" onclick="opener.popOutQR()">🗗 QR als Fenster</button>
         <button class="gm-btn gray sm" onclick="opener.jeopardyBuzzToggleHidden();opener.updateGamemaster();">${jeopardyBuzzer.hidden ? '👁 Anzeige einblenden' : '🙈 Anzeige ausblenden'}</button>
       </div>
-    </div>`;
+    </details>`;
 
   let body;
   if (jeopardyState.currentClue && jeopardyState.ddPending) {
@@ -3922,7 +3902,8 @@ function jeopardyUndo() {
 }
 
 function startJeopardy() {
-  showScreenPicker(screen => { openBoardPopout(screen); startJeopardyActual(); });
+  openBoardPopout();
+  startJeopardyActual();
 }
 function startJeopardyActual() {
   jeopardyState.teamCount = document.getElementById('jeopardy-enable-team3').checked ? 3 : 2;
@@ -4070,8 +4051,7 @@ function showJeopardyTitle() {
       renderJeopardyScores();
       renderJeopardyBoard();
       setTimeout(() => openGamemaster(), 120);
-      const bd = document.querySelector('.black-backdrop');
-      if (bd) { bd.classList.add('fade-out'); bd.addEventListener('animationend', () => bd.remove()); }
+      fadeOutBackdrop(document.querySelector('.black-backdrop'));
     });
   });
 }
@@ -4695,7 +4675,7 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','nextRound','openJeopardyClue',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia','saveHostNotesRemote',
-  'tournamentStartGame',
+  'tournamentStartGame','tournamentRevealSecret',
 ]);
 
 function gmRemoteInitFirebase() {
@@ -5129,8 +5109,7 @@ function showJeopardyBoardTransition() {
       renderJeopardyScores();
       renderJeopardyBoard();
       updateGamemaster();
-      const b = document.querySelector('.black-backdrop');
-      if (b) { b.classList.add('fade-out'); b.addEventListener('animationend', () => b.remove()); }
+      fadeOutBackdrop(document.querySelector('.black-backdrop'));
     });
   });
 }
@@ -5294,7 +5273,8 @@ let wwmState = {
 function wwmMoney(n){ return n.toLocaleString('de-DE') + ' €'; }
 
 function startWwm(){
-  showScreenPicker(screen => { openBoardPopout(screen); startWwmActual(); });
+  openBoardPopout();
+  startWwmActual();
 }
 function startWwmActual(){
   jeopardyState.active = false;
