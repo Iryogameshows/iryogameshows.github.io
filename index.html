@@ -2946,13 +2946,57 @@ body{pointer-events:none;}
   startBoardMirror();
 }
 
+// Patcht target so es source entspricht, ohne unveränderte Knoten neu zu
+// erschaffen. Ein simples innerHTML-Replace (frühere Variante) hat bei JEDER
+// Mutation irgendwo im Mainscreen (Score-Update, Buzzer-Ping, GM-Refresh, …)
+// den kompletten Popout-DOM neu aufgebaut - das hat u.a. bereits fertige
+// CSS-Animationen (Stern-Intro etc.) und laufende Videos in den Einblendungen
+// bei jeder Kleinigkeit von vorn starten lassen. Reines DOM-Patching lässt
+// unveränderte Knoten (und ihre Animationen/Videos) in Ruhe.
+function morphMirror(target, source) {
+  if (target.nodeType === 1 && source.nodeType === 1) {
+    const targetAttrs = target.attributes;
+    for (let i = targetAttrs.length - 1; i >= 0; i--) {
+      const name = targetAttrs[i].name;
+      if (!source.hasAttribute(name)) target.removeAttribute(name);
+    }
+    for (let i = 0; i < source.attributes.length; i++) {
+      const attr = source.attributes[i];
+      if (target.getAttribute(attr.name) !== attr.value) target.setAttribute(attr.name, attr.value);
+    }
+  }
+  let tChild = target.firstChild;
+  let sChild = source.firstChild;
+  while (sChild) {
+    if (!tChild) {
+      target.appendChild(sChild.cloneNode(true));
+      sChild = sChild.nextSibling;
+      continue;
+    }
+    const nextT = tChild.nextSibling;
+    if (tChild.nodeType !== sChild.nodeType || tChild.nodeName !== sChild.nodeName) {
+      target.replaceChild(sChild.cloneNode(true), tChild);
+    } else if (sChild.nodeType === Node.TEXT_NODE || sChild.nodeType === Node.COMMENT_NODE) {
+      if (tChild.nodeValue !== sChild.nodeValue) tChild.nodeValue = sChild.nodeValue;
+    } else if (sChild.nodeType === Node.ELEMENT_NODE) {
+      morphMirror(tChild, sChild);
+    }
+    tChild = nextT;
+    sChild = sChild.nextSibling;
+  }
+  while (tChild) {
+    const next = tChild.nextSibling;
+    target.removeChild(tChild);
+    tChild = next;
+  }
+}
 function scheduleBoardMirror() {
   if (!boardWin || boardWin.closed || boardMirrorScheduled) return;
   boardMirrorScheduled = true;
   requestAnimationFrame(() => {
     boardMirrorScheduled = false;
     if (!boardWin || boardWin.closed) return;
-    boardWin.document.body.innerHTML = document.body.innerHTML;
+    morphMirror(boardWin.document.body, document.body);
   });
 }
 function startBoardMirror() {
