@@ -962,6 +962,18 @@ body {
 @keyframes hgShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
 #jeopardy-setup-screen { gap: 24px; margin-top: 10px; }
 
+/* ── Bildschirm-Auswahl für das Board-Popout ── */
+#screen-picker { position: fixed; inset: 0; z-index: 5000; background: #0b0e2c;
+  background-image: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(30,50,140,.5) 0%, transparent 60%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px; text-align: center; }
+#screen-picker .sp-title { font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; color: #FFD23F; letter-spacing: 4px; }
+#screen-picker .sp-sub { color: rgba(255,255,255,.5); font-size: .9rem; max-width: 380px; line-height: 1.5; }
+#screen-picker .sp-list { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; max-width: 560px; }
+#screen-picker .sp-btn { padding: 18px 26px; border-radius: 14px; border: 2px solid rgba(255,255,255,.15); background: rgba(255,255,255,.06); color: #fff; font-family: 'Inter', sans-serif; font-weight: 700; cursor: pointer; transition: all .12s; }
+#screen-picker .sp-btn:hover { border-color: #FFD23F; background: rgba(255,210,63,.1); transform: translateY(-2px); }
+#screen-picker .sp-btn span { display: block; font-size: .72rem; font-weight: 500; color: rgba(255,255,255,.4); margin-top: 4px; }
+#screen-picker .sp-skip { background: none; border: none; color: rgba(255,255,255,.35); font-size: .8rem; text-decoration: underline; cursor: pointer; font-family: 'Inter', sans-serif; }
+
 /* ── GAMESHOW INTRO ── */
 #kg-overlay{position:fixed;inset:0;z-index:4000;background:#141420;cursor:pointer;user-select:none;animation:kgFadeIn .8s ease both;}
 #kg-overlay.leaving{animation:kgFadeOut .8s ease forwards;}
@@ -1682,6 +1694,9 @@ function loadFromStorage(){
 // ── GAME ──
 function startGame() {
   if(!questions.length) return alert('Keine Fragen!');
+  showScreenPicker(screen => { openBoardPopout(screen); startGameActual(); });
+}
+function startGameActual() {
   jeopardyState.active = false;
   wwmState.active = false;
   state.teamCount = document.getElementById('enable-team3').checked ? 3 : 2;
@@ -2386,6 +2401,74 @@ function showFinaleSwitch() {
 
 function endFinale() {
   showFinaleResults();
+}
+
+// ── BOARD-POPOUT (Zuschauer-Bildschirm als eigenes Fenster) ──
+// Fragt beim Spielstart, auf welchem Bildschirm das Board erscheinen soll,
+// öffnet dort ein Vollbild-Popout und spiegelt danach automatisch alles, was
+// im Hauptfenster passiert (Boards, Overlays, Konfetti, Buzzer-Anzeige) hinein -
+// ohne dass jede einzelne Render-Funktion angefasst werden muss. Das
+// Hauptfenster bleibt dabei für den Host nutzbar (Menü, GM-Fenster öffnen etc.).
+function showScreenPicker(onChoose) {
+  if (!('getScreenDetails' in window)) { onChoose(null); return; }
+  window.getScreenDetails().then(details => {
+    if (details.screens.length < 2) { onChoose(null); return; } // nur ein Bildschirm - kein Popout nötig
+    const picker = document.createElement('div');
+    picker.id = 'screen-picker';
+    picker.innerHTML = `
+      <div class="sp-title">🖥 Board-Bildschirm wählen</div>
+      <div class="sp-sub">Auf welchem Bildschirm soll das Spielfeld für die Zuschauer als eigenes Fenster erscheinen?</div>
+      <div class="sp-list">
+        ${details.screens.map((s, i) => `<button class="sp-btn" data-i="${i}">Bildschirm ${i + 1}<span>${s.width}×${s.height}${s === details.currentScreen ? ' · aktuell' : ''}</span></button>`).join('')}
+      </div>
+      <button class="sp-skip">Ohne Popout fortfahren</button>`;
+    document.body.appendChild(picker);
+    picker.querySelectorAll('.sp-btn').forEach(btn => {
+      btn.addEventListener('click', () => { picker.remove(); onChoose(details.screens[+btn.dataset.i]); });
+    });
+    picker.querySelector('.sp-skip').addEventListener('click', () => { picker.remove(); onChoose(null); });
+  }).catch(() => onChoose(null));
+}
+
+let boardWin = null;
+let boardMirrorObserver = null;
+let boardMirrorScheduled = false;
+
+function openBoardPopout(screen) {
+  if (!screen) return; // keine Auswahl / nicht unterstützt - Board bleibt im Hauptfenster
+  const left = screen.availLeft, top = screen.availTop, width = screen.availWidth, height = screen.availHeight;
+  boardWin = window.open('', 'Board', `left=${left},top=${top},width=${width},height=${height}`);
+  if (!boardWin) return; // vom Browser blockiert
+  const styleContent = document.querySelector('head style').textContent;
+  boardWin.document.open();
+  boardWin.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&display=swap" rel="stylesheet">
+<style>${styleContent}
+body{pointer-events:none;}
+#gm-bar,#host-gate,#screen-picker,#menu-screen,#setup-screen,#jeopardy-setup-screen,#wwm-setup-screen,#edit-screen,#jeopardy-edit-screen,#wwm-edit-screen,#qr-overlay{display:none!important;}
+</style></head><body></body></html>`);
+  boardWin.document.close();
+  try { boardWin.moveTo(left, top); boardWin.resizeTo(width, height); } catch (e) {}
+  try { boardWin.document.documentElement.requestFullscreen && boardWin.document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
+  startBoardMirror();
+}
+
+function scheduleBoardMirror() {
+  if (!boardWin || boardWin.closed || boardMirrorScheduled) return;
+  boardMirrorScheduled = true;
+  requestAnimationFrame(() => {
+    boardMirrorScheduled = false;
+    if (!boardWin || boardWin.closed) return;
+    boardWin.document.body.innerHTML = document.body.innerHTML;
+  });
+}
+function startBoardMirror() {
+  if (boardMirrorObserver) boardMirrorObserver.disconnect();
+  boardMirrorObserver = new MutationObserver(scheduleBoardMirror);
+  boardMirrorObserver.observe(document.body, { childList: true, subtree: true, attributes: true, characterData: true });
+  scheduleBoardMirror();
 }
 
 // ── GAMEMASTER ──
@@ -3255,6 +3338,9 @@ function jeopardyUndo() {
 }
 
 function startJeopardy() {
+  showScreenPicker(screen => { openBoardPopout(screen); startJeopardyActual(); });
+}
+function startJeopardyActual() {
   jeopardyState.teamCount = document.getElementById('jeopardy-enable-team3').checked ? 3 : 2;
   jeopardyState.teamNames = [];
   jeopardyState.scores = [];
@@ -4573,6 +4659,9 @@ let wwmState = {
 function wwmMoney(n){ return n.toLocaleString('de-DE') + ' €'; }
 
 function startWwm(){
+  showScreenPicker(screen => { openBoardPopout(screen); startWwmActual(); });
+}
+function startWwmActual(){
   jeopardyState.active = false;
   finaleState.active = false;
   wwmState.name = document.getElementById('wwm-name').value || 'Kandidat';
