@@ -553,6 +553,23 @@ body {
   text-transform: uppercase; letter-spacing: 3px;
   color: rgba(255,255,255,.4); margin-bottom: 6px;
 }
+.note-check-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; margin-bottom: 6px;
+  border-radius: 10px; border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.04); cursor: pointer; transition: all .15s;
+}
+.note-check-item:hover { background: rgba(255,255,255,.08); border-color: rgba(255,210,63,.3); }
+.note-check-box {
+  width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0;
+  border: 2px solid rgba(255,210,63,.5);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 900; color: #FFD23F;
+}
+.note-check-item.done { opacity: .5; }
+.note-check-item.done .note-check-box { background: #FFD23F; border-color: #FFD23F; color: #1a1200; }
+.note-check-item.done .note-check-text { text-decoration: line-through; }
+.note-check-text { font-size: .92rem; font-weight: 600; flex: 1; }
 .editor-card input {
   width: 100%; padding: 11px 14px; border-radius: 8px;
   border: 1.5px solid rgba(255,255,255,.1);
@@ -1409,9 +1426,10 @@ body {
 <!-- HOST-NOTIZEN -->
 <div id="host-notes-screen" class="screen">
   <div class="page-title"><em>📋 Host</em>-Notizen</div>
+  <div id="host-notes-checklist" style="width:100%;display:none;margin-bottom:16px;"></div>
   <div class="editor-card" style="width:100%;">
-    <label>Ablaufplan / Notizen (wird automatisch gespeichert)</label>
-    <textarea id="host-notes-text" placeholder="z.B.&#10;20:00  Begrüßung + Intro&#10;20:10  Family Feud (5 Runden)&#10;21:00  Pause&#10;21:15  Finale&#10;…" oninput="saveHostNotes()" style="width:100%;min-height:320px;padding:14px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.95rem;line-height:1.7;outline:none;resize:vertical;"></textarea>
+    <label>Ablaufplan / Notizen (wird automatisch gespeichert) — eine Zeile mit <strong>/</strong> beenden, um sie oben als anklickbare Checkliste anzuzeigen</label>
+    <textarea id="host-notes-text" placeholder="z.B.&#10;20:00  Begrüßung + Intro&#10;20:10  Family Feud (5 Runden)&#10;21:00  Pause&#10;21:15  Finale&#10;…&#10;&#10;Getränke nachfüllen /" oninput="saveHostNotes()" style="width:100%;min-height:320px;padding:14px 16px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.95rem;line-height:1.7;outline:none;resize:vertical;"></textarea>
   </div>
   <div class="edit-bar" style="margin-top:12px;">
     <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zum Menü</button>
@@ -1779,11 +1797,17 @@ function escapeHtml(s) {
 const GM_SHARED_CSS = `
   :root{color-scheme:dark;}
   *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Inter',sans-serif;color:#eef0fb;padding:0;display:flex;flex-direction:column;min-height:100vh;background:#0b0e2c;background-image:radial-gradient(ellipse 120% 60% at 50% -10%, rgba(40,60,160,.35) 0%, transparent 60%);}
-  .gm-header{position:sticky;top:0;z-index:5;padding:14px 16px 12px;background:linear-gradient(180deg, rgba(15,18,50,.98), rgba(15,18,50,.9));border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  /* Fester Rahmen statt einer einzigen langen Seite: Kopfzeile und
+     Aktions-Buttons bleiben immer sichtbar, nur die Mitte scrollt. So
+     verschwinden die Buttons (Strike, Weiter, ...) nie hinter Buzzer-/
+     Verbunden-Panels - kein Suchen mehr per Scrollen während des Spiels. */
+  html,body{height:100%;}
+  body{font-family:'Inter',sans-serif;color:#eef0fb;padding:0;display:flex;flex-direction:column;overflow:hidden;background:#0b0e2c;background-image:radial-gradient(ellipse 120% 60% at 50% -10%, rgba(40,60,160,.35) 0%, transparent 60%);}
+  .gm-header{flex-shrink:0;padding:14px 16px 12px;background:linear-gradient(180deg, rgba(15,18,50,.98), rgba(15,18,50,.9));border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .gm-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:#FFD23F;}
   .gm-title small{display:block;font-family:'Inter',sans-serif;font-size:.55rem;letter-spacing:2px;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase;}
-  .gm-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px;flex:1;}
+  .gm-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;overflow-y:auto;}
+  .gm-actions{flex-shrink:0;padding:12px 16px;display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid rgba(255,255,255,.1);background:linear-gradient(0deg, rgba(15,18,50,.98), rgba(15,18,50,.85));}
   .chip{font-size:.62rem;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:99px;white-space:nowrap;}
   .chip-ok{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.35);}
   .chip-bad{background:rgba(232,69,60,.15);color:#FF8A80;border:1px solid rgba(232,69,60,.35);}
@@ -1841,7 +1865,6 @@ const GM_SHARED_CSS = `
   .gm-btn.gm-gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
   .gm-btn.gm-gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
   .gm-btn.gm-blue{background:linear-gradient(180deg,#3B82F6,#1D4ED8);color:#fff;}
-  .controls{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-wrap:wrap;gap:6px;}
   .tag{font-size:.62rem;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.3px;}
   .tag-blue{background:rgba(59,130,246,.15);color:#93C5FD;}
   .tag-gold{background:rgba(255,210,63,.15);color:#FFD23F;}
@@ -2061,9 +2084,11 @@ function noteNewBuzzes(prevResults, newResults, game){
 // ── HOST-NOTIZEN ── (automatisch gespeichert, geräteseitig)
 function loadHostNotes(){
   try { document.getElementById('host-notes-text').value = localStorage.getItem('hostNotes') || ''; } catch {}
+  renderNotesChecklist();
 }
 function saveHostNotes(){
   try { localStorage.setItem('hostNotes', document.getElementById('host-notes-text').value); } catch {}
+  renderNotesChecklist();
 }
 // Wird von der Notizen-Box im GM-Panel (und darüber vom Gamepad-Handy) aufgerufen.
 // Rendert bewusst NICHT das GM-Panel neu (kein updateGamemaster()) - sonst würde
@@ -2072,6 +2097,48 @@ function saveHostNotesRemote(text){
   try { localStorage.setItem('hostNotes', text); } catch {}
   const el = document.getElementById('host-notes-text');
   if (el && el.value !== text) el.value = text;
+  renderNotesChecklist();
+}
+
+// Zeilen, die mit "/" enden, werden als anklickbare Checkliste angezeigt -
+// z.B. "Getränke nachfüllen /". Der erledigt-Status wird getrennt von den
+// Notizen selbst gespeichert (per Zeilentext), damit er Bearbeitungen an
+// anderen Zeilen übersteht.
+function parseNoteChecklist(text){
+  return (text || '').split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 1 && l.endsWith('/'))
+    .map(l => l.slice(0, -1).trim())
+    .filter(Boolean);
+}
+function loadNotesChecked(){
+  try { return new Set(JSON.parse(localStorage.getItem('hostNotesChecked') || '[]')); } catch { return new Set(); }
+}
+function saveNotesChecked(set){
+  try { localStorage.setItem('hostNotesChecked', JSON.stringify([...set])); } catch {}
+}
+let noteChecklistItems = [];
+function renderNotesChecklist(){
+  const el = document.getElementById('host-notes-checklist');
+  if (!el) return;
+  const notesEl = document.getElementById('host-notes-text');
+  noteChecklistItems = parseNoteChecklist(notesEl ? notesEl.value : '');
+  if (!noteChecklistItems.length){ el.innerHTML = ''; el.style.display = 'none'; return; }
+  const checked = loadNotesChecked();
+  el.style.display = '';
+  el.innerHTML = noteChecklistItems.map((text, i) => `
+    <div class="note-check-item ${checked.has(text) ? 'done' : ''}" onclick="toggleNoteChecked(${i})">
+      <span class="note-check-box">${checked.has(text) ? '✓' : ''}</span>
+      <span class="note-check-text">${escapeHtml(text)}</span>
+    </div>`).join('');
+}
+function toggleNoteChecked(i){
+  const text = noteChecklistItems[i];
+  if (text === undefined) return;
+  const checked = loadNotesChecked();
+  if (checked.has(text)) checked.delete(text); else checked.add(text);
+  saveNotesChecked(checked);
+  renderNotesChecklist();
 }
 
 // ── TURNIER ── Mehrtägige Gameshow: gleiche Teams, gewichtete Spiele, Gesamtwertung.
@@ -3275,6 +3342,13 @@ function updateGamemaster() {
       </div>
     </details>`;
 
+  const controlsHtml = `
+    ${!state.allOut ? `<button class="gm-btn red" onclick="opener.addStrike()">Strike</button>` : ''}
+    ${!state.allOut ? `<button class="gm-btn gray" onclick="opener.switchTeam();opener.updateActiveTeam();opener.updateGamemaster();">Team wechseln</button>` : ''}
+    <button class="gm-btn gray" onclick="opener.revealAll()">Alle aufdecken</button>
+    <button class="gm-btn orange" onclick="opener.undoLast()">↩ Undo</button>
+    <button class="gm-btn gold" onclick="opener.nextRound()">Nächste Runde</button>`;
+
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
@@ -3306,15 +3380,9 @@ function updateGamemaster() {
   ${mediaControlButtonsHtml(q.media, 'feudToggleMedia')}
   ${feudBuzzPanel}
   ${feudConnectPanel}
-  <div class="controls">
-    ${!state.allOut ? `<button class="gm-btn red" onclick="opener.addStrike()">Strike</button>` : ''}
-    ${!state.allOut ? `<button class="gm-btn gray" onclick="opener.switchTeam();opener.updateActiveTeam();opener.updateGamemaster();">Team wechseln</button>` : ''}
-    <button class="gm-btn gray" onclick="opener.revealAll()">Alle aufdecken</button>
-    <button class="gm-btn orange" onclick="opener.undoLast()">↩ Undo</button>
-    <button class="gm-btn gold" onclick="opener.nextRound()">Nächste Runde</button>
-  </div>
   `}
   </div>
+  <div class="gm-actions">${controlsHtml}</div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
 }
@@ -3359,9 +3427,9 @@ function updateGamemasterFinale() {
   <div style="font-size:.85rem;">${scoresHtml}</div>
   <div class="question">${q.question}</div>
   <div class="answer-list">${answersHtml}</div>
-  <div class="controls">
-    <button class="gm-btn red" onclick="opener.finaleMarkMiss()">Nicht auf dem Board</button>
   </div>
+  <div class="gm-actions">
+    <button class="gm-btn red" onclick="opener.finaleMarkMiss()">Nicht auf dem Board</button>
   </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
@@ -3403,9 +3471,9 @@ function updateGamemasterFinaleReveal() {
     <span>${state.teamNames[finaleState.teams[1]]}: <strong>${team2Text}</strong></span>
     <span style="color:#FFD23F;font-weight:700;">${team2Pts} Pkt</span>
   </div>
-  <div class="controls">
-    <button class="gm-btn gold" onclick="opener.finaleNextReveal()">Nächste Frage</button>
   </div>
+  <div class="gm-actions">
+    <button class="gm-btn gold" onclick="opener.finaleNextReveal()">Nächste Frage</button>
   </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
@@ -3443,6 +3511,7 @@ function updateGamemasterJeopardy() {
     </details>`;
 
   let body;
+  let controlsHtml;
   if (jeopardyState.currentClue && jeopardyState.ddPending) {
     // Daily Double — private warning before it pops on the main screen
     body = `
@@ -3452,11 +3521,10 @@ function updateGamemasterJeopardy() {
         <div class="dd-title">★ DAILY DOUBLE ★</div>
         <div class="dd-sub">Dieses Feld ist das versteckte Daily Double.<br>Sag es jetzt dramatisch an — dann deckst du die Frage auf.</div>
       </div>
-      ${connectPanel}
-      <div class="controls">
+      ${connectPanel}`;
+    controlsHtml = `
         <button class="gm-btn gold" onclick="opener.jeopardyAnnounceDaily()">★ Ansagen &amp; Frage aufdecken</button>
-        <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>
-      </div>`;
+        <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
   } else if (jeopardyState.currentClue) {
     // Clue control view
     const { col, row } = jeopardyState.currentClue;
@@ -3515,24 +3583,21 @@ function updateGamemasterJeopardy() {
         </div>
         ${buzzHtml}
         ${connectPanel}
-        <div class="controls">
-          <button class="gm-btn gold" onclick="opener.jeopardyRevealQuestion()">👁 Frage aufdecken</button>
-          <button class="gm-btn gray" onclick="opener.jeopardySkip()">Überspringen</button>
-          <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>
-        </div>
       ` : `
         ${(staged||soundBtn)?`<div class="btn-grid">${stageBtn}${soundBtn}</div>`:''}
         ${buzzHtml}
         ${connectPanel}
         <div class="btn-grid">${teamBtns}</div>
         <div class="btn-grid">${deductBtns}</div>
-        <div class="controls">
+      `}`;
+    controlsHtml = !revealed ? `
+          <button class="gm-btn gold" onclick="opener.jeopardyRevealQuestion()">👁 Frage aufdecken</button>
+          <button class="gm-btn gray" onclick="opener.jeopardySkip()">Überspringen</button>
+          <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>` : `
           <button class="gm-btn blue" onclick="opener.jeopardyToggleAnswer()">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
           <button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Niemand / Überspringen</button>
-          <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>
-        </div>
-      `}`;
+          <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
   } else {
     // Board mirror view
     const cats = jBoard();
@@ -3554,10 +3619,8 @@ function updateGamemasterJeopardy() {
       <div class="round-label">Board ${jeopardyState.currentBoard + 1} / ${JEOPARDY_BOARDS} · Feld wählen</div>
       <div class="scores-row">${scoresHtml}</div>
       ${boardHtml}
-      ${connectPanel}
-      <div class="controls">
-        <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>
-      </div>`;
+      ${connectPanel}`;
+    controlsHtml = `<button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
   }
 
   const gmHtml = `<!DOCTYPE html>
@@ -3585,6 +3648,7 @@ function updateGamemasterJeopardy() {
     ${gmNotesPanelHtml()}
     ${body}
   </div>
+  <div class="gm-actions">${controlsHtml}</div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
 }
@@ -5536,8 +5600,8 @@ function updateGamemasterWwm(){
   <div class="hint-line">
     ${wwmState.locked ? (wwmState.revealed ? 'Aufgelöst.' : 'Geloggt — jetzt auflösen.') : (wwmState.selected!==null ? 'Antwort '+WWM_LETTERS[wwmState.selected]+' gewählt.' : 'Keine Antwort gewählt.')}
   </div>
-  <div class="controls">${wwmControlsHtml('opener.')}</div>
   </div>
+  <div class="gm-actions">${wwmControlsHtml('opener.')}</div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
 }
