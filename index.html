@@ -2757,24 +2757,71 @@ function endFinale() {
 // ohne dass jede einzelne Render-Funktion angefasst werden muss. Das
 // Hauptfenster bleibt dabei für den Host nutzbar (Menü, GM-Fenster öffnen etc.).
 function showScreenPicker(onChoose) {
-  if (!('getScreenDetails' in window)) { onChoose(null); return; }
-  window.getScreenDetails().then(details => {
-    if (details.screens.length < 2) { onChoose(null); return; } // nur ein Bildschirm - kein Popout nötig
-    const picker = document.createElement('div');
-    picker.id = 'screen-picker';
-    picker.innerHTML = `
-      <div class="sp-title">🖥 Board-Bildschirm wählen</div>
-      <div class="sp-sub">Auf welchem Bildschirm soll das Spielfeld für die Zuschauer als eigenes Fenster erscheinen?</div>
-      <div class="sp-list">
-        ${details.screens.map((s, i) => `<button class="sp-btn" data-i="${i}">Bildschirm ${i + 1}<span>${s.width}×${s.height}${s === details.currentScreen ? ' · aktuell' : ''}</span></button>`).join('')}
-      </div>
-      <button class="sp-skip">Ohne Popout fortfahren</button>`;
-    document.body.appendChild(picker);
-    picker.querySelectorAll('.sp-btn').forEach(btn => {
-      btn.addEventListener('click', () => { picker.remove(); onChoose(details.screens[+btn.dataset.i]); });
+  // Chrome/Edge/Opera: echte Bildschirmliste per Window Management API.
+  if ('getScreenDetails' in window) {
+    window.getScreenDetails().then(details => {
+      if (details.screens.length < 2) { onChoose(null); return; } // nur ein Bildschirm - kein Popout nötig
+      showRealScreenPicker(details, onChoose);
+    }).catch(() => showManualScreenPicker(onChoose));
+    return;
+  }
+  // Firefox/Zen/Safari & Co: die API existiert dort nicht (und wird von
+  // Mozilla aus Datenschutzgründen wohl auch nie kommen) - trotzdem soll
+  // die Abfrage erscheinen, nur eben ohne echte Bildschirmnamen/-auflösung.
+  showManualScreenPicker(onChoose);
+}
+
+function showRealScreenPicker(details, onChoose) {
+  const picker = document.createElement('div');
+  picker.id = 'screen-picker';
+  picker.innerHTML = `
+    <div class="sp-title">🖥 Board-Bildschirm wählen</div>
+    <div class="sp-sub">Auf welchem Bildschirm soll das Spielfeld für die Zuschauer als eigenes Fenster erscheinen?</div>
+    <div class="sp-list">
+      ${details.screens.map((s, i) => `<button class="sp-btn" data-i="${i}">Bildschirm ${i + 1}<span>${s.width}×${s.height}${s === details.currentScreen ? ' · aktuell' : ''}</span></button>`).join('')}
+    </div>
+    <button class="sp-skip">Ohne Popout fortfahren</button>`;
+  document.body.appendChild(picker);
+  picker.querySelectorAll('.sp-btn').forEach(btn => {
+    btn.addEventListener('click', () => { picker.remove(); onChoose(details.screens[+btn.dataset.i]); });
+  });
+  picker.querySelector('.sp-skip').addEventListener('click', () => { picker.remove(); onChoose(null); });
+}
+
+// Ohne Window Management API kennen wir die echten Bildschirme nicht - der
+// Host wählt stattdessen eine Richtung/Anzahl relativ zum aktuellen
+// Bildschirm ("2 Bildschirme nach links" usw.), und wir schätzen die
+// Position anhand der Bildschirmbreite (funktioniert in jedem Browser,
+// solange die Monitore nebeneinander in einer Reihe angeordnet sind).
+function showManualScreenPicker(onChoose) {
+  const picker = document.createElement('div');
+  picker.id = 'screen-picker';
+  const offsets = [
+    { label: 'Aktueller Bildschirm', n: 0 },
+    { label: '1 Bildschirm ← links', n: -1 },
+    { label: '2 Bildschirme ← links', n: -2 },
+    { label: '1 Bildschirm rechts →', n: 1 },
+    { label: '2 Bildschirme rechts →', n: 2 },
+  ];
+  picker.innerHTML = `
+    <div class="sp-title">🖥 Board-Bildschirm wählen</div>
+    <div class="sp-sub">Dieser Browser kann Bildschirme nicht automatisch erkennen - wähle, wohin das Spielfeld-Fenster relativ zum aktuellen Bildschirm soll.</div>
+    <div class="sp-list">
+      ${offsets.map((o, i) => `<button class="sp-btn" data-i="${i}">${o.label}</button>`).join('')}
+    </div>
+    <button class="sp-skip">Ohne Popout fortfahren</button>`;
+  document.body.appendChild(picker);
+  picker.querySelectorAll('.sp-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      picker.remove();
+      const n = offsets[+btn.dataset.i].n;
+      const baseLeft = window.screenLeft ?? window.screenX ?? 0;
+      const baseTop = window.screenTop ?? window.screenY ?? 0;
+      const w = window.screen.width, h = window.screen.height;
+      onChoose({ availLeft: baseLeft + w * n, availTop: baseTop, availWidth: w, availHeight: h });
     });
-    picker.querySelector('.sp-skip').addEventListener('click', () => { picker.remove(); onChoose(null); });
-  }).catch(() => onChoose(null));
+  });
+  picker.querySelector('.sp-skip').addEventListener('click', () => { picker.remove(); onChoose(null); });
 }
 
 let boardWin = null;
