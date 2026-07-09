@@ -1394,8 +1394,13 @@ body {
   <div class="result-card">
     <div class="result-scores" id="final-scores"></div>
   </div>
+  <div id="result-leaderboard" style="width:100%;max-width:520px;display:none;margin-top:6px;">
+    <div class="page-title" style="font-size:.85rem;margin-bottom:8px;"><em>⚡ Buzzer</em>-Bestenliste</div>
+    <div class="q-list"></div>
+  </div>
   <div class="result-btns">
     <button class="btn btn-accent" id="tour-record-btn" style="display:none;" onclick="tournamentRecordPending()">🏆 Ins Turnier übernehmen</button>
+    <button class="btn btn-accent" id="tour-goto-btn" style="display:none;" onclick="showScreen('tournament-screen')">🏆 Zur Turnierübersicht</button>
     <button class="btn btn-primary" onclick="startGame()">Nochmal spielen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>
   </div>
@@ -1659,6 +1664,7 @@ function showScreen(id) {
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
   if (id === 'tournament-screen') renderTournament();
+  if (id === 'result-screen') renderResultLeaderboard();
   // Eingebettetes GM-Panel nur beim echten Rücksprung zum Hauptmenü wieder
   // ausblenden - bleibt bei internen Übergängen (z.B. Feud → Finale) sichtbar,
   // genau wie das alte Popup-Fenster das auch nie automatisch geschlossen hat.
@@ -1758,6 +1764,117 @@ function mediaControlButtonsHtml(media, togglerName) {
       ${filled.map(i => `<button class="gm-btn ${activeMediaSlot === i ? 'gold' : 'gray'} sm" onclick="opener.${togglerName}(${i})">${activeMediaSlot === i ? '✕ ' : ''}${i + 1}</button>`).join('')}
     </div>
   </div>`;
+}
+
+// ── GM-PANEL: gemeinsames Design ──
+// Ein Stylesheet + Header/Notizen-Bausteine für alle GM-Templates (FF, Jeopardy,
+// WWM, Finale), statt dass jedes Template seine eigenen, leicht abweichenden
+// Kopien von .panel/.gm-btn/.chip usw. mitschleppt.
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+const GM_SHARED_CSS = `
+  :root{color-scheme:dark;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Inter',sans-serif;color:#eef0fb;padding:0;display:flex;flex-direction:column;min-height:100vh;background:#0b0e2c;background-image:radial-gradient(ellipse 120% 60% at 50% -10%, rgba(40,60,160,.35) 0%, transparent 60%);}
+  .gm-header{position:sticky;top:0;z-index:5;padding:14px 16px 12px;background:linear-gradient(180deg, rgba(15,18,50,.98), rgba(15,18,50,.9));border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .gm-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:#FFD23F;}
+  .gm-title small{display:block;font-family:'Inter',sans-serif;font-size:.55rem;letter-spacing:2px;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase;}
+  .gm-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px;flex:1;}
+  .chip{font-size:.62rem;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:99px;white-space:nowrap;}
+  .chip-ok{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.35);}
+  .chip-bad{background:rgba(232,69,60,.15);color:#FF8A80;border:1px solid rgba(232,69,60,.35);}
+  .round-label{display:inline-block;padding:5px 14px;border-radius:7px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.25);font-size:.68rem;font-weight:800;color:#FFD23F;letter-spacing:1.5px;text-transform:uppercase;align-self:flex-start;}
+  .round-label.warn{background:rgba(232,69,60,.15);border-color:rgba(232,69,60,.4);color:#FF8A80;}
+  .round-label.green{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);color:#22C55E;}
+  .dd-inline{color:#FFD23F;font-weight:800;}
+  .scores-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .score-card{flex:1;min-width:80px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px 10px;}
+  .score-card.active{border-color:rgba(255,210,63,.4);background:rgba(255,210,63,.07);}
+  .score-name{font-size:.6rem;font-weight:800;letter-spacing:.5px;color:rgba(255,255,255,.55);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .score-val{font-family:'Bebas Neue',sans-serif;font-size:1.65rem;color:#FFD23F;line-height:1.1;}
+  .question{font-size:1.05rem;font-weight:700;line-height:1.5;color:rgba(255,255,255,.9)}
+  .answer{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:8px;font-weight:600;font-size:.9rem;transition:filter .1s;}
+  .answer.hidden{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);cursor:pointer;}
+  .answer.hidden:hover{filter:brightness(1.3);}
+  .answer.shown{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);}
+  .answer.shown .text{color:#22C55E}
+  .answer-list{display:flex;flex-direction:column;gap:4px;}
+  .num{color:#FFD23F;margin-right:10px;font-weight:700}
+  .pts{color:#FFD23F;font-weight:700}
+  .strikes-section{display:flex;gap:8px;flex-wrap:wrap;}
+  .panel{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;}
+  .panel-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .badge{background:rgba(34,197,94,.18);color:#4ADE80;border-radius:99px;padding:1px 8px;font-size:.68rem;}
+  .pr-list{display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;margin-bottom:8px;}
+  .pr-row{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;padding:3px 2px;}
+  .pr-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
+  .pr-team-btn{padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.62rem;font-weight:700;cursor:pointer;}
+  .pr-team-btn.active{background:rgba(255,210,63,.25);border-color:#FFD23F;color:#FFD23F;}
+  @keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .pr-empty{font-size:.72rem;color:rgba(255,255,255,.35);padding:4px 0;}
+  .buzz-row{justify-content:flex-start;background:rgba(255,255,255,.03);border-radius:6px;padding:5px 8px;}
+  .buzz-row.first{background:rgba(255,210,63,.12);box-shadow:inset 0 0 0 1px rgba(255,210,63,.3);}
+  .pr-rank{color:#FFD23F;font-family:'Bebas Neue',sans-serif;font-size:1rem;width:18px;}
+  .buzz-time{margin-left:auto;font-family:'Bebas Neue',sans-serif;font-size:1rem;}
+  .hint-line{font-size:.72rem;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .info-card{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:11px 13px;font-size:.76rem;color:rgba(255,255,255,.8);text-align:center;line-height:1.55;}
+  .hint-ok{font-size:.76rem;color:#4ADE80;font-weight:700;align-self:center;}
+  .excl-tag{font-size:.68rem;color:#FF8A80;font-weight:700;}
+  .btn-grid{display:flex;flex-wrap:wrap;gap:6px;}
+  .gm-btn{padding:10px 16px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:filter .1s;}
+  .gm-btn:hover{filter:brightness(1.15);}
+  .gm-btn.red{background:linear-gradient(180deg,#E8453C,#C62828);color:#fff;}
+  .gm-btn.gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
+  .gm-btn.gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
+  .gm-btn.blue{background:linear-gradient(180deg,#3B82F6,#1D4ED8);color:#fff;}
+  .gm-btn.orange{background:linear-gradient(180deg,#F97316,#C2410C);color:#fff;}
+  .gm-btn.purple{background:linear-gradient(180deg,#8B5CF6,#6D28D9);color:#fff;}
+  .gm-btn.danger-outline{background:rgba(232,69,60,.1);color:#FF8A80;border:1px solid rgba(232,69,60,.35);}
+  .gm-btn.sm{padding:7px 10px;font-size:.68rem;flex:1;}
+  .gm-btn.gm-red{background:linear-gradient(180deg,#E8453C,#C62828);color:#fff;}
+  .gm-btn.gm-gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
+  .gm-btn.gm-gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
+  .gm-btn.gm-blue{background:linear-gradient(180deg,#3B82F6,#1D4ED8);color:#fff;}
+  .controls{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-wrap:wrap;gap:6px;}
+  .tag{font-size:.62rem;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.3px;}
+  .tag-blue{background:rgba(59,130,246,.15);color:#93C5FD;}
+  .tag-gold{background:rgba(255,210,63,.15);color:#FFD23F;}
+  .tag-green{background:rgba(34,197,94,.15);color:#86EFAC;}
+  .tag-purple{background:rgba(139,92,246,.18);color:#C4B5FD;}
+  .media-row{display:flex;flex-wrap:wrap;gap:5px;}
+  .gm-tabs{display:flex;gap:6px;}
+  .gm-tab{flex:1;padding:8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+  .gm-tab.active{background:rgba(255,210,63,.12);border-color:rgba(255,210,63,.35);color:#FFD23F;}
+  .order-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
+  .order-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.06);font-size:.85rem;}
+  .order-item.current{background:rgba(255,210,63,.1);border-color:rgba(255,210,63,.3);}
+  .order-item.done{opacity:.4;text-decoration:line-through;}
+  .order-num{color:#FFD23F;font-weight:700;min-width:1.4em;}
+  .active-team-label{font-size:.7rem;color:#FFD23F;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+  .notes-panel summary{cursor:pointer;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);list-style:none;display:flex;align-items:center;justify-content:space-between;}
+  .notes-panel summary::-webkit-details-marker{display:none;}
+  .notes-panel .car{transition:transform .15s;font-size:.7rem;}
+  .notes-panel[open] .car{transform:rotate(90deg);}
+  .notes-panel textarea{margin-top:8px;width:100%;min-height:90px;padding:10px 11px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.82rem;line-height:1.6;outline:none;resize:vertical;}
+`;
+function gmHeaderHtml(title, subtitle, chip) {
+  return `<div class="gm-header">
+    <div class="gm-title">${title}${subtitle ? `<small>${subtitle}</small>` : ''}</div>
+    ${chip || ''}
+  </div>`;
+}
+// Notizen direkt im GM-Panel (und dank Firebase-Spiegelung automatisch auch im
+// Gamepad fürs Handy) - zugeklappt by default, damit sie während des Spiels
+// nicht im Weg sind, aber immer einen Klick entfernt.
+function gmNotesPanelHtml() {
+  let notes = '';
+  try { notes = localStorage.getItem('hostNotes') || ''; } catch {}
+  return `<details class="panel notes-panel">
+    <summary>📋 Notizen <span class="car">▸</span></summary>
+    <textarea placeholder="Ablaufplan / Notizen…" oninput="opener.saveHostNotesRemote(this.value)">${escapeHtml(notes)}</textarea>
+  </details>`;
 }
 
 // ── EDIT ──
@@ -1908,6 +2025,21 @@ function renderReactionBoard(){
       <span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#FFD23F;">${r.t.toFixed(2)}s</span>
     </div>`).join('');
 }
+// Kompakte Version der Bestenliste, direkt auf dem Ergebnis-Bildschirm nach
+// jedem Spielende (und damit auch am Ende eines Turniers, das denselben
+// Ergebnis-Bildschirm nutzt) - kein extra Klick zur Bestenliste nötig.
+function renderResultLeaderboard(){
+  const el = document.getElementById('result-leaderboard');
+  if (!el) return;
+  if (!reactionBoard.length){ el.style.display = 'none'; return; }
+  el.style.display = '';
+  const medals = ['🥇','🥈','🥉'];
+  el.querySelector('.q-list').innerHTML = reactionBoard.slice(0, 10).map((r, i) => `
+    <div class="q-list-item">
+      <span class="q-label"><span class="q-num">${medals[i] || (i+1)+'.'}</span>${r.name}<span class="q-meta">${r.game}</span></span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#FFD23F;">${r.t.toFixed(2)}s</span>
+    </div>`).join('');
+}
 // Neue Buzzes seit dem letzten Snapshot erkennen und in die Bestenliste aufnehmen
 function noteNewBuzzes(prevResults, newResults, game){
   const prevNames = new Set(prevResults.map(r => r.name));
@@ -1924,6 +2056,14 @@ function loadHostNotes(){
 }
 function saveHostNotes(){
   try { localStorage.setItem('hostNotes', document.getElementById('host-notes-text').value); } catch {}
+}
+// Wird von der Notizen-Box im GM-Panel (und darüber vom Gamepad-Handy) aufgerufen.
+// Rendert bewusst NICHT das GM-Panel neu (kein updateGamemaster()) - sonst würde
+// jeder Tastendruck das eigene Eingabefeld unterbrechen.
+function saveHostNotesRemote(text){
+  try { localStorage.setItem('hostNotes', text); } catch {}
+  const el = document.getElementById('host-notes-text');
+  if (el && el.value !== text) el.value = text;
 }
 
 // ── TURNIER ── Mehrtägige Gameshow: gleiche Teams, gewichtete Spiele, Gesamtwertung.
@@ -1955,6 +2095,47 @@ function saveTournament(){
   renderTournament();
 }
 
+// Welche Turnierspiele die App selbst starten kann (führt direkt in den
+// jeweiligen Setup-/Lobby-Screen), und welches Icon dafür in der Übersicht steht.
+const TOURNAMENT_STARTABLE = { 'Family Feud': 'setup-screen', 'Jeopardy': 'jeopardy-setup-screen', 'Wer wird Millionär': 'wwm-setup-screen' };
+function tournamentGameIcon(name){
+  if (name === 'Family Feud') return '🎯';
+  if (name === 'Jeopardy') return '📺';
+  if (name === 'Wer wird Millionär') return '💰';
+  return '🎮';
+}
+// Wenn gesetzt: dieses Spiel läuft gerade als Teil des Turniers (über "Spiel
+// starten" im Spielplan gestartet) - beim Spielende wird sein Ergebnis
+// automatisch in dieses Spielplan-Feld eingetragen, keine manuelle Eingabe nötig.
+let activeTournamentGameIndex = null;
+function tournamentStartGame(i){
+  if (!tournament || !tournament.games[i]) return;
+  const g = tournament.games[i];
+  const screen = TOURNAMENT_STARTABLE[g.game];
+  if (!screen) { alert('Dieser Spieltyp kann nicht automatisch gestartet werden - bitte manuell spielen und "Ergebnis eintragen" nutzen.'); return; }
+  activeTournamentGameIndex = i;
+  showScreen(screen);
+}
+// Trägt (falls über "Spiel starten" aktiv) das gerade beendete Spiel automatisch
+// ins Turnier ein - per Namensabgleich, sonst per Index/Reihenfolge. Gibt zurück
+// ob tatsächlich automatisch eingetragen wurde (steuert die Buttons auf dem
+// Ergebnis-Bildschirm).
+function tournamentAutoRecordIfActive(gameTeamNames, gameScores){
+  if (activeTournamentGameIndex === null || !tournament) return false;
+  const gi = activeTournamentGameIndex;
+  activeTournamentGameIndex = null;
+  const g = tournament.games[gi];
+  if (!g) return false;
+  const sameLength = gameTeamNames.length === tournament.teams.length;
+  g.scores = tournament.teams.map((t, ti) => {
+    const byName = gameTeamNames.findIndex(n => n.trim().toLowerCase() === t.trim().toLowerCase());
+    if (byName >= 0) return Number(gameScores[byName]) || 0;
+    return sameLength ? (Number(gameScores[ti]) || 0) : 0;
+  });
+  g.done = true;
+  saveTournament();
+  return true;
+}
 function tournamentCreate(){
   const name = document.getElementById('tour-name').value.trim() || 'Keller-Turnier';
   const teams = [1,2,3].map(i => document.getElementById('tour-team'+i).value.trim()).filter(Boolean);
@@ -1966,7 +2147,8 @@ function tournamentAddGame(){
   const game = document.getElementById('tour-game-type').value;
   const weight = Math.max(1, parseInt(document.getElementById('tour-game-weight').value) || 1);
   const date = document.getElementById('tour-game-date').value.trim();
-  tournament.games.push({ game, weight, date, scores: null, done: false });
+  const secret = document.getElementById('tour-game-secret').checked;
+  tournament.games.push({ game, weight, date, scores: null, done: false, secret });
   saveTournament();
 }
 function tournamentRemoveGame(i){
@@ -2050,13 +2232,18 @@ function renderTournament(){
 
   const gamesHtml = tournament.games.map((g, i) => {
     const pts = tournamentGamePoints(g, tournament.teams.length);
+    const hidden = g.secret && !g.done;
+    const icon = hidden ? '❓' : tournamentGameIcon(g.game);
+    const label = hidden ? '???' : g.game;
     const result = g.done
       ? tournament.teams.map((t, ti) => `${t}: ${g.scores[ti]} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')
       : '<span style="color:rgba(255,255,255,.35);">Noch nicht gespielt</span>';
+    const canAutoStart = !hidden && !g.done && TOURNAMENT_STARTABLE[g.game];
     return `
       <div class="q-list-item" style="flex-wrap:wrap;gap:6px;">
-        <span class="q-label"><span class="q-num">${i+1}.</span><strong>${g.game}</strong>${g.date ? `<span class="q-meta">${g.date}</span>` : ''}<span class="q-meta" style="color:#FFD23F;">Gewichtung ×${g.weight}</span></span>
+        <span class="q-label"><span class="q-num">${i+1}.</span><span style="margin-right:2px;">${icon}</span><strong>${label}</strong>${(!hidden && g.date) ? `<span class="q-meta">${g.date}</span>` : ''}<span class="q-meta" style="color:#FFD23F;">Gewichtung ×${g.weight}</span></span>
         <div class="q-btns">
+          ${canAutoStart ? `<button class="btn btn-accent" onclick="tournamentStartGame(${i})">▶ Spiel starten</button>` : ''}
           <button class="btn btn-secondary" onclick="tournamentEnterResult(${i})">${g.done ? 'Ergebnis ändern' : 'Ergebnis eintragen'}</button>
           <button class="btn btn-danger" onclick="tournamentRemoveGame(${i})">Del</button>
         </div>
@@ -2084,6 +2271,9 @@ function renderTournament(){
         <input type="text" id="tour-game-date" placeholder="z.B. Freitag" style="flex:1;min-width:110px;margin-bottom:0;">
         <button class="btn btn-accent" onclick="tournamentAddGame()">+ Hinzufügen</button>
       </div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:600;color:rgba(255,255,255,.7);margin-top:10px;">
+        <input type="checkbox" id="tour-game-secret" style="width:auto;margin:0;"> 🔒 Geheim halten (zeigt "???" im Spielplan, bis das Spiel gespielt wurde)
+      </label>
       <div style="font-size:.7rem;color:rgba(255,255,255,.35);margin-top:8px;">Gewichtung = wie viel das Spiel zählt. Platz 1 bekommt (Teamanzahl × Gewichtung) Turnierpunkte, Platz 2 entsprechend weniger.</div>
     </div>
     <div class="edit-bar" style="margin-top:12px;">
@@ -2584,7 +2774,9 @@ function showResults() {
   ).join('<br>');
   document.getElementById('winner-text').textContent =
     winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
-  offerTournamentResult('Family Feud', state.teamNames, state.scores);
+  const recordedToTournament = tournamentAutoRecordIfActive(state.teamNames, state.scores);
+  document.getElementById('tour-goto-btn').style.display = recordedToTournament ? '' : 'none';
+  if (!recordedToTournament) offerTournamentResult('Family Feud', state.teamNames, state.scores);
   showScreen('result-screen');
   if (winners.length === 1) confetti();
 }
@@ -3105,61 +3297,10 @@ function updateGamemaster() {
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
-<style>
-  :root{color-scheme:dark;}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Inter',sans-serif;background:#0b0e2c;color:#fff;padding:20px;display:flex;flex-direction:column;min-height:100vh;}
-  h2{font-size:.65rem;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.4);margin-bottom:6px}
-  .question{font-size:1.05rem;font-weight:700;margin-bottom:16px;line-height:1.5;color:rgba(255,255,255,.9)}
-  .answer{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;margin-bottom:3px;border-radius:8px;font-weight:600;font-size:.9rem;transition:filter .1s;}
-  .answer.hidden{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);cursor:pointer;}
-  .answer.hidden:hover{filter:brightness(1.3);}
-  .answer.shown{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);}
-  .num{color:#FFD23F;margin-right:10px;font-weight:700}
-  .pts{color:#FFD23F;font-weight:700}
-  .answer.shown .text{color:#22C55E}
-  .round-label{display:inline-block;padding:4px 14px;border-radius:6px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);font-size:.7rem;font-weight:700;color:#FFD23F;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
-  .strikes-section{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
-  .controls{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-wrap:wrap;gap:6px;}
-  .gm-btn{padding:10px 16px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:filter .1s;}
-  .gm-btn:hover{filter:brightness(1.15);}
-  .gm-btn.red{background:linear-gradient(180deg,#E8453C,#C62828);color:#fff;}
-  .gm-btn.gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
-  .gm-btn.gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
-  .gm-btn.blue{background:linear-gradient(180deg,#3B82F6,#1D4ED8);color:#fff;}
-  .gm-btn.orange{background:linear-gradient(180deg,#F97316,#C2410C);color:#fff;}
-  .active-team-label{font-size:.7rem;color:#FFD23F;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
-  .gm-tabs{display:flex;gap:6px;margin-bottom:14px;}
-  .gm-tab{flex:1;padding:8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
-  .gm-tab.active{background:rgba(255,210,63,.12);border-color:rgba(255,210,63,.35);color:#FFD23F;}
-  .order-list{display:flex;flex-direction:column;gap:6px;overflow-y:auto;}
-  .order-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.06);font-size:.85rem;}
-  .order-item.current{background:rgba(255,210,63,.1);border-color:rgba(255,210,63,.3);}
-  .order-item.done{opacity:.4;text-decoration:line-through;}
-  .order-num{color:#FFD23F;font-weight:700;min-width:1.4em;}
-  .chip{font-size:.62rem;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:99px;white-space:nowrap;}
-  .chip-ok{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.35);}
-  .chip-bad{background:rgba(232,69,60,.15);color:#FF8A80;border:1px solid rgba(232,69,60,.35);}
-  .panel{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;margin-bottom:12px;}
-  .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;}
-  .badge{background:rgba(34,197,94,.18);color:#4ADE80;border-radius:99px;padding:1px 8px;font-size:.68rem;}
-  .pr-list{display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;margin-bottom:8px;}
-  .pr-row{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;padding:3px 2px;}
-  .pr-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
-  .pr-team-btn{padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.62rem;font-weight:700;cursor:pointer;}
-  .pr-team-btn.active{background:rgba(255,210,63,.25);border-color:#FFD23F;color:#FFD23F;}
-  @keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.4}}
-  .pr-empty{font-size:.72rem;color:rgba(255,255,255,.35);padding:4px 0;}
-  .panel-row{display:flex;gap:6px;flex-wrap:wrap;}
-  .buzz-row{justify-content:flex-start;background:rgba(255,255,255,.03);border-radius:6px;padding:5px 8px;}
-  .buzz-row.first{background:rgba(255,210,63,.12);box-shadow:inset 0 0 0 1px rgba(255,210,63,.3);}
-  .pr-rank{color:#FFD23F;font-family:'Bebas Neue',sans-serif;font-size:1rem;width:18px;}
-  .buzz-time{margin-left:auto;font-family:'Bebas Neue',sans-serif;font-size:1rem;}
-  .gm-btn.sm{padding:7px 10px;font-size:.68rem;flex:1;}
-  .hint-line{font-size:.72rem;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-</style></head><body>
-  <h2>Gamemaster</h2>
-  <div class="round-label">Runde ${state.currentRound+1} / ${state.roundQuestions.length}</div>
+<style>${GM_SHARED_CSS}</style></head><body>
+  ${gmHeaderHtml('Gamemaster', `Family Feud · Runde ${state.currentRound+1} / ${state.roundQuestions.length}`)}
+  <div class="gm-body">
+  ${gmNotesPanelHtml()}
   <div class="gm-tabs">
     <button class="gm-tab ${gmFeudTab==='question'?'active':''}" onclick="opener.setGmFeudTab('question')">Aktuelle Frage</button>
     <button class="gm-tab ${gmFeudTab==='order'?'active':''}" onclick="opener.setGmFeudTab('order')">Reihenfolge</button>
@@ -3173,14 +3314,16 @@ function updateGamemaster() {
   ` : `
   <div class="active-team-label">${state.allOut ? '⚠ Alle Teams out' : 'Am Zug: ' + state.teamNames[state.currentTeam]}</div>
   <div class="strikes-section">${strikesHtml}</div>
-  ${feudBuzzPanel}
-  ${feudConnectPanel}
-  ${mediaControlButtonsHtml(q.media, 'feudToggleMedia')}
   <div class="question" onclick="opener.revealQuestion()" style="cursor:pointer;">${q.question}</div>
+  <div class="answer-list">
   ${q.answers.map((a,i) => `<div class="answer ${state.revealed[i]?'shown':'hidden'}" ${!state.revealed[i] ? `onclick="opener.revealAnswer(${i})"` : ''}>
     <span><span class="num">${i+1}.</span> <span class="text">${a.text}</span></span>
     <span class="pts">${a.points}</span>
   </div>`).join('')}
+  </div>
+  ${mediaControlButtonsHtml(q.media, 'feudToggleMedia')}
+  ${feudBuzzPanel}
+  ${feudConnectPanel}
   <div class="controls">
     ${!state.allOut ? `<button class="gm-btn red" onclick="opener.addStrike()">Strike</button>` : ''}
     ${!state.allOut ? `<button class="gm-btn gray" onclick="opener.switchTeam();opener.updateActiveTeam();opener.updateGamemaster();">Team wechseln</button>` : ''}
@@ -3189,6 +3332,7 @@ function updateGamemaster() {
     <button class="gm-btn gold" onclick="opener.nextRound()">Nächste Runde</button>
   </div>
   `}
+  </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
 }
@@ -3225,31 +3369,17 @@ function updateGamemasterFinale() {
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
-<style>
-  :root{color-scheme:dark;}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Inter',sans-serif;background:#0b0e2c;color:#fff;padding:20px;display:flex;flex-direction:column;min-height:100vh;}
-  h2{font-size:.65rem;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.4);margin-bottom:6px}
-  .question{font-size:1.05rem;font-weight:700;margin-bottom:16px;line-height:1.5;color:rgba(255,255,255,.9)}
-  .answer{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;margin-bottom:3px;border-radius:8px;font-weight:600;font-size:.9rem;transition:filter .1s}
-  .answer.hidden{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3)}
-  .answer:hover{filter:brightness(1.3)}
-  .num{color:#FFD23F;margin-right:10px;font-weight:700}
-  .pts{color:#FFD23F;font-weight:700}
-  .round-label{display:inline-block;padding:4px 14px;border-radius:6px;background:rgba(232,69,60,.1);border:1px solid rgba(232,69,60,.3);font-size:.7rem;font-weight:700;color:#E8453C;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
-  .controls{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-wrap:wrap;gap:6px;}
-  .gm-btn{padding:10px 16px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:filter .1s;}
-  .gm-btn:hover{filter:brightness(1.15);}
-  .gm-btn.red{background:linear-gradient(180deg,#E8453C,#C62828);color:#fff;}
-</style></head><body>
-  <h2>Gamemaster</h2>
-  <div class="round-label">Finale · Frage ${finaleState.currentQ+1} / ${finaleState.questions.length}</div>
-  <div style="font-size:.75rem;color:#FFD23F;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;">Am Zug: ${state.teamNames[ti]}</div>
-  <div style="font-size:.85rem;margin-bottom:12px;">${scoresHtml}</div>
+<style>${GM_SHARED_CSS}</style></head><body>
+  ${gmHeaderHtml('Gamemaster', `Finale · Frage ${finaleState.currentQ+1} / ${finaleState.questions.length}`)}
+  <div class="gm-body">
+  ${gmNotesPanelHtml()}
+  <div class="active-team-label">Am Zug: ${state.teamNames[ti]}</div>
+  <div style="font-size:.85rem;">${scoresHtml}</div>
   <div class="question">${q.question}</div>
-  ${answersHtml}
+  <div class="answer-list">${answersHtml}</div>
   <div class="controls">
     <button class="gm-btn red" onclick="opener.finaleMarkMiss()">Nicht auf dem Board</button>
+  </div>
   </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
@@ -3275,22 +3405,13 @@ function updateGamemasterFinaleReveal() {
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
-<style>
-  :root{color-scheme:dark;}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Inter',sans-serif;background:#0b0e2c;color:#fff;padding:20px;display:flex;flex-direction:column;min-height:100vh;}
-  h2{font-size:.65rem;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.4);margin-bottom:6px}
-  .question{font-size:1.05rem;font-weight:700;margin-bottom:16px;line-height:1.5;color:rgba(255,255,255,.9)}
-  .round-label{display:inline-block;padding:4px 14px;border-radius:6px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);font-size:.7rem;font-weight:700;color:#22C55E;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
-  .team-result{padding:10px 14px;margin-bottom:6px;border-radius:8px;font-weight:600;font-size:.9rem;display:flex;justify-content:space-between;align-items:center;}
-  .controls{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-wrap:wrap;gap:6px;}
-  .gm-btn{padding:10px 16px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:filter .1s;}
-  .gm-btn:hover{filter:brightness(1.15);}
-  .gm-btn.gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
+<style>${GM_SHARED_CSS}
+  .team-result{padding:10px 14px;border-radius:8px;font-weight:600;font-size:.9rem;display:flex;justify-content:space-between;align-items:center;}
 </style></head><body>
-  <h2>Gamemaster</h2>
-  <div class="round-label">Auflösung · Frage ${qi+1} / ${finaleState.questions.length}</div>
-  <div style="font-size:.85rem;margin-bottom:12px;">${scoresHtml}</div>
+  ${gmHeaderHtml('Gamemaster', `Auflösung · Frage ${qi+1} / ${finaleState.questions.length}`)}
+  <div class="gm-body">
+  ${gmNotesPanelHtml()}
+  <div style="font-size:.85rem;">${scoresHtml}</div>
   <div class="question">${q.question}</div>
   <div class="team-result" style="background:rgba(${team1Ans>=0?'34,197,94':'232,69,60'},.1);border:1px solid rgba(${team1Ans>=0?'34,197,94':'232,69,60'},.3);">
     <span>${state.teamNames[finaleState.teams[0]]}: <strong>${team1Text}</strong></span>
@@ -3302,6 +3423,7 @@ function updateGamemasterFinaleReveal() {
   </div>
   <div class="controls">
     <button class="gm-btn gold" onclick="opener.finaleNextReveal()">Nächste Frage</button>
+  </div>
   </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
@@ -3459,95 +3581,25 @@ function updateGamemasterJeopardy() {
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
-<style>
-  :root{ color-scheme: dark; }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{
-    font-family:'Inter',sans-serif;color:#eef0fb;padding:0;display:flex;flex-direction:column;min-height:100vh;
-    background:#0b0e2c;
-    background-image:radial-gradient(ellipse 120% 60% at 50% -10%, rgba(40,60,160,.35) 0%, transparent 60%);
-  }
-  .gm-header{
-    position:sticky;top:0;z-index:5;padding:14px 16px 12px;
-    background:linear-gradient(180deg, rgba(15,18,50,.98), rgba(15,18,50,.9));
-    border-bottom:1px solid rgba(255,255,255,.08);
-    display:flex;align-items:center;justify-content:space-between;gap:8px;
-  }
-  .gm-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:#FFD23F;}
-  .gm-title small{display:block;font-family:'Inter',sans-serif;font-size:.55rem;letter-spacing:2px;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase;}
-  .chip{font-size:.62rem;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:99px;white-space:nowrap;}
-  .chip-ok{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.35);}
-  .chip-bad{background:rgba(232,69,60,.15);color:#FF8A80;border:1px solid rgba(232,69,60,.35);}
-  .gm-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px;flex:1;}
-
-  .round-label{display:inline-block;padding:5px 14px;border-radius:7px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.25);font-size:.68rem;font-weight:800;color:#FFD23F;letter-spacing:1.5px;text-transform:uppercase;}
-  .round-label.warn{background:rgba(232,69,60,.15);border-color:rgba(232,69,60,.4);color:#FF8A80;}
-  .dd-inline{color:#FFD23F;font-weight:800;}
-
-  .scores-row{display:flex;gap:8px;}
-  .score-card{flex:1;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:9px 10px;}
-  .score-name{font-size:.6rem;font-weight:800;letter-spacing:.5px;color:rgba(255,255,255,.55);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .score-val{font-family:'Bebas Neue',sans-serif;font-size:1.65rem;color:#FFD23F;line-height:1.1;}
-
+<style>${GM_SHARED_CSS}
   .dd-card{background:linear-gradient(180deg,rgba(255,210,63,.14),rgba(245,158,11,.06));border:1px solid rgba(255,210,63,.4);border-radius:12px;padding:20px;text-align:center;}
   .dd-title{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:#FFD23F;letter-spacing:3px;}
   .dd-sub{font-size:.8rem;color:rgba(255,255,255,.7);margin-top:8px;line-height:1.55;}
-
   .jboard{display:grid;gap:3px;}
   .jcat{background:linear-gradient(180deg,#1a2a8a,#111d6e);text-align:center;padding:6px 3px;font-size:.5rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:#fff;display:flex;align-items:center;justify-content:center;min-height:36px;line-height:1.2;border-radius:5px;}
   .jcell{background:linear-gradient(180deg,#1a2a8a,#111d6e);text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#FFD23F;display:flex;align-items:center;justify-content:center;min-height:40px;cursor:pointer;border-radius:5px;transition:background .12s, transform .1s;}
   .jcell:hover{background:linear-gradient(180deg,#2a3eb0,#1a2e8a);transform:scale(1.03);}
   .jcell.used{background:#080c1e;cursor:default;}
-
   .clue-box{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;}
   .clue-q{font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:10px;}
-  .media-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
-  .tag{font-size:.62rem;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.3px;}
-  .tag-blue{background:rgba(59,130,246,.15);color:#93C5FD;}
-  .tag-gold{background:rgba(255,210,63,.15);color:#FFD23F;}
-  .tag-green{background:rgba(34,197,94,.15);color:#86EFAC;}
-  .tag-purple{background:rgba(139,92,246,.18);color:#C4B5FD;}
   .clue-a{font-size:.92rem;color:#4ADE80;font-weight:700;padding-top:10px;border-top:1px dashed rgba(255,255,255,.1);}
-
-  .info-card{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:11px 13px;font-size:.76rem;color:rgba(255,255,255,.8);text-align:center;line-height:1.55;}
-  .hint-ok{font-size:.76rem;color:#4ADE80;font-weight:700;align-self:center;}
-  .hint-line{font-size:.72rem;color:rgba(255,255,255,.45);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-  .excl-tag{margin-top:8px;font-size:.68rem;color:#FF8A80;font-weight:700;}
-
-  .panel{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;}
-  .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;}
-  .badge{background:rgba(34,197,94,.18);color:#4ADE80;border-radius:99px;padding:1px 8px;font-size:.68rem;}
-  .pr-list{display:flex;flex-direction:column;gap:4px;max-height:110px;overflow-y:auto;margin-bottom:8px;}
-  .pr-row{display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:600;padding:3px 2px;}
-  .pr-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 6px #22C55E;flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
-  .pr-team-btn{padding:3px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.62rem;font-weight:700;cursor:pointer;}
-  .pr-team-btn.active{background:rgba(255,210,63,.25);border-color:#FFD23F;color:#FFD23F;}
-  @keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.4}}
-  .pr-empty{font-size:.72rem;color:rgba(255,255,255,.35);padding:4px 0;}
-  .panel-row{display:flex;gap:6px;}
-  .buzz-row{justify-content:flex-start;background:rgba(255,255,255,.03);border-radius:6px;padding:5px 8px;}
-  .buzz-row.first{background:rgba(255,210,63,.12);box-shadow:inset 0 0 0 1px rgba(255,210,63,.3);}
-  .pr-rank{color:#FFD23F;font-family:'Bebas Neue',sans-serif;font-size:1rem;width:18px;}
-  .buzz-time{margin-left:auto;font-family:'Bebas Neue',sans-serif;font-size:1rem;}
-
-  .btn-grid{display:flex;flex-wrap:wrap;gap:6px;}
-  .controls{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);display:flex;flex-wrap:wrap;gap:7px;}
-  .gm-btn{padding:10px 14px;border:none;border-radius:9px;font-family:'Inter',sans-serif;font-size:.76rem;font-weight:800;cursor:pointer;text-transform:uppercase;letter-spacing:.4px;transition:filter .1s, transform .05s;}
-  .gm-btn:hover{filter:brightness(1.15);}
-  .gm-btn:active{transform:scale(.97);}
-  .gm-btn.sm{padding:7px 10px;font-size:.68rem;flex:1;}
-  .gm-btn.gray{background:rgba(255,255,255,.09);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.12);}
-  .gm-btn.gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
-  .gm-btn.blue{background:linear-gradient(180deg,#3B82F6,#1D4ED8);color:#fff;}
-  .gm-btn.orange{background:linear-gradient(180deg,#F97316,#C2410C);color:#fff;}
-  .gm-btn.purple{background:linear-gradient(180deg,#8B5CF6,#6D28D9);color:#fff;}
-  .gm-btn.danger-outline{background:rgba(232,69,60,.12);border:1px solid rgba(232,69,60,.4);color:#FF8A80;}
 </style></head><body>
   <div class="gm-header">
     <div class="gm-title">JEOPARDY<small>Gamemaster</small></div>
     ${connChip}
   </div>
   <div class="gm-body">
+    ${gmNotesPanelHtml()}
     ${body}
   </div>
 </body></html>`;
@@ -4642,7 +4694,8 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','nextRound','openJeopardyClue',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
-  'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia',
+  'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia','saveHostNotesRemote',
+  'tournamentStartGame',
 ]);
 
 function gmRemoteInitFirebase() {
@@ -4692,9 +4745,13 @@ function pushGamemasterHtmlToFirebase(html) {
 // Ersetzt document.open()/write()/close() an allen GM-Render-Stellen: schreibt
 // wie bisher ins Popup UND spiegelt dieselbe HTML nach Firebase fürs Handy.
 function commitGamemasterHtml(html) {
-  gamemasterWin.document.open();
-  gamemasterWin.document.write(html);
-  gamemasterWin.document.close();
+  // Statt jedes Mal das ganze iframe-Dokument neu zu schreiben (document.write),
+  // wird nur reingepatcht was sich wirklich geändert hat (per morphMirror, siehe
+  // Board-Popout weiter oben). Das lässt z.B. das Notizen-Textfeld beim Tippen
+  // in Ruhe, statt es bei jedem GM-Update (Buzz, Punktestand, …) zu resetten.
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  morphMirror(gamemasterWin.document.head, doc.head);
+  morphMirror(gamemasterWin.document.body, doc.body);
   pushGamemasterHtmlToFirebase(html);
 }
 
@@ -5093,7 +5150,9 @@ function showJeopardyResults() {
     winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
   jeopardyState.active = false;
   closeJeopardyClue();
-  offerTournamentResult('Jeopardy', jeopardyState.teamNames, jeopardyState.scores);
+  const recordedToTournament = tournamentAutoRecordIfActive(jeopardyState.teamNames, jeopardyState.scores);
+  document.getElementById('tour-goto-btn').style.display = recordedToTournament ? '' : 'none';
+  if (!recordedToTournament) offerTournamentResult('Jeopardy', jeopardyState.teamNames, jeopardyState.scores);
   showScreen('result-screen');
   updateGamemaster();
   if (winners.length === 1) confetti();
@@ -5373,6 +5432,8 @@ function wwmEnd(amount, jackpot){
     : `${wwmState.name} gewinnt ${wwmMoney(amount)}`;
   document.getElementById('final-scores').innerHTML = `Gewonnen: <strong>${wwmMoney(amount)}</strong>`;
   document.getElementById('tour-record-btn').style.display = 'none';
+  const recordedToTournament = tournamentAutoRecordIfActive([wwmState.name], [amount]);
+  document.getElementById('tour-goto-btn').style.display = recordedToTournament ? '' : 'none';
   showScreen('result-screen');
   updateGamemaster();
   if (amount > 0) confetti(jackpot);
@@ -5474,46 +5535,26 @@ function updateGamemasterWwm(){
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
-<style>
-  :root{color-scheme:dark;}
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Inter',sans-serif;background:#0b0e2c;color:#fff;padding:18px;display:flex;flex-direction:column;min-height:100vh;}
-  h2{font-size:.65rem;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.4);margin-bottom:6px}
-  .round-label{display:inline-block;padding:4px 14px;border-radius:6px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);font-size:.7rem;font-weight:700;color:#FFD23F;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
-  .money{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:12px;}
+<style>${GM_SHARED_CSS}
+  .money{display:flex;justify-content:space-between;font-size:.85rem;}
   .money strong{color:#FFD23F;}
-  .question{font-size:1.05rem;font-weight:700;margin-bottom:14px;line-height:1.5;}
-  .answer{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;margin-bottom:5px;border-radius:8px;font-weight:600;font-size:.9rem;transition:filter .1s;}
-  .answer:hover{filter:brightness(1.2);}
-  .num{color:#FFD23F;margin-right:10px;font-weight:700;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;}
-  .ll{font-size:.72rem;color:rgba(255,255,255,.5);margin-bottom:12px;}
+  .ll{font-size:.72rem;color:rgba(255,255,255,.5);}
   .ll b{color:#FFD23F;}
-  .controls{margin-top:auto;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-wrap:wrap;gap:6px;}
-  .gm-btn{padding:10px 16px;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:filter .1s;}
-  .gm-btn:hover{filter:brightness(1.15);}
-  .gm-btn.gm-red{background:linear-gradient(180deg,#E8453C,#C62828);color:#fff;}
-  .gm-btn.gm-gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
-  .gm-btn.gm-gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
-  .gm-btn.gm-blue{background:linear-gradient(180deg,#3B82F6,#1D4ED8);color:#fff;}
-  .gm-btn.gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
-  .gm-btn.gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
-  .gm-btn.sm{padding:7px 10px;font-size:.68rem;flex:1;}
-  .panel{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;margin-bottom:12px;}
-  .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;}
-  .panel-row{display:flex;gap:6px;flex-wrap:wrap;}
 </style></head><body>
-  <h2>Gamemaster · Millionär</h2>
-  <div class="round-label">Frage ${wwmState.currentQ+1} / ${wwmData.questions.length}</div>
+  ${gmHeaderHtml('Gamemaster', `Millionär · Frage ${wwmState.currentQ+1} / ${wwmData.questions.length}`)}
+  <div class="gm-body">
+  ${gmNotesPanelHtml()}
   <div class="money"><span>Frage um: <strong>${wwmMoney(amtNow)}</strong></span><span>Sicher: <strong>${wwmMoney(secured)}</strong></span></div>
   <div class="ll">Joker: 50:50 <b>${wwmState.lifelines.fifty?'✗':'✓'}</b> · Telefon <b>${wwmState.lifelines.phone?'✗':'✓'}</b> · Publikum <b>${wwmState.lifelines.audience?'✗':'✓'}</b></div>
   ${audHtml}
-  ${mediaControlButtonsHtml(q.media, 'wwmToggleMedia')}
   <div class="question">${q.q}</div>
-  ${answersHtml}
-  <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:8px;">
+  <div class="answer-list">${answersHtml}</div>
+  ${mediaControlButtonsHtml(q.media, 'wwmToggleMedia')}
+  <div class="hint-line">
     ${wwmState.locked ? (wwmState.revealed ? 'Aufgelöst.' : 'Geloggt — jetzt auflösen.') : (wwmState.selected!==null ? 'Antwort '+WWM_LETTERS[wwmState.selected]+' gewählt.' : 'Keine Antwort gewählt.')}
   </div>
   <div class="controls">${wwmControlsHtml('opener.')}</div>
+  </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
 }
