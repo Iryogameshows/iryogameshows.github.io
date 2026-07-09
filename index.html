@@ -743,6 +743,13 @@ body {
   text-transform: uppercase; color: rgba(255,255,255,.3);
 }
 
+/* ── GM-Fenster eingebettet auf dem Mainscreen (statt separates Popup) ── */
+#gm-embed-overlay {
+  display: none; position: fixed; inset: 0; z-index: 4800; background: #0b0e2c;
+}
+#gm-embed-overlay.visible { display: block; }
+#gm-embed-frame { width: 100%; height: 100%; border: none; }
+
 @media (max-width: 600px) {
   .logo svg { width: 200px; }
   .team-panel .t-score { font-size: 2.2rem; }
@@ -1432,6 +1439,10 @@ body {
 
 <div class="gm-bar" id="gm-bar"></div>
 
+<div id="gm-embed-overlay">
+  <iframe id="gm-embed-frame"></iframe>
+</div>
+
 <script>
 // ── SFX ── Synthetisierte Soundeffekte (Web Audio API, keine externen Dateien nötig)
 const SFX = (() => {
@@ -1652,6 +1663,10 @@ function showScreen(id) {
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
   if (id === 'tournament-screen') renderTournament();
+  // Eingebettetes GM-Panel nur beim echten Rücksprung zum Hauptmenü wieder
+  // ausblenden - bleibt bei internen Übergängen (z.B. Feud → Finale) sichtbar,
+  // genau wie das alte Popup-Fenster das auch nie automatisch geschlossen hat.
+  if (id === 'menu-screen') document.getElementById('gm-embed-overlay').classList.remove('visible');
   // Logo per context
   if (id === 'menu-screen') renderLogo('KELLER', 'GAMESHOWS', 30);
   else if (id === 'tournament-screen') renderLogo('TURNIER', null, null);
@@ -2841,7 +2856,7 @@ function openBoardPopout(screen) {
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&display=swap" rel="stylesheet">
 <style>${styleContent}
 body{pointer-events:none;}
-#gm-bar,#host-gate,#screen-picker,#menu-screen,#setup-screen,#jeopardy-setup-screen,#wwm-setup-screen,#edit-screen,#jeopardy-edit-screen,#wwm-edit-screen,#qr-overlay{display:none!important;}
+#gm-bar,#gm-embed-overlay,#host-gate,#screen-picker,#menu-screen,#setup-screen,#jeopardy-setup-screen,#wwm-setup-screen,#edit-screen,#jeopardy-edit-screen,#wwm-edit-screen,#qr-overlay{display:none!important;}
 </style></head><body></body></html>`);
   boardWin.document.close();
   try { boardWin.moveTo(left, top); boardWin.resizeTo(width, height); } catch (e) {}
@@ -2866,45 +2881,24 @@ function startBoardMirror() {
 }
 
 // ── GAMEMASTER ──
+// Das GM-"Fenster" ist kein separates Popup mehr, sondern ein iframe direkt
+// im Mainscreen (das Popout mit dem Board läuft ja jetzt eigenständig als
+// Gamescreen - der Mainscreen ist damit frei für die Steuerung). Die ganze
+// bestehende GM-Logik (commitGamemasterHtml, onclick="opener.xxx()" usw.)
+// bleibt unverändert: contentWindow.opener wird manuell auf das Hauptfenster
+// gesetzt, damit "opener.xxx()" in den generierten GM-Templates weiter
+// funktioniert, obwohl es sich technisch nicht mehr um ein echtes Popup handelt.
 function openGamemaster() {
-  if (gamemasterWin && !gamemasterWin.closed) { updateGamemaster(); gamemasterWin.focus(); return; }
-  const GM_W = 420, GM_H = 600;
-  const guess = guessSecondScreenPosition(GM_W, GM_H);
-  const features = `width=${GM_W},height=${GM_H},resizable=yes${guess ? `,left=${guess.left},top=${guess.top}` : ''}`;
-  gamemasterWin = window.open('', 'Gamemaster', features);
+  const overlay = document.getElementById('gm-embed-overlay');
+  const frame = document.getElementById('gm-embed-frame');
+  overlay.classList.add('visible');
+  if (!gamemasterWin) {
+    gamemasterWin = frame.contentWindow;
+    gamemasterWin.opener = window;
+  }
   updateGamemaster();
-  refineGamemasterPosition(GM_W, GM_H);
   startGmPoller();
   startGmRemoteCommandListener();
-}
-// Grobe, berechtigungsfreie Vermutung fürs bekannte 3-Monitor-Setup: Family Feud
-// läuft auf dem rechten Bildschirm, das GM-Fenster soll auf den LINKEN (zwei
-// Monitore weiter links). Funktioniert in allen Browsern (nur window.open-
-// Positionsangaben), ist aber nur eine Schätzung - die genaue Platzierung
-// übernimmt refineGamemasterPosition() via Window Management API.
-function guessSecondScreenPosition(width, height) {
-  if (window.screen.isExtended === false) return null; // Browser weiß sicher: kein 2. Bildschirm
-  const baseLeft = (window.screenLeft ?? window.screenX ?? 0);
-  const baseTop = (window.screenTop ?? window.screenY ?? 0);
-  return { left: baseLeft - window.screen.width * 2, top: baseTop + 40 };
-}
-// Verfeinert die Position, falls die Window Management API verfügbar & erlaubt ist
-// (Chrome/Edge, HTTPS) - zielt gezielt auf den am weitesten LINKS liegenden
-// Bildschirm (der gewünschte "Bildschirm 2"), statt nur irgendeinen anderen.
-async function refineGamemasterPosition(width, height) {
-  if (!gamemasterWin || gamemasterWin.closed) return;
-  if (!('getScreenDetails' in window)) return;
-  try {
-    const details = await window.getScreenDetails();
-    if (details.screens.length < 2) return;
-    const target = [...details.screens].sort((a, b) => a.availLeft - b.availLeft)[0];
-    const left = target.availLeft + Math.max(0, (target.availWidth - width) / 2);
-    const top = target.availTop + Math.max(0, (target.availHeight - height) / 2);
-    gamemasterWin.moveTo(left, top);
-    gamemasterWin.resizeTo(width, height);
-  } catch (e) {
-    // Berechtigung verweigert oder nicht unterstützt - grobe Vermutung bleibt bestehen
-  }
 }
 // Wird gezeigt, solange ein "Klicken zum Fortfahren"-Overlay (Intro, Tutorial,
 // Zwischensequenz) den Hauptbildschirm blockiert - der Host muss dafür nicht
