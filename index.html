@@ -316,7 +316,6 @@ body {
   60% { opacity: 1; transform: scale(1.05) rotate(2deg); }
   100% { opacity: .8; transform: scale(1) rotate(0); }
 }
-.intro-overlay.leaving { animation: introOut .5s ease-in forwards; }
 @keyframes introOut {
   to { opacity: 0; }
 }
@@ -334,6 +333,15 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 .overlay-enter { animation: overlayIn .5s ease-out; }
+
+/* Klick-Overlays der Finale-Sequenz (Intro, Matchup) - gleiche Optik wie
+   .welcome-overlay, aber über dem Black-Backdrop (z-index 2000). */
+.finale-click-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 12px;
+  cursor: pointer; user-select: none; background: #000;
+}
 
 /* ── WELCOME SCREEN ── */
 .welcome-overlay {
@@ -363,11 +371,6 @@ body {
   color: #FFD23F; letter-spacing: 6px;
   text-shadow: 0 0 50px rgba(255,210,63,.3);
   opacity: 0; animation: welcomeTextIn .8s ease-out .9s forwards;
-}
-.welcome-line3 {
-  font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem;
-  color: rgba(255,255,255,.2); letter-spacing: 8px;
-  opacity: 0; animation: welcomeTextIn .6s ease-out 1.4s forwards;
 }
 @keyframes welcomeTextIn {
   from { opacity: 0; transform: translateY(15px); }
@@ -475,10 +478,6 @@ body {
   width: 50px; height: 50px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-weight: 900; font-size: 1.3rem;
-}
-.tut-x.off {
-  background: rgba(255,255,255,.04); border: 2px solid rgba(255,255,255,.08);
-  color: rgba(255,255,255,.1);
 }
 .tut-x.on {
   background: radial-gradient(circle, rgba(232,69,60,.3), rgba(198,40,40,.4));
@@ -1690,6 +1689,28 @@ function showScreen(id) {
 // Fenstern drosseln/pausieren, die gerade im Hintergrund sind (z.B. wenn der
 // Host gerade auf den Gamescreen-Popout statt den Mainscreen schaut) - dann
 // feuert animationend nie und der Backdrop bleibt für immer schwarz stehen.
+// Legt den schwarzen Hintergrund an, der während Intro-/Zwischensequenzen
+// verhindert, dass darunterliegende Screens durchblitzen.
+function addBlackBackdrop() {
+  const bd = document.createElement('div');
+  bd.className = 'black-backdrop';
+  document.body.appendChild(bd);
+  return bd;
+}
+// Zeigt ein Vollbild-Overlay, das der Host per Klick weiterschaltet - der
+// Klick zählt erst nach delayMs, damit ein Doppelklick am Ende der vorigen
+// Sequenz nicht ausversehen gleich die nächste überspringt.
+function showClickOverlay(className, html, delayMs, onNext, styleOverride) {
+  const ov = document.createElement('div');
+  ov.className = className;
+  if (styleOverride) ov.style.cssText = styleOverride;
+  ov.innerHTML = html;
+  document.body.appendChild(ov);
+  let canClick = false;
+  setTimeout(() => { canClick = true; }, delayMs);
+  ov.addEventListener('click', () => { if (canClick) closeOverlay(ov, onNext); });
+  return ov;
+}
 function fadeOutBackdrop(bd) {
   if (!bd) return;
   let finished = false;
@@ -2008,21 +2029,26 @@ function downloadJSON(data, filename) {
 }
 function exportQuestions() { downloadJSON(questions, 'family-feud-fragen.json'); }
 function exportFinaleQuestions() { downloadJSON(finaleQuestions, 'family-feud-finale-fragen.json'); }
-function importJSON(e, callback) {
-  const file = e.target.files[0]; if(!file)return;
+// Gemeinsames Datei-Handling für alle JSON-Importe (FF/Jeopardy/WWM):
+// Datei lesen, BOM entfernen, parsen - apply(d) macht die formatspezifische
+// Validierung und darf bei ungültigem Inhalt einfach werfen.
+function readJsonFile(e, apply) {
+  const file = e.target.files[0]; if(!file) return;
   const r = new FileReader();
   r.onload = () => {
-    try {
-      const text = r.result.replace(/^﻿/, '');
-      const d = JSON.parse(text);
-      if(!Array.isArray(d)) throw new Error('Datei muss ein JSON-Array sein');
-      callback(d);
-      saveToStorage();
-      renderQuestionList();
-    } catch(err) { alert('Import fehlgeschlagen: ' + err.message); }
+    try { apply(JSON.parse(r.result.replace(/^﻿/, ''))); }
+    catch(err) { alert('Import fehlgeschlagen' + (err && err.message ? ': ' + err.message : '')); }
   };
   r.onerror = () => { alert('Datei konnte nicht gelesen werden'); };
-  r.readAsText(file, 'UTF-8'); e.target.value='';
+  r.readAsText(file, 'UTF-8'); e.target.value = '';
+}
+function importJSON(e, callback) {
+  readJsonFile(e, d => {
+    if(!Array.isArray(d)) throw new Error('Datei muss ein JSON-Array sein');
+    callback(d);
+    saveToStorage();
+    renderQuestionList();
+  });
 }
 function importQuestions(e) { importJSON(e, d => { questions = d; }); }
 function importFinaleQuestions(e) { importJSON(e, d => { finaleQuestions = d; }); }
@@ -2451,11 +2477,9 @@ function startGameActual() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
 
   // Black backdrop stays behind all overlays so nothing flashes through
-  let old = document.querySelector('.black-backdrop');
+  const old = document.querySelector('.black-backdrop');
   if (old) old.remove();
-  const bd = document.createElement('div');
-  bd.className = 'black-backdrop';
-  document.body.appendChild(bd);
+  addBlackBackdrop();
 
   openGamemaster(); // schon jetzt öffnen, damit Intro/Tutorial vom GM-Fenster aus steuerbar sind
   activeBuzzerContext = 'feud';
@@ -2495,20 +2519,11 @@ function afterStar() {
 }
 
 function showWelcomeIntro() {
-  const ov = document.createElement('div');
-  ov.className = 'welcome-overlay overlay-enter';
-  ov.innerHTML = `
+  showClickOverlay('welcome-overlay overlay-enter', `
     <div class="welcome-star">${STAR_SVG}</div>
     <div class="welcome-line1">Willkommen zu</div>
     <div class="welcome-line2">Keller Feud</div>
-  `;
-  document.body.appendChild(ov);
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 1800);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, showTutorialThenGame);
-  });
+  `, 1800, showTutorialThenGame);
 }
 
 function showTutorialThenGame() {
@@ -2541,9 +2556,16 @@ function showGameshowIntro(onDone) {
       <div class="screen s7"><p class="lbl">Wer nach 2 Tagen vorn liegt, gewinnt</p><p class="euro">30&thinsp;€</p><p class="sub">…aufs Gewinner-Team aufgeteilt!</p></div>
       <div class="kg-hint">Klicken um fortzufahren</div>
     </div>`;
+  runKgIntro(overlay, onDone);
+}
+
+// Gemeinsamer Ablauf beider Gameshow-Intros (Tag 1 und Tag 2): Marquee-Birnen
+// und Funken aufbauen, Sequenz abspielen, per Klick beenden (frühestens nach
+// 1,5s), bei Resize neu aufbauen. Der jeweilige Bildinhalt kommt vom Aufrufer.
+function runKgIntro(overlay, onDone) {
   document.body.appendChild(overlay);
-  const kg = overlay.querySelector('#kg');
-  const frame = overlay.querySelector('#kgframe');
+  const kg = overlay.firstElementChild;
+  const frame = kg.querySelector('.frame');
   const cols = ['#FFD24D', '#FF5DA2'];
   function build() {
     frame.innerHTML = '';
@@ -2557,8 +2579,8 @@ function showGameshowIntro(onDone) {
     for (let y2 = H - 14 - step; y2 > 14; y2 -= step) mb(14, y2);
     for (let s = 0; s < 12; s++) { const sp = document.createElement('div'); sp.className = 'spark'; sp.style.left = (8 + Math.random() * 84) + '%'; sp.style.top = (14 + Math.random() * 54) + '%'; sp.style.animationDelay = (Math.random() * 1.8) + 's'; kg.appendChild(sp); }
   }
-  function play() { kg.classList.remove('play'); void kg.offsetWidth; kg.classList.add('play'); }
-  build(); play();
+  build();
+  kg.classList.add('play');
   let done = false;
   function finish() {
     if (done) return;
@@ -2684,25 +2706,15 @@ function showBlackPause() {
 }
 
 function showWelcome() {
-  const ov = document.createElement('div');
-  ov.className = 'welcome-overlay overlay-enter';
-  ov.innerHTML = `
+  showClickOverlay('welcome-overlay overlay-enter', `
     <div class="welcome-star">${STAR_SVG}</div>
     <div class="welcome-line1">Los geht's</div>
     <div class="welcome-line2">Runde 1</div>
-  `;
-  document.body.appendChild(ov);
-
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 1800);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, () => {
-      showScreen('game-screen');
-      loadRound();
-      setTimeout(() => openGamemaster(), 120);
-      fadeOutBackdrop(document.querySelector('.black-backdrop'));
-    });
+  `, 1800, () => {
+    showScreen('game-screen');
+    loadRound();
+    setTimeout(() => openGamemaster(), 120);
+    fadeOutBackdrop(document.querySelector('.black-backdrop'));
   });
 }
 
@@ -2880,63 +2892,33 @@ function showResults() {
 }
 
 function showEliminationScreen(eliminatedIdx) {
-  const ov = document.createElement('div');
-  ov.className = 'elim-overlay overlay-enter';
-  ov.innerHTML = `
+  showClickOverlay('elim-overlay overlay-enter', `
     <div class="elim-text">Ausgeschieden</div>
     <div class="elim-team">${state.teamNames[eliminatedIdx]}</div>
     <div class="elim-sub">Die besten zwei Teams spielen das Finale</div>
-  `;
-  document.body.appendChild(ov);
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 2500);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, showFinaleMatchup);
-  });
+  `, 2500, showFinaleMatchup);
 }
 
 function showFinaleIntroScreen(onDone) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  let old = document.querySelector('.black-backdrop');
-  if (!old) { const bd = document.createElement('div'); bd.className = 'black-backdrop'; document.body.appendChild(bd); }
-  const ov = document.createElement('div');
-  ov.className = 'finale-click-overlay';
-  ov.style.cssText = 'position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;user-select:none;background:#000;';
-  ov.innerHTML = `
+  if (!document.querySelector('.black-backdrop')) addBlackBackdrop();
+  showClickOverlay('finale-click-overlay', `
     <div class="welcome-star">${STAR_SVG}</div>
     <div class="welcome-line1">Jetzt kommt</div>
     <div class="welcome-line2">Das große Finale</div>
-  `;
-  document.body.appendChild(ov);
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 2000);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, onDone);
-  });
+  `, 2000, onDone);
 }
 
 function showFinaleMatchup() {
-  const ov = document.createElement('div');
-  ov.className = 'finale-click-overlay';
-  ov.style.cssText = 'position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;user-select:none;background:#000;';
-  ov.innerHTML = `
+  showClickOverlay('finale-click-overlay', `
     <div class="welcome-star">${STAR_SVG}</div>
     <div class="welcome-line2" style="font-size:3.5rem;">${state.teamNames[finaleState.teams[0]]}</div>
     <div class="welcome-line1" style="animation-delay:1s;">vs</div>
     <div class="welcome-line2" style="font-size:3.5rem;animation-delay:1.2s;">${state.teamNames[finaleState.teams[1]]}</div>
-  `;
-  document.body.appendChild(ov);
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 2500);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, () => {
-      if (finaleState.questions.length === 0) { showResults(); return; }
-      startFinale();
-    });
-  });
+  `, 2500, () => {
+    if (finaleState.questions.length === 0) { showResults(); return; }
+    startFinale();
+  }, 'gap:16px;');
 }
 
 function startFinale() {
@@ -3006,29 +2988,18 @@ function finaleMarkMiss() {
 
 function startFinaleReveal() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const bd = document.createElement('div');
-  bd.className = 'black-backdrop';
-  document.body.appendChild(bd);
-  const ov = document.createElement('div');
-  ov.className = 'welcome-overlay overlay-enter';
-  ov.innerHTML = `
+  const bd = addBlackBackdrop();
+  showClickOverlay('welcome-overlay overlay-enter', `
     <div class="welcome-star">${STAR_SVG}</div>
     <div class="welcome-line1">Und jetzt</div>
     <div class="welcome-line2">Die Auflösung</div>
-  `;
-  document.body.appendChild(ov);
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 1500);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, () => {
-      finaleState.phase = 'reveal';
-      finaleState.revealQ = 0;
-      showScreen('finale-screen');
-      document.getElementById('finale-team-label').textContent = 'Auflösung';
-      loadRevealQuestion();
-      fadeOutBackdrop(bd);
-    });
+  `, 1500, () => {
+    finaleState.phase = 'reveal';
+    finaleState.revealQ = 0;
+    showScreen('finale-screen');
+    document.getElementById('finale-team-label').textContent = 'Auflösung';
+    loadRevealQuestion();
+    fadeOutBackdrop(bd);
   });
 }
 
@@ -3107,31 +3078,16 @@ function showFinaleResults() {
 
 function showFinaleSwitch() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const bd = document.createElement('div');
-  bd.className = 'black-backdrop';
-  document.body.appendChild(bd);
-  const ov = document.createElement('div');
-  ov.className = 'welcome-overlay overlay-enter';
-  ov.innerHTML = `
+  const bd = addBlackBackdrop();
+  showClickOverlay('welcome-overlay overlay-enter', `
     <div class="welcome-star">${STAR_SVG}</div>
     <div class="welcome-line1">Jetzt spielt</div>
     <div class="welcome-line2">${state.teamNames[finaleState.teams[1]]}</div>
-  `;
-  document.body.appendChild(ov);
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 1500);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, () => {
-      showScreen('finale-screen');
-      loadFinaleQuestion();
-      fadeOutBackdrop(bd);
-    });
+  `, 1500, () => {
+    showScreen('finale-screen');
+    loadFinaleQuestion();
+    fadeOutBackdrop(bd);
   });
-}
-
-function endFinale() {
-  showFinaleResults();
 }
 
 // ── GAMESCREEN (Zuschauer-Bildschirm als eigenes Fenster) ──
@@ -4025,11 +3981,9 @@ function startJeopardyActual() {
 
   // Hide screens behind a black backdrop, then play intro
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  let old = document.querySelector('.black-backdrop');
+  const old = document.querySelector('.black-backdrop');
   if (old) old.remove();
-  const bd = document.createElement('div');
-  bd.className = 'black-backdrop';
-  document.body.appendChild(bd);
+  addBlackBackdrop();
   openGamemaster(); // schon jetzt öffnen, damit Intro vom GM-Fenster aus steuerbar ist
   showJeopardyIntro();
 }
@@ -4076,70 +4030,19 @@ function showGameshowIntroTag2(onDone) {
       <div class="screen s6"><p class="lbl">Wer am Ende vorn liegt, gewinnt</p><p class="euro">30&thinsp;€</p><p class="sub">…aufs Gewinner-Team aufgeteilt!</p></div>
       <div class="kg-hint">Klicken um fortzufahren</div>
     </div>`;
-  document.body.appendChild(overlay);
-  const kg = overlay.querySelector('#kg2');
-  const frame = overlay.querySelector('#kg2frame');
-  const cols = ['#FFD24D', '#FF5DA2'];
-  function build() {
-    frame.innerHTML = '';
-    kg.querySelectorAll('.spark').forEach(e => e.remove());
-    const W = kg.clientWidth || 680, H = kg.clientHeight || 470, step = 40;
-    let i = 0;
-    function mb(x, y) { const b = document.createElement('div'); b.className = 'mb'; b.style.left = x + 'px'; b.style.top = y + 'px'; const c = cols[i % 2]; b.style.background = c; b.style.boxShadow = '0 0 10px 2px ' + c; b.style.animationDelay = (i * 0.07) + 's'; frame.appendChild(b); i++; }
-    for (let x = 20; x <= W - 20; x += step) mb(x, 14);
-    for (let y = 14 + step; y <= H - 40; y += step) mb(W - 14, y);
-    for (let x2 = W - 20; x2 >= 20; x2 -= step) mb(x2, H - 14);
-    for (let y2 = H - 14 - step; y2 > 14; y2 -= step) mb(14, y2);
-    for (let s = 0; s < 12; s++) { const sp = document.createElement('div'); sp.className = 'spark'; sp.style.left = (8 + Math.random() * 84) + '%'; sp.style.top = (14 + Math.random() * 54) + '%'; sp.style.animationDelay = (Math.random() * 1.8) + 's'; kg.appendChild(sp); }
-  }
-  function play() { kg.classList.remove('play'); void kg.offsetWidth; kg.classList.add('play'); }
-  build(); play();
-  let done = false;
-  function finish() {
-    if (done) return;
-    done = true;
-    overlay.classList.add('leaving');
-    let finished = false;
-    const cleanup = () => {
-      if (finished) return;
-      finished = true;
-      overlay.remove();
-      if (onDone) onDone();
-    };
-    // Screens inside the sequence (.s1-.s7) have their own finite kgBeat
-    // animations whose animationend bubbles up here too — ignore those.
-    overlay.addEventListener('animationend', (e) => {
-      if (e.target !== overlay) return;
-      cleanup();
-    });
-    setTimeout(cleanup, 900); // kgFadeOut is .8s; safety net if animationend is missed
-  }
-  let canSkip = false;
-  setTimeout(() => { canSkip = true; }, 1500);
-  overlay.addEventListener('click', () => { if (canSkip) finish(); });
-  const onResize = () => { if (!done) build(); else window.removeEventListener('resize', onResize); };
-  window.addEventListener('resize', onResize);
+  runKgIntro(overlay, onDone);
 }
 
 function showJeopardyTitle() {
-  const ov = document.createElement('div');
-  ov.className = 'welcome-overlay overlay-enter';
-  ov.innerHTML = `
+  showClickOverlay('welcome-overlay overlay-enter', `
     <div class="danger-title-sign">${DANGER_SVG}</div>
     <div class="welcome-line2" style="color:#FFD23F;">Jeopardy</div>
-  `;
-  document.body.appendChild(ov);
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 1800);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, () => {
-      showScreen('jeopardy-screen');
-      renderJeopardyScores();
-      renderJeopardyBoard();
-      setTimeout(() => openGamemaster(), 120);
-      fadeOutBackdrop(document.querySelector('.black-backdrop'));
-    });
+  `, 1800, () => {
+    showScreen('jeopardy-screen');
+    renderJeopardyScores();
+    renderJeopardyBoard();
+    setTimeout(() => openGamemaster(), 120);
+    fadeOutBackdrop(document.querySelector('.black-backdrop'));
   });
 }
 
@@ -5154,50 +5057,24 @@ function renderJeopardyControls() {
   if (el) el.remove();
 }
 
-function jeopardyExit() {
-  jeopardyState.active = false;
-  jeopardyState.currentClue = null;
-  closeJeopardyClue();
-  jeopardyStopSound(true);
-  jeopardyBuzzDisconnect();
-  const corner = document.getElementById('jeopardy-corner');
-  if (corner) corner.remove();
-  const bz = document.getElementById('jeopardy-buzzer');
-  if (bz) bz.remove();
-  document.getElementById('gm-bar').classList.remove('visible');
-  showScreen('menu-screen');
-  updateGamemaster();
-}
-
 function showJeopardyBoardTransition() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const bd = document.createElement('div');
-  bd.className = 'black-backdrop';
-  document.body.appendChild(bd);
-  const ov = document.createElement('div');
-  ov.className = 'welcome-overlay overlay-enter';
-  ov.innerHTML = `
+  addBlackBackdrop();
+  showClickOverlay('welcome-overlay overlay-enter', `
     <div class="danger-title-sign">${DANGER_SVG}</div>
     <div class="welcome-line1">Weiter geht's mit</div>
     <div class="welcome-line2" style="color:#FFD23F;">Board ${jeopardyState.currentBoard + 2}</div>
-  `;
-  document.body.appendChild(ov);
-  let canClick = false;
-  setTimeout(() => { canClick = true; }, 1500);
-  ov.addEventListener('click', () => {
-    if (!canClick) return;
-    closeOverlay(ov, () => {
-      jeopardyState.currentBoard++;
-      jeopardyState.used = jBoard().map(() => new Array(JEOPARDY_VALUES.length).fill(false));
-      jeopardyState.currentClue = null;
-      jeopardyState.answerShown = false;
-      jeopardyHistory = [];
-      showScreen('jeopardy-screen');
-      renderJeopardyScores();
-      renderJeopardyBoard();
-      updateGamemaster();
-      fadeOutBackdrop(document.querySelector('.black-backdrop'));
-    });
+  `, 1500, () => {
+    jeopardyState.currentBoard++;
+    jeopardyState.used = jBoard().map(() => new Array(JEOPARDY_VALUES.length).fill(false));
+    jeopardyState.currentClue = null;
+    jeopardyState.answerShown = false;
+    jeopardyHistory = [];
+    showScreen('jeopardy-screen');
+    renderJeopardyScores();
+    renderJeopardyBoard();
+    updateGamemaster();
+    fadeOutBackdrop(document.querySelector('.black-backdrop'));
   });
 }
 
@@ -5294,37 +5171,22 @@ function renderJeopardyEditor() {
   grid.innerHTML = html;
 }
 
-function exportJeopardy() {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(jeopardyData,null,2)],{type:'application/json'}));
-  a.download = 'jeopardy-boards.json';
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 100);
-}
+function exportJeopardy() { downloadJSON(jeopardyData, 'jeopardy-boards.json'); }
 
 function importJeopardy(e) {
-  const file = e.target.files[0]; if(!file) return;
-  const r = new FileReader();
-  r.onload = () => {
-    try {
-      const d = JSON.parse(r.result.replace(/^﻿/,''));
-      let boards = null;
-      if (Array.isArray(d.boards)) boards = d.boards;
-      else if (Array.isArray(d.categories)) boards = [d, makeEmptyBoard(2)]; // legacy single-board file
-      else if (Array.isArray(d)) boards = d; // bare array of boards
-      if (!boards) { alert('Ungültiges Format'); return; }
-      // Normalise to exactly 2 boards
-      while (boards.length < JEOPARDY_BOARDS) boards.push(makeEmptyBoard(boards.length + 1));
-      boards = boards.slice(0, JEOPARDY_BOARDS);
-      jeopardyData = { boards };
-      renderJeopardyEditor();
-    } catch { alert('Import fehlgeschlagen'); }
-  };
-  r.readAsText(file, 'UTF-8'); e.target.value = '';
+  readJsonFile(e, d => {
+    let boards = null;
+    if (Array.isArray(d.boards)) boards = d.boards;
+    else if (Array.isArray(d.categories)) boards = [d, makeEmptyBoard(2)]; // legacy single-board file
+    else if (Array.isArray(d)) boards = d; // bare array of boards
+    if (!boards) throw new Error('Ungültiges Format');
+    // Normalise to exactly 2 boards
+    while (boards.length < JEOPARDY_BOARDS) boards.push(makeEmptyBoard(boards.length + 1));
+    boards = boards.slice(0, JEOPARDY_BOARDS);
+    jeopardyData = { boards };
+    renderJeopardyEditor();
+  });
 }
-
-// Result screen back button for jeopardy
-function goToMenu() { showScreen('menu-screen'); }
 
 // ── WER WIRD MILLIONÄR ──
 const WWM_LADDER = [50,100,200,300,500,1000,2000,4000,8000,16000,32000,64000,125000,500000,1000000];
@@ -5547,13 +5409,6 @@ function wwmAudience(){
   updateGamemaster();
 }
 
-function wwmExit(){
-  wwmState.active = false;
-  document.getElementById('gm-bar').classList.remove('visible');
-  showScreen('menu-screen');
-  updateGamemaster();
-}
-
 // ── WWM GAMEMASTER ──
 function wwmControlsHtml(pfx){
   const q = wwmData.questions[wwmState.currentQ];
@@ -5666,28 +5521,16 @@ function wwmAddQuestion(){
 function wwmDeleteQuestion(i){
   if (confirm('Frage löschen?')){ wwmData.questions.splice(i,1); renderWwmEditor(); }
 }
-function exportWwm(){
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(wwmData,null,2)],{type:'application/json'}));
-  a.download = 'millionaer-fragen.json';
-  document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 100);
-}
+function exportWwm(){ downloadJSON(wwmData, 'millionaer-fragen.json'); }
 function importWwm(e){
-  const file = e.target.files[0]; if(!file) return;
-  const r = new FileReader();
-  r.onload = () => {
-    try {
-      const d = JSON.parse(r.result.replace(/^﻿/,''));
-      let qs = Array.isArray(d.questions) ? d.questions : (Array.isArray(d) ? d : null);
-      if (!qs) { alert('Ungültiges Format'); return; }
-      // normalise
-      qs = qs.map(x => ({ q:x.q||x.question||'', answers:(x.answers||['','','','']).slice(0,4), correct:Number(x.correct)||0 }));
-      wwmData = { questions: qs };
-      renderWwmEditor();
-    } catch { alert('Import fehlgeschlagen'); }
-  };
-  r.readAsText(file, 'UTF-8'); e.target.value = '';
+  readJsonFile(e, d => {
+    let qs = Array.isArray(d.questions) ? d.questions : (Array.isArray(d) ? d : null);
+    if (!qs) throw new Error('Ungültiges Format');
+    // normalise
+    qs = qs.map(x => ({ q:x.q||x.question||'', answers:(x.answers||['','','','']).slice(0,4), correct:Number(x.correct)||0 }));
+    wwmData = { questions: qs };
+    renderWwmEditor();
+  });
 }
 
 </script>
