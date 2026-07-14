@@ -774,24 +774,43 @@ body {
   .team-card { min-width: 160px; padding: 20px 16px; }
 }
 
-/* ── MENU ── */
-.menu-cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+/* ── MENU (Studio Gold) ── */
+.menu-divider { width: 200px; height: 1px; background: #2b3160; margin: 4px auto 22px; }
+.menu-cards {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px; width: 100%; max-width: 720px; margin: 0 auto;
+}
 .menu-card {
-  flex: 1; min-width: 220px; max-width: 320px;
-  background: rgba(255,255,255,.04);
-  border: 1.5px solid rgba(255,255,255,.1);
-  border-radius: 20px; padding: 40px 28px;
+  background: #101538;
+  border: 1px solid #2b3160;
+  border-radius: 14px; padding: 24px 16px;
   text-align: center; cursor: pointer;
-  transition: transform .15s, border-color .2s, background .2s;
+  transition: transform .14s ease, border-color .2s, background .2s;
   position: relative; overflow: hidden;
 }
-.menu-card:hover { transform: translateY(-4px); border-color: rgba(255,210,63,.4); background: rgba(255,210,63,.04); }
-.menu-card-icon { font-size: 3.5rem; margin-bottom: 16px; }
-.menu-card-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem;
-  color: #FFD23F; letter-spacing: 4px; margin-bottom: 8px;
+/* Goldene Akzentkante, die beim Hover oben aufleuchtet */
+.menu-card::before {
+  content: ''; position: absolute; top: 0; left: 22%; right: 22%; height: 3px;
+  background: linear-gradient(90deg, transparent, #D9A62E, transparent);
+  opacity: 0; transition: opacity .2s;
 }
-.menu-card-sub { font-size: .8rem; color: rgba(255,255,255,.4); font-weight: 600; letter-spacing: 1px; }
+.menu-card:hover { transform: translateY(-3px); border-color: rgba(217,166,46,.55); background: #141a46; }
+.menu-card:hover::before { opacity: 1; }
+.menu-card-icon { font-size: 2.3rem; margin-bottom: 12px; line-height: 1; }
+.menu-card-title {
+  font-family: 'Inter', sans-serif; font-size: 1.02rem; font-weight: 700;
+  color: #F0EDE2; letter-spacing: .3px; margin-bottom: 5px;
+}
+.menu-card-sub { font-size: .74rem; color: #7d83ad; font-weight: 600; letter-spacing: .3px; }
+.menu-pills { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+.menu-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid #2b3160; border-radius: 999px; padding: 9px 18px;
+  color: #9aa0c8; font-size: .8rem; font-weight: 700; letter-spacing: .5px;
+  cursor: pointer; background: transparent; font-family: 'Inter', sans-serif;
+  transition: border-color .2s, color .2s, background .2s;
+}
+.menu-pill:hover { border-color: rgba(217,166,46,.5); color: #F3E4BC; background: rgba(217,166,46,.06); }
 
 /* ── JEOPARDY ── */
 #jeopardy-screen { gap: 12px; max-width: 1100px; }
@@ -1159,6 +1178,7 @@ body {
 
 <!-- MENU -->
 <div id="menu-screen" class="screen active">
+  <div class="menu-divider"></div>
   <div class="menu-cards">
     <div class="menu-card" onclick="showScreen('setup-screen')">
       <div class="menu-card-icon">🎯</div>
@@ -1181,19 +1201,11 @@ body {
       <div class="menu-card-sub">Mehrtägig, gleiche Teams, Gewichtung</div>
     </div>
   </div>
-  <div class="menu-cards" style="margin-top:14px;">
-    <div class="menu-card" style="max-width:220px;" onclick="showScreen('reaction-board-screen')">
-      <div class="menu-card-icon">⚡</div>
-      <div class="menu-card-title" style="font-size:1.4rem;">Bestenliste</div>
-      <div class="menu-card-sub">Schnellste Buzzer-Zeiten</div>
-    </div>
-    <div class="menu-card" style="max-width:220px;" onclick="showScreen('host-notes-screen')">
-      <div class="menu-card-icon">📋</div>
-      <div class="menu-card-title" style="font-size:1.4rem;">Notizen</div>
-      <div class="menu-card-sub">Ablaufplan für den Host</div>
-    </div>
+  <div class="menu-pills">
+    <button class="menu-pill" onclick="showScreen('reaction-board-screen')">⚡ Bestenliste</button>
+    <button class="menu-pill" onclick="showScreen('host-notes-screen')">📋 Notizen</button>
+    <button class="menu-pill" id="sfx-toggle" onclick="this.textContent = SFX.toggle() ? '🔊 Sound an' : '🔇 Sound aus'"></button>
   </div>
-  <button class="btn btn-secondary" id="sfx-toggle" style="margin-top:18px;" onclick="this.textContent = SFX.toggle() ? '🔊 Sound an' : '🔇 Sound aus'"></button>
 </div>
 
 <!-- SETUP -->
