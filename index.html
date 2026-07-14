@@ -471,6 +471,58 @@ body {
   to { transform: perspective(800px) rotateX(0); }
 }
 
+/* Buzzer-Demo: team-farbige Buzz-Buttons */
+.tut-buzz-demo { display: flex; gap: 16px; margin-top: 6px; }
+.tut-buzz-btn {
+  padding: 14px 32px; border-radius: 16px;
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; letter-spacing: 2px;
+  color: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.35);
+}
+.tut-buzz-btn.red { background: linear-gradient(180deg, #E8453C, #C62828); }
+.tut-buzz-btn.blue {
+  background: linear-gradient(180deg, #3B82F6, #1D4ED8);
+  animation: tutStrikePop .45s cubic-bezier(.17,.67,.3,1.3);
+}
+/* Einblendungen-Demo: kleine Medien-Kacheln */
+.tut-media-demo { display: flex; gap: 10px; margin-top: 6px; }
+.tut-media-tile {
+  width: 70px; height: 70px; border-radius: 10px;
+  border: 2px solid rgba(255,255,255,.15);
+  display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
+  background: rgba(255,255,255,.05);
+}
+/* Jeopardy-Board-Demo */
+.tut-jboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 320px; }
+.tut-jcat {
+  background: linear-gradient(180deg, #1a2a8a, #111d6e); border-radius: 5px;
+  padding: 7px 3px; font-size: .5rem; font-weight: 900; text-transform: uppercase;
+  letter-spacing: .5px; color: #fff; text-align: center;
+  display: flex; align-items: center; justify-content: center; min-height: 34px;
+}
+.tut-jcell {
+  background: linear-gradient(180deg, #1a2a8a, #111d6e); border-radius: 5px; height: 42px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.35rem; color: #FFD23F;
+}
+.tut-jcell.used { background: #080c1e; color: transparent; }
+.tut-jcell.pick { animation: tutStrikePop .45s cubic-bezier(.17,.67,.3,1.3); box-shadow: 0 0 18px rgba(255,210,63,.5); }
+/* Richtig/Falsch-Demo (Jeopardy) */
+.tut-scorerow { display: flex; gap: 14px; margin-top: 6px; }
+.tut-scorechip {
+  display: flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 12px;
+  font-size: 1rem; font-weight: 800;
+}
+.tut-scorechip.good { background: rgba(34,197,94,.15); border: 2px solid #22C55E; color: #6EE7A0; }
+.tut-scorechip.bad { background: rgba(232,69,60,.15); border: 2px solid #E8453C; color: #FF8A80; }
+/* Daily-Double-Badge */
+.tut-dd {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 4px; color: #FFD23F;
+  padding: 14px 30px; border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,210,63,.16), rgba(245,158,11,.06));
+  border: 2px solid rgba(255,210,63,.5); text-shadow: 0 0 30px rgba(255,210,63,.4);
+  animation: tutTrophyBounce 1.6s ease-in-out infinite;
+}
+
 .tut-strikes-demo {
   display: flex; gap: 12px; margin-top: 8px;
 }
@@ -519,6 +571,8 @@ body {
   animation: introPulse 2.5s ease-in-out infinite;
 }
 
+.tut-danger { margin-bottom: 12px; animation: tutTrophyBounce 2s ease-in-out infinite; }
+.tut-danger svg { width: 96px; height: auto; filter: drop-shadow(0 4px 24px rgba(255,200,0,.35)); }
 .tut-star-anim {
   animation: tutStarSpin 3s linear infinite;
 }
@@ -1337,6 +1391,7 @@ body {
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startJeopardy()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('jeopardy-edit-screen')">Fragen bearbeiten</button>
+    <button class="btn btn-secondary" onclick="showJeopardyTutorial()">Tutorial</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
   </div>
 </div>
@@ -2621,80 +2676,23 @@ function runKgIntro(overlay, onDone) {
   window.addEventListener('resize', onResize);
 }
 
-function showTutorialFlow(onDone) {
-  const slides = [
-    { html: `
-      <div class="tut-star-anim" style="margin-bottom:10px;">
-        <svg viewBox="0 0 100 100" width="100" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="tsg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#FFE066"/><stop offset="50%" stop-color="#FFD23F"/><stop offset="100%" stop-color="#C6930A"/>
-          </linearGradient></defs>
-          <polygon points="50,5 61,38 96,38 68,58 79,91 50,72 21,91 32,58 4,38 39,38" fill="url(#tsg)"/>
-        </svg>
-      </div>
-      <div class="tut-big tut-gold">Keller Feud</div>
-    ` },
-    { html: `
-      <div class="tut-icon">⚔️</div>
-      <div class="tut-big tut-white" style="font-size:3rem;">Teams treten<br>gegeneinander an</div>
-      <div class="tut-sub">2 oder 3 Teams spielen um Punkte.<br>Pro Runde gibt es eine Frage mit versteckten Antworten.</div>
-    ` },
-    { html: `
-      <div class="tut-big tut-gold" style="font-size:2.5rem; margin-bottom:10px;">Das Board</div>
-      <div class="tut-board-demo">
-        <div class="tut-tile-demo tut-tile-green">
-          <div class="tut-tile-num">1</div>
-          <div class="tut-tile-text">Verschlafen</div>
-          <div class="tut-tile-pts">40</div>
-        </div>
-        <div class="tut-tile-demo tut-tile-blue"><div class="tut-tile-num">2</div><div class="tut-tile-placeholder"></div></div>
-        <div class="tut-tile-demo tut-tile-blue"><div class="tut-tile-num">3</div><div class="tut-tile-placeholder"></div></div>
-        <div class="tut-tile-demo tut-tile-blue"><div class="tut-tile-num">4</div><div class="tut-tile-placeholder"></div></div>
-      </div>
-      <div class="tut-sub">Klicke auf eine Antwort, um sie aufzudecken.<br>Je beliebter die Antwort, desto mehr Punkte.</div>
-    ` },
-    { html: `
-      <div class="tut-big tut-red" style="font-size:3rem;">Strikes!</div>
-      <div class="tut-strikes-demo">
-        <div class="tut-x on">✕</div>
-        <div class="tut-x on">✕</div>
-        <div class="tut-x on">✕</div>
-      </div>
-      <div class="tut-sub">Falsche Antwort? Strike!<br>Bei 3 Strikes wechselt das Team —<br>das andere Team kassiert die Punkte.</div>
-    ` },
-    { html: `
-      <div class="tut-icon tut-trophy-bounce">🏆</div>
-      <div class="tut-big tut-gold" style="font-size:3rem;">Am Ende gewinnt...</div>
-      <div class="tut-sub">...das Team mit den meisten Punkten!<br>Viel Spaß beim Spielen.</div>
-    ` }
-  ];
-
+// Gemeinsame Tutorial-Engine: zeigt eine Reihe Slides (HTML-Strings), weiter
+// per Klick, mit Fortschrittspunkten und Überspringen-Button. onDone (optional)
+// läuft nach der letzten Slide bzw. beim Überspringen - im FF-Intro führt das
+// direkt weiter ins Spiel, beim Tutorial-Button schließt es einfach.
+function runTutorial(slides, onDone) {
   let current = 0;
   const ov = document.createElement('div');
   ov.className = 'tut-overlay overlay-enter';
-
-  let slidesHtml = slides.map((s, i) => `
-    <div class="tut-slide ${i === 0 ? 'active' : ''}" data-idx="${i}">${s.html}</div>
-  `).join('');
-  const dots = slides.map((_, i) => `<div class="tut-dot ${i === 0 ? 'active' : ''}"></div>`).join('');
-
   ov.innerHTML = `
     <button class="tut-skip" id="tut-skip-btn">Überspringen</button>
-    ${slidesHtml}
-    <div class="tut-progress">${dots}</div>
+    ${slides.map((s, i) => `<div class="tut-slide ${i === 0 ? 'active' : ''}" data-idx="${i}">${s}</div>`).join('')}
+    <div class="tut-progress">${slides.map((_, i) => `<div class="tut-dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>
     <div class="tut-hint">Klicken zum Fortfahren</div>
   `;
   document.body.appendChild(ov);
-
-  function closeTutorial() {
-    closeOverlay(ov, onDone);
-  }
-
-  ov.querySelector('#tut-skip-btn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    closeTutorial();
-  });
-
+  const finish = () => closeOverlay(ov, onDone);
+  ov.querySelector('#tut-skip-btn').addEventListener('click', (e) => { e.stopPropagation(); finish(); });
   ov.addEventListener('click', (e) => {
     if (e.target.closest('#tut-skip-btn')) return;
     const allSlides = ov.querySelectorAll('.tut-slide');
@@ -2703,11 +2701,89 @@ function showTutorialFlow(onDone) {
     allSlides[current].classList.add('exit');
     allDots[current].classList.remove('active');
     current++;
-    if (current >= slides.length) { closeTutorial(); return; }
+    if (current >= slides.length) { finish(); return; }
     allDots[current].classList.add('active');
     setTimeout(() => { allSlides[current].classList.add('active'); }, 100);
   });
 }
+
+const TUT_STAR = `<svg viewBox="0 0 100 100" width="100" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="tsg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#FFE066"/><stop offset="50%" stop-color="#FFD23F"/><stop offset="100%" stop-color="#C6930A"/>
+  </linearGradient></defs>
+  <polygon points="50,5 61,38 96,38 68,58 79,91 50,72 21,91 32,58 4,38 39,38" fill="url(#tsg)"/>
+</svg>`;
+
+// Deckt alle Family-Feud-Regeln ab: Teams, Handy-Buzzer, Board, Strikes,
+// Einblendungen, Finale, Sieg.
+function feudTutorialSlides() {
+  return [
+    `<div class="tut-star-anim" style="margin-bottom:10px;">${TUT_STAR}</div>
+     <div class="tut-big tut-gold">Keller Feud</div>`,
+    `<div class="tut-icon">⚔️</div>
+     <div class="tut-big tut-white" style="font-size:3rem;">Teams treten<br>gegeneinander an</div>
+     <div class="tut-sub">2 oder 3 Teams spielen um Punkte.<br>Pro Runde gibt es eine Frage mit versteckten Antworten.</div>`,
+    `<div class="tut-icon">📱</div>
+     <div class="tut-big tut-white" style="font-size:2.6rem;">Per Handy dabei</div>
+     <div class="tut-buzz-demo"><div class="tut-buzz-btn red">BUZZ</div><div class="tut-buzz-btn blue">BUZZ</div></div>
+     <div class="tut-sub">Die Spieler scannen den QR-Code und buzzern vom Handy.<br>Wer zuerst buzzert, darf für sein Team antworten.</div>`,
+    `<div class="tut-big tut-gold" style="font-size:2.5rem; margin-bottom:10px;">Das Board</div>
+     <div class="tut-board-demo">
+       <div class="tut-tile-demo tut-tile-green"><div class="tut-tile-num">1</div><div class="tut-tile-text">Verschlafen</div><div class="tut-tile-pts">40</div></div>
+       <div class="tut-tile-demo tut-tile-blue"><div class="tut-tile-num">2</div><div class="tut-tile-placeholder"></div></div>
+       <div class="tut-tile-demo tut-tile-blue"><div class="tut-tile-num">3</div><div class="tut-tile-placeholder"></div></div>
+       <div class="tut-tile-demo tut-tile-blue"><div class="tut-tile-num">4</div><div class="tut-tile-placeholder"></div></div>
+     </div>
+     <div class="tut-sub">Richtige Antwort? Feld wird aufgedeckt.<br>Je beliebter die Antwort, desto mehr Punkte.</div>`,
+    `<div class="tut-big tut-red" style="font-size:3rem;">Strikes!</div>
+     <div class="tut-strikes-demo"><div class="tut-x on">✕</div><div class="tut-x on">✕</div><div class="tut-x on">✕</div></div>
+     <div class="tut-sub">Falsche Antwort? Strike!<br>Bei 3 Strikes ist das nächste Team dran —<br>rät es richtig, kassiert es die Punkte.</div>`,
+    `<div class="tut-media-demo"><div class="tut-media-tile">🖼️</div><div class="tut-media-tile">🎬</div><div class="tut-media-tile">🖼️</div></div>
+     <div class="tut-big tut-white" style="font-size:2.4rem; margin-top:14px;">Einblendungen</div>
+     <div class="tut-sub">Zu manchen Fragen blendest du Bilder oder Videos ein –<br>die Zuschauer sehen sie auf dem großen Bildschirm.</div>`,
+    `<div class="tut-icon tut-trophy-bounce">🔥</div>
+     <div class="tut-big tut-gold" style="font-size:2.8rem;">Das große Finale</div>
+     <div class="tut-sub">Zum Schluss spielen die besten Teams das Finale.<br>Bei 3 Teams scheidet das schwächste vorher aus.</div>`,
+    `<div class="tut-icon tut-trophy-bounce">🏆</div>
+     <div class="tut-big tut-gold" style="font-size:3rem;">Am Ende gewinnt...</div>
+     <div class="tut-sub">...das Team mit den meisten Punkten!<br>Viel Spaß beim Spielen.</div>`
+  ];
+}
+
+// Deckt alle Jeopardy-Regeln ab: Board/Kategorien, Buzzer & Sperre, Punkte/
+// Abzug, Daily Double, zwei Runden, Sieg.
+function jeopardyTutorialSlides() {
+  return [
+    `<div class="tut-danger">${DANGER_SVG}</div>
+     <div class="tut-big tut-gold">Jeopardy</div>`,
+    `<div class="tut-big tut-gold" style="font-size:2.4rem; margin-bottom:12px;">Kategorien &amp; Punkte</div>
+     <div class="tut-jboard">
+       <div class="tut-jcat">Musik</div><div class="tut-jcat">Sport</div><div class="tut-jcat">Kino</div>
+       <div class="tut-jcell">100</div><div class="tut-jcell">100</div><div class="tut-jcell pick">100</div>
+       <div class="tut-jcell">300</div><div class="tut-jcell used">300</div><div class="tut-jcell">300</div>
+       <div class="tut-jcell">500</div><div class="tut-jcell">500</div><div class="tut-jcell">500</div>
+     </div>
+     <div class="tut-sub">Wähle ein Feld aus einer Kategorie.<br>Je höher der Wert, desto schwerer die Frage.</div>`,
+    `<div class="tut-icon">📱</div>
+     <div class="tut-big tut-white" style="font-size:2.5rem;">Wer zuerst buzzert</div>
+     <div class="tut-buzz-demo"><div class="tut-buzz-btn red">BUZZ</div><div class="tut-buzz-btn blue">BUZZ</div></div>
+     <div class="tut-sub">Frage wird gezeigt, dann buzzern alle vom Handy.<br>Falsch geraten? 3 Sekunden gesperrt – die anderen dürfen.</div>`,
+    `<div class="tut-big tut-white" style="font-size:2.4rem; margin-bottom:6px;">Richtig oder falsch</div>
+     <div class="tut-scorerow"><div class="tut-scorechip good">✓ + Punkte</div><div class="tut-scorechip bad">✕ Abzug</div></div>
+     <div class="tut-sub">Richtige Antwort gibt den Feldwert gutgeschrieben,<br>eine falsche zieht Punkte ab.</div>`,
+    `<div class="tut-dd">★ Daily Double ★</div>
+     <div class="tut-sub" style="margin-top:16px;">Ein Feld versteckt das Daily Double.<br>Du sagst es dramatisch an, bevor die Frage kommt.</div>`,
+    `<div class="tut-icon">🎬</div>
+     <div class="tut-big tut-white" style="font-size:2.4rem;">Zwei Runden</div>
+     <div class="tut-sub">Nach dem ersten Board geht es mit einem<br>zweiten, schwereren Board weiter.</div>`,
+    `<div class="tut-icon tut-trophy-bounce">🏆</div>
+     <div class="tut-big tut-gold" style="font-size:3rem;">Am Ende gewinnt...</div>
+     <div class="tut-sub">...das Team mit den meisten Punkten!<br>Viel Erfolg.</div>`
+  ];
+}
+
+function showTutorialFlow(onDone) { runTutorial(feudTutorialSlides(), onDone); }
+function showJeopardyTutorial() { runTutorial(jeopardyTutorialSlides()); }
 
 function showBlackPause() {
   const ov = document.createElement('div');
@@ -3663,116 +3739,7 @@ function confetti(big){
 }
 
 // ── TUTORIAL ──
-function showTutorial() {
-  const slides = [
-    {
-      html: `
-        <div class="tut-star-anim" style="margin-bottom:10px;">
-          <svg viewBox="0 0 100 100" width="100" xmlns="http://www.w3.org/2000/svg">
-            <defs><linearGradient id="tsg" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#FFE066"/><stop offset="50%" stop-color="#FFD23F"/><stop offset="100%" stop-color="#C6930A"/>
-            </linearGradient></defs>
-            <polygon points="50,5 61,38 96,38 68,58 79,91 50,72 21,91 32,58 4,38 39,38" fill="url(#tsg)"/>
-          </svg>
-        </div>
-        <div class="tut-big tut-gold">Keller Feud</div>
-        `
-    },
-    {
-      html: `
-        <div class="tut-icon">⚔️</div>
-        <div class="tut-big tut-white" style="font-size:3rem;">Teams treten<br>gegeneinander an</div>
-        <div class="tut-sub">2 oder 3 Teams spielen um Punkte.<br>Pro Runde gibt es eine Frage mit versteckten Antworten.</div>
-      `
-    },
-    {
-      html: `
-        <div class="tut-big tut-gold" style="font-size:2.5rem; margin-bottom:10px;">Das Board</div>
-        <div class="tut-board-demo">
-          <div class="tut-tile-demo tut-tile-green">
-            <div class="tut-tile-num">1</div>
-            <div class="tut-tile-text">Verschlafen</div>
-            <div class="tut-tile-pts">40</div>
-          </div>
-          <div class="tut-tile-demo tut-tile-blue">
-            <div class="tut-tile-num">2</div>
-            <div class="tut-tile-placeholder"></div>
-          </div>
-          <div class="tut-tile-demo tut-tile-blue">
-            <div class="tut-tile-num">3</div>
-            <div class="tut-tile-placeholder"></div>
-          </div>
-          <div class="tut-tile-demo tut-tile-blue">
-            <div class="tut-tile-num">4</div>
-            <div class="tut-tile-placeholder"></div>
-          </div>
-        </div>
-        <div class="tut-sub">Klicke auf eine Antwort, um sie aufzudecken.<br>Je beliebter die Antwort, desto mehr Punkte.</div>
-      `
-    },
-    {
-      html: `
-        <div class="tut-big tut-red" style="font-size:3rem;">Strikes!</div>
-        <div class="tut-strikes-demo">
-          <div class="tut-x on">✕</div>
-          <div class="tut-x on">✕</div>
-          <div class="tut-x on">✕</div>
-        </div>
-        <div class="tut-sub">Falsche Antwort? Strike!<br>Bei 3 Strikes wechselt das Team —<br>das andere Team kassiert die Punkte.</div>
-      `
-    },
-    {
-      html: `
-        <div class="tut-icon tut-trophy-bounce">🏆</div>
-        <div class="tut-big tut-gold" style="font-size:3rem;">Am Ende gewinnt...</div>
-        <div class="tut-sub">...das Team mit den meisten Punkten!<br>Viel Spaß beim Spielen.</div>
-      `
-    }
-  ];
-
-  let current = 0;
-
-  const ov = document.createElement('div');
-  ov.className = 'tut-overlay overlay-enter';
-
-  let slidesHtml = slides.map((s, i) => `
-    <div class="tut-slide ${i === 0 ? 'active' : ''}" data-idx="${i}">${s.html}</div>
-  `).join('');
-
-  const dots = slides.map((_, i) => `<div class="tut-dot ${i === 0 ? 'active' : ''}"></div>`).join('');
-
-  ov.innerHTML = `
-    <button class="tut-skip" onclick="event.stopPropagation(); this.closest('.tut-overlay').remove();">Überspringen</button>
-    ${slidesHtml}
-    <div class="tut-progress">${dots}</div>
-    <div class="tut-hint">Klicken zum Fortfahren</div>
-  `;
-
-  document.body.appendChild(ov);
-
-  ov.addEventListener('click', (e) => {
-    if (e.target.closest('.tut-skip')) return;
-
-    const allSlides = ov.querySelectorAll('.tut-slide');
-    const allDots = ov.querySelectorAll('.tut-dot');
-
-    allSlides[current].classList.remove('active');
-    allSlides[current].classList.add('exit');
-    allDots[current].classList.remove('active');
-
-    current++;
-
-    if (current >= slides.length) {
-      closeOverlay(ov);
-      return;
-    }
-
-    allDots[current].classList.add('active');
-    setTimeout(() => {
-      allSlides[current].classList.add('active');
-    }, 100);
-  });
-}
+function showTutorial() { runTutorial(feudTutorialSlides()); }
 
 function toggleGMBar() {
   const bar = document.getElementById('gm-bar');
