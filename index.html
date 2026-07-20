@@ -1305,6 +1305,8 @@ body {
     <div id="answer-fields"></div>
     <label>Einblendungen (0-3 Bilder/Videos)</label>
     <div id="feud-media-slots"></div>
+    <label>📝 Notiz (nur für den Host, im GM-Panel & Gamepad sichtbar)</label>
+    <input type="text" id="edit-note" placeholder="z.B. Zusatzinfo, Wertungshinweis, Anekdote…">
     <div class="editor-actions">
       <button class="btn btn-secondary" onclick="addAnswerField()">+ Antwort</button>
       <button class="btn btn-primary" onclick="saveQuestion()">Speichern</button>
@@ -1921,6 +1923,8 @@ const GM_SHARED_CSS = `
   .score-name{font-size:.6rem;font-weight:800;letter-spacing:.5px;color:rgba(255,255,255,.55);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .score-val{font-family:'Bebas Neue',sans-serif;font-size:1.65rem;color:#FFD23F;line-height:1.1;}
   .question{font-size:1.05rem;font-weight:700;line-height:1.5;color:rgba(255,255,255,.9)}
+  .qnote{background:rgba(255,210,63,.08);border-left:3px solid #FFD23F;border-radius:0 8px 8px 0;padding:8px 12px;font-size:.8rem;color:rgba(255,240,200,.9);line-height:1.5;}
+  .qnote b{color:#FFD23F;font-size:.65rem;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:2px;}
   .answer{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:8px;font-weight:600;font-size:.9rem;transition:filter .1s;}
   .answer.hidden{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);cursor:pointer;}
   .answer.hidden:hover{filter:brightness(1.3);}
@@ -2007,6 +2011,12 @@ function gmNotesPanelHtml() {
     <textarea placeholder="Ablaufplan / Notizen…" oninput="opener.saveHostNotesRemote(this.value)">${escapeHtml(notes)}</textarea>
   </details>`;
 }
+// Notiz zu einer einzelnen Frage - steht direkt unter der Frage im GM-Panel
+// (und damit auch am Gamepad), das Publikum sieht sie nie.
+function qNoteHtml(note) {
+  if (!note) return '';
+  return `<div class="qnote"><b>📝 Frage-Notiz</b>${escapeHtml(note)}</div>`;
+}
 
 // ── EDIT ──
 function renderQuestionList() {
@@ -2031,6 +2041,7 @@ function newQuestion(isFinale) {
   state.editingIndex = -1;
   state.editingFinale = !!isFinale;
   document.getElementById('edit-question').value = '';
+  document.getElementById('edit-note').value = '';
   document.getElementById('answer-fields').innerHTML = '';
   for (let i = 0; i < 5; i++) addAnswerField();
   document.getElementById('edit-question').focus();
@@ -2042,6 +2053,7 @@ function editQuestion(i, isFinale) {
   state.editingFinale = !!isFinale;
   const list = isFinale ? finaleQuestions : questions;
   document.getElementById('edit-question').value = list[i].question;
+  document.getElementById('edit-note').value = list[i].note || '';
   document.getElementById('answer-fields').innerHTML = '';
   list[i].answers.forEach(a => addAnswerField(a.text, a.points));
   document.getElementById('edit-question').focus();
@@ -2075,11 +2087,13 @@ function saveQuestion() {
     const isFinale = state.editingFinale;
     const list = isFinale ? finaleQuestions : questions;
     const media = (state.editingMedia || []).filter(m => m);
-    if (state.editingIndex >= 0) list[state.editingIndex] = {question, answers, media};
-    else list.push({question, answers, media});
+    const note = document.getElementById('edit-note').value.trim();
+    if (state.editingIndex >= 0) list[state.editingIndex] = {question, answers, media, note};
+    else list.push({question, answers, media, note});
     saveToStorage(); renderQuestionList();
     state.editingIndex = -1; state.editingFinale = false; state.editingMedia = [];
     document.getElementById('edit-question').value = '';
+    document.getElementById('edit-note').value = '';
     document.getElementById('answer-fields').innerHTML = '';
     renderFeudMediaSlots();
   } catch(err) { alert('Fehler beim Speichern: ' + err.message); }
@@ -3429,6 +3443,7 @@ function updateGamemaster() {
   <div class="active-team-label">${state.allOut ? '⚠ Alle Teams out' : 'Am Zug: ' + state.teamNames[state.currentTeam]}</div>
   <div class="strikes-section">${strikesHtml}</div>
   <div class="question" onclick="opener.revealQuestion()" style="cursor:pointer;">${q.question}</div>
+  ${qNoteHtml(q.note)}
   <div class="answer-list">
   ${q.answers.map((a,i) => `<div class="answer ${state.revealed[i]?'shown':'hidden'}" ${!state.revealed[i] ? `onclick="opener.revealAnswer(${i})"` : ''}>
     <span><span class="num">${i+1}.</span> <span class="text">${a.text}</span></span>
@@ -3643,6 +3658,7 @@ function updateGamemasterJeopardy() {
         ${media?`<div class="media-row">${media}</div>`:''}
         <div class="clue-a">Lösung: <strong>${clue.a||'(nur Bild)'}</strong></div>
       </div>
+      ${qNoteHtml(clue.note)}
       ${mediaControlButtonsHtml(clue.media, 'jeopardyToggleMedia')}
       ${!revealed ? `
         <div class="info-card">
@@ -5143,6 +5159,7 @@ function renderJeopardyEditor() {
             </div>
             <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
             ${mediaSlotsHtml(clue.media || (clue.media = []), (slot, inputExpr) => `jeopardyEditMedia(${b},${col},${row},${slot},${inputExpr})`)}
+            <input type="text" placeholder="📝 Notiz für den Host" value="${esc(clue.note)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].note=this.value" style="width:100%;margin-top:6px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
           </div>`).join('')}
       </div>`;
     });
@@ -5446,6 +5463,7 @@ function updateGamemasterWwm(){
   <div class="gm-body">
   <div class="gm-main">
   <div class="question">${q.q}</div>
+  ${qNoteHtml(q.note)}
   <div class="answer-list">${answersHtml}</div>
   ${mediaControlButtonsHtml(q.media, 'wwmToggleMedia')}
   <div class="hint-line">
@@ -5485,6 +5503,7 @@ function renderWwmEditor(){
         </div>`).join('')}
       <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
       ${mediaSlotsHtml(q.media || (q.media = []), (slot, inputExpr) => `wwmEditMedia(${i},${slot},${inputExpr})`)}
+      <input type="text" placeholder="📝 Notiz für den Host" value="${(q.note||'').replace(/"/g,'&quot;')}" onchange="wwmData.questions[${i}].note=this.value" style="width:100%;margin-top:6px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
     </div>`).join('');
 }
 function wwmEditMedia(i,slot,input){
@@ -5506,7 +5525,7 @@ function importWwm(e){
     let qs = Array.isArray(d.questions) ? d.questions : (Array.isArray(d) ? d : null);
     if (!qs) throw new Error('Ungültiges Format');
     // normalise
-    qs = qs.map(x => ({ q:x.q||x.question||'', answers:(x.answers||['','','','']).slice(0,4), correct:Number(x.correct)||0 }));
+    qs = qs.map(x => ({ q:x.q||x.question||'', answers:(x.answers||['','','','']).slice(0,4), correct:Number(x.correct)||0, media:x.media||[], note:x.note||'' }));
     wwmData = { questions: qs };
     renderWwmEditor();
   });
