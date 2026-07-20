@@ -203,17 +203,28 @@
   let clientId = localStorage.getItem('buzzClientId');
   if (!clientId) { clientId = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('buzzClientId', clientId); }
   const presenceRef = firebase.database().ref('buzzer/presence/' + clientId);
+  // Dauerhafte Team-Zuteilung (überlebt Disconnect): der Host schreibt sie hierhin.
+  const teamRef = firebase.database().ref('buzzer/teams/' + clientId);
+  let savedTeam = null;
   function updatePresence(){
     const n = myName();
     if (!n) { presenceRef.remove().catch(()=>{}); return; }
     if (!nameAllowed()) return; // Spiel gesperrt und Name nicht schon vorher dabei - kein neuer Eintrag
-    // update() statt set(), damit ein vom Host gesetztes "team"-Feld erhalten bleibt
-    presenceRef.update({ name: n, ts: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
+    const upd = { name: n, ts: firebase.database.ServerValue.TIMESTAMP };
+    // Bereits zugeteiltes Team beim (Neu-)Eintragen sofort wieder mitschreiben,
+    // damit es nach einem Disconnect nicht verloren geht.
+    if (savedTeam !== null && savedTeam !== undefined) upd.team = savedTeam;
+    presenceRef.update(upd).catch(()=>{});
   }
   presenceRef.on('value', (snap) => {
     const v = snap.val() || {};
     myTeam = (v.team === undefined || v.team === null) ? null : v.team;
     refreshRoot();
+  });
+  // Dauerhaftes Team live verfolgen und in die Präsenz spiegeln.
+  teamRef.on('value', (snap) => {
+    savedTeam = (snap.val() === undefined || snap.val() === null) ? null : snap.val();
+    if (savedTeam !== null && myName()) presenceRef.update({ team: savedTeam }).catch(()=>{});
   });
   firebase.database().ref('buzzer/presence').on('value', (snap) => {
     presenceCount = Object.keys(snap.val() || {}).length;
