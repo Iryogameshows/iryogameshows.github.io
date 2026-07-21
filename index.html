@@ -649,6 +649,10 @@ body {
 .q-list-item .q-meta { color: rgba(255,255,255,.25); font-size: .75rem; margin-left: 6px; }
 .tour-icon-svg { display: inline-flex; vertical-align: middle; margin-right: 2px; }
 .tour-icon-svg svg { width: 22px; height: 22px; }
+.pmini-av { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+.player-row .q-label { display: flex; align-items: center; gap: 8px; }
+.player-stats { font-size: .7rem; color: rgba(255,255,255,.35); margin-left: 8px; }
+.player-team-tag { font-size: .65rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
 .q-btns { display: flex; gap: 4px; }
 .q-btns .btn { padding: 6px 14px; font-size: .7rem; }
 .edit-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
@@ -865,6 +869,7 @@ body {
   transition: border-color .2s, color .2s, background .2s;
 }
 .menu-pill:hover { border-color: rgba(217,166,46,.5); color: #F3E4BC; background: rgba(217,166,46,.06); }
+.menu-pill.active { border-color: #D9A62E; color: #F3E4BC; background: rgba(217,166,46,.14); }
 
 /* ── JEOPARDY ── */
 #jeopardy-screen { gap: 12px; max-width: 1100px; }
@@ -1257,8 +1262,23 @@ body {
   </div>
   <div class="menu-pills">
     <button class="menu-pill" onclick="showScreen('reaction-board-screen')">⚡ Bestenliste</button>
+    <button class="menu-pill" onclick="showScreen('players-screen')">👤 Spieler</button>
     <button class="menu-pill" onclick="showScreen('host-notes-screen')">📋 Notizen</button>
     <button class="menu-pill" id="sfx-toggle" onclick="this.textContent = SFX.toggle() ? '🔊 Sound an' : '🔇 Sound aus'"></button>
+  </div>
+</div>
+
+<!-- SPIELERÜBERSICHT (Accounts) -->
+<div id="players-screen" class="screen">
+  <div class="page-title"><em>👤 Spieler</em>-Accounts</div>
+  <div class="menu-pills" style="margin-bottom:10px;">
+    <button class="menu-pill active" id="players-tab-list" onclick="setPlayersTab('list')">Alle Spieler</button>
+    <button class="menu-pill" id="players-tab-board" onclick="setPlayersTab('board')">🏅 Ewige Bestenliste</button>
+  </div>
+  <div id="players-content" style="width:100%;"></div>
+  <div class="edit-bar" style="margin-top:12px;">
+    <button class="btn btn-danger" onclick="resetAllPlayerTeams()">Alle Teams zurücksetzen</button>
+    <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zum Menü</button>
   </div>
 </div>
 
@@ -1739,6 +1759,7 @@ function showScreen(id) {
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
+  if (id === 'players-screen') { ensurePlayersConnected(); setPlayersTab(playersTab); }
   if (id === 'tournament-screen') { renderTournament(); updateGamemaster(); }
   if (id === 'result-screen') renderResultLeaderboard();
   // Eingebettetes GM-Panel nur beim echten Rücksprung zum Hauptmenü wieder
@@ -2201,9 +2222,119 @@ function noteNewBuzzes(prevResults, newResults, game){
   const prevNames = new Set(prevResults.map(r => r.name));
   let any = false;
   newResults.forEach(r => {
-    if (!prevNames.has(r.name)){ recordReaction(r.name, r.t, game); any = true; }
+    if (!prevNames.has(r.name)){ recordReaction(r.name, r.t, game); recordAccountBuzz(r.account, r.t); any = true; }
   });
   if (any) SFX.buzz();
+}
+// Account-Statistik: Buzz-Anzahl + persönliche Bestzeit, dauerhaft am Account
+// gespeichert (überlebt Geräte, Reloads, sogar Account-Reisen zwischen Events).
+function recordAccountBuzz(accountKey, t){
+  if (!accountKey || !(t >= 0)) return;
+  const ref = firebase.database().ref('buzzer/players/' + accountKey + '/stats');
+  ref.transaction(cur => {
+    cur = cur || { buzzes: 0, bestBuzz: null, wins: 0, games: 0 };
+    cur.buzzes = (cur.buzzes || 0) + 1;
+    if (cur.bestBuzz === null || cur.bestBuzz === undefined || t < cur.bestBuzz) cur.bestBuzz = t;
+    return cur;
+  }).catch(()=>{});
+}
+// Am Spielende: allen Accounts, die aktuell einem der Teams zugeteilt sind,
+// eine Teilnahme gutschreiben, und den Gewinner-Teams zusätzlich einen Sieg.
+function recordAccountGameResult(teamNames, scores){
+  if (!teamNames || !teamNames.length) return;
+  const maxScore = Math.max(...scores);
+  const winnerTeams = scores.map((s,i) => s === maxScore ? i : -1).filter(i => i >= 0);
+  const singleWinner = winnerTeams.length === 1 ? winnerTeams[0] : -1;
+  firebase.database().ref('buzzer/players').once('value').then(snap => {
+    snap.forEach(child => {
+      const p = child.val();
+      if (!p || p.team === undefined || p.team === null || p.team >= teamNames.length) return;
+      const ref = child.ref.child('stats');
+      const won = p.team === singleWinner;
+      ref.transaction(cur => {
+        cur = cur || { buzzes: 0, bestBuzz: null, wins: 0, games: 0 };
+        cur.games = (cur.games || 0) + 1;
+        if (won) cur.wins = (cur.wins || 0) + 1;
+        return cur;
+      }).catch(()=>{});
+    });
+  }).catch(()=>{});
+}
+
+// ── SPIELER-ACCOUNTS (Übersicht + ewige Bestenliste) ──
+// Alle jemals angelegten Accounts, live aus Firebase - unabhängig davon, ob
+// sie gerade online sind. Team-Zuteilung, Avatar/Farbe und Statistik leben
+// direkt am Account und sind damit geräteübergreifend und permanent.
+let allPlayers = [];
+let playersTab = 'list';
+let playersRef = null;
+function ensurePlayersConnected(){
+  if (playersRef) return;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    playersRef = firebase.database().ref('buzzer/players');
+    playersRef.on('value', snap => {
+      const v = snap.val() || {};
+      allPlayers = Object.entries(v).map(([key, p]) => ({ key, ...p, stats: p.stats || { buzzes:0, bestBuzz:null, wins:0, games:0 } }));
+      if (document.getElementById('players-screen').classList.contains('active')) setPlayersTab(playersTab, true);
+    });
+  } catch {}
+}
+function setPlayersTab(tab, silent){
+  playersTab = tab;
+  document.getElementById('players-tab-list').classList.toggle('active', tab === 'list');
+  document.getElementById('players-tab-board').classList.toggle('active', tab === 'board');
+  if (tab === 'list') renderPlayersList(); else renderPlayersLeaderboard();
+}
+// Aktuelle Teamnamen des zuletzt aktiven Kontexts (Feud/Jeopardy), zum
+// Anzeigen des Team-Tags - fällt auf "Team N" zurück wenn kein Spiel offen ist.
+function currentTeamLabel(i){
+  const names = activeBuzzerContext === 'jeopardy' ? jeopardyState.teamNames : state.teamNames;
+  return (names && names[i]) || ('Team ' + (i+1));
+}
+function renderPlayersList(){
+  const el = document.getElementById('players-content');
+  if (!allPlayers.length){
+    el.innerHTML = `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spieler-Accounts angelegt.</div>`;
+    return;
+  }
+  const sorted = [...allPlayers].sort((a,b) => a.name.localeCompare(b.name, 'de'));
+  const teamTagColors = ['#E8453C','#3B82F6','#22C55E'];
+  el.innerHTML = `<div class="q-list">${sorted.map(p => {
+    const teamTag = (p.team !== undefined && p.team !== null)
+      ? `<span class="player-team-tag" style="background:${teamTagColors[p.team]||'#888'}22;color:${teamTagColors[p.team]||'#888'};">${currentTeamLabel(p.team)}</span>`
+      : `<span class="player-team-tag" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);">kein Team</span>`;
+    const s = p.stats || {};
+    return `<div class="q-list-item player-row">
+      <span class="q-label">${playerAvatarHtml(p)}<b>${escapeHtml(p.name)}</b>${teamTag}
+        <span class="player-stats">🔔${s.buzzes||0} · 🏆${s.wins||0}/${s.games||0}${s.bestBuzz!=null?' · ⚡'+s.bestBuzz.toFixed(2)+'s':''}</span>
+      </span>
+      <div class="q-btns">
+        ${[0,1,2].map(i => `<button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam('${p.key}',${i})">${currentTeamLabel(i)}</button>`).join('')}
+        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam('${p.key}',null)">✕</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+function renderPlayersLeaderboard(){
+  const el = document.getElementById('players-content');
+  const withStats = allPlayers.filter(p => (p.stats?.games||0) > 0 || (p.stats?.buzzes||0) > 0);
+  if (!withStats.length){
+    el.innerHTML = `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spiele/Buzzes aufgezeichnet.</div>`;
+    return;
+  }
+  const byWins = [...withStats].sort((a,b) => (b.stats.wins||0) - (a.stats.wins||0) || (b.stats.games||0) - (a.stats.games||0));
+  const byBuzz = [...allPlayers].filter(p => p.stats?.bestBuzz != null).sort((a,b) => a.stats.bestBuzz - b.stats.bestBuzz);
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = `
+    <div class="page-title" style="font-size:.85rem;margin-bottom:6px;">🏆 Meiste Siege</div>
+    <div class="q-list" style="margin-bottom:20px;">${byWins.slice(0,15).map((p,i) => `
+      <div class="q-list-item"><span class="q-label"><span class="q-num">${medals[i]||(i+1)+'.'}</span>${playerAvatarHtml(p)}${escapeHtml(p.name)}</span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#FFD23F;">${p.stats.wins||0} Siege <span style="color:rgba(255,255,255,.3);font-size:.7rem;font-family:'Inter',sans-serif;">/ ${p.stats.games||0} Spiele</span></span></div>`).join('')}</div>
+    <div class="page-title" style="font-size:.85rem;margin-bottom:6px;">⚡ Schnellste Buzzer</div>
+    <div class="q-list">${byBuzz.slice(0,15).map((p,i) => `
+      <div class="q-list-item"><span class="q-label"><span class="q-num">${medals[i]||(i+1)+'.'}</span>${playerAvatarHtml(p)}${escapeHtml(p.name)}</span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#FFD23F;">${p.stats.bestBuzz.toFixed(2)}s</span></div>`).join('')}</div>`;
 }
 
 // ── HOST-NOTIZEN ── (automatisch gespeichert, geräteseitig)
@@ -2995,6 +3126,7 @@ function showResults() {
   const recordedToTournament = tournamentAutoRecordIfActive(state.teamNames, state.scores);
   document.getElementById('tour-goto-btn').style.display = recordedToTournament ? '' : 'none';
   if (!recordedToTournament) offerTournamentResult('Family Feud', state.teamNames, state.scores);
+  recordAccountGameResult(state.teamNames, state.scores);
   showScreen('result-screen');
   if (winners.length === 1) confetti();
 }
@@ -3388,7 +3520,7 @@ function updateGamemaster() {
 
   const feudPresenceCount = feudBuzzer.presence.length;
   const feudPresenceRows = feudBuzzer.presence.length
-    ? feudBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, state.teamNames, 'opener.')}</div>`).join('')
+    ? feudBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, state.teamNames, 'opener.')}</div>`).join('')
     : `<div class="pr-empty">Noch niemand verbunden</div>`;
   const feudConnChip = feudBuzzer.connected
     ? `<span class="chip chip-ok">● Server verbunden</span>`
@@ -3577,7 +3709,7 @@ function updateGamemasterJeopardy() {
   // ── Verbunden-Panel (Presence) + Steuerung — immer sichtbar, unabhängig vom Frage-Status ──
   const presenceCount = jeopardyBuzzer.presence.length;
   const presenceRows = jeopardyBuzzer.presence.length
-    ? jeopardyBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, jeopardyState.teamNames, 'opener.')}</div>`).join('')
+    ? jeopardyBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, jeopardyState.teamNames, 'opener.')}</div>`).join('')
     : `<div class="pr-empty">Noch niemand verbunden</div>`;
   const connChip = jeopardyBuzzer.connected
     ? `<span class="chip chip-ok">● Server verbunden</span>`
@@ -4327,42 +4459,47 @@ function buzzerBroadcastTeams(names){
   const ref = currentBuzzer().fbRef;
   if (ref) ref.child('teamNames').set(names || []).catch(()=>{});
 }
-// Setzt bei allen aktuell verbundenen Spielern die Team-Zuteilung zurück -
-// so startet jedes neue Spiel mit einer sauberen Lobby statt alter Teams.
-function buzzerResetTeamAssignments(){
+// Team-Zuteilungen leben jetzt am Account (buzzer/players/{key}/team), nicht
+// mehr an der flüchtigen Presence - sie sind also von Haus aus permanent und
+// überleben Disconnects UND das Ende eines Spiels. Ein neues Spiel setzt sie
+// NICHT mehr automatisch zurück; der Host tut das explizit über einen der
+// drei "Teams zurücksetzen"-Buttons (Lobby-Panel, Spielerübersicht, GM-Panel).
+function buzzerResetTeamAssignments(){ resetAllPlayerTeams(true); }
+// Vom GM-Fenster, Setup-Screen oder der Spielerübersicht aufgerufen: weist
+// einen Spieler (per Account-Key) einem Team zu. Presence wird als schnelle
+// Kopie mitgeschrieben (falls der Spieler gerade online ist).
+function assignPlayerTeam(key, teamIdx){
+  firebase.database().ref('buzzer/players/' + key + '/team').set(teamIdx).catch(()=>{});
   const presenceRef = currentBuzzer().presenceRef;
-  if (!presenceRef) return;
-  presenceRef.once('value').then(snap => {
+  if (presenceRef) presenceRef.child(key).update({ team: teamIdx }).catch(()=>{});
+}
+// Alle Team-Zuteilungen löschen (für ein frisches Event) - wirkt auf ALLE
+// jemals angelegten Accounts, nicht nur die gerade verbundenen.
+function resetAllPlayerTeams(silent){
+  if (!silent && !confirm('Team-Zuteilung aller Spieler zurücksetzen?')) return;
+  firebase.database().ref('buzzer/players').once('value').then(snap => {
     const updates = {};
     snap.forEach(child => { updates[child.key + '/team'] = null; });
-    if (Object.keys(updates).length) presenceRef.update(updates).catch(()=>{});
+    if (Object.keys(updates).length) firebase.database().ref('buzzer/players').update(updates).catch(()=>{});
   }).catch(()=>{});
-}
-// Vom GM-Fenster oder Setup-Screen aufgerufen: weist einen Spieler (per
-// Presence-ID) einem Team zu.
-function assignPlayerTeam(id, teamIdx){
-  const presenceRef = currentBuzzer().presenceRef;
-  if (presenceRef) presenceRef.child(id).update({ team: teamIdx }).catch(()=>{});
-  // Zusätzlich dauerhaft speichern (überlebt Disconnect des Handys): beim
-  // Wiederverbinden liest die Buzzer-Seite ihr Team von hier zurück.
-  try { firebase.database().ref('buzzer/teams/' + id).set(teamIdx).catch(()=>{}); } catch {}
-}
-// Alle Team-Zuteilungen löschen (für ein frisches Event).
-function resetAllTeams(){
-  if (!confirm('Alle Team-Zuteilungen löschen?')) return;
-  try { firebase.database().ref('buzzer/teams').remove().catch(()=>{}); } catch {}
   const pr = currentBuzzer().presenceRef;
   if (pr) pr.once('value').then(s => {
     const v = s.val() || {};
     Object.keys(v).forEach(id => pr.child(id).update({ team: null }).catch(()=>{}));
   });
 }
+// Rückwärtskompatibler Name für alte Aufrufer.
+function resetAllTeams(){ resetAllPlayerTeams(false); }
 // Baut die kleinen Team-Zuweisungs-Buttons neben einem Spieler in der GM-Präsenzliste.
 // prefix ist 'opener.' innerhalb der GM-Popup-Vorlagen, oder leer, wenn direkt
-// auf der Hauptseite gerendert (z.B. im Setup-Screen-Lobby-Panel).
+// auf der Hauptseite gerendert (z.B. im Setup-Screen-Lobby-Panel). p.id ist
+// hier der Account-Key (Presence-Key == Account-Key).
 function playerTeamButtonsHtml(p, teamNames, prefix){
   prefix = prefix || '';
   return teamNames.map((name, i) => `<button class="pr-team-btn ${p.team===i?'active':''}" onclick="${prefix}assignPlayerTeam('${p.id}',${i})">${name}</button>`).join('');
+}
+function playerAvatarHtml(p){
+  return `<span class="pmini-av" style="background:${p.color||'#888'};">${p.avatar||'👤'}</span>`;
 }
 
 // Rendert die Lobby-Liste direkt auf dem Setup-Screen (nicht im GM-Popup) -
@@ -4378,7 +4515,7 @@ function renderSetupLobby(game){
   const team3On = document.getElementById(isJeopardy ? 'jeopardy-enable-team3' : 'enable-team3').checked;
   if (team3On) teamNames.push(document.getElementById(isJeopardy ? 'jt3-name' : 'team3-name').value || 'Team 3');
   const rows = buzzer.presence.length
-    ? buzzer.presence.map(p => `<div class="pr-row"><span class="pr-dot"></span><span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, teamNames)}</div>`).join('')
+    ? buzzer.presence.map(p => `<div class="pr-row"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, teamNames)}</div>`).join('')
     : `<div class="pr-empty">Noch niemand verbunden — QR-Code scannen zum Beitreten</div>`;
   container.innerHTML = `
     <div class="panel-head"><span>👥 Lobby</span><span class="badge">${buzzer.presence.length}</span></div>
@@ -4419,7 +4556,7 @@ function jeopardyBuzzConnect(){
         .filter(b => b && b.name && b.ts)
         .sort((a, b) => a.ts - b.ts)
         .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
-        .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team }));
+        .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team, account: b.account }));
       noteNewBuzzes(prevResults, jeopardyBuzzer.results, 'Jeopardy');
       // Sobald der Erste buzzert, ploppt die Anzeige auf
       if (wasEmpty && jeopardyBuzzer.results.length > 0) jeopardyBuzzer.poppedForQuestion = true;
@@ -4432,7 +4569,7 @@ function jeopardyBuzzConnect(){
       const v = snap.val() || {};
       jeopardyBuzzer.presence = Object.entries(v)
         .filter(([id, p]) => p && p.name)
-        .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team) }))
+        .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team), avatar: p.avatar, color: p.color }))
         .sort((a, b) => (a.ts || 0) - (b.ts || 0));
       renderSetupLobby('jeopardy');
       updateGamemaster();
@@ -4516,7 +4653,7 @@ function feudBuzzConnect(){
       .filter(b => b && b.name && b.ts)
       .sort((a, b) => a.ts - b.ts)
       .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
-      .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team }));
+      .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team, account: b.account }));
     noteNewBuzzes(prevResults, feudBuzzer.results, 'Family Feud');
     if (wasEmpty && feudBuzzer.results.length > 0) {
       feudBuzzer.poppedForQuestion = true;
@@ -4538,7 +4675,7 @@ function feudBuzzConnect(){
     const v = snap.val() || {};
     feudBuzzer.presence = Object.entries(v)
       .filter(([id, p]) => p && p.name)
-      .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team) }))
+      .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team), avatar: p.avatar, color: p.color }))
       .sort((a, b) => (a.ts||0) - (b.ts||0));
     renderSetupLobby('feud');
     updateGamemaster();
@@ -4549,15 +4686,14 @@ function feudBuzzConnect(){
 
 // Aufgerufen, sobald der Family-Feud-Setup-Screen erscheint: verbindet die
 // Lobby schon vor dem eigentlichen Spielstart, damit Spieler per QR-Code
-// beitreten und der Host sie schon hier den Teams zuteilen kann.
+// beitreten und der Host sie schon hier den Teams zuteilen kann. Teams
+// bleiben zwischen Spielen bestehen (Accounts sind permanent) - der Host
+// setzt sie nur explizit über einen der "Teams zurücksetzen"-Buttons zurück.
 function ensureFeudLobbyConnected(){
   activeBuzzerContext = 'feud';
   const isFresh = !feudBuzzer.fbRef;
   feudBuzzConnect();
-  if (isFresh) {
-    buzzerResetTeamAssignments();
-    feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
-  }
+  if (isFresh) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
   broadcastFeudSetupTeamNames();
   renderSetupLobby('feud');
 }
@@ -4576,10 +4712,7 @@ function ensureJeopardyLobbyConnected(){
   activeBuzzerContext = 'jeopardy';
   const isFresh = !jeopardyBuzzer.presenceRef;
   jeopardyBuzzConnect();
-  if (isFresh) {
-    buzzerResetTeamAssignments();
-    jeopardyBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
-  }
+  if (isFresh) jeopardyBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
   broadcastJeopardySetupTeamNames();
   renderSetupLobby('jeopardy');
 }
@@ -5143,6 +5276,7 @@ function showJeopardyResults() {
   const recordedToTournament = tournamentAutoRecordIfActive(jeopardyState.teamNames, jeopardyState.scores);
   document.getElementById('tour-goto-btn').style.display = recordedToTournament ? '' : 'none';
   if (!recordedToTournament) offerTournamentResult('Jeopardy', jeopardyState.teamNames, jeopardyState.scores);
+  recordAccountGameResult(jeopardyState.teamNames, jeopardyState.scores);
   showScreen('result-screen');
   updateGamemaster();
   if (winners.length === 1) confetti();
