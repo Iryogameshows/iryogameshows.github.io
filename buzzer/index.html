@@ -87,7 +87,7 @@
   <!-- LOBBY -->
   <div id="screen-lobby" class="screen">
     <div class="lobby-title">Du bist drin! 🎉</div>
-    <img class="lobby-gif" src="images/freddy-fazbear-fnaf.gif" alt="">
+    <img class="lobby-gif" id="lobby-gif" src="" alt="">
     <div class="me-row"><span class="me-av" id="lobby-av"></span><b id="lobby-name"></b></div>
     <div class="lobby-sub">Der Host teilt dich gleich einem Team zu.<br>Nicht weggehen, das dauert nicht lang!</div>
     <div class="lobby-count" id="lobby-count"></div>
@@ -245,6 +245,26 @@
   function amExcluded(){ const n=myName(); return !!n && !!excludedSet[n]; }
   function nameAllowed(){ return !joinLocked || lockedNames.includes(myName()); }
 
+  const LOBBY_GIFS = [
+    'images/lobby-gifs/67-south-park-67.gif',
+    'images/lobby-gifs/ai-dog.gif',
+    'images/lobby-gifs/arna-celebration.gif',
+    'images/lobby-gifs/freddy-fazbear-fnaf.gif',
+    'images/lobby-gifs/higuruma-hiromi-higaruma.gif',
+    'images/lobby-gifs/kingdom-hearts-kingdom-hearts-2.gif',
+    'images/lobby-gifs/nature-vegeta.gif',
+    'images/lobby-gifs/nose-fur.gif',
+    'images/lobby-gifs/on-it-yes-sir.gif',
+    'images/lobby-gifs/stich.gif',
+    'images/lobby-gifs/stunned-wow.gif',
+    'images/lobby-gifs/sweep-spongebob.gif',
+    'images/lobby-gifs/triplet-tung-tung-tung-sahur.gif',
+    'images/lobby-gifs/vaya.gif',
+  ];
+  function pickRandomLobbyGif(){
+    const pick = LOBBY_GIFS[Math.floor(Math.random() * LOBBY_GIFS.length)];
+    document.getElementById('lobby-gif').src = pick;
+  }
   function refreshRoot(){
     if (!acc) { showScreen('screen-login'); return; }
     if (document.getElementById('screen-signup').classList.contains('active')) return;
@@ -254,6 +274,7 @@
     document.getElementById('lobby-name').textContent = acc.name;
     if (!nameAllowed()) { showScreen('screen-blocked'); return; }
     if (myTeam === null || myTeam === undefined) {
+      if (!document.getElementById('screen-lobby').classList.contains('active')) pickRandomLobbyGif();
       showScreen('screen-lobby');
       document.getElementById('lobby-count').textContent = presenceCount > 1 ? `${presenceCount} Leute in der Lobby` : '';
       return;
