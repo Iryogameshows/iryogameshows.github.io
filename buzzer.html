@@ -263,7 +263,10 @@
   ];
   function pickRandomLobbyGif(){
     const pick = LOBBY_GIFS[Math.floor(Math.random() * LOBBY_GIFS.length)];
-    document.getElementById('lobby-gif').src = pick;
+    const img = document.getElementById('lobby-gif');
+    img.style.visibility = 'hidden';
+    img.onload = () => { img.style.visibility = 'visible'; };
+    img.src = pick;
   }
   function refreshRoot(){
     if (!acc) { showScreen('screen-login'); return; }
