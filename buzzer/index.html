@@ -261,6 +261,13 @@
     'images/lobby-gifs/triplet-tung-tung-tung-sahur.gif',
     'images/lobby-gifs/vaya.gif',
   ];
+  // Eigenes Flag statt der CSS-"active"-Klasse: beim Login feuern mehrere
+  // unabhängige Firebase-Listener (teamNames/joinLocked/lockedNames/presence/
+  // team) knapp nacheinander refreshRoot(), wobei kurzzeitig ein anderer
+  // Zwischenzustand (z.B. screen-blocked) aktiv sein kann, bevor die echten
+  // Werte da sind - das würde die active-Klasse an- und abschalten und so
+  // bei jedem Zwischenschritt ein neues GIF würfeln.
+  let lobbyGifPicked = false;
   function pickRandomLobbyGif(){
     const pick = LOBBY_GIFS[Math.floor(Math.random() * LOBBY_GIFS.length)];
     // Vollständig vorladen (unsichtbares Image-Objekt), bevor das sichtbare
@@ -277,13 +284,14 @@
     document.getElementById('lobby-av').textContent = acc.avatar;
     document.getElementById('lobby-av').style.background = acc.color;
     document.getElementById('lobby-name').textContent = acc.name;
-    if (!nameAllowed()) { showScreen('screen-blocked'); return; }
+    if (!nameAllowed()) { lobbyGifPicked = false; showScreen('screen-blocked'); return; }
     if (myTeam === null || myTeam === undefined) {
-      if (!document.getElementById('screen-lobby').classList.contains('active')) pickRandomLobbyGif();
+      if (!lobbyGifPicked) { lobbyGifPicked = true; pickRandomLobbyGif(); }
       showScreen('screen-lobby');
       document.getElementById('lobby-count').textContent = presenceCount > 1 ? `${presenceCount} Leute in der Lobby` : '';
       return;
     }
+    lobbyGifPicked = false;
     showScreen('screen-buzz');
     teamChip.textContent = teamNames[myTeam] || ('Team ' + (myTeam+1));
     teamChip.style.background = TEAM_COLORS_HEX[myTeam] || '#888';
