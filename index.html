@@ -653,8 +653,10 @@ body {
 .player-row .q-label { display: flex; align-items: center; gap: 8px; }
 .player-stats { font-size: .7rem; color: rgba(255,255,255,.35); margin-left: 8px; }
 .player-team-tag { font-size: .65rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
-.q-btns { display: flex; gap: 4px; }
+.q-btns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .q-btns .btn { padding: 6px 14px; font-size: .7rem; }
+.player-row { flex-wrap: wrap; row-gap: 8px; }
+.player-row .q-btns { flex: 1 0 auto; }
 .edit-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
 /* ── RESULT ── */
@@ -1262,7 +1264,7 @@ body {
   </div>
   <div class="menu-pills">
     <button class="menu-pill" onclick="showScreen('reaction-board-screen')">⚡ Bestenliste</button>
-    <button class="menu-pill" onclick="showScreen('players-screen')">👤 Spieler</button>
+    <button class="menu-pill" onclick="openPlayersScreen('menu-screen')">👤 Spieler</button>
     <button class="menu-pill" onclick="showScreen('host-notes-screen')">📋 Notizen</button>
     <button class="menu-pill" id="sfx-toggle" onclick="this.textContent = SFX.toggle() ? '🔊 Sound an' : '🔇 Sound aus'"></button>
   </div>
@@ -1278,7 +1280,7 @@ body {
   <div id="players-content" style="width:100%;"></div>
   <div class="edit-bar" style="margin-top:12px;">
     <button class="btn btn-danger" onclick="resetAllPlayerTeams()">Alle Teams zurücksetzen</button>
-    <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zum Menü</button>
+    <button class="btn btn-primary" onclick="closePlayersScreen()">Zurück</button>
   </div>
 </div>
 
@@ -2268,6 +2270,14 @@ function recordAccountGameResult(teamNames, scores){
 let allPlayers = [];
 let playersTab = 'list';
 let playersRef = null;
+// Merkt sich, von welchem Screen aus die Spielerübersicht geöffnet wurde
+// (Hauptmenü oder ein Setup-Screen), damit "Zurück" dorthin zurückführt.
+let playersReturnScreen = 'menu-screen';
+function openPlayersScreen(returnTo){
+  playersReturnScreen = returnTo || 'menu-screen';
+  showScreen('players-screen');
+}
+function closePlayersScreen(){ showScreen(playersReturnScreen); }
 function ensurePlayersConnected(){
   if (playersRef) return;
   try {
@@ -4487,7 +4497,7 @@ function buzzerResetTeamAssignments(){ resetAllPlayerTeams(true); }
 // einen Spieler (per Account-Key) einem Team zu. Presence wird als schnelle
 // Kopie mitgeschrieben (falls der Spieler gerade online ist).
 function assignPlayerTeam(key, teamIdx){
-  firebase.database().ref('buzzer/players/' + key + '/team').set(teamIdx).catch(()=>{});
+  firebase.database().ref('buzzer/players/' + key + '/team').set(teamIdx).catch(e => console.error('assignPlayerTeam failed', e));
   const presenceRef = currentBuzzer().presenceRef;
   if (presenceRef) presenceRef.child(key).update({ team: teamIdx }).catch(()=>{});
 }
@@ -4532,8 +4542,14 @@ function renderSetupLobby(game){
     : [document.getElementById('team1-name').value || 'Team 1', document.getElementById('team2-name').value || 'Team 2'];
   const team3On = document.getElementById(isJeopardy ? 'jeopardy-enable-team3' : 'enable-team3').checked;
   if (team3On) teamNames.push(document.getElementById(isJeopardy ? 'jt3-name' : 'team3-name').value || 'Team 3');
+  const teamTagColors = ['#E8453C','#3B82F6','#22C55E'];
   const rows = buzzer.presence.length
-    ? buzzer.presence.map(p => `<div class="pr-row"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, teamNames)}</div>`).join('')
+    ? buzzer.presence.map(p => {
+        const teamTag = (p.team !== undefined && p.team !== null)
+          ? `<span class="player-team-tag" style="background:${teamTagColors[p.team]||'#888'}22;color:${teamTagColors[p.team]||'#888'};">${teamNames[p.team] || ('Team '+(p.team+1))}</span>`
+          : `<span class="player-team-tag" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);">kein Team</span>`;
+        return `<div class="pr-row"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${p.name}</span>${teamTag}</div>`;
+      }).join('')
     : `<div class="pr-empty">Noch niemand verbunden — QR-Code scannen zum Beitreten</div>`;
   container.innerHTML = `
     <div class="panel-head"><span>👥 Lobby</span><span class="badge">${buzzer.presence.length}</span></div>
@@ -4541,6 +4557,7 @@ function renderSetupLobby(game){
     <div class="panel-row">
       <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code zeigen'}</button>
       <button class="btn btn-secondary" onclick="popOutQR()">🗗 QR als Fenster</button>
+      <button class="btn btn-primary" onclick="openPlayersScreen('${isJeopardy ? 'jeopardy-setup-screen' : 'setup-screen'}')">👥 Teams zuteilen</button>
       <button class="btn btn-secondary" onclick="resetAllTeams()">↺ Teams zurücksetzen</button>
     </div>`;
 }

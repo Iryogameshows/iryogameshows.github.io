@@ -200,6 +200,7 @@
       name, pin: ph, avatar, color, team: null, created: TS,
       stats: { buzzes: 0, bestBuzz: null, wins: 0, games: 0 },
     });
+    document.getElementById('screen-signup').classList.remove('active');
     loginAs({ key, name, avatar, color }, pin);
   }
 
@@ -228,7 +229,7 @@
     buildGrid('prof-color-grid', COLORS, true, () => profileChoice.color, v => profileChoice.color = v);
     showScreen('screen-profile');
   }
-  function closeProfile(){ refreshRoot(); }
+  function closeProfile(){ document.getElementById('screen-profile').classList.remove('active'); refreshRoot(); }
   async function saveProfile(){
     acc.avatar = profileChoice.avatar; acc.color = profileChoice.color;
     await db.ref('buzzer/players/'+acc.key).update({ avatar: acc.avatar, color: acc.color });
