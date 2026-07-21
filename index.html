@@ -2539,6 +2539,13 @@ function tournamentCreate(){
   tournament = { name, teams, games: [], created: Date.now() };
   saveTournament();
 }
+// Standard-Gewichtung pro Spieltyp - wird beim Auswählen automatisch ins
+// Gewichtungsfeld übernommen (kann vor dem Hinzufügen noch manuell geändert werden).
+const TOURNAMENT_DEFAULT_WEIGHTS = { 'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Sonstiges': 1 };
+function tournamentGameTypeChanged(){
+  const type = document.getElementById('tour-game-type').value;
+  document.getElementById('tour-game-weight').value = TOURNAMENT_DEFAULT_WEIGHTS[type] || 1;
+}
 function tournamentAddGame(){
   const game = document.getElementById('tour-game-type').value;
   const weight = Math.max(1, parseInt(document.getElementById('tour-game-weight').value) || 1);
@@ -2657,13 +2664,13 @@ function renderTournament(){
     <div class="editor-card">
       <label>Spiel hinzufügen</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <select id="tour-game-type" style="flex:2;min-width:150px;padding:11px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;outline:none;">
+        <select id="tour-game-type" onchange="tournamentGameTypeChanged()" style="flex:2;min-width:150px;padding:11px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;outline:none;">
           <option>Family Feud</option>
           <option>Jeopardy</option>
           <option>Wer wird Millionär</option>
           <option>Sonstiges</option>
         </select>
-        <input type="number" id="tour-game-weight" value="1" min="1" title="Gewichtung" style="flex:0 0 80px;margin-bottom:0;text-align:center;" placeholder="×">
+        <input type="number" id="tour-game-weight" value="${TOURNAMENT_DEFAULT_WEIGHTS['Family Feud']}" min="1" title="Gewichtung" style="flex:0 0 80px;margin-bottom:0;text-align:center;" placeholder="×">
         <input type="text" id="tour-game-date" placeholder="z.B. Freitag" style="flex:1;min-width:110px;margin-bottom:0;">
         <button class="btn btn-accent" onclick="tournamentAddGame()">+ Hinzufügen</button>
       </div>
