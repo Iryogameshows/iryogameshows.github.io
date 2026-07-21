@@ -60,7 +60,7 @@
     <h1>🔔 Keller Buzzer</h1>
     <div class="hint">Melde dich an oder erstelle einen Account.<br>Dein Account (und dein Team) folgt dir auf jedes Gerät.</div>
     <input id="login-name" placeholder="Spielername" autocomplete="off" maxlength="24">
-    <input id="login-pin" placeholder="PIN (4 Ziffern)" inputmode="numeric" maxlength="4" autocomplete="off">
+    <input id="login-pin" type="password" placeholder="PIN oder Passwort" maxlength="32" autocomplete="off">
     <div class="err" id="login-err"></div>
     <button class="btn" onclick="doLogin()">Weiter</button>
   </div>
@@ -173,13 +173,13 @@
     const err = document.getElementById('login-err');
     err.textContent = '';
     if (name.length < 2) { err.textContent = 'Bitte einen Namen (min. 2 Zeichen) eingeben.'; return; }
-    if (!/^\d{4}$/.test(pin)) { err.textContent = 'PIN muss genau 4 Ziffern sein.'; return; }
+    if (pin.length < 4) { err.textContent = 'PIN/Passwort muss mind. 4 Zeichen haben.'; return; }
     const key = keyOf(name);
     const snap = await db.ref('buzzer/players/'+key).get();
     const ph = await hashPin(name, pin);
     if (snap.exists()){
       const p = snap.val();
-      if (p.pin !== ph){ err.textContent = 'Falsche PIN für diesen Namen.'; return; }
+      if (p.pin !== ph){ err.textContent = 'Falsches PIN/Passwort für diesen Namen.'; return; }
       loginAs({ key, name: p.name || name, avatar: p.avatar || AVATARS[0], color: p.color || COLORS[0] }, pin);
     } else {
       // Neuer Account → Profil wählen
