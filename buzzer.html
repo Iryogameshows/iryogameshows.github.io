@@ -173,7 +173,7 @@
     const err = document.getElementById('login-err');
     err.textContent = '';
     if (name.length < 2) { err.textContent = 'Bitte einen Namen (min. 2 Zeichen) eingeben.'; return; }
-    if (pin.length < 4) { err.textContent = 'PIN/Passwort muss mind. 4 Zeichen haben.'; return; }
+    if (pin.length < 5) { err.textContent = 'PIN/Passwort muss mind. 5 Zeichen haben.'; return; }
     const key = keyOf(name);
     const snap = await db.ref('buzzer/players/'+key).get();
     const ph = await hashPin(name, pin);
