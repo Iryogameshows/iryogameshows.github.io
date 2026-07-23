@@ -87,7 +87,7 @@
   <!-- LOBBY -->
   <div id="screen-lobby" class="screen">
     <div class="lobby-title">Du bist drin! 🎉</div>
-    <img class="lobby-gif" id="lobby-gif" src="" alt="">
+    <img class="lobby-gif" id="lobby-gif" alt="" style="visibility:hidden">
     <div class="me-row"><span class="me-av" id="lobby-av"></span><b id="lobby-name"></b></div>
     <div class="lobby-sub">Der Host teilt dich gleich einem Team zu.<br>Nicht weggehen, das dauert nicht lang!</div>
     <div class="lobby-count" id="lobby-count"></div>
@@ -274,7 +274,11 @@
   function pickRandomLobbyGif(){
     const pick = LOBBY_GIFS[Math.floor(Math.random() * LOBBY_GIFS.length)];
     const preload = new Image();
-    preload.onload = () => { document.getElementById('lobby-gif').src = pick; };
+    preload.onload = () => {
+      const img = document.getElementById('lobby-gif');
+      img.src = pick;
+      img.style.visibility = 'visible';
+    };
     preload.src = pick;
   }
   function refreshRoot(){
