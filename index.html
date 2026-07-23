@@ -3195,6 +3195,10 @@ function endGame() {
 }
 
 function showResults() {
+  // Falls wir aus einer Intro-/Finale-Sequenz kommen (z.B. kein Finale, weil
+  // keine Finale-Fragen angelegt sind), liegt noch der schwarze Backdrop
+  // (z-index 1999) über allem - sonst bleibt das Ergebnis dahinter schwarz.
+  fadeOutBackdrop(document.querySelector('.black-backdrop'));
   const maxScore = Math.max(...state.scores);
   const winners = state.teamNames.filter((_, i) => state.scores[i] === maxScore);
   document.getElementById('final-scores').innerHTML = state.teamNames.map((name, i) =>
