@@ -1311,6 +1311,11 @@ body {
     <input type="checkbox" id="enable-gameshow-intro">
     <label for="enable-gameshow-intro">Gameshow-Intro abspielen</label>
   </div>
+  <div class="team-toggle" style="gap:10px;">
+    <label for="feud-show-name" style="white-space:nowrap;">Name im Intro:</label>
+    <input type="text" id="feud-show-name" placeholder="z.B. Keller" oninput="saveFeudName()" style="flex:1;min-width:120px;max-width:220px;" value="Keller">
+    <span style="opacity:.7;white-space:nowrap;">Feud</span>
+  </div>
   <div class="setup-lobby" id="feud-setup-lobby"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startGame()">Spiel starten</button>
@@ -2171,6 +2176,7 @@ function saveToStorage(){
 function loadFromStorage(){
   try { const s=localStorage.getItem('familyFeudQuestions');if(s){questions=JSON.parse(s);} } catch {}
   try { const f=localStorage.getItem('familyFeudFinaleQuestions');if(f){finaleQuestions=JSON.parse(f);} } catch {}
+  try { const inp=document.getElementById('feud-show-name'); if(inp){ const v=localStorage.getItem('feudShowName'); if(v!==null) inp.value=v; } } catch {}
 }
 
 // ── REAKTIONSZEIT-BESTENLISTE ── (übers ganze Event hinweg, geräteseitig gespeichert)
@@ -2797,11 +2803,23 @@ function afterStar() {
   else showWelcomeIntro();
 }
 
+// Anpassbarer Show-Name im Intro: "___ Feud". Default "Keller".
+function getFeudName() {
+  try { const v = localStorage.getItem('feudShowName'); if (v !== null) return v.trim() || 'Keller'; } catch {}
+  return 'Keller';
+}
+function saveFeudName() {
+  const inp = document.getElementById('feud-show-name');
+  const v = inp ? inp.value : '';
+  try { localStorage.setItem('feudShowName', v); } catch {}
+}
+function feudTitle() { return getFeudName() + ' Feud'; }
+
 function showWelcomeIntro() {
   showClickOverlay('welcome-overlay overlay-enter', `
     <div class="welcome-star">${STAR_SVG}</div>
     <div class="welcome-line1">Willkommen zu</div>
-    <div class="welcome-line2">Keller Feud</div>
+    <div class="welcome-line2">${feudTitle()}</div>
   `, 1800, showTutorialThenGame);
 }
 
@@ -2931,7 +2949,7 @@ const TUT_STAR = `<svg viewBox="0 0 100 100" width="100" xmlns="http://www.w3.or
 function feudTutorialSlides() {
   return [
     `<div class="tut-star-anim" style="margin-bottom:10px;">${TUT_STAR}</div>
-     <div class="tut-big tut-gold">Keller Feud</div>`,
+     <div class="tut-big tut-gold">${feudTitle()}</div>`,
     `<div class="tut-icon">⚔️</div>
      <div class="tut-big tut-white" style="font-size:3rem;">Teams treten<br>gegeneinander an</div>
      <div class="tut-sub">2 oder 3 Teams spielen um Punkte.<br>Pro Runde gibt es eine Frage mit versteckten Antworten.</div>`,
