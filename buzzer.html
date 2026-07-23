@@ -358,6 +358,7 @@
     if (saved && saved.key){
       acc = { key: saved.key, name: saved.name, avatar: saved.avatar || AVATARS[0], color: saved.color || COLORS[0] };
       document.getElementById('topbar').style.display = 'flex';
+      pickRandomLobbyGif();
       startPresence(); subscribeAccount(); refreshRoot();
     } else {
       showScreen('screen-login');
