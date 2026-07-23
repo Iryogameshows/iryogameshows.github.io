@@ -202,6 +202,7 @@
     acc = a;
     try { localStorage.setItem('buzzAccount', JSON.stringify({ key:a.key, name:a.name, avatar:a.avatar, color:a.color, pin })); } catch {}
     document.getElementById('topbar').style.display = 'flex';
+    pickRandomLobbyGif();
     startPresence();
     subscribeAccount();
     refreshRoot();
@@ -267,12 +268,11 @@
   // Zwischenzustand (z.B. screen-blocked) aktiv sein kann, bevor die echten
   // Werte da sind - das würde die active-Klasse an- und abschalten und so
   // bei jedem Zwischenschritt ein neues GIF würfeln.
-  let lobbyGifPicked = false;
+  // Das GIF wird EINMAL fest gewählt (beim Login), nicht in refreshRoot -
+  // sonst würfeln die vielen kurz nacheinander feuernden Firebase-Listener
+  // beim Login mehrfach und man sieht erst ein anderes GIF aufblitzen.
   function pickRandomLobbyGif(){
     const pick = LOBBY_GIFS[Math.floor(Math.random() * LOBBY_GIFS.length)];
-    // Vollständig vorladen (unsichtbares Image-Objekt), bevor das sichtbare
-    // <img> umgeschaltet wird - sonst blitzt kurz das alte oder ein
-    // halbgeladenes GIF auf, während das neue noch über's Netz kommt.
     const preload = new Image();
     preload.onload = () => { document.getElementById('lobby-gif').src = pick; };
     preload.src = pick;
@@ -284,14 +284,12 @@
     document.getElementById('lobby-av').textContent = acc.avatar;
     document.getElementById('lobby-av').style.background = acc.color;
     document.getElementById('lobby-name').textContent = acc.name;
-    if (!nameAllowed()) { lobbyGifPicked = false; showScreen('screen-blocked'); return; }
+    if (!nameAllowed()) { showScreen('screen-blocked'); return; }
     if (myTeam === null || myTeam === undefined) {
-      if (!lobbyGifPicked) { lobbyGifPicked = true; pickRandomLobbyGif(); }
       showScreen('screen-lobby');
       document.getElementById('lobby-count').textContent = presenceCount > 1 ? `${presenceCount} Leute in der Lobby` : '';
       return;
     }
-    lobbyGifPicked = false;
     showScreen('screen-buzz');
     teamChip.textContent = teamNames[myTeam] || ('Team ' + (myTeam+1));
     teamChip.style.background = TEAM_COLORS_HEX[myTeam] || '#888';
