@@ -180,9 +180,9 @@ body {
 .q-text:not(.hidden-q) { cursor: default; }
 
 .answers { display: flex; flex-direction: column; gap: 5px; }
-/* Ab 5 Antworten wie beim echten Family Feud zwei Spalten: 1..n/2 links,
-   Rest rechts (spaltenweise gefüllt via grid-auto-flow:column; die Zeilenzahl
-   setzt renderBoard() inline je nach Antwortzahl). */
+/* Ab 5 Antworten zwei Spalten: linke Spalte immer bis 4 gefüllt (1-4),
+   alles darüber nach rechts (5-8). Spaltenweise via grid-auto-flow:column;
+   renderBoard() setzt inline repeat(4,1fr) als Zeilenraster. */
 .answers.split {
   display: grid; grid-auto-flow: column;
   grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 5px;
@@ -3081,7 +3081,7 @@ function renderBoard() {
   const board = document.getElementById('answer-board');
   const twoCol = q.answers.length > 4;
   board.className = 'answers' + (twoCol ? ' split' : '');
-  board.style.gridTemplateRows = twoCol ? `repeat(${Math.ceil(q.answers.length / 2)}, 1fr)` : '';
+  board.style.gridTemplateRows = twoCol ? 'repeat(4, 1fr)' : '';
   board.innerHTML = q.answers.map((a,i) => {
     const revealed = state.revealed[i];
     const missed = state.allOut && !revealed;
