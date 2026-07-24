@@ -810,6 +810,17 @@ body {
 .media-slot.filled { border: 2px solid rgba(255,255,255,.15); }
 .media-slot.filled img, .media-slot.filled video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .media-slot-remove { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(0,0,0,.6); color: #FF8A80; font-weight: 700; cursor: pointer; }
+.media-slot.filled { cursor: help; }
+/* Kleine Jeopardy-Bild-Thumbnails im Editor (Frage-/Lösungs-/Staffel-Bild) */
+.jimg-thumb { width: 30px; height: 30px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(255,255,255,.2); cursor: help; vertical-align: middle; }
+/* Schwebende Bild-Vorschau beim Hover: vergrößertes Bild + Dateiname */
+#img-hover-preview {
+  position: fixed; z-index: 6000; pointer-events: none; display: none;
+  background: #0b0e2c; border: 1px solid rgba(255,210,63,.45); border-radius: 10px;
+  padding: 6px; box-shadow: 0 14px 44px rgba(0,0,0,.6); max-width: 264px;
+}
+#img-hover-preview img, #img-hover-preview video { max-width: 250px; max-height: 210px; border-radius: 6px; display: block; }
+#img-hover-preview .ihp-name { font-size: .72rem; color: #FFD23F; margin-top: 6px; text-align: center; word-break: break-all; font-weight: 600; }
 
 /* ── Einblendungen: Anzeige auf dem Gamescreen ── */
 #media-overlay { position: fixed; inset: 0; z-index: 4300; background: rgba(5,8,26,.94); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 40px; }
@@ -1818,10 +1829,48 @@ function setMediaSlot(arr, slot, input, afterFn) {
   const f = input.files[0]; if (!f) return;
   const r = new FileReader();
   r.onload = () => {
-    arr[slot] = { type: f.type.startsWith('video') ? 'video' : 'image', data: r.result };
+    arr[slot] = { type: f.type.startsWith('video') ? 'video' : 'image', data: r.result, name: f.name };
     afterFn();
   };
   r.readAsDataURL(f);
+}
+function escAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+// Schwebende Bild-Vorschau: jedes Element mit data-preview-name (und optional
+// einem inneren img/video oder data-preview-src) zeigt beim Hover ein
+// vergrößertes Bild samt Dateiname an - so lässt sich jedes eingebaute Bild
+// überall im Editor eindeutig identifizieren.
+function ensureImgHoverPreview() {
+  if (document.getElementById('img-hover-preview')) return;
+  const el = document.createElement('div');
+  el.id = 'img-hover-preview';
+  el.innerHTML = '<img alt=""><video muted></video><div class="ihp-name"></div>';
+  document.body.appendChild(el);
+  const imgEl = el.querySelector('img'), vidEl = el.querySelector('video'), nameEl = el.querySelector('.ihp-name');
+  document.addEventListener('mouseover', (e) => {
+    const t = e.target.closest && e.target.closest('[data-preview-name]');
+    if (!t) return;
+    const inner = t.matches('img,video') ? t : t.querySelector('img,video');
+    const src = t.getAttribute('data-preview-src') || (inner && inner.getAttribute('src')) || '';
+    const isVideo = inner && inner.tagName === 'VIDEO';
+    imgEl.style.display = (src && !isVideo) ? 'block' : 'none';
+    vidEl.style.display = (src && isVideo) ? 'block' : 'none';
+    if (src && !isVideo) imgEl.src = src;
+    if (src && isVideo) vidEl.src = src;
+    nameEl.textContent = t.getAttribute('data-preview-name') || '';
+    el.style.display = 'block';
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (el.style.display !== 'block') return;
+    const pad = 16, r = el.getBoundingClientRect();
+    let x = e.clientX + pad, y = e.clientY + pad;
+    if (x + r.width > innerWidth) x = e.clientX - r.width - pad;
+    if (y + r.height > innerHeight) y = e.clientY - r.height - pad;
+    el.style.left = Math.max(4, x) + 'px'; el.style.top = Math.max(4, y) + 'px';
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (e.target.closest && e.target.closest('[data-preview-name]')) el.style.display = 'none';
+  });
 }
 // buildOnClick(slot, inputExpr) liefert den onclick/onchange-Ausdruck als
 // String - so kann jeder Editor (Feud/Jeopardy/WWM) seine eigene Adressierung
@@ -1831,7 +1880,7 @@ function mediaSlotsHtml(arr, buildOnClick) {
   for (let i = 0; i < 3; i++) {
     const m = arr[i];
     html += m
-      ? `<div class="media-slot filled">${m.type === 'video' ? `<video src="${m.data}" muted></video>` : `<img src="${m.data}">`}<button type="button" class="media-slot-remove" onclick="${buildOnClick(i, 'null')}">✕</button></div>`
+      ? `<div class="media-slot filled" data-preview-name="${escAttr(m.name || (m.type === 'video' ? 'Video' : 'Bild'))}">${m.type === 'video' ? `<video src="${m.data}" muted></video>` : `<img src="${m.data}">`}<button type="button" class="media-slot-remove" onclick="${buildOnClick(i, 'null')}">✕</button></div>`
       : `<label class="media-slot empty">+<input type="file" accept="image/*,video/*" style="display:none;" onchange="${buildOnClick(i, 'this')}"></label>`;
   }
   html += '</div>';
@@ -3839,6 +3888,7 @@ loadFromStorage();
 loadReactionBoard();
 loadHostNotes();
 loadTournament();
+ensureImgHoverPreview();
 renderLogo('KELLER', 'GAMESHOWS', 30);
 document.getElementById('sfx-toggle').textContent = SFX.enabled ? '🔊 Sound an' : '🔇 Sound aus';
 
@@ -5090,10 +5140,27 @@ function jeopardyEditMedia(b,col,row,slot,input){
 function jeopardyEditImg(b,col,row,field,input){
   const f = input.files[0]; if(!f) return;
   const r = new FileReader();
-  r.onload = () => { jeopardyClue(b,col,row)[field] = r.result; renderJeopardyEditor(); };
+  r.onload = () => {
+    const c = jeopardyClue(b,col,row);
+    c[field] = r.result; c[field + 'Name'] = f.name; // Dateiname zum Identifizieren merken
+    renderJeopardyEditor();
+  };
   r.readAsDataURL(f);
 }
-function jeopardyClearImg(b,col,row,field){ delete jeopardyClue(b,col,row)[field]; renderJeopardyEditor(); }
+function jeopardyClearImg(b,col,row,field){
+  const c = jeopardyClue(b,col,row);
+  delete c[field]; delete c[field + 'Name'];
+  renderJeopardyEditor();
+}
+// Kleines Thumbnail eines gesetzten Jeopardy-Bilds mit Hover-Vorschau + Löschen.
+function jimgThumb(clue, field, b, col, row, label) {
+  if (!clue[field]) return '';
+  const name = clue[field + 'Name'] || label;
+  return `<span style="display:inline-flex;align-items:center;gap:5px;">
+    <img class="jimg-thumb" src="${clue[field]}" data-preview-name="${escAttr(name)}" alt="">
+    <button onclick="jeopardyClearImg(${b},${col},${row},'${field}')" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${escAttr(name)} entfernen">✕</button>
+  </span>`;
+}
 function jeopardyEditStaged(b,col,row,cb){
   const c = jeopardyClue(b,col,row); c.staged = cb.checked;
   if(c.staged){ if(!c.stageCols) c.stageCols = 3; if(!c.stageRows) c.stageRows = 3; }
@@ -5125,17 +5192,17 @@ function renderJeopardyEditor() {
             </div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
               <label style="${uploadLbl}">🖼 Frage-Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'qImg',this)"></label>
-              ${clue.qImg?`<button onclick="jeopardyClearImg(${b},${col},${row},'qImg')" style="${uploadLbl}color:#FF8A80;">✕ Frage-Bild</button>`:''}
+              ${jimgThumb(clue,'qImg',b,col,row,'Frage-Bild')}
               <label style="${uploadLbl}">🖼 Lösungs-Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'aImg',this)"></label>
-              ${clue.aImg?`<button onclick="jeopardyClearImg(${b},${col},${row},'aImg')" style="${uploadLbl}color:#FF8A80;">✕ Lösungs-Bild</button>`:''}
+              ${jimgThumb(clue,'aImg',b,col,row,'Lösungs-Bild')}
               <label style="${uploadLbl}">🔊 Sound<input type="file" accept="audio/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'sound',this)"></label>
-              ${clue.sound?`<button onclick="jeopardyClearImg(${b},${col},${row},'sound')" style="${uploadLbl}color:#FF8A80;">✕ Sound</button>`:''}
+              ${clue.sound?`<span style="display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:#22C55E;">🔊 ${escAttr(clue.soundName||'Sound')}<button onclick="jeopardyClearImg(${b},${col},${row},'sound')" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;">✕</button></span>`:''}
               <label style="${uploadLbl}background:${clue.staged?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
                 <input type="checkbox" ${clue.staged?'checked':''} onchange="jeopardyEditStaged(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🧩 Staffeln
               </label>
               ${clue.staged?`
                 <label style="${uploadLbl}">Staffel-Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'stageImg',this)"></label>
-                ${clue.stageImg?'<span style="font-size:.65rem;color:#22C55E;">✓ Bild</span>':'<span style="font-size:.65rem;color:#FF8A80;">kein Bild</span>'}
+                ${clue.stageImg ? jimgThumb(clue,'stageImg',b,col,row,'Staffel-Bild') : '<span style="font-size:.65rem;color:#FF8A80;">kein Bild</span>'}
                 <select onchange="jeopardyEditGrid(${b},${col},${row},this.value)" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
                   ${gridOpts.map(([c2,r2])=>`<option value="${c2}x${r2}" ${(clue.stageCols||3)===c2&&(clue.stageRows||3)===r2?'selected':''}>${c2}×${r2} = ${c2*r2} Felder</option>`).join('')}
                 </select>
