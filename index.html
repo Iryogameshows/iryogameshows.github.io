@@ -1010,6 +1010,24 @@ body {
 .jeopardy-stage-cover { position: absolute; inset: 0; display: grid; gap: 2px; }
 .jeopardy-stage-tile { background: #0F1B5C; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); transition: opacity .35s ease; }
 .jeopardy-stage-tile.gone { opacity: 0; }
+/* Bilder-Reihe: mehrere einzelne Bilder nebeneinander, eins nach dem anderen
+   aufgedeckt (z.B. 5 Pokémon). Jede Zelle ist erst verdeckt, Klick deckt die
+   nächste (links → rechts) auf. */
+.jeopardy-series { display: grid; gap: 10px; width: 100%; max-width: min(92vw, 1150px); margin: 0 auto; }
+.jeopardy-series-cell {
+  position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden;
+  background: #05081a; box-shadow: 0 6px 22px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08);
+}
+.jeopardy-series-cell img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.jeopardy-series-cover {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #1E3FAE 0%, #162E88 50%, #112370 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.2);
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.8rem; color: rgba(255,255,255,.4);
+  transition: opacity .4s ease;
+}
+.jeopardy-series-cell.shown .jeopardy-series-cover { opacity: 0; pointer-events: none; }
+.jeopardy-series-cell.shown img { animation: ddPop .4s ease; }
 /* Sound playback animation */
 .jeopardy-sound-fx {
   position: fixed; inset: 0; z-index: 1050;
@@ -3879,9 +3897,19 @@ function updateGamemasterJeopardy() {
         ? `<button class="gm-btn gold" onclick="opener.jeopardyStageReveal()">🧩 Feld aufdecken (${done}/${g.total})</button>`
         : `<span class="hint-ok">✓ Bild komplett aufgedeckt</span>`;
     }
+    const series = clue.series && jeopardySeriesImgs(clue).length > 0;
+    let seriesBtn = '';
+    if (series){
+      const total = jeopardySeriesImgs(clue).length;
+      const done = jeopardyState.seriesRevealed;
+      seriesBtn = done < total
+        ? `<button class="gm-btn gold" onclick="opener.jeopardySeriesReveal()">🎴 Nächstes Bild (${done}/${total})</button>`
+        : `<span class="hint-ok">✓ Alle Bilder aufgedeckt</span>`;
+    }
     const media = [
       clue.qImg ? '<span class="tag tag-blue">🖼 Frage-Bild</span>' : '',
       staged ? '<span class="tag tag-gold">🧩 Staffel-Bild</span>' : '',
+      series ? `<span class="tag tag-gold">🎴 Bilder-Reihe (${jeopardySeriesImgs(clue).length})</span>` : '',
       clue.aImg ? '<span class="tag tag-green">🖼 Lösungs-Bild</span>' : '',
       clue.sound ? '<span class="tag tag-purple">🔊 Sound</span>' : '',
     ].filter(Boolean).join(' ');
@@ -3915,7 +3943,7 @@ function updateGamemasterJeopardy() {
           Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.
         </div>
       ` : `
-        ${(staged||soundBtn)?`<div class="btn-grid">${stageBtn}${soundBtn}</div>`:''}
+        ${(staged||series||soundBtn)?`<div class="btn-grid">${stageBtn}${seriesBtn}${soundBtn}</div>`:''}
         ${autoScoreHtml}
         ${autoScoreHtml ? '<details class="manual-score"><summary>oder Team manuell wählen</summary>' : ''}
         <div class="btn-grid">${teamBtns}</div>
@@ -4151,6 +4179,7 @@ let jeopardyState = {
   ddPending: false,  // true while GM sees the warning but the question isn't shown yet
   currentIsDaily: false,
   stageRevealed: [], // revealed tile indices for a staged-image clue
+  seriesRevealed: 0, // wie viele Bilder einer Bilder-Reihe schon aufgedeckt sind (links → rechts)
   questionRevealed: false, // the question text is hidden until the GM reveals it
 };
 
@@ -4169,6 +4198,7 @@ function jeopardySnapshot() {
     ddPending: jeopardyState.ddPending,
     currentIsDaily: jeopardyState.currentIsDaily,
     stageRevealed: [...jeopardyState.stageRevealed],
+    seriesRevealed: jeopardyState.seriesRevealed,
     questionRevealed: jeopardyState.questionRevealed,
   });
 }
@@ -4184,6 +4214,7 @@ function jeopardyUndo() {
   jeopardyState.ddPending = prev.ddPending;
   jeopardyState.currentIsDaily = prev.currentIsDaily;
   jeopardyState.stageRevealed = prev.stageRevealed || [];
+  jeopardyState.seriesRevealed = prev.seriesRevealed || 0;
   jeopardyState.questionRevealed = prev.questionRevealed;
   renderJeopardyScores();
   renderJeopardyBoard();
@@ -4350,6 +4381,7 @@ function openJeopardyClue(col, row) {
   jeopardyState.currentClue = { col, row };
   jeopardyState.answerShown = false;
   jeopardyState.stageRevealed = [];
+  jeopardyState.seriesRevealed = 0;
   jeopardyState.questionRevealed = false;
   resetMediaOverlay();
   if (jeopardyIsDaily(col, row)) {
@@ -4389,8 +4421,8 @@ function jeopardyRevealQuestion() {
 
 // Staged image helpers
 function jeopardyStageGrid(clue){
-  const cols = Math.max(2, Math.min(4, clue.stageCols || 3));
-  const rows = Math.max(2, Math.min(4, clue.stageRows || 3));
+  const cols = Math.max(1, Math.min(5, clue.stageCols || 3));
+  const rows = Math.max(1, Math.min(4, clue.stageRows || 3));
   return { cols, rows, total: cols * rows };
 }
 
@@ -4407,6 +4439,19 @@ function jeopardyStageHtml(clue){
   </div>`;
 }
 
+// Bilder-Reihe: nur die tatsächlich hochgeladenen Bilder (max. 5)
+function jeopardySeriesImgs(clue){ return (clue.seriesImgs || []).filter(Boolean); }
+function jeopardySeriesHtml(clue){
+  const imgs = jeopardySeriesImgs(clue);
+  const shown = jeopardyState.seriesRevealed;
+  const cells = imgs.map((src, i) => `
+    <div class="jeopardy-series-cell ${i < shown ? 'shown' : ''}">
+      <img src="${src}" alt="">
+      <div class="jeopardy-series-cover">${i+1}</div>
+    </div>`).join('');
+  return `<div class="jeopardy-series" style="grid-template-columns:repeat(${imgs.length},1fr);">${cells}</div>`;
+}
+
 // Renders the clue overlay on the MAIN screen from state (re-entrant).
 // Updates an already-open overlay in place instead of destroying and
 // recreating it, so the entrance animation doesn't restart and flash
@@ -4419,6 +4464,7 @@ function renderJeopardyClueOverlay() {
   const clue = cat.clues[row];
   const val = JEOPARDY_VALUES[row];
   const staged = clue.staged && clue.stageImg;
+  const series = clue.series && jeopardySeriesImgs(clue).length > 0;
 
   const qImgHtml = clue.qImg ? `<img class="jeopardy-clue-img" src="${clue.qImg}" alt="">` : '';
   const aImgHtml = clue.aImg ? `<img class="jeopardy-answer-img ${jeopardyState.answerShown?'visible':''}" src="${clue.aImg}" alt="">` : '';
@@ -4426,7 +4472,7 @@ function renderJeopardyClueOverlay() {
   const revealed = jeopardyState.questionRevealed;
   const questionArea = revealed
     ? `${clue.q ? `<div class="jeopardy-clue-text">${clue.q}</div>` : ''}
-       ${staged ? jeopardyStageHtml(clue) : qImgHtml}`
+       ${series ? jeopardySeriesHtml(clue) : staged ? jeopardyStageHtml(clue) : qImgHtml}`
     : `<div class="jeopardy-clue-blank">Frage verdeckt</div>`;
 
   let ov = document.getElementById('jeopardy-clue-ov');
@@ -4465,6 +4511,19 @@ function jeopardyStageReveal() {
   if (!hidden.length) return;
   jeopardySnapshot();
   jeopardyState.stageRevealed.push(hidden[Math.floor(Math.random()*hidden.length)]);
+  renderJeopardyClueOverlay();
+  updateGamemaster();
+}
+// Reveal the next image of a Bilder-Reihe (links → rechts)
+function jeopardySeriesReveal() {
+  if (!jeopardyState.currentClue) return;
+  const { col, row } = jeopardyState.currentClue;
+  const clue = jBoard()[col].clues[row];
+  if (!clue.series) return;
+  const total = jeopardySeriesImgs(clue).length;
+  if (jeopardyState.seriesRevealed >= total) return;
+  jeopardySnapshot();
+  jeopardyState.seriesRevealed++;
   renderJeopardyClueOverlay();
   updateGamemaster();
 }
@@ -5409,12 +5468,26 @@ function jeopardyEditGrid(b,col,row,val){
   const [cols,rows] = val.split('x').map(Number);
   const c = jeopardyClue(b,col,row); c.stageCols = cols; c.stageRows = rows;
 }
+function jeopardyEditSeries(b,col,row,cb){
+  const c = jeopardyClue(b,col,row); c.series = cb.checked;
+  if(c.series && !c.seriesImgs) c.seriesImgs = [];
+  renderJeopardyEditor();
+}
+function jeopardyEditSeriesImg(b,col,row,idx,input){
+  const f = input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => { const c = jeopardyClue(b,col,row); c.seriesImgs = c.seriesImgs || []; c.seriesImgs[idx] = r.result; renderJeopardyEditor(); };
+  r.readAsDataURL(f);
+}
+function jeopardyClearSeriesImg(b,col,row,idx){
+  const c = jeopardyClue(b,col,row); if(c.seriesImgs) c.seriesImgs[idx] = null; renderJeopardyEditor();
+}
 
 function renderJeopardyEditor() {
   const grid = document.getElementById('jeopardy-editor-grid');
   const esc = s => (s||'').replace(/"/g,'&quot;');
   const uploadLbl = 'display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);cursor:pointer;color:rgba(255,255,255,.7);font-size:.68rem;font-weight:700;';
-  const gridOpts = [[2,2],[3,2],[4,2],[3,3]];
+  const gridOpts = [[2,2],[3,2],[4,2],[3,3],[5,1]];
   let html = '';
   jeopardyData.boards.forEach((board, b) => {
     html += `<div style="margin-bottom:8px;"><div class="page-title" style="margin:${b===0?'0':'24px'} 0 12px;"><em>Board ${b+1}</em></div></div>`;
@@ -5446,6 +5519,13 @@ function renderJeopardyEditor() {
                   ${gridOpts.map(([c2,r2])=>`<option value="${c2}x${r2}" ${(clue.stageCols||3)===c2&&(clue.stageRows||3)===r2?'selected':''}>${c2}×${r2} = ${c2*r2} Felder</option>`).join('')}
                 </select>
               `:''}
+              <label style="${uploadLbl}background:${clue.series?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
+                <input type="checkbox" ${clue.series?'checked':''} onchange="jeopardyEditSeries(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🎴 Bilder-Reihe
+              </label>
+              ${clue.series?[0,1,2,3,4].map(idx=>{
+                const has = clue.seriesImgs && clue.seriesImgs[idx];
+                return `<label style="${uploadLbl}${has?'color:#22C55E;':''}" title="Bild ${idx+1}">${has?`✓ ${idx+1}`:`＋ ${idx+1}`}<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditSeriesImg(${b},${col},${row},${idx},this)"></label>${has?`<button onclick="jeopardyClearSeriesImg(${b},${col},${row},${idx})" style="${uploadLbl}color:#FF8A80;padding:4px 7px;">✕</button>`:''}`;
+              }).join(''):''}
             </div>
             <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
             ${mediaSlotsHtml(clue.media || (clue.media = []), (slot, inputExpr) => `jeopardyEditMedia(${b},${col},${row},${slot},${inputExpr})`)}
