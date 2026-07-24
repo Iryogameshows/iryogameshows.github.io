@@ -4439,8 +4439,9 @@ function jeopardyStageHtml(clue){
   </div>`;
 }
 
-// Bilder-Reihe: nur die tatsächlich hochgeladenen Bilder (max. 5)
-function jeopardySeriesImgs(clue){ return (clue.seriesImgs || []).filter(Boolean); }
+// Bilder-Reihe: eingestellte Anzahl (2-5) und die tatsächlich hochgeladenen Bilder
+function jeopardySeriesCount(clue){ return Math.max(2, Math.min(5, clue.seriesCount || 5)); }
+function jeopardySeriesImgs(clue){ return (clue.seriesImgs || []).slice(0, jeopardySeriesCount(clue)).filter(Boolean); }
 function jeopardySeriesHtml(clue){
   const imgs = jeopardySeriesImgs(clue);
   const shown = jeopardyState.seriesRevealed;
@@ -5470,7 +5471,11 @@ function jeopardyEditGrid(b,col,row,val){
 }
 function jeopardyEditSeries(b,col,row,cb){
   const c = jeopardyClue(b,col,row); c.series = cb.checked;
-  if(c.series && !c.seriesImgs) c.seriesImgs = [];
+  if(c.series){ if(!c.seriesImgs) c.seriesImgs = []; if(!c.seriesCount) c.seriesCount = 5; }
+  renderJeopardyEditor();
+}
+function jeopardyEditSeriesCount(b,col,row,val){
+  const c = jeopardyClue(b,col,row); c.seriesCount = Math.max(2, Math.min(5, Number(val)||5));
   renderJeopardyEditor();
 }
 function jeopardyEditSeriesImg(b,col,row,idx,input){
@@ -5522,10 +5527,15 @@ function renderJeopardyEditor() {
               <label style="${uploadLbl}background:${clue.series?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
                 <input type="checkbox" ${clue.series?'checked':''} onchange="jeopardyEditSeries(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🎴 Bilder-Reihe
               </label>
-              ${clue.series?[0,1,2,3,4].map(idx=>{
-                const has = clue.seriesImgs && clue.seriesImgs[idx];
-                return `<label style="${uploadLbl}${has?'color:#22C55E;':''}" title="Bild ${idx+1}">${has?`✓ ${idx+1}`:`＋ ${idx+1}`}<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditSeriesImg(${b},${col},${row},${idx},this)"></label>${has?`<button onclick="jeopardyClearSeriesImg(${b},${col},${row},${idx})" style="${uploadLbl}color:#FF8A80;padding:4px 7px;">✕</button>`:''}`;
-              }).join(''):''}
+              ${clue.series?`
+                <select onchange="jeopardyEditSeriesCount(${b},${col},${row},this.value)" title="Anzahl Bilder" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
+                  ${[2,3,4,5].map(n=>`<option value="${n}" ${jeopardySeriesCount(clue)===n?'selected':''}>${n} Bilder</option>`).join('')}
+                </select>
+                ${Array.from({length: jeopardySeriesCount(clue)}, (_,idx)=>{
+                  const has = clue.seriesImgs && clue.seriesImgs[idx];
+                  return `<label style="${uploadLbl}${has?'color:#22C55E;':''}" title="Bild ${idx+1}">${has?`✓ ${idx+1}`:`＋ ${idx+1}`}<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditSeriesImg(${b},${col},${row},${idx},this)"></label>${has?`<button onclick="jeopardyClearSeriesImg(${b},${col},${row},${idx})" style="${uploadLbl}color:#FF8A80;padding:4px 7px;">✕</button>`:''}`;
+                }).join('')}
+              `:''}
             </div>
             <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
             ${mediaSlotsHtml(clue.media || (clue.media = []), (slot, inputExpr) => `jeopardyEditMedia(${b},${col},${row},${slot},${inputExpr})`)}
