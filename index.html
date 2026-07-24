@@ -180,6 +180,13 @@ body {
 .q-text:not(.hidden-q) { cursor: default; }
 
 .answers { display: flex; flex-direction: column; gap: 5px; }
+/* Ab 5 Antworten wie beim echten Family Feud zwei Spalten: 1..n/2 links,
+   Rest rechts (spaltenweise gefüllt via grid-auto-flow:column; die Zeilenzahl
+   setzt renderBoard() inline je nach Antwortzahl). */
+.answers.split {
+  display: grid; grid-auto-flow: column;
+  grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 5px;
+}
 .tile {
   display: flex; align-items: stretch;
   min-height: 50px; cursor: pointer;
@@ -224,9 +231,12 @@ body {
 .tile.open .tile-answer { font-size: .95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 .tile.open .tile-pts {
   display: flex; align-items: center; justify-content: center;
-  padding: 0 16px; min-width: 56px;
+  padding: 0 18px; min-width: 60px;
   font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; color: #FFD23F;
-  border-left: 1px solid rgba(255,255,255,.08); text-shadow: 0 0 8px rgba(255,210,63,.3);
+  border-left: 2px solid rgba(255,210,63,.45);
+  background: rgba(0,0,0,.22);
+  box-shadow: inset 1px 0 0 rgba(0,0,0,.3);
+  text-shadow: 0 0 8px rgba(255,210,63,.3);
 }
 @keyframes tileFlip {
   0% { transform: perspective(800px) rotateX(90deg); }
@@ -3068,7 +3078,11 @@ function loadRound() {
 
 function renderBoard() {
   const q = state.roundQuestions[state.currentRound];
-  document.getElementById('answer-board').innerHTML = q.answers.map((a,i) => {
+  const board = document.getElementById('answer-board');
+  const twoCol = q.answers.length > 4;
+  board.className = 'answers' + (twoCol ? ' split' : '');
+  board.style.gridTemplateRows = twoCol ? `repeat(${Math.ceil(q.answers.length / 2)}, 1fr)` : '';
+  board.innerHTML = q.answers.map((a,i) => {
     const revealed = state.revealed[i];
     const missed = state.allOut && !revealed;
     let cls = '';
