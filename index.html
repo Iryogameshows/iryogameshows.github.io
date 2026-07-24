@@ -3485,11 +3485,33 @@ function startFinale() {
   if (gamemasterWin && !gamemasterWin.closed) updateGamemaster();
 }
 
+// Punktestand, den ein Team bis einschliesslich der gerade aufgedeckten Frage
+// erreicht hat. Waehrend des Antwortens steht in finaleState.scores schon die
+// Endsumme - in der Aufloesung soll sie sich aber Frage fuer Frage aufbauen.
+function finaleRevealedScore(idx) {
+  let sum = 0;
+  for (let qi = 0; qi <= finaleState.revealQ && qi < finaleState.questions.length; qi++) {
+    const a = finaleState.teamAnswers[idx][qi];
+    if (a >= 0 && finaleState.questions[qi].answers[a]) sum += finaleState.questions[qi].answers[a].points;
+  }
+  return sum;
+}
+
 function renderFinaleScores() {
-  document.getElementById('finale-scores').innerHTML = finaleState.teams.map((ti, idx) => `
-    <div class="finale-score-card ${finaleState.phase === 'answer' && idx === finaleState.currentTeamIdx ? 'active' : ''} ${finaleState.phase === 'reveal' ? 'active' : ''}">
+  const el = document.getElementById('finale-scores');
+  // Fast Money: solange die Teams antworten, bleibt der Stand verborgen -
+  // sonst sieht das zweite Team (und das Publikum) schon vorab, was zu
+  // schlagen ist. Eingeblendet wird er erst in der Aufloesung.
+  if (finaleState.phase !== 'reveal') {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  el.style.display = '';
+  el.innerHTML = finaleState.teams.map((ti, idx) => `
+    <div class="finale-score-card active">
       <div class="finale-score-name">${state.teamNames[ti]}</div>
-      <div class="finale-score-pts" id="finale-pts-${idx}">${finaleState.scores[idx]}</div>
+      <div class="finale-score-pts" id="finale-pts-${idx}">${finaleRevealedScore(idx)}</div>
     </div>
   `).join('');
 }
@@ -3520,7 +3542,10 @@ function finalePickAnswer(i) {
   const q = finaleState.questions[finaleState.currentQ];
   finaleState.teamAnswers[finaleState.currentTeamIdx][finaleState.currentQ] = i;
   finaleState.scores[finaleState.currentTeamIdx] += q.answers[i].points;
-  document.getElementById(`finale-pts-${finaleState.currentTeamIdx}`).textContent = finaleState.scores[finaleState.currentTeamIdx];
+  // Die Punktekarte existiert waehrend des Antwortens nicht (siehe
+  // renderFinaleScores) - der Stand wird erst in der Aufloesung gezeigt.
+  const ptsEl = document.getElementById(`finale-pts-${finaleState.currentTeamIdx}`);
+  if (ptsEl) ptsEl.textContent = finaleState.scores[finaleState.currentTeamIdx];
   showFlash();
   updateGamemaster();
   finaleState.currentQ++;
