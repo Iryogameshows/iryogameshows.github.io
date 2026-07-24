@@ -3848,6 +3848,10 @@ function updateGamemaster() {
   if (jeopardyState.active) return updateGamemasterJeopardy();
   if (finaleState.active) return updateGamemasterFinale();
   if (document.getElementById('tournament-screen').classList.contains('active')) return updateGamemasterTournament();
+  // Ohne diesen Zweig bleibt das GM-Fenster am Spielende auf dem letzten Stand
+  // stehen: alle Modus-Flags sind aus, und der Feud-Fallback unten steigt bei
+  // fehlender Frage wortlos aus - der Host kam nicht mehr zurück ins Menü.
+  if (document.getElementById('result-screen').classList.contains('active')) return updateGamemasterResult();
   const q = state.roundQuestions[state.currentRound];
   if (!q) return;
 
@@ -4289,7 +4293,8 @@ function toggleGMBar() {
   const jeopardyActive = document.getElementById('jeopardy-screen').classList.contains('active');
   const wwmActive = document.getElementById('wwm-screen').classList.contains('active');
   const wwdsActive = document.getElementById('wwds-screen').classList.contains('active');
-  if (!gameActive && !finaleActive && !jeopardyActive && !wwmActive && !wwdsActive) return;
+  const resultActive = document.getElementById('result-screen').classList.contains('active');
+  if (!gameActive && !finaleActive && !jeopardyActive && !wwmActive && !wwdsActive && !resultActive) return;
   bar.classList.toggle('visible');
   if (bar.classList.contains('visible')) updateGMBar();
 }
@@ -4305,6 +4310,13 @@ function updateGMBar() {
 
   if (wwdsState.active) {
     bar.innerHTML = `<span class="gm-label">Sowas</span>` + wwdsBarButtons();
+    return;
+  }
+
+  if (document.getElementById('result-screen').classList.contains('active')) {
+    bar.innerHTML = `<span class="gm-label">Spiel beendet</span>
+      <button class="gm-btn gm-gold" onclick="gmBackToMenu()">🏠 Zum Menü</button>
+      <button class="gm-btn gm-blue" onclick="gmPlayAgain()">↻ Nochmal spielen</button>`;
     return;
   }
 
@@ -5325,6 +5337,9 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','nextRound','openJeopardyClue',
   'jeopardyEstimateOpen','jeopardyEstimateClose','jeopardyEstimateReopen',
+  'wwdsAdjustBet','wwdsSetBet','wwdsStartMaster','wwdsMasterSet','wwdsRevealMaster','wwdsAfterMaster',
+  'wwdsPick','wwdsSelect','wwdsLock','wwdsReveal','wwdsNext','wwdsAudience','wwdsStartTimer',
+  'wwdsRevealTie','wwdsToggleMedia','gmBackToMenu','gmPlayAgain','gmGotoTournament',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia','saveHostNotesRemote',
   'tournamentStartGame','tournamentRevealSecret',
@@ -6635,11 +6650,24 @@ function wwdsToBetting(){
   renderWwds();
   updateGamemaster();
 }
+// Aus dem Zahlenfeld am Hauptbildschirm: nur die Teamkarten neu zeichnen,
+// sonst würde die Eingabe beim Tippen unter dem Cursor weggerendert.
 function wwdsSetBet(i, v){
   let n = Math.floor(Number(v) || 0);
   n = Math.max(0, Math.min(n, wwdsState.scores[i]));
   wwdsState.bets[i] = n;
   wwdsRenderTeams();
+  updateGamemaster();
+}
+
+// Aus dem Gamemaster (auch vom Handy): hier muss das Zahlenfeld am
+// Hauptbildschirm mitgezogen werden, deshalb voller Re-Render.
+function wwdsAdjustBet(i, delta){
+  if (wwdsState.phase !== 'bet') return;
+  const cur = wwdsState.bets[i] || 0;
+  const next = delta === 'max' ? wwdsState.scores[i] : delta === 'min' ? 0 : cur + delta;
+  wwdsState.bets[i] = Math.max(0, Math.min(Math.floor(next), wwdsState.scores[i]));
+  renderWwds();
   updateGamemaster();
 }
 function wwdsStartMaster(){
@@ -6826,11 +6854,22 @@ function updateGamemasterWwds(){
     }${s.timeUp && !s.revealed && !s.masterRevealed ? ' <b style="color:#E8453C;">Zeit abgelaufen!</b>' : ''}</div>`;
   } else if (s.phase === 'bet'){
     body = `<div class="question">Einsätze für die Masterfrage</div>
-      <div class="answer-list">` + s.teamNames.map((n,i) =>
-        `<div class="answer" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)">
-          <span><span class="text" style="color:${WWDS_HEX[i]}">${n}</span></span>
-          <span class="pts">${wwdsMoney(s.bets[i])} / ${wwdsMoney(s.scores[i])}</span>
-        </div>`).join('') + `</div>`;
+      <div class="hint-line">Richtig = Einsatz kommt dazu · Falsch = Einsatz geht ab</div>` +
+      s.teamNames.map((n,i) => `
+        <div class="panel" style="margin-bottom:8px;">
+          <div class="panel-head">
+            <span style="color:${WWDS_HEX[i]}">${n}</span>
+            <span class="badge">${wwdsMoney(s.bets[i])} von ${wwdsMoney(s.scores[i])}</span>
+          </div>
+          <div class="panel-row" style="flex-wrap:wrap;gap:5px;">
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},'min')">0</button>
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},-500)">−500</button>
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},-100)">−100</button>
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},100)">+100</button>
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},500)">+500</button>
+            <button class="gm-btn gold sm" onclick="opener.wwdsAdjustBet(${i},'max')">Alles</button>
+          </div>
+        </div>`).join('');
   } else if (s.phase === 'tie'){
     const t = wwdsData.tiebreakers[s.tieIdx];
     body = `<div class="question">${t ? t.q : 'Keine Schätzfrage hinterlegt'}</div>
@@ -6865,6 +6904,44 @@ function updateGamemasterWwds(){
   </div>
   </div>
   <div class="gm-actions">${wwdsControlsHtml('opener.')}</div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
+}
+
+// ── GAMEMASTER: ERGEBNIS-SCREEN (für alle Spielmodi) ──
+function gmBackToMenu(){ showScreen('menu-screen'); updateGamemaster(); }
+function gmGotoTournament(){ showScreen('tournament-screen'); updateGamemaster(); }
+function gmPlayAgain(){
+  const btn = document.querySelector('#result-screen .result-btns .btn-primary');
+  if (btn) btn.click();
+}
+
+function updateGamemasterResult(){
+  const winner = (document.getElementById('winner-text') || {}).textContent || '';
+  const scores = (document.getElementById('final-scores') || {}).innerHTML || '';
+  const tourVisible = (document.getElementById('tour-goto-btn') || {}).style?.display === '';
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}
+  .win{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#FFD23F;letter-spacing:2px;text-align:center;margin-bottom:10px;}
+  .sc{font-size:.95rem;line-height:2;text-align:center;color:rgba(255,255,255,.75);}
+  .sc strong{color:#FFD23F;}
+</style></head><body>
+  ${gmHeaderHtml('Gamemaster', 'Spiel beendet')}
+  <div class="gm-body">
+  <div class="gm-main">
+    <div class="win">🏆 ${winner}</div>
+    <div class="panel"><div class="sc">${scores}</div></div>
+  </div>
+  <div class="gm-side">${gmNotesPanelHtml()}</div>
+  </div>
+  <div class="gm-actions">
+    <button class="gm-btn gold" onclick="opener.gmBackToMenu()">🏠 Zum Menü</button>
+    <button class="gm-btn blue" onclick="opener.gmPlayAgain()">↻ Nochmal spielen</button>
+    ${tourVisible ? `<button class="gm-btn gray" onclick="opener.gmGotoTournament()">🏆 Turnierübersicht</button>` : ''}
+  </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
 }
