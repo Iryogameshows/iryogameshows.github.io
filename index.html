@@ -4114,7 +4114,19 @@ function updateGamemasterJeopardy() {
       : '';
     const excludedTag = jeopardyBuzzer.excluded.length
       ? `<div class="excl-tag">🚫 Gesperrt: ${jeopardyBuzzer.excluded.join(', ')}</div>` : '';
-    const buzzHtml = jeopardyBuzzer.results.length
+    // Schätzfrage: statt der Buzzer-Reihenfolge die eingegangenen Schätzungen
+    const buzzHtml = clue.estimate
+      ? `<div class="panel">
+          <div class="panel-head">
+            <span>📊 Schätzungen</span>
+            <span class="badge">${jeopardyEstimate.answers.length}</span>
+          </div>
+          <div class="answer-list" style="margin-top:8px;">${jeopardyEstimateListHtml()}</div>
+          <div class="hint-line">${jeopardyEstimate.open
+            ? 'Eingabe auf den Handys ist <b>offen</b>.'
+            : 'Eingabe ist <b>geschlossen</b>.'}</div>
+        </div>`
+      : jeopardyBuzzer.results.length
       ? `<div class="panel">
           <div class="panel-head"><span>🔔 Buzzer-Reihenfolge</span></div>
           ${jeopardyBuzzer.results.map((r,idx)=>`<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${r.name}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')}
@@ -4134,7 +4146,9 @@ function updateGamemasterJeopardy() {
       ${mediaControlButtonsHtml(clue.media, 'jeopardyToggleMedia')}
       ${!revealed ? `
         <div class="info-card">
-          Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.
+          Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>${clue.estimate
+            ? 'Beim Aufdecken öffnet sich auf allen Handys das <b>Schätz-Eingabefeld</b>.'
+            : 'Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.'}
         </div>
       ` : `
         ${(staged||series||soundBtn)?`<div class="btn-grid">${stageBtn}${seriesBtn}${soundBtn}</div>`:''}
@@ -4150,7 +4164,11 @@ function updateGamemasterJeopardy() {
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Überspringen</button>
           <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>` : `
           <button class="gm-btn blue" onclick="opener.jeopardyToggleAnswer()">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
-          <button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>
+          ${clue.estimate
+            ? (jeopardyEstimate.open
+                ? `<button class="gm-btn gray" onclick="opener.jeopardyEstimateClose()">📊 Eingabe schließen</button>`
+                : `<button class="gm-btn gray" onclick="opener.jeopardyEstimateReopen()">📊 Eingabe neu öffnen</button>`)
+            : `<button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>`}
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Niemand / Überspringen</button>
           <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
   } else {
@@ -4295,7 +4313,11 @@ function updateGMBar() {
         ${soundBtn}
         ${teamBtns}
         <button class="gm-btn gm-blue" onclick="jeopardyToggleAnswer();updateGMBar();">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
-        <button class="gm-btn gm-gray" onclick="jeopardyBuzzReopen();updateGMBar();">🔔 Buzzer neu</button>
+        ${cc.estimate
+          ? (jeopardyEstimate.open
+              ? `<button class="gm-btn gm-gray" onclick="jeopardyEstimateClose();updateGMBar();">📊 Eingabe schließen (${jeopardyEstimate.answers.length})</button>`
+              : `<button class="gm-btn gm-gray" onclick="jeopardyEstimateReopen();updateGMBar();">📊 Eingabe neu öffnen</button>`)
+          : `<button class="gm-btn gm-gray" onclick="jeopardyBuzzReopen();updateGMBar();">🔔 Buzzer neu</button>`}
         <button class="gm-btn gm-gray" onclick="jeopardySkip();updateGMBar();">Überspringen</button>
         <button class="gm-btn gm-blue" onclick="jeopardyUndo();updateGMBar();">↩ Undo</button>
       `;
@@ -4619,8 +4641,82 @@ function jeopardyRevealQuestion() {
   if (!jeopardyState.currentClue || jeopardyState.ddPending || jeopardyState.questionRevealed) return;
   jeopardyState.questionRevealed = true;
   renderJeopardyClueOverlay();
-  jeopardyBuzzArm();
+  // Schätzfragen laufen nicht über den Buzzer: statt zu armen wird auf den
+  // Handys das Eingabefeld geöffnet und eingesammelt.
+  if (jeopardyCurrentClue() && jeopardyCurrentClue().estimate) jeopardyEstimateOpen();
+  else jeopardyBuzzArm();
   updateGamemaster();
+}
+
+function jeopardyCurrentClue(){
+  const c = jeopardyState.currentClue;
+  if (!c) return null;
+  return jBoard()[c.col].clues[c.row];
+}
+
+// ── SCHÄTZFRAGEN (Eingabe auf den Buzzer-Handys) ──
+let jeopardyEstimate = { open:false, round:0, answers:[], ref:null, question:'' };
+
+function jeopardyEstimateRef(){
+  if (!jeopardyEstimate.ref){
+    if (!jeopardyBuzzInitFirebase()) return null;
+    jeopardyEstimate.ref = firebase.database().ref('buzzer/estimate');
+    jeopardyEstimate.ref.child('answers').on('value', s => {
+      const v = s.val() || {};
+      jeopardyEstimate.answers = Object.values(v).filter(a => a && a.name);
+      updateGamemaster();
+    });
+  }
+  return jeopardyEstimate.ref;
+}
+
+function jeopardyEstimateOpen(){
+  const clue = jeopardyCurrentClue();
+  if (!clue) return;
+  const r = jeopardyEstimateRef();
+  jeopardyEstimate.open = true;
+  jeopardyEstimate.round++;
+  jeopardyEstimate.answers = [];
+  jeopardyEstimate.question = clue.q || '';
+  if (r) r.set({ active:true, round:jeopardyEstimate.round, question:jeopardyEstimate.question, answers:null }).catch(()=>{});
+  updateGamemaster();
+}
+
+function jeopardyEstimateClose(){
+  jeopardyEstimate.open = false;
+  const r = jeopardyEstimateRef();
+  if (r) r.update({ active:false }).catch(()=>{});
+  updateGamemaster();
+}
+
+function jeopardyEstimateReopen(){
+  jeopardyEstimateOpen();
+}
+
+// Sortierung: Zahlen aufsteigend zuerst, alles ohne Zahl danach in der
+// Reihenfolge des Eingangs.
+function jeopardyEstimateSorted(){
+  const list = jeopardyEstimate.answers.slice();
+  const nums = list.filter(a => typeof a.num === 'number' && isFinite(a.num));
+  const rest = list.filter(a => !(typeof a.num === 'number' && isFinite(a.num)));
+  nums.sort((a,b) => a.num - b.num || (a.ts||0) - (b.ts||0));
+  rest.sort((a,b) => (a.ts||0) - (b.ts||0));
+  return nums.concat(rest);
+}
+
+function jeopardyEstimateListHtml(){
+  const rows = jeopardyEstimateSorted();
+  if (!rows.length) return `<div class="pr-empty">Noch keine Schätzung abgegeben</div>`;
+  const hex = ['#E8453C','#3B82F6','#22C55E'];
+  return rows.map((a,i) => {
+    const col = (typeof a.team === 'number' && hex[a.team]) ? hex[a.team] : 'rgba(255,255,255,.5)';
+    const teamName = (typeof a.team === 'number' && jeopardyState.teamNames[a.team]) || '';
+    return `<div class="answer" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);">
+      <span><span class="num">${i+1}.</span> <span class="text">${a.name}</span>
+        ${teamName ? `<span style="color:${col};font-size:.68rem;font-weight:700;"> ● ${teamName}</span>` : ''}</span>
+      <span class="pts">${String(a.value)}</span>
+    </div>`;
+  }).join('');
 }
 
 // Staged image helpers
@@ -5196,6 +5292,7 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'jeopardyAnnounceDaily','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','nextRound','openJeopardyClue',
+  'jeopardyEstimateOpen','jeopardyEstimateClose','jeopardyEstimateReopen',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia','saveHostNotesRemote',
   'tournamentStartGame','tournamentRevealSecret',
@@ -5597,6 +5694,8 @@ function jeopardySkip() {
 function closeJeopardyClue() {
   const ov = document.getElementById('jeopardy-clue-ov');
   if (ov) ov.remove();
+  // Läuft gerade eine Schätzfrage, holt das die Handys zurück in den Buzzer-Screen
+  if (jeopardyEstimate.open) jeopardyEstimateClose();
 }
 
 // No controls on the main screen — controls live in the GM bar / GM window only
@@ -5755,6 +5854,9 @@ function renderJeopardyEditor() {
               `:''}
               <label style="${uploadLbl}background:${clue.series?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
                 <input type="checkbox" ${clue.series?'checked':''} onchange="jeopardyEditSeries(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🎴 Bilder-Reihe
+              </label>
+              <label style="${uploadLbl}background:${clue.estimate?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Statt Buzzer geben alle Handys eine Schätzung ein">
+                <input type="checkbox" ${clue.estimate?'checked':''} onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].estimate=this.checked;renderJeopardyEditor();" style="accent-color:#FFD23F;"> 📊 Schätzfrage
               </label>
               ${clue.series?`
                 <select onchange="jeopardyEditSeriesCount(${b},${col},${row},this.value)" title="Anzahl Bilder" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
