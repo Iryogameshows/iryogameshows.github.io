@@ -1261,18 +1261,25 @@ body {
 }
 
 /* ── WER WEISS DENN SOWAS ── */
-.wwds-top{display:flex;gap:10px;width:100%;justify-content:center;flex-wrap:wrap;margin-bottom:4px;}
-.wwds-team{flex:1;min-width:150px;max-width:260px;text-align:center;padding:12px 14px;border-radius:12px;position:relative;transition:all .3s;border:1px solid rgba(255,255,255,.07);}
+/* Kopfzeile spannt sich genau so breit wie das Board darunter - mit einer
+   max-width pro Karte stand bei 2 Teams sonst ein 500px-Block über einem
+   800px-Board. */
+.wwds-top{display:flex;gap:10px;width:100%;align-items:stretch;flex-wrap:wrap;margin-bottom:10px;}
+.wwds-team{flex:1 1 0;min-width:150px;text-align:center;padding:12px 14px;border-radius:12px;position:relative;transition:border-color .3s,box-shadow .3s,background .3s;border:1px solid rgba(255,255,255,.07);}
 .wwds-team.red{background:linear-gradient(180deg,rgba(153,27,27,.55),rgba(127,29,29,.65));}
 .wwds-team.blue{background:linear-gradient(180deg,rgba(30,64,175,.55),rgba(30,58,138,.65));}
 .wwds-team.green{background:linear-gradient(180deg,rgba(22,101,52,.55),rgba(20,83,45,.65));}
-.wwds-team.on{border-color:rgba(255,210,63,.55);box-shadow:0 0 18px rgba(255,210,63,.18);transform:translateY(-2px);}
+/* Kein translateY: das hat die aktive Karte gegen die andere verschoben und
+   sah nach Layoutfehler aus statt nach Hervorhebung. Die Aufhellung läuft über
+   inset-Schatten statt über background-image - letzteres hätte das Gradient
+   der Teamfarbe (.red/.blue/.green) überschrieben und die Karte entfärbt. */
+.wwds-team.on{border-color:rgba(255,210,63,.55);box-shadow:0 0 18px rgba(255,210,63,.18),inset 0 0 0 999px rgba(255,210,63,.06);}
 .wwds-team .wt-name{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.55);}
 .wwds-team.on .wt-name{color:#FFD23F;}
 .wwds-team .wt-money{font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1.1;color:#fff;}
 .wwds-team.on .wt-money{color:#FFD23F;text-shadow:0 0 16px rgba(255,210,63,.3);}
 .wwds-team .wt-meta{font-size:.6rem;color:rgba(255,255,255,.35);letter-spacing:1px;}
-.wwds-team .wt-lock{margin-top:5px;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;color:#FFD23F;min-height:22px;}
+.wwds-team .wt-lock{margin-top:5px;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;color:#FFD23F;line-height:1.1;}
 
 .wwds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;}
 .wwds-cat{
@@ -6434,7 +6441,7 @@ function wwdsRenderTeams(){
       <div class="wt-name">${n}</div>
       <div class="wt-money">${wwdsMoney(wwdsState.scores[i])}</div>
       <div class="wt-meta">Joker ${wwdsState.audienceUsed[i]?'verbraucht':'frei'} · ${per} Fragen</div>
-      <div class="wt-lock">${lock}</div>
+      ${lock ? `<div class="wt-lock">${lock}</div>` : ''}
     </div>`;
   }).join('');
 }
