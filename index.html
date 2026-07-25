@@ -2888,7 +2888,7 @@ function tournamentCreate(){
 }
 // Standard-Gewichtung pro Spieltyp - wird beim Auswählen automatisch ins
 // Gewichtungsfeld übernommen (kann vor dem Hinzufügen noch manuell geändert werden).
-const TOURNAMENT_DEFAULT_WEIGHTS = { 'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Sonstiges': 1 };
+const TOURNAMENT_DEFAULT_WEIGHTS = { 'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Wer weiß denn sowas': 1, 'Sonstiges': 1 };
 function tournamentGameTypeChanged(){
   const type = document.getElementById('tour-game-type').value;
   document.getElementById('tour-game-weight').value = TOURNAMENT_DEFAULT_WEIGHTS[type] || 1;
@@ -3015,6 +3015,7 @@ function renderTournament(){
           <option>Family Feud</option>
           <option>Jeopardy</option>
           <option>Wer wird Millionär</option>
+          <option>Wer weiß denn sowas</option>
           <option>Sonstiges</option>
         </select>
         <input type="number" id="tour-game-weight" value="${TOURNAMENT_DEFAULT_WEIGHTS['Family Feud']}" min="1" title="Gewichtung" style="flex:0 0 80px;margin-bottom:0;text-align:center;" placeholder="×">
