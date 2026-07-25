@@ -524,6 +524,29 @@ body {
 }
 .tut-scorechip.good { background: rgba(34,197,94,.15); border: 2px solid #22C55E; color: #6EE7A0; }
 .tut-scorechip.bad { background: rgba(232,69,60,.15); border: 2px solid #E8453C; color: #FF8A80; }
+/* Kategorie- und Antwort-Demo (Wer weiß denn sowas) */
+.tut-wwds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 400px; }
+.tut-wwds-cat {
+  min-height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  padding: 6px 4px; text-align: center; font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; color: #fff;
+  background: linear-gradient(180deg, #1E3FAE, #112370);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+}
+.tut-wwds-cat.pick { box-shadow: 0 0 18px rgba(255,210,63,.5); animation: tutStrikePop .45s cubic-bezier(.17,.67,.3,1.3); }
+.tut-wwds-cat.used { background: linear-gradient(180deg,#243056,#141a33); opacity: .4; text-decoration: line-through; }
+.tut-wwds-opts { display: flex; flex-direction: column; gap: 8px; width: 380px; }
+.tut-wwds-opt {
+  display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: 10px;
+  font-size: .9rem; font-weight: 700; color: #fff;
+  background: linear-gradient(180deg, #1E3FAE, #112370);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+}
+.tut-wwds-opt span {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: #FFD23F; min-width: 20px;
+}
+.tut-wwds-opt.right { background: linear-gradient(180deg, #16A34A, #0F4024); }
+.tut-wwds-opt.right span { color: #fff; }
 /* Daily-Double-Badge */
 .tut-dd {
   font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 4px; color: #FFD23F;
@@ -563,16 +586,6 @@ body {
   background: #FFD23F; box-shadow: 0 0 8px rgba(255,210,63,.4);
   width: 24px; border-radius: 4px;
 }
-
-.tut-skip {
-  position: absolute; top: 24px; right: 28px;
-  font-size: .7rem; font-weight: 700; color: rgba(255,255,255,.2);
-  letter-spacing: 3px; text-transform: uppercase;
-  cursor: pointer; transition: color .2s; z-index: 10;
-  background: none; border: none; font-family: inherit;
-  padding: 8px 16px;
-}
-.tut-skip:hover { color: rgba(255,255,255,.5); }
 
 .tut-hint {
   position: absolute; bottom: 60px;
@@ -1719,6 +1732,7 @@ body {
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startWwds()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('wwds-edit-screen')">Fragen bearbeiten</button>
+    <button class="btn btn-secondary" onclick="showWwdsTutorial()">Tutorial</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
   </div>
 </div>
@@ -1994,8 +2008,7 @@ const GM_OVERLAY_SELECTOR = '.intro-overlay, .welcome-overlay, .tut-overlay, .el
 function gmActiveOverlay() { return document.querySelector(GM_OVERLAY_SELECTOR); }
 function gmAdvance() { const el = gmActiveOverlay(); if (el) el.click(); }
 function gmSkipTutorial() {
-  const btn = document.querySelector('.tut-overlay .tut-skip, .tut-overlay #tut-skip-btn');
-  if (btn) btn.click();
+  if (activeTutorialSkip) activeTutorialSkip();
 }
 let gmPollerStarted = false;
 let gmLastOverlayPresent = false;
@@ -3295,21 +3308,24 @@ function runKgIntro(overlay, onDone) {
 // per Klick, mit Fortschrittspunkten und Überspringen-Button. onDone (optional)
 // läuft nach der letzten Slide bzw. beim Überspringen - im FF-Intro führt das
 // direkt weiter ins Spiel, beim Tutorial-Button schließt es einfach.
+// Solange ein Tutorial läuft, hängt hier seine Abbruchfunktion - der
+// Überspringen-Knopf sitzt nur noch im Gamemaster, nicht mehr auf dem
+// Bildschirm, den die Zuschauer sehen.
+let activeTutorialSkip = null;
+
 function runTutorial(slides, onDone) {
   let current = 0;
   const ov = document.createElement('div');
   ov.className = 'tut-overlay overlay-enter';
   ov.innerHTML = `
-    <button class="tut-skip" id="tut-skip-btn">Überspringen</button>
     ${slides.map((s, i) => `<div class="tut-slide ${i === 0 ? 'active' : ''}" data-idx="${i}">${s}</div>`).join('')}
     <div class="tut-progress">${slides.map((_, i) => `<div class="tut-dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>
     <div class="tut-hint">Klicken zum Fortfahren</div>
   `;
   document.body.appendChild(ov);
-  const finish = () => closeOverlay(ov, onDone);
-  ov.querySelector('#tut-skip-btn').addEventListener('click', (e) => { e.stopPropagation(); finish(); });
-  ov.addEventListener('click', (e) => {
-    if (e.target.closest('#tut-skip-btn')) return;
+  const finish = () => { activeTutorialSkip = null; closeOverlay(ov, onDone); };
+  activeTutorialSkip = finish;
+  ov.addEventListener('click', () => {
     const allSlides = ov.querySelectorAll('.tut-slide');
     const allDots = ov.querySelectorAll('.tut-dot');
     allSlides[current].classList.remove('active');
@@ -3397,8 +3413,47 @@ function jeopardyTutorialSlides() {
   ];
 }
 
+function wwdsTutorialSlides() {
+  return [
+    `<div class="tut-star-anim" style="margin-bottom:10px;">
+       <svg viewBox="0 0 100 100" width="100" xmlns="http://www.w3.org/2000/svg">
+         <defs><linearGradient id="wtsg" x1="0" y1="0" x2="0" y2="1">
+           <stop offset="0%" stop-color="#FFE066"/><stop offset="50%" stop-color="#FFD23F"/><stop offset="100%" stop-color="#C6930A"/>
+         </linearGradient></defs>
+         <polygon points="50,5 61,38 96,38 68,58 79,91 50,72 21,91 32,58 4,38 39,38" fill="url(#wtsg)"/>
+       </svg>
+     </div>
+     <div class="tut-big tut-gold" style="font-size:3.2rem;">Wer weiß<br>denn sowas?</div>`,
+    `<div class="tut-big tut-gold" style="font-size:2.4rem;margin-bottom:12px;">${wwdsData.categories.length} Kategorien</div>
+     <div class="tut-wwds-grid">
+       ${wwdsData.categories.slice(0,8).map((c,i) => `<div class="tut-wwds-cat ${i===2?'pick':''} ${i===5?'used':''}">${c.cat||'—'}</div>`).join('')}
+     </div>
+     <div class="tut-sub">Die Teams sind <b>abwechselnd</b> dran.<br>Wer am Zug ist, wählt eine Kategorie.</div>`,
+    `<div class="tut-big tut-white" style="font-size:2.3rem;margin-bottom:4px;">Drei Antworten</div>
+     <div class="tut-wwds-opts">
+       <div class="tut-wwds-opt"><span>A</span>Eine davon</div>
+       <div class="tut-wwds-opt right"><span>B</span>ist richtig</div>
+       <div class="tut-wwds-opt"><span>C</span>Die anderen nicht</div>
+     </div>
+     <div class="tut-sub">Ihr habt <b>20 Sekunden</b> Beratungszeit.<br>Richtig geraten gibt <b>500 €</b>.</div>`,
+    `<div class="tut-icon">👥</div>
+     <div class="tut-big tut-white" style="font-size:2.4rem;">Publikumsjoker</div>
+     <div class="tut-sub">Jedes Team darf <b>einmal</b> das Publikum fragen.<br>Vorsicht: das Publikum irrt sich auch mal.</div>`,
+    `<div class="tut-big tut-gold" style="font-size:2.6rem;margin-bottom:6px;">Die Masterfrage</div>
+     <div class="tut-scorerow">
+       <div class="tut-scorechip good">✓ Einsatz dazu</div>
+       <div class="tut-scorechip bad">✕ Einsatz weg</div>
+     </div>
+     <div class="tut-sub">Am Ende setzt jedes Team einen Teil seines Geldes.<br>Richtig verdoppelt, falsch kostet.</div>`,
+    `<div class="tut-icon tut-trophy-bounce">🏆</div>
+     <div class="tut-big tut-gold" style="font-size:3rem;">Am Ende gewinnt...</div>
+     <div class="tut-sub">...das Team mit dem meisten Geld.<br>Bei Gleichstand entscheidet eine Schätzfrage.</div>`
+  ];
+}
+
 function showTutorialFlow(onDone) { runTutorial(feudTutorialSlides(), onDone); }
 function showJeopardyTutorial() { runTutorial(jeopardyTutorialSlides()); }
+function showWwdsTutorial() { runTutorial(wwdsTutorialSlides()); }
 
 function showBlackPause() {
   const ov = document.createElement('div');
@@ -3944,7 +3999,7 @@ function openGamemaster() {
 // Zwischensequenz) den Hauptbildschirm blockiert - der Host muss dafür nicht
 // an den Hauptbildschirm, sondern klickt hier "Weiter".
 function updateGamemasterOverlay() {
-  const hasTutSkip = !!document.querySelector('.tut-overlay .tut-skip, .tut-overlay #tut-skip-btn');
+  const hasTutSkip = !!activeTutorialSkip;
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
@@ -4451,7 +4506,9 @@ function toggleGMBar() {
   const wwmActive = document.getElementById('wwm-screen').classList.contains('active');
   const wwdsActive = document.getElementById('wwds-screen').classList.contains('active');
   const resultActive = document.getElementById('result-screen').classList.contains('active');
-  if (!gameActive && !finaleActive && !jeopardyActive && !wwmActive && !wwdsActive && !resultActive) return;
+  // Während eines Tutorials ist kein Screen aktiv - die Leiste soll sich aber
+  // öffnen lassen, weil dort jetzt der Überspringen-Knopf sitzt.
+  if (!gameActive && !finaleActive && !jeopardyActive && !wwmActive && !wwdsActive && !resultActive && !activeTutorialSkip) return;
   bar.classList.toggle('visible');
   if (bar.classList.contains('visible')) updateGMBar();
 }
@@ -4459,6 +4516,14 @@ function toggleGMBar() {
 function updateGMBar() {
   const bar = document.getElementById('gm-bar');
   if (!bar.classList.contains('visible')) return;
+
+  // Zuerst prüfen: ein laufendes Tutorial liegt über allem anderen
+  if (activeTutorialSkip) {
+    bar.innerHTML = `<span class="gm-label">Tutorial</span>
+      <button class="gm-btn gm-gold" onclick="gmAdvance()">Weiter ▶</button>
+      <button class="gm-btn gm-gray" onclick="gmSkipTutorial();updateGMBar();">Überspringen</button>`;
+    return;
+  }
 
   if (wwmState.active) {
     bar.innerHTML = `<span class="gm-label">Millionär</span>` + wwmBarButtons();
