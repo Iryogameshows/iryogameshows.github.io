@@ -1413,9 +1413,6 @@ body {
 .wwds-banner{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:4px;color:#FFD23F;text-align:center;}
 .wwds-sub{font-size:.8rem;color:rgba(255,255,255,.4);text-align:center;font-weight:600;}
 .wwds-bet-row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:4px;}
-.wwds-bet-row input{width:110px;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-weight:700;text-align:center;outline:none;}
-.wwds-bet-row input:focus{border-color:rgba(255,210,63,.5);}
 
 @media (max-width:720px){
   .wwds-grid{grid-template-columns:repeat(2,1fr);}
@@ -5593,7 +5590,7 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','nextRound','openJeopardyClue',
   'jeopardyEstimateOpen','jeopardyEstimateClose','jeopardyEstimateReopen',
-  'wwdsAdjustBet','wwdsSetBet','wwdsStartMaster','wwdsMasterSet','wwdsRevealMaster','wwdsAfterMaster',
+  'wwdsAdjustBet','wwdsSetGuess','wwdsStartMaster','wwdsMasterSet','wwdsRevealMaster','wwdsAfterMaster',
   'wwdsPick','wwdsSelect','wwdsLock','wwdsReveal','wwdsNext','wwdsAudience','wwdsStartTimer',
   'wwdsRevealTie','wwdsToggleMedia','gmBackToMenu','gmPlayAgain','gmGotoTournament',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
@@ -6775,12 +6772,11 @@ function wwdsBetHtml(){
       <div class="wwds-bet-row">
         <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${n}</span>
         <span style="color:rgba(255,255,255,.4);font-size:.8rem;">Guthaben ${wwdsMoney(wwdsState.scores[i])}</span>
-        <input type="number" id="wwds-bet-${i}" min="0" max="${wwdsState.scores[i]}" step="100"
-               value="${wwdsState.bets[i]}" oninput="wwdsSetBet(${i}, this.value)">
+        <span style="min-width:110px;padding:9px 12px;border-radius:8px;background:rgba(0,0,0,.35);
+              border:1.5px solid rgba(255,255,255,.12);text-align:center;
+              font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#FFD23F;">${wwdsMoney(wwdsState.bets[i])}</span>
       </div>`).join('') +
-    `<div style="text-align:center;margin-top:16px;">
-       <button class="btn btn-primary" onclick="wwdsStartMaster()">Masterfrage starten</button>
-     </div>`;
+    `<div class="wwds-sub" style="margin-top:16px;">Einsätze setzt und startet der Host über den Gamemaster.</div>`;
 }
 
 function wwdsMasterHtml(){
@@ -6807,14 +6803,14 @@ function wwdsTieHtml(){
     wwdsState.teamNames.map((n,i) => wwdsState.scores[i] === Math.max(...wwdsState.scores) ? `
       <div class="wwds-bet-row">
         <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${n}</span>
-        <input type="number" id="wwds-tie-${i}" placeholder="Schätzung"
-               value="${wwdsState.tieGuesses[i] === null ? '' : wwdsState.tieGuesses[i]}"
-               oninput="wwdsSetGuess(${i}, this.value)">
+        <span style="min-width:110px;padding:9px 12px;border-radius:8px;background:rgba(0,0,0,.35);
+              border:1.5px solid rgba(255,255,255,.12);font-weight:700;text-align:center;
+              font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#FFD23F;">${
+          wwdsState.tieGuesses[i] === null ? '—' : wwdsState.tieGuesses[i]}</span>
       </div>` : '').join('') +
     (wwdsState.tieRevealed
       ? `<div class="wwds-banner" style="margin-top:14px;">Richtig: ${t.answer}</div>`
-      : `<div style="text-align:center;margin-top:16px;">
-           <button class="btn btn-primary" onclick="wwdsRevealTie()">Auflösen</button></div>`);
+      : `<div class="wwds-sub" style="margin-top:14px;">Eingabe und Auflösen laufen über den Gamemaster.</div>`);
 }
 
 // ── HAUPTRUNDE ──
@@ -6912,18 +6908,8 @@ function wwdsToBetting(){
   renderWwds();
   updateGamemaster();
 }
-// Aus dem Zahlenfeld am Hauptbildschirm: nur die Teamkarten neu zeichnen,
-// sonst würde die Eingabe beim Tippen unter dem Cursor weggerendert.
-function wwdsSetBet(i, v){
-  let n = Math.floor(Number(v) || 0);
-  n = Math.max(0, Math.min(n, wwdsState.scores[i]));
-  wwdsState.bets[i] = n;
-  wwdsRenderTeams();
-  updateGamemaster();
-}
-
-// Aus dem Gamemaster (auch vom Handy): hier muss das Zahlenfeld am
-// Hauptbildschirm mitgezogen werden, deshalb voller Re-Render.
+// Einsatz kommt ausschliesslich aus dem Gamemaster (Knöpfe, auch vom Handy) -
+// der Hauptbildschirm zeigt ihn nur an.
 function wwdsAdjustBet(i, delta){
   if (wwdsState.phase !== 'bet') return;
   const cur = wwdsState.bets[i] || 0;
@@ -6979,10 +6965,13 @@ function wwdsToTie(){
   renderWwds();
   updateGamemaster();
 }
+// Wird aus dem Gamemaster aufgerufen. Absichtlich OHNE updateGamemaster():
+// das Handy-Pad lädt sein Panel bei jeder Aktualisierung komplett neu, dabei
+// ginge eine gerade getippte Zahl im Nachbarfeld verloren. Der Hauptbildschirm
+// wird trotzdem sofort mitgezogen.
 function wwdsSetGuess(i, v){
-  wwdsState.tieGuesses[i] = (v === '' ? null : Math.floor(Number(v) || 0));
-  wwdsRenderTeams();
-  updateGamemaster();
+  wwdsState.tieGuesses[i] = (v === '' ? null : Math.floor(Number(String(v).replace(',', '.')) || 0));
+  renderWwds();
 }
 function wwdsRevealTie(){
   const t = wwdsData.tiebreakers[wwdsState.tieIdx];
@@ -7134,8 +7123,19 @@ function updateGamemasterWwds(){
         </div>`).join('');
   } else if (s.phase === 'tie'){
     const t = wwdsData.tiebreakers[s.tieIdx];
+    const max = Math.max(...s.scores);
+    const tied = s.teamNames.map((_,i) => i).filter(i => s.scores[i] === max);
     body = `<div class="question">${t ? t.q : 'Keine Schätzfrage hinterlegt'}</div>
-      ${t ? `<div class="hint-line">Richtige Antwort: <b style="color:#FFD23F;">${t.answer}</b></div>` : ''}`;
+      ${t ? `<div class="hint-line">Richtige Antwort: <b style="color:#FFD23F;">${t.answer}</b></div>` : ''}
+      <div class="hint-line">Schätzungen hier eintragen — der Hauptbildschirm zeigt sie mit an.</div>` +
+      tied.map(i => `
+        <div class="panel-row" style="align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="min-width:100px;color:${WWDS_HEX[i]};font-weight:700;font-size:.8rem;">${s.teamNames[i]}</span>
+          <input type="number" inputmode="decimal" placeholder="Schätzung"
+            value="${s.tieGuesses[i] === null ? '' : s.tieGuesses[i]}"
+            onchange="opener.wwdsSetGuess(${i}, this.value)"
+            style="flex:1;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.15);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-weight:700;text-align:center;outline:none;">
+        </div>`).join('');
   }
 
   const scoreRows = s.teamNames.map((n,i) =>
