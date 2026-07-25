@@ -140,6 +140,7 @@ body {
 
 .round-bar {
   display: flex; gap: 12px; align-items: center; justify-content: center;
+  flex-wrap: wrap; text-align: center; max-width: 100%;
   font-size: .75rem; color: rgba(255,255,255,.4);
   letter-spacing: 2px; text-transform: uppercase; font-weight: 700;
 }
@@ -1342,10 +1343,14 @@ body {
 }
 
 /* ── WER WEISS DENN SOWAS ── */
+/* Eigener Abstand zwischen den Blöcken: das Board hat einen 12px breiten
+   Leuchtrand aus box-shadow, der ausserhalb seiner Box liegt und ohne Abstand
+   in die Zeile darüber ragt (Schrift lag direkt auf dem Rand). */
+#wwds-screen{gap:14px;}
 /* Kopfzeile spannt sich genau so breit wie das Board darunter - mit einer
    max-width pro Karte stand bei 2 Teams sonst ein 500px-Block über einem
    800px-Board. */
-.wwds-top{display:flex;gap:10px;width:100%;align-items:stretch;flex-wrap:wrap;margin-bottom:10px;}
+.wwds-top{display:flex;gap:10px;width:100%;align-items:stretch;flex-wrap:wrap;}
 .wwds-team{flex:1 1 0;min-width:150px;text-align:center;padding:12px 14px;border-radius:12px;position:relative;transition:border-color .3s,box-shadow .3s,background .3s;border:1px solid rgba(255,255,255,.07);}
 .wwds-team.red{background:linear-gradient(180deg,rgba(153,27,27,.55),rgba(127,29,29,.65));}
 .wwds-team.blue{background:linear-gradient(180deg,rgba(30,64,175,.55),rgba(30,58,138,.65));}
@@ -1890,6 +1895,13 @@ const TEAM_COLORS = ['red','blue','green'];
 // ── LOGO ──
 function renderLogo(line1, line2, size2, danger) {
   const fs2 = size2 || 48;
+  // Zweite Zeile hing an einer festen Grundlinie (y=110), während ihre
+  // Schriftgrösse variabel war - bei der Standardgrösse 48 lief sie deshalb
+  // 24px in die Zeile darüber. Grundlinie und viewBox-Höhe richten sich jetzt
+  // nach der tatsächlichen Schriftgrösse.
+  const y1 = 76;
+  const y2 = y1 + Math.round(fs2 * 0.78) + 6;
+  const vbH = Math.max(120, y2 + 12);
   let inner;
   if (danger) {
     inner = `<svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
@@ -1911,7 +1923,7 @@ function renderLogo(line1, line2, size2, danger) {
       <text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="32" fill="url(#goldText)" filter="url(#glow)" letter-spacing="2">${line1}</text>
     </svg>`;
   } else {
-    inner = `<svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+    inner = `<svg viewBox="0 0 300 ${line2 ? vbH : 120}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#FFF6E0"/><stop offset="9%" stop-color="#F5CD5E"/><stop offset="45%" stop-color="#DDA828"/><stop offset="100%" stop-color="#A97A10"/>
@@ -1927,8 +1939,8 @@ function renderLogo(line1, line2, size2, danger) {
         <rect x="0" y="60" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
       </g>
       ${line2
-        ? `<text x="150" y="80" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
-           <text x="150" y="110" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
+        ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
+           <text x="150" y="${y2}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
         : `<text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
       }
     </svg>`;
