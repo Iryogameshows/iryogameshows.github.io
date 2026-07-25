@@ -1713,15 +1713,15 @@ body {
   <div class="team-setup">
     <div class="team-card red">
       <div class="label">Team 1</div>
-      <input type="text" id="wwds-t1-name" placeholder="Teamname..." value="Team Rot">
+      <input type="text" id="wwds-t1-name" placeholder="Teamname..." value="Team Rot" oninput="broadcastWwdsSetupTeamNames()">
     </div>
     <div class="team-card blue">
       <div class="label">Team 2</div>
-      <input type="text" id="wwds-t2-name" placeholder="Teamname..." value="Team Blau">
+      <input type="text" id="wwds-t2-name" placeholder="Teamname..." value="Team Blau" oninput="broadcastWwdsSetupTeamNames()">
     </div>
     <div class="team-card green" id="wwds-t3-card" style="display:none;">
       <div class="label">Team 3</div>
-      <input type="text" id="wwds-t3-name" placeholder="Teamname..." value="Team Grün">
+      <input type="text" id="wwds-t3-name" placeholder="Teamname..." value="Team Grün" oninput="broadcastWwdsSetupTeamNames()">
     </div>
   </div>
   <div class="team-toggle">
@@ -1729,6 +1729,7 @@ body {
     <label for="wwds-enable-team3">3. Team aktivieren</label>
   </div>
   <div class="wwds-sub" id="wwds-split-info">12 Kategorien · je 6 Fragen pro Team · max. 3.000 € in der Hauptrunde</div>
+  <div class="setup-lobby" id="wwds-setup-lobby"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startWwds()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('wwds-edit-screen')">Fragen bearbeiten</button>
@@ -2043,7 +2044,7 @@ function showScreen(id) {
   if (id === 'jeopardy-edit-screen') renderJeopardyEditor();
   if (id === 'wwm-edit-screen') renderWwmEditor();
   if (id === 'wwds-edit-screen') renderWwdsEditor();
-  if (id === 'wwds-setup-screen') wwdsToggleTeam3();
+  if (id === 'wwds-setup-screen') { wwdsToggleTeam3(); ensureWwdsLobbyConnected(); }
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
@@ -2635,7 +2636,9 @@ function setPlayersTab(tab, silent){
 // Aktuelle Teamnamen des zuletzt aktiven Kontexts (Feud/Jeopardy), zum
 // Anzeigen des Team-Tags - fällt auf "Team N" zurück wenn kein Spiel offen ist.
 function currentTeamLabel(i){
-  const names = activeBuzzerContext === 'jeopardy' ? jeopardyState.teamNames : state.teamNames;
+  const names = activeBuzzerContext === 'jeopardy' ? jeopardyState.teamNames
+              : activeBuzzerContext === 'wwds' ? (wwdsState.teamNames.length ? wwdsState.teamNames : lobbyTeamNames('wwds'))
+              : state.teamNames;
   return (names && names[i]) || ('Team ' + (i+1));
 }
 function renderPlayersList(){
@@ -5227,16 +5230,33 @@ function playerAvatarHtml(p){
 
 // Rendert die Lobby-Liste direkt auf dem Setup-Screen (nicht im GM-Popup) -
 // game ist 'feud' oder 'jeopardy', bestimmt welchen Buzzer/Teamnamen-Satz wir zeigen.
+// Welche Eingabefelder/Container zu welchem Spielmodus gehören. Vorher stand
+// das als feud/jeopardy-Verzweigung im Code - mit dem dritten Modus wurde das
+// unübersichtlich.
+const LOBBY_SETUP = {
+  feud:     { container:'feud-setup-lobby',     screen:'setup-screen',            names:['team1-name','team2-name','team3-name'], team3:'enable-team3' },
+  jeopardy: { container:'jeopardy-setup-lobby', screen:'jeopardy-setup-screen',   names:['jt1-name','jt2-name','jt3-name'],       team3:'jeopardy-enable-team3' },
+  wwds:     { container:'wwds-setup-lobby',     screen:'wwds-setup-screen',       names:['wwds-t1-name','wwds-t2-name','wwds-t3-name'], team3:'wwds-enable-team3' },
+};
+function lobbyTeamNames(game){
+  const cfg = LOBBY_SETUP[game];
+  const val = (id, fb) => (document.getElementById(id) || {}).value || fb;
+  const names = [val(cfg.names[0], 'Team 1'), val(cfg.names[1], 'Team 2')];
+  const t3 = document.getElementById(cfg.team3);
+  if (t3 && t3.checked) names.push(val(cfg.names[2], 'Team 3'));
+  return names;
+}
+
 function renderSetupLobby(game){
+  const cfg = LOBBY_SETUP[game];
+  if (!cfg) return;
   const isJeopardy = game === 'jeopardy';
-  const container = document.getElementById(isJeopardy ? 'jeopardy-setup-lobby' : 'feud-setup-lobby');
+  const container = document.getElementById(cfg.container);
   if (!container) return;
+  // Wer weiss denn sowas buzzert nicht - es braucht nur Presence und
+  // Teamzuteilung, deshalb läuft es über dieselbe Verbindung wie Feud.
   const buzzer = isJeopardy ? jeopardyBuzzer : feudBuzzer;
-  const teamNames = isJeopardy
-    ? [document.getElementById('jt1-name').value || 'Team 1', document.getElementById('jt2-name').value || 'Team 2']
-    : [document.getElementById('team1-name').value || 'Team 1', document.getElementById('team2-name').value || 'Team 2'];
-  const team3On = document.getElementById(isJeopardy ? 'jeopardy-enable-team3' : 'enable-team3').checked;
-  if (team3On) teamNames.push(document.getElementById(isJeopardy ? 'jt3-name' : 'team3-name').value || 'Team 3');
+  const teamNames = lobbyTeamNames(game);
   const teamTagColors = ['#E8453C','#3B82F6','#22C55E'];
   const rows = buzzer.presence.length
     ? buzzer.presence.map(p => {
@@ -5252,7 +5272,7 @@ function renderSetupLobby(game){
     <div class="panel-row">
       <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code zeigen'}</button>
       <button class="btn btn-secondary" onclick="popOutQR()">🗗 QR als Fenster</button>
-      <button class="btn btn-primary" onclick="openPlayersScreen('${isJeopardy ? 'jeopardy-setup-screen' : 'setup-screen'}')">👥 Teams zuteilen</button>
+      <button class="btn btn-primary" onclick="openPlayersScreen('${cfg.screen}')">👥 Teams zuteilen</button>
       <button class="btn btn-secondary" onclick="resetAllTeams()">↺ Teams zurücksetzen</button>
     </div>`;
 }
@@ -5435,6 +5455,20 @@ function broadcastFeudSetupTeamNames(){
   if (document.getElementById('enable-team3').checked) names.push(document.getElementById('team3-name').value || 'Team 3');
   buzzerBroadcastTeams(names);
   renderSetupLobby('feud');
+}
+
+// Wer weiss denn sowas: gleiche Lobby wie Feud (Presence + Teamzuteilung),
+// nur ohne Buzzer-Scharfschaltung - in diesem Modus wird nicht gebuzzert.
+function ensureWwdsLobbyConnected(){
+  activeBuzzerContext = 'wwds';
+  const isFresh = !feudBuzzer.fbRef;
+  feudBuzzConnect();
+  if (isFresh && feudBuzzer.fbRef) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
+  broadcastWwdsSetupTeamNames();
+}
+function broadcastWwdsSetupTeamNames(){
+  buzzerBroadcastTeams(lobbyTeamNames('wwds'));
+  renderSetupLobby('wwds');
 }
 
 // Aufgerufen, sobald der Jeopardy-Setup-Screen erscheint (siehe Family-Feud-Pendant oben).
@@ -6569,6 +6603,8 @@ function wwdsToggleTeam3(){
   const per = Math.floor(wwdsData.categories.length / n);
   document.getElementById('wwds-split-info').textContent =
     `${wwdsData.categories.length} Kategorien · je ${per} Fragen pro Team · max. ${wwdsMoney(per*WWDS_WIN)} in der Hauptrunde`;
+  // Drittes Team an-/abschalten ändert die Auswahl auf den Handys
+  if (document.getElementById('wwds-setup-lobby')) broadcastWwdsSetupTeamNames();
 }
 
 // ── START ──
@@ -6599,6 +6635,10 @@ function startWwdsActual(){
   }
   wwdsState.used = new Array(wwdsData.categories.length).fill(false);
   wwdsState.currentTeam = Math.floor(Math.random() * wwdsState.teamCount);
+  // Endgültige Teamnamen an die Handys, danach keine neuen Beitritte mehr
+  activeBuzzerContext = 'wwds';
+  buzzerBroadcastTeams(wwdsState.teamNames);
+  lockBuzzerJoins(feudBuzzer);
   wwdsState.currentCat = null;
   wwdsState.phase = 'pick';
   wwdsState.masterRevealed = false;
