@@ -1413,6 +1413,17 @@ body {
 .wwds-banner{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:4px;color:#FFD23F;text-align:center;}
 .wwds-sub{font-size:.8rem;color:rgba(255,255,255,.4);text-align:center;font-weight:600;}
 .wwds-bet-row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:4px;}
+/* Schätzung bleibt unscharf, bis der Host sie aufdeckt. Solange steht ein
+   Platzhalter im DOM, nicht die echte Zahl - unscharf heisst nicht geheim. */
+.wwds-guess{
+  min-width:110px;padding:9px 12px;border-radius:8px;background:rgba(0,0,0,.35);
+  border:1.5px solid rgba(255,255,255,.12);text-align:center;
+  font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#FFD23F;
+  filter:blur(9px);opacity:.55;transition:filter .5s ease,opacity .5s ease,transform .5s ease;
+  user-select:none;
+}
+.wwds-guess.shown{filter:none;opacity:1;animation:wwdsGuessPop .45s cubic-bezier(.17,.67,.3,1.3);}
+@keyframes wwdsGuessPop{0%{transform:scale(.85)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
 
 @media (max-width:720px){
   .wwds-grid{grid-template-columns:repeat(2,1fr);}
@@ -5590,7 +5601,7 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','nextRound','openJeopardyClue',
   'jeopardyEstimateOpen','jeopardyEstimateClose','jeopardyEstimateReopen',
-  'wwdsAdjustBet','wwdsSetGuess','wwdsStartMaster','wwdsMasterSet','wwdsRevealMaster','wwdsAfterMaster',
+  'wwdsAdjustBet','wwdsSetGuess','wwdsShowTieGuesses','wwdsStartMaster','wwdsMasterSet','wwdsRevealMaster','wwdsAfterMaster',
   'wwdsPick','wwdsSelect','wwdsLock','wwdsReveal','wwdsNext','wwdsAudience','wwdsStartTimer',
   'wwdsRevealTie','wwdsToggleMedia','gmBackToMenu','gmPlayAgain','gmGotoTournament',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
@@ -6586,7 +6597,7 @@ let wwdsState = {
   audienceUsed:[], audienceShown:false, audienceData:null,
   phase:'pick',            // pick | question | bet | master | tie | done
   bets:[], masterPick:[], masterRevealed:false,
-  tieIdx:0, tieGuesses:[], tieRevealed:false,
+  tieIdx:0, tieGuesses:[], tieRevealed:false, tieGuessesShown:false,
   timer:0, timerInt:null, timeUp:false,
 };
 
@@ -6803,14 +6814,15 @@ function wwdsTieHtml(){
     wwdsState.teamNames.map((n,i) => wwdsState.scores[i] === Math.max(...wwdsState.scores) ? `
       <div class="wwds-bet-row">
         <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${n}</span>
-        <span style="min-width:110px;padding:9px 12px;border-radius:8px;background:rgba(0,0,0,.35);
-              border:1.5px solid rgba(255,255,255,.12);font-weight:700;text-align:center;
-              font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#FFD23F;">${
-          wwdsState.tieGuesses[i] === null ? '—' : wwdsState.tieGuesses[i]}</span>
+        <span class="wwds-guess ${wwdsState.tieGuessesShown ? 'shown' : ''}">${
+          wwdsState.tieGuesses[i] === null ? '—'
+            : (wwdsState.tieGuessesShown ? wwdsState.tieGuesses[i] : '000')}</span>
       </div>` : '').join('') +
     (wwdsState.tieRevealed
       ? `<div class="wwds-banner" style="margin-top:14px;">Richtig: ${t.answer}</div>`
-      : `<div class="wwds-sub" style="margin-top:14px;">Eingabe und Auflösen laufen über den Gamemaster.</div>`);
+      : `<div class="wwds-sub" style="margin-top:14px;">${wwdsState.tieGuessesShown
+            ? 'Die Auflösung kommt gleich…'
+            : 'Die Schätzungen sind abgegeben — noch nicht verraten!'}</div>`);
 }
 
 // ── HAUPTRUNDE ──
@@ -6961,6 +6973,7 @@ function wwdsToTie(){
   wwdsStopTimer();
   wwdsState.phase = 'tie';
   wwdsState.tieRevealed = false;
+  wwdsState.tieGuessesShown = false;
   wwdsState.tieGuesses = wwdsState.teamNames.map(() => null);
   renderWwds();
   updateGamemaster();
@@ -6973,12 +6986,26 @@ function wwdsSetGuess(i, v){
   wwdsState.tieGuesses[i] = (v === '' ? null : Math.floor(Number(String(v).replace(',', '.')) || 0));
   renderWwds();
 }
+// Zwischenschritt vor der Auflösung: erst werden die abgegebenen Schätzungen
+// gleichzeitig sichtbar (vorher unscharf), dann kommt die richtige Antwort.
+function wwdsShowTieGuesses(){
+  if (wwdsState.phase !== 'tie' || wwdsState.tieGuessesShown) return;
+  const max = Math.max(...wwdsState.scores);
+  const tied = wwdsState.teamNames.map((_,i) => i).filter(i => wwdsState.scores[i] === max);
+  if (tied.some(i => wwdsState.tieGuesses[i] === null)) return alert('Alle beteiligten Teams müssen erst schätzen!');
+  wwdsState.tieGuessesShown = true;
+  SFX.point();
+  renderWwds();
+  updateGamemaster();
+}
+
 function wwdsRevealTie(){
   const t = wwdsData.tiebreakers[wwdsState.tieIdx];
   if (!t) return;
   const max = Math.max(...wwdsState.scores);
   const tied = wwdsState.teamNames.map((_,i) => i).filter(i => wwdsState.scores[i] === max);
   if (tied.some(i => wwdsState.tieGuesses[i] === null)) return alert('Alle beteiligten Teams müssen schätzen!');
+  wwdsState.tieGuessesShown = true;
   wwdsState.tieRevealed = true;
   const dist = tied.map(i => Math.abs(wwdsState.tieGuesses[i] - t.answer));
   const best = Math.min(...dist);
@@ -7049,6 +7076,7 @@ function wwdsControlsHtml(pfx){
       b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsAfterMaster()">Weiter →</button>`;
     }
   } else if (s.phase === 'tie'){
+    if (!s.tieGuessesShown) b += `<button class="gm-btn gm-blue" onclick="${pfx}wwdsShowTieGuesses()">👁 Schätzungen aufdecken</button>`;
     if (!s.tieRevealed) b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsRevealTie()">Auflösen</button>`;
   }
   return b;
