@@ -3299,11 +3299,22 @@ function runKgIntro(overlay, onDone) {
     for (let s = 0; s < 12; s++) { const sp = document.createElement('div'); sp.className = 'spark'; sp.style.left = (8 + Math.random() * 84) + '%'; sp.style.top = (14 + Math.random() * 54) + '%'; sp.style.animationDelay = (Math.random() * 1.8) + 's'; kg.appendChild(sp); }
   }
   build();
+  // Der Rahmen wird pixelgenau aus kg.clientWidth/-Height berechnet. Läuft
+  // build() zu früh (Layout noch nicht fertig) oder ändert sich die Bühne
+  // später (Fullscreen am Beamer, verzögertes Layout), säße die rechte/linke
+  // Lämpchen-Spalte an der falschen Stelle - z.B. mitten im Bild. Ein
+  // ResizeObserver auf der Bühne baut den Rahmen bei JEDER Größenänderung
+  // sauber neu (build() leert vorher das Frame), plus ein rAF-Nachbau, sobald
+  // das erste Layout steht.
+  requestAnimationFrame(() => requestAnimationFrame(() => { if (!done) build(); }));
   kg.classList.add('play');
   let done = false;
+  const ro = ('ResizeObserver' in window) ? new ResizeObserver(() => { if (!done) build(); }) : null;
+  if (ro) ro.observe(kg);
   function finish() {
     if (done) return;
     done = true;
+    if (ro) ro.disconnect();
     overlay.classList.add('leaving');
     let finished = false;
     const cleanup = () => {
