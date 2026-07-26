@@ -4290,14 +4290,16 @@ function startJeopardyActual() {
   jeopardyState.currentClue = null;
   jeopardyState.answerShown = false;
   jeopardyState.active = true;
-  // Hidden Daily Double: one random field (only on questions worth 300+)
+  // Hidden Daily Double: one random field (only on questions worth 300+),
+  // und nur in Kategorien, in denen es der Host erlaubt hat (cat.noDD !== true).
   const ddRows = JEOPARDY_VALUES.map((v, i) => i).filter(i => JEOPARDY_VALUES[i] >= 300);
-  jeopardyState.dailyDouble = {
-    board: Math.floor(Math.random() * JEOPARDY_BOARDS),
-    col: Math.floor(Math.random() * JEOPARDY_CATS),
-    row: ddRows[Math.floor(Math.random() * ddRows.length)],
-    done: false,
-  };
+  const ddSpots = [];
+  jeopardyData.boards.forEach((board, b) => board.categories.forEach((cat, col) => {
+    if (!cat.noDD) ddRows.forEach(row => ddSpots.push({ board: b, col, row }));
+  }));
+  jeopardyState.dailyDouble = ddSpots.length
+    ? { ...ddSpots[Math.floor(Math.random() * ddSpots.length)], done: false }
+    : null;
   jeopardyState.ddPending = false;
   jeopardyState.currentIsDaily = false;
   wwmState.active = false;
@@ -5040,8 +5042,8 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'addStrike','assignPlayerTeam','feudBuzzToggleHidden','feudSetStartTeam','feudToggleMedia','finaleMarkMiss','finaleNextReveal',
   'finalePickAnswer','gmAdvance','gmSkipTutorial',
   'jeopardyAnnounceDaily','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
-  'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySkip','jeopardyStageReveal',
-  'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','nextRound','openJeopardyClue',
+  'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySeriesReveal','jeopardySkip','jeopardyStageReveal',
+  'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','jeopardyWrongReopen','nextRound','openJeopardyClue',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia','saveHostNotesRemote',
   'tournamentStartGame','tournamentRevealSecret',
@@ -5573,7 +5575,12 @@ function renderJeopardyEditor() {
     html += `<div style="margin-bottom:8px;"><div class="page-title" style="margin:${b===0?'0':'24px'} 0 12px;"><em>Board ${b+1}</em></div></div>`;
     board.categories.forEach((cat, col) => {
       html += `<div style="margin-bottom:18px;">
-        <label>Kategorie ${col+1}</label>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <label>Kategorie ${col+1}</label>
+          <label style="display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;color:${cat.noDD?'rgba(255,255,255,.35)':'#FFD23F'};cursor:pointer;" title="Wenn aus, kann das versteckte Daily Double nicht in dieser Kategorie landen.">
+            <input type="checkbox" ${cat.noDD?'':'checked'} onchange="jeopardyData.boards[${b}].categories[${col}].noDD=!this.checked;this.parentNode.style.color=this.checked?'#FFD23F':'rgba(255,255,255,.35)'" style="accent-color:#FFD23F;"> ★ Daily Double erlaubt
+          </label>
+        </div>
         <input type="text" value="${esc(cat.name)}" onchange="jeopardyData.boards[${b}].categories[${col}].name=this.value" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;outline:none;margin-bottom:8px;">
         ${cat.clues.map((clue, row) => `
           <div style="border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px;margin-bottom:6px;">
