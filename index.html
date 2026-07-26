@@ -140,6 +140,7 @@ body {
 
 .round-bar {
   display: flex; gap: 12px; align-items: center; justify-content: center;
+  flex-wrap: wrap; text-align: center; max-width: 100%;
   font-size: .75rem; color: rgba(255,255,255,.4);
   letter-spacing: 2px; text-transform: uppercase; font-weight: 700;
 }
@@ -524,6 +525,29 @@ body {
 }
 .tut-scorechip.good { background: rgba(34,197,94,.15); border: 2px solid #22C55E; color: #6EE7A0; }
 .tut-scorechip.bad { background: rgba(232,69,60,.15); border: 2px solid #E8453C; color: #FF8A80; }
+/* Kategorie- und Antwort-Demo (Wer weiß denn sowas) */
+.tut-wwds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 400px; }
+.tut-wwds-cat {
+  min-height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  padding: 6px 4px; text-align: center; font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; color: #fff;
+  background: linear-gradient(180deg, #1E3FAE, #112370);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+}
+.tut-wwds-cat.pick { box-shadow: 0 0 18px rgba(255,210,63,.5); animation: tutStrikePop .45s cubic-bezier(.17,.67,.3,1.3); }
+.tut-wwds-cat.used { background: linear-gradient(180deg,#243056,#141a33); opacity: .4; text-decoration: line-through; }
+.tut-wwds-opts { display: flex; flex-direction: column; gap: 8px; width: 380px; }
+.tut-wwds-opt {
+  display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: 10px;
+  font-size: .9rem; font-weight: 700; color: #fff;
+  background: linear-gradient(180deg, #1E3FAE, #112370);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+}
+.tut-wwds-opt span {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; color: #FFD23F; min-width: 20px;
+}
+.tut-wwds-opt.right { background: linear-gradient(180deg, #16A34A, #0F4024); }
+.tut-wwds-opt.right span { color: #fff; }
 /* Daily-Double-Badge */
 .tut-dd {
   font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem; letter-spacing: 4px; color: #FFD23F;
@@ -563,16 +587,6 @@ body {
   background: #FFD23F; box-shadow: 0 0 8px rgba(255,210,63,.4);
   width: 24px; border-radius: 4px;
 }
-
-.tut-skip {
-  position: absolute; top: 24px; right: 28px;
-  font-size: .7rem; font-weight: 700; color: rgba(255,255,255,.2);
-  letter-spacing: 3px; text-transform: uppercase;
-  cursor: pointer; transition: color .2s; z-index: 10;
-  background: none; border: none; font-family: inherit;
-  padding: 8px 16px;
-}
-.tut-skip:hover { color: rgba(255,255,255,.5); }
 
 .tut-hint {
   position: absolute; bottom: 60px;
@@ -1202,6 +1216,74 @@ body {
   #kg2 .pill{font-size:20px;}
 }
 
+/* ── GEBURTSTAGS-INTRO ── */
+/* Gleiche Bühne wie die Keller-Gameshow (Wand, Boden, Scheinwerfer, Marquee-
+   Rahmen, Funken), aber wärmere Palette plus Torte, Kerzen und Luftballons. */
+#kgb{position:relative;width:100%;height:100%;overflow:hidden;background:#1a1122;font-family:'Luckiest Guy',system-ui,sans-serif;isolation:isolate;}
+#kgb .wall{position:absolute;inset:0;background:#20142b;background-image:repeating-linear-gradient(0deg,#291836 0 2px,transparent 2px 74px),repeating-linear-gradient(90deg,#291836 0 2px,transparent 2px 96px);opacity:.9;}
+#kgb .floor{position:absolute;left:0;right:0;bottom:0;height:66px;background:#150d1c;box-shadow:0 -2px 0 #3a2450;}
+#kgb .cone{position:absolute;top:-30px;width:300px;height:640px;clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);background:rgba(255,190,120,.10);z-index:1;transform-origin:top center;pointer-events:none;}
+#kgb .coneL{left:60px;animation:kgSweepL 4.6s ease-in-out infinite;}
+#kgb .coneR{right:60px;animation:kgSweepR 3.9s ease-in-out infinite;}
+#kgb .cord{position:absolute;top:0;right:110px;width:3px;height:64px;background:#4a3160;z-index:2;transform-origin:top center;animation:kgSwing 2.4s ease-in-out infinite;}
+#kgb .bulb{position:absolute;top:60px;left:-11px;width:22px;height:28px;border-radius:50% 50% 48% 48%;background:#FFD9A0;box-shadow:0 0 20px 7px rgba(255,190,120,.5),0 0 6px 2px #fff6cf inset;}
+#kgb .bulb:after{content:"";position:absolute;top:-6px;left:6px;width:10px;height:7px;background:#6b5546;border-radius:2px;}
+#kgb .frame{position:absolute;inset:0;z-index:6;pointer-events:none;}
+#kgb .mb{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);animation:kgBlink 1s ease-in-out infinite alternate;}
+#kgb .header{position:absolute;top:22px;left:0;right:0;z-index:5;text-align:center;color:#FFC93C;font-size:20px;letter-spacing:2px;-webkit-text-stroke:1px #2a1600;text-shadow:0 2px 0 #9c6a08;}
+#kgb .header .star{color:#FF5DA2;font-size:16px;vertical-align:2px;margin:0 8px;}
+#kgb .screen{position:absolute;left:0;right:0;top:40px;bottom:30px;max-width:none;width:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px;z-index:5;opacity:0;}
+#kgb .lbl{font-family:'Inter',system-ui,sans-serif;font-weight:700;letter-spacing:3px;font-size:20px;color:#FF9EC7;text-transform:uppercase;margin:0 0 12px;}
+#kgb .big{color:#FFC93C;font-size:78px;line-height:.98;margin:0;-webkit-text-stroke:3px #2a1600;text-shadow:0 3px 0 #c98a10,0 6px 0 #9c6a08,0 9px 14px rgba(0,0,0,.6);}
+#kgb .big.pink{color:#FF5DA2;text-shadow:0 3px 0 #b2306b,0 6px 12px rgba(0,0,0,.5);-webkit-text-stroke:3px #33091f;}
+#kgb .big.mint{color:#7FE5B0;text-shadow:0 3px 0 #2f9e6a,0 6px 0 #1c6b47,0 9px 14px rgba(0,0,0,.6);-webkit-text-stroke:3px #0b3a24;}
+#kgb .big.sm{font-size:56px;}
+#kgb .big.xl{font-size:96px;}
+#kgb .sub{color:#FFF0DC;font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:24px;letter-spacing:.5px;margin:14px 0 0;}
+#kgb .teamrow{display:flex;align-items:center;justify-content:center;gap:26px;margin-bottom:16px;}
+#kgb .spark{position:absolute;width:10px;height:10px;z-index:4;background:#FFD9A0;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:kgTw 1.8s ease-in-out infinite;}
+#kgb .kg-hint{position:absolute;bottom:20px;left:0;right:0;z-index:7;text-align:center;font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);animation:introPulse 2.5s ease-in-out infinite;}
+
+/* Torte mit flackernden Kerzen */
+#kgb .cake{position:relative;width:190px;height:150px;margin-bottom:26px;}
+#kgb .cake .plate{position:absolute;bottom:0;left:0;right:0;height:12px;border-radius:8px;background:#E8E3F0;box-shadow:0 3px 0 #9d95b5;}
+#kgb .cake .tier{position:absolute;left:14px;right:14px;border-radius:8px;border:3px solid #3a1226;}
+#kgb .cake .t1{bottom:10px;height:46px;background:linear-gradient(180deg,#FF7FB8,#E24C8E);}
+#kgb .cake .t2{bottom:54px;left:30px;right:30px;height:38px;background:linear-gradient(180deg,#FFD9A0,#F0AC63);}
+#kgb .cake .icing{position:absolute;bottom:88px;left:30px;right:30px;height:14px;border-radius:8px;background:#FFF6E4;border:3px solid #3a1226;}
+#kgb .cake .candle{position:absolute;bottom:100px;width:8px;height:30px;border-radius:2px;background:repeating-linear-gradient(45deg,#fff 0 4px,#FF5DA2 4px 8px);border:2px solid #3a1226;}
+#kgb .cake .c1{left:64px;}
+#kgb .cake .c2{left:91px;}
+#kgb .cake .c3{left:118px;}
+#kgb .cake .flame{position:absolute;bottom:130px;width:12px;height:18px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 50% 70%,#FFF3B0,#FFA630 70%,#FF6A2A);box-shadow:0 0 16px 6px rgba(255,180,80,.55);transform-origin:bottom center;}
+#kgb .cake .f1{left:62px;animation:kgbFlame 1.1s ease-in-out infinite;}
+#kgb .cake .f2{left:89px;animation:kgbFlame 1.3s ease-in-out infinite .2s;}
+#kgb .cake .f3{left:116px;animation:kgbFlame .95s ease-in-out infinite .45s;}
+@keyframes kgbFlame{0%,100%{transform:scale(1) rotate(-4deg);opacity:.95}50%{transform:scale(1.18) rotate(5deg);opacity:1}}
+
+/* Luftballons, die langsam durchs Bild steigen */
+#kgb .balloon{position:absolute;bottom:-140px;width:54px;height:66px;border-radius:50% 50% 48% 48%;z-index:3;opacity:.9;animation:kgbFloat linear infinite;}
+#kgb .balloon:after{content:"";position:absolute;bottom:-40px;left:50%;width:1px;height:40px;background:rgba(255,255,255,.25);}
+#kgb .balloon:before{content:"";position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:inherit;}
+@keyframes kgbFloat{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-120vh) rotate(6deg)}}
+
+#kgb.play .s1{animation:kgBeat 4.8s ease .3s both;}
+#kgb.play .s2{animation:kgBeat 4.8s ease 4.9s both;}
+#kgb.play .s3{animation:kgBeat 4.8s ease 9.5s both;}
+#kgb.play .s4{animation:kgBeat 4.8s ease 14.1s both;}
+#kgb.play .s5{animation:kgBeat 4.8s ease 18.7s both;}
+#kgb.play .s6{animation:kgBeat 4.8s ease 23.3s both;}
+#kgb.play .s7{animation:kgBeatHold 2s ease 27.9s both;}
+@media (max-width:600px){
+  #kgb .big{font-size:50px;}
+  #kgb .big.sm{font-size:38px;}
+  #kgb .big.xl{font-size:60px;}
+  #kgb .lbl{font-size:16px;}
+  #kgb .sub{font-size:18px;}
+  #kgb .header{font-size:15px;}
+  #kgb .cake{width:150px;height:120px;transform:scale(.85);}
+}
+
 /* ── WER WIRD MILLIONÄR ── */
 #wwm-screen{gap:16px;max-width:1000px;}
 .wwm-wrap{display:flex;gap:18px;width:100%;align-items:stretch;}
@@ -1260,6 +1342,99 @@ body {
   .wwm-answers{grid-template-columns:1fr;}
 }
 
+/* ── WER WEISS DENN SOWAS ── */
+/* Eigener Abstand zwischen den Blöcken: das Board hat einen 12px breiten
+   Leuchtrand aus box-shadow, der ausserhalb seiner Box liegt und ohne Abstand
+   in die Zeile darüber ragt (Schrift lag direkt auf dem Rand). */
+#wwds-screen{gap:14px;}
+/* Kopfzeile spannt sich genau so breit wie das Board darunter - mit einer
+   max-width pro Karte stand bei 2 Teams sonst ein 500px-Block über einem
+   800px-Board. */
+.wwds-top{display:flex;gap:10px;width:100%;align-items:stretch;flex-wrap:wrap;}
+.wwds-team{flex:1 1 0;min-width:150px;text-align:center;padding:12px 14px;border-radius:12px;position:relative;transition:border-color .3s,box-shadow .3s,background .3s;border:1px solid rgba(255,255,255,.07);}
+.wwds-team.red{background:linear-gradient(180deg,rgba(153,27,27,.55),rgba(127,29,29,.65));}
+.wwds-team.blue{background:linear-gradient(180deg,rgba(30,64,175,.55),rgba(30,58,138,.65));}
+.wwds-team.green{background:linear-gradient(180deg,rgba(22,101,52,.55),rgba(20,83,45,.65));}
+/* Kein translateY: das hat die aktive Karte gegen die andere verschoben und
+   sah nach Layoutfehler aus statt nach Hervorhebung. Die Aufhellung läuft über
+   inset-Schatten statt über background-image - letzteres hätte das Gradient
+   der Teamfarbe (.red/.blue/.green) überschrieben und die Karte entfärbt. */
+.wwds-team.on{border-color:rgba(255,210,63,.55);box-shadow:0 0 18px rgba(255,210,63,.18),inset 0 0 0 999px rgba(255,210,63,.06);}
+.wwds-team .wt-name{font-size:.62rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.55);}
+.wwds-team.on .wt-name{color:#FFD23F;}
+.wwds-team .wt-money{font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1.1;color:#fff;}
+.wwds-team.on .wt-money{color:#FFD23F;text-shadow:0 0 16px rgba(255,210,63,.3);}
+.wwds-team .wt-meta{font-size:.6rem;color:rgba(255,255,255,.35);letter-spacing:1px;}
+.wwds-team .wt-lock{margin-top:5px;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:3px;color:#FFD23F;line-height:1.1;}
+
+.wwds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;}
+.wwds-cat{
+  min-height:74px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;padding:8px 6px;text-align:center;
+  background:linear-gradient(180deg,#1E3FAE 0%,#162E88 50%,#112370 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 6px rgba(0,0,0,.3);
+  transition:transform .15s,filter .15s;
+}
+.wwds-cat:hover:not(.done){transform:scale(1.03);filter:brightness(1.15);}
+.wwds-cat .wc-num{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:rgba(255,255,255,.35);}
+.wwds-cat .wc-name{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;line-height:1.25;}
+.wwds-cat.done{background:linear-gradient(180deg,#243056,#141a33);cursor:default;opacity:.45;}
+.wwds-cat.done .wc-name{text-decoration:line-through;}
+
+.wwds-q{
+  text-align:center;font-size:1.15rem;font-weight:700;line-height:1.5;
+  padding:16px 18px;border-radius:12px;background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.07);width:100%;
+}
+.wwds-cat-chip{display:inline-block;padding:4px 14px;border-radius:6px;background:rgba(255,210,63,.12);
+  border:1px solid rgba(255,210,63,.28);font-size:.7rem;font-weight:700;color:#FFD23F;
+  letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+.wwds-opts{display:flex;flex-direction:column;gap:9px;width:100%;}
+.wwds-opt{
+  display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:10px;cursor:pointer;
+  background:linear-gradient(180deg,#1E3FAE,#112370);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.1);font-weight:700;transition:filter .15s;
+}
+.wwds-opt:hover{filter:brightness(1.15);}
+.wwds-opt .wo-let{color:#FFD23F;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;min-width:24px;}
+.wwds-opt.sel{background:linear-gradient(180deg,#F59E0B,#C2410C);}
+.wwds-opt.sel .wo-let{color:#fff;}
+.wwds-opt.right{background:linear-gradient(180deg,#16A34A,#0F4024);animation:wwdsPulse .5s ease;}
+.wwds-opt.bad{background:linear-gradient(180deg,#E8453C,#7F1D1D);}
+@keyframes wwdsPulse{0%{transform:scale(1);}50%{transform:scale(1.02);}100%{transform:scale(1);}}
+.wwds-opt .wo-tags{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;}
+.wwds-tag{font-size:.6rem;font-weight:900;letter-spacing:1px;padding:3px 8px;border-radius:999px;color:#fff;}
+
+.wwds-timer{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;line-height:1;color:#fff;transition:color .3s;}
+.wwds-timer.urgent{color:#E8453C;animation:wwdsTick .5s ease-in-out infinite;}
+.wwds-timer.done{color:rgba(255,255,255,.25);}
+@keyframes wwdsTick{0%,100%{transform:scale(1);}50%{transform:scale(1.09);}}
+
+.wwds-aud{display:flex;gap:14px;align-items:flex-end;justify-content:center;height:110px;margin-top:2px;}
+.wwds-abar{width:46px;background:linear-gradient(180deg,#3B82F6,#1D4ED8);border-radius:6px 6px 0 0;position:relative;transition:height .5s ease;}
+.wwds-abar .wa-pct{position:absolute;top:-20px;left:0;right:0;text-align:center;font-weight:700;font-size:.78rem;color:#FFD23F;}
+.wwds-abar .wa-let{position:absolute;bottom:-21px;left:0;right:0;text-align:center;font-weight:700;color:#fff;}
+
+.wwds-banner{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;letter-spacing:4px;color:#FFD23F;text-align:center;}
+.wwds-sub{font-size:.8rem;color:rgba(255,255,255,.4);text-align:center;font-weight:600;}
+.wwds-bet-row{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:4px;}
+/* Schätzung bleibt unscharf, bis der Host sie aufdeckt. Solange steht ein
+   Platzhalter im DOM, nicht die echte Zahl - unscharf heisst nicht geheim. */
+.wwds-guess{
+  min-width:110px;padding:9px 12px;border-radius:8px;background:rgba(0,0,0,.35);
+  border:1.5px solid rgba(255,255,255,.12);text-align:center;
+  font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#FFD23F;
+  filter:blur(9px);opacity:.55;transition:filter .5s ease,opacity .5s ease,transform .5s ease;
+  user-select:none;
+}
+.wwds-guess.shown{filter:none;opacity:1;animation:wwdsGuessPop .45s cubic-bezier(.17,.67,.3,1.3);}
+@keyframes wwdsGuessPop{0%{transform:scale(.85)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+
+@media (max-width:720px){
+  .wwds-grid{grid-template-columns:repeat(2,1fr);}
+  .wwds-team .wt-money{font-size:1.5rem;}
+}
+
 /* ── Setup-Lobby (Team-Zuteilung vor Spielstart) ── */
 .setup-lobby{width:100%;max-width:520px;margin:18px auto 0;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 16px;}
 .setup-lobby .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px;}
@@ -1297,6 +1472,11 @@ body {
       <div class="menu-card-icon">💰</div>
       <div class="menu-card-title">Wer wird Millionär</div>
       <div class="menu-card-sub">15 Fragen, 4 Antworten, Joker</div>
+    </div>
+    <div class="menu-card" onclick="showScreen('wwds-setup-screen')">
+      <div class="menu-card-icon">🤔</div>
+      <div class="menu-card-title">Wer weiß denn sowas</div>
+      <div class="menu-card-sub">12 Kategorien, 3 Antworten, Masterfrage</div>
     </div>
     <div class="menu-card" onclick="showScreen('tournament-screen')">
       <div class="menu-card-icon">🏆</div>
@@ -1347,8 +1527,17 @@ body {
     <label for="enable-team3">3. Team aktivieren</label>
   </div>
   <div class="team-toggle">
-    <input type="checkbox" id="enable-gameshow-intro">
+    <input type="checkbox" id="enable-gameshow-intro" onchange="toggleIntroPicker()">
     <label for="enable-gameshow-intro">Gameshow-Intro abspielen</label>
+  </div>
+  <div class="team-toggle" id="intro-picker" style="gap:10px;display:none;">
+    <label for="intro-variant" style="white-space:nowrap;">Welches Intro:</label>
+    <select id="intro-variant" onchange="toggleIntroPicker()" style="padding:8px 10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-weight:700;outline:none;">
+      <option value="keller">Keller Gameshow</option>
+      <option value="bday">Geburtstag</option>
+    </select>
+    <label for="bday-name" id="bday-name-label" style="white-space:nowrap;display:none;">Name:</label>
+    <input type="text" id="bday-name" placeholder="z.B. Ajdin" oninput="saveBdayName()" value="Ajdin" style="display:none;flex:1;min-width:110px;max-width:200px;">
   </div>
   <div class="team-toggle" style="gap:10px;">
     <label for="feud-show-name" style="white-space:nowrap;">Name im Intro:</label>
@@ -1531,6 +1720,65 @@ body {
   </div>
 </div>
 
+<!-- WWDS SETUP -->
+<div id="wwds-setup-screen" class="screen">
+  <div class="page-title"><em>Wer weiß denn sowas</em> Setup</div>
+  <div class="team-setup">
+    <div class="team-card red">
+      <div class="label">Team 1</div>
+      <input type="text" id="wwds-t1-name" placeholder="Teamname..." value="Team Rot" oninput="broadcastWwdsSetupTeamNames()">
+    </div>
+    <div class="team-card blue">
+      <div class="label">Team 2</div>
+      <input type="text" id="wwds-t2-name" placeholder="Teamname..." value="Team Blau" oninput="broadcastWwdsSetupTeamNames()">
+    </div>
+    <div class="team-card green" id="wwds-t3-card" style="display:none;">
+      <div class="label">Team 3</div>
+      <input type="text" id="wwds-t3-name" placeholder="Teamname..." value="Team Grün" oninput="broadcastWwdsSetupTeamNames()">
+    </div>
+  </div>
+  <div class="team-toggle">
+    <input type="checkbox" id="wwds-enable-team3" onchange="wwdsToggleTeam3()">
+    <label for="wwds-enable-team3">3. Team aktivieren</label>
+  </div>
+  <div class="wwds-sub" id="wwds-split-info">12 Kategorien · je 6 Fragen pro Team · max. 3.000 € in der Hauptrunde</div>
+  <div class="setup-lobby" id="wwds-setup-lobby"></div>
+  <div class="setup-actions">
+    <button class="btn btn-primary" onclick="startWwds()">Spiel starten</button>
+    <button class="btn btn-secondary" onclick="showScreen('wwds-edit-screen')">Fragen bearbeiten</button>
+    <button class="btn btn-secondary" onclick="showWwdsTutorial()">Tutorial</button>
+    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
+  </div>
+</div>
+
+<!-- WWDS EDIT -->
+<div id="wwds-edit-screen" class="screen">
+  <div class="page-title"><em>Wer weiß denn sowas</em> Fragen bearbeiten</div>
+  <div class="editor-card" style="width:100%;">
+    <div id="wwds-editor-grid"></div>
+  </div>
+  <div class="edit-bar" style="margin-top:12px;">
+    <button class="btn btn-accent" onclick="wwdsAddCategory()">+ Kategorie</button>
+    <button class="btn btn-secondary" onclick="wwdsAddTiebreaker()">+ Schätzfrage</button>
+    <button class="btn btn-secondary" onclick="exportWwds()">Exportieren</button>
+    <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importWwds(event)" style="display:none;"></label>
+    <button class="btn btn-primary" onclick="showScreen('wwds-setup-screen')">Zurück</button>
+  </div>
+</div>
+
+<!-- WWDS BOARD -->
+<div id="wwds-screen" class="screen">
+  <div class="wwds-top" id="wwds-teams"></div>
+  <div class="round-bar">
+    <span id="wwds-info">Hauptrunde</span>
+    <span>·</span>
+    <span>Am Zug: <span class="pts" id="wwds-turn"></span></span>
+  </div>
+  <div class="board" style="width:100%;">
+    <div id="wwds-stage"></div>
+  </div>
+</div>
+
 <!-- RESULT -->
 <div id="result-screen" class="screen">
   <div class="result-icon">🏆</div>
@@ -1647,6 +1895,13 @@ const TEAM_COLORS = ['red','blue','green'];
 // ── LOGO ──
 function renderLogo(line1, line2, size2, danger) {
   const fs2 = size2 || 48;
+  // Zweite Zeile hing an einer festen Grundlinie (y=110), während ihre
+  // Schriftgrösse variabel war - bei der Standardgrösse 48 lief sie deshalb
+  // 24px in die Zeile darüber. Grundlinie und viewBox-Höhe richten sich jetzt
+  // nach der tatsächlichen Schriftgrösse.
+  const y1 = 76;
+  const y2 = y1 + Math.round(fs2 * 0.78) + 6;
+  const vbH = Math.max(120, y2 + 12);
   let inner;
   if (danger) {
     inner = `<svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
@@ -1668,7 +1923,7 @@ function renderLogo(line1, line2, size2, danger) {
       <text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="32" fill="url(#goldText)" filter="url(#glow)" letter-spacing="2">${line1}</text>
     </svg>`;
   } else {
-    inner = `<svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+    inner = `<svg viewBox="0 0 300 ${line2 ? vbH : 120}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#FFF6E0"/><stop offset="9%" stop-color="#F5CD5E"/><stop offset="45%" stop-color="#DDA828"/><stop offset="100%" stop-color="#A97A10"/>
@@ -1684,8 +1939,8 @@ function renderLogo(line1, line2, size2, danger) {
         <rect x="0" y="60" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
       </g>
       ${line2
-        ? `<text x="150" y="80" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
-           <text x="150" y="110" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
+        ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
+           <text x="150" y="${y2}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
         : `<text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
       }
     </svg>`;
@@ -1774,8 +2029,7 @@ const GM_OVERLAY_SELECTOR = '.intro-overlay, .welcome-overlay, .tut-overlay, .el
 function gmActiveOverlay() { return document.querySelector(GM_OVERLAY_SELECTOR); }
 function gmAdvance() { const el = gmActiveOverlay(); if (el) el.click(); }
 function gmSkipTutorial() {
-  const btn = document.querySelector('.tut-overlay .tut-skip, .tut-overlay #tut-skip-btn');
-  if (btn) btn.click();
+  if (activeTutorialSkip) activeTutorialSkip();
 }
 let gmPollerStarted = false;
 let gmLastOverlayPresent = false;
@@ -1800,11 +2054,17 @@ function toggleTeam3() {
 }
 
 function showScreen(id) {
+  // Editor-Änderungen sichern, bevor er verlassen wird (die Felder schreiben
+  // direkt ins Objekt, ohne selbst zu speichern).
+  const leaving = document.querySelector('.screen.active');
+  if (leaving && leaving.id === 'wwds-edit-screen' && id !== 'wwds-edit-screen') wwdsSave();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if (id === 'edit-screen') renderQuestionList();
   if (id === 'jeopardy-edit-screen') renderJeopardyEditor();
   if (id === 'wwm-edit-screen') renderWwmEditor();
+  if (id === 'wwds-edit-screen') renderWwdsEditor();
+  if (id === 'wwds-setup-screen') { wwdsToggleTeam3(); ensureWwdsLobbyConnected(); }
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
@@ -1819,6 +2079,7 @@ function showScreen(id) {
   if (id === 'menu-screen') renderLogo('KELLER', 'GAMESHOWS', 30);
   else if (id === 'tournament-screen') renderLogo('TURNIER', null, null);
   else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, true);
+  else if (id.startsWith('wwds')) renderLogo('WER WEISS', 'DENN SOWAS', 26);
   else if (id.startsWith('wwm')) renderLogo('MILLIONÄR', null, null);
   else renderLogo('KELLER', 'FEUD');
 }
@@ -2254,6 +2515,7 @@ function loadFromStorage(){
   try { const s=localStorage.getItem('familyFeudQuestions');if(s){questions=JSON.parse(s);} } catch {}
   try { const f=localStorage.getItem('familyFeudFinaleQuestions');if(f){finaleQuestions=JSON.parse(f);} } catch {}
   try { const inp=document.getElementById('feud-show-name'); if(inp){ const v=localStorage.getItem('feudShowName'); if(v!==null) inp.value=v; } } catch {}
+  try { const inp=document.getElementById('bday-name'); if(inp){ const v=localStorage.getItem('bdayName'); if(v!==null) inp.value=v; } } catch {}
 }
 
 // ── REAKTIONSZEIT-BESTENLISTE ── (übers ganze Event hinweg, geräteseitig gespeichert)
@@ -2394,7 +2656,9 @@ function setPlayersTab(tab, silent){
 // Aktuelle Teamnamen des zuletzt aktiven Kontexts (Feud/Jeopardy), zum
 // Anzeigen des Team-Tags - fällt auf "Team N" zurück wenn kein Spiel offen ist.
 function currentTeamLabel(i){
-  const names = activeBuzzerContext === 'jeopardy' ? jeopardyState.teamNames : state.teamNames;
+  const names = activeBuzzerContext === 'jeopardy' ? jeopardyState.teamNames
+              : activeBuzzerContext === 'wwds' ? (wwdsState.teamNames.length ? wwdsState.teamNames : lobbyTeamNames('wwds'))
+              : state.teamNames;
   return (names && names[i]) || ('Team ' + (i+1));
 }
 function renderPlayersList(){
@@ -2624,7 +2888,7 @@ function tournamentCreate(){
 }
 // Standard-Gewichtung pro Spieltyp - wird beim Auswählen automatisch ins
 // Gewichtungsfeld übernommen (kann vor dem Hinzufügen noch manuell geändert werden).
-const TOURNAMENT_DEFAULT_WEIGHTS = { 'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Sonstiges': 1 };
+const TOURNAMENT_DEFAULT_WEIGHTS = { 'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Wer weiß denn sowas': 1, 'Sonstiges': 1 };
 function tournamentGameTypeChanged(){
   const type = document.getElementById('tour-game-type').value;
   document.getElementById('tour-game-weight').value = TOURNAMENT_DEFAULT_WEIGHTS[type] || 1;
@@ -2751,6 +3015,7 @@ function renderTournament(){
           <option>Family Feud</option>
           <option>Jeopardy</option>
           <option>Wer wird Millionär</option>
+          <option>Wer weiß denn sowas</option>
           <option>Sonstiges</option>
         </select>
         <input type="number" id="tour-game-weight" value="${TOURNAMENT_DEFAULT_WEIGHTS['Family Feud']}" min="1" title="Gewichtung" style="flex:0 0 80px;margin-bottom:0;text-align:center;" placeholder="×">
@@ -2819,6 +3084,7 @@ function startGame() {
 function startGameActual() {
   jeopardyState.active = false;
   wwmState.active = false;
+  wwdsState.active = false;
   state.teamCount = document.getElementById('enable-team3').checked ? 3 : 2;
   state.scores = new Array(state.teamCount).fill(0);
   state.teamStrikes = new Array(state.teamCount).fill(0);
@@ -2876,8 +3142,20 @@ function showIntro() {
 
 function afterStar() {
   const introOn = document.getElementById('enable-gameshow-intro');
-  if (introOn && introOn.checked) showGameshowIntro(showWelcomeIntro);
-  else showWelcomeIntro();
+  if (!introOn || !introOn.checked) return showWelcomeIntro();
+  const variant = (document.getElementById('intro-variant') || {}).value;
+  if (variant === 'bday') showBirthdayIntro(showWelcomeIntro);
+  else showGameshowIntro(showWelcomeIntro);
+}
+
+// Intro-Auswahl nur zeigen, wenn ein Intro läuft; Namensfeld nur beim Geburtstag
+function toggleIntroPicker() {
+  const on = document.getElementById('enable-gameshow-intro').checked;
+  const picker = document.getElementById('intro-picker');
+  picker.style.display = on ? '' : 'none';
+  const bday = document.getElementById('intro-variant').value === 'bday';
+  document.getElementById('bday-name').style.display = bday ? '' : 'none';
+  document.getElementById('bday-name-label').style.display = bday ? '' : 'none';
 }
 
 // Anpassbarer Show-Name im Intro: "___ Feud". Default "Keller".
@@ -2933,6 +3211,73 @@ function showGameshowIntro(onDone) {
   runKgIntro(overlay, onDone);
 }
 
+// Name des Geburtstagskinds im Intro (wie getFeudName: merkbar, überschreibbar)
+function getBdayName() {
+  try { const v = localStorage.getItem('bdayName'); if (v !== null) return v.trim() || 'Ajdin'; } catch {}
+  return 'Ajdin';
+}
+function saveBdayName() {
+  const inp = document.getElementById('bday-name');
+  try { localStorage.setItem('bdayName', inp ? inp.value : ''); } catch {}
+}
+
+function showBirthdayIntro(onDone) {
+  const name = getBdayName().toUpperCase();
+  const blob = (fill) => `<svg width="70" height="70" viewBox="0 0 70 70"><ellipse cx="35" cy="38" rx="27" ry="29" fill="${fill}" stroke="#111" stroke-width="4"/><circle cx="26" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="45" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="27" cy="35" r="3.5" fill="#111"/><circle cx="46" cy="35" r="3.5" fill="#111"/><path d="M27 49 q8 8 17 0" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/></svg>`;
+  const cake = `
+    <div class="cake">
+      <div class="flame f1"></div><div class="flame f2"></div><div class="flame f3"></div>
+      <div class="candle c1"></div><div class="candle c2"></div><div class="candle c3"></div>
+      <div class="icing"></div>
+      <div class="tier t2"></div>
+      <div class="tier t1"></div>
+      <div class="plate"></div>
+    </div>`;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'kg-overlay';
+  overlay.innerHTML = `
+    <div id="kgb">
+      <div class="wall"></div>
+      <div class="floor"></div>
+      <div class="cone coneL"></div>
+      <div class="cone coneR"></div>
+      <div class="cord"><div class="bulb"></div></div>
+      <div class="frame"></div>
+      <div class="header"><span class="star">★</span>Die Große ${getBdayName()}-Geburtstagsshow<span class="star">★</span></div>
+      <div class="screen s1"><p class="big">HERZLICH</p><p class="big pink">WILLKOMMEN!</p></div>
+      <div class="screen s2"><p class="lbl">Heute steigt</p><p class="big">${name}S</p><p class="big pink sm">GEBURTSTAGSSHOW</p></div>
+      <div class="screen s3">${cake}<p class="lbl">Der Grund für das ganze Theater</p><p class="big xl pink">${name}</p></div>
+      <div class="screen s4"><p class="lbl">Das erwartet euch</p><p class="big">SPIEL, SPASS</p><p class="big pink sm">UND CHAOS</p></div>
+      <div class="screen s5">
+        <div class="teamrow">${blob('#6DD3B0')}${blob('#F58BB8')}</div>
+        <p class="lbl">Und es gilt</p><p class="big">TEAM GEGEN TEAM</p>
+      </div>
+      <div class="screen s6"><p class="lbl">Für das Siegerteam gibt es</p><p class="big mint sm">EWIGE EHRE</p><p class="sub">…und Angeberrechte bis nächstes Jahr</p></div>
+      <div class="screen s7">${cake}<p class="big">HAPPY BIRTHDAY</p><p class="big pink xl">${name}!</p></div>
+      <div class="kg-hint">Klicken um fortzufahren</div>
+    </div>`;
+
+  // Luftballons steigen nur an den Rändern auf. Quer durch die Mitte gelegt
+  // wandern sie sonst hinter Torte und Schrift durch und werden als Teil des
+  // Bildes gelesen statt als Deko.
+  const stage = overlay.firstElementChild;
+  const lanes = [3, 11, 19, 79, 87, 95];
+  ['#FF5DA2','#FFC93C','#7FE5B0','#8FB8FF','#FF8A5C','#C9A0FF'].forEach((c, i) => {
+    const b = document.createElement('div');
+    b.className = 'balloon';
+    b.style.background = c;
+    b.style.borderTopColor = c;
+    b.style.left = (lanes[i] + Math.random() * 3) + '%';
+    b.style.animationDuration = (13 + Math.random() * 9) + 's';
+    b.style.animationDelay = (i * 2.6 + Math.random() * 2) + 's';
+    b.style.transform = 'scale(' + (0.7 + Math.random() * 0.4) + ')';
+    stage.appendChild(b);
+  });
+
+  runKgIntro(overlay, onDone);
+}
+
 // Gemeinsamer Ablauf beider Gameshow-Intros (Tag 1 und Tag 2): Marquee-Birnen
 // und Funken aufbauen, Sequenz abspielen, per Klick beenden (frühestens nach
 // 1,5s), bei Resize neu aufbauen. Der jeweilige Bildinhalt kommt vom Aufrufer.
@@ -2954,11 +3299,22 @@ function runKgIntro(overlay, onDone) {
     for (let s = 0; s < 12; s++) { const sp = document.createElement('div'); sp.className = 'spark'; sp.style.left = (8 + Math.random() * 84) + '%'; sp.style.top = (14 + Math.random() * 54) + '%'; sp.style.animationDelay = (Math.random() * 1.8) + 's'; kg.appendChild(sp); }
   }
   build();
+  // Der Rahmen wird pixelgenau aus kg.clientWidth/-Height berechnet. Läuft
+  // build() zu früh (Layout noch nicht fertig) oder ändert sich die Bühne
+  // später (Fullscreen am Beamer, verzögertes Layout), säße die rechte/linke
+  // Lämpchen-Spalte an der falschen Stelle - z.B. mitten im Bild. Ein
+  // ResizeObserver auf der Bühne baut den Rahmen bei JEDER Größenänderung
+  // sauber neu (build() leert vorher das Frame), plus ein rAF-Nachbau, sobald
+  // das erste Layout steht.
+  requestAnimationFrame(() => requestAnimationFrame(() => { if (!done) build(); }));
   kg.classList.add('play');
   let done = false;
+  const ro = ('ResizeObserver' in window) ? new ResizeObserver(() => { if (!done) build(); }) : null;
+  if (ro) ro.observe(kg);
   function finish() {
     if (done) return;
     done = true;
+    if (ro) ro.disconnect();
     overlay.classList.add('leaving');
     let finished = false;
     const cleanup = () => {
@@ -2987,21 +3343,24 @@ function runKgIntro(overlay, onDone) {
 // per Klick, mit Fortschrittspunkten und Überspringen-Button. onDone (optional)
 // läuft nach der letzten Slide bzw. beim Überspringen - im FF-Intro führt das
 // direkt weiter ins Spiel, beim Tutorial-Button schließt es einfach.
+// Solange ein Tutorial läuft, hängt hier seine Abbruchfunktion - der
+// Überspringen-Knopf sitzt nur noch im Gamemaster, nicht mehr auf dem
+// Bildschirm, den die Zuschauer sehen.
+let activeTutorialSkip = null;
+
 function runTutorial(slides, onDone) {
   let current = 0;
   const ov = document.createElement('div');
   ov.className = 'tut-overlay overlay-enter';
   ov.innerHTML = `
-    <button class="tut-skip" id="tut-skip-btn">Überspringen</button>
     ${slides.map((s, i) => `<div class="tut-slide ${i === 0 ? 'active' : ''}" data-idx="${i}">${s}</div>`).join('')}
     <div class="tut-progress">${slides.map((_, i) => `<div class="tut-dot ${i === 0 ? 'active' : ''}"></div>`).join('')}</div>
     <div class="tut-hint">Klicken zum Fortfahren</div>
   `;
   document.body.appendChild(ov);
-  const finish = () => closeOverlay(ov, onDone);
-  ov.querySelector('#tut-skip-btn').addEventListener('click', (e) => { e.stopPropagation(); finish(); });
-  ov.addEventListener('click', (e) => {
-    if (e.target.closest('#tut-skip-btn')) return;
+  const finish = () => { activeTutorialSkip = null; closeOverlay(ov, onDone); };
+  activeTutorialSkip = finish;
+  ov.addEventListener('click', () => {
     const allSlides = ov.querySelectorAll('.tut-slide');
     const allDots = ov.querySelectorAll('.tut-dot');
     allSlides[current].classList.remove('active');
@@ -3089,8 +3448,47 @@ function jeopardyTutorialSlides() {
   ];
 }
 
+function wwdsTutorialSlides() {
+  return [
+    `<div class="tut-star-anim" style="margin-bottom:10px;">
+       <svg viewBox="0 0 100 100" width="100" xmlns="http://www.w3.org/2000/svg">
+         <defs><linearGradient id="wtsg" x1="0" y1="0" x2="0" y2="1">
+           <stop offset="0%" stop-color="#FFE066"/><stop offset="50%" stop-color="#FFD23F"/><stop offset="100%" stop-color="#C6930A"/>
+         </linearGradient></defs>
+         <polygon points="50,5 61,38 96,38 68,58 79,91 50,72 21,91 32,58 4,38 39,38" fill="url(#wtsg)"/>
+       </svg>
+     </div>
+     <div class="tut-big tut-gold" style="font-size:3.2rem;">Wer weiß<br>denn sowas?</div>`,
+    `<div class="tut-big tut-gold" style="font-size:2.4rem;margin-bottom:12px;">${wwdsData.categories.length} Kategorien</div>
+     <div class="tut-wwds-grid">
+       ${wwdsData.categories.slice(0,8).map((c,i) => `<div class="tut-wwds-cat ${i===2?'pick':''} ${i===5?'used':''}">${c.cat||'—'}</div>`).join('')}
+     </div>
+     <div class="tut-sub">Die Teams sind <b>abwechselnd</b> dran.<br>Wer am Zug ist, wählt eine Kategorie.</div>`,
+    `<div class="tut-big tut-white" style="font-size:2.3rem;margin-bottom:4px;">Drei Antworten</div>
+     <div class="tut-wwds-opts">
+       <div class="tut-wwds-opt"><span>A</span>Eine davon</div>
+       <div class="tut-wwds-opt right"><span>B</span>ist richtig</div>
+       <div class="tut-wwds-opt"><span>C</span>Die anderen nicht</div>
+     </div>
+     <div class="tut-sub">Ihr habt <b>20 Sekunden</b> Beratungszeit.<br>Richtig geraten gibt <b>500 €</b>.</div>`,
+    `<div class="tut-icon">👥</div>
+     <div class="tut-big tut-white" style="font-size:2.4rem;">Publikumsjoker</div>
+     <div class="tut-sub">Jedes Team darf <b>einmal</b> das Publikum fragen.<br>Vorsicht: das Publikum irrt sich auch mal.</div>`,
+    `<div class="tut-big tut-gold" style="font-size:2.6rem;margin-bottom:6px;">Die Masterfrage</div>
+     <div class="tut-scorerow">
+       <div class="tut-scorechip good">✓ Einsatz dazu</div>
+       <div class="tut-scorechip bad">✕ Einsatz weg</div>
+     </div>
+     <div class="tut-sub">Am Ende setzt jedes Team einen Teil seines Geldes.<br>Richtig verdoppelt, falsch kostet.</div>`,
+    `<div class="tut-icon tut-trophy-bounce">🏆</div>
+     <div class="tut-big tut-gold" style="font-size:3rem;">Am Ende gewinnt...</div>
+     <div class="tut-sub">...das Team mit dem meisten Geld.<br>Bei Gleichstand entscheidet eine Schätzfrage.</div>`
+  ];
+}
+
 function showTutorialFlow(onDone) { runTutorial(feudTutorialSlides(), onDone); }
 function showJeopardyTutorial() { runTutorial(jeopardyTutorialSlides()); }
+function showWwdsTutorial() { runTutorial(wwdsTutorialSlides()); }
 
 function showBlackPause() {
   const ov = document.createElement('div');
@@ -3341,11 +3739,33 @@ function startFinale() {
   if (gamemasterWin && !gamemasterWin.closed) updateGamemaster();
 }
 
+// Punktestand, den ein Team bis einschliesslich der gerade aufgedeckten Frage
+// erreicht hat. Waehrend des Antwortens steht in finaleState.scores schon die
+// Endsumme - in der Aufloesung soll sie sich aber Frage fuer Frage aufbauen.
+function finaleRevealedScore(idx) {
+  let sum = 0;
+  for (let qi = 0; qi <= finaleState.revealQ && qi < finaleState.questions.length; qi++) {
+    const a = finaleState.teamAnswers[idx][qi];
+    if (a >= 0 && finaleState.questions[qi].answers[a]) sum += finaleState.questions[qi].answers[a].points;
+  }
+  return sum;
+}
+
 function renderFinaleScores() {
-  document.getElementById('finale-scores').innerHTML = finaleState.teams.map((ti, idx) => `
-    <div class="finale-score-card ${finaleState.phase === 'answer' && idx === finaleState.currentTeamIdx ? 'active' : ''} ${finaleState.phase === 'reveal' ? 'active' : ''}">
+  const el = document.getElementById('finale-scores');
+  // Fast Money: solange die Teams antworten, bleibt der Stand verborgen -
+  // sonst sieht das zweite Team (und das Publikum) schon vorab, was zu
+  // schlagen ist. Eingeblendet wird er erst in der Aufloesung.
+  if (finaleState.phase !== 'reveal') {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  el.style.display = '';
+  el.innerHTML = finaleState.teams.map((ti, idx) => `
+    <div class="finale-score-card active">
       <div class="finale-score-name">${state.teamNames[ti]}</div>
-      <div class="finale-score-pts" id="finale-pts-${idx}">${finaleState.scores[idx]}</div>
+      <div class="finale-score-pts" id="finale-pts-${idx}">${finaleRevealedScore(idx)}</div>
     </div>
   `).join('');
 }
@@ -3376,7 +3796,10 @@ function finalePickAnswer(i) {
   const q = finaleState.questions[finaleState.currentQ];
   finaleState.teamAnswers[finaleState.currentTeamIdx][finaleState.currentQ] = i;
   finaleState.scores[finaleState.currentTeamIdx] += q.answers[i].points;
-  document.getElementById(`finale-pts-${finaleState.currentTeamIdx}`).textContent = finaleState.scores[finaleState.currentTeamIdx];
+  // Die Punktekarte existiert waehrend des Antwortens nicht (siehe
+  // renderFinaleScores) - der Stand wird erst in der Aufloesung gezeigt.
+  const ptsEl = document.getElementById(`finale-pts-${finaleState.currentTeamIdx}`);
+  if (ptsEl) ptsEl.textContent = finaleState.scores[finaleState.currentTeamIdx];
   showFlash();
   updateGamemaster();
   finaleState.currentQ++;
@@ -3611,7 +4034,7 @@ function openGamemaster() {
 // Zwischensequenz) den Hauptbildschirm blockiert - der Host muss dafür nicht
 // an den Hauptbildschirm, sondern klickt hier "Weiter".
 function updateGamemasterOverlay() {
-  const hasTutSkip = !!document.querySelector('.tut-overlay .tut-skip, .tut-overlay #tut-skip-btn');
+  const hasTutSkip = !!activeTutorialSkip;
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
@@ -3668,9 +4091,14 @@ function updateGamemaster() {
   if (!gamemasterWin || gamemasterWin.closed) return;
   if (gmActiveOverlay()) return updateGamemasterOverlay();
   if (wwmState.active) return updateGamemasterWwm();
+  if (wwdsState.active) return updateGamemasterWwds();
   if (jeopardyState.active) return updateGamemasterJeopardy();
   if (finaleState.active) return updateGamemasterFinale();
   if (document.getElementById('tournament-screen').classList.contains('active')) return updateGamemasterTournament();
+  // Ohne diesen Zweig bleibt das GM-Fenster am Spielende auf dem letzten Stand
+  // stehen: alle Modus-Flags sind aus, und der Feud-Fallback unten steigt bei
+  // fehlender Frage wortlos aus - der Host kam nicht mehr zurück ins Menü.
+  if (document.getElementById('result-screen').classList.contains('active')) return updateGamemasterResult();
   const q = state.roundQuestions[state.currentRound];
   if (!q) return;
 
@@ -3969,7 +4397,19 @@ function updateGamemasterJeopardy() {
       : '';
     const excludedTag = jeopardyBuzzer.excluded.length
       ? `<div class="excl-tag">🚫 Gesperrt: ${jeopardyBuzzer.excluded.join(', ')}</div>` : '';
-    const buzzHtml = jeopardyBuzzer.results.length
+    // Schätzfrage: statt der Buzzer-Reihenfolge die eingegangenen Schätzungen
+    const buzzHtml = clue.estimate
+      ? `<div class="panel">
+          <div class="panel-head">
+            <span>📊 Schätzungen</span>
+            <span class="badge">${jeopardyEstimate.answers.length}</span>
+          </div>
+          <div class="answer-list" style="margin-top:8px;">${jeopardyEstimateListHtml()}</div>
+          <div class="hint-line">${jeopardyEstimate.open
+            ? 'Eingabe auf den Handys ist <b>offen</b>.'
+            : 'Eingabe ist <b>geschlossen</b>.'}</div>
+        </div>`
+      : jeopardyBuzzer.results.length
       ? `<div class="panel">
           <div class="panel-head"><span>🔔 Buzzer-Reihenfolge</span></div>
           ${jeopardyBuzzer.results.map((r,idx)=>`<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${r.name}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')}
@@ -3989,7 +4429,9 @@ function updateGamemasterJeopardy() {
       ${mediaControlButtonsHtml(clue.media, 'jeopardyToggleMedia')}
       ${!revealed ? `
         <div class="info-card">
-          Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.
+          Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>${clue.estimate
+            ? 'Beim Aufdecken öffnet sich auf allen Handys das <b>Schätz-Eingabefeld</b>.'
+            : 'Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.'}
         </div>
       ` : `
         ${(staged||series||soundBtn)?`<div class="btn-grid">${stageBtn}${seriesBtn}${soundBtn}</div>`:''}
@@ -4005,7 +4447,11 @@ function updateGamemasterJeopardy() {
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Überspringen</button>
           <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>` : `
           <button class="gm-btn blue" onclick="opener.jeopardyToggleAnswer()">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
-          <button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>
+          ${clue.estimate
+            ? (jeopardyEstimate.open
+                ? `<button class="gm-btn gray" onclick="opener.jeopardyEstimateClose()">📊 Eingabe schließen</button>`
+                : `<button class="gm-btn gray" onclick="opener.jeopardyEstimateReopen()">📊 Eingabe neu öffnen</button>`)
+            : `<button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>`}
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Niemand / Überspringen</button>
           <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
   } else {
@@ -4093,7 +4539,11 @@ function toggleGMBar() {
   const finaleActive = document.getElementById('finale-screen').classList.contains('active');
   const jeopardyActive = document.getElementById('jeopardy-screen').classList.contains('active');
   const wwmActive = document.getElementById('wwm-screen').classList.contains('active');
-  if (!gameActive && !finaleActive && !jeopardyActive && !wwmActive) return;
+  const wwdsActive = document.getElementById('wwds-screen').classList.contains('active');
+  const resultActive = document.getElementById('result-screen').classList.contains('active');
+  // Während eines Tutorials ist kein Screen aktiv - die Leiste soll sich aber
+  // öffnen lassen, weil dort jetzt der Überspringen-Knopf sitzt.
+  if (!gameActive && !finaleActive && !jeopardyActive && !wwmActive && !wwdsActive && !resultActive && !activeTutorialSkip) return;
   bar.classList.toggle('visible');
   if (bar.classList.contains('visible')) updateGMBar();
 }
@@ -4102,8 +4552,28 @@ function updateGMBar() {
   const bar = document.getElementById('gm-bar');
   if (!bar.classList.contains('visible')) return;
 
+  // Zuerst prüfen: ein laufendes Tutorial liegt über allem anderen
+  if (activeTutorialSkip) {
+    bar.innerHTML = `<span class="gm-label">Tutorial</span>
+      <button class="gm-btn gm-gold" onclick="gmAdvance()">Weiter ▶</button>
+      <button class="gm-btn gm-gray" onclick="gmSkipTutorial();updateGMBar();">Überspringen</button>`;
+    return;
+  }
+
   if (wwmState.active) {
     bar.innerHTML = `<span class="gm-label">Millionär</span>` + wwmBarButtons();
+    return;
+  }
+
+  if (wwdsState.active) {
+    bar.innerHTML = `<span class="gm-label">Sowas</span>` + wwdsBarButtons();
+    return;
+  }
+
+  if (document.getElementById('result-screen').classList.contains('active')) {
+    bar.innerHTML = `<span class="gm-label">Spiel beendet</span>
+      <button class="gm-btn gm-gold" onclick="gmBackToMenu()">🏠 Zum Menü</button>
+      <button class="gm-btn gm-blue" onclick="gmPlayAgain()">↻ Nochmal spielen</button>`;
     return;
   }
 
@@ -4144,7 +4614,11 @@ function updateGMBar() {
         ${soundBtn}
         ${teamBtns}
         <button class="gm-btn gm-blue" onclick="jeopardyToggleAnswer();updateGMBar();">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
-        <button class="gm-btn gm-gray" onclick="jeopardyBuzzReopen();updateGMBar();">🔔 Buzzer neu</button>
+        ${cc.estimate
+          ? (jeopardyEstimate.open
+              ? `<button class="gm-btn gm-gray" onclick="jeopardyEstimateClose();updateGMBar();">📊 Eingabe schließen (${jeopardyEstimate.answers.length})</button>`
+              : `<button class="gm-btn gm-gray" onclick="jeopardyEstimateReopen();updateGMBar();">📊 Eingabe neu öffnen</button>`)
+          : `<button class="gm-btn gm-gray" onclick="jeopardyBuzzReopen();updateGMBar();">🔔 Buzzer neu</button>`}
         <button class="gm-btn gm-gray" onclick="jeopardySkip();updateGMBar();">Überspringen</button>
         <button class="gm-btn gm-blue" onclick="jeopardyUndo();updateGMBar();">↩ Undo</button>
       `;
@@ -4278,6 +4752,9 @@ function startJeopardy() {
   startJeopardyActual();
 }
 function startJeopardyActual() {
+  wwmState.active = false;
+  wwdsState.active = false;
+  finaleState.active = false;
   jeopardyState.teamCount = document.getElementById('jeopardy-enable-team3').checked ? 3 : 2;
   jeopardyState.teamNames = [];
   jeopardyState.scores = [];
@@ -4467,8 +4944,82 @@ function jeopardyRevealQuestion() {
   if (!jeopardyState.currentClue || jeopardyState.ddPending || jeopardyState.questionRevealed) return;
   jeopardyState.questionRevealed = true;
   renderJeopardyClueOverlay();
-  jeopardyBuzzArm();
+  // Schätzfragen laufen nicht über den Buzzer: statt zu armen wird auf den
+  // Handys das Eingabefeld geöffnet und eingesammelt.
+  if (jeopardyCurrentClue() && jeopardyCurrentClue().estimate) jeopardyEstimateOpen();
+  else jeopardyBuzzArm();
   updateGamemaster();
+}
+
+function jeopardyCurrentClue(){
+  const c = jeopardyState.currentClue;
+  if (!c) return null;
+  return jBoard()[c.col].clues[c.row];
+}
+
+// ── SCHÄTZFRAGEN (Eingabe auf den Buzzer-Handys) ──
+let jeopardyEstimate = { open:false, round:0, answers:[], ref:null, question:'' };
+
+function jeopardyEstimateRef(){
+  if (!jeopardyEstimate.ref){
+    if (!jeopardyBuzzInitFirebase()) return null;
+    jeopardyEstimate.ref = firebase.database().ref('buzzer/estimate');
+    jeopardyEstimate.ref.child('answers').on('value', s => {
+      const v = s.val() || {};
+      jeopardyEstimate.answers = Object.values(v).filter(a => a && a.name);
+      updateGamemaster();
+    });
+  }
+  return jeopardyEstimate.ref;
+}
+
+function jeopardyEstimateOpen(){
+  const clue = jeopardyCurrentClue();
+  if (!clue) return;
+  const r = jeopardyEstimateRef();
+  jeopardyEstimate.open = true;
+  jeopardyEstimate.round++;
+  jeopardyEstimate.answers = [];
+  jeopardyEstimate.question = clue.q || '';
+  if (r) r.set({ active:true, round:jeopardyEstimate.round, question:jeopardyEstimate.question, answers:null }).catch(()=>{});
+  updateGamemaster();
+}
+
+function jeopardyEstimateClose(){
+  jeopardyEstimate.open = false;
+  const r = jeopardyEstimateRef();
+  if (r) r.update({ active:false }).catch(()=>{});
+  updateGamemaster();
+}
+
+function jeopardyEstimateReopen(){
+  jeopardyEstimateOpen();
+}
+
+// Sortierung: Zahlen aufsteigend zuerst, alles ohne Zahl danach in der
+// Reihenfolge des Eingangs.
+function jeopardyEstimateSorted(){
+  const list = jeopardyEstimate.answers.slice();
+  const nums = list.filter(a => typeof a.num === 'number' && isFinite(a.num));
+  const rest = list.filter(a => !(typeof a.num === 'number' && isFinite(a.num)));
+  nums.sort((a,b) => a.num - b.num || (a.ts||0) - (b.ts||0));
+  rest.sort((a,b) => (a.ts||0) - (b.ts||0));
+  return nums.concat(rest);
+}
+
+function jeopardyEstimateListHtml(){
+  const rows = jeopardyEstimateSorted();
+  if (!rows.length) return `<div class="pr-empty">Noch keine Schätzung abgegeben</div>`;
+  const hex = ['#E8453C','#3B82F6','#22C55E'];
+  return rows.map((a,i) => {
+    const col = (typeof a.team === 'number' && hex[a.team]) ? hex[a.team] : 'rgba(255,255,255,.5)';
+    const teamName = (typeof a.team === 'number' && jeopardyState.teamNames[a.team]) || '';
+    return `<div class="answer" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);">
+      <span><span class="num">${i+1}.</span> <span class="text">${a.name}</span>
+        ${teamName ? `<span style="color:${col};font-size:.68rem;font-weight:700;"> ● ${teamName}</span>` : ''}</span>
+      <span class="pts">${String(a.value)}</span>
+    </div>`;
+  }).join('');
 }
 
 // Staged image helpers
@@ -4713,16 +5264,33 @@ function playerAvatarHtml(p){
 
 // Rendert die Lobby-Liste direkt auf dem Setup-Screen (nicht im GM-Popup) -
 // game ist 'feud' oder 'jeopardy', bestimmt welchen Buzzer/Teamnamen-Satz wir zeigen.
+// Welche Eingabefelder/Container zu welchem Spielmodus gehören. Vorher stand
+// das als feud/jeopardy-Verzweigung im Code - mit dem dritten Modus wurde das
+// unübersichtlich.
+const LOBBY_SETUP = {
+  feud:     { container:'feud-setup-lobby',     screen:'setup-screen',            names:['team1-name','team2-name','team3-name'], team3:'enable-team3' },
+  jeopardy: { container:'jeopardy-setup-lobby', screen:'jeopardy-setup-screen',   names:['jt1-name','jt2-name','jt3-name'],       team3:'jeopardy-enable-team3' },
+  wwds:     { container:'wwds-setup-lobby',     screen:'wwds-setup-screen',       names:['wwds-t1-name','wwds-t2-name','wwds-t3-name'], team3:'wwds-enable-team3' },
+};
+function lobbyTeamNames(game){
+  const cfg = LOBBY_SETUP[game];
+  const val = (id, fb) => (document.getElementById(id) || {}).value || fb;
+  const names = [val(cfg.names[0], 'Team 1'), val(cfg.names[1], 'Team 2')];
+  const t3 = document.getElementById(cfg.team3);
+  if (t3 && t3.checked) names.push(val(cfg.names[2], 'Team 3'));
+  return names;
+}
+
 function renderSetupLobby(game){
+  const cfg = LOBBY_SETUP[game];
+  if (!cfg) return;
   const isJeopardy = game === 'jeopardy';
-  const container = document.getElementById(isJeopardy ? 'jeopardy-setup-lobby' : 'feud-setup-lobby');
+  const container = document.getElementById(cfg.container);
   if (!container) return;
+  // Wer weiss denn sowas buzzert nicht - es braucht nur Presence und
+  // Teamzuteilung, deshalb läuft es über dieselbe Verbindung wie Feud.
   const buzzer = isJeopardy ? jeopardyBuzzer : feudBuzzer;
-  const teamNames = isJeopardy
-    ? [document.getElementById('jt1-name').value || 'Team 1', document.getElementById('jt2-name').value || 'Team 2']
-    : [document.getElementById('team1-name').value || 'Team 1', document.getElementById('team2-name').value || 'Team 2'];
-  const team3On = document.getElementById(isJeopardy ? 'jeopardy-enable-team3' : 'enable-team3').checked;
-  if (team3On) teamNames.push(document.getElementById(isJeopardy ? 'jt3-name' : 'team3-name').value || 'Team 3');
+  const teamNames = lobbyTeamNames(game);
   const teamTagColors = ['#E8453C','#3B82F6','#22C55E'];
   const rows = buzzer.presence.length
     ? buzzer.presence.map(p => {
@@ -4738,7 +5306,7 @@ function renderSetupLobby(game){
     <div class="panel-row">
       <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code zeigen'}</button>
       <button class="btn btn-secondary" onclick="popOutQR()">🗗 QR als Fenster</button>
-      <button class="btn btn-primary" onclick="openPlayersScreen('${isJeopardy ? 'jeopardy-setup-screen' : 'setup-screen'}')">👥 Teams zuteilen</button>
+      <button class="btn btn-primary" onclick="openPlayersScreen('${cfg.screen}')">👥 Teams zuteilen</button>
       <button class="btn btn-secondary" onclick="resetAllTeams()">↺ Teams zurücksetzen</button>
     </div>`;
 }
@@ -4923,6 +5491,20 @@ function broadcastFeudSetupTeamNames(){
   renderSetupLobby('feud');
 }
 
+// Wer weiss denn sowas: gleiche Lobby wie Feud (Presence + Teamzuteilung),
+// nur ohne Buzzer-Scharfschaltung - in diesem Modus wird nicht gebuzzert.
+function ensureWwdsLobbyConnected(){
+  activeBuzzerContext = 'wwds';
+  const isFresh = !feudBuzzer.fbRef;
+  feudBuzzConnect();
+  if (isFresh && feudBuzzer.fbRef) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
+  broadcastWwdsSetupTeamNames();
+}
+function broadcastWwdsSetupTeamNames(){
+  buzzerBroadcastTeams(lobbyTeamNames('wwds'));
+  renderSetupLobby('wwds');
+}
+
 // Aufgerufen, sobald der Jeopardy-Setup-Screen erscheint (siehe Family-Feud-Pendant oben).
 function ensureJeopardyLobbyConnected(){
   activeBuzzerContext = 'jeopardy';
@@ -5044,6 +5626,10 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'jeopardyAnnounceDaily','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySeriesReveal','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','jeopardyWrongReopen','nextRound','openJeopardyClue',
+  'jeopardyEstimateOpen','jeopardyEstimateClose','jeopardyEstimateReopen',
+  'wwdsAdjustBet','wwdsSetGuess','wwdsShowTieGuesses','wwdsStartMaster','wwdsMasterSet','wwdsRevealMaster','wwdsAfterMaster',
+  'wwdsPick','wwdsSelect','wwdsLock','wwdsReveal','wwdsNext','wwdsAudience','wwdsStartTimer',
+  'wwdsRevealTie','wwdsToggleMedia','gmBackToMenu','gmPlayAgain','gmGotoTournament',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia','saveHostNotesRemote',
   'tournamentStartGame','tournamentRevealSecret',
@@ -5445,6 +6031,8 @@ function jeopardySkip() {
 function closeJeopardyClue() {
   const ov = document.getElementById('jeopardy-clue-ov');
   if (ov) ov.remove();
+  // Läuft gerade eine Schätzfrage, holt das die Handys zurück in den Buzzer-Screen
+  if (jeopardyEstimate.open) jeopardyEstimateClose();
 }
 
 // No controls on the main screen — controls live in the GM bar / GM window only
@@ -5609,6 +6197,9 @@ function renderJeopardyEditor() {
               <label style="${uploadLbl}background:${clue.series?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
                 <input type="checkbox" ${clue.series?'checked':''} onchange="jeopardyEditSeries(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🎴 Bilder-Reihe
               </label>
+              <label style="${uploadLbl}background:${clue.estimate?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Statt Buzzer geben alle Handys eine Schätzung ein">
+                <input type="checkbox" ${clue.estimate?'checked':''} onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].estimate=this.checked;renderJeopardyEditor();" style="accent-color:#FFD23F;"> 📊 Schätzfrage
+              </label>
               ${clue.series?`
                 <select onchange="jeopardyEditSeriesCount(${b},${col},${row},this.value)" title="Anzahl Bilder" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
                   ${[2,3,4,5].map(n=>`<option value="${n}" ${jeopardySeriesCount(clue)===n?'selected':''}>${n} Bilder</option>`).join('')}
@@ -5688,6 +6279,7 @@ function startWwm(){
 function startWwmActual(){
   jeopardyState.active = false;
   finaleState.active = false;
+  wwdsState.active = false;
   wwmState.name = document.getElementById('wwm-name').value || 'Kandidat';
   wwmState.currentQ = 0;
   wwmState.lifelines = {fifty:false, phone:false, audience:false};
@@ -5994,6 +6586,782 @@ function importWwm(e){
     renderWwmEditor();
   });
 }
+
+// ══════════ WER WEISS DENN SOWAS ══════════
+// Format (ARD): 12 Kategorien, Teams wählen abwechselnd. Jede Frage hat 3
+// Antworten und bringt 500 €. Publikumsjoker 1x pro Team. Danach die
+// Masterfrage mit Einsatz (richtig = Einsatz dazu, falsch = Einsatz weg).
+// Gleichstand wird per Schätzfrage entschieden.
+const WWDS_LETTERS = ['A','B','C'];
+const WWDS_WIN = 500;
+const WWDS_COLORS = ['red','blue','green'];
+const WWDS_HEX  = ['#E8453C','#3B82F6','#22C55E'];
+const WWDS_HEX2 = ['#C62828','#1D4ED8','#16A34A'];
+
+let wwdsData = {
+  categories: [
+    { cat:'Tiere',     q:'Wie viele Herzen hat ein Regenwurm?', answers:['1','5','10'], correct:1, note:'Genau genommen 5 Aortenbögen.', media:[] },
+    { cat:'Sprache',   q:'Woher stammt der Ausdruck „Hals- und Beinbruch"?', answers:['Aus dem Jiddischen','Aus der Zirkussprache','Aus dem Bergbau'], correct:0, note:'Von „hatslokhe un brokhe" – Glück und Segen.', media:[] },
+    { cat:'Essen',     q:'Wodurch bekommen Laugenbrezeln ihre braune Farbe?', answers:['Karamell','Natronlauge','Malzzusatz'], correct:1, note:'', media:[] },
+    { cat:'Alltag',    q:'Warum sind Tennisbälle gelb?', answers:['Wegen des Farbfernsehens','Wegen der Haltbarkeit','Wegen des Rasens'], correct:0, note:'Seit 1972 – besser sichtbar im TV.', media:[] },
+    { cat:'Körper',    q:'Wozu dient Gänsehaut ursprünglich?', answers:['Zur Abkühlung','Zum Aufstellen des Fells','Zur Schweißbildung'], correct:1, note:'Relikt aus der Zeit mit dichtem Körperfell.', media:[] },
+    { cat:'Technik',   q:'Wofür stand das „i" beim ersten iMac?', answers:['Internet','Innovation','Individuell'], correct:0, note:'', media:[] },
+    { cat:'Geschichte',q:'Wie lange dauerte der kürzeste Krieg der Geschichte?', answers:['38 Minuten','7 Stunden','3 Tage'], correct:0, note:'Großbritannien–Sansibar, 1896.', media:[] },
+    { cat:'Weltall',   q:'Welche Farbe hat ein Sonnenuntergang auf dem Mars?', answers:['Rot','Grün','Blau'], correct:2, note:'Der Staub streut rotes Licht weg.', media:[] },
+    { cat:'Musik',     q:'Wie viele Tasten hat ein Standard-Klavier?', answers:['76','88','96'], correct:1, note:'', media:[] },
+    { cat:'Sport',     q:'Wozu dienen die Dellen im Golfball?', answers:['Für mehr Reichweite','Für besseren Griff','Für weniger Gewicht'], correct:0, note:'Die Dimples verringern den Luftwiderstand.', media:[] },
+    { cat:'Verkehr',   q:'Warum wird das Licht im Flugzeug beim Start gedimmt?', answers:['Um Strom zu sparen','Damit Passagiere schlafen','Zur Gewöhnung der Augen'], correct:2, note:'Für den Notfall – Augen sind sofort dunkeladaptiert.', media:[] },
+    { cat:'Kurioses',  q:'Welches Produkt wurde als erstes per Barcode gescannt?', answers:['Kaugummi','Cornflakes','Milch'], correct:0, note:'Wrigley\'s, 1974 in Ohio.', media:[] },
+  ],
+  master: { q:'Wie viele Haare verliert ein Mensch im Schnitt pro Tag?', answers:['ca. 30','ca. 100','ca. 300'], correct:1, note:'', media:[] },
+  tiebreakers: [
+    { q:'Wie viele Knochen hat ein erwachsener Mensch?', answer:206, note:'' },
+    { q:'Wie hoch ist der Eiffelturm in Metern?', answer:330, note:'' },
+    { q:'Wie viele Liter Blut pumpt das Herz pro Tag?', answer:7000, note:'' },
+  ]
+};
+
+let wwdsState = {
+  active:false, teamCount:2, teamNames:[], scores:[],
+  currentTeam:0, used:[], currentCat:null,
+  selected:null, locked:false, revealed:false,
+  audienceUsed:[], audienceShown:false, audienceData:null,
+  phase:'pick',            // pick | question | bet | master | tie | done
+  bets:[], masterPick:[], masterRevealed:false,
+  tieIdx:0, tieGuesses:[], tieRevealed:false, tieGuessesShown:false,
+  timer:0, timerInt:null, timeUp:false,
+};
+
+function wwdsMoney(n){ return (n||0).toLocaleString('de-DE') + ' €'; }
+function wwdsQPerTeam(){ return Math.floor(wwdsData.categories.length / wwdsState.teamCount); }
+
+function wwdsToggleTeam3(){
+  const on = document.getElementById('wwds-enable-team3').checked;
+  document.getElementById('wwds-t3-card').style.display = on ? '' : 'none';
+  const n = on ? 3 : 2;
+  const per = Math.floor(wwdsData.categories.length / n);
+  document.getElementById('wwds-split-info').textContent =
+    `${wwdsData.categories.length} Kategorien · je ${per} Fragen pro Team · max. ${wwdsMoney(per*WWDS_WIN)} in der Hauptrunde`;
+  // Drittes Team an-/abschalten ändert die Auswahl auf den Handys
+  if (document.getElementById('wwds-setup-lobby')) broadcastWwdsSetupTeamNames();
+}
+
+// ── START ──
+function startWwds(){
+  if (!wwdsData.categories.length) return alert('Keine Kategorien angelegt!');
+  openBoardPopout();
+  startWwdsActual();
+}
+function startWwdsActual(){
+  jeopardyState.active = false;
+  wwmState.active = false;
+  finaleState.active = false;
+
+  wwdsState.teamCount = document.getElementById('wwds-enable-team3').checked ? 3 : 2;
+  wwdsState.teamNames = [];
+  wwdsState.scores = [];
+  wwdsState.audienceUsed = [];
+  wwdsState.bets = [];
+  wwdsState.masterPick = [];
+  wwdsState.tieGuesses = [];
+  for (let i = 0; i < wwdsState.teamCount; i++){
+    wwdsState.teamNames.push(document.getElementById(`wwds-t${i+1}-name`).value || `Team ${i+1}`);
+    wwdsState.scores.push(0);
+    wwdsState.audienceUsed.push(false);
+    wwdsState.bets.push(0);
+    wwdsState.masterPick.push(null);
+    wwdsState.tieGuesses.push(null);
+  }
+  wwdsState.used = new Array(wwdsData.categories.length).fill(false);
+  wwdsState.currentTeam = Math.floor(Math.random() * wwdsState.teamCount);
+  // Endgültige Teamnamen an die Handys, danach keine neuen Beitritte mehr
+  activeBuzzerContext = 'wwds';
+  buzzerBroadcastTeams(wwdsState.teamNames);
+  lockBuzzerJoins(feudBuzzer);
+  wwdsState.currentCat = null;
+  wwdsState.phase = 'pick';
+  wwdsState.masterRevealed = false;
+  wwdsState.tieIdx = 0;
+  wwdsState.tieRevealed = false;
+  wwdsState.active = true;
+  wwdsStopTimer();
+
+  showScreen('wwds-screen');
+  renderWwds();
+  setTimeout(() => openGamemaster(), 120);
+}
+
+// ── TIMER (20 s, blockiert nicht – der Host entscheidet) ──
+function wwdsStopTimer(){
+  if (wwdsState.timerInt) clearInterval(wwdsState.timerInt);
+  wwdsState.timerInt = null;
+}
+function wwdsStartTimer(){
+  wwdsStopTimer();
+  wwdsState.timer = 20;
+  wwdsState.timeUp = false;
+  wwdsState.timerInt = setInterval(() => {
+    wwdsState.timer--;
+    if (wwdsState.timer <= 0){
+      wwdsState.timer = 0;
+      wwdsState.timeUp = true;
+      wwdsStopTimer();
+      SFX.wrong();
+    } else if (wwdsState.timer <= 5) SFX.tick();
+    wwdsRenderTimer();
+    updateGamemaster();
+  }, 1000);
+  wwdsRenderTimer();
+}
+function wwdsRenderTimer(){
+  const el = document.getElementById('wwds-timer');
+  if (!el) return;
+  el.textContent = wwdsState.timeUp ? 'Zeit!' : wwdsState.timer;
+  el.className = 'wwds-timer' + (wwdsState.timeUp ? ' done' : (wwdsState.timer <= 5 ? ' urgent' : ''));
+}
+
+// ── RENDER ──
+function renderWwds(){
+  wwdsRenderTeams();
+  const info = document.getElementById('wwds-info');
+  const turn = document.getElementById('wwds-turn');
+  const p = wwdsState.phase;
+  info.textContent = p === 'bet' ? 'Einsätze für die Masterfrage'
+    : p === 'master' ? 'Masterfrage'
+    : p === 'tie' ? 'Schätzfrage (Stichfrage)'
+    : `Hauptrunde · ${wwdsState.used.filter(Boolean).length} / ${wwdsData.categories.length}`;
+  turn.textContent = (p === 'pick' || p === 'question') ? wwdsState.teamNames[wwdsState.currentTeam] : '—';
+
+  const stage = document.getElementById('wwds-stage');
+  if (p === 'pick') stage.innerHTML = wwdsGridHtml();
+  else if (p === 'question') stage.innerHTML = wwdsQuestionHtml();
+  else if (p === 'bet') stage.innerHTML = wwdsBetHtml();
+  else if (p === 'master') stage.innerHTML = wwdsMasterHtml();
+  else if (p === 'tie') stage.innerHTML = wwdsTieHtml();
+  wwdsRenderTimer();
+}
+
+function wwdsRenderTeams(){
+  document.getElementById('wwds-teams').innerHTML = wwdsState.teamNames.map((n,i) => {
+    const isTurn = (wwdsState.phase === 'pick' || wwdsState.phase === 'question') && wwdsState.currentTeam === i;
+    let lock = '';
+    if (wwdsState.phase === 'master')
+      lock = wwdsState.masterRevealed
+        ? (wwdsState.masterPick[i] === null ? '—' : WWDS_LETTERS[wwdsState.masterPick[i]])
+        : (wwdsState.masterPick[i] === null ? '' : '✓');
+    if (wwdsState.phase === 'bet') lock = wwdsMoney(wwdsState.bets[i]);
+    if (wwdsState.phase === 'tie')
+      lock = wwdsState.tieGuesses[i] === null ? '' : (wwdsState.tieRevealed ? String(wwdsState.tieGuesses[i]) : '✓');
+    const per = wwdsQPerTeam();
+    return `<div class="wwds-team ${WWDS_COLORS[i]} ${isTurn?'on':''}">
+      <div class="wt-name">${n}</div>
+      <div class="wt-money">${wwdsMoney(wwdsState.scores[i])}</div>
+      <div class="wt-meta">Joker ${wwdsState.audienceUsed[i]?'verbraucht':'frei'} · ${per} Fragen</div>
+      ${lock ? `<div class="wt-lock">${lock}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function wwdsGridHtml(){
+  return `<div class="wwds-sub" style="margin-bottom:12px;">
+      <strong style="color:#FFD23F;">${wwdsState.teamNames[wwdsState.currentTeam]}</strong> wählt eine Kategorie
+    </div>
+    <div class="wwds-grid">` +
+    wwdsData.categories.map((c,i) => `
+      <div class="wwds-cat ${wwdsState.used[i]?'done':''}" ${wwdsState.used[i]?'':`onclick="wwdsPick(${i})"`}>
+        <span class="wc-num">${i+1}</span>
+        <span class="wc-name">${c.cat || 'Kategorie'}</span>
+      </div>`).join('') + `</div>`;
+}
+
+function wwdsQuestionHtml(){
+  const c = wwdsData.categories[wwdsState.currentCat];
+  return `<div style="text-align:center;"><span class="wwds-cat-chip">${c.cat||''}</span></div>
+    <div style="display:flex;justify-content:center;margin-bottom:10px;"><div class="wwds-timer" id="wwds-timer">20</div></div>
+    <div class="wwds-q" style="margin-bottom:14px;">${c.q}</div>
+    <div class="wwds-opts">${wwdsOptsHtml(c, wwdsState.selected, wwdsState.revealed, i => `wwdsSelect(${i})`)}</div>
+    ${wwdsAudienceHtml(c)}`;
+}
+
+function wwdsOptsHtml(q, sel, revealed, onClickFn, tags){
+  return q.answers.map((a,i) => {
+    let cls = '';
+    if (revealed && i === q.correct) cls = 'right';
+    else if (revealed && i === sel && i !== q.correct) cls = 'bad';
+    else if (!revealed && sel === i) cls = 'sel';
+    const tagHtml = (tags && tags[i] && tags[i].length)
+      ? `<span class="wo-tags">${tags[i].map(t => `<span class="wwds-tag" style="background:${t.color}">${t.label}</span>`).join('')}</span>` : '';
+    const click = onClickFn ? ` onclick="${onClickFn(i)}"` : '';
+    return `<div class="wwds-opt ${cls}"${click}>
+      <span class="wo-let">${WWDS_LETTERS[i]}</span><span>${a}</span>${tagHtml}
+    </div>`;
+  }).join('');
+}
+
+function wwdsAudienceHtml(c){
+  if (!wwdsState.audienceShown || !wwdsState.audienceData) return '';
+  return `<div class="wwds-aud">` + c.answers.map((a,i) =>
+    `<div class="wwds-abar" style="height:${Math.max(6, wwdsState.audienceData[i])}%">
+       <span class="wa-pct">${wwdsState.audienceData[i]}%</span><span class="wa-let">${WWDS_LETTERS[i]}</span>
+     </div>`).join('') + `</div>`;
+}
+
+function wwdsBetHtml(){
+  return `<div class="wwds-banner">Die Masterfrage</div>
+    <div class="wwds-sub" style="margin:6px 0 14px;">Jedes Team setzt einen Teil seines Guthabens.<br>
+      Richtig = Einsatz kommt dazu · Falsch = Einsatz geht ab.</div>` +
+    wwdsState.teamNames.map((n,i) => `
+      <div class="wwds-bet-row">
+        <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${n}</span>
+        <span style="color:rgba(255,255,255,.4);font-size:.8rem;">Guthaben ${wwdsMoney(wwdsState.scores[i])}</span>
+        <span style="min-width:110px;padding:9px 12px;border-radius:8px;background:rgba(0,0,0,.35);
+              border:1.5px solid rgba(255,255,255,.12);text-align:center;
+              font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:#FFD23F;">${wwdsMoney(wwdsState.bets[i])}</span>
+      </div>`).join('') +
+    `<div class="wwds-sub" style="margin-top:16px;">Einsätze setzt und startet der Host über den Gamemaster.</div>`;
+}
+
+function wwdsMasterHtml(){
+  const m = wwdsData.master;
+  const tags = m.answers.map((_, i) =>
+    wwdsState.teamNames.map((n, t) => (wwdsState.masterRevealed && wwdsState.masterPick[t] === i)
+      ? { label:n, color:WWDS_HEX[t] } : null).filter(Boolean));
+  return `<div style="text-align:center;"><span class="wwds-cat-chip">Masterfrage</span></div>
+    <div style="display:flex;justify-content:center;margin-bottom:10px;"><div class="wwds-timer" id="wwds-timer">20</div></div>
+    <div class="wwds-q" style="margin-bottom:14px;">${m.q}</div>
+    <div class="wwds-opts">${wwdsOptsHtml(m, null, wwdsState.masterRevealed, null, tags)}</div>
+    <div class="wwds-sub" style="margin-top:12px;">${wwdsState.masterRevealed
+      ? 'Aufgelöst.' : 'Die Teams legen ihre Antwort fest — sichtbar erst bei der Auflösung.'}</div>`;
+}
+
+function wwdsTieHtml(){
+  const t = wwdsData.tiebreakers[wwdsState.tieIdx];
+  if (!t) return `<div class="wwds-banner">Keine Schätzfrage hinterlegt</div>
+    <div style="text-align:center;margin-top:14px;"><button class="btn btn-primary" onclick="wwdsFinish(true)">Trotzdem beenden</button></div>`;
+  return `<div style="text-align:center;"><span class="wwds-cat-chip">Stichfrage ${wwdsState.tieIdx+1}</span></div>
+    <div class="wwds-banner">Gleichstand!</div>
+    <div class="wwds-sub" style="margin:6px 0 14px;">Wer am nächsten dran ist, gewinnt.</div>
+    <div class="wwds-q" style="margin-bottom:14px;">${t.q}</div>` +
+    wwdsState.teamNames.map((n,i) => wwdsState.scores[i] === Math.max(...wwdsState.scores) ? `
+      <div class="wwds-bet-row">
+        <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${n}</span>
+        <span class="wwds-guess ${wwdsState.tieGuessesShown ? 'shown' : ''}">${
+          wwdsState.tieGuesses[i] === null ? '—'
+            : (wwdsState.tieGuessesShown ? wwdsState.tieGuesses[i] : '000')}</span>
+      </div>` : '').join('') +
+    (wwdsState.tieRevealed
+      ? `<div class="wwds-banner" style="margin-top:14px;">Richtig: ${t.answer}</div>`
+      : `<div class="wwds-sub" style="margin-top:14px;">${wwdsState.tieGuessesShown
+            ? 'Die Auflösung kommt gleich…'
+            : 'Die Schätzungen sind abgegeben — noch nicht verraten!'}</div>`);
+}
+
+// ── HAUPTRUNDE ──
+function wwdsPick(i){
+  if (wwdsState.phase !== 'pick' || wwdsState.used[i]) return;
+  wwdsState.currentCat = i;
+  wwdsState.selected = null;
+  wwdsState.locked = false;
+  wwdsState.revealed = false;
+  wwdsState.audienceShown = false;
+  wwdsState.audienceData = null;
+  wwdsState.phase = 'question';
+  resetMediaOverlay();
+  renderWwds();
+  wwdsStartTimer();
+  updateGamemaster();
+}
+
+function wwdsSelect(i){
+  if (wwdsState.phase !== 'question' || wwdsState.locked || wwdsState.revealed) return;
+  wwdsState.selected = i;
+  renderWwds();
+  updateGamemaster();
+}
+
+function wwdsLock(){
+  if (wwdsState.phase !== 'question' || wwdsState.selected === null || wwdsState.locked) return;
+  wwdsState.locked = true;
+  wwdsStopTimer();
+  renderWwds();
+  updateGamemaster();
+}
+
+function wwdsReveal(){
+  if (wwdsState.phase !== 'question' || !wwdsState.locked || wwdsState.revealed) return;
+  wwdsState.revealed = true;
+  wwdsStopTimer();
+  const c = wwdsData.categories[wwdsState.currentCat];
+  if (wwdsState.selected === c.correct){
+    wwdsState.scores[wwdsState.currentTeam] += WWDS_WIN;
+    SFX.correct();
+  } else SFX.wrong();
+  renderWwds();
+  updateGamemaster();
+}
+
+function wwdsNext(){
+  if (wwdsState.phase !== 'question' || !wwdsState.revealed) return;
+  wwdsState.used[wwdsState.currentCat] = true;
+  wwdsState.currentCat = null;
+  wwdsState.audienceShown = false;
+  wwdsStopTimer();
+  // Hauptrunde vorbei, sobald jedes Team gleich oft dran war
+  const done = wwdsState.used.filter(Boolean).length;
+  const total = wwdsQPerTeam() * wwdsState.teamCount;
+  if (done >= total){ wwdsToBetting(); return; }
+  wwdsState.currentTeam = (wwdsState.currentTeam + 1) % wwdsState.teamCount;
+  wwdsState.phase = 'pick';
+  renderWwds();
+  updateGamemaster();
+}
+
+function wwdsAudience(){
+  if (wwdsState.phase !== 'question') return;
+  const t = wwdsState.currentTeam;
+  if (wwdsState.audienceUsed[t] || wwdsState.revealed) return;
+  const c = wwdsData.categories[wwdsState.currentCat];
+  // Publikum liegt meistens, aber nicht immer richtig
+  const right = 45 + Math.floor(Math.random()*30);
+  let rest = 100 - right;
+  const a = [0,0,0];
+  a[c.correct] = right;
+  const others = [0,1,2].filter(i => i !== c.correct);
+  const first = Math.floor(Math.random() * (rest+1));
+  a[others[0]] = first;
+  a[others[1]] = rest - first;
+  wwdsState.audienceData = a;
+  wwdsState.audienceShown = true;
+  wwdsState.audienceUsed[t] = true;
+  renderWwds();
+  updateGamemaster();
+}
+
+function wwdsToggleMedia(slot){
+  const c = wwdsState.phase === 'master' ? wwdsData.master : wwdsData.categories[wwdsState.currentCat];
+  if (!c) return;
+  toggleMediaSlot(c.media || [], slot);
+}
+
+// ── MASTERFRAGE ──
+function wwdsToBetting(){
+  wwdsStopTimer();
+  wwdsState.phase = 'bet';
+  wwdsState.bets = wwdsState.scores.map(s => Math.min(500, s));
+  renderWwds();
+  updateGamemaster();
+}
+// Einsatz kommt ausschliesslich aus dem Gamemaster (Knöpfe, auch vom Handy) -
+// der Hauptbildschirm zeigt ihn nur an.
+function wwdsAdjustBet(i, delta){
+  if (wwdsState.phase !== 'bet') return;
+  const cur = wwdsState.bets[i] || 0;
+  const next = delta === 'max' ? wwdsState.scores[i] : delta === 'min' ? 0 : cur + delta;
+  wwdsState.bets[i] = Math.max(0, Math.min(Math.floor(next), wwdsState.scores[i]));
+  renderWwds();
+  updateGamemaster();
+}
+function wwdsStartMaster(){
+  wwdsState.phase = 'master';
+  wwdsState.masterPick = wwdsState.teamNames.map(() => null);
+  wwdsState.masterRevealed = false;
+  resetMediaOverlay();
+  renderWwds();
+  wwdsStartTimer();
+  updateGamemaster();
+}
+function wwdsMasterSet(team, i){
+  if (wwdsState.phase !== 'master' || wwdsState.masterRevealed) return;
+  wwdsState.masterPick[team] = (wwdsState.masterPick[team] === i) ? null : i;
+  renderWwds();
+  updateGamemaster();
+}
+function wwdsRevealMaster(){
+  if (wwdsState.phase !== 'master' || wwdsState.masterRevealed) return;
+  wwdsState.masterRevealed = true;
+  wwdsStopTimer();
+  const m = wwdsData.master;
+  let anyRight = false;
+  wwdsState.teamNames.forEach((_, i) => {
+    if (wwdsState.masterPick[i] === null) return;
+    if (wwdsState.masterPick[i] === m.correct){ wwdsState.scores[i] += wwdsState.bets[i]; anyRight = true; }
+    else wwdsState.scores[i] = Math.max(0, wwdsState.scores[i] - wwdsState.bets[i]);
+  });
+  anyRight ? SFX.correct() : SFX.wrong();
+  renderWwds();
+  updateGamemaster();
+}
+function wwdsAfterMaster(){
+  if (!wwdsState.masterRevealed) return;
+  const max = Math.max(...wwdsState.scores);
+  const leaders = wwdsState.scores.filter(s => s === max).length;
+  if (leaders > 1){ wwdsToTie(); return; }
+  wwdsFinish();
+}
+
+// ── STICHFRAGE ──
+function wwdsToTie(){
+  wwdsStopTimer();
+  wwdsState.phase = 'tie';
+  wwdsState.tieRevealed = false;
+  wwdsState.tieGuessesShown = false;
+  wwdsState.tieGuesses = wwdsState.teamNames.map(() => null);
+  renderWwds();
+  updateGamemaster();
+}
+// Wird aus dem Gamemaster aufgerufen. Absichtlich OHNE updateGamemaster():
+// das Handy-Pad lädt sein Panel bei jeder Aktualisierung komplett neu, dabei
+// ginge eine gerade getippte Zahl im Nachbarfeld verloren. Der Hauptbildschirm
+// wird trotzdem sofort mitgezogen.
+function wwdsSetGuess(i, v){
+  wwdsState.tieGuesses[i] = (v === '' ? null : Math.floor(Number(String(v).replace(',', '.')) || 0));
+  renderWwds();
+}
+// Zwischenschritt vor der Auflösung: erst werden die abgegebenen Schätzungen
+// gleichzeitig sichtbar (vorher unscharf), dann kommt die richtige Antwort.
+function wwdsShowTieGuesses(){
+  if (wwdsState.phase !== 'tie' || wwdsState.tieGuessesShown) return;
+  const max = Math.max(...wwdsState.scores);
+  const tied = wwdsState.teamNames.map((_,i) => i).filter(i => wwdsState.scores[i] === max);
+  if (tied.some(i => wwdsState.tieGuesses[i] === null)) return alert('Alle beteiligten Teams müssen erst schätzen!');
+  wwdsState.tieGuessesShown = true;
+  SFX.point();
+  renderWwds();
+  updateGamemaster();
+}
+
+function wwdsRevealTie(){
+  const t = wwdsData.tiebreakers[wwdsState.tieIdx];
+  if (!t) return;
+  const max = Math.max(...wwdsState.scores);
+  const tied = wwdsState.teamNames.map((_,i) => i).filter(i => wwdsState.scores[i] === max);
+  if (tied.some(i => wwdsState.tieGuesses[i] === null)) return alert('Alle beteiligten Teams müssen schätzen!');
+  wwdsState.tieGuessesShown = true;
+  wwdsState.tieRevealed = true;
+  const dist = tied.map(i => Math.abs(wwdsState.tieGuesses[i] - t.answer));
+  const best = Math.min(...dist);
+  const winners = tied.filter((_, k) => dist[k] === best);
+  renderWwds();
+  updateGamemaster();
+  if (winners.length === 1){
+    // Stichfrage-Sieger bekommt symbolisch 1 € mehr → eindeutiger Gewinner
+    wwdsState.scores[winners[0]] += 1;
+    SFX.correct();
+    setTimeout(() => wwdsFinish(), 1200);
+  } else {
+    SFX.wrong();
+    setTimeout(() => {
+      wwdsState.tieIdx++;
+      if (wwdsState.tieIdx >= wwdsData.tiebreakers.length){ wwdsFinish(true); return; }
+      wwdsToTie();
+    }, 1500);
+  }
+}
+
+// ── ENDE ──
+function wwdsFinish(forceDraw){
+  wwdsStopTimer();
+  wwdsState.phase = 'done';
+  wwdsState.active = false;
+  document.getElementById('gm-bar').classList.remove('visible');
+  const max = Math.max(...wwdsState.scores);
+  const winners = wwdsState.teamNames.filter((_, i) => wwdsState.scores[i] === max);
+  document.getElementById('final-scores').innerHTML = wwdsState.teamNames.map((n,i) =>
+    `${n}: <strong>${wwdsMoney(wwdsState.scores[i])}</strong>`).join('<br>');
+  document.getElementById('winner-text').textContent =
+    (forceDraw || winners.length > 1) ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
+  document.getElementById('tour-record-btn').style.display = 'none';
+  const recorded = tournamentAutoRecordIfActive(wwdsState.teamNames, wwdsState.scores);
+  document.getElementById('tour-goto-btn').style.display = recorded ? '' : 'none';
+  if (!recorded) offerTournamentResult('Wer weiß denn sowas', wwdsState.teamNames, wwdsState.scores);
+  recordAccountGameResult(wwdsState.teamNames, wwdsState.scores);
+  showScreen('result-screen');
+  updateGamemaster();
+  if (!forceDraw && winners.length === 1) confetti();
+}
+
+// ── GAMEMASTER ──
+function wwdsControlsHtml(pfx){
+  const s = wwdsState;
+  let b = '';
+  if (s.phase === 'pick'){
+    b += `<span class="gm-label">Kategorie wählen lassen</span>`;
+  } else if (s.phase === 'question'){
+    if (!s.locked){
+      b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsLock()">✓ Antwort loggen</button>`;
+      if (!s.audienceUsed[s.currentTeam])
+        b += `<button class="gm-btn gm-blue" onclick="${pfx}wwdsAudience()">👥 Publikum</button>`;
+      b += `<button class="gm-btn gm-gray" onclick="${pfx}wwdsStartTimer()">⏱ Zeit neu</button>`;
+    } else if (!s.revealed){
+      b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsReveal()">Auflösen</button>`;
+    } else {
+      b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsNext()">Weiter →</button>`;
+    }
+  } else if (s.phase === 'bet'){
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsStartMaster()">Masterfrage starten</button>`;
+  } else if (s.phase === 'master'){
+    if (!s.masterRevealed){
+      b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsRevealMaster()">Auflösen</button>`;
+      b += `<button class="gm-btn gm-gray" onclick="${pfx}wwdsStartTimer()">⏱ Zeit neu</button>`;
+    } else {
+      b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsAfterMaster()">Weiter →</button>`;
+    }
+  } else if (s.phase === 'tie'){
+    if (!s.tieGuessesShown) b += `<button class="gm-btn gm-blue" onclick="${pfx}wwdsShowTieGuesses()">👁 Schätzungen aufdecken</button>`;
+    if (!s.tieRevealed) b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsRevealTie()">Auflösen</button>`;
+  }
+  return b;
+}
+function wwdsBarButtons(){ return wwdsControlsHtml(''); }
+
+function updateGamemasterWwds(){
+  const s = wwdsState;
+  const isMaster = s.phase === 'master';
+  const q = isMaster ? wwdsData.master
+          : (s.currentCat !== null ? wwdsData.categories[s.currentCat] : null);
+
+  let body = '';
+  if (s.phase === 'pick'){
+    body = `<div class="question">Kategorie-Auswahl</div>
+      <div class="answer-list">` + wwdsData.categories.map((c,i) =>
+        `<div class="answer" style="${s.used[i]
+          ? 'opacity:.35;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)'
+          : 'background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);cursor:pointer'}"
+          ${s.used[i]?'':`onclick="opener.wwdsPick(${i})"`}>
+          <span><span class="num">${i+1}.</span> <span class="text">${c.cat||'—'}</span></span>
+          <span class="pts">${s.used[i]?'gespielt':'frei'}</span>
+        </div>`).join('') + `</div>`;
+  } else if (q){
+    const teamTag = (i) => s.teamNames.map((n,t) =>
+      (isMaster && s.masterPick[t] === i) ? `<span style="color:${WWDS_HEX[t]};font-size:.7rem;font-weight:700;"> ●${n}</span>` : '').join('');
+    body = `<div class="question">${q.q}</div>
+      ${qNoteHtml(q.note)}
+      <div class="answer-list">` + q.answers.map((a,i) => {
+        const right = i === q.correct;
+        const sel = !isMaster && s.selected === i;
+        let bg = 'rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3)';
+        if (right) bg = 'rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.45)';
+        if (sel)   bg = 'rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.5)';
+        const click = (!isMaster && !s.locked) ? ` onclick="opener.wwdsSelect(${i})"` : '';
+        return `<div class="answer" style="background:${bg};cursor:${click?'pointer':'default'}"${click}>
+          <span><span class="num">${WWDS_LETTERS[i]}</span> <span class="text">${a}</span>${right?' <span style="color:#22C55E;font-size:.7rem;">✔ richtig</span>':''}${teamTag(i)}</span>
+        </div>`;
+      }).join('') + `</div>
+      ${mediaControlButtonsHtml(q.media, 'wwdsToggleMedia')}`;
+
+    if (isMaster && !s.masterRevealed){
+      body += `<div class="hint-line">Antwort je Team festlegen:</div>` +
+        s.teamNames.map((n,t) => `<div class="panel-row" style="align-items:center;gap:6px;">
+          <span style="min-width:90px;color:${WWDS_HEX[t]};font-weight:700;font-size:.75rem;">${n}</span>` +
+          [0,1,2].map(i => `<button class="gm-btn ${s.masterPick[t]===i?'gold':'gray'} sm"
+             onclick="opener.wwdsMasterSet(${t},${i})">${WWDS_LETTERS[i]}</button>`).join('') +
+        `</div>`).join('');
+    }
+    body += `<div class="hint-line">${
+      isMaster ? (s.masterRevealed ? 'Aufgelöst.' : 'Teams setzen ihre Antwort.')
+      : (s.revealed ? 'Aufgelöst.' : s.locked ? 'Geloggt — jetzt auflösen.'
+        : s.selected !== null ? 'Antwort ' + WWDS_LETTERS[s.selected] + ' gewählt.' : 'Keine Antwort gewählt.')
+    }${s.timeUp && !s.revealed && !s.masterRevealed ? ' <b style="color:#E8453C;">Zeit abgelaufen!</b>' : ''}</div>`;
+  } else if (s.phase === 'bet'){
+    body = `<div class="question">Einsätze für die Masterfrage</div>
+      <div class="hint-line">Richtig = Einsatz kommt dazu · Falsch = Einsatz geht ab</div>` +
+      s.teamNames.map((n,i) => `
+        <div class="panel" style="margin-bottom:8px;">
+          <div class="panel-head">
+            <span style="color:${WWDS_HEX[i]}">${n}</span>
+            <span class="badge">${wwdsMoney(s.bets[i])} von ${wwdsMoney(s.scores[i])}</span>
+          </div>
+          <div class="panel-row" style="flex-wrap:wrap;gap:5px;">
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},'min')">0</button>
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},-500)">−500</button>
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},-100)">−100</button>
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},100)">+100</button>
+            <button class="gm-btn gray sm" onclick="opener.wwdsAdjustBet(${i},500)">+500</button>
+            <button class="gm-btn gold sm" onclick="opener.wwdsAdjustBet(${i},'max')">Alles</button>
+          </div>
+        </div>`).join('');
+  } else if (s.phase === 'tie'){
+    const t = wwdsData.tiebreakers[s.tieIdx];
+    const max = Math.max(...s.scores);
+    const tied = s.teamNames.map((_,i) => i).filter(i => s.scores[i] === max);
+    body = `<div class="question">${t ? t.q : 'Keine Schätzfrage hinterlegt'}</div>
+      ${t ? `<div class="hint-line">Richtige Antwort: <b style="color:#FFD23F;">${t.answer}</b></div>` : ''}
+      <div class="hint-line">Schätzungen hier eintragen — der Hauptbildschirm zeigt sie mit an.</div>` +
+      tied.map(i => `
+        <div class="panel-row" style="align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="min-width:100px;color:${WWDS_HEX[i]};font-weight:700;font-size:.8rem;">${s.teamNames[i]}</span>
+          <input type="number" inputmode="decimal" placeholder="Schätzung"
+            value="${s.tieGuesses[i] === null ? '' : s.tieGuesses[i]}"
+            onchange="opener.wwdsSetGuess(${i}, this.value)"
+            style="flex:1;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.15);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-weight:700;text-align:center;outline:none;">
+        </div>`).join('');
+  }
+
+  const scoreRows = s.teamNames.map((n,i) =>
+    `<div class="money"><span style="color:${WWDS_HEX[i]}">${n}</span><strong>${wwdsMoney(s.scores[i])}</strong></div>`).join('');
+
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}
+  .money{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px;}
+  .money strong{color:#FFD23F;}
+  .tm{font-size:.72rem;color:rgba(255,255,255,.5);}
+</style></head><body>
+  ${gmHeaderHtml('Gamemaster', `Wer weiß denn sowas · ${
+    s.phase === 'master' ? 'Masterfrage' : s.phase === 'bet' ? 'Einsätze'
+    : s.phase === 'tie' ? 'Stichfrage' : `Hauptrunde ${s.used.filter(Boolean).length}/${wwdsQPerTeam()*s.teamCount}`}`)}
+  <div class="gm-body">
+  <div class="gm-main">${body}</div>
+  <div class="gm-side">
+  <div class="panel">
+    <div class="panel-head"><span>💰 Stand</span></div>
+    ${scoreRows}
+    <div class="tm">${(s.phase==='question'||s.phase==='master') ? (s.timeUp?'Zeit abgelaufen':'Timer: '+s.timer+' s') : ''}</div>
+    ${(s.phase==='pick'||s.phase==='question') ? `<div class="tm">Am Zug: <b style="color:${WWDS_HEX[s.currentTeam]}">${s.teamNames[s.currentTeam]}</b></div>` : ''}
+  </div>
+  ${gmNotesPanelHtml()}
+  </div>
+  </div>
+  <div class="gm-actions">${wwdsControlsHtml('opener.')}</div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
+}
+
+// ── GAMEMASTER: ERGEBNIS-SCREEN (für alle Spielmodi) ──
+function gmBackToMenu(){ showScreen('menu-screen'); updateGamemaster(); }
+function gmGotoTournament(){ showScreen('tournament-screen'); updateGamemaster(); }
+function gmPlayAgain(){
+  const btn = document.querySelector('#result-screen .result-btns .btn-primary');
+  if (btn) btn.click();
+}
+
+function updateGamemasterResult(){
+  const winner = (document.getElementById('winner-text') || {}).textContent || '';
+  const scores = (document.getElementById('final-scores') || {}).innerHTML || '';
+  const tourVisible = (document.getElementById('tour-goto-btn') || {}).style?.display === '';
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}
+  .win{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#FFD23F;letter-spacing:2px;text-align:center;margin-bottom:10px;}
+  .sc{font-size:.95rem;line-height:2;text-align:center;color:rgba(255,255,255,.75);}
+  .sc strong{color:#FFD23F;}
+</style></head><body>
+  ${gmHeaderHtml('Gamemaster', 'Spiel beendet')}
+  <div class="gm-body">
+  <div class="gm-main">
+    <div class="win">🏆 ${winner}</div>
+    <div class="panel"><div class="sc">${scores}</div></div>
+  </div>
+  <div class="gm-side">${gmNotesPanelHtml()}</div>
+  </div>
+  <div class="gm-actions">
+    <button class="gm-btn gold" onclick="opener.gmBackToMenu()">🏠 Zum Menü</button>
+    <button class="gm-btn blue" onclick="opener.gmPlayAgain()">↻ Nochmal spielen</button>
+    ${tourVisible ? `<button class="gm-btn gray" onclick="opener.gmGotoTournament()">🏆 Turnierübersicht</button>` : ''}
+  </div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
+}
+
+// ── EDITOR ──
+function renderWwdsEditor(){
+  const g = document.getElementById('wwds-editor-grid');
+  const inp = 'width:100%;padding:8px 11px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.88rem;outline:none;';
+  const optRow = (q, path, j) => `
+    <div style="display:flex;gap:8px;margin-bottom:5px;align-items:center;">
+      <label style="display:flex;align-items:center;gap:5px;color:${q.correct===j?'#22C55E':'rgba(255,255,255,.4)'};font-size:.8rem;font-weight:700;min-width:44px;">
+        <input type="radio" name="wwds-c-${path}" ${q.correct===j?'checked':''}
+          onchange="${path}.correct=${j};renderWwdsEditor();" style="accent-color:#22C55E;"> ${WWDS_LETTERS[j]}
+      </label>
+      <input type="text" value="${(q.answers[j]||'').replace(/"/g,'&quot;')}"
+        onchange="${path}.answers[${j}]=this.value" style="flex:1;${inp}">
+    </div>`;
+
+  g.innerHTML = `<div class="page-title" style="font-size:.8rem;margin-bottom:10px;"><em>Kategorien</em> (Hauptrunde)</div>` +
+    wwdsData.categories.map((c,i) => {
+      const p = `wwdsData.categories[${i}]`;
+      return `<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <label>Kategorie ${i+1}
+          <button class="btn btn-danger" style="float:right;padding:4px 10px;font-size:.7rem;" onclick="wwdsDeleteCategory(${i})">Del</button>
+        </label>
+        <input type="text" value="${(c.cat||'').replace(/"/g,'&quot;')}" placeholder="Kategoriename"
+          onchange="${p}.cat=this.value;renderWwdsEditor();" style="${inp}margin-bottom:6px;">
+        <input type="text" value="${(c.q||'').replace(/"/g,'&quot;')}" placeholder="Frage"
+          onchange="${p}.q=this.value" style="${inp}margin-bottom:8px;font-weight:600;">
+        ${[0,1,2].map(j => optRow(c, p, j)).join('')}
+        <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
+        ${mediaSlotsHtml(c.media || (c.media = []), (slot, inputExpr) => `wwdsEditMedia(${i},${slot},${inputExpr})`)}
+        <input type="text" placeholder="📝 Notiz für den Host" value="${(c.note||'').replace(/"/g,'&quot;')}"
+          onchange="${p}.note=this.value" style="${inp}margin-top:6px;border-color:rgba(255,210,63,.25);background:rgba(255,210,63,.05);">
+      </div>`;
+    }).join('') +
+    `<div class="page-title" style="font-size:.8rem;margin:18px 0 10px;"><em>Masterfrage</em></div>
+     <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.06);">
+       <input type="text" value="${(wwdsData.master.q||'').replace(/"/g,'&quot;')}" placeholder="Masterfrage"
+         onchange="wwdsData.master.q=this.value" style="${inp}margin-bottom:8px;font-weight:600;">
+       ${[0,1,2].map(j => optRow(wwdsData.master, 'wwdsData.master', j)).join('')}
+       <input type="text" placeholder="📝 Notiz für den Host" value="${(wwdsData.master.note||'').replace(/"/g,'&quot;')}"
+         onchange="wwdsData.master.note=this.value" style="${inp}margin-top:6px;border-color:rgba(255,210,63,.25);background:rgba(255,210,63,.05);">
+     </div>
+     <div class="page-title" style="font-size:.8rem;margin:18px 0 10px;"><em>Schätzfragen</em> (bei Gleichstand)</div>` +
+    wwdsData.tiebreakers.map((t,i) => `
+      <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
+        <input type="text" value="${(t.q||'').replace(/"/g,'&quot;')}" placeholder="Schätzfrage"
+          onchange="wwdsData.tiebreakers[${i}].q=this.value" style="flex:3;${inp}">
+        <input type="number" value="${t.answer}" placeholder="Zahl"
+          onchange="wwdsData.tiebreakers[${i}].answer=Number(this.value)" style="flex:1;${inp}text-align:center;">
+        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="wwdsDeleteTiebreaker(${i})">✕</button>
+      </div>`).join('');
+}
+function wwdsEditMedia(i, slot, input){
+  const c = wwdsData.categories[i];
+  c.media = c.media || [];
+  setMediaSlot(c.media, slot, input, renderWwdsEditor);
+}
+function wwdsAddCategory(){
+  wwdsData.categories.push({ cat:'Neue Kategorie', q:'Neue Frage', answers:['','',''], correct:0, note:'', media:[] });
+  renderWwdsEditor(); wwdsSave();
+}
+function wwdsDeleteCategory(i){
+  if (confirm('Kategorie löschen?')){ wwdsData.categories.splice(i,1); renderWwdsEditor(); wwdsSave(); }
+}
+function wwdsAddTiebreaker(){
+  wwdsData.tiebreakers.push({ q:'Neue Schätzfrage', answer:0, note:'' });
+  renderWwdsEditor(); wwdsSave();
+}
+function wwdsDeleteTiebreaker(i){
+  wwdsData.tiebreakers.splice(i,1); renderWwdsEditor(); wwdsSave();
+}
+function exportWwds(){ downloadJSON(wwdsData, 'wer-weiss-denn-sowas.json'); }
+function importWwds(e){
+  readJsonFile(e, d => {
+    const cats = Array.isArray(d.categories) ? d.categories : (Array.isArray(d) ? d : null);
+    if (!cats) throw new Error('Ungültiges Format');
+    wwdsData = {
+      categories: cats.map(x => ({
+        cat: x.cat || x.category || '',
+        q: x.q || x.question || '',
+        answers: (x.answers || ['','','']).slice(0,3),
+        correct: Number(x.correct) || 0,
+        note: x.note || '', media: x.media || []
+      })),
+      master: d.master
+        ? { q:d.master.q||'', answers:(d.master.answers||['','','']).slice(0,3), correct:Number(d.master.correct)||0, note:d.master.note||'', media:d.master.media||[] }
+        : wwdsData.master,
+      tiebreakers: Array.isArray(d.tiebreakers)
+        ? d.tiebreakers.map(t => ({ q:t.q||'', answer:Number(t.answer)||0, note:t.note||'' }))
+        : wwdsData.tiebreakers
+    };
+    renderWwdsEditor(); wwdsSave();
+  });
+}
+function wwdsSave(){ try { localStorage.setItem('wwdsData', JSON.stringify(wwdsData)); } catch {} }
+function wwdsLoad(){ try { const s = localStorage.getItem('wwdsData'); if (s) wwdsData = JSON.parse(s); } catch {} }
+wwdsLoad();
 
 </script>
 </body>
