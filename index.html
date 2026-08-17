@@ -2743,6 +2743,7 @@ function ensurePlayersConnected(){
       const v = snap.val() || {};
       allPlayers = Object.entries(v).map(([key, p]) => ({ key, ...p, stats: p.stats || { buzzes:0, bestBuzz:null, wins:0, games:0 } }));
       if (document.getElementById('players-screen').classList.contains('active')) setPlayersTab(playersTab, true);
+      if (document.getElementById('ddf-setup-screen').classList.contains('active')) renderDdfLobby();
     });
     playersPresenceRef = firebase.database().ref('buzzer/presence');
     playersPresenceRef.on('value', snap => {
@@ -2750,6 +2751,7 @@ function ensurePlayersConnected(){
       const v = snap.val() || {};
       Object.keys(v).forEach(key => onlinePlayerKeys[key] = true);
       if (document.getElementById('players-screen').classList.contains('active') && playersTab === 'list') renderPlayersList();
+      if (document.getElementById('ddf-setup-screen').classList.contains('active')) renderDdfLobby();
     });
   } catch {}
 }
@@ -5569,7 +5571,6 @@ function feudBuzzConnect(){
       .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team), avatar: p.avatar, color: p.color }))
       .sort((a, b) => (a.ts||0) - (b.ts||0));
     renderSetupLobby('feud');
-    renderDdfLobby();
     updateGamemaster();
   });
   renderFeudBuzzer();
@@ -7504,66 +7505,94 @@ let ddfState = {
 
 /* ── Setup ─────────────────────────────────────────────────────────────── */
 
-// Teilnehmer kommen aus der Lobby (Accounts, die per QR beigetreten sind).
-// ddfExcluded hält die, die zwar verbunden sind, aber nicht mitspielen -
-// z.B. jemand, der nur zuschaut. Gäste ohne Handy stehen in ddfSetupNames.
+// Teilnehmer werden aus den Spieler-Accounts gewählt - nicht nur aus den
+// gerade verbundenen Geräten. Wer offline ist, kann trotzdem mitspielen: der
+// Host tippt für ihn, das Handy braucht DDF ohnehin nur zum Beitreten.
+// ddfSelected hält die Account-Keys, die mitspielen. Beim ersten Öffnen sind
+// die Online-Accounts vorausgewählt, alles Weitere entscheidet der Host.
 let ddfSetupNames = [];
-let ddfExcluded = new Set();
+let ddfSelected = new Set();
+let ddfSeeded = false;
 
-// Der Anwesenheits-Listener rendert fest die Feud-Lobby; damit neu beigetretene
-// Spieler auch hier sofort auftauchen, hängen wir uns zusätzlich ein.
+function ddfSeedSelection(){
+  if (ddfSeeded) return;
+  const online = Object.keys(onlinePlayerKeys || {}).filter(k => onlinePlayerKeys[k]);
+  if (!online.length && !(allPlayers || []).length) return;  // noch nichts geladen
+  online.forEach(k => ddfSelected.add(k));
+  ddfSeeded = true;
+}
+
 function renderDdfLobby(){
   const box = document.getElementById('ddf-setup-lobby');
   if (!box) return;
-  const presence = (typeof feudBuzzer !== 'undefined' && feudBuzzer.presence) ? feudBuzzer.presence : [];
-  const rows = presence.length
-    ? presence.map(p => {
-        const on = !ddfExcluded.has(p.id);
-        return `<div class="pr-row" style="${on ? '' : 'opacity:.4;'}">
-          <span class="pr-dot"></span>${playerAvatarHtml(p)}
+  ddfSeedSelection();
+
+  const accounts = [...(allPlayers || [])].sort((a,b) => {
+    const aOn = !!onlinePlayerKeys[a.key], bOn = !!onlinePlayerKeys[b.key];
+    if (aOn !== bOn) return aOn ? -1 : 1;
+    return a.name.localeCompare(b.name, 'de');
+  });
+
+  const rows = accounts.length
+    ? accounts.map(p => {
+        const on = ddfSelected.has(p.key);
+        const online = !!onlinePlayerKeys[p.key];
+        return `<div class="pr-row" style="${on ? '' : 'opacity:.45;'}">
+          <span class="online-dot${online ? '' : ' offline'}" title="${online ? 'Online' : 'Offline'}"></span>
+          ${playerAvatarHtml(p)}
           <span style="flex:1;">${escAttr(p.name)}</span>
-          <button class="btn ${on ? 'btn-secondary' : 'btn-primary'}" style="padding:4px 10px;font-size:.7rem;"
-                  onclick="ddfTogglePlayer('${escAttr(p.id)}')">${on ? 'spielt mit' : 'aussetzen'}</button>
+          <button class="btn ${on ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:.7rem;"
+                  onclick="ddfTogglePlayer('${escAttr(p.key)}')">${on ? '✓ spielt mit' : 'dazu'}</button>
         </div>`;
       }).join('')
-    : `<div class="pr-empty">Noch niemand verbunden — QR-Code scannen zum Beitreten</div>`;
+    : `<div class="pr-empty">Noch keine Spieler-Accounts angelegt — QR-Code scannen oder Gäste eintragen</div>`;
 
-  const count = presence.filter(p => !ddfExcluded.has(p.id)).length + ddfSetupNames.filter(n => (n||'').trim()).length;
+  const count = ddfContestants().length;
   box.innerHTML = `
-    <div class="panel-head"><span>👥 Lobby</span><span class="badge">${count} Teilnehmer</span></div>
+    <div class="panel-head"><span>👥 Teilnehmer</span><span class="badge">${count}</span></div>
     <div class="pr-list">${rows}</div>
     <div class="panel-row">
-      <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code zeigen'}</button>
-      <button class="btn btn-secondary" onclick="popOutQR()">🗗 QR als Fenster</button>
-      <button class="btn btn-secondary" onclick="openPlayersScreen('ddf-setup-screen')">👥 Accounts</button>
+      <button class="btn btn-secondary" onclick="ddfSelectAll(true)">Alle</button>
+      <button class="btn btn-secondary" onclick="ddfSelectAll(false)">Keinen</button>
+      <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
+      <button class="btn btn-secondary" onclick="openPlayersScreen('ddf-setup-screen')">👥 Accounts verwalten</button>
     </div>`;
 }
 
-function ddfTogglePlayer(id){
-  if (ddfExcluded.has(id)) ddfExcluded.delete(id); else ddfExcluded.add(id);
+function ddfTogglePlayer(key){
+  if (ddfSelected.has(key)) ddfSelected.delete(key); else ddfSelected.add(key);
+  ddfSeeded = true;
+  renderDdfLobby();
+}
+function ddfSelectAll(on){
+  ddfSelected = on ? new Set((allPlayers || []).map(p => p.key)) : new Set();
+  ddfSeeded = true;
   renderDdfLobby();
 }
 
-// Wie bei Wer weiss denn sowas: DDF buzzert nicht, braucht die Verbindung nur
-// für die Anwesenheit - also dieselbe Leitung wie Feud, ohne Teamzuteilung.
+// DDF buzzert nicht, braucht die Buzzer-Leitung also gar nicht - nur die
+// Account-Liste. Die QR-Verbindung bleibt trotzdem verfügbar, damit neue
+// Spieler sich spontan einen Account anlegen können.
 function ensureDdfLobbyConnected(){
   activeBuzzerContext = 'ddf';
+  ensurePlayersConnected();
   const isFresh = !feudBuzzer.fbRef;
   feudBuzzConnect();
   if (isFresh && feudBuzzer.fbRef) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
   renderDdfLobby();
 }
 
-// Alle Teilnehmer: verbundene Accounts (ausser abgewählten) plus manuelle Gäste.
+// Gewählte Accounts plus Gäste ohne Account.
 function ddfContestants(){
-  const presence = (typeof feudBuzzer !== 'undefined' && feudBuzzer.presence) ? feudBuzzer.presence : [];
-  const fromLobby = presence
-    .filter(p => !ddfExcluded.has(p.id))
-    .map(p => ({ name: p.name, avatar: p.avatar, color: p.color, id: p.id }));
+  const byKey = new Map((allPlayers || []).map(p => [p.key, p]));
+  const chosen = [...ddfSelected]
+    .map(k => byKey.get(k))
+    .filter(Boolean)
+    .map(p => ({ name: p.name, avatar: p.avatar, color: p.color, key: p.key }));
   const guests = ddfSetupNames
     .map(n => (n||'').trim()).filter(Boolean)
-    .map(n => ({ name: n, avatar: null, color: null, id: null }));
-  return fromLobby.concat(guests);
+    .map(n => ({ name: n, avatar: null, color: null, key: null }));
+  return chosen.concat(guests);
 }
 
 function renderDdfPlayerInputs(){
@@ -7591,7 +7620,7 @@ function startDdf(){
 
   ddfState = {
     active:true,
-    players: people.map(p => ({ name:p.name, avatar:p.avatar, color:p.color, id:p.id, lives, out:false })),
+    players: people.map(p => ({ name:p.name, avatar:p.avatar, color:p.color, key:p.key, lives, out:false })),
     maxLives: lives,
     roundTime: time,
     order: ddfData.questions.map((_,i) => i).sort(() => Math.random() - .5),
