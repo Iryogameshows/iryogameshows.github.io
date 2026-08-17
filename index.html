@@ -1478,6 +1478,11 @@ body {
       <div class="menu-card-title">Wer weiß denn sowas</div>
       <div class="menu-card-sub">12 Kategorien, 3 Antworten, Masterfrage</div>
     </div>
+    <div class="menu-card" onclick="showScreen('ddf-setup-screen')">
+      <div class="menu-card-icon">💀</div>
+      <div class="menu-card-title">Der Dümmste fliegt</div>
+      <div class="menu-card-sub">Leben, Abstimmung, letzter bleibt</div>
+    </div>
     <div class="menu-card" onclick="showScreen('tournament-screen')">
       <div class="menu-card-icon">🏆</div>
       <div class="menu-card-title">Turnier</div>
@@ -1779,6 +1784,102 @@ body {
   </div>
 </div>
 
+<!-- DER DÜMMSTE FLIEGT -->
+<style>
+/* Leben als Herzen. Voll ist kräftig rot, verbraucht bleibt als dunkle
+   Silhouette stehen - so sieht man die Ausgangszahl die ganze Runde über. */
+.ddf-heart { font-size: 1.35rem; line-height: 1; margin-right: 2px; }
+.ddf-heart.full { color: #e23b3b; text-shadow: 0 0 6px rgba(226,59,59,.55), 0 1px 0 #000; }
+.ddf-heart.empty { color: #2a2a2a; text-shadow: 0 1px 0 #000; }
+
+.ddf-players { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 18px; }
+.ddf-player {
+  background: rgba(255,255,255,.05); border: 2px solid rgba(255,255,255,.14);
+  border-radius: 14px; padding: 10px 16px; min-width: 130px; text-align: center;
+  transition: opacity .25s, border-color .25s, transform .25s;
+}
+.ddf-player.out { opacity: .32; border-color: rgba(255,255,255,.08); transform: scale(.94); }
+.ddf-player.out .ddf-player-name { text-decoration: line-through; }
+.ddf-player.picked { border-color: #e23b3b; box-shadow: 0 0 18px rgba(226,59,59,.4); }
+.ddf-player-name { font-weight: 700; margin-bottom: 6px; }
+
+/* Die Frage ist der Mittelpunkt des Screens - alles andere ordnet sich unter. */
+.ddf-question {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  text-align: center; font-size: clamp(1.6rem, 4.2vw, 3.4rem); font-weight: 800;
+  line-height: 1.2; padding: 20px; max-width: 1100px; margin: 0 auto;
+}
+.ddf-answer {
+  text-align: center; font-size: clamp(1.2rem, 2.6vw, 2rem); font-weight: 700;
+  color: #4ade80; padding: 10px 20px 20px;
+}
+.ddf-note { text-align: center; font-size: .85rem; color: #9a9a9a; padding-bottom: 12px; }
+.ddf-vote-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 10px 0 18px; }
+.ddf-vote-btn { min-width: 120px; }
+.ddf-media-bar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; padding-bottom: 10px; }
+
+.ddf-card {
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px; padding: 14px; max-width: 820px; margin: 0 auto 14px;
+}
+.ddf-card input[type="text"] { background: rgba(255,255,255,.05); }
+</style>
+
+<!-- DDF SETUP -->
+<div id="ddf-setup-screen" class="screen">
+  <div class="page-title"><em>Der Dümmste</em> fliegt</div>
+  <div class="wwds-sub">Alle bekommen dieselbe Frage. Nach jeder Runde stimmen die Verbliebenen ab, wer ein Leben verliert.</div>
+
+  <div style="max-width:620px;margin:18px auto;">
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;">
+      <div class="team-card" style="flex:1;min-width:180px;">
+        <div class="label">Leben pro Spieler</div>
+        <input type="number" id="ddf-lives" min="1" max="10" value="3">
+      </div>
+      <div class="team-card" style="flex:1;min-width:180px;">
+        <div class="label">Rundenzeit (Sek., 0 = aus)</div>
+        <input type="number" id="ddf-time" min="0" max="600" value="30">
+      </div>
+    </div>
+
+    <div class="label" style="margin-bottom:6px;">Spieler</div>
+    <div id="ddf-player-inputs"></div>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="ddfAddPlayerInput()">+ Spieler</button>
+  </div>
+
+  <div class="setup-actions">
+    <button class="btn btn-primary" onclick="startDdf()">Spiel starten</button>
+    <button class="btn btn-secondary" onclick="showScreen('ddf-edit-screen')">Fragen bearbeiten</button>
+    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
+  </div>
+</div>
+
+<!-- DDF EDIT -->
+<div id="ddf-edit-screen" class="screen">
+  <div class="page-title"><em>Der Dümmste fliegt</em> Fragen bearbeiten</div>
+  <div class="edit-actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;">
+    <button class="btn btn-secondary" onclick="ddfAddQuestion()">+ Frage</button>
+    <button class="btn btn-secondary" onclick="exportDdf()">Exportieren</button>
+    <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importDdf(event)" style="display:none;"></label>
+    <button class="btn btn-secondary" onclick="showScreen('ddf-setup-screen')">Zurück</button>
+  </div>
+  <div id="ddf-editor"></div>
+</div>
+
+<!-- DDF GAME -->
+<div id="ddf-screen" class="screen">
+  <div style="display:flex;flex-direction:column;height:100%;">
+    <div class="ddf-players" id="ddf-players"></div>
+    <div id="ddf-timer" style="text-align:center;font-size:1.4rem;font-weight:800;letter-spacing:.05em;"></div>
+    <div class="ddf-question" id="ddf-question"></div>
+    <div class="ddf-media-bar" id="ddf-media-bar"></div>
+    <div class="ddf-answer" id="ddf-answer" style="display:none;"></div>
+    <div class="ddf-note" id="ddf-note"></div>
+    <div class="ddf-vote-grid" id="ddf-vote-grid"></div>
+    <div class="setup-actions" id="ddf-controls"></div>
+  </div>
+</div>
+
 <!-- RESULT -->
 <div id="result-screen" class="screen">
   <div class="result-icon">🏆</div>
@@ -2065,6 +2166,8 @@ function showScreen(id) {
   if (id === 'wwm-edit-screen') renderWwmEditor();
   if (id === 'wwds-edit-screen') renderWwdsEditor();
   if (id === 'wwds-setup-screen') { wwdsToggleTeam3(); ensureWwdsLobbyConnected(); }
+  if (id === 'ddf-edit-screen') renderDdfEditor();
+  if (id === 'ddf-setup-screen') renderDdfPlayerInputs();
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
@@ -2081,6 +2184,7 @@ function showScreen(id) {
   else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, true);
   else if (id.startsWith('wwds')) renderLogo('WER WEISS', 'DENN SOWAS', 26);
   else if (id.startsWith('wwm')) renderLogo('MILLIONÄR', null, null);
+  else if (id.startsWith('ddf')) renderLogo('DER DÜMMSTE', 'FLIEGT', 26);
   else renderLogo('KELLER', 'FEUD');
 }
 
@@ -2197,9 +2301,9 @@ function ensureImgHoverPreview() {
 // buildOnClick(slot, inputExpr) liefert den onclick/onchange-Ausdruck als
 // String - so kann jeder Editor (Feud/Jeopardy/WWM) seine eigene Adressierung
 // (Temp-Array, Board/Spalte/Reihe, Fragen-Index...) mit einbacken.
-function mediaSlotsHtml(arr, buildOnClick) {
+function mediaSlotsHtml(arr, buildOnClick, count) {
   let html = '<div class="media-slots">';
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < (count || 3); i++) {
     const m = arr[i];
     html += m
       ? `<div class="media-slot filled" data-preview-name="${escAttr(m.name || (m.type === 'video' ? 'Video' : 'Bild'))}">${m.type === 'video' ? `<video src="${m.data}" muted></video>` : `<img src="${m.data}">`}<button type="button" class="media-slot-remove" onclick="${buildOnClick(i, 'null')}">✕</button></div>`
@@ -2888,7 +2992,7 @@ function tournamentCreate(){
 }
 // Standard-Gewichtung pro Spieltyp - wird beim Auswählen automatisch ins
 // Gewichtungsfeld übernommen (kann vor dem Hinzufügen noch manuell geändert werden).
-const TOURNAMENT_DEFAULT_WEIGHTS = { 'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Wer weiß denn sowas': 1, 'Sonstiges': 1 };
+const TOURNAMENT_DEFAULT_WEIGHTS = { 'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Wer weiß denn sowas': 1, 'Der Dümmste fliegt': 1, 'Sonstiges': 1 };
 function tournamentGameTypeChanged(){
   const type = document.getElementById('tour-game-type').value;
   document.getElementById('tour-game-weight').value = TOURNAMENT_DEFAULT_WEIGHTS[type] || 1;
@@ -3016,6 +3120,7 @@ function renderTournament(){
           <option>Jeopardy</option>
           <option>Wer wird Millionär</option>
           <option>Wer weiß denn sowas</option>
+          <option>Der Dümmste fliegt</option>
           <option>Sonstiges</option>
         </select>
         <input type="number" id="tour-game-weight" value="${TOURNAMENT_DEFAULT_WEIGHTS['Family Feud']}" min="1" title="Gewichtung" style="flex:0 0 80px;margin-bottom:0;text-align:center;" placeholder="×">
@@ -7362,6 +7467,318 @@ function importWwds(e){
 function wwdsSave(){ try { localStorage.setItem('wwdsData', JSON.stringify(wwdsData)); } catch {} }
 function wwdsLoad(){ try { const s = localStorage.getItem('wwdsData'); if (s) wwdsData = JSON.parse(s); } catch {} }
 wwdsLoad();
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DER DÜMMSTE FLIEGT
+   Einzelspieler mit Leben. Alle bekommen dieselbe Frage, danach stimmen die
+   Verbliebenen ab - der Gewählte verliert ein Herz. Bei null Herzen ist er
+   raus, der Letzte gewinnt.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const DDF_MAX_MEDIA = 5;
+
+let ddfData = {
+  questions: [
+    { q:'Welches Tier kann nicht rückwärts laufen?', answer:'Das Känguru', note:'Der dicke Schwanz steht im Weg.', qMedia:[], aMedia:[] },
+    { q:'Wie viele Streifen hat die Flagge der USA?', answer:'13', note:'Für die 13 Gründerstaaten.', qMedia:[], aMedia:[] },
+    { q:'In welchem Land steht die Chinesische Mauer nicht?', answer:'In der Mongolei', note:'', qMedia:[], aMedia:[] },
+    { q:'Was ist schwerer: ein Kilo Federn oder ein Kilo Blei?', answer:'Gleich schwer', note:'Der Klassiker.', qMedia:[], aMedia:[] },
+    { q:'Wie viele Minuten hat ein Fußballspiel ohne Nachspielzeit?', answer:'90', note:'', qMedia:[], aMedia:[] },
+    { q:'Welcher Planet ist der Sonne am nächsten?', answer:'Merkur', note:'', qMedia:[], aMedia:[] },
+  ]
+};
+
+let ddfState = {
+  active:false,
+  players:[],            // [{ name, lives, out }]
+  maxLives:3,
+  roundTime:30,
+  order:[], idx:0,       // gemischte Fragenreihenfolge
+  phase:'question',      // question | answer | vote | done
+  timer:0, timerInt:null, timeUp:false,
+  lastEliminated:null,
+};
+
+/* ── Setup ─────────────────────────────────────────────────────────────── */
+
+let ddfSetupNames = ['Spieler 1','Spieler 2','Spieler 3'];
+
+function renderDdfPlayerInputs(){
+  const box = document.getElementById('ddf-player-inputs');
+  if (!box) return;
+  box.innerHTML = ddfSetupNames.map((n,i) => `
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <input type="text" value="${escAttr(n)}" placeholder="Name..." style="flex:1;"
+             oninput="ddfSetupNames[${i}]=this.value">
+      <button class="btn btn-danger" style="padding:6px 12px;" onclick="ddfRemovePlayerInput(${i})">✕</button>
+    </div>`).join('');
+}
+function ddfAddPlayerInput(){ ddfSetupNames.push('Spieler ' + (ddfSetupNames.length+1)); renderDdfPlayerInputs(); }
+function ddfRemovePlayerInput(i){
+  if (ddfSetupNames.length <= 2) { alert('Mindestens zwei Spieler.'); return; }
+  ddfSetupNames.splice(i,1); renderDdfPlayerInputs();
+}
+
+function startDdf(){
+  const names = ddfSetupNames.map(n => (n||'').trim()).filter(Boolean);
+  if (names.length < 2) { alert('Mindestens zwei Spieler eintragen.'); return; }
+  if (!ddfData.questions.length) { alert('Keine Fragen vorhanden.'); return; }
+
+  const lives = Math.max(1, Number(document.getElementById('ddf-lives').value) || 3);
+  const time  = Math.max(0, Number(document.getElementById('ddf-time').value) || 0);
+
+  ddfState = {
+    active:true,
+    players: names.map(n => ({ name:n, lives, out:false })),
+    maxLives: lives,
+    roundTime: time,
+    order: ddfData.questions.map((_,i) => i).sort(() => Math.random() - .5),
+    idx: 0,
+    phase:'question',
+    timer:0, timerInt:null, timeUp:false,
+    lastEliminated:null,
+  };
+  showScreen('ddf-screen');
+  ddfRenderRound();
+}
+
+/* ── Anzeige ───────────────────────────────────────────────────────────── */
+
+function ddfAlive(){ return ddfState.players.filter(p => !p.out); }
+
+function ddfRenderPlayers(picked){
+  const box = document.getElementById('ddf-players');
+  if (!box) return;
+  box.innerHTML = ddfState.players.map(p => {
+    let hearts = '';
+    for (let i = 0; i < ddfState.maxLives; i++)
+      hearts += `<span class="ddf-heart ${i < p.lives ? 'full' : 'empty'}">❤</span>`;
+    const cls = 'ddf-player' + (p.out ? ' out' : '') + (picked === p.name ? ' picked' : '');
+    return `<div class="${cls}">
+      <div class="ddf-player-name">${escAttr(p.name)}</div>
+      <div>${hearts}</div>
+    </div>`;
+  }).join('');
+}
+
+function ddfCurrentQuestion(){ return ddfData.questions[ddfState.order[ddfState.idx]] || null; }
+
+// Bild-Leiste: Zusatzbilder zur Frage und - nach dem Aufdecken - zur Antwort.
+function ddfRenderMediaBar(){
+  const bar = document.getElementById('ddf-media-bar');
+  const q = ddfCurrentQuestion();
+  if (!bar || !q) return;
+  const btn = (arrName, arr, i, label) =>
+    `<button class="btn btn-secondary" style="padding:5px 11px;font-size:.75rem;"
+       onclick="ddfShowMedia('${arrName}', ${i})">${label}</button>`;
+  let html = (q.qMedia||[]).map((m,i) => m ? btn('qMedia', q.qMedia, i, `🖼 Frage ${i+1}`) : '').join('');
+  if (ddfState.phase === 'answer' || ddfState.phase === 'vote')
+    html += (q.aMedia||[]).map((m,i) => m ? btn('aMedia', q.aMedia, i, `🖼 Antwort ${i+1}`) : '').join('');
+  bar.innerHTML = html;
+}
+
+function ddfShowMedia(which, i){
+  const q = ddfCurrentQuestion();
+  if (!q) return;
+  const arr = q[which] || [];
+  activeMediaSlot = (activeMediaSlot === i && ddfLastMediaArr === which) ? null : i;
+  ddfLastMediaArr = which;
+  renderMediaOverlay(arr);
+}
+let ddfLastMediaArr = 'qMedia';
+
+function ddfRenderRound(){
+  const q = ddfCurrentQuestion();
+  const alive = ddfAlive();
+
+  if (alive.length <= 1 || !q) { ddfFinish(); return; }
+
+  ddfRenderPlayers();
+  document.getElementById('ddf-question').innerHTML = escAttr(q.q);
+  const ans = document.getElementById('ddf-answer');
+  ans.style.display = (ddfState.phase === 'answer' || ddfState.phase === 'vote') ? '' : 'none';
+  ans.innerHTML = escAttr(q.answer);
+  document.getElementById('ddf-note').innerHTML =
+    (ddfState.phase !== 'question' && q.note) ? escAttr(q.note) : '';
+
+  ddfRenderMediaBar();
+  ddfRenderVoteGrid();
+  ddfRenderControls();
+}
+
+function ddfRenderControls(){
+  const box = document.getElementById('ddf-controls');
+  if (!box) return;
+  if (ddfState.phase === 'question') {
+    box.innerHTML = `
+      <button class="btn btn-primary" onclick="ddfReveal()">Antwort zeigen</button>
+      ${ddfState.roundTime ? `<button class="btn btn-secondary" onclick="ddfStartTimer()">Zeit starten</button>` : ''}
+      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
+  } else if (ddfState.phase === 'answer') {
+    box.innerHTML = `
+      <button class="btn btn-primary" onclick="ddfBeginVote()">Zur Abstimmung</button>
+      <button class="btn btn-secondary" onclick="ddfNext()">Frage überspringen</button>
+      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
+  } else {
+    box.innerHTML = `<button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
+  }
+}
+
+function ddfRenderVoteGrid(){
+  const grid = document.getElementById('ddf-vote-grid');
+  if (!grid) return;
+  if (ddfState.phase !== 'vote') { grid.innerHTML = ''; return; }
+  grid.innerHTML =
+    `<div style="width:100%;text-align:center;color:#9a9a9a;font-size:.85rem;margin-bottom:4px;">
+       Wen haben die Mitspieler gewählt? Er verliert ein Herz.
+     </div>` +
+    ddfAlive().map(p =>
+      `<button class="btn btn-danger ddf-vote-btn" onclick="ddfVoteOut('${escAttr(p.name)}')">${escAttr(p.name)}</button>`
+    ).join('');
+}
+
+/* ── Ablauf ────────────────────────────────────────────────────────────── */
+
+function ddfReveal(){ ddfStopTimer(); ddfState.phase = 'answer'; ddfRenderRound(); }
+function ddfBeginVote(){ ddfState.phase = 'vote'; ddfRenderRound(); }
+
+function ddfVoteOut(name){
+  const p = ddfState.players.find(x => x.name === name && !x.out);
+  if (!p) return;
+  p.lives--;
+  if (p.lives <= 0) { p.lives = 0; p.out = true; ddfState.lastEliminated = p.name; }
+  ddfRenderPlayers(p.name);
+
+  const alive = ddfAlive();
+  setTimeout(() => {
+    if (alive.length <= 1) { ddfFinish(); return; }
+    ddfNext();
+  }, 900);
+}
+
+function ddfNext(){
+  ddfStopTimer();
+  activeMediaSlot = null; renderMediaOverlay(null);
+  ddfState.idx++;
+  ddfState.phase = 'question';
+  ddfState.timeUp = false;
+  if (ddfState.idx >= ddfState.order.length) {
+    // Fragen alle - von vorn, sonst endet das Spiel vor dem letzten Spieler.
+    ddfState.order = ddfData.questions.map((_,i) => i).sort(() => Math.random() - .5);
+    ddfState.idx = 0;
+  }
+  ddfRenderRound();
+}
+
+function ddfStartTimer(){
+  ddfStopTimer();
+  ddfState.timer = ddfState.roundTime;
+  ddfState.timeUp = false;
+  const el = document.getElementById('ddf-timer');
+  const tick = () => {
+    el.textContent = ddfState.timer > 0 ? `⏱ ${ddfState.timer}s` : '⏱ Zeit um!';
+    el.style.color = ddfState.timer <= 5 && ddfState.timer > 0 ? '#e23b3b' : '';
+    // timeUp vor dem Stoppen setzen: ddfStopTimer() löscht die Anzeige nur,
+    // solange die Zeit nicht abgelaufen ist - sonst verschwindet "Zeit um!" sofort.
+    if (ddfState.timer <= 0) { ddfState.timeUp = true; ddfStopTimer(); return; }
+    ddfState.timer--;
+  };
+  tick();
+  ddfState.timerInt = setInterval(tick, 1000);
+}
+function ddfStopTimer(){
+  if (ddfState.timerInt) { clearInterval(ddfState.timerInt); ddfState.timerInt = null; }
+  const el = document.getElementById('ddf-timer');
+  if (el && !ddfState.timeUp) el.textContent = '';
+}
+
+function ddfFinish(){
+  ddfStopTimer();
+  activeMediaSlot = null; renderMediaOverlay(null);
+  ddfState.phase = 'done';
+  const winner = ddfAlive()[0];
+  ddfRenderPlayers(winner ? winner.name : null);
+  document.getElementById('ddf-question').innerHTML =
+    winner ? `🏆 ${escAttr(winner.name)} gewinnt!` : 'Spiel beendet';
+  document.getElementById('ddf-answer').style.display = 'none';
+  document.getElementById('ddf-note').innerHTML = '';
+  document.getElementById('ddf-media-bar').innerHTML = '';
+  document.getElementById('ddf-vote-grid').innerHTML = '';
+  document.getElementById('ddf-controls').innerHTML = `
+    <button class="btn btn-primary" onclick="showScreen('ddf-setup-screen')">Nochmal</button>
+    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>`;
+}
+
+function ddfQuit(){
+  ddfStopTimer();
+  activeMediaSlot = null; renderMediaOverlay(null);
+  ddfState.active = false;
+  showScreen('menu-screen');
+}
+
+/* ── Editor ────────────────────────────────────────────────────────────── */
+
+function renderDdfEditor(){
+  const box = document.getElementById('ddf-editor');
+  if (!box) return;
+  box.innerHTML = ddfData.questions.map((q,i) => `
+    <div class="ddf-card" style="margin-bottom:14px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <strong style="min-width:28px;">${i+1}.</strong>
+        <input type="text" value="${escAttr(q.q)}" placeholder="Frage..." style="flex:1;"
+               oninput="ddfData.questions[${i}].q=this.value; ddfSave()">
+        <button class="btn btn-danger" style="padding:6px 12px;" onclick="ddfDeleteQuestion(${i})">🗑</button>
+      </div>
+      <input type="text" value="${escAttr(q.answer)}" placeholder="Antwort..." style="width:100%;margin-bottom:6px;"
+             oninput="ddfData.questions[${i}].answer=this.value; ddfSave()">
+      <input type="text" value="${escAttr(q.note||'')}" placeholder="Notiz für den Host (optional)..." style="width:100%;margin-bottom:8px;"
+             oninput="ddfData.questions[${i}].note=this.value; ddfSave()">
+      <div style="font-size:.75rem;color:#9a9a9a;margin-bottom:4px;">Bilder zur Frage (max. ${DDF_MAX_MEDIA})</div>
+      ${mediaSlotsHtml(q.qMedia||[], (s,expr) => `ddfSetMedia(${i},'qMedia',${s},${expr})`, DDF_MAX_MEDIA)}
+      <div style="font-size:.75rem;color:#9a9a9a;margin:8px 0 4px;">Bilder zur Antwort (max. ${DDF_MAX_MEDIA})</div>
+      ${mediaSlotsHtml(q.aMedia||[], (s,expr) => `ddfSetMedia(${i},'aMedia',${s},${expr})`, DDF_MAX_MEDIA)}
+    </div>`).join('') || '<div style="text-align:center;color:#9a9a9a;">Noch keine Fragen.</div>';
+}
+
+function ddfSetMedia(qi, which, slot, input){
+  const q = ddfData.questions[qi];
+  if (!q) return;
+  if (!Array.isArray(q[which])) q[which] = [];
+  setMediaSlot(q[which], slot, input, () => { ddfSave(); renderDdfEditor(); });
+}
+
+function ddfAddQuestion(){
+  ddfData.questions.push({ q:'', answer:'', note:'', qMedia:[], aMedia:[] });
+  ddfSave(); renderDdfEditor();
+}
+function ddfDeleteQuestion(i){
+  if (!confirm('Frage löschen?')) return;
+  ddfData.questions.splice(i,1); ddfSave(); renderDdfEditor();
+}
+
+/* ── Import / Export ───────────────────────────────────────────────────── */
+
+function exportDdf(){ downloadJSON(ddfData, 'der-duemmste-fliegt.json'); }
+function importDdf(e){
+  readJsonFile(e, d => {
+    const list = Array.isArray(d.questions) ? d.questions : (Array.isArray(d) ? d : null);
+    if (!list) throw new Error('Datei braucht ein Array "questions"');
+    ddfData = {
+      questions: list.map(x => ({
+        q: x.q || x.question || x.frage || '',
+        answer: x.answer || x.a || x.antwort || '',
+        note: x.note || x.notiz || '',
+        qMedia: (x.qMedia || x.questionMedia || []).slice(0, DDF_MAX_MEDIA),
+        aMedia: (x.aMedia || x.answerMedia || []).slice(0, DDF_MAX_MEDIA),
+      }))
+    };
+    renderDdfEditor(); ddfSave();
+  });
+}
+
+function ddfSave(){ try { localStorage.setItem('ddfData', JSON.stringify(ddfData)); } catch {} }
+function ddfLoad(){ try { const s = localStorage.getItem('ddfData'); if (s) ddfData = JSON.parse(s); } catch {} }
+ddfLoad();
 
 </script>
 </body>
