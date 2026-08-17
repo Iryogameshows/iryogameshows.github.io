@@ -7628,6 +7628,7 @@ function startDdf(){
     phase:'question',
     timer:0, timerInt:null, timeUp:false,
     lastEliminated:null,
+    votes:{}, runoff:null, tied:null, lastCounts:null, loser:null,
   };
   showScreen('ddf-screen');
   ddfRenderRound();
@@ -7711,6 +7712,20 @@ function ddfRenderControls(){
       <button class="btn btn-primary" onclick="ddfBeginVote()">Zur Abstimmung</button>
       <button class="btn btn-secondary" onclick="ddfNext()">Frage überspringen</button>
       <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
+  } else if (ddfState.phase === 'vote') {
+    const voters = ddfPhoneVoters();
+    const done = Object.keys(ddfState.votes || {}).length;
+    box.innerHTML = `
+      <button class="btn btn-primary" onclick="ddfEvaluateVote()">Auswerten${done < voters.length ? ' (vorzeitig)' : ''}</button>
+      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
+  } else if (ddfState.phase === 'runoffAnnounce') {
+    box.innerHTML = `
+      <button class="btn btn-primary" onclick="ddfStartRunoff()">🔁 Stichwahl starten</button>
+      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
+  } else if (ddfState.phase === 'result') {
+    box.innerHTML = `
+      <button class="btn btn-primary" onclick="ddfAfterResult()">Weiter</button>
+      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
   } else {
     box.innerHTML = `<button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
   }
@@ -7719,38 +7734,193 @@ function ddfRenderControls(){
 function ddfRenderVoteGrid(){
   const grid = document.getElementById('ddf-vote-grid');
   if (!grid) return;
-  if (ddfState.phase !== 'vote') { grid.innerHTML = ''; return; }
-  grid.innerHTML =
-    `<div style="width:100%;text-align:center;color:#9a9a9a;font-size:.85rem;margin-bottom:4px;">
-       Wen haben die Mitspieler gewählt? Er verliert ein Herz.
-     </div>` +
-    ddfAlive().map(p =>
-      `<button class="btn btn-danger ddf-vote-btn" onclick="ddfVoteOut('${escAttr(p.name)}')">${escAttr(p.name)}</button>`
-    ).join('');
+  const hint = t => `<div style="width:100%;text-align:center;color:#9a9a9a;font-size:.85rem;margin-bottom:6px;">${t}</div>`;
+
+  if (ddfState.phase === 'vote') {
+    const voters = ddfPhoneVoters();
+    const done = Object.keys(ddfState.votes || {}).filter(k => voters.some(v => v.key === k)).length;
+    const guests = ddfAlive().filter(p => !p.key);
+    // Bewusst nur die Anzahl - wer wen gewählt hat, bleibt bis zum Schluss verborgen.
+    grid.innerHTML =
+      hint(ddfState.runoff ? '🔁 Stichwahl läuft — auf den Handys abstimmen' : 'Abstimmung läuft — auf den Handys abstimmen') +
+      `<div style="width:100%;text-align:center;font-size:1.6rem;font-weight:800;margin-bottom:8px;">
+         ${done} / ${voters.length} <span style="font-size:.9rem;font-weight:600;color:#9a9a9a;">Stimmen</span>
+       </div>` +
+      (guests.length ? hint('Gäste ohne Handy — Stimme eintragen:') +
+        guests.map(g => ddfAlive().map(c =>
+          `<button class="btn btn-secondary ddf-vote-btn" style="font-size:.7rem;"
+             onclick="ddfHostVote('${escAttr(g.key||('guest:'+g.name))}','${escAttr(c.key||('guest:'+c.name))}')">
+             ${escAttr(g.name)} → ${escAttr(c.name)}</button>`).join('')).join('') : '');
+    return;
+  }
+
+  if (ddfState.phase === 'runoffAnnounce') {
+    grid.innerHTML = hint('Gleichstand zwischen: <b>' + ddfState.tied.map(escAttr).join('</b>, <b>') + '</b>');
+    return;
+  }
+
+  if (ddfState.phase === 'tiebreak') {
+    grid.innerHTML = hint('Auch die Stichwahl endet gleich — du entscheidest:') +
+      ddfState.tied.map(n =>
+        `<button class="btn btn-danger ddf-vote-btn" onclick="ddfVoteOut('${escAttr(n)}')">${escAttr(n)}</button>`
+      ).join('');
+    return;
+  }
+
+  if (ddfState.phase === 'result') {
+    const c = ddfState.lastCounts || {};
+    const rows = Object.keys(c).sort((a,b) => c[b]-c[a])
+      .map(n => `<div style="display:flex;gap:10px;align-items:center;justify-content:center;font-size:1rem;${n===ddfState.loser?'font-weight:800;color:#e23b3b;':''}">
+          <span style="min-width:140px;text-align:right;">${escAttr(n)}</span>
+          <span style="min-width:40px;text-align:left;">${c[n]}</span>
+        </div>`).join('');
+    grid.innerHTML = hint('Ergebnis — wer wen gewählt hat, bleibt geheim') +
+      `<div style="width:100%;">${rows}</div>` +
+      hint(`<b>${escAttr(ddfState.loser||'')}</b> verliert ein Herz.`);
+    return;
+  }
+
+  grid.innerHTML = '';
+}
+
+// Host trägt die Stimme eines Gastes ohne Handy ein.
+function ddfHostVote(voterKey, candKey){
+  ddfState.votes = ddfState.votes || {};
+  ddfState.votes[voterKey] = candKey;
+  ddfRenderRound();
 }
 
 /* ── Ablauf ────────────────────────────────────────────────────────────── */
 
 function ddfReveal(){ ddfStopTimer(); ddfState.phase = 'answer'; ddfRenderRound(); }
-function ddfBeginVote(){ ddfState.phase = 'vote'; ddfRenderRound(); }
 
-function ddfVoteOut(name){
+/* ── Abstimmung über die Handys ──────────────────────────────────────────
+   Läuft über buzzer/ddfvote, nach demselben Muster wie die Schätzfrage:
+   der Host öffnet die Runde, die Handys schreiben ihre Stimme, der Host
+   wertet aus. Während der Abstimmung sieht niemand mehr als die Anzahl der
+   abgegebenen Stimmen; am Ende zeigt der Host die Stimmenzahl pro Spieler,
+   aber nie, wer wen gewählt hat.
+   ──────────────────────────────────────────────────────────────────────── */
+
+let ddfVoteRef = null;
+let ddfVoteRound = 0;
+
+function ddfVoteInit(){
+  if (ddfVoteRef) return ddfVoteRef;
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    ddfVoteRef = firebase.database().ref('buzzer/ddfvote');
+    ddfVoteRef.child('votes').on('value', snap => {
+      ddfState.votes = snap.val() || {};
+      if (ddfState.phase === 'vote') ddfRenderRound();
+    });
+  } catch { ddfVoteRef = null; }
+  return ddfVoteRef;
+}
+
+// candidates: wer gewählt werden kann. voters: wer abstimmen darf.
+// Beides sind die noch lebenden Spieler - Selbstvotum ist erlaubt.
+function ddfBeginVote(candidates){
+  const alive = ddfAlive();
+  const cands = candidates || alive;
+  ddfState.phase = 'vote';
+  ddfState.votes = {};
+  ddfState.runoff = candidates ? cands.map(p => p.name) : null;
+  ddfVoteRound++;
+
+  ddfVoteInit();
+  if (ddfVoteRef) {
+    ddfVoteRef.set({
+      active: true,
+      round: ddfVoteRound,
+      candidates: cands.map(p => ({ key: p.key || ('guest:'+p.name), name: p.name, avatar: p.avatar || null, color: p.color || null })),
+      voters: alive.filter(p => p.key).map(p => p.key),
+      votes: null,
+    }).catch(()=>{});
+  }
+  ddfRenderRound();
+}
+
+function ddfCloseVote(){
+  if (ddfVoteRef) ddfVoteRef.update({ active: false }).catch(()=>{});
+}
+
+// Wer per Handy abstimmen kann - Gäste ohne Account nicht, für die trägt
+// der Host ein.
+function ddfPhoneVoters(){ return ddfAlive().filter(p => p.key); }
+
+function ddfVoteCounts(){
+  const counts = {};
+  const cands = ddfState.runoff
+    ? ddfAlive().filter(p => ddfState.runoff.includes(p.name))
+    : ddfAlive();
+  cands.forEach(p => counts[p.name] = 0);
+  const byKey = new Map(ddfState.players.map(p => [p.key || ('guest:'+p.name), p]));
+  Object.values(ddfState.votes || {}).forEach(candKey => {
+    const target = byKey.get(candKey);
+    if (target && counts[target.name] !== undefined) counts[target.name]++;
+  });
+  return counts;
+}
+
+// Auswerten: Höchstzahl gewinnt (bzw. verliert). Bei Gleichstand Stichwahl
+// zwischen den Betroffenen; steht es dann wieder gleich, entscheidet der Host.
+function ddfEvaluateVote(){
+  const counts = ddfVoteCounts();
+  const max = Math.max(...Object.values(counts), 0);
+  const top = Object.keys(counts).filter(n => counts[n] === max);
+
+  ddfState.lastCounts = counts;
+  ddfCloseVote();
+
+  if (max === 0) { alert('Es wurde noch keine Stimme abgegeben.'); return; }
+
+  if (top.length > 1) {
+    if (ddfState.runoff) {
+      // Stichwahl schon gelaufen und immer noch gleich - der Host löst auf.
+      ddfState.phase = 'tiebreak';
+      ddfState.tied = top;
+      ddfRenderRound();
+      return;
+    }
+    ddfState.phase = 'runoffAnnounce';
+    ddfState.tied = top;
+    ddfRenderRound();
+    return;
+  }
+
+  ddfApplyLoss(top[0]);
+}
+
+function ddfApplyLoss(name){
   const p = ddfState.players.find(x => x.name === name && !x.out);
   if (!p) return;
   p.lives--;
   if (p.lives <= 0) { p.lives = 0; p.out = true; ddfState.lastEliminated = p.name; }
+  ddfState.phase = 'result';
+  ddfState.loser = p.name;
+  ddfRenderRound();
   ddfRenderPlayers(p.name);
+}
+// Manuelle Auswahl - für Gäste ohne Handy und als Notausgang des Hosts.
+function ddfVoteOut(name){ ddfCloseVote(); ddfApplyLoss(name); }
 
-  const alive = ddfAlive();
-  setTimeout(() => {
-    if (alive.length <= 1) { ddfFinish(); return; }
-    ddfNext();
-  }, 900);
+function ddfStartRunoff(){
+  const tied = ddfState.tied || [];
+  ddfBeginVote(ddfAlive().filter(p => tied.includes(p.name)));
+}
+
+function ddfAfterResult(){
+  if (ddfAlive().length <= 1) { ddfFinish(); return; }
+  ddfNext();
 }
 
 function ddfNext(){
   ddfStopTimer();
+  ddfCloseVote();
   activeMediaSlot = null; renderMediaOverlay(null);
+  ddfState.votes = {}; ddfState.runoff = null; ddfState.tied = null;
+  ddfState.lastCounts = null; ddfState.loser = null;
   ddfState.idx++;
   ddfState.phase = 'question';
   ddfState.timeUp = false;
@@ -7786,6 +7956,7 @@ function ddfStopTimer(){
 
 function ddfFinish(){
   ddfStopTimer();
+  ddfCloseVote();
   activeMediaSlot = null; renderMediaOverlay(null);
   ddfState.phase = 'done';
   const winner = ddfAlive()[0];
@@ -7803,6 +7974,7 @@ function ddfFinish(){
 
 function ddfQuit(){
   ddfStopTimer();
+  ddfCloseVote();
   activeMediaSlot = null; renderMediaOverlay(null);
   ddfState.active = false;
   showScreen('menu-screen');

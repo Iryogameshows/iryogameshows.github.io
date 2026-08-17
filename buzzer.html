@@ -42,6 +42,15 @@
   .lobby-sub{font-size:.85rem;color:rgba(255,255,255,.45);text-align:center;max-width:280px;line-height:1.5;}
   .lobby-count{font-size:.72rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;}
   .team-chip{display:inline-block;padding:8px 20px;border-radius:99px;font-weight:900;font-size:1.05rem;letter-spacing:.5px;box-shadow:0 6px 16px rgba(0,0,0,.35);}
+  #vote-list { display:flex; flex-direction:column; gap:10px; width:100%; margin:14px 0; }
+  .vote-opt {
+    display:flex; align-items:center; gap:12px; width:100%;
+    padding:14px 16px; border-radius:14px; cursor:pointer;
+    background:rgba(255,255,255,.06); border:2px solid rgba(255,255,255,.14);
+    color:#fff; font-size:1.05rem; font-weight:700; text-align:left;
+  }
+  .vote-opt:active { transform:scale(.98); }
+  .vote-opt .av { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex:0 0 34px; }
 </style></head><body>
 
   <div class="topbar" id="topbar" style="display:none;">
@@ -109,6 +118,14 @@
     <input id="est-input" type="text" inputmode="decimal" placeholder="Deine Schätzung" autocomplete="off">
     <button class="btn" id="est-send">Abschicken</button>
     <div class="lobby-sub" id="est-hint" style="color:rgba(255,255,255,.3);"></div>
+  </div>
+
+  <!-- ABSTIMMUNG (Der Dümmste fliegt) -->
+  <div id="screen-vote" class="screen">
+    <div class="lobby-title">🗳️ Abstimmung</div>
+    <div class="lobby-sub" id="vote-sub">Wer soll ein Herz verlieren?</div>
+    <div id="vote-list"></div>
+    <div class="lobby-sub" id="vote-hint" style="color:rgba(255,255,255,.3);"></div>
   </div>
 
   <!-- BLOCKED -->
@@ -300,6 +317,9 @@
     document.getElementById('lobby-av').style.background = acc.color;
     document.getElementById('lobby-name').textContent = acc.name;
     if (!nameAllowed()) { showScreen('screen-blocked'); return; }
+    // Der Dümmste fliegt kennt keine Teams - die Abstimmung muss deshalb vor
+    // der Teamprüfung kommen, sonst hingen die Spieler in der Lobby fest.
+    if (mayVote()) { showScreen('screen-vote'); renderVote(); return; }
     if (myTeam === null || myTeam === undefined) {
       showScreen('screen-lobby');
       document.getElementById('lobby-count').textContent = presenceCount > 1 ? `${presenceCount} Leute in der Lobby` : '';
@@ -364,6 +384,50 @@
     document.getElementById('est-hint').textContent = estSubmitted ? 'Schätzung abgegeben ✔' : '';
     refreshRoot();
   });
+
+  // ── ABSTIMMUNG (Der Dümmste fliegt) ──
+  // Der Host öffnet sie über buzzer/ddfvote. Jede Runde hat eine eigene
+  // Nummer, damit die Sperre pro Abstimmung zurückgesetzt wird - auch bei
+  // einer Stichwahl direkt danach.
+  let voteActive=false, voteRound=0, voteSubmitted=false, voteCands=[], voteVoters=[];
+  ref.child('ddfvote').on('value', s => {
+    const v = s.val() || {};
+    const r = v.round || 0;
+    if (r !== voteRound) { voteRound = r; voteSubmitted = false; }
+    voteActive = !!v.active;
+    voteCands = Array.isArray(v.candidates) ? v.candidates : [];
+    voteVoters = Array.isArray(v.voters) ? v.voters : [];
+    if (acc && v.votes && v.votes[acc.key]) voteSubmitted = true;
+    refreshRoot();
+  });
+
+  function mayVote(){ return !!acc && voteActive && voteVoters.includes(acc.key); }
+
+  function renderVote(){
+    document.getElementById('vote-sub').textContent = voteSubmitted
+      ? 'Deine Stimme ist abgegeben.'
+      : 'Wer soll ein Herz verlieren?';
+    document.getElementById('vote-hint').textContent = voteSubmitted
+      ? 'Warte auf die anderen …'
+      : 'Du darfst dich auch selbst wählen.';
+    const list = document.getElementById('vote-list');
+    list.innerHTML = voteSubmitted ? '' : voteCands.map(c =>
+      `<button class="vote-opt" data-k="${String(c.key).replace(/"/g,'&quot;')}">
+         <span class="av" style="background:${c.color||'#888'};">${c.avatar||'👤'}</span>
+         <span>${String(c.name).replace(/</g,'&lt;')}</span>
+       </button>`).join('');
+    list.querySelectorAll('.vote-opt').forEach(b => {
+      b.addEventListener('click', () => sendVote(b.dataset.k), { once:true });
+    });
+  }
+
+  function sendVote(candKey){
+    if (!acc || voteSubmitted) return;
+    voteSubmitted = true;
+    renderVote();
+    ref.child('ddfvote/votes/' + acc.key).set(candKey)
+      .catch(() => { voteSubmitted = false; renderVote(); });
+  }
 
   // Wandelt eine getippte Schätzung in eine Zahl, damit der Host numerisch
   // sortieren kann. Muss deutsche Schreibweise abkönnen: "390.000" sind
