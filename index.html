@@ -1842,9 +1842,11 @@ body {
       </div>
     </div>
 
-    <div class="label" style="margin-bottom:6px;">Spieler</div>
+    <div class="setup-lobby" id="ddf-setup-lobby"></div>
+
+    <div class="label" style="margin:14px 0 6px;">Gäste ohne Handy (optional)</div>
     <div id="ddf-player-inputs"></div>
-    <button class="btn btn-secondary" style="margin-top:8px;" onclick="ddfAddPlayerInput()">+ Spieler</button>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="ddfAddPlayerInput()">+ Gast</button>
   </div>
 
   <div class="setup-actions">
@@ -2167,7 +2169,7 @@ function showScreen(id) {
   if (id === 'wwds-edit-screen') renderWwdsEditor();
   if (id === 'wwds-setup-screen') { wwdsToggleTeam3(); ensureWwdsLobbyConnected(); }
   if (id === 'ddf-edit-screen') renderDdfEditor();
-  if (id === 'ddf-setup-screen') renderDdfPlayerInputs();
+  if (id === 'ddf-setup-screen') { renderDdfPlayerInputs(); ensureDdfLobbyConnected(); }
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
@@ -5567,6 +5569,7 @@ function feudBuzzConnect(){
       .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team), avatar: p.avatar, color: p.color }))
       .sort((a, b) => (a.ts||0) - (b.ts||0));
     renderSetupLobby('feud');
+    renderDdfLobby();
     updateGamemaster();
   });
   renderFeudBuzzer();
@@ -7501,7 +7504,67 @@ let ddfState = {
 
 /* ── Setup ─────────────────────────────────────────────────────────────── */
 
-let ddfSetupNames = ['Spieler 1','Spieler 2','Spieler 3'];
+// Teilnehmer kommen aus der Lobby (Accounts, die per QR beigetreten sind).
+// ddfExcluded hält die, die zwar verbunden sind, aber nicht mitspielen -
+// z.B. jemand, der nur zuschaut. Gäste ohne Handy stehen in ddfSetupNames.
+let ddfSetupNames = [];
+let ddfExcluded = new Set();
+
+// Der Anwesenheits-Listener rendert fest die Feud-Lobby; damit neu beigetretene
+// Spieler auch hier sofort auftauchen, hängen wir uns zusätzlich ein.
+function renderDdfLobby(){
+  const box = document.getElementById('ddf-setup-lobby');
+  if (!box) return;
+  const presence = (typeof feudBuzzer !== 'undefined' && feudBuzzer.presence) ? feudBuzzer.presence : [];
+  const rows = presence.length
+    ? presence.map(p => {
+        const on = !ddfExcluded.has(p.id);
+        return `<div class="pr-row" style="${on ? '' : 'opacity:.4;'}">
+          <span class="pr-dot"></span>${playerAvatarHtml(p)}
+          <span style="flex:1;">${escAttr(p.name)}</span>
+          <button class="btn ${on ? 'btn-secondary' : 'btn-primary'}" style="padding:4px 10px;font-size:.7rem;"
+                  onclick="ddfTogglePlayer('${escAttr(p.id)}')">${on ? 'spielt mit' : 'aussetzen'}</button>
+        </div>`;
+      }).join('')
+    : `<div class="pr-empty">Noch niemand verbunden — QR-Code scannen zum Beitreten</div>`;
+
+  const count = presence.filter(p => !ddfExcluded.has(p.id)).length + ddfSetupNames.filter(n => (n||'').trim()).length;
+  box.innerHTML = `
+    <div class="panel-head"><span>👥 Lobby</span><span class="badge">${count} Teilnehmer</span></div>
+    <div class="pr-list">${rows}</div>
+    <div class="panel-row">
+      <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code zeigen'}</button>
+      <button class="btn btn-secondary" onclick="popOutQR()">🗗 QR als Fenster</button>
+      <button class="btn btn-secondary" onclick="openPlayersScreen('ddf-setup-screen')">👥 Accounts</button>
+    </div>`;
+}
+
+function ddfTogglePlayer(id){
+  if (ddfExcluded.has(id)) ddfExcluded.delete(id); else ddfExcluded.add(id);
+  renderDdfLobby();
+}
+
+// Wie bei Wer weiss denn sowas: DDF buzzert nicht, braucht die Verbindung nur
+// für die Anwesenheit - also dieselbe Leitung wie Feud, ohne Teamzuteilung.
+function ensureDdfLobbyConnected(){
+  activeBuzzerContext = 'ddf';
+  const isFresh = !feudBuzzer.fbRef;
+  feudBuzzConnect();
+  if (isFresh && feudBuzzer.fbRef) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
+  renderDdfLobby();
+}
+
+// Alle Teilnehmer: verbundene Accounts (ausser abgewählten) plus manuelle Gäste.
+function ddfContestants(){
+  const presence = (typeof feudBuzzer !== 'undefined' && feudBuzzer.presence) ? feudBuzzer.presence : [];
+  const fromLobby = presence
+    .filter(p => !ddfExcluded.has(p.id))
+    .map(p => ({ name: p.name, avatar: p.avatar, color: p.color, id: p.id }));
+  const guests = ddfSetupNames
+    .map(n => (n||'').trim()).filter(Boolean)
+    .map(n => ({ name: n, avatar: null, color: null, id: null }));
+  return fromLobby.concat(guests);
+}
 
 function renderDdfPlayerInputs(){
   const box = document.getElementById('ddf-player-inputs');
@@ -7509,19 +7572,18 @@ function renderDdfPlayerInputs(){
   box.innerHTML = ddfSetupNames.map((n,i) => `
     <div style="display:flex;gap:6px;margin-bottom:6px;">
       <input type="text" value="${escAttr(n)}" placeholder="Name..." style="flex:1;"
-             oninput="ddfSetupNames[${i}]=this.value">
+             oninput="ddfSetupNames[${i}]=this.value; renderDdfLobby()">
       <button class="btn btn-danger" style="padding:6px 12px;" onclick="ddfRemovePlayerInput(${i})">✕</button>
     </div>`).join('');
 }
-function ddfAddPlayerInput(){ ddfSetupNames.push('Spieler ' + (ddfSetupNames.length+1)); renderDdfPlayerInputs(); }
+function ddfAddPlayerInput(){ ddfSetupNames.push(''); renderDdfPlayerInputs(); renderDdfLobby(); }
 function ddfRemovePlayerInput(i){
-  if (ddfSetupNames.length <= 2) { alert('Mindestens zwei Spieler.'); return; }
-  ddfSetupNames.splice(i,1); renderDdfPlayerInputs();
+  ddfSetupNames.splice(i,1); renderDdfPlayerInputs(); renderDdfLobby();
 }
 
 function startDdf(){
-  const names = ddfSetupNames.map(n => (n||'').trim()).filter(Boolean);
-  if (names.length < 2) { alert('Mindestens zwei Spieler eintragen.'); return; }
+  const people = ddfContestants();
+  if (people.length < 2) { alert('Mindestens zwei Teilnehmer — per QR beitreten lassen oder Gäste eintragen.'); return; }
   if (!ddfData.questions.length) { alert('Keine Fragen vorhanden.'); return; }
 
   const lives = Math.max(1, Number(document.getElementById('ddf-lives').value) || 3);
@@ -7529,7 +7591,7 @@ function startDdf(){
 
   ddfState = {
     active:true,
-    players: names.map(n => ({ name:n, lives, out:false })),
+    players: people.map(p => ({ name:p.name, avatar:p.avatar, color:p.color, id:p.id, lives, out:false })),
     maxLives: lives,
     roundTime: time,
     order: ddfData.questions.map((_,i) => i).sort(() => Math.random() - .5),
@@ -7554,8 +7616,9 @@ function ddfRenderPlayers(picked){
     for (let i = 0; i < ddfState.maxLives; i++)
       hearts += `<span class="ddf-heart ${i < p.lives ? 'full' : 'empty'}">❤</span>`;
     const cls = 'ddf-player' + (p.out ? ' out' : '') + (picked === p.name ? ' picked' : '');
+    const av = p.avatar ? playerAvatarHtml(p) + ' ' : '';
     return `<div class="${cls}">
-      <div class="ddf-player-name">${escAttr(p.name)}</div>
+      <div class="ddf-player-name">${av}${escAttr(p.name)}</div>
       <div>${hearts}</div>
     </div>`;
   }).join('');
