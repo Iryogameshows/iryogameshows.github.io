@@ -836,7 +836,9 @@ body {
 #gm-embed-frame { width: 100%; height: 100%; border: none; }
 
 /* ── Einblendungen: Editor-Slots (Fragen bearbeiten) ── */
-.media-slots { display: flex; gap: 10px; margin-bottom: 14px; }
+/* wrap ist Pflicht: die Slots schrumpfen nicht (flex-shrink:0), in einer zu
+   schmalen Spalte liefen sie sonst heraus und über den Nachbarn. */
+.media-slots { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
 .media-slot { width: 84px; height: 84px; border-radius: 10px; flex-shrink: 0; position: relative; overflow: hidden; }
 .media-slot.empty { display: flex; align-items: center; justify-content: center; border: 2px dashed rgba(255,255,255,.15); color: rgba(255,255,255,.3); font-size: 1.6rem; cursor: pointer; }
 .media-slot.empty:hover { border-color: #FFD23F; color: #FFD23F; }
@@ -1818,6 +1820,9 @@ body {
 .ddf-vote-btn { min-width: 120px; }
 .ddf-media-bar { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; padding-bottom: 10px; }
 
+/* Der Edit-Screen ist ein zentrierter Flex-Container: ohne width:100% würde
+   #ddf-editor auf seinen Inhalt schrumpfen und die Karten blieben schmal. */
+#ddf-editor { width: 100%; }
 .ddf-card {
   background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
   border-radius: 8px; padding: 10px; max-width: 820px; margin: 0 auto 8px;
@@ -1826,6 +1831,8 @@ body {
   max-width: 820px; margin: 0 auto 6px; font-size: .65rem; font-weight: 700;
   letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.4);
 }
+/* Slot-Reihen sitzen dichter an ihrem Label als der globale Abstand vorgibt. */
+.ddf-card .media-slots { margin-bottom: 10px; }
 </style>
 
 <!-- DDF SETUP -->
@@ -8095,16 +8102,10 @@ function renderDdfEditor(){
         <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;flex-shrink:0;"
                 onclick="ddfDeleteQuestion(${i})" title="Frage löschen">🗑</button>
       </div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:240px;">
-          <label style="${sectCss}">🖼 Bilder zur Frage (max. ${DDF_MAX_MEDIA})</label>
-          ${mediaSlotsHtml(q.qMedia||[], (s,expr) => `ddfSetMedia(${i},'qMedia',${s},${expr})`, DDF_MAX_MEDIA)}
-        </div>
-        <div style="flex:1;min-width:240px;">
-          <label style="${sectCss}">🖼 Bilder zur Antwort (max. ${DDF_MAX_MEDIA})</label>
-          ${mediaSlotsHtml(q.aMedia||[], (s,expr) => `ddfSetMedia(${i},'aMedia',${s},${expr})`, DDF_MAX_MEDIA)}
-        </div>
-      </div>
+      <label style="${sectCss}">🖼 Bilder zur Frage (max. ${DDF_MAX_MEDIA})</label>
+      ${mediaSlotsHtml(q.qMedia||[], (s,expr) => `ddfSetMedia(${i},'qMedia',${s},${expr})`, DDF_MAX_MEDIA)}
+      <label style="${sectCss}">🖼 Bilder zur Antwort (max. ${DDF_MAX_MEDIA})</label>
+      ${mediaSlotsHtml(q.aMedia||[], (s,expr) => `ddfSetMedia(${i},'aMedia',${s},${expr})`, DDF_MAX_MEDIA)}
       <input type="text" value="${escAttr(q.note||'')}" placeholder="📝 Notiz für den Host" style="${noteCss}"
              oninput="ddfData.questions[${i}].note=this.value; ddfSave()">
     </div>`).join('');
