@@ -2169,7 +2169,7 @@ function showScreen(id) {
   if (id === 'wwds-edit-screen') renderWwdsEditor();
   if (id === 'wwds-setup-screen') { wwdsToggleTeam3(); ensureWwdsLobbyConnected(); }
   if (id === 'ddf-edit-screen') renderDdfEditor();
-  if (id === 'ddf-setup-screen') { renderDdfPlayerInputs(); ensureDdfLobbyConnected(); }
+  if (id === 'ddf-setup-screen') { ddfLoadSettings(); renderDdfPlayerInputs(); ensureDdfLobbyConnected(); }
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
@@ -2263,6 +2263,12 @@ function setMediaSlot(arr, slot, input, afterFn) {
   r.readAsDataURL(f);
 }
 function escAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+// Wert als JS-Argument in ein onclick="..." schreiben. escAttr allein reicht
+// dafür nicht: es lässt ' durch, und ein Name wie O'Brien zerlegt dann den
+// Handler. JSON.stringify quotet korrekt, escAttr entschärft anschließend die
+// dabei entstehenden " fürs HTML-Attribut.
+function escJsArg(v) { return escAttr(JSON.stringify(v == null ? '' : v)); }
 
 // Schwebende Bild-Vorschau: jedes Element mit data-preview-name (und optional
 // einem inneren img/video oder data-preview-src) zeigt beim Hover ein
@@ -2795,8 +2801,8 @@ function renderPlayersList(){
       <div class="q-btns">
         ${[0,1,2].map(i => `<button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam('${p.key}',${i})">${currentTeamLabel(i)}</button>`).join('')}
         <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam('${p.key}',null)">✕</button>
-        <button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="resetPlayerPassword('${p.key}', ${JSON.stringify(p.name)})">🔑 Passwort</button>
-        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="deletePlayerAccount('${p.key}', ${JSON.stringify(p.name)})">🗑️ Löschen</button>
+        <button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="resetPlayerPassword('${p.key}', ${escJsArg(p.name)})">🔑 Passwort</button>
+        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="deletePlayerAccount('${p.key}', ${escJsArg(p.name)})">🗑️ Löschen</button>
       </div>
     </div>`;
   }).join('')}</div>`;
@@ -7494,12 +7500,16 @@ let ddfData = {
 
 let ddfState = {
   active:false,
-  players:[],            // [{ name, lives, out }]
+  players:[],            // [{ name, avatar, color, key, lives, out }]
   maxLives:3,
   roundTime:30,
   order:[], idx:0,       // gemischte Fragenreihenfolge
-  phase:'question',      // question | answer | vote | done
+  // question → answer → vote → [runoffAnnounce → vote] → [tiebreak] → result → done
+  phase:'question',
   timer:0, timerInt:null, timeUp:false,
+  votes:{},              // von den Handys (Firebase spiegelt hier herein)
+  hostVotes:{},          // vom Host für Gäste ohne Handy eingetragen
+  runoff:null, tied:null, lastCounts:null, loser:null,
   lastEliminated:null,
 };
 
@@ -7610,6 +7620,19 @@ function ddfRemovePlayerInput(i){
   ddfSetupNames.splice(i,1); renderDdfPlayerInputs(); renderDdfLobby();
 }
 
+// Fisher-Yates - sort(() => Math.random()-.5) mischt nachweislich schief.
+// avoid: Fragenindex, der nicht vorne stehen soll. Beim Nachmischen ist das
+// die zuletzt gestellte Frage, sonst käme sie sofort ein zweites Mal.
+function ddfShuffledOrder(avoid){
+  const a = ddfData.questions.map((_,i) => i);
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  if (a.length > 1 && a[0] === avoid) [a[0], a[1]] = [a[1], a[0]];
+  return a;
+}
+
 function startDdf(){
   const people = ddfContestants();
   if (people.length < 2) { alert('Mindestens zwei Teilnehmer — per QR beitreten lassen oder Gäste eintragen.'); return; }
@@ -7623,13 +7646,15 @@ function startDdf(){
     players: people.map(p => ({ name:p.name, avatar:p.avatar, color:p.color, key:p.key, lives, out:false })),
     maxLives: lives,
     roundTime: time,
-    order: ddfData.questions.map((_,i) => i).sort(() => Math.random() - .5),
+    order: ddfShuffledOrder(-1),
     idx: 0,
     phase:'question',
     timer:0, timerInt:null, timeUp:false,
+    votes:{}, hostVotes:{},
+    runoff:null, tied:null, lastCounts:null, loser:null,
     lastEliminated:null,
-    votes:{}, runoff:null, tied:null, lastCounts:null, loser:null,
   };
+  ddfSaveSettings();
   showScreen('ddf-screen');
   ddfRenderRound();
 }
@@ -7656,17 +7681,25 @@ function ddfRenderPlayers(picked){
 
 function ddfCurrentQuestion(){ return ddfData.questions[ddfState.order[ddfState.idx]] || null; }
 
+// Ist die Antwort schon aufgedeckt? Ab dem Aufdecken bleibt sie den Rest der
+// Runde stehen - auch während Abstimmung, Stichwahl und Ergebnis.
+function ddfAnswerRevealed(){
+  return ddfState.phase !== 'question' && ddfState.phase !== 'done';
+}
+
 // Bild-Leiste: Zusatzbilder zur Frage und - nach dem Aufdecken - zur Antwort.
+let ddfLastMediaArr = 'qMedia';
+
 function ddfRenderMediaBar(){
   const bar = document.getElementById('ddf-media-bar');
   const q = ddfCurrentQuestion();
   if (!bar || !q) return;
-  const btn = (arrName, arr, i, label) =>
+  const btn = (arrName, i, label) =>
     `<button class="btn btn-secondary" style="padding:5px 11px;font-size:.75rem;"
        onclick="ddfShowMedia('${arrName}', ${i})">${label}</button>`;
-  let html = (q.qMedia||[]).map((m,i) => m ? btn('qMedia', q.qMedia, i, `🖼 Frage ${i+1}`) : '').join('');
-  if (ddfState.phase === 'answer' || ddfState.phase === 'vote')
-    html += (q.aMedia||[]).map((m,i) => m ? btn('aMedia', q.aMedia, i, `🖼 Antwort ${i+1}`) : '').join('');
+  let html = (q.qMedia||[]).map((m,i) => m ? btn('qMedia', i, `🖼 Frage ${i+1}`) : '').join('');
+  if (ddfAnswerRevealed())
+    html += (q.aMedia||[]).map((m,i) => m ? btn('aMedia', i, `🖼 Antwort ${i+1}`) : '').join('');
   bar.innerHTML = html;
 }
 
@@ -7678,21 +7711,22 @@ function ddfShowMedia(which, i){
   ddfLastMediaArr = which;
   renderMediaOverlay(arr);
 }
-let ddfLastMediaArr = 'qMedia';
 
 function ddfRenderRound(){
   const q = ddfCurrentQuestion();
-  const alive = ddfAlive();
 
-  if (alive.length <= 1 || !q) { ddfFinish(); return; }
+  // Das Ergebnis der letzten Abstimmung muss stehenbleiben, auch wenn dadurch
+  // nur noch einer übrig ist - sonst sieht niemand, wie das Spiel ausging.
+  // Erst "Weiter" ruft ddfFinish() auf.
+  if (!q || (ddfAlive().length <= 1 && ddfState.phase !== 'result')) { ddfFinish(); return; }
 
-  ddfRenderPlayers();
+  ddfRenderPlayers(ddfState.phase === 'result' ? ddfState.loser : null);
   document.getElementById('ddf-question').innerHTML = escAttr(q.q);
   const ans = document.getElementById('ddf-answer');
-  ans.style.display = (ddfState.phase === 'answer' || ddfState.phase === 'vote') ? '' : 'none';
+  ans.style.display = ddfAnswerRevealed() ? '' : 'none';
   ans.innerHTML = escAttr(q.answer);
   document.getElementById('ddf-note').innerHTML =
-    (ddfState.phase !== 'question' && q.note) ? escAttr(q.note) : '';
+    (ddfAnswerRevealed() && q.note) ? escAttr(q.note) : '';
 
   ddfRenderMediaBar();
   ddfRenderVoteGrid();
@@ -7713,10 +7747,9 @@ function ddfRenderControls(){
       <button class="btn btn-secondary" onclick="ddfNext()">Frage überspringen</button>
       <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
   } else if (ddfState.phase === 'vote') {
-    const voters = ddfPhoneVoters();
-    const done = Object.keys(ddfState.votes || {}).length;
+    const { done, total } = ddfVoteProgress();
     box.innerHTML = `
-      <button class="btn btn-primary" onclick="ddfEvaluateVote()">Auswerten${done < voters.length ? ' (vorzeitig)' : ''}</button>
+      <button class="btn btn-primary" onclick="ddfEvaluateVote()">Auswerten${done < total ? ' (vorzeitig)' : ''}</button>
       <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
   } else if (ddfState.phase === 'runoffAnnounce') {
     box.innerHTML = `
@@ -7737,32 +7770,40 @@ function ddfRenderVoteGrid(){
   const hint = t => `<div style="width:100%;text-align:center;color:#9a9a9a;font-size:.85rem;margin-bottom:6px;">${t}</div>`;
 
   if (ddfState.phase === 'vote') {
-    const voters = ddfPhoneVoters();
-    const done = Object.keys(ddfState.votes || {}).filter(k => voters.some(v => v.key === k)).length;
-    const guests = ddfAlive().filter(p => !p.key);
+    const { done, total } = ddfVoteProgress();
+    const cands = ddfCandidates();
+    const guests = ddfGuestVoters();
     // Bewusst nur die Anzahl - wer wen gewählt hat, bleibt bis zum Schluss verborgen.
     grid.innerHTML =
       hint(ddfState.runoff ? '🔁 Stichwahl läuft — auf den Handys abstimmen' : 'Abstimmung läuft — auf den Handys abstimmen') +
       `<div style="width:100%;text-align:center;font-size:1.6rem;font-weight:800;margin-bottom:8px;">
-         ${done} / ${voters.length} <span style="font-size:.9rem;font-weight:600;color:#9a9a9a;">Stimmen</span>
+         ${done} / ${total} <span style="font-size:.9rem;font-weight:600;color:#9a9a9a;">Stimmen</span>
        </div>` +
       (guests.length ? hint('Gäste ohne Handy — Stimme eintragen:') +
-        guests.map(g => ddfAlive().map(c =>
-          `<button class="btn btn-secondary ddf-vote-btn" style="font-size:.7rem;"
-             onclick="ddfHostVote('${escAttr(g.key||('guest:'+g.name))}','${escAttr(c.key||('guest:'+c.name))}')">
-             ${escAttr(g.name)} → ${escAttr(c.name)}</button>`).join('')).join('') : '');
+        guests.map(g => {
+          const gk = ddfVoterKey(g);
+          const chosen = ddfState.hostVotes[gk];
+          return `<div style="width:100%;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="min-width:110px;text-align:right;font-size:.8rem;color:#9a9a9a;">${escAttr(g.name)} →</span>
+            ${cands.map(c => {
+              const ck = ddfVoterKey(c);
+              return `<button class="btn ${chosen === ck ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:.7rem;"
+                onclick="ddfHostVote(${escJsArg(gk)}, ${escJsArg(ck)})">${escAttr(c.name)}</button>`;
+            }).join('')}
+          </div>`;
+        }).join('') : '');
     return;
   }
 
   if (ddfState.phase === 'runoffAnnounce') {
-    grid.innerHTML = hint('Gleichstand zwischen: <b>' + ddfState.tied.map(escAttr).join('</b>, <b>') + '</b>');
+    grid.innerHTML = hint('Gleichstand zwischen: <b>' + (ddfState.tied || []).map(escAttr).join('</b>, <b>') + '</b>');
     return;
   }
 
   if (ddfState.phase === 'tiebreak') {
     grid.innerHTML = hint('Auch die Stichwahl endet gleich — du entscheidest:') +
-      ddfState.tied.map(n =>
-        `<button class="btn btn-danger ddf-vote-btn" onclick="ddfVoteOut('${escAttr(n)}')">${escAttr(n)}</button>`
+      (ddfState.tied || []).map(n =>
+        `<button class="btn btn-danger ddf-vote-btn" onclick="ddfVoteOut(${escJsArg(n)})">${escAttr(n)}</button>`
       ).join('');
     return;
   }
@@ -7783,10 +7824,12 @@ function ddfRenderVoteGrid(){
   grid.innerHTML = '';
 }
 
-// Host trägt die Stimme eines Gastes ohne Handy ein.
+// Host trägt die Stimme eines Gastes ohne Handy ein. Bewusst getrennt von
+// ddfState.votes: dort spiegelt Firebase die Handy-Stimmen herein und würde
+// eingetragene Gast-Stimmen bei jeder Aktualisierung wieder wegwerfen.
 function ddfHostVote(voterKey, candKey){
-  ddfState.votes = ddfState.votes || {};
-  ddfState.votes[voterKey] = candKey;
+  ddfState.hostVotes = ddfState.hostVotes || {};
+  ddfState.hostVotes[voterKey] = candKey;
   ddfRenderRound();
 }
 
@@ -7804,18 +7847,34 @@ function ddfReveal(){ ddfStopTimer(); ddfState.phase = 'answer'; ddfRenderRound(
 
 let ddfVoteRef = null;
 let ddfVoteRound = 0;
+let ddfVotesCb = null;
 
-function ddfVoteInit(){
+// Einheitlicher Schlüssel pro Person: Account-Key, für Gäste ein Pseudokey.
+function ddfVoterKey(p){ return p.key || ('guest:' + p.name); }
+
+function ddfVoteRefInit(){
   if (ddfVoteRef) return ddfVoteRef;
   try {
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     ddfVoteRef = firebase.database().ref('buzzer/ddfvote');
-    ddfVoteRef.child('votes').on('value', snap => {
-      ddfState.votes = snap.val() || {};
-      if (ddfState.phase === 'vote') ddfRenderRound();
-    });
   } catch { ddfVoteRef = null; }
   return ddfVoteRef;
+}
+
+// Der Listener wird erst angehängt, wenn die neue Runde geschrieben ist -
+// sonst liefert er beim Start noch die Stimmen der vorigen Runde und die
+// zählen mit.
+function ddfAttachVotes(){
+  ddfDetachVotes();
+  if (!ddfVoteRef) return;
+  ddfVotesCb = ddfVoteRef.child('votes').on('value', snap => {
+    ddfState.votes = snap.val() || {};
+    if (ddfState.phase === 'vote') ddfRenderRound();
+  });
+}
+function ddfDetachVotes(){
+  if (ddfVoteRef && ddfVotesCb) ddfVoteRef.child('votes').off('value', ddfVotesCb);
+  ddfVotesCb = null;
 }
 
 // candidates: wer gewählt werden kann. voters: wer abstimmen darf.
@@ -7825,38 +7884,60 @@ function ddfBeginVote(candidates){
   const cands = candidates || alive;
   ddfState.phase = 'vote';
   ddfState.votes = {};
+  ddfState.hostVotes = {};
   ddfState.runoff = candidates ? cands.map(p => p.name) : null;
   ddfVoteRound++;
 
-  ddfVoteInit();
+  ddfDetachVotes();
+  ddfVoteRefInit();
   if (ddfVoteRef) {
     ddfVoteRef.set({
       active: true,
       round: ddfVoteRound,
-      candidates: cands.map(p => ({ key: p.key || ('guest:'+p.name), name: p.name, avatar: p.avatar || null, color: p.color || null })),
+      candidates: cands.map(p => ({ key: ddfVoterKey(p), name: p.name, avatar: p.avatar || null, color: p.color || null })),
       voters: alive.filter(p => p.key).map(p => p.key),
       votes: null,
-    }).catch(()=>{});
+    }).then(ddfAttachVotes).catch(()=>{});
   }
   ddfRenderRound();
 }
 
 function ddfCloseVote(){
+  ddfDetachVotes();
   if (ddfVoteRef) ddfVoteRef.update({ active: false }).catch(()=>{});
 }
 
-// Wer per Handy abstimmen kann - Gäste ohne Account nicht, für die trägt
-// der Host ein.
+// Abstimmen dürfen alle noch lebenden Spieler. Wer einen Account hat, stimmt
+// per Handy ab; für Gäste ohne Account trägt der Host ein.
 function ddfPhoneVoters(){ return ddfAlive().filter(p => p.key); }
+function ddfGuestVoters(){ return ddfAlive().filter(p => !p.key); }
+
+// Wer gewählt werden kann - in der Stichwahl nur die Gleichstand-Kandidaten.
+function ddfCandidates(){
+  const alive = ddfAlive();
+  return ddfState.runoff ? alive.filter(p => ddfState.runoff.includes(p.name)) : alive;
+}
+
+// Handy-Stimmen und vom Host eingetragene Gast-Stimmen zusammengeführt.
+// Stimmen von Ausgeschiedenen fallen dabei raus.
+function ddfAllVotes(){
+  const out = {};
+  const phones = new Set(ddfPhoneVoters().map(p => p.key));
+  Object.keys(ddfState.votes || {}).forEach(k => { if (phones.has(k)) out[k] = ddfState.votes[k]; });
+  const guests = new Set(ddfGuestVoters().map(ddfVoterKey));
+  Object.keys(ddfState.hostVotes || {}).forEach(k => { if (guests.has(k)) out[k] = ddfState.hostVotes[k]; });
+  return out;
+}
+
+function ddfVoteProgress(){
+  return { done: Object.keys(ddfAllVotes()).length, total: ddfAlive().length };
+}
 
 function ddfVoteCounts(){
   const counts = {};
-  const cands = ddfState.runoff
-    ? ddfAlive().filter(p => ddfState.runoff.includes(p.name))
-    : ddfAlive();
-  cands.forEach(p => counts[p.name] = 0);
-  const byKey = new Map(ddfState.players.map(p => [p.key || ('guest:'+p.name), p]));
-  Object.values(ddfState.votes || {}).forEach(candKey => {
+  ddfCandidates().forEach(p => counts[p.name] = 0);
+  const byKey = new Map(ddfState.players.map(p => [ddfVoterKey(p), p]));
+  Object.values(ddfAllVotes()).forEach(candKey => {
     const target = byKey.get(candKey);
     if (target && counts[target.name] !== undefined) counts[target.name]++;
   });
@@ -7870,10 +7951,12 @@ function ddfEvaluateVote(){
   const max = Math.max(...Object.values(counts), 0);
   const top = Object.keys(counts).filter(n => counts[n] === max);
 
+  // Erst prüfen, dann schließen: sonst wäre die Abstimmung auf den Handys zu,
+  // während der Host noch in der Vote-Phase feststeckt.
+  if (max === 0) { alert('Es wurde noch keine Stimme abgegeben.'); return; }
+
   ddfState.lastCounts = counts;
   ddfCloseVote();
-
-  if (max === 0) { alert('Es wurde noch keine Stimme abgegeben.'); return; }
 
   if (top.length > 1) {
     if (ddfState.runoff) {
@@ -7899,8 +7982,7 @@ function ddfApplyLoss(name){
   if (p.lives <= 0) { p.lives = 0; p.out = true; ddfState.lastEliminated = p.name; }
   ddfState.phase = 'result';
   ddfState.loser = p.name;
-  ddfRenderRound();
-  ddfRenderPlayers(p.name);
+  ddfRenderRound();   // hebt den Verlierer über ddfRenderPlayers(loser) hervor
 }
 // Manuelle Auswahl - für Gäste ohne Handy und als Notausgang des Hosts.
 function ddfVoteOut(name){ ddfCloseVote(); ddfApplyLoss(name); }
@@ -7919,14 +8001,15 @@ function ddfNext(){
   ddfStopTimer();
   ddfCloseVote();
   activeMediaSlot = null; renderMediaOverlay(null);
-  ddfState.votes = {}; ddfState.runoff = null; ddfState.tied = null;
+  ddfState.votes = {}; ddfState.hostVotes = {}; ddfState.runoff = null; ddfState.tied = null;
   ddfState.lastCounts = null; ddfState.loser = null;
+  const lastQ = ddfState.order[ddfState.idx];
   ddfState.idx++;
   ddfState.phase = 'question';
   ddfState.timeUp = false;
   if (ddfState.idx >= ddfState.order.length) {
     // Fragen alle - von vorn, sonst endet das Spiel vor dem letzten Spieler.
-    ddfState.order = ddfData.questions.map((_,i) => i).sort(() => Math.random() - .5);
+    ddfState.order = ddfShuffledOrder(lastQ);
     ddfState.idx = 0;
   }
   ddfRenderRound();
@@ -7937,6 +8020,7 @@ function ddfStartTimer(){
   ddfState.timer = ddfState.roundTime;
   ddfState.timeUp = false;
   const el = document.getElementById('ddf-timer');
+  if (!el) return;
   const tick = () => {
     el.textContent = ddfState.timer > 0 ? `⏱ ${ddfState.timer}s` : '⏱ Zeit um!';
     el.style.color = ddfState.timer <= 5 && ddfState.timer > 0 ? '#e23b3b' : '';
@@ -7959,8 +8043,13 @@ function ddfFinish(){
   ddfCloseVote();
   activeMediaSlot = null; renderMediaOverlay(null);
   ddfState.phase = 'done';
+  ddfState.active = false;
+  ddfState.timeUp = false;
   const winner = ddfAlive()[0];
   ddfRenderPlayers(winner ? winner.name : null);
+  // Direkt leeren: ddfStopTimer() lässt ein "Zeit um!" bewusst stehen, auf dem
+  // Siegerbild hat es nichts zu suchen.
+  document.getElementById('ddf-timer').textContent = '';
   document.getElementById('ddf-question').innerHTML =
     winner ? `🏆 ${escAttr(winner.name)} gewinnt!` : 'Spiel beendet';
   document.getElementById('ddf-answer').style.display = 'none';
@@ -8043,6 +8132,24 @@ function importDdf(e){
 function ddfSave(){ try { localStorage.setItem('ddfData', JSON.stringify(ddfData)); } catch {} }
 function ddfLoad(){ try { const s = localStorage.getItem('ddfData'); if (s) ddfData = JSON.parse(s); } catch {} }
 ddfLoad();
+
+// Herzen und Rundenzeit bleiben pro Gerät gemerkt - sonst muss der Host sie
+// vor jeder Show neu eintippen.
+function ddfSaveSettings(){
+  try {
+    localStorage.setItem('ddfSettings', JSON.stringify({ lives: ddfState.maxLives, time: ddfState.roundTime }));
+  } catch {}
+}
+function ddfLoadSettings(){
+  try {
+    const s = JSON.parse(localStorage.getItem('ddfSettings') || 'null');
+    if (!s) return;
+    const lives = document.getElementById('ddf-lives');
+    const time  = document.getElementById('ddf-time');
+    if (lives && s.lives != null) lives.value = s.lives;
+    if (time  && s.time  != null) time.value  = s.time;
+  } catch {}
+}
 
 </script>
 </body>

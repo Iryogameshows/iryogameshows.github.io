@@ -411,10 +411,13 @@
       ? 'Warte auf die anderen …'
       : 'Du darfst dich auch selbst wählen.';
     const list = document.getElementById('vote-list');
+    // esc auch für color/avatar: die kommen aus fremden Accounts und landen
+    // hier in einem style-Attribut bzw. im Markup.
+    const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
     list.innerHTML = voteSubmitted ? '' : voteCands.map(c =>
-      `<button class="vote-opt" data-k="${String(c.key).replace(/"/g,'&quot;')}">
-         <span class="av" style="background:${c.color||'#888'};">${c.avatar||'👤'}</span>
-         <span>${String(c.name).replace(/</g,'&lt;')}</span>
+      `<button class="vote-opt" data-k="${esc(c.key)}">
+         <span class="av" style="background:${esc(c.color||'#888')};">${esc(c.avatar||'👤')}</span>
+         <span>${esc(c.name)}</span>
        </button>`).join('');
     list.querySelectorAll('.vote-opt').forEach(b => {
       b.addEventListener('click', () => sendVote(b.dataset.k), { once:true });
