@@ -3066,12 +3066,20 @@ function tournamentEnterResult(i){
 // weniger usw. Bei Punktgleichheit teilen sich Teams den besseren Rang.
 function tournamentGamePoints(g, teamCount){
   if (!g.done || !g.scores) return new Array(teamCount).fill(0);
-  const ranked = g.scores.map((s, i) => ({ s, i })).sort((a, b) => b.s - a.s);
+  // Gewichtung absichern: ein Turnier, das noch aus der Zeit vor den
+  // Gewichten im Speicher liegt, hat kein weight - die Multiplikation
+  // ergäbe NaN und die gesamte Tabelle zeigte NaN statt Punkten.
+  const weight = Number(g.weight) || 1;
+  // Nur so viele Ergebnisse berücksichtigen, wie es Teams gibt. Sonst schreibt
+  // ein Spiel mit mehr Ergebnissen als Teams über das Punktefeld hinaus.
+  const ranked = g.scores.slice(0, teamCount)
+    .map((s, i) => ({ s: Number(s) || 0, i }))
+    .sort((a, b) => b.s - a.s);
   const pts = new Array(teamCount).fill(0);
   let rank = 0;
   for (let k = 0; k < ranked.length; k++){
     if (k > 0 && ranked[k].s < ranked[k-1].s) rank = k;
-    pts[ranked[k].i] = (teamCount - rank) * g.weight;
+    pts[ranked[k].i] = (teamCount - rank) * weight;
   }
   return pts;
 }
@@ -6334,7 +6342,7 @@ function jeopardyClearSeriesImg(b,col,row,idx){
 
 function renderJeopardyEditor() {
   const grid = document.getElementById('jeopardy-editor-grid');
-  const esc = s => (s||'').replace(/"/g,'&quot;');
+  const esc = s => escAttr(s);
   const uploadLbl = 'display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);cursor:pointer;color:rgba(255,255,255,.7);font-size:.68rem;font-weight:700;';
   const gridOpts = [[2,2],[3,2],[4,2],[3,3],[5,1]];
   let html = '';
@@ -6452,10 +6460,14 @@ let wwmState = {
 function wwmMoney(n){ return n.toLocaleString('de-DE') + ' €'; }
 
 function startWwm(){
+  // Prüfen bevor das Board-Fenster aufgeht: sonst steht ein leeres Fenster
+  // offen und der Hauptbildschirm zeigt die Reste der letzten Runde.
+  if (!wwmData.questions.length) { alert('Keine Fragen vorhanden.'); return; }
   openBoardPopout();
   startWwmActual();
 }
 function startWwmActual(){
+  if (!wwmData.questions.length) { alert('Keine Fragen vorhanden.'); return; }
   jeopardyState.active = false;
   finaleState.active = false;
   wwdsState.active = false;
@@ -6501,7 +6513,7 @@ function renderWwm(){
     else if (wwmState.revealed && i === wwmState.selected && i !== q.correct) cls = 'wrong';
     else if (wwmState.selected === i && !wwmState.revealed) cls = 'selected';
     return `<div class="wwm-opt ${cls}" onclick="wwmSelect(${i})">
-      <span class="wwm-letter">${WWM_LETTERS[i]}</span><span class="wwm-text">${a}</span>
+      <span class="wwm-letter">${WWM_LETTERS[i]}</span><span class="wwm-text">${escapeHtml(a)}</span>
     </div>`;
   }).join('');
   // Lifelines
@@ -6560,8 +6572,13 @@ function wwmNext(){
   const q = wwmData.questions[wwmState.currentQ];
   if (!wwmState.revealed) return;
   if (wwmState.selected === q.correct){
-    if (wwmState.currentQ >= wwmData.questions.length - 1 || wwmState.currentQ >= WWM_LADDER.length - 1){
-      wwmEnd(WWM_LADDER[wwmState.currentQ], true);
+    const letzteFrage   = wwmState.currentQ >= wwmData.questions.length - 1;
+    const oberstesFeld  = wwmState.currentQ >= WWM_LADDER.length - 1;
+    if (letzteFrage || oberstesFeld){
+      // Millionär ist nur, wer wirklich oben auf der Leiter ankommt. Wer mit
+      // weniger als 15 Fragen spielt, hat vorher schon alle beantwortet - dann
+      // stand hier "ist Millionär!" über einem Gewinn von 500 €.
+      wwmEnd(WWM_LADDER[wwmState.currentQ], oberstesFeld);
     } else {
       wwmState.currentQ++;
       loadWwmQuestion();
@@ -6603,10 +6620,13 @@ function wwmEnd(amount, jackpot){
 function wwmFifty(){
   if (wwmState.lifelines.fifty || wwmState.revealed) return;
   const q = wwmData.questions[wwmState.currentQ];
-  const wrong = [0,1,2,3].filter(i => i !== q.correct);
-  // shuffle wrong, keep one, remove the other two
+  // An der tatsächlichen Antwortzahl entlang statt an fest verdrahteten vier:
+  // eine importierte Frage kann auch drei haben, dann verwies [0,1,2,3] auf
+  // eine Antwort, die es gar nicht gibt.
+  const wrong = q.answers.map((_, i) => i).filter(i => i !== q.correct);
+  // mischen, eine falsche stehen lassen, den Rest entfernen
   for (let i = wrong.length-1; i>0; i--){ const j = Math.floor(Math.random()*(i+1)); [wrong[i],wrong[j]]=[wrong[j],wrong[i]]; }
-  wwmState.removed = wrong.slice(0,2);
+  wwmState.removed = wrong.slice(0, Math.max(0, wrong.length - 1));
   if (wwmState.selected !== null && wwmState.removed.includes(wwmState.selected)) wwmState.selected = null;
   wwmState.lifelines.fifty = true;
   renderWwm();
@@ -6623,12 +6643,12 @@ function wwmPhone(){
 function wwmAudience(){
   if (wwmState.lifelines.audience || wwmState.revealed) return;
   const q = wwmData.questions[wwmState.currentQ];
-  const active = [0,1,2,3].filter(i => !wwmState.removed.includes(i));
-  // weighted-random: correct answer gets a big share
+  const active = q.answers.map((_, i) => i).filter(i => !wwmState.removed.includes(i));
+  // gewichteter Zufall: die richtige Antwort bekommt den grossen Anteil
   const weights = {};
   let total = 0;
   active.forEach(i => { const w = (i===q.correct? 45+Math.random()*30 : 5+Math.random()*20); weights[i]=w; total+=w; });
-  const data = [0,0,0,0];
+  const data = new Array(q.answers.length).fill(0);
   let sum = 0;
   active.forEach((i,idx) => { let p = Math.round(weights[i]/total*100); data[i]=p; sum+=p; });
   // fix rounding to 100
@@ -6675,7 +6695,7 @@ function updateGamemasterWwm(){
     if (isCorrect) bg = 'rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.45)';
     if (sel) bg = 'rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.5)';
     return `<div class="answer" style="background:${bg};${removed?'opacity:.35;text-decoration:line-through;':''}cursor:${wwmState.locked?'default':'pointer'}" ${(!wwmState.locked && !removed)?`onclick="opener.wwmSelect(${i})"`:''}>
-      <span><span class="num">${WWM_LETTERS[i]}</span> <span class="text">${a}</span>${isCorrect?' <span style="color:#22C55E;font-size:.7rem;">✔ richtig</span>':''}</span>
+      <span><span class="num">${WWM_LETTERS[i]}</span> <span class="text">${escapeHtml(a)}</span>${isCorrect?' <span style="color:#22C55E;font-size:.7rem;">✔ richtig</span>':''}</span>
     </div>`;
   }).join('');
   const amtNow = WWM_LADDER[wwmState.currentQ];
@@ -6728,17 +6748,17 @@ function renderWwmEditor(){
       <label>Frage ${i+1} <span style="color:#FFD23F;">(${wwmMoney(WWM_LADDER[i]||0)})</span>
         <button class="btn btn-danger" style="float:right;padding:4px 10px;font-size:.7rem;" onclick="wwmDeleteQuestion(${i})">Del</button>
       </label>
-      <input type="text" value="${(q.q||'').replace(/"/g,'&quot;')}" onchange="wwmData.questions[${i}].q=this.value" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.9rem;font-weight:600;outline:none;margin-bottom:8px;">
+      <input type="text" value="${escAttr(q.q)}" onchange="wwmData.questions[${i}].q=this.value" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.9rem;font-weight:600;outline:none;margin-bottom:8px;">
       ${q.answers.map((a,j) => `
         <div style="display:flex;gap:8px;margin-bottom:5px;align-items:center;">
           <label style="display:flex;align-items:center;gap:5px;color:${q.correct===j?'#22C55E':'rgba(255,255,255,.4)'};font-size:.8rem;font-weight:700;min-width:52px;">
             <input type="radio" name="wwm-correct-${i}" ${q.correct===j?'checked':''} onchange="wwmData.questions[${i}].correct=${j};renderWwmEditor();" style="accent-color:#22C55E;"> ${WWM_LETTERS[j]}
           </label>
-          <input type="text" value="${(a||'').replace(/"/g,'&quot;')}" onchange="wwmData.questions[${i}].answers[${j}]=this.value" style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;">
+          <input type="text" value="${escAttr(a)}" onchange="wwmData.questions[${i}].answers[${j}]=this.value" style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;">
         </div>`).join('')}
       <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
       ${mediaSlotsHtml(q.media || (q.media = []), (slot, inputExpr) => `wwmEditMedia(${i},${slot},${inputExpr})`)}
-      <input type="text" placeholder="📝 Notiz für den Host" value="${(q.note||'').replace(/"/g,'&quot;')}" onchange="wwmData.questions[${i}].note=this.value" style="width:100%;margin-top:6px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
+      <input type="text" placeholder="📝 Notiz für den Host" value="${escAttr(q.note)}" onchange="wwmData.questions[${i}].note=this.value" style="width:100%;margin-top:6px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
     </div>`).join('');
 }
 function wwmEditMedia(i,slot,input){
@@ -6760,7 +6780,18 @@ function importWwm(e){
     let qs = Array.isArray(d.questions) ? d.questions : (Array.isArray(d) ? d : null);
     if (!qs) throw new Error('Ungültiges Format');
     // normalise
-    qs = qs.map(x => ({ q:x.q||x.question||'', answers:(x.answers||['','','','']).slice(0,4), correct:Number(x.correct)||0, media:x.media||[], note:x.note||'' }));
+    // Auf vier Antworten bringen und correct in den gültigen Bereich zwingen.
+    // Vorher wurde nur abgeschnitten: eine Datei mit zwei Antworten ergab eine
+    // Frage, bei der 50:50 und der Publikumsjoker auf Nichts zugriffen, und
+    // ein correct von 7 zeigte gar keine richtige Antwort an.
+    qs = qs.map(x => {
+      const answers = (Array.isArray(x.answers) ? x.answers : []).slice(0, 4)
+        .map(a => String(a == null ? '' : a));
+      while (answers.length < 4) answers.push('');
+      let correct = Number(x.correct);
+      if (!Number.isInteger(correct) || correct < 0 || correct >= answers.length) correct = 0;
+      return { q:x.q||x.question||'', answers, correct, media:x.media||[], note:x.note||'' };
+    });
     wwmData = { questions: qs };
     renderWwmEditor();
   });
@@ -7323,7 +7354,7 @@ function updateGamemasterWwds(){
         if (sel)   bg = 'rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.5)';
         const click = (!isMaster && !s.locked) ? ` onclick="opener.wwdsSelect(${i})"` : '';
         return `<div class="answer" style="background:${bg};cursor:${click?'pointer':'default'}"${click}>
-          <span><span class="num">${WWDS_LETTERS[i]}</span> <span class="text">${a}</span>${right?' <span style="color:#22C55E;font-size:.7rem;">✔ richtig</span>':''}${teamTag(i)}</span>
+          <span><span class="num">${WWDS_LETTERS[i]}</span> <span class="text">${escapeHtml(a)}</span>${right?' <span style="color:#22C55E;font-size:.7rem;">✔ richtig</span>':''}${teamTag(i)}</span>
         </div>`;
       }).join('') + `</div>
       ${mediaControlButtonsHtml(q.media, 'wwdsToggleMedia')}`;
@@ -7456,7 +7487,7 @@ function renderWwdsEditor(){
         <input type="radio" name="wwds-c-${path}" ${q.correct===j?'checked':''}
           onchange="${path}.correct=${j};renderWwdsEditor();" style="accent-color:#22C55E;"> ${WWDS_LETTERS[j]}
       </label>
-      <input type="text" value="${(q.answers[j]||'').replace(/"/g,'&quot;')}"
+      <input type="text" value="${escAttr(q.answers[j])}"
         onchange="${path}.answers[${j}]=this.value" style="flex:1;${inp}">
     </div>`;
 
@@ -7467,29 +7498,29 @@ function renderWwdsEditor(){
         <label>Kategorie ${i+1}
           <button class="btn btn-danger" style="float:right;padding:4px 10px;font-size:.7rem;" onclick="wwdsDeleteCategory(${i})">Del</button>
         </label>
-        <input type="text" value="${(c.cat||'').replace(/"/g,'&quot;')}" placeholder="Kategoriename"
+        <input type="text" value="${escAttr(c.cat)}" placeholder="Kategoriename"
           onchange="${p}.cat=this.value;renderWwdsEditor();" style="${inp}margin-bottom:6px;">
-        <input type="text" value="${(c.q||'').replace(/"/g,'&quot;')}" placeholder="Frage"
+        <input type="text" value="${escAttr(c.q)}" placeholder="Frage"
           onchange="${p}.q=this.value" style="${inp}margin-bottom:8px;font-weight:600;">
         ${[0,1,2].map(j => optRow(c, p, j)).join('')}
         <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
         ${mediaSlotsHtml(c.media || (c.media = []), (slot, inputExpr) => `wwdsEditMedia(${i},${slot},${inputExpr})`)}
-        <input type="text" placeholder="📝 Notiz für den Host" value="${(c.note||'').replace(/"/g,'&quot;')}"
+        <input type="text" placeholder="📝 Notiz für den Host" value="${escAttr(c.note)}"
           onchange="${p}.note=this.value" style="${inp}margin-top:6px;border-color:rgba(255,210,63,.25);background:rgba(255,210,63,.05);">
       </div>`;
     }).join('') +
     `<div class="page-title" style="font-size:.8rem;margin:18px 0 10px;"><em>Masterfrage</em></div>
      <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.06);">
-       <input type="text" value="${(wwdsData.master.q||'').replace(/"/g,'&quot;')}" placeholder="Masterfrage"
+       <input type="text" value="${escAttr(wwdsData.master.q)}" placeholder="Masterfrage"
          onchange="wwdsData.master.q=this.value" style="${inp}margin-bottom:8px;font-weight:600;">
        ${[0,1,2].map(j => optRow(wwdsData.master, 'wwdsData.master', j)).join('')}
-       <input type="text" placeholder="📝 Notiz für den Host" value="${(wwdsData.master.note||'').replace(/"/g,'&quot;')}"
+       <input type="text" placeholder="📝 Notiz für den Host" value="${escAttr(wwdsData.master.note)}"
          onchange="wwdsData.master.note=this.value" style="${inp}margin-top:6px;border-color:rgba(255,210,63,.25);background:rgba(255,210,63,.05);">
      </div>
      <div class="page-title" style="font-size:.8rem;margin:18px 0 10px;"><em>Schätzfragen</em> (bei Gleichstand)</div>` +
     wwdsData.tiebreakers.map((t,i) => `
       <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
-        <input type="text" value="${(t.q||'').replace(/"/g,'&quot;')}" placeholder="Schätzfrage"
+        <input type="text" value="${escAttr(t.q)}" placeholder="Schätzfrage"
           onchange="wwdsData.tiebreakers[${i}].q=this.value" style="flex:3;${inp}">
         <input type="number" value="${t.answer}" placeholder="Zahl"
           onchange="wwdsData.tiebreakers[${i}].answer=Number(this.value)" style="flex:1;${inp}text-align:center;">
