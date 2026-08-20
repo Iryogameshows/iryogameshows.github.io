@@ -22,13 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: '.'
+          # Ab v4 schliesst die Action Punktdateien aus (--exclude=.[^/]*).
+          # Ohne diese Zeile fiele .nojekyll aus dem Deploy - die Datei schaltet
+          # die Jekyll-Verarbeitung ab, und ohne sie wuerde GitHub Pages die
+          # Seite durch einen Generator schicken, der Dateien mit _ oder . am
+          # Anfang verwirft.
+          include-hidden-files: true
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
