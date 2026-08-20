@@ -4477,21 +4477,36 @@ function updateGamemasterJeopardy() {
       <div class="scores-row">${scoresHtml}</div>
       <div class="dd-card">
         <div class="dd-title">★ DAILY DOUBLE ★</div>
-        <div class="dd-sub">Dieses Feld ist das versteckte Daily Double.<br>Sag es jetzt dramatisch an — dann deckst du die Frage auf.</div>
+        <div class="dd-sub">Dieses Feld ist das versteckte Daily Double.<br>
+          Nur das Team, das es gewählt hat, darf antworten — es gibt <b>doppelte Punkte</b>
+          (${JEOPARDY_VALUES[jeopardyState.currentClue.row] * 2}), bei falscher Antwort
+          −${Math.round(JEOPARDY_VALUES[jeopardyState.currentClue.row] / 2)}.</div>
+        <div class="dd-sub" style="margin-top:10px;">Welches Team hat das Feld gewählt?</div>
+        <div class="btn-grid" style="margin-top:6px;">
+          ${jeopardyState.teamNames.map((name, i) => `
+            <button class="gm-btn" style="background:${jeopardyState.ddTeam === i
+                ? `linear-gradient(180deg,${teamColors[i][0]},${teamColors[i][1]})`
+                : 'rgba(255,255,255,.06)'};color:#fff;border:1px solid ${teamColors[i][0]};"
+              onclick="opener.jeopardySetDdTeam(${i})">${jeopardyState.ddTeam === i ? '✓ ' : ''}${escapeHtml(name)}</button>`).join('')}
+        </div>
       </div>`;
     sideHtml = connectPanel;
     controlsHtml = `
-        <button class="gm-btn gold" onclick="opener.jeopardyAnnounceDaily()">★ Ansagen &amp; Frage aufdecken</button>
+        ${jeopardyState.ddTeam === null
+          ? `<span class="hint-line">Erst das Team wählen, dann ansagen.</span>`
+          : `<button class="gm-btn gold" onclick="opener.jeopardyAnnounceDaily()">★ Ansagen &amp; Frage aufdecken</button>`}
         <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
   } else if (jeopardyState.currentClue) {
     // Clue control view
     const { col, row } = jeopardyState.currentClue;
     const cat = jBoard()[col];
     const clue = cat.clues[row];
-    const val = JEOPARDY_VALUES[row];
+    const val = jeopardyClueValue();
+    const minus = jeopardyDeductValue();
     const ddBadge = jeopardyState.currentIsDaily ? ` <span class="dd-inline">★ DAILY DOUBLE</span>` : '';
     // Automatische Wertung: das Team des ersten Buzzers ist aus der Lobby bekannt.
-    const buzzTeam = jeopardyBuzzTeam();
+    // Beim Daily Double wird nicht gebuzzert - dort zählt nur das wählende Team.
+    const buzzTeam = jeopardyState.currentIsDaily ? null : jeopardyBuzzTeam();
     let autoScoreHtml = '';
     if (buzzTeam !== null) {
       const bn = jeopardyState.teamNames[buzzTeam];
@@ -4505,11 +4520,16 @@ function updateGamemasterJeopardy() {
           </div>
         </div>`;
     }
-    const teamBtns = jeopardyState.teamNames.map((name, i) => `
-      <button class="gm-btn" style="background:linear-gradient(180deg,${teamColors[i][0]},${teamColors[i][1]});color:#fff;" onclick="opener.jeopardyScore(${i})">✓ ${name} +${val}</button>
+    // Beim Daily Double bleibt nur das wählende Team stehen - so kann der Host
+    // die Punkte gar nicht erst versehentlich dem falschen Team geben.
+    const wertbar = jeopardyState.teamNames
+      .map((name, i) => ({ name, i }))
+      .filter(t => jeopardyTeamMayAnswer(t.i));
+    const teamBtns = wertbar.map(({ name, i }) => `
+      <button class="gm-btn" style="background:linear-gradient(180deg,${teamColors[i][0]},${teamColors[i][1]});color:#fff;" onclick="opener.jeopardyScore(${i})">✓ ${escapeHtml(name)} +${val}</button>
     `).join('');
-    const deductBtns = jeopardyState.teamNames.map((name, i) => `
-      <button class="gm-btn danger-outline" onclick="opener.jeopardyDeduct(${i})">✕ ${name} −${Math.round(val/2)}</button>
+    const deductBtns = wertbar.map(({ name, i }) => `
+      <button class="gm-btn danger-outline" onclick="opener.jeopardyDeduct(${i})">✕ ${escapeHtml(name)} −${minus}</button>
     `).join('');
     const staged = clue.staged && clue.stageImg;
     let stageBtn = '';
@@ -4561,6 +4581,10 @@ function updateGamemasterJeopardy() {
           ${jeopardyBuzzer.results.map((r,idx)=>`<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${escapeHtml(r.name)}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')}
           ${excludedTag}
         </div>`
+      : jeopardyState.currentIsDaily
+      // Beim Daily Double wird nicht gebuzzert - ein Hinweis auf den Buzzer
+      // wäre hier schlicht falsch.
+      ? `<div class="hint-line">★ Daily Double — kein Buzzer, nur <b>${escapeHtml(jeopardyState.teamNames[jeopardyState.ddTeam] || '')}</b> antwortet ${connChip}</div>`
       : `<div class="hint-line">🔔 Buzzer ${jeopardyBuzzer.armed?'scharf — warte auf Buzz…':'aus'} ${connChip}${excludedTag}</div>`;
     const revealed = jeopardyState.questionRevealed;
     body = `
@@ -4597,6 +4621,10 @@ function updateGamemasterJeopardy() {
             ? (jeopardyEstimate.open
                 ? `<button class="gm-btn gray" onclick="opener.jeopardyEstimateClose()">📊 Eingabe schließen</button>`
                 : `<button class="gm-btn gray" onclick="opener.jeopardyEstimateReopen()">📊 Eingabe neu öffnen</button>`)
+            : jeopardyState.currentIsDaily
+            // Kein "Buzzer neu" beim Daily Double: es hat nie jemand gebuzzert,
+            // und ein zweiter Versuch für die anderen wäre gegen die Regel.
+            ? ''
             : `<button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>`}
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Niemand / Überspringen</button>
           <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
@@ -4742,8 +4770,11 @@ function updateGMBar() {
       return;
     }
     if (jeopardyState.currentClue) {
-      const teamBtns = jeopardyState.teamNames.map((name, i) =>
-        `<button class="gm-btn" style="background:linear-gradient(180deg,${['#E8453C','#3B82F6','#22C55E'][i]},${['#C62828','#1D4ED8','#16a34a'][i]});color:#fff;" onclick="jeopardyScore(${i})">✓ ${name}</button>`).join('');
+      // Beim Daily Double bleibt auch in der Sternleiste nur das wählende Team.
+      const teamBtns = jeopardyState.teamNames.map((name, i) => ({ name, i }))
+        .filter(t => jeopardyTeamMayAnswer(t.i))
+        .map(({ name, i }) =>
+        `<button class="gm-btn" style="background:linear-gradient(180deg,${['#E8453C','#3B82F6','#22C55E'][i]},${['#C62828','#1D4ED8','#16a34a'][i]});color:#fff;" onclick="jeopardyScore(${i})">✓ ${escapeHtml(name)}</button>`).join('');
       const cc = jBoard()[jeopardyState.currentClue.col].clues[jeopardyState.currentClue.row];
       let stageBtn = '';
       if (cc.staged && cc.stageImg){
@@ -4764,6 +4795,8 @@ function updateGMBar() {
           ? (jeopardyEstimate.open
               ? `<button class="gm-btn gm-gray" onclick="jeopardyEstimateClose();updateGMBar();">📊 Eingabe schließen (${jeopardyEstimate.answers.length})</button>`
               : `<button class="gm-btn gm-gray" onclick="jeopardyEstimateReopen();updateGMBar();">📊 Eingabe neu öffnen</button>`)
+          : jeopardyState.currentIsDaily
+          ? ''
           : `<button class="gm-btn gm-gray" onclick="jeopardyBuzzReopen();updateGMBar();">🔔 Buzzer neu</button>`}
         <button class="gm-btn gm-gray" onclick="jeopardySkip();updateGMBar();">Überspringen</button>
         <button class="gm-btn gm-blue" onclick="jeopardyUndo();updateGMBar();">↩ Undo</button>
@@ -4845,9 +4878,10 @@ let jeopardyState = {
   used: [], // used[cat][row] = true/false (for current board)
   currentClue: null, // {col, row}
   answerShown: false,
-  dailyDouble: null, // { board, col, row, done }
+  dailyDoubles: [],  // pro Board eins: [{ col, row, done }, …]
   ddPending: false,  // true while GM sees the warning but the question isn't shown yet
   currentIsDaily: false,
+  ddTeam: null,      // welches Team das Daily Double gewählt hat - nur dieses darf antworten
   stageRevealed: [], // revealed tile indices for a staged-image clue
   seriesRevealed: 0, // wie viele Bilder einer Bilder-Reihe schon aufgedeckt sind (links → rechts)
   questionRevealed: false, // the question text is hidden until the GM reveals it
@@ -4864,9 +4898,10 @@ function jeopardySnapshot() {
     used: jeopardyState.used.map(c => [...c]),
     currentClue: jeopardyState.currentClue ? {...jeopardyState.currentClue} : null,
     answerShown: jeopardyState.answerShown,
-    dd: jeopardyState.dailyDouble ? {...jeopardyState.dailyDouble} : null,
+    dd: jeopardyState.dailyDoubles.map(d => d ? {...d} : null),
     ddPending: jeopardyState.ddPending,
     currentIsDaily: jeopardyState.currentIsDaily,
+    ddTeam: jeopardyState.ddTeam,
     stageRevealed: [...jeopardyState.stageRevealed],
     seriesRevealed: jeopardyState.seriesRevealed,
     questionRevealed: jeopardyState.questionRevealed,
@@ -4880,9 +4915,10 @@ function jeopardyUndo() {
   jeopardyState.used = prev.used;
   jeopardyState.currentClue = prev.currentClue;
   jeopardyState.answerShown = prev.answerShown;
-  jeopardyState.dailyDouble = prev.dd;
+  jeopardyState.dailyDoubles = prev.dd || [];
   jeopardyState.ddPending = prev.ddPending;
   jeopardyState.currentIsDaily = prev.currentIsDaily;
+  jeopardyState.ddTeam = prev.ddTeam === undefined ? null : prev.ddTeam;
   jeopardyState.stageRevealed = prev.stageRevealed || [];
   jeopardyState.seriesRevealed = prev.seriesRevealed || 0;
   jeopardyState.questionRevealed = prev.questionRevealed;
@@ -4913,18 +4949,19 @@ function startJeopardyActual() {
   jeopardyState.currentClue = null;
   jeopardyState.answerShown = false;
   jeopardyState.active = true;
-  // Hidden Daily Double: one random field (only on questions worth 300+),
+  // Verstecktes Daily Double: EINS PRO BOARD, nur auf Feldern ab 300 Punkten
   // und nur in Kategorien, in denen es der Host erlaubt hat (cat.noDD !== true).
   const ddRows = JEOPARDY_VALUES.map((v, i) => i).filter(i => JEOPARDY_VALUES[i] >= 300);
-  const ddSpots = [];
-  jeopardyData.boards.forEach((board, b) => board.categories.forEach((cat, col) => {
-    if (!cat.noDD) ddRows.forEach(row => ddSpots.push({ board: b, col, row }));
-  }));
-  jeopardyState.dailyDouble = ddSpots.length
-    ? { ...ddSpots[Math.floor(Math.random() * ddSpots.length)], done: false }
-    : null;
+  jeopardyState.dailyDoubles = jeopardyData.boards.map(board => {
+    const spots = [];
+    board.categories.forEach((cat, col) => {
+      if (!cat.noDD) ddRows.forEach(row => spots.push({ col, row }));
+    });
+    return spots.length ? { ...spots[Math.floor(Math.random() * spots.length)], done: false } : null;
+  });
   jeopardyState.ddPending = false;
   jeopardyState.currentIsDaily = false;
+  jeopardyState.ddTeam = null;
   wwmState.active = false;
   jeopardyHistory = [];
   jeopardyBuzzer.hidden = false;
@@ -5045,9 +5082,37 @@ function jeopardyAdvanceBoard() {
   }
 }
 
+// Das Daily Double des AKTUELLEN Boards - jedes Board hat sein eigenes.
+function jeopardyCurrentDd() {
+  return jeopardyState.dailyDoubles[jeopardyState.currentBoard] || null;
+}
 function jeopardyIsDaily(col, row) {
-  const dd = jeopardyState.dailyDouble;
-  return dd && !dd.done && dd.board === jeopardyState.currentBoard && dd.col === col && dd.row === row;
+  const dd = jeopardyCurrentDd();
+  return !!dd && !dd.done && dd.col === col && dd.row === row;
+}
+// Der Punktwert dieser Frage: beim Daily Double das Doppelte. Auf dem Board
+// steht weiterhin der normale Wert - dort darf sich das Daily Double nicht
+// verraten, sonst ist die Überraschung weg.
+function jeopardyClueValue() {
+  if (!jeopardyState.currentClue) return 0;
+  const base = JEOPARDY_VALUES[jeopardyState.currentClue.row];
+  return jeopardyState.currentIsDaily ? base * 2 : base;
+}
+// Abgezogen wird immer die Hälfte des ORIGINALWERTS - beim Daily Double also
+// nicht die Hälfte der verdoppelten Punkte.
+function jeopardyDeductValue() {
+  if (!jeopardyState.currentClue) return 0;
+  return Math.round(JEOPARDY_VALUES[jeopardyState.currentClue.row] / 2);
+}
+// Beim Daily Double darf nur das Team antworten, das das Feld gewählt hat.
+function jeopardyTeamMayAnswer(teamIdx) {
+  if (!jeopardyState.currentIsDaily) return true;
+  return jeopardyState.ddTeam === null || jeopardyState.ddTeam === teamIdx;
+}
+function jeopardySetDdTeam(i) {
+  if (!jeopardyState.ddPending) return;
+  jeopardyState.ddTeam = i;
+  updateGamemaster();
 }
 
 function openJeopardyClue(col, row) {
@@ -5058,6 +5123,7 @@ function openJeopardyClue(col, row) {
   jeopardyState.stageRevealed = [];
   jeopardyState.seriesRevealed = 0;
   jeopardyState.questionRevealed = false;
+  jeopardyState.ddTeam = null;
   resetMediaOverlay();
   if (jeopardyIsDaily(col, row)) {
     // Daily Double: the question does NOT pop yet. The GM gets a private
@@ -5077,11 +5143,17 @@ function openJeopardyClue(col, row) {
 // GM announces the Daily Double → clue frame pops (question still hidden)
 function jeopardyAnnounceDaily() {
   if (!jeopardyState.ddPending) return;
+  // Ohne wählendes Team keine Ansage - sonst stünde die Frage auf dem
+  // Bildschirm und niemand wüsste, wer sie überhaupt beantworten darf.
+  if (jeopardyState.ddTeam === null) { alert('Erst angeben, welches Team das Feld gewählt hat.'); return; }
   jeopardyState.ddPending = false;
   jeopardyState.questionRevealed = false;
-  if (jeopardyState.dailyDouble) jeopardyState.dailyDouble.done = true;
+  const dd = jeopardyCurrentDd();
+  if (dd) dd.done = true;
   renderJeopardyClueOverlay();
-  jeopardyBuzzPrepare();
+  // KEIN jeopardyBuzzPrepare: beim Daily Double antwortet nur das Team, das
+  // das Feld gewählt hat. Ein offener Buzzer würde die anderen einladen.
+  jeopardyBuzzClose();
   updateGamemaster();
 }
 
@@ -5092,7 +5164,10 @@ function jeopardyRevealQuestion() {
   renderJeopardyClueOverlay();
   // Schätzfragen laufen nicht über den Buzzer: statt zu armen wird auf den
   // Handys das Eingabefeld geöffnet und eingesammelt.
+  // Das Daily Double ebenso wenig - dort antwortet ausschliesslich das Team,
+  // das das Feld gewählt hat, ein scharfer Buzzer würde die anderen einladen.
   if (jeopardyCurrentClue() && jeopardyCurrentClue().estimate) jeopardyEstimateOpen();
+  else if (jeopardyState.currentIsDaily) jeopardyBuzzClose();
   else jeopardyBuzzArm();
   updateGamemaster();
 }
@@ -5790,7 +5865,7 @@ function renderFeudBuzzer(){
 const GM_REMOTE_ALLOWED_FNS = new Set([
   'addStrike','assignPlayerTeam','feudBuzzToggleHidden','feudSetStartTeam','feudToggleMedia','finaleMarkMiss','finaleNextReveal',
   'finalePickAnswer','gmAdvance','gmSkipTutorial',
-  'jeopardyAnnounceDaily','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
+  'jeopardyAnnounceDaily','jeopardySetDdTeam','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySeriesReveal','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','jeopardyWrongReopen','nextRound','openJeopardyClue',
   'jeopardyEstimateOpen','jeopardyEstimateClose','jeopardyEstimateReopen',
@@ -6151,14 +6226,16 @@ function jeopardyToggleAnswer() {
 
 function jeopardyScore(teamIdx) {
   if (!jeopardyState.currentClue) return;
+  if (!jeopardyTeamMayAnswer(teamIdx)) return;
   jeopardySnapshot();
   const { col, row } = jeopardyState.currentClue;
-  const val = JEOPARDY_VALUES[row];
+  const val = jeopardyClueValue();
   jeopardyState.scores[teamIdx] += val;
   jeopardyState.used[col][row] = true;
   jeopardyState.currentClue = null;
   jeopardyState.answerShown = false;
   jeopardyState.currentIsDaily = false;
+  jeopardyState.ddTeam = null;
   jeopardyState.ddPending = false;
   jeopardyState.questionRevealed = false;
   SFX.correct();
@@ -6174,9 +6251,9 @@ function jeopardyScore(teamIdx) {
 // Deduct HALF the question value on a wrong answer
 function jeopardyDeduct(teamIdx) {
   if (!jeopardyState.currentClue) return;
+  if (!jeopardyTeamMayAnswer(teamIdx)) return;
   jeopardySnapshot();
-  const { row } = jeopardyState.currentClue;
-  jeopardyState.scores[teamIdx] -= Math.round(JEOPARDY_VALUES[row] / 2);
+  jeopardyState.scores[teamIdx] -= jeopardyDeductValue();
   SFX.wrong();
   renderJeopardyScores();
   updateGamemaster();
@@ -6205,6 +6282,7 @@ function jeopardySkip() {
   jeopardyState.currentClue = null;
   jeopardyState.answerShown = false;
   jeopardyState.currentIsDaily = false;
+  jeopardyState.ddTeam = null;
   jeopardyState.ddPending = false;
   jeopardyState.questionRevealed = false;
   jeopardyStopSound(true);
