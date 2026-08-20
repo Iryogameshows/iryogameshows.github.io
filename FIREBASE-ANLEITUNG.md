@@ -78,6 +78,6 @@ Diese Werte sind **öffentliche Client-Daten** — bei Firebase ist das so vorge
 
 ## Danach
 Sobald du mir den Block gibst, baue ich den Buzzer so ein, dass:
-- Handys einfach **`deinspiel.netlify.app/buzzer`** öffnen (kein Server, kein WLAN-Zwang),
+- Handys einfach **`iryogameshows.github.io/buzzer`** öffnen (kein Server, kein WLAN-Zwang),
 - die Eck-Anzeige die Reihenfolge + Zeit (2 Nachkommastellen) live zeigt,
 - der lokale Node-Server nur noch als Offline-Notlösung bleibt.

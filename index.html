@@ -3256,7 +3256,7 @@ function buildScoreboard() {
   `).join('');
 }
 
-// Flow: Star → Welcome → Tutorial → Coin/Carousel → Black pause → Welcome2 → Game
+// Flow: Star → Welcome → Tutorial → Black pause → Welcome2 → Game
 function showIntro() {
   const overlay = document.createElement('div');
   overlay.className = 'intro-overlay';
@@ -5301,6 +5301,11 @@ const FIREBASE_CONFIG = {
   appId: "1:589064661958:web:1c1024eab161ad8e53e0c7",
 };
 const BUZZER_URL = localStorage.getItem('buzzerUrl') || 'http://localhost:3777';
+// Wo die Seite oeffentlich liegt. Wird nur gebraucht, wenn index.html lokal per
+// Doppelklick geoeffnet wurde - dann gibt es kein location.origin, aus dem sich
+// die Buzzer-Adresse fuer den QR-Code ableiten liesse.
+const SITE_URL = 'https://iryogameshows.github.io';
+const BUZZER_FALLBACK_URL = SITE_URL + '/buzzer';
 let jeopardyBuzzer = {
   armed: false, start: 0, results: [], keys: ['a', 'l', 'b'],
   connected: false, joinUrl: '', es: null, mode: 'none', fbRef: null, round: 0,
@@ -5349,7 +5354,6 @@ function buzzerBroadcastTeams(names){
 // überleben Disconnects UND das Ende eines Spiels. Ein neues Spiel setzt sie
 // NICHT mehr automatisch zurück; der Host tut das explizit über einen der
 // drei "Teams zurücksetzen"-Buttons (Lobby-Panel, Spielerübersicht, GM-Panel).
-function buzzerResetTeamAssignments(){ resetAllPlayerTeams(true); }
 // Vom GM-Fenster, Setup-Screen oder der Spielerübersicht aufgerufen: weist
 // einen Spieler (per Account-Key) einem Team zu. Presence wird als schnelle
 // Kopie mitgeschrieben (falls der Spieler gerade online ist).
@@ -5442,7 +5446,7 @@ function jeopardyBuzzConnect(){
     jeopardyBuzzer.mode = 'firebase';
     jeopardyBuzzer.connected = true;
     const origin = (location.origin && location.origin !== 'null') ? location.origin : '';
-    jeopardyBuzzer.joinUrl = origin ? origin + '/buzzer' : '(deine Netlify-Seite)/buzzer';
+    jeopardyBuzzer.joinUrl = origin ? origin + '/buzzer' : BUZZER_FALLBACK_URL;
     // Sauberer Start: Board ist sichtbar, also muss der Buzzer beim Verbinden
     // deaktiviert sein - auch wenn von einer vorherigen Session noch "live"
     // in Firebase hängengeblieben ist.
@@ -5547,7 +5551,7 @@ function feudBuzzConnect(){
   feudBuzzer.connected = true;
   feudBuzzer.fbRef = firebase.database().ref('buzzer');
   const origin = (location.origin && location.origin !== 'null') ? location.origin : '';
-  feudBuzzer.joinUrl = origin ? origin + '/buzzer' : '(deine Netlify-Seite)/buzzer';
+  feudBuzzer.joinUrl = origin ? origin + '/buzzer' : BUZZER_FALLBACK_URL;
   // Sauberer Start: neue Runde beginnt immer mit deaktiviertem Buzzer.
   feudBuzzer.fbRef.update({ live: false, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
   feudBuzzer.fbRef.on('value', (snap) => {
@@ -5973,7 +5977,7 @@ function showJeopardyQR(){
   ov.innerHTML = `<div class="qr-card">
     <div class="qr-title">Scan zum Mitspielen</div>
     <div id="qr-box"></div>
-    <div class="qr-url">${url || '(Seite lokal geöffnet — bitte über die Netlify-URL öffnen)'}</div>
+    <div class="qr-url">${url || '(Seite lokal geöffnet — bitte über ' + SITE_URL + ' öffnen)'}</div>
     <div class="qr-hint">Klicken zum Schließen</div>
   </div>`;
   document.body.appendChild(ov);
