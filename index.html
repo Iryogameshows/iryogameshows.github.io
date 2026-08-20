@@ -683,7 +683,12 @@ body {
 .q-btns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .q-btns .btn { padding: 6px 14px; font-size: .7rem; }
 .player-row { flex-wrap: wrap; row-gap: 8px; }
-.player-row .q-btns { flex: 1 0 auto; }
+/* flex-shrink war 0: der Knopfblock konnte damit nie schmaler werden als seine
+   sechs Knöpfe nebeneinander, sein eigenes flex-wrap kam nie zum Zug und die
+   Spielerübersicht lief auf schmalen Fenstern um 150px über. min-width:0 hebt
+   zusätzlich die automatische Mindestbreite von Flex-Elementen auf. */
+.player-row .q-btns { flex: 1 1 auto; min-width: 0; }
+.player-row .q-label { min-width: 0; }
 .edit-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
 /* ── RESULT ── */
@@ -5111,7 +5116,7 @@ function jeopardyEstimateOpen(){
   if (!clue) return;
   const r = jeopardyEstimateRef();
   jeopardyEstimate.open = true;
-  jeopardyEstimate.round++;
+  jeopardyEstimate.round = nextRoundId(jeopardyEstimate.round);
   jeopardyEstimate.answers = [];
   jeopardyEstimate.question = clue.q || '';
   if (r) r.set({ active:true, round:jeopardyEstimate.round, question:jeopardyEstimate.question, answers:null }).catch(()=>{});
@@ -5461,6 +5466,17 @@ function renderSetupLobby(game){
 // seine Seite neu, ging deshalb das komplette Gamemaster-HTML erneut nach
 // Firebase und das Handy-Panel des Hosts baute sich neu auf.
 // Feud und Jeopardy hatten dafür zwei fast identische Kopien dieses Blocks.
+// Rundennummer für Buzzer, Schätzfrage und Abstimmung. Die Handys setzen ihre
+// Sperre ("schon gebuzzert/abgegeben/gewählt") zurück, sobald diese Zahl sich
+// ÄNDERT - sie muss also nur eindeutig sein, nicht fortlaufend.
+// Vorher war es ein Zähler, der bei 0 startete. Lud der Host seine Seite mitten
+// in der Show neu, fing er wieder von vorn an: die nächste Runde bekam erneut
+// die 1, und jedes Handy, das die 1 schon gesehen hatte, hielt seine Sperre
+// weiter - der Spieler konnte nicht mehr buzzern und niemand wusste warum.
+// Die Uhrzeit ist über Neuladen und Geräte hinweg eindeutig; das Maximum
+// verhindert Gleichstand bei zwei Runden in derselben Millisekunde.
+function nextRoundId(prev){ return Math.max(Date.now(), (prev || 0) + 1); }
+
 function attachBuzzerGameListeners(bz, label, render, onFirstBuzz){
   let armStart = 0, armStartKnown = false, raw = {};
   const refresh = () => { render(); updateGamemaster(); };
@@ -5682,7 +5698,7 @@ function feudBuzzDisconnect(){
 
 // Neue Runde geladen, Frage noch verdeckt - Buzzer live, aber noch nicht scharf
 function feudBuzzPrepare(){
-  feudBuzzer.round++;
+  feudBuzzer.round = nextRoundId(feudBuzzer.round);
   feudBuzzer.excluded = [];
   feudBuzzer.poppedForQuestion = false;
   if (feudBuzzer.fbRef) feudBuzzer.fbRef.update({ round: feudBuzzer.round, live: true, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
@@ -5872,7 +5888,7 @@ function startGmRemoteCommandListener() {
 
 // Question loaded but NOT armed yet — buzzers are live, an early buzz = penalty
 function jeopardyBuzzPrepare(){
-  jeopardyBuzzer.round++; // neue Frage → neue Runde (setzt Sperren der Handys zurück)
+  jeopardyBuzzer.round = nextRoundId(jeopardyBuzzer.round); // neue Frage → Sperren zurücksetzen
   jeopardyBuzzer.excluded = [];
   jeopardyBuzzer.poppedForQuestion = false; // Anzeige wieder verdeckt, bis jemand buzzert
   if (jeopardyBuzzer.mode === 'firebase' && jeopardyBuzzer.fbRef){
@@ -5910,7 +5926,7 @@ function jeopardyBuzzReopen(){
     const firstName = jeopardyBuzzer.results[0].name;
     if (!jeopardyBuzzer.excluded.includes(firstName)) jeopardyBuzzer.excluded.push(firstName);
   }
-  jeopardyBuzzer.round++;
+  jeopardyBuzzer.round = nextRoundId(jeopardyBuzzer.round);
   if (jeopardyBuzzer.mode === 'firebase' && jeopardyBuzzer.fbRef){
     const excludedObj = {};
     jeopardyBuzzer.excluded.forEach(n => excludedObj[n] = true);
@@ -7934,7 +7950,7 @@ function ddfBeginVote(candidates){
   ddfState.votes = {};
   ddfState.hostVotes = {};
   ddfState.runoff = candidates ? cands.map(p => p.name) : null;
-  ddfVoteRound++;
+  ddfVoteRound = nextRoundId(ddfVoteRound);
 
   ddfDetachVotes();
   ddfVoteRefInit();
@@ -8125,17 +8141,21 @@ function renderDdfEditor(){
   const box = document.getElementById('ddf-editor');
   if (!box) return;
 
-  const fieldCss = 'padding:8px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;';
+  // min-width:0 ist hier entscheidend: ein Flex-Element bekommt sonst
+  // min-width:auto und darf nicht unter seine Eigenbreite schrumpfen. Ein
+  // input ist von Haus aus rund 200px breit, zwei davon nebeneinander sprengen
+  // deshalb jedes schmale Fenster - der Editor lief um 151px über.
+  const fieldCss = 'min-width:0;padding:8px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;';
   const noteCss  = 'width:100%;margin-top:8px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;';
   const sectCss  = 'display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:0 0 4px;';
 
   const cards = ddfData.questions.map((q,i) => `
     <div class="ddf-card">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
         <span style="color:#FFD23F;font-weight:700;font-size:.8rem;width:26px;flex-shrink:0;">${i+1}.</span>
-        <input type="text" value="${escAttr(q.q)}" placeholder="Frage / Aufgabe" style="flex:2;${fieldCss}"
+        <input type="text" value="${escAttr(q.q)}" placeholder="Frage / Aufgabe" style="flex:2 1 180px;${fieldCss}"
                oninput="ddfData.questions[${i}].q=this.value; ddfSave()">
-        <input type="text" value="${escAttr(q.answer)}" placeholder="Antwort" style="flex:1;${fieldCss}"
+        <input type="text" value="${escAttr(q.answer)}" placeholder="Antwort" style="flex:1 1 120px;${fieldCss}"
                oninput="ddfData.questions[${i}].answer=this.value; ddfSave()">
         <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;flex-shrink:0;"
                 onclick="ddfDeleteQuestion(${i})" title="Frage löschen">🗑</button>
