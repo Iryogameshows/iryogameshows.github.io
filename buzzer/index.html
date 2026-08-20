@@ -17,7 +17,9 @@
   .btn{width:100%;max-width:320px;padding:14px 18px;border-radius:12px;border:none;background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;font-size:1.05rem;font-weight:800;cursor:pointer;letter-spacing:.5px;}
   .btn.ghost{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);}
   .btn:active{transform:translateY(2px);}
-  #buzz{width:80vw;max-width:340px;height:80vw;max-height:340px;border-radius:50%;border:none;font-size:2.4rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#fff;cursor:pointer;transition:transform .06s,filter .15s,background .3s;background:radial-gradient(circle at 50% 35%,var(--buzz-light,#FF6B5E),var(--buzz-mid,#E8453C) 65%,var(--buzz-dark,#B8241C));box-shadow:0 12px 0 var(--buzz-shadow,#7a140e),0 18px 40px rgba(0,0,0,.5);-webkit-appearance:none;appearance:none;}
+  /* touch-action: der Browser wartet sonst kurz ab, ob ein Doppeltipp zum
+     Zoomen folgt - beim Buzzern zählt jede Millisekunde. */
+  #buzz{touch-action:manipulation;width:80vw;max-width:340px;height:80vw;max-height:340px;border-radius:50%;border:none;font-size:2.4rem;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:#fff;cursor:pointer;transition:transform .06s,filter .15s,background .3s;background:radial-gradient(circle at 50% 35%,var(--buzz-light,#FF6B5E),var(--buzz-mid,#E8453C) 65%,var(--buzz-dark,#B8241C));box-shadow:0 12px 0 var(--buzz-shadow,#7a140e),0 18px 40px rgba(0,0,0,.5);-webkit-appearance:none;appearance:none;}
   #buzz:active{transform:translateY(8px);box-shadow:0 4px 0 var(--buzz-shadow,#7a140e),0 8px 20px rgba(0,0,0,.5);}
   #buzz:disabled{filter:grayscale(.7) brightness(.7);cursor:default;box-shadow:0 12px 0 #333,0 18px 40px rgba(0,0,0,.4);}
   #status{font-size:1rem;font-weight:700;min-height:24px;text-align:center;color:#FFD23F;}
@@ -51,7 +53,20 @@
   }
   .vote-opt:active { transform:scale(.98); }
   .vote-opt .av { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex:0 0 34px; }
+
+  /* Verbindungsbanner: liegt fest oben und schiebt nichts, damit der Buzzer
+     nicht springt, wenn das WLAN kurz wegbricht. */
+  #conn{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    padding:8px 12px;text-align:center;font-size:.8rem;font-weight:800;letter-spacing:.5px;
+    background:#B8241C;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.45);
+    transform:translateY(-100%);transition:transform .25s ease;
+  }
+  #conn.show{transform:none;}
+  #conn.back{background:#15803D;}
 </style></head><body>
+
+  <div id="conn"></div>
 
   <div class="topbar" id="topbar" style="display:none;">
     <button class="icon-btn" onclick="openProfile()" title="Profil">⚙️</button>
@@ -232,6 +247,7 @@
     pickRandomLobbyGif();
     startPresence();
     subscribeAccount();
+    keepAwake();
     refreshRoot();
   }
   function logout(){
@@ -266,6 +282,7 @@
   const hint = document.getElementById('hint');
   const teamChip = document.getElementById('team-chip');
   let live=false, armed=false, buzzedThisRound=false, lastRound=0, results=[], lockUntil=0, excludedSet={};
+  let online=false, buzzFailed=false;
   let myTeam=null, teamNames=[], presenceCount=0, joinLocked=false, lockedNames=[];
   let estActive=false, estQuestion='', estRound=0, estSubmitted=false;
 
@@ -342,8 +359,12 @@
     refreshBuzz();
   }
   function refreshBuzz(){
-    buzz.disabled = !(live && !buzzedThisRound && !locked() && !amExcluded());
-    if (amExcluded()) { status.textContent='Für diese Frage gesperrt 🚫'; status.style.color='#FF6B6B'; }
+    buzz.disabled = !(online && live && !buzzedThisRound && !locked() && !amExcluded());
+    // Ohne Verbindung landet ein Buzz nirgends. Lieber ehrlich sperren als
+    // den Knopf bunt lassen und den Spieler ins Leere drücken lassen.
+    if (!online) { status.textContent='Keine Verbindung …'; status.style.color='#FF6B6B'; }
+    else if (buzzFailed) { status.textContent='Buzz kam nicht an — nochmal!'; status.style.color='#FF6B6B'; }
+    else if (amExcluded()) { status.textContent='Für diese Frage gesperrt 🚫'; status.style.color='#FF6B6B'; }
     else if (locked()) { status.textContent='Zu früh! Gesperrt '+Math.ceil((lockUntil-Date.now())/1000)+'s'; status.style.color='#FF6B6B'; }
     else if (buzzedThisRound) { status.textContent='Gebuzzert! ✔'; status.style.color='#22C55E'; }
     else if (armed) { status.textContent='BEREIT — jetzt buzzern!'; status.style.color='#FFD23F'; }
@@ -353,24 +374,55 @@
     hint.textContent = pos >= 0 ? ('Platz ' + (pos+1)) : '';
   }
 
-  buzz.addEventListener('click', () => {
+  // pointerdown statt click: click feuert erst beim LOSLASSEN des Fingers.
+  // Bei einem Wettrennen um Millisekunden ist das der Unterschied zwischen
+  // gewonnen und verloren - und wer den Finger liegen lässt, verliert sonst
+  // gegen den, der nur antippt. Die Reihenfolge entscheidet ohnehin der
+  // Server-Zeitstempel, das Handy kann also nicht schummeln.
+  buzz.addEventListener('pointerdown', (e) => {
     if (buzz.disabled) return;
+    // Nur der erste Finger und die linke Maustaste - ein zweiter Finger auf
+    // dem Knopf oder ein Rechtsklick soll nicht mitbuzzern.
+    if (e.isPrimary === false || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    e.preventDefault();
     if (!armed) { lockUntil = Date.now()+3000; if(navigator.vibrate)navigator.vibrate([40,60,40]); refreshBuzz(); return; }
-    buzzedThisRound = true; refreshBuzz();
-    ref.child('buzzes').push({ name: myName(), account: acc.key, ts: TS, team: myTeam }).catch(()=>{});
+    buzzedThisRound = true; buzzFailed = false; refreshBuzz();
+    ref.child('buzzes').push({ name: myName(), account: acc.key, ts: TS, team: myTeam })
+      .catch(() => {
+        // Sonst steht "Gebuzzert! ✔" auf dem Handy, während beim Host nichts
+        // ankam - der schlimmste denkbare Zustand mitten im Spiel.
+        buzzedThisRound = false; buzzFailed = true;
+        if (navigator.vibrate) navigator.vibrate([80,50,80]);
+        refreshBuzz();
+      });
     if (navigator.vibrate) navigator.vibrate(60);
   });
 
-  ref.on('value', (snap) => {
-    const v = snap.val() || {};
-    live=!!v.live; armed=!!v.armed; excludedSet=v.excluded||{};
-    const round=v.round||0;
-    if (round!==lastRound){ lastRound=round; buzzedThisRound=false; lockUntil=0; }
-    const seen={};
-    results = Object.values(v.buzzes||{}).filter(b=>b&&b.name&&b.ts).sort((a,b)=>a.ts-b.ts).filter(b=>{if(seen[b.name])return false;seen[b.name]=1;return true;});
-    if (results.some(b=>b.name===myName())) buzzedThisRound=true;
+  // Gezielt auf die einzelnen Spielfelder hören statt auf den ganzen
+  // buzzer-Knoten. Ein Sammel-Listener auf /buzzer hätte drei Nachteile:
+  // er lädt buzzer/players mit ALLEN Accounts (inklusive PIN-Hashes) auf
+  // jedes Spielerhandy, er feuert bei jeder fremden Änderung (Presence,
+  // Abstimmung, Schätzung) neu, und er überträgt bei jedem Buzz erneut
+  // den kompletten Teilbaum statt nur der Buzz-Liste.
+  let rawBuzzes = {};
+  function recomputeResults(){
+    const seen = {};
+    results = Object.values(rawBuzzes)
+      .filter(b => b && b.name && b.ts)
+      .sort((a,b) => a.ts - b.ts)
+      .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; });
+    if (results.some(b => b.name === myName())) buzzedThisRound = true;
+  }
+  ref.child('live').on('value', s => { live = !!s.val(); refreshBuzz(); });
+  ref.child('armed').on('value', s => { armed = !!s.val(); refreshBuzz(); });
+  ref.child('excluded').on('value', s => { excludedSet = s.val() || {}; refreshBuzz(); });
+  ref.child('round').on('value', s => {
+    const round = s.val() || 0;
+    if (round !== lastRound){ lastRound = round; buzzedThisRound = false; lockUntil = 0; buzzFailed = false; }
+    recomputeResults();
     refreshBuzz();
   });
+  ref.child('buzzes').on('value', s => { rawBuzzes = s.val() || {}; recomputeResults(); refreshBuzz(); });
   // ── SCHÄTZFRAGE ──
   // Der Host öffnet/schließt sie über buzzer/estimate. Jede neue Schätzfrage
   // bekommt eine eigene round, damit die Sperre pro Frage zurückgesetzt wird.
@@ -472,16 +524,71 @@
   ref.child('lockedNames').on('value', s => { lockedNames = s.val()||[]; refreshRoot(); });
   db.ref('buzzer/presence').on('value', s => { presenceCount = Object.keys(s.val()||{}).length; refreshRoot(); });
 
-  // ── Presence (per Account) + Team (aus dem Account) ──
+  // ── Verbindung ──
+  // Ein einziger .info/connected-Listener für alles: Banner, Buzzer-Sperre und
+  // das Neuanmelden der Presence. Früher hing der Listener in startPresence()
+  // und wurde bei jedem Login erneut angehängt.
+  // Deklaration bewusst VOR dem .info/connected-Listener: der greift auf
+  // presenceRef zu, und eine let-Variable ist bis zu ihrer Zeile nicht nutzbar.
   let presenceRef = null;
+  // Firebase meldet beim Laden erst "nicht verbunden" und baut die Verbindung
+  // dann auf. Ohne Schonfrist blitzt deshalb bei JEDEM Start eine Fehlermeldung
+  // auf - und eine Warnung, die immer kommt, sieht man irgendwann nicht mehr.
+  let everOffline = false, connectedOnce = false, inGrace = true, connBackTimer = null;
+  const graceTimer = setTimeout(() => { inGrace = false; setConnBanner(); }, 2500);
+  function setConnBanner(){
+    const el = document.getElementById('conn');
+    clearTimeout(connBackTimer);
+    if (!online){
+      if (inGrace) { el.classList.remove('show'); return; }
+      el.textContent = connectedOnce
+        ? '⚠ Verbindung verloren — Buzzer gesperrt'
+        : '⚠ Keine Verbindung — Internet prüfen';
+      el.classList.remove('back'); el.classList.add('show');
+    } else if (everOffline){
+      el.textContent = '✔ Wieder verbunden';
+      el.classList.add('back', 'show');
+      connBackTimer = setTimeout(() => el.classList.remove('show'), 2200);
+    } else {
+      el.classList.remove('show');
+    }
+  }
+  db.ref('.info/connected').on('value', s => {
+    online = s.val() === true;
+    if (online) { connectedOnce = true; inGrace = false; clearTimeout(graceTimer); }
+    else if (connectedOnce) everOffline = true;
+    setConnBanner();
+    refreshBuzz();
+    // Nach einem Verbindungsabriss ist der Presence-Eintrag durch onDisconnect
+    // geloescht - er muss neu gesetzt werden, sonst faellt der Spieler beim
+    // Host aus der Lobby, obwohl er wieder da ist.
+    if (online && acc && presenceRef) registerPresence();
+  });
+
+  // ── Bildschirm wachhalten ──
+  // Ein gesperrtes Handy verpasst den Buzz. Das Wake Lock geht beim Wechsel in
+  // den Hintergrund automatisch verloren und wird beim Zurueckkommen erneuert.
+  let wakeLock = null;
+  async function keepAwake(){
+    try {
+      if ('wakeLock' in navigator && !wakeLock){
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && acc) keepAwake();
+  });
+
+  // ── Presence (per Account) + Team (aus dem Account) ──
+  function registerPresence(){
+    presenceRef.onDisconnect().remove();
+    if (nameAllowed()) presenceRef.set({ name: acc.name, account: acc.key, avatar: acc.avatar, color: acc.color, team: myTeam, ts: TS });
+  }
   function startPresence(){
     presenceRef = db.ref('buzzer/presence/' + acc.key);
-    db.ref('.info/connected').on('value', s => {
-      if (s.val() === true && acc){
-        presenceRef.onDisconnect().remove();
-        if (nameAllowed()) presenceRef.set({ name: acc.name, account: acc.key, avatar: acc.avatar, color: acc.color, ts: TS });
-      }
-    });
+    if (online) registerPresence();
   }
   function subscribeAccount(){
     db.ref('buzzer/players/'+acc.key+'/team').on('value', s => {
@@ -499,7 +606,21 @@
       acc = { key: saved.key, name: saved.name, avatar: saved.avatar || AVATARS[0], color: saved.color || COLORS[0] };
       document.getElementById('topbar').style.display = 'flex';
       pickRandomLobbyGif();
-      startPresence(); subscribeAccount(); refreshRoot();
+      startPresence(); subscribeAccount(); keepAwake(); refreshRoot();
+      // Wurde der Account beim Aufräumen geloescht, hing das Handy sonst als
+      // Karteileiche in der Lobby: angemeldet, aber beim Host nicht vorhanden.
+      // Nur bei einer eindeutigen Antwort abmelden - ein Netzfehler darf
+      // niemanden mitten im Spiel rauswerfen.
+      db.ref('buzzer/players/' + saved.key).get()
+        .then(s => {
+          if (s.exists()) return;
+          try { localStorage.removeItem('buzzAccount'); } catch {}
+          acc = null;
+          document.getElementById('topbar').style.display = 'none';
+          showScreen('screen-login');
+          document.getElementById('login-err').textContent = 'Dieser Account gibt es nicht mehr — bitte neu anmelden.';
+        })
+        .catch(() => {});
     } else {
       showScreen('screen-login');
     }

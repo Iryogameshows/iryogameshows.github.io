@@ -1964,10 +1964,18 @@ const SFX = (() => {
     o.connect(g); g.connect(c.destination);
     o.start(c.currentTime + start); o.stop(c.currentTime + start + dur + 0.05);
   }
-  let enabled = localStorage.getItem('sfxEnabled') !== 'off';
+  // Abgesichert, weil das hier beim Laden auf oberster Ebene läuft: wirft
+  // localStorage (Datei per Doppelklick geöffnet, Speicher gesperrt), stirbt
+  // sonst der komplette Skriptblock und es startet gar nichts mehr.
+  let enabled = true;
+  try { enabled = localStorage.getItem('sfxEnabled') !== 'off'; } catch {}
   return {
     get enabled(){ return enabled; },
-    toggle(){ enabled = !enabled; localStorage.setItem('sfxEnabled', enabled ? 'on' : 'off'); return enabled; },
+    toggle(){
+      enabled = !enabled;
+      try { localStorage.setItem('sfxEnabled', enabled ? 'on' : 'off'); } catch {}
+      return enabled;
+    },
     buzz(){ if(!enabled) return; tone(880, 0, .09, 'square', .12); },
     point(){ if(!enabled) return; tone(660, 0, .07, 'triangle', .14); tone(990, .06, .09, 'triangle', .12); },
     correct(){ if(!enabled) return; tone(523, 0, .11, 'triangle', .16); tone(659, .09, .11, 'triangle', .16); tone(880, .18, .18, 'triangle', .16); },
@@ -2670,7 +2678,7 @@ function renderReactionBoard(){
   const medals = ['🥇','🥈','🥉'];
   list.innerHTML = reactionBoard.slice(0, 30).map((r, i) => `
     <div class="q-list-item">
-      <span class="q-label"><span class="q-num">${medals[i] || (i+1)+'.'}</span>${r.name}<span class="q-meta">${r.game}</span></span>
+      <span class="q-label"><span class="q-num">${medals[i] || (i+1)+'.'}</span>${escapeHtml(r.name)}<span class="q-meta">${escapeHtml(r.game)}</span></span>
       <span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#FFD23F;">${r.t.toFixed(2)}s</span>
     </div>`).join('');
 }
@@ -2685,7 +2693,7 @@ function renderResultLeaderboard(){
   const medals = ['🥇','🥈','🥉'];
   el.querySelector('.q-list').innerHTML = reactionBoard.slice(0, 10).map((r, i) => `
     <div class="q-list-item">
-      <span class="q-label"><span class="q-num">${medals[i] || (i+1)+'.'}</span>${r.name}<span class="q-meta">${r.game}</span></span>
+      <span class="q-label"><span class="q-num">${medals[i] || (i+1)+'.'}</span>${escapeHtml(r.name)}<span class="q-meta">${escapeHtml(r.game)}</span></span>
       <span style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#FFD23F;">${r.t.toFixed(2)}s</span>
     </div>`).join('');
 }
@@ -4237,7 +4245,7 @@ function updateGamemaster() {
 
   const feudPresenceCount = feudBuzzer.presence.length;
   const feudPresenceRows = feudBuzzer.presence.length
-    ? feudBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, state.teamNames, 'opener.')}</div>`).join('')
+    ? feudBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${escapeHtml(p.name)}</span>${playerTeamButtonsHtml(p, state.teamNames, 'opener.')}</div>`).join('')
     : `<div class="pr-empty">Noch niemand verbunden</div>`;
   const feudConnChip = feudBuzzer.connected
     ? `<span class="chip chip-ok">● Server verbunden</span>`
@@ -4261,7 +4269,7 @@ function updateGamemaster() {
       <summary class="panel-head"><span>🔔 Buzzer-Duell</span>${feudConnChip}<span class="car">▸</span></summary>
       <div style="margin-top:8px;">
       ${feudBuzzer.results.length
-        ? feudBuzzer.results.map((r,idx) => `<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${r.name}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')
+        ? feudBuzzer.results.map((r,idx) => `<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${escapeHtml(r.name)}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')
         : `<div class="hint-line">🔔 Buzzer ${feudBuzzer.armed?'scharf — warte auf Buzz…':'aus'}</div>`}
       <div class="panel-row" style="margin-top:8px;">
         ${state.teamNames.map((name,i) => `<button class="gm-btn gray sm" onclick="opener.feudSetStartTeam(${i})">→ ${name} beginnt</button>`).join('')}
@@ -4426,7 +4434,7 @@ function updateGamemasterJeopardy() {
   // ── Verbunden-Panel (Presence) + Steuerung — immer sichtbar, unabhängig vom Frage-Status ──
   const presenceCount = jeopardyBuzzer.presence.length;
   const presenceRows = jeopardyBuzzer.presence.length
-    ? jeopardyBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${p.name}</span>${playerTeamButtonsHtml(p, jeopardyState.teamNames, 'opener.')}</div>`).join('')
+    ? jeopardyBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${escapeHtml(p.name)}</span>${playerTeamButtonsHtml(p, jeopardyState.teamNames, 'opener.')}</div>`).join('')
     : `<div class="pr-empty">Noch niemand verbunden</div>`;
   const connChip = jeopardyBuzzer.connected
     ? `<span class="chip chip-ok">● Server verbunden</span>`
@@ -4537,7 +4545,7 @@ function updateGamemasterJeopardy() {
       : jeopardyBuzzer.results.length
       ? `<div class="panel">
           <div class="panel-head"><span>🔔 Buzzer-Reihenfolge</span></div>
-          ${jeopardyBuzzer.results.map((r,idx)=>`<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${r.name}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')}
+          ${jeopardyBuzzer.results.map((r,idx)=>`<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${escapeHtml(r.name)}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')}
           ${excludedTag}
         </div>`
       : `<div class="hint-line">🔔 Buzzer ${jeopardyBuzzer.armed?'scharf — warte auf Buzz…':'aus'} ${connChip}${excludedTag}</div>`;
@@ -5140,9 +5148,9 @@ function jeopardyEstimateListHtml(){
     const col = (typeof a.team === 'number' && hex[a.team]) ? hex[a.team] : 'rgba(255,255,255,.5)';
     const teamName = (typeof a.team === 'number' && jeopardyState.teamNames[a.team]) || '';
     return `<div class="answer" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);">
-      <span><span class="num">${i+1}.</span> <span class="text">${a.name}</span>
-        ${teamName ? `<span style="color:${col};font-size:.68rem;font-weight:700;"> ● ${teamName}</span>` : ''}</span>
-      <span class="pts">${String(a.value)}</span>
+      <span><span class="num">${i+1}.</span> <span class="text">${escapeHtml(a.name)}</span>
+        ${teamName ? `<span style="color:${col};font-size:.68rem;font-weight:700;"> ● ${escapeHtml(teamName)}</span>` : ''}</span>
+      <span class="pts">${escapeHtml(String(a.value))}</span>
     </div>`;
   }).join('');
 }
@@ -5300,7 +5308,11 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "589064661958",
   appId: "1:589064661958:web:1c1024eab161ad8e53e0c7",
 };
-const BUZZER_URL = localStorage.getItem('buzzerUrl') || 'http://localhost:3777';
+// Auch das läuft beim Laden auf oberster Ebene - siehe SFX weiter oben.
+const BUZZER_URL = (() => {
+  try { return localStorage.getItem('buzzerUrl') || 'http://localhost:3777'; }
+  catch { return 'http://localhost:3777'; }
+})();
 // Wo die Seite oeffentlich liegt. Wird nur gebraucht, wenn index.html lokal per
 // Doppelklick geoeffnet wurde - dann gibt es kein location.origin, aus dem sich
 // die Buzzer-Adresse fuer den QR-Code ableiten liesse.
@@ -5387,8 +5399,10 @@ function playerTeamButtonsHtml(p, teamNames, prefix){
   prefix = prefix || '';
   return teamNames.map((name, i) => `<button class="pr-team-btn ${p.team===i?'active':''}" onclick="${prefix}assignPlayerTeam('${p.id}',${i})">${name}</button>`).join('');
 }
+// Avatar und Farbe stammen aus fremden Accounts und landen hier in einem
+// style-Attribut bzw. im Markup - beides muss escaped werden.
 function playerAvatarHtml(p){
-  return `<span class="pmini-av" style="background:${p.color||'#888'};">${p.avatar||'👤'}</span>`;
+  return `<span class="pmini-av" style="background:${escAttr(p.color||'#888')};">${escapeHtml(p.avatar||'👤')}</span>`;
 }
 
 // Rendert die Lobby-Liste direkt auf dem Setup-Screen (nicht im GM-Popup) -
@@ -5426,7 +5440,7 @@ function renderSetupLobby(game){
         const teamTag = (p.team !== undefined && p.team !== null)
           ? `<span class="player-team-tag" style="background:${teamTagColors[p.team]||'#888'}22;color:${teamTagColors[p.team]||'#888'};">${teamNames[p.team] || ('Team '+(p.team+1))}</span>`
           : `<span class="player-team-tag" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);">kein Team</span>`;
-        return `<div class="pr-row"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${p.name}</span>${teamTag}</div>`;
+        return `<div class="pr-row"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${escapeHtml(p.name)}</span>${teamTag}</div>`;
       }).join('')
     : `<div class="pr-empty">Noch niemand verbunden — QR-Code scannen zum Beitreten</div>`;
   container.innerHTML = `
@@ -5438,6 +5452,41 @@ function renderSetupLobby(game){
       <button class="btn btn-primary" onclick="openPlayersScreen('${cfg.screen}')">👥 Teams zuteilen</button>
       <button class="btn btn-secondary" onclick="resetAllTeams()">↺ Teams zurücksetzen</button>
     </div>`;
+}
+
+// Hängt die Spiel-Listener eines Buzzer-Kontexts an - gezielt auf die einzelnen
+// Felder statt auf den ganzen /buzzer-Knoten. Der enthält nämlich auch players
+// (sämtliche Accounts inklusive PIN-Hashes) und presence. Ein Listener darauf
+// lud all das mit und feuerte bei JEDER fremden Änderung: lud ein Spieler nur
+// seine Seite neu, ging deshalb das komplette Gamemaster-HTML erneut nach
+// Firebase und das Handy-Panel des Hosts baute sich neu auf.
+// Feud und Jeopardy hatten dafür zwei fast identische Kopien dieses Blocks.
+function attachBuzzerGameListeners(bz, label, render, onFirstBuzz){
+  let armStart = 0, armStartKnown = false, raw = {};
+  const refresh = () => { render(); updateGamemaster(); };
+  const apply = () => {
+    // Ohne armStart wäre die Reaktionszeit gegen 0 gerechnet - das landet in
+    // der Bestenliste und ist dort nicht mehr zu unterscheiden.
+    if (!armStartKnown) return;
+    const seen = {};
+    const prev = bz.results;
+    const wasEmpty = prev.length === 0;
+    bz.results = Object.values(raw)
+      .filter(b => b && b.name && b.ts)
+      .sort((a, b) => a.ts - b.ts)
+      .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
+      .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team, account: b.account }));
+    noteNewBuzzes(prev, bz.results, label);
+    if (wasEmpty && bz.results.length > 0) {
+      bz.poppedForQuestion = true;
+      if (onFirstBuzz) onFirstBuzz(bz.results[0]);
+    }
+    refresh();
+  };
+  bz.fbRef.child('armed').on('value', s => { bz.armed = !!s.val(); refresh(); });
+  bz.fbRef.child('excluded').on('value', s => { bz.excluded = Object.keys(s.val() || {}); refresh(); });
+  bz.fbRef.child('armStart').on('value', s => { armStart = s.val() || 0; armStartKnown = true; apply(); });
+  bz.fbRef.child('buzzes').on('value', s => { raw = s.val() || {}; apply(); });
 }
 
 function jeopardyBuzzConnect(){
@@ -5457,25 +5506,8 @@ function jeopardyBuzzConnect(){
       updateGamemaster();
       return;
     }
-    jeopardyBuzzer.fbRef.on('value', (snap) => {
-      const v = snap.val() || {};
-      const armStart = v.armStart || 0;
-      jeopardyBuzzer.armed = !!v.armed;
-      jeopardyBuzzer.excluded = Object.keys(v.excluded || {});
-      const seen = {};
-      const wasEmpty = jeopardyBuzzer.results.length === 0;
-      const prevResults = jeopardyBuzzer.results;
-      jeopardyBuzzer.results = Object.values(v.buzzes || {})
-        .filter(b => b && b.name && b.ts)
-        .sort((a, b) => a.ts - b.ts)
-        .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
-        .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team, account: b.account }));
-      noteNewBuzzes(prevResults, jeopardyBuzzer.results, 'Jeopardy');
-      // Sobald der Erste buzzert, ploppt die Anzeige auf
-      if (wasEmpty && jeopardyBuzzer.results.length > 0) jeopardyBuzzer.poppedForQuestion = true;
-      renderBuzzer();
-      updateGamemaster();
-    });
+    // Sobald der Erste buzzert, ploppt die Anzeige auf (in poppedForQuestion).
+    attachBuzzerGameListeners(jeopardyBuzzer, 'Jeopardy', renderBuzzer);
     // Presence: welche Handys sind gerade verbunden (inkl. Team-Zuteilung)
     jeopardyBuzzer.presenceRef = firebase.database().ref('buzzer/presence');
     jeopardyBuzzer.presenceRef.on('value', (snap) => {
@@ -5554,34 +5586,16 @@ function feudBuzzConnect(){
   feudBuzzer.joinUrl = origin ? origin + '/buzzer' : BUZZER_FALLBACK_URL;
   // Sauberer Start: neue Runde beginnt immer mit deaktiviertem Buzzer.
   feudBuzzer.fbRef.update({ live: false, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
-  feudBuzzer.fbRef.on('value', (snap) => {
-    const v = snap.val() || {};
-    const armStart = v.armStart || 0;
-    feudBuzzer.armed = !!v.armed;
-    feudBuzzer.excluded = Object.keys(v.excluded || {});
-    const seen = {};
-    const wasEmpty = feudBuzzer.results.length === 0;
-    const prevResults = feudBuzzer.results;
-    feudBuzzer.results = Object.values(v.buzzes || {})
-      .filter(b => b && b.name && b.ts)
-      .sort((a, b) => a.ts - b.ts)
-      .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; })
-      .map(b => ({ name: b.name, t: Math.max(0, (b.ts - armStart) / 1000), team: b.team, account: b.account }));
-    noteNewBuzzes(prevResults, feudBuzzer.results, 'Family Feud');
-    if (wasEmpty && feudBuzzer.results.length > 0) {
-      feudBuzzer.poppedForQuestion = true;
-      // Team des Spielers, der zuerst gebuzzert hat, ist schon bekannt (vom
-      // Host zugeteilt) → automatisch als Startteam übernehmen, kein
-      // manueller GM-Klick nötig, keine Verwechslungsgefahr bei den Strikes.
-      // Schließt den Buzzer NICHT - das Zeiten-Fenster bleibt stehen, bis die
-      // nächste Runde vorbereitet wird (feudBuzzPrepare() setzt es dann zurück).
-      const winnerTeam = feudBuzzer.results[0].team;
-      if (winnerTeam !== undefined && winnerTeam !== null && winnerTeam >= 0 && winnerTeam < state.teamNames.length) {
-        feudAutoSetStartTeam(winnerTeam);
-      }
+  // Team des Spielers, der zuerst gebuzzert hat, ist schon bekannt (vom Host
+  // zugeteilt) → automatisch als Startteam übernehmen, kein manueller GM-Klick
+  // nötig, keine Verwechslungsgefahr bei den Strikes. Schließt den Buzzer NICHT
+  // - das Zeiten-Fenster bleibt stehen, bis die nächste Runde vorbereitet wird
+  // (feudBuzzPrepare() setzt es dann zurück).
+  attachBuzzerGameListeners(feudBuzzer, 'Family Feud', renderFeudBuzzer, (first) => {
+    const winnerTeam = first.team;
+    if (winnerTeam !== undefined && winnerTeam !== null && winnerTeam >= 0 && winnerTeam < state.teamNames.length) {
+      feudAutoSetStartTeam(winnerTeam);
     }
-    renderFeudBuzzer();
-    updateGamemaster();
   });
   feudBuzzer.presenceRef = firebase.database().ref('buzzer/presence');
   feudBuzzer.presenceRef.on('value', (snap) => {
@@ -5737,7 +5751,7 @@ function renderFeudBuzzer(){
   const rows = feudBuzzer.results.map((r, idx) => `
     <div class="jbz-row ${idx === 0 ? 'first' : ''}">
       <span class="jbz-rank">${idx + 1}</span>
-      <span class="jbz-name">${r.name}</span>
+      <span class="jbz-name">${escapeHtml(r.name)}</span>
       <span class="jbz-time">${r.t.toFixed(2)}s</span>
     </div>`).join('');
   el.innerHTML = `
@@ -5800,12 +5814,30 @@ function gmRemoteBridgeScript() {
 <\/script>`;
 }
 
+// Das GM-HTML ist je nach Modus 20-40 KB gross. updateGamemaster() läuft aber
+// bei jeder Kleinigkeit - Buzz, Punkt, Presence -, teilweise mehrfach in
+// derselben Aktion. Deshalb zwei Bremsen: identisches HTML gar nicht erst
+// senden, und schnell aufeinanderfolgende Änderungen zu einem Schreibvorgang
+// zusammenfassen. Es zählt immer der letzte Stand, nie ein übersprungener.
+const GM_PUSH_MS = 120;
+let gmPushTimer = null, gmPushPending = null, gmLastPush = 0, gmLastPushedHtml = null;
 function pushGamemasterHtmlToFirebase(html) {
   if (!gmRemoteInitFirebase()) return;
-  try {
-    const withBridge = html.replace('<head>', '<head>' + gmRemoteBridgeScript());
-    gmRemoteRef().set(withBridge);
-  } catch (e) {}
+  if (html === gmLastPushedHtml) return;
+  gmPushPending = html;
+  if (gmPushTimer) return;
+  const wait = Math.max(0, GM_PUSH_MS - (Date.now() - gmLastPush));
+  gmPushTimer = setTimeout(() => {
+    gmPushTimer = null;
+    const pending = gmPushPending;
+    gmPushPending = null;
+    if (pending === null) return;
+    gmLastPush = Date.now();
+    gmLastPushedHtml = pending;
+    try {
+      gmRemoteRef().set(pending.replace('<head>', '<head>' + gmRemoteBridgeScript()));
+    } catch (e) {}
+  }, wait);
 }
 
 // Ersetzt document.open()/write()/close() an allen GM-Render-Stellen: schreibt
@@ -5954,7 +5986,7 @@ function renderBuzzer(){
   const rows = jeopardyBuzzer.results.map((r, idx) => `
     <div class="jbz-row ${idx === 0 ? 'first' : ''}">
       <span class="jbz-rank">${idx + 1}</span>
-      <span class="jbz-name">${r.name}</span>
+      <span class="jbz-name">${escapeHtml(r.name)}</span>
       <span class="jbz-time">${r.t.toFixed(2)}s</span>
     </div>`).join('');
   el.innerHTML = `
@@ -6044,7 +6076,7 @@ function popOutQR(){
 // ── PASSWORT-GATE (nur Host-Seite; die /buzzer-Seite ist NICHT geschützt) ──
 const HOST_PASSWORD = 'keller2024'; // hier dein Wunsch-Passwort setzen
 function ensureHostGate(){
-  if (localStorage.getItem('hostUnlocked') === HOST_PASSWORD) return;
+  try { if (localStorage.getItem('hostUnlocked') === HOST_PASSWORD) return; } catch {}
   const gate = document.createElement('div');
   gate.id = 'host-gate';
   gate.innerHTML = `
@@ -6058,7 +6090,9 @@ function ensureHostGate(){
   const input = gate.querySelector('#hg-input');
   const tryUnlock = () => {
     if (input.value === HOST_PASSWORD){
-      localStorage.setItem('hostUnlocked', HOST_PASSWORD);
+      // Merken ist Komfort, nicht Bedingung: schlägt es fehl, geht die Sperre
+      // trotzdem auf - sonst käme der Host gar nicht ins Spiel.
+      try { localStorage.setItem('hostUnlocked', HOST_PASSWORD); } catch {}
       gate.remove();
     } else {
       gate.classList.add('err');

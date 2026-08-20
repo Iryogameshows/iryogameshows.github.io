@@ -19,9 +19,18 @@
   #status h1{font-size:1.1rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.6);}
   #status p{font-size:.85rem;color:rgba(255,255,255,.4);max-width:320px;line-height:1.5;}
   #gmFrame{position:fixed;inset:0;width:100%;height:100%;border:none;display:none;}
+  #conn{
+    position:fixed;top:0;left:0;right:0;z-index:50;
+    padding:7px 12px;text-align:center;font-size:.78rem;font-weight:800;letter-spacing:.5px;
+    background:#B8241C;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.45);
+    transform:translateY(-100%);transition:transform .25s ease;
+  }
+  #conn.show{transform:none;}
+  #conn.back{background:#15803D;}
 </style>
 </head>
 <body>
+  <div id="conn"></div>
   <div id="status">
     <h1>Gamemaster Gamepad</h1>
     <p id="status-text">Verbinde…</p>
@@ -41,23 +50,144 @@ const FIREBASE_CONFIG = {
 const statusEl = document.getElementById('status');
 const statusText = document.getElementById('status-text');
 const frame = document.getElementById('gmFrame');
+const connEl = document.getElementById('conn');
 
 firebase.initializeApp(FIREBASE_CONFIG);
-const ref = firebase.database().ref('gmremote/html');
+const db = firebase.database();
+const ref = db.ref('gmremote/html');
+
+// ── Panel aktualisieren ohne es neu zu laden ──
+// Frueher wurde bei jedem Update srcdoc neu gesetzt, also das komplette
+// Dokument verworfen. Damit war nach jedem Buzz, jedem Punkt und jeder
+// Presence-Aenderung die Scrollposition am Anfang, aufgeklappte Panels wieder
+// zu und ein halb getippter Wert im Eingabefeld weg. Stattdessen wird jetzt -
+// genau wie im Gamemaster-Fenster am Rechner - nur das reingepatcht, was sich
+// wirklich geaendert hat.
+function morphMirror(target, source) {
+  if (target.nodeType === 1 && source.nodeType === 1) {
+    const targetAttrs = target.attributes;
+    for (let i = targetAttrs.length - 1; i >= 0; i--) {
+      const name = targetAttrs[i].name;
+      if (!source.hasAttribute(name)) target.removeAttribute(name);
+    }
+    for (let i = 0; i < source.attributes.length; i++) {
+      const attr = source.attributes[i];
+      if (target.getAttribute(attr.name) !== attr.value) target.setAttribute(attr.name, attr.value);
+    }
+  }
+  let tChild = target.firstChild;
+  let sChild = source.firstChild;
+  while (sChild) {
+    if (!tChild) {
+      target.appendChild(sChild.cloneNode(true));
+      sChild = sChild.nextSibling;
+      continue;
+    }
+    const nextT = tChild.nextSibling;
+    // Skripte in Ruhe lassen. Im <head> steckt die Bruecke, die opener-Aufrufe
+    // nach Firebase schickt - ein neu eingefuegtes script-Element wuerde erneut
+    // ausgefuehrt und die Verbindung ein zweites Mal aufbauen.
+    if (tChild.nodeName === 'SCRIPT' && sChild.nodeName === 'SCRIPT') {
+      tChild = nextT; sChild = sChild.nextSibling; continue;
+    }
+    if (tChild.nodeType !== sChild.nodeType || tChild.nodeName !== sChild.nodeName) {
+      target.replaceChild(sChild.cloneNode(true), tChild);
+    } else if (sChild.nodeType === Node.TEXT_NODE || sChild.nodeType === Node.COMMENT_NODE) {
+      if (tChild.nodeValue !== sChild.nodeValue) tChild.nodeValue = sChild.nodeValue;
+    } else if (sChild.nodeType === Node.ELEMENT_NODE) {
+      morphMirror(tChild, sChild);
+    }
+    tChild = nextT;
+    sChild = sChild.nextSibling;
+  }
+  while (tChild) {
+    const next = tChild.nextSibling;
+    target.removeChild(tChild);
+    tChild = next;
+  }
+}
+
+let frameReady = false;
+function fullLoad(html){
+  frameReady = false;
+  frame.onload = () => { frameReady = true; };
+  frame.srcdoc = html;
+}
+function applyHtml(html){
+  const doc = frameReady ? frame.contentDocument : null;
+  if (!doc || !doc.body) { fullLoad(html); return; }
+  try {
+    const incoming = new DOMParser().parseFromString(html, 'text/html');
+    morphMirror(doc.head, incoming.head);
+    morphMirror(doc.body, incoming.body);
+  } catch (e) {
+    // Lieber ein sichtbarer Neuaufbau als ein halb gepatchtes Panel.
+    fullLoad(html);
+  }
+}
 
 ref.on('value', (snap) => {
   const html = snap.val();
   if (!html) {
     frame.style.display = 'none';
+    frame.removeAttribute('srcdoc');
+    frameReady = false;
     statusEl.style.display = 'flex';
     statusText.textContent = 'Warte auf ein laufendes Spiel — öffne das Gamemaster-Fenster am Hauptrechner.';
     return;
   }
   statusEl.style.display = 'none';
   frame.style.display = 'block';
-  frame.srcdoc = html;
+  applyHtml(html);
 }, () => {
   statusText.textContent = 'Keine Verbindung — bitte Internet prüfen.';
+});
+
+// ── Verbindungsanzeige ──
+// Ohne sie zeigt das Panel bei einem Abriss einfach den letzten Stand weiter,
+// und der Host tippt auf Knoepfe, die nirgends ankommen.
+// Schonfrist beim Start: Firebase meldet zuerst "nicht verbunden" und baut die
+// Verbindung dann erst auf - ohne die Wartezeit blitzt bei jedem Öffnen des
+// Panels eine Fehlermeldung auf.
+let online = false, everOffline = false, connectedOnce = false, inGrace = true, connBackTimer = null;
+const graceTimer = setTimeout(() => { inGrace = false; setConnBanner(); }, 2500);
+function setConnBanner(){
+  clearTimeout(connBackTimer);
+  if (!online){
+    if (inGrace) { connEl.classList.remove('show'); return; }
+    connEl.textContent = connectedOnce
+      ? '⚠ Verbindung verloren — Befehle kommen nicht an'
+      : '⚠ Keine Verbindung — Internet prüfen';
+    connEl.classList.remove('back'); connEl.classList.add('show');
+  } else if (everOffline){
+    connEl.textContent = '✔ Wieder verbunden';
+    connEl.classList.add('back', 'show');
+    connBackTimer = setTimeout(() => connEl.classList.remove('show'), 2200);
+  } else {
+    connEl.classList.remove('show');
+  }
+}
+db.ref('.info/connected').on('value', s => {
+  online = s.val() === true;
+  if (online) { connectedOnce = true; inGrace = false; clearTimeout(graceTimer); }
+  else if (connectedOnce) everOffline = true;
+  setConnBanner();
+});
+
+// Der Host schaut oft minutenlang nicht aufs Handy - ohne das hier ist es
+// gesperrt, wenn er es braucht.
+let wakeLock = null;
+async function keepAwake(){
+  try {
+    if ('wakeLock' in navigator && !wakeLock){
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch {}
+}
+keepAwake();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') keepAwake();
 });
 </script>
 </body>
