@@ -2441,15 +2441,23 @@ const GM_SHARED_CSS = `
     border-left:4px solid var(--team);border-radius:10px;padding:8px 10px 8px 12px;
   }
   .score-row.buzzed{background:rgba(255,210,63,.08);border-color:rgba(255,210,63,.45);border-left-color:var(--team);}
+  /* Feste Breite fuer die Namensspalte: sonst beginnt das Punkte-Kaestchen in
+     jeder Zeile woanders, weil die Namen verschieden lang sind. Den Abstand zu
+     den Knoepfen macht .sr-gap, nicht der Name - der wuerde die Punkte sonst
+     wieder nach rechts an die Knoepfe schieben. */
   .score-row .sr-name{
-    flex:1 1 auto;min-width:0;font-size:.78rem;font-weight:800;letter-spacing:.3px;color:#fff;
+    flex:0 0 132px;min-width:0;font-size:.78rem;font-weight:800;letter-spacing:.3px;color:#fff;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  .score-row .sr-buzz{color:#FFD23F;font-size:.68rem;font-weight:800;flex-shrink:0;}
   .score-row .sr-val{
+    flex-shrink:0;min-width:56px;text-align:center;
     font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#FFD23F;line-height:1;
-    flex-shrink:0;min-width:52px;text-align:right;font-variant-numeric:tabular-nums;
+    font-variant-numeric:tabular-nums;
+    background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);
+    border-radius:8px;padding:3px 9px 1px;
   }
+  .score-row .sr-gap{flex:1 1 auto;}
+  .score-row .sr-buzz{color:#FFD23F;font-size:.68rem;font-weight:800;flex-shrink:0;}
   .score-row .sr-btns{display:flex;gap:6px;flex-shrink:0;}
   /* Feste Breite, damit die Knoepfe aller Zeilen exakt untereinander stehen. */
   .sr-btn{
@@ -2463,6 +2471,9 @@ const GM_SHARED_CSS = `
   .sr-btn.minus{background:rgba(232,69,60,.12);border:1px solid rgba(232,69,60,.5);color:#FF8A80;}
   @media (max-width:420px){
     .score-row{flex-wrap:wrap;}
+    /* Etwas schmaler als am Rechner, aber weiterhin fest - sonst faengt das
+       Punkte-Kaestchen in jeder Zeile an einer anderen Stelle an. */
+    .score-row .sr-name{flex:0 0 116px;}
     .score-row .sr-btns{width:100%;}
     .sr-btn{flex:1;}
   }
@@ -4553,8 +4564,9 @@ function updateGamemasterJeopardy() {
       return `
       <div class="score-row${dran ? ' buzzed' : ''}" style="--team:${teamColors[i][0]};">
         <span class="sr-name">${escapeHtml(name)}</span>
-        ${dran ? `<span class="sr-buzz">🔔 ${escapeHtml(buzzName)}</span>` : ''}
         <span class="sr-val">${jeopardyState.scores[i]}</span>
+        ${dran ? `<span class="sr-buzz">🔔 ${escapeHtml(buzzName)}</span>` : ''}
+        <span class="sr-gap"></span>
         <span class="sr-btns">
           <button class="sr-btn plus" onclick="opener.jeopardyScore(${i})">+${val}</button>
           <button class="sr-btn minus" onclick="opener.${dran ? `jeopardyWrongReopen(${i})` : `jeopardyDeduct(${i})`}">−${minus}</button>
