@@ -2071,7 +2071,38 @@ const DANGER_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg
 const TEAM_COLORS = ['red','blue','green'];
 
 // ── LOGO ──
-function renderLogo(line1, line2, size2, danger) {
+// Das Symbol über dem Schriftzug - je Spiel ein eigenes, gezeichnet in einer
+// 80×80-Box mit demselben Gold-Verlauf (url(#goldGrad)) wie der Schriftzug.
+function logoIconMarkup(icon) {
+  switch (icon) {
+    case 'wwm': // Diamant - Reichtum (Wer wird Millionär)
+      return `<polygon points="16,28 30,10 50,10 64,28 40,74" fill="url(#goldGrad)"/>
+        <polyline points="16,28 64,28" fill="none" stroke="#8a6410" stroke-width="2"/>
+        <polyline points="30,10 25,28 40,74" fill="none" stroke="#8a6410" stroke-width="2"/>
+        <polyline points="50,10 55,28 40,74" fill="none" stroke="#8a6410" stroke-width="2"/>
+        <polyline points="30,10 40,28 50,10" fill="none" stroke="#8a6410" stroke-width="2"/>`;
+    case 'wwds': // Glühbirne - Wissen (Wer weiß denn sowas)
+      return `<circle cx="40" cy="31" r="23" fill="url(#goldGrad)"/>
+        <path d="M40 18 v26 M31 27 l9 6 9 -6" fill="none" stroke="#8a6410" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="30" y="52" width="20" height="7" rx="2" fill="url(#goldGrad)"/>
+        <rect x="33" y="61" width="14" height="6" rx="2" fill="url(#goldGrad)"/>
+        <rect x="36" y="69" width="8" height="5" rx="2" fill="url(#goldGrad)"/>`;
+    case 'ddf': // Papierflieger - "fliegt" (Der Dümmste fliegt)
+      return `<polygon points="6,40 74,8 44,74 36,48" fill="url(#goldGrad)"/>
+        <polygon points="36,48 44,74 74,8" fill="#a97a10"/>`;
+    case 'trophy': // Pokal - Turnier
+      return `<path d="M24,12 H56 V26 A16,16 0 0,1 24,26 Z" fill="url(#goldGrad)"/>
+        <path d="M24,15 H14 A9,10 0 0,0 25,31" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
+        <path d="M56,15 H66 A9,10 0 0,1 55,31" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
+        <rect x="37" y="42" width="6" height="14" fill="url(#goldGrad)"/>
+        <rect x="27" y="58" width="26" height="8" rx="2" fill="url(#goldGrad)"/>`;
+    default: // drei Balken - Family Feud / Menü
+      return `<rect x="0" y="0" width="80" height="20" rx="5" fill="url(#goldGrad)"/>
+        <rect x="0" y="30" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
+        <rect x="0" y="60" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>`;
+  }
+}
+function renderLogo(line1, line2, size2, icon) {
   const fs2 = size2 || 48;
   // Zweite Zeile hing an einer festen Grundlinie (y=110), während ihre
   // Schriftgrösse variabel war - bei der Standardgrösse 48 lief sie deshalb
@@ -2081,7 +2112,7 @@ function renderLogo(line1, line2, size2, danger) {
   const y2 = y1 + Math.round(fs2 * 0.78) + 6;
   const vbH = Math.max(120, y2 + 12);
   let inner;
-  if (danger) {
+  if (icon === 'danger') {
     inner = `<svg viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
@@ -2111,11 +2142,7 @@ function renderLogo(line1, line2, size2, danger) {
         </linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <g transform="translate(127,6) scale(0.575)">
-        <rect x="0" y="0" width="80" height="20" rx="5" fill="url(#goldGrad)"/>
-        <rect x="0" y="30" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
-        <rect x="0" y="60" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
-      </g>
+      <g transform="translate(127,6) scale(0.575)">${logoIconMarkup(icon)}</g>
       ${line2
         ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
            <text x="150" y="${y2}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
@@ -2257,11 +2284,11 @@ function showScreen(id) {
   if (id === 'menu-screen') document.getElementById('gm-embed-overlay').classList.remove('visible');
   // Logo per context
   if (id === 'menu-screen') renderLogo('KELLER', 'GAMESHOWS', 30);
-  else if (id === 'tournament-screen') renderLogo('TURNIER', null, null);
-  else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, true);
-  else if (id.startsWith('wwds')) renderLogo('WER WEISS', 'DENN SOWAS', 26);
-  else if (id.startsWith('wwm')) renderLogo('MILLIONÄR', null, null);
-  else if (id.startsWith('ddf')) renderLogo('DER DÜMMSTE', 'FLIEGT', 26);
+  else if (id === 'tournament-screen') renderLogo('TURNIER', null, null, 'trophy');
+  else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, 'danger');
+  else if (id.startsWith('wwds')) renderLogo('WER WEISS', 'DENN SOWAS', 26, 'wwds');
+  else if (id.startsWith('wwm')) renderLogo('MILLIONÄR', null, null, 'wwm');
+  else if (id.startsWith('ddf')) renderLogo('DER DÜMMSTE', 'FLIEGT', 26, 'ddf');
   else renderLogo('KELLER', 'FEUD');
   // Beim Screenwechsel ganz nach oben und den Hoch-Button neu bewerten.
   window.scrollTo(0, 0);
