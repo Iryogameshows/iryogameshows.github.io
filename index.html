@@ -2346,8 +2346,8 @@ function showScreen(id) {
   const logoBox = document.querySelector('.logo');
   const logoSvg = document.querySelector('#main-logo svg');
   const bigLogo = ['wwds-setup-screen','wwds-edit-screen','ddf-setup-screen','ddf-edit-screen','tournament-screen'].includes(id);
-  if (logoBox) logoBox.style.marginTop = bigLogo ? '48px' : '';
-  if (logoSvg) logoSvg.style.width = bigLogo ? '440px' : '';
+  if (logoBox) logoBox.style.marginTop = bigLogo ? '44px' : '';
+  if (logoSvg) logoSvg.style.width = bigLogo ? 'min(580px, 92vw)' : '';
   // Beim Screenwechsel ganz nach oben und den Hoch-Button neu bewerten.
   window.scrollTo(0, 0);
   updateEditorTopBtn();
