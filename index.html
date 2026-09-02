@@ -8423,54 +8423,98 @@ function ddfQuit(){
 
 // Optik bewusst wie im Jeopardy-Editor: goldene Nummer, Frage und Antwort in
 // einer Zeile (2:1), kleine graue Sektionslabels, gold getöntes Notizfeld.
+// Schnelle Massen-Erfassung: Frage + Antwort sind immer direkt tippbar,
+// Tab springt Frage→Antwort→nächste Zeile, Enter legt eine neue Frage an.
+// Bilder/Notiz stecken hinter dem ▸-Ausklapper (bei DDF selten gebraucht).
 function renderDdfEditor(){
   const box = document.getElementById('ddf-editor');
   if (!box) return;
 
   // min-width:0 ist hier entscheidend: ein Flex-Element bekommt sonst
-  // min-width:auto und darf nicht unter seine Eigenbreite schrumpfen. Ein
-  // input ist von Haus aus rund 200px breit, zwei davon nebeneinander sprengen
-  // deshalb jedes schmale Fenster - der Editor lief um 151px über.
-  const fieldCss = 'min-width:0;padding:8px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;';
-  const noteCss  = 'width:100%;margin-top:8px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;';
+  // min-width:auto und darf nicht unter seine Eigenbreite schrumpfen.
+  const fieldCss = 'min-width:0;box-sizing:border-box;padding:8px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;';
+  const noteCss  = 'width:100%;box-sizing:border-box;margin-top:8px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;';
   const sectCss  = 'display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:0 0 4px;';
+  const n = ddfData.questions.length;
 
-  const cards = ddfData.questions.map((q,i) => {
+  const toolbar = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+    <span class="ddf-card-head" style="margin:0;">${n} ${n === 1 ? 'Frage' : 'Fragen'}</span>
+    <button class="btn btn-secondary" style="padding:7px 12px;font-size:.72rem;" onclick="ddfToggleBulk()">${ddfBulkVisible ? '✕ Abbrechen' : '⇊ Mehrere einfügen'}</button>
+  </div>`;
+
+  const bulk = ddfBulkVisible ? `<div style="margin-bottom:12px;padding:12px;background:#0F1436;border:1px solid rgba(255,210,63,.3);border-radius:10px;">
+    <label style="${sectCss}">Eine Frage pro Zeile · Frage und Antwort mit „|“ trennen (Antwort optional).</label>
+    <textarea id="ddf-bulk-text" rows="8" placeholder="Welches Tier kann nicht rückwärts laufen? | Das Känguru&#10;Wie viele Streifen hat die US-Flagge? | 13&#10;Frage ganz ohne Antwort" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-size:.85rem;line-height:1.5;outline:none;resize:vertical;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+      <button class="btn btn-accent" style="padding:8px 14px;font-size:.75rem;" onclick="ddfBulkAdd()">Hinzufügen</button>
+      <span style="font-size:.66rem;color:rgba(255,255,255,.4);">wird ans Ende angehängt</span>
+    </div>
+  </div>` : '';
+
+  const rows = ddfData.questions.map((q,i) => {
     const isOpen = ddfEditOpen === i;
     const imgCount = (q.qMedia||[]).filter(Boolean).length + (q.aMedia||[]).filter(Boolean).length;
-    const head = `<div onclick="ddfToggleOpen(${i})" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 11px;background:${isOpen?'#1A2150':'#141A3D'};border:1px solid ${isOpen?'rgba(255,210,63,.4)':'rgba(255,255,255,.07)'};border-radius:9px;${isOpen?'border-bottom-left-radius:0;border-bottom-right-radius:0;':''}">
-      <span style="color:#6C74A8;font-size:.9rem;">${isOpen?'▾':'▸'}</span>
-      <span style="color:#FFD23F;font-weight:700;font-size:.78rem;flex-shrink:0;">${i+1}.</span>
-      <span style="flex:1;min-width:0;color:${q.q?'#F0EDE2':'rgba(255,255,255,.4)'};font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escAttr(q.q)||'— noch leer —'}${q.answer?` <span style="color:rgba(255,255,255,.45);font-weight:400;">· ${escAttr(q.answer)}</span>`:''}</span>
-      <span style="display:flex;align-items:center;gap:6px;flex-shrink:0;font-size:.66rem;color:#FFD23F;">${imgCount?`🖼${imgCount}`:''}</span>
+    const hasExtra = imgCount || (q.note && q.note.trim());
+    const row = `<div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:#141A3D;border:1px solid ${isOpen?'rgba(255,210,63,.4)':'rgba(255,255,255,.07)'};border-radius:8px;${isOpen?'border-bottom-left-radius:0;border-bottom-right-radius:0;':''}">
+      <span style="color:#FFD23F;font-weight:700;font-size:.72rem;width:26px;text-align:right;flex-shrink:0;">${i+1}.</span>
+      <input id="ddf-q-${i}" type="text" value="${escAttr(q.q)}" placeholder="Frage / Aufgabe" style="flex:3 1 0;${fieldCss}" oninput="ddfData.questions[${i}].q=this.value;ddfSave()">
+      <input type="text" value="${escAttr(q.answer)}" placeholder="Antwort" style="flex:2 1 0;${fieldCss}" oninput="ddfData.questions[${i}].answer=this.value;ddfSave()" onkeydown="ddfAnswerKey(event,${i})">
+      <button tabindex="-1" onclick="ddfToggleOpen(${i})" title="Bilder &amp; Notiz" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:${hasExtra?'#FFD23F':'#6C74A8'};font-size:.85rem;padding:2px 4px;display:inline-flex;align-items:center;gap:2px;">${isOpen?'▾':'▸'}<span style="font-size:.6rem;">${imgCount?('🖼'+imgCount):(q.note&&q.note.trim()?'📝':'')}</span></button>
+      <button tabindex="-1" class="btn btn-danger" style="padding:5px 9px;font-size:.68rem;flex-shrink:0;" onclick="ddfDeleteQuestion(${i})" title="Löschen">🗑</button>
     </div>`;
-    const body = isOpen ? `<div style="padding:12px;background:#0F1436;border:1px solid rgba(255,210,63,.25);border-top:none;border-radius:0 0 9px 9px;">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-        <input type="text" value="${escAttr(q.q)}" placeholder="Frage / Aufgabe" style="flex:2 1 180px;${fieldCss}"
-               oninput="ddfData.questions[${i}].q=this.value; ddfSave()">
-        <input type="text" value="${escAttr(q.answer)}" placeholder="Antwort" style="flex:1 1 120px;${fieldCss}"
-               oninput="ddfData.questions[${i}].answer=this.value; ddfSave()">
-        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;flex-shrink:0;"
-                onclick="ddfDeleteQuestion(${i})" title="Frage löschen">🗑</button>
-      </div>
+    const body = isOpen ? `<div style="padding:12px;background:#0F1436;border:1px solid rgba(255,210,63,.25);border-top:none;border-radius:0 0 8px 8px;">
       <label style="${sectCss}">🖼 Bilder zur Frage (max. ${DDF_MAX_MEDIA})</label>
       ${mediaSlotsHtml(q.qMedia||[], (s,expr) => `ddfSetMedia(${i},'qMedia',${s},${expr})`, DDF_MAX_MEDIA)}
       <label style="${sectCss}">🖼 Bilder zur Antwort (max. ${DDF_MAX_MEDIA})</label>
       ${mediaSlotsHtml(q.aMedia||[], (s,expr) => `ddfSetMedia(${i},'aMedia',${s},${expr})`, DDF_MAX_MEDIA)}
-      <input type="text" value="${escAttr(q.note||'')}" placeholder="📝 Notiz für den Host" style="${noteCss}"
-             oninput="ddfData.questions[${i}].note=this.value; ddfSave()">
+      <input type="text" value="${escAttr(q.note||'')}" placeholder="📝 Notiz für den Host" style="${noteCss}" oninput="ddfData.questions[${i}].note=this.value;ddfSave()">
     </div>` : '';
-    return `<div style="margin-bottom:7px;">${head}${body}</div>`;
+    return `<div style="margin-bottom:5px;">${row}${body}</div>`;
   }).join('');
 
-  box.innerHTML = cards
-    ? `<div class="ddf-card-head">${ddfData.questions.length} ${ddfData.questions.length === 1 ? 'Frage' : 'Fragen'}</div>${cards}`
+  box.innerHTML = toolbar + bulk + (n
+    ? rows + `<button class="btn btn-secondary" style="width:100%;margin-top:6px;padding:9px;font-size:.75rem;" onclick="ddfAddQuestion()">+ Frage</button>`
     : `<div class="ddf-card" style="text-align:center;color:rgba(255,255,255,.4);font-size:.85rem;">
-         Noch keine Fragen — mit „+ Frage“ anlegen oder eine JSON-Datei importieren.
-       </div>`;
+         Noch keine Fragen — „⇊ Mehrere einfügen", „+ Frage" oder JSON importieren.
+       </div>`);
 }
-let ddfEditOpen = 0;
+let ddfEditOpen = -1;
 function ddfToggleOpen(i){ ddfEditOpen = (ddfEditOpen === i ? -1 : i); renderDdfEditor(); }
+
+let ddfBulkVisible = false;
+function ddfToggleBulk(){
+  ddfBulkVisible = !ddfBulkVisible;
+  renderDdfEditor();
+  if (ddfBulkVisible) { const t = document.getElementById('ddf-bulk-text'); if (t) t.focus(); }
+}
+// Massen-Import: eine Zeile pro Frage, "Frage | Antwort" (auch Tab oder ; als
+// Trenner; Antwort optional). Wird ans Ende angehängt.
+function ddfBulkAdd(){
+  const t = document.getElementById('ddf-bulk-text');
+  if (!t) return;
+  const lines = t.value.split('\n').map(s => s.trim()).filter(Boolean);
+  let added = 0;
+  lines.forEach(line => {
+    const parts = line.split(/\s*[|\t;]\s*/);
+    const q = (parts[0] || '').trim();
+    const answer = (parts[1] || '').trim();
+    if (!q) return;
+    ddfData.questions.push({ q, answer, note:'', qMedia:[], aMedia:[] });
+    added++;
+  });
+  if (!added) { alert('Keine Zeilen erkannt.\nFormat: Frage | Antwort (eine pro Zeile)'); return; }
+  t.value = '';
+  ddfBulkVisible = false;
+  ddfSave(); renderDdfEditor();
+}
+// Enter im Antwort-Feld: in der letzten Zeile neue Frage anlegen, sonst zur
+// nächsten Frage springen - so tippt man Fragen zügig durch.
+function ddfAnswerKey(e, i){
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  if (i >= ddfData.questions.length - 1) { ddfAddQuestion(); }
+  else { const nx = document.getElementById('ddf-q-' + (i+1)); if (nx) nx.focus(); }
+}
 
 function ddfSetMedia(qi, which, slot, input){
   const q = ddfData.questions[qi];
@@ -8481,8 +8525,9 @@ function ddfSetMedia(qi, which, slot, input){
 
 function ddfAddQuestion(){
   ddfData.questions.push({ q:'', answer:'', note:'', qMedia:[], aMedia:[] });
-  ddfEditOpen = ddfData.questions.length - 1;
   ddfSave(); renderDdfEditor();
+  const el = document.getElementById('ddf-q-' + (ddfData.questions.length - 1));
+  if (el) el.focus();
 }
 function ddfDeleteQuestion(i){
   if (!confirm('Frage löschen?')) return;
