@@ -8443,8 +8443,8 @@ function renderDdfEditor(){
   </div>`;
 
   const bulk = ddfBulkVisible ? `<div style="margin-bottom:12px;padding:12px;background:#0F1436;border:1px solid rgba(255,210,63,.3);border-radius:10px;">
-    <label style="${sectCss}">Eine Frage pro Zeile · Frage und Antwort mit „|“ trennen (Antwort optional).</label>
-    <textarea id="ddf-bulk-text" rows="8" placeholder="Welches Tier kann nicht rückwärts laufen? | Das Känguru&#10;Wie viele Streifen hat die US-Flagge? | 13&#10;Frage ganz ohne Antwort" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-size:.85rem;line-height:1.5;outline:none;resize:vertical;"></textarea>
+    <label style="${sectCss}">Eine Frage pro Zeile · Frage und Antwort mit „/" (oder „|") trennen (Antwort optional).</label>
+    <textarea id="ddf-bulk-text" rows="8" placeholder="Welches Tier kann nicht rückwärts laufen? / Das Känguru&#10;Wie viele Streifen hat die US-Flagge? / 13&#10;Frage ganz ohne Antwort" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-size:.85rem;line-height:1.5;outline:none;resize:vertical;"></textarea>
     <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
       <button class="btn btn-accent" style="padding:8px 14px;font-size:.75rem;" onclick="ddfBulkAdd()">Hinzufügen</button>
       <span style="font-size:.66rem;color:rgba(255,255,255,.4);">wird ans Ende angehängt</span>
@@ -8487,17 +8487,18 @@ function ddfToggleBulk(){
   renderDdfEditor();
   if (ddfBulkVisible) { const t = document.getElementById('ddf-bulk-text'); if (t) t.focus(); }
 }
-// Massen-Import: eine Zeile pro Frage, "Frage | Antwort" (auch Tab oder ; als
-// Trenner; Antwort optional). Wird ans Ende angehängt.
+// Massen-Import: eine Zeile pro Frage, "Frage / Antwort" (auch |, Tab oder ;
+// als Trenner; Antwort optional). Getrennt wird am ERSTEN Trennzeichen, damit
+// ein "/" in der Antwort selbst (z.B. "km/h") erhalten bleibt. Ans Ende angehängt.
 function ddfBulkAdd(){
   const t = document.getElementById('ddf-bulk-text');
   if (!t) return;
   const lines = t.value.split('\n').map(s => s.trim()).filter(Boolean);
   let added = 0;
   lines.forEach(line => {
-    const parts = line.split(/\s*[|\t;]\s*/);
-    const q = (parts[0] || '').trim();
-    const answer = (parts[1] || '').trim();
+    const m = line.match(/^(.*?)\s*[/|\t;]\s*(.*)$/);
+    const q = (m ? m[1] : line).trim();
+    const answer = (m ? m[2] : '').trim();
     if (!q) return;
     ddfData.questions.push({ q, answer, note:'', qMedia:[], aMedia:[] });
     added++;
