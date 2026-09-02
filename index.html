@@ -2339,15 +2339,15 @@ function showScreen(id) {
   else if (id === 'tournament-screen') renderLogo('TURNIER', null, null, 'trophy');
   else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, 'danger');
   else if (id.startsWith('wwds')) renderLogo('WER WEISS', 'DENN SOWAS', 26, 'wwds');
-  else if (id.startsWith('wwm')) renderLogo('MILLIONÄR', null, null, 'wwm');
+  else if (id.startsWith('wwm')) renderLogo('WER WIRD', 'MILLIONÄR', 26, 'wwm');
   else if (id.startsWith('ddf')) renderLogo('DER DÜMMSTE', 'FLIEGT', 26, 'ddf');
   else renderLogo('KELLER', 'FEUD');
   // WWDS-, DDF- und Turnier-Logo etwas größer und ein Stück tiefer.
   const logoBox = document.querySelector('.logo');
   const logoSvg = document.querySelector('#main-logo svg');
-  const bigLogo = ['wwds-setup-screen','wwds-edit-screen','ddf-setup-screen','ddf-edit-screen','tournament-screen'].includes(id);
+  const bigLogo = ['wwm-setup-screen','wwm-edit-screen','wwds-setup-screen','wwds-edit-screen','ddf-setup-screen','ddf-edit-screen','tournament-screen'].includes(id);
   if (logoBox) logoBox.style.marginTop = bigLogo ? '44px' : '';
-  if (logoSvg) logoSvg.style.width = bigLogo ? 'min(580px, 92vw)' : '';
+  if (logoSvg) logoSvg.style.width = bigLogo ? 'min(660px, 94vw)' : '';
   // Beim Screenwechsel ganz nach oben und den Hoch-Button neu bewerten.
   window.scrollTo(0, 0);
   updateEditorTopBtn();
