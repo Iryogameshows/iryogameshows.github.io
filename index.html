@@ -691,6 +691,41 @@ body {
 .player-row .q-label { min-width: 0; }
 .edit-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
+/* Editor mit fester Button-Spalte daneben (bleibt beim Scrollen stehen). */
+.screen.wide-editor { max-width: 1120px; }
+.editor-layout { display: flex; gap: 16px; align-items: flex-start; width: 100%; }
+.editor-layout > .editor-card, .editor-layout > .editor-main { flex: 1; min-width: 0; }
+.editor-main { display: flex; flex-direction: column; }
+.editor-side {
+  position: sticky; top: 16px; align-self: flex-start;
+  display: flex; flex-direction: column; gap: 8px;
+  width: 190px; flex-shrink: 0;
+}
+.editor-side .btn { width: 100%; padding: 12px 14px; text-align: center; box-sizing: border-box; }
+.editor-side .side-label {
+  font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+  color: rgba(255,255,255,.3); margin: 4px 2px 2px; text-align: center;
+}
+@media (max-width: 760px) {
+  .editor-layout { flex-direction: column; }
+  .editor-side { position: static; width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .editor-side .btn { width: auto; }
+  .editor-side .side-label { display: none; }
+}
+
+/* Floating „nach ganz oben"-Button im Editor. */
+#editor-top-btn {
+  position: fixed; right: 22px; bottom: 22px; z-index: 4000;
+  width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+  background: linear-gradient(180deg, #FFD23F 0%, #F0B800 100%); color: #1a1200;
+  font-size: 1.6rem; font-weight: 900; line-height: 1;
+  box-shadow: 0 4px 16px rgba(0,0,0,.45);
+  display: none; align-items: center; justify-content: center;
+  transition: transform .12s, opacity .2s;
+}
+#editor-top-btn:hover { transform: translateY(-3px); }
+#editor-top-btn.show { display: flex; }
+
 /* ── RESULT ── */
 #result-screen { gap: 24px; margin-top: 50px; text-align: center; }
 .result-icon { font-size: 4.5rem; line-height: 1; }
@@ -1566,42 +1601,45 @@ body {
 </div>
 
 <!-- EDIT -->
-<div id="edit-screen" class="screen">
+<div id="edit-screen" class="screen wide-editor">
   <div class="page-title"><em>Fragen</em> verwalten</div>
-  <div class="editor-card" id="question-editor">
-    <label>Frage</label>
-    <input type="text" id="edit-question" placeholder="z.B. Nenne etwas, das man im Kühlschrank findet">
-    <label>Antworten (max. 8)</label>
-    <div id="answer-fields"></div>
-    <label>Einblendungen (0-3 Bilder/Videos)</label>
-    <div id="feud-media-slots"></div>
-    <label>📝 Notiz (nur für den Host, im GM-Panel & Gamepad sichtbar)</label>
-    <input type="text" id="edit-note" placeholder="z.B. Zusatzinfo, Wertungshinweis, Anekdote…">
-    <div class="editor-actions">
-      <button class="btn btn-secondary" onclick="addAnswerField()">+ Antwort</button>
-      <button class="btn btn-primary" onclick="saveQuestion()">Speichern</button>
-      <button class="btn btn-secondary" onclick="cancelEdit()">Abbrechen</button>
+  <div class="editor-layout">
+    <div class="editor-main">
+      <div class="editor-card" id="question-editor">
+        <label>Frage</label>
+        <input type="text" id="edit-question" placeholder="z.B. Nenne etwas, das man im Kühlschrank findet">
+        <label>Antworten (max. 8)</label>
+        <div id="answer-fields"></div>
+        <label>Einblendungen (0-3 Bilder/Videos)</label>
+        <div id="feud-media-slots"></div>
+        <label>📝 Notiz (nur für den Host, im GM-Panel & Gamepad sichtbar)</label>
+        <input type="text" id="edit-note" placeholder="z.B. Zusatzinfo, Wertungshinweis, Anekdote…">
+        <div class="editor-actions">
+          <button class="btn btn-secondary" onclick="addAnswerField()">+ Antwort</button>
+          <button class="btn btn-primary" onclick="saveQuestion()">Speichern</button>
+          <button class="btn btn-secondary" onclick="cancelEdit()">Abbrechen</button>
+        </div>
+      </div>
+      <div class="q-list" id="question-list"></div>
+      <div class="page-title" style="margin-top:24px;"><em>Finale</em>-Fragen</div>
+      <div class="q-list" id="finale-question-list"></div>
+      <div class="edit-bar" style="margin-top:12px;">
+        <button class="btn btn-accent" onclick="newQuestion(true)">+ Neue Finale-Frage</button>
+        <button class="btn btn-secondary" onclick="exportFinaleQuestions()">Exportieren</button>
+        <label class="btn btn-secondary" style="cursor:pointer;">
+          Importieren <input type="file" accept=".json" onchange="importFinaleQuestions(event)" style="display:none;">
+        </label>
+      </div>
     </div>
-  </div>
-  <div class="q-list" id="question-list"></div>
-  <div class="edit-bar">
-    <button class="btn btn-accent" onclick="newQuestion()">+ Neue Frage</button>
-    <button class="btn btn-secondary" onclick="exportQuestions()">Exportieren</button>
-    <label class="btn btn-secondary" style="cursor:pointer;">
-      Importieren <input type="file" accept=".json" onchange="importQuestions(event)" style="display:none;">
-    </label>
-  </div>
-  <div class="page-title" style="margin-top:24px;"><em>Finale</em>-Fragen</div>
-  <div class="q-list" id="finale-question-list"></div>
-  <div class="edit-bar">
-    <button class="btn btn-accent" onclick="newQuestion(true)">+ Neue Finale-Frage</button>
-    <button class="btn btn-secondary" onclick="exportFinaleQuestions()">Exportieren</button>
-    <label class="btn btn-secondary" style="cursor:pointer;">
-      Importieren <input type="file" accept=".json" onchange="importFinaleQuestions(event)" style="display:none;">
-    </label>
-  </div>
-  <div class="edit-bar" style="margin-top:12px;">
-    <button class="btn btn-primary" onclick="showScreen('setup-screen')">Zurück</button>
+    <div class="editor-side">
+      <div class="side-label">Hauptfragen</div>
+      <button class="btn btn-accent" onclick="newQuestion()">+ Neue Frage</button>
+      <button class="btn btn-secondary" onclick="exportQuestions()">Exportieren</button>
+      <label class="btn btn-secondary" style="cursor:pointer;">
+        Importieren <input type="file" accept=".json" onchange="importQuestions(event)" style="display:none;">
+      </label>
+      <button class="btn btn-primary" onclick="showScreen('setup-screen')">Zurück</button>
+    </div>
   </div>
 </div>
 
@@ -1669,15 +1707,17 @@ body {
 </div>
 
 <!-- JEOPARDY EDIT -->
-<div id="jeopardy-edit-screen" class="screen">
+<div id="jeopardy-edit-screen" class="screen wide-editor">
   <div class="page-title"><em>Jeopardy</em> Fragen bearbeiten</div>
-  <div class="editor-card" style="width:100%;">
-    <div id="jeopardy-editor-grid"></div>
-  </div>
-  <div class="edit-bar" style="margin-top:12px;">
-    <button class="btn btn-secondary" onclick="exportJeopardy()">Exportieren</button>
-    <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importJeopardy(event)" style="display:none;"></label>
-    <button class="btn btn-primary" onclick="showScreen('jeopardy-setup-screen')">Zurück</button>
+  <div class="editor-layout">
+    <div class="editor-card">
+      <div id="jeopardy-editor-grid"></div>
+    </div>
+    <div class="editor-side">
+      <button class="btn btn-secondary" onclick="exportJeopardy()">Exportieren</button>
+      <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importJeopardy(event)" style="display:none;"></label>
+      <button class="btn btn-primary" onclick="showScreen('jeopardy-setup-screen')">Zurück</button>
+    </div>
   </div>
 </div>
 
@@ -1705,16 +1745,18 @@ body {
 </div>
 
 <!-- WWM EDIT -->
-<div id="wwm-edit-screen" class="screen">
+<div id="wwm-edit-screen" class="screen wide-editor">
   <div class="page-title"><em>Wer wird Millionär</em> Fragen bearbeiten</div>
-  <div class="editor-card" style="width:100%;">
-    <div id="wwm-editor-grid"></div>
-  </div>
-  <div class="edit-bar" style="margin-top:12px;">
-    <button class="btn btn-accent" onclick="wwmAddQuestion()">+ Frage</button>
-    <button class="btn btn-secondary" onclick="exportWwm()">Exportieren</button>
-    <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importWwm(event)" style="display:none;"></label>
-    <button class="btn btn-primary" onclick="showScreen('wwm-setup-screen')">Zurück</button>
+  <div class="editor-layout">
+    <div class="editor-card">
+      <div id="wwm-editor-grid"></div>
+    </div>
+    <div class="editor-side">
+      <button class="btn btn-accent" onclick="wwmAddQuestion()">+ Frage</button>
+      <button class="btn btn-secondary" onclick="exportWwm()">Exportieren</button>
+      <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importWwm(event)" style="display:none;"></label>
+      <button class="btn btn-primary" onclick="showScreen('wwm-setup-screen')">Zurück</button>
+    </div>
   </div>
 </div>
 
@@ -1764,17 +1806,19 @@ body {
 </div>
 
 <!-- WWDS EDIT -->
-<div id="wwds-edit-screen" class="screen">
+<div id="wwds-edit-screen" class="screen wide-editor">
   <div class="page-title"><em>Wer weiß denn sowas</em> Fragen bearbeiten</div>
-  <div class="editor-card" style="width:100%;">
-    <div id="wwds-editor-grid"></div>
-  </div>
-  <div class="edit-bar" style="margin-top:12px;">
-    <button class="btn btn-accent" onclick="wwdsAddCategory()">+ Kategorie</button>
-    <button class="btn btn-secondary" onclick="wwdsAddTiebreaker()">+ Schätzfrage</button>
-    <button class="btn btn-secondary" onclick="exportWwds()">Exportieren</button>
-    <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importWwds(event)" style="display:none;"></label>
-    <button class="btn btn-primary" onclick="showScreen('wwds-setup-screen')">Zurück</button>
+  <div class="editor-layout">
+    <div class="editor-card">
+      <div id="wwds-editor-grid"></div>
+    </div>
+    <div class="editor-side">
+      <button class="btn btn-accent" onclick="wwdsAddCategory()">+ Kategorie</button>
+      <button class="btn btn-secondary" onclick="wwdsAddTiebreaker()">+ Schätzfrage</button>
+      <button class="btn btn-secondary" onclick="exportWwds()">Exportieren</button>
+      <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importWwds(event)" style="display:none;"></label>
+      <button class="btn btn-primary" onclick="showScreen('wwds-setup-screen')">Zurück</button>
+    </div>
   </div>
 </div>
 
@@ -1872,15 +1916,19 @@ body {
 </div>
 
 <!-- DDF EDIT -->
-<div id="ddf-edit-screen" class="screen">
+<div id="ddf-edit-screen" class="screen wide-editor">
   <div class="page-title"><em>Der Dümmste fliegt</em> Fragen bearbeiten</div>
-  <div class="edit-actions" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;">
-    <button class="btn btn-secondary" onclick="ddfAddQuestion()">+ Frage</button>
-    <button class="btn btn-secondary" onclick="exportDdf()">Exportieren</button>
-    <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importDdf(event)" style="display:none;"></label>
-    <button class="btn btn-secondary" onclick="showScreen('ddf-setup-screen')">Zurück</button>
+  <div class="editor-layout">
+    <div class="editor-card">
+      <div id="ddf-editor"></div>
+    </div>
+    <div class="editor-side">
+      <button class="btn btn-accent" onclick="ddfAddQuestion()">+ Frage</button>
+      <button class="btn btn-secondary" onclick="exportDdf()">Exportieren</button>
+      <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importDdf(event)" style="display:none;"></label>
+      <button class="btn btn-primary" onclick="showScreen('ddf-setup-screen')">Zurück</button>
+    </div>
   </div>
-  <div id="ddf-editor"></div>
 </div>
 
 <!-- DDF GAME -->
@@ -2211,6 +2259,9 @@ function showScreen(id) {
   else if (id.startsWith('wwm')) renderLogo('MILLIONÄR', null, null);
   else if (id.startsWith('ddf')) renderLogo('DER DÜMMSTE', 'FLIEGT', 26);
   else renderLogo('KELLER', 'FEUD');
+  // Beim Screenwechsel ganz nach oben und den Hoch-Button neu bewerten.
+  window.scrollTo(0, 0);
+  updateEditorTopBtn();
 }
 
 // Blendet einen .black-backdrop aus und entfernt ihn danach. Wie closeOverlay
@@ -2328,6 +2379,27 @@ function ensureImgHoverPreview() {
   document.addEventListener('mouseout', (e) => {
     if (e.target.closest && e.target.closest('[data-preview-name]')) el.style.display = 'none';
   });
+}
+// Floating „nach ganz oben"-Button — nur in den Editor-Screens, sobald man
+// ein Stück runtergescrollt hat.
+function ensureEditorTopBtn() {
+  if (document.getElementById('editor-top-btn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'editor-top-btn';
+  btn.type = 'button';
+  btn.title = 'Nach ganz oben';
+  btn.setAttribute('aria-label', 'Nach ganz oben');
+  btn.textContent = '↑';
+  btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.body.appendChild(btn);
+  window.addEventListener('scroll', updateEditorTopBtn, { passive: true });
+}
+function updateEditorTopBtn() {
+  const btn = document.getElementById('editor-top-btn');
+  if (!btn) return;
+  const active = document.querySelector('.screen.active');
+  const isEditor = !!active && active.id.endsWith('edit-screen');
+  btn.classList.toggle('show', isEditor && window.scrollY > 200);
 }
 // buildOnClick(slot, inputExpr) liefert den onclick/onchange-Ausdruck als
 // String - so kann jeder Editor (Feud/Jeopardy/WWM) seine eigene Adressierung
@@ -4877,6 +4949,7 @@ loadReactionBoard();
 loadHostNotes();
 loadTournament();
 ensureImgHoverPreview();
+ensureEditorTopBtn();
 renderLogo('KELLER', 'GAMESHOWS', 30);
 document.getElementById('sfx-toggle').textContent = SFX.enabled ? '🔊 Sound an' : '🔇 Sound aus';
 
