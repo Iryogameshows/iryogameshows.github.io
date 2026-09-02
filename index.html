@@ -6456,71 +6456,116 @@ function jeopardyClearSeriesImg(b,col,row,idx){
   renderJeopardyEditor();
 }
 
+// Welches Feld im Board-Editor gerade zum Bearbeiten offen ist.
+let jeopardyEditSel = { b: 0, col: 0, row: 0 };
+function jeopardySelectClue(b, col, row){ jeopardyEditSel = { b, col, row }; renderJeopardyEditor(); }
+
+// Kleine Status-Icons einer Frage fürs Board-Gitter.
+function jeopardyCellBadges(clue){
+  const hasImg = clue.qImg || clue.aImg || clue.stageImg || (clue.seriesImgs || []).some(Boolean);
+  let b = '';
+  if (hasImg)        b += '<span title="Bild">🖼</span>';
+  if (clue.sound)    b += '<span title="Sound">🔊</span>';
+  if (clue.staged)   b += '<span title="Staffeln">🧩</span>';
+  if (clue.series)   b += '<span title="Bilder-Reihe">🎴</span>';
+  if (clue.estimate) b += '<span title="Schätzfrage">📊</span>';
+  return b;
+}
+
+// Das komplette Bearbeiten-Formular EINER Frage (unter dem Board-Gitter).
+function jeopardyClueEditorHtml(b, col, row){
+  const clue = jeopardyClue(b, col, row);
+  const esc = s => escAttr(s);
+  const cat = jeopardyData.boards[b].categories[col];
+  const catName = cat.name || ('Kategorie ' + (col + 1));
+  const uploadLbl = 'display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);cursor:pointer;color:rgba(255,255,255,.7);font-size:.68rem;font-weight:700;';
+  const inp = 'width:100%;box-sizing:border-box;padding:9px 11px;border-radius:7px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-size:.86rem;outline:none;';
+  const gridOpts = [[2,2],[3,2],[4,2],[3,3],[5,1]];
+  return `<div style="background:#0F1436;border:1px solid rgba(255,210,63,.35);border-radius:11px;padding:13px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="color:#FFD23F;font-size:.85rem;font-weight:800;">${escAttr(catName)} · ${JEOPARDY_VALUES[row]}</span>
+    </div>
+    <input type="text" placeholder="Frage / Clue" value="${esc(clue.q)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].q=this.value;renderJeopardyEditor()" style="${inp}font-weight:600;margin-bottom:7px;">
+    <input type="text" placeholder="Lösung" value="${esc(clue.a)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].a=this.value;renderJeopardyEditor()" style="${inp}margin-bottom:9px;">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <label style="${uploadLbl}">🖼 Frage-Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'qImg',this)"></label>
+      ${jimgThumb(clue,'qImg',b,col,row,'Frage-Bild')}
+      <label style="${uploadLbl}">🖼 Lösungs-Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'aImg',this)"></label>
+      ${jimgThumb(clue,'aImg',b,col,row,'Lösungs-Bild')}
+      <label style="${uploadLbl}">🔊 Sound<input type="file" accept="audio/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'sound',this)"></label>
+      ${clue.sound?`<span style="display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:#22C55E;">🔊 ${escAttr(clue.soundName||'Sound')}<button onclick="jeopardyClearImg(${b},${col},${row},'sound')" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;">✕</button></span>`:''}
+      <label style="${uploadLbl}background:${clue.staged?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
+        <input type="checkbox" ${clue.staged?'checked':''} onchange="jeopardyEditStaged(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🧩 Staffeln
+      </label>
+      ${clue.staged?`
+        <label style="${uploadLbl}">Staffel-Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'stageImg',this)"></label>
+        ${clue.stageImg ? jimgThumb(clue,'stageImg',b,col,row,'Staffel-Bild') : '<span style="font-size:.65rem;color:#FF8A80;">kein Bild</span>'}
+        <select onchange="jeopardyEditGrid(${b},${col},${row},this.value)" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
+          ${gridOpts.map(([c2,r2])=>`<option value="${c2}x${r2}" ${(clue.stageCols||3)===c2&&(clue.stageRows||3)===r2?'selected':''}>${c2}×${r2} = ${c2*r2} Felder</option>`).join('')}
+        </select>
+      `:''}
+      <label style="${uploadLbl}background:${clue.series?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
+        <input type="checkbox" ${clue.series?'checked':''} onchange="jeopardyEditSeries(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🎴 Bilder-Reihe
+      </label>
+      <label style="${uploadLbl}background:${clue.estimate?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Statt Buzzer geben alle Handys eine Schätzung ein">
+        <input type="checkbox" ${clue.estimate?'checked':''} onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].estimate=this.checked;renderJeopardyEditor();" style="accent-color:#FFD23F;"> 📊 Schätzfrage
+      </label>
+      ${clue.series?`
+        <select onchange="jeopardyEditSeriesCount(${b},${col},${row},this.value)" title="Anzahl Bilder" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
+          ${[2,3,4,5].map(n=>`<option value="${n}" ${jeopardySeriesCount(clue)===n?'selected':''}>${n} Bilder</option>`).join('')}
+        </select>
+        ${Array.from({length: jeopardySeriesCount(clue)}, (_,idx)=>{
+          const has = clue.seriesImgs && clue.seriesImgs[idx];
+          if (!has) return `<label style="${uploadLbl}" title="Bild ${idx+1}">＋ ${idx+1}<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditSeriesImg(${b},${col},${row},${idx},this)"></label>`;
+          const nm = (clue.seriesNames && clue.seriesNames[idx]) || ('Bild ' + (idx+1));
+          return `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="font-size:.62rem;color:#22C55E;font-weight:700;">${idx+1}</span><img class="jimg-thumb" src="${clue.seriesImgs[idx]}" data-preview-name="${escAttr(nm)}" alt=""><button onclick="jeopardyClearSeriesImg(${b},${col},${row},${idx})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${escAttr(nm)} entfernen">✕</button></span>`;
+        }).join('')}
+      `:''}
+    </div>
+    <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:9px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
+    ${mediaSlotsHtml(clue.media || (clue.media = []), (slot, inputExpr) => `jeopardyEditMedia(${b},${col},${row},${slot},${inputExpr})`)}
+    <input type="text" placeholder="📝 Notiz für den Host" value="${esc(clue.note)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].note=this.value" style="${inp}margin-top:7px;border-color:rgba(255,210,63,.25);background:rgba(255,210,63,.05);font-size:.82rem;">
+  </div>`;
+}
+
 function renderJeopardyEditor() {
   const grid = document.getElementById('jeopardy-editor-grid');
   const esc = s => escAttr(s);
-  const uploadLbl = 'display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);cursor:pointer;color:rgba(255,255,255,.7);font-size:.68rem;font-weight:700;';
-  const gridOpts = [[2,2],[3,2],[4,2],[3,3],[5,1]];
+  const sel = jeopardyEditSel;
+  const cols = JEOPARDY_CATS;
   let html = '';
   jeopardyData.boards.forEach((board, b) => {
-    html += `<div style="margin-bottom:8px;"><div class="page-title" style="margin:${b===0?'0':'24px'} 0 12px;"><em>Board ${b+1}</em></div></div>`;
+    html += `<div class="page-title" style="margin:${b===0?'0':'26px'} 0 10px;"><em>Board ${b+1}</em></div>`;
+    // Kopfzeile: Kategorienamen + Daily-Double-Schalter
+    html += `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:6px;margin-bottom:6px;">`;
     board.categories.forEach((cat, col) => {
-      html += `<div style="margin-bottom:18px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-          <label>Kategorie ${col+1}</label>
-          <label style="display:inline-flex;align-items:center;gap:5px;font-size:.68rem;font-weight:700;color:${cat.noDD?'rgba(255,255,255,.35)':'#FFD23F'};cursor:pointer;" title="Wenn aus, kann das versteckte Daily Double nicht in dieser Kategorie landen.">
-            <input type="checkbox" ${cat.noDD?'':'checked'} onchange="jeopardyData.boards[${b}].categories[${col}].noDD=!this.checked;this.parentNode.style.color=this.checked?'#FFD23F':'rgba(255,255,255,.35)'" style="accent-color:#FFD23F;"> ★ Daily Double erlaubt
-          </label>
-        </div>
-        <input type="text" value="${esc(cat.name)}" onchange="jeopardyData.boards[${b}].categories[${col}].name=this.value" style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;outline:none;margin-bottom:8px;">
-        ${cat.clues.map((clue, row) => `
-          <div style="border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:8px;margin-bottom:6px;">
-            <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
-              <span style="color:#FFD23F;font-weight:700;font-size:.8rem;width:40px;flex-shrink:0;">${JEOPARDY_VALUES[row]}</span>
-              <input type="text" placeholder="Frage / Clue" value="${esc(clue.q)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].q=this.value" style="flex:2;padding:8px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;">
-              <input type="text" placeholder="Lösung" value="${esc(clue.a)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].a=this.value" style="flex:1;padding:8px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;">
-            </div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-              <label style="${uploadLbl}">🖼 Frage-Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'qImg',this)"></label>
-              ${jimgThumb(clue,'qImg',b,col,row,'Frage-Bild')}
-              <label style="${uploadLbl}">🖼 Lösungs-Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'aImg',this)"></label>
-              ${jimgThumb(clue,'aImg',b,col,row,'Lösungs-Bild')}
-              <label style="${uploadLbl}">🔊 Sound<input type="file" accept="audio/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'sound',this)"></label>
-              ${clue.sound?`<span style="display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:#22C55E;">🔊 ${escAttr(clue.soundName||'Sound')}<button onclick="jeopardyClearImg(${b},${col},${row},'sound')" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;">✕</button></span>`:''}
-              <label style="${uploadLbl}background:${clue.staged?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
-                <input type="checkbox" ${clue.staged?'checked':''} onchange="jeopardyEditStaged(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🧩 Staffeln
-              </label>
-              ${clue.staged?`
-                <label style="${uploadLbl}">Staffel-Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'stageImg',this)"></label>
-                ${clue.stageImg ? jimgThumb(clue,'stageImg',b,col,row,'Staffel-Bild') : '<span style="font-size:.65rem;color:#FF8A80;">kein Bild</span>'}
-                <select onchange="jeopardyEditGrid(${b},${col},${row},this.value)" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
-                  ${gridOpts.map(([c2,r2])=>`<option value="${c2}x${r2}" ${(clue.stageCols||3)===c2&&(clue.stageRows||3)===r2?'selected':''}>${c2}×${r2} = ${c2*r2} Felder</option>`).join('')}
-                </select>
-              `:''}
-              <label style="${uploadLbl}background:${clue.series?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
-                <input type="checkbox" ${clue.series?'checked':''} onchange="jeopardyEditSeries(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🎴 Bilder-Reihe
-              </label>
-              <label style="${uploadLbl}background:${clue.estimate?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Statt Buzzer geben alle Handys eine Schätzung ein">
-                <input type="checkbox" ${clue.estimate?'checked':''} onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].estimate=this.checked;renderJeopardyEditor();" style="accent-color:#FFD23F;"> 📊 Schätzfrage
-              </label>
-              ${clue.series?`
-                <select onchange="jeopardyEditSeriesCount(${b},${col},${row},this.value)" title="Anzahl Bilder" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
-                  ${[2,3,4,5].map(n=>`<option value="${n}" ${jeopardySeriesCount(clue)===n?'selected':''}>${n} Bilder</option>`).join('')}
-                </select>
-                ${Array.from({length: jeopardySeriesCount(clue)}, (_,idx)=>{
-                  const has = clue.seriesImgs && clue.seriesImgs[idx];
-                  if (!has) return `<label style="${uploadLbl}" title="Bild ${idx+1}">＋ ${idx+1}<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditSeriesImg(${b},${col},${row},${idx},this)"></label>`;
-                  const nm = (clue.seriesNames && clue.seriesNames[idx]) || ('Bild ' + (idx+1));
-                  return `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="font-size:.62rem;color:#22C55E;font-weight:700;">${idx+1}</span><img class="jimg-thumb" src="${clue.seriesImgs[idx]}" data-preview-name="${escAttr(nm)}" alt=""><button onclick="jeopardyClearSeriesImg(${b},${col},${row},${idx})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${escAttr(nm)} entfernen">✕</button></span>`;
-                }).join('')}
-              `:''}
-            </div>
-            <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
-            ${mediaSlotsHtml(clue.media || (clue.media = []), (slot, inputExpr) => `jeopardyEditMedia(${b},${col},${row},${slot},${inputExpr})`)}
-            <input type="text" placeholder="📝 Notiz für den Host" value="${esc(clue.note)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].note=this.value" style="width:100%;margin-top:6px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
-          </div>`).join('')}
+      html += `<div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
+        <input type="text" value="${esc(cat.name)}" placeholder="Kategorie ${col+1}" onchange="jeopardyData.boards[${b}].categories[${col}].name=this.value;renderJeopardyEditor()" style="width:100%;box-sizing:border-box;padding:7px 6px;border-radius:7px;border:1px solid rgba(255,210,63,.3);background:rgba(0,0,0,.3);color:#FFD23F;font-family:inherit;font-size:.74rem;font-weight:700;text-align:center;outline:none;">
+        <label style="display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:.6rem;font-weight:700;color:${cat.noDD?'rgba(255,255,255,.3)':'#FFD23F'};cursor:pointer;" title="Daily Double in dieser Kategorie erlauben">
+          <input type="checkbox" ${cat.noDD?'':'checked'} onchange="jeopardyData.boards[${b}].categories[${col}].noDD=!this.checked;renderJeopardyEditor()" style="accent-color:#FFD23F;transform:scale(.85);"> ★ DD
+        </label>
       </div>`;
     });
+    html += `</div>`;
+    // Spielbrett: eine Zeile pro Wert, ein Feld pro Kategorie
+    html += `<div style="display:grid;grid-template-columns:repeat(${cols},1fr);gap:6px;">`;
+    for (let row = 0; row < JEOPARDY_VALUES.length; row++){
+      for (let col = 0; col < cols; col++){
+        const clue = board.categories[col].clues[row];
+        const filled = !!(clue.q || clue.a);
+        const isSel = sel.b === b && sel.col === col && sel.row === row;
+        html += `<div onclick="jeopardySelectClue(${b},${col},${row})" style="cursor:pointer;min-height:50px;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;background:${isSel?'#3a2e00':(filled?'rgba(255,255,255,.05)':'rgba(255,255,255,.02)')};border:1px solid ${isSel?'#FFD23F':(filled?'rgba(255,255,255,.1)':'rgba(255,255,255,.05)')};">
+          <span style="color:${filled?'#FFD23F':'rgba(255,255,255,.35)'};font-weight:700;font-size:1rem;">${JEOPARDY_VALUES[row]}</span>
+          <span style="position:absolute;top:3px;right:4px;font-size:.6rem;line-height:1;display:flex;gap:1px;">${jeopardyCellBadges(clue)}</span>
+          <span style="position:absolute;bottom:3px;left:5px;font-size:.62rem;line-height:1;color:${filled?'#22C55E':'rgba(255,255,255,.25)'};">${filled?'✓':'○'}</span>
+        </div>`;
+      }
+    }
+    html += `</div>`;
+    // Bearbeiten-Panel unter dem Board, dem die Auswahl gehört
+    if (sel.b === b){
+      html += `<div style="margin-top:10px;">${jeopardyClueEditorHtml(b, sel.col, sel.row)}</div>`;
+    }
   });
   grid.innerHTML = html;
 }
@@ -7594,9 +7639,12 @@ function updateGamemasterResult(){
 }
 
 // ── EDITOR ──
+let wwdsEditOpen = 0;
+function wwdsToggleOpen(i){ wwdsEditOpen = (wwdsEditOpen === i ? -1 : i); renderWwdsEditor(); }
+
 function renderWwdsEditor(){
   const g = document.getElementById('wwds-editor-grid');
-  const inp = 'width:100%;padding:8px 11px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.88rem;outline:none;';
+  const inp = 'width:100%;box-sizing:border-box;padding:8px 11px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.88rem;outline:none;';
   const optRow = (q, path, j) => `
     <div style="display:flex;gap:8px;margin-bottom:5px;align-items:center;">
       <label style="display:flex;align-items:center;gap:5px;color:${q.correct===j?'#22C55E':'rgba(255,255,255,.4)'};font-size:.8rem;font-weight:700;min-width:44px;">
@@ -7610,20 +7658,33 @@ function renderWwdsEditor(){
   g.innerHTML = `<div class="page-title" style="font-size:.8rem;margin-bottom:10px;"><em>Kategorien</em> (Hauptrunde)</div>` +
     wwdsData.categories.map((c,i) => {
       const p = `wwdsData.categories[${i}]`;
-      return `<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.06);">
-        <label>Kategorie ${i+1}
-          <button class="btn btn-danger" style="float:right;padding:4px 10px;font-size:.7rem;" onclick="wwdsDeleteCategory(${i})">Del</button>
-        </label>
-        <input type="text" value="${escAttr(c.cat)}" placeholder="Kategoriename"
-          onchange="${p}.cat=this.value;renderWwdsEditor();" style="${inp}margin-bottom:6px;">
+      const isOpen = wwdsEditOpen === i;
+      const answered = (c.answers || []).filter(a => a && a.trim()).length;
+      const mediaCount = (c.media || []).filter(Boolean).length;
+      const head = `<div onclick="wwdsToggleOpen(${i})" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 11px;background:${isOpen?'#1A2150':'#141A3D'};border:1px solid ${isOpen?'rgba(255,210,63,.4)':'rgba(255,255,255,.07)'};border-radius:9px;${isOpen?'border-bottom-left-radius:0;border-bottom-right-radius:0;':''}">
+        <span style="color:#6C74A8;font-size:.9rem;">${isOpen?'▾':'▸'}</span>
+        <span style="color:#FFD23F;font-weight:700;font-size:.78rem;flex-shrink:0;">${i+1}.</span>
+        <span style="flex:1;min-width:0;color:${c.cat?'#F0EDE2':'rgba(255,255,255,.4)'};font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escAttr(c.cat)||'— ohne Namen —'}${c.q?` <span style="color:rgba(255,255,255,.45);font-weight:400;">· ${escAttr(c.q)}</span>`:''}</span>
+        <span style="display:flex;align-items:center;gap:6px;flex-shrink:0;font-size:.66rem;">
+          ${mediaCount?`<span style="color:#FFD23F;">🖼${mediaCount}</span>`:''}
+          <span style="color:${answered>=3?'#22C55E':'#FFB74D'};">${answered}/3</span>
+        </span>
+      </div>`;
+      const body = isOpen ? `<div style="padding:12px;background:#0F1436;border:1px solid rgba(255,210,63,.25);border-top:none;border-radius:0 0 9px 9px;">
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <input type="text" value="${escAttr(c.cat)}" placeholder="Kategoriename"
+            onchange="${p}.cat=this.value;renderWwdsEditor();" style="flex:1;${inp}">
+          <button class="btn btn-danger" style="padding:4px 10px;font-size:.7rem;flex-shrink:0;" onclick="wwdsDeleteCategory(${i})">Del</button>
+        </div>
         <input type="text" value="${escAttr(c.q)}" placeholder="Frage"
-          onchange="${p}.q=this.value" style="${inp}margin-bottom:8px;font-weight:600;">
+          onchange="${p}.q=this.value;renderWwdsEditor();" style="${inp}margin-bottom:8px;font-weight:600;">
         ${[0,1,2].map(j => optRow(c, p, j)).join('')}
         <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
         ${mediaSlotsHtml(c.media || (c.media = []), (slot, inputExpr) => `wwdsEditMedia(${i},${slot},${inputExpr})`)}
         <input type="text" placeholder="📝 Notiz für den Host" value="${escAttr(c.note)}"
           onchange="${p}.note=this.value" style="${inp}margin-top:6px;border-color:rgba(255,210,63,.25);background:rgba(255,210,63,.05);">
-      </div>`;
+      </div>` : '';
+      return `<div style="margin-bottom:7px;">${head}${body}</div>`;
     }).join('') +
     `<div class="page-title" style="font-size:.8rem;margin:18px 0 10px;"><em>Masterfrage</em></div>
      <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.06);">
@@ -7650,6 +7711,7 @@ function wwdsEditMedia(i, slot, input){
 }
 function wwdsAddCategory(){
   wwdsData.categories.push({ cat:'Neue Kategorie', q:'Neue Frage', answers:['','',''], correct:0, note:'', media:[] });
+  wwdsEditOpen = wwdsData.categories.length - 1;
   renderWwdsEditor(); wwdsSave();
 }
 function wwdsDeleteCategory(i){
@@ -8296,10 +8358,17 @@ function renderDdfEditor(){
   const noteCss  = 'width:100%;margin-top:8px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;';
   const sectCss  = 'display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:0 0 4px;';
 
-  const cards = ddfData.questions.map((q,i) => `
-    <div class="ddf-card">
+  const cards = ddfData.questions.map((q,i) => {
+    const isOpen = ddfEditOpen === i;
+    const imgCount = (q.qMedia||[]).filter(Boolean).length + (q.aMedia||[]).filter(Boolean).length;
+    const head = `<div onclick="ddfToggleOpen(${i})" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 11px;background:${isOpen?'#1A2150':'#141A3D'};border:1px solid ${isOpen?'rgba(255,210,63,.4)':'rgba(255,255,255,.07)'};border-radius:9px;${isOpen?'border-bottom-left-radius:0;border-bottom-right-radius:0;':''}">
+      <span style="color:#6C74A8;font-size:.9rem;">${isOpen?'▾':'▸'}</span>
+      <span style="color:#FFD23F;font-weight:700;font-size:.78rem;flex-shrink:0;">${i+1}.</span>
+      <span style="flex:1;min-width:0;color:${q.q?'#F0EDE2':'rgba(255,255,255,.4)'};font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escAttr(q.q)||'— noch leer —'}${q.answer?` <span style="color:rgba(255,255,255,.45);font-weight:400;">· ${escAttr(q.answer)}</span>`:''}</span>
+      <span style="display:flex;align-items:center;gap:6px;flex-shrink:0;font-size:.66rem;color:#FFD23F;">${imgCount?`🖼${imgCount}`:''}</span>
+    </div>`;
+    const body = isOpen ? `<div style="padding:12px;background:#0F1436;border:1px solid rgba(255,210,63,.25);border-top:none;border-radius:0 0 9px 9px;">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-        <span style="color:#FFD23F;font-weight:700;font-size:.8rem;width:26px;flex-shrink:0;">${i+1}.</span>
         <input type="text" value="${escAttr(q.q)}" placeholder="Frage / Aufgabe" style="flex:2 1 180px;${fieldCss}"
                oninput="ddfData.questions[${i}].q=this.value; ddfSave()">
         <input type="text" value="${escAttr(q.answer)}" placeholder="Antwort" style="flex:1 1 120px;${fieldCss}"
@@ -8313,7 +8382,9 @@ function renderDdfEditor(){
       ${mediaSlotsHtml(q.aMedia||[], (s,expr) => `ddfSetMedia(${i},'aMedia',${s},${expr})`, DDF_MAX_MEDIA)}
       <input type="text" value="${escAttr(q.note||'')}" placeholder="📝 Notiz für den Host" style="${noteCss}"
              oninput="ddfData.questions[${i}].note=this.value; ddfSave()">
-    </div>`).join('');
+    </div>` : '';
+    return `<div style="margin-bottom:7px;">${head}${body}</div>`;
+  }).join('');
 
   box.innerHTML = cards
     ? `<div class="ddf-card-head">${ddfData.questions.length} ${ddfData.questions.length === 1 ? 'Frage' : 'Fragen'}</div>${cards}`
@@ -8321,6 +8392,8 @@ function renderDdfEditor(){
          Noch keine Fragen — mit „+ Frage“ anlegen oder eine JSON-Datei importieren.
        </div>`;
 }
+let ddfEditOpen = 0;
+function ddfToggleOpen(i){ ddfEditOpen = (ddfEditOpen === i ? -1 : i); renderDdfEditor(); }
 
 function ddfSetMedia(qi, which, slot, input){
   const q = ddfData.questions[qi];
@@ -8331,6 +8404,7 @@ function ddfSetMedia(qi, which, slot, input){
 
 function ddfAddQuestion(){
   ddfData.questions.push({ q:'', answer:'', note:'', qMedia:[], aMedia:[] });
+  ddfEditOpen = ddfData.questions.length - 1;
   ddfSave(); renderDdfEditor();
 }
 function ddfDeleteQuestion(i){
