@@ -940,7 +940,8 @@ body {
 }
 .menu-card:hover { transform: translateY(-3px); border-color: rgba(217,166,46,.55); background: #141a46; }
 .menu-card:hover::before { opacity: 1; }
-.menu-card-icon { font-size: 2.3rem; margin-bottom: 12px; line-height: 1; }
+.menu-card-icon { font-size: 2.3rem; margin-bottom: 12px; line-height: 1; height: 56px; display: flex; align-items: center; justify-content: center; }
+.menu-card-icon svg { width: 56px; height: 56px; display: block; filter: drop-shadow(0 2px 8px rgba(255,200,0,.28)); }
 .menu-card-title {
   font-family: 'Inter', sans-serif; font-size: 1.02rem; font-weight: 700;
   color: #F0EDE2; letter-spacing: .3px; margin-bottom: 5px;
@@ -1505,32 +1506,32 @@ body {
   <div class="menu-divider"></div>
   <div class="menu-cards">
     <div class="menu-card" onclick="showScreen('setup-screen')">
-      <div class="menu-card-icon">🎯</div>
+      <div class="menu-card-icon" data-game="feud"></div>
       <div class="menu-card-title">Family Feud</div>
       <div class="menu-card-sub">Teams raten Umfrageantworten</div>
     </div>
     <div class="menu-card" onclick="showScreen('jeopardy-setup-screen')">
-      <div class="menu-card-icon">📺</div>
+      <div class="menu-card-icon" data-game="jeopardy"></div>
       <div class="menu-card-title">Jeopardy</div>
       <div class="menu-card-sub">Kategorien & Punktefelder</div>
     </div>
     <div class="menu-card" onclick="showScreen('wwm-setup-screen')">
-      <div class="menu-card-icon">💰</div>
+      <div class="menu-card-icon" data-game="wwm"></div>
       <div class="menu-card-title">Wer wird Millionär</div>
       <div class="menu-card-sub">15 Fragen, 4 Antworten, Joker</div>
     </div>
     <div class="menu-card" onclick="showScreen('wwds-setup-screen')">
-      <div class="menu-card-icon">🤔</div>
+      <div class="menu-card-icon" data-game="wwds"></div>
       <div class="menu-card-title">Wer weiß denn sowas</div>
       <div class="menu-card-sub">12 Kategorien, 3 Antworten, Masterfrage</div>
     </div>
     <div class="menu-card" onclick="showScreen('ddf-setup-screen')">
-      <div class="menu-card-icon">💀</div>
+      <div class="menu-card-icon" data-game="ddf"></div>
       <div class="menu-card-title">Der Dümmste fliegt</div>
       <div class="menu-card-sub">Leben, Abstimmung, letzter bleibt</div>
     </div>
     <div class="menu-card" onclick="showScreen('tournament-screen')">
-      <div class="menu-card-icon">🏆</div>
+      <div class="menu-card-icon" data-game="trophy"></div>
       <div class="menu-card-title">Turnier</div>
       <div class="menu-card-sub">Mehrtägig, gleiche Teams, Gewichtung</div>
     </div>
@@ -2171,6 +2172,43 @@ function renderLogo(line1, line2, size2, icon) {
   document.getElementById('main-logo').innerHTML = inner;
 }
 
+// Menü-Karten: das eigene Gold-Logo jedes Spiels statt eines Emojis.
+function gameCardIcon(key){
+  if (key === 'feud') return STAR_SVG;
+  if (key === 'jeopardy') return DANGER_SVG;
+  const gid = 'cg_' + key;
+  const grad = `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF6E0"/><stop offset="9%" stop-color="#F5CD5E"/><stop offset="45%" stop-color="#DDA828"/><stop offset="100%" stop-color="#A97A10"/></linearGradient></defs>`;
+  const body = logoIconMarkup(key).split('url(#goldGrad)').join('url(#' + gid + ')');
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">${grad}${body}</svg>`;
+}
+function renderMenuIcons(){
+  document.querySelectorAll('.menu-card-icon[data-game]').forEach(el => { el.innerHTML = gameCardIcon(el.getAttribute('data-game')); });
+}
+
+// Hub-Logo: das IRYO-GAMESHOW-Schild (Blau & Gold) statt Schriftzug + Balken.
+function renderIryoHubLogo(){
+  const el = document.getElementById('main-logo'); if (!el) return;
+  const S = 2, W = 900, H = 500;
+  const cv = document.createElement('canvas'); cv.width = W*S; cv.height = H*S;
+  const ctx = cv.getContext('2d'); ctx.scale(S,S);
+  const octPts = (x,y,w,h,c) => [[x+c,y],[x+w-c,y],[x+w,y+c],[x+w,y+h-c],[x+w-c,y+h],[x+c,y+h],[x,y+h-c],[x,y+c]];
+  const rp = (pts,r) => { ctx.beginPath(); const n=pts.length; const m=[(pts[0][0]+pts[1][0])/2,(pts[0][1]+pts[1][1])/2]; ctx.moveTo(m[0],m[1]); for(let i=0;i<n;i++){ const c=pts[(i+1)%n],nx=pts[(i+2)%n]; ctx.arcTo(c[0],c[1],nx[0],nx[1],r);} ctx.closePath(); };
+  const oct = (x,y,w,h,c,r) => rp(octPts(x,y,w,h,c),r);
+  ctx.save(); ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=26; ctx.shadowOffsetY=8; oct(65,26,770,448,96,28); ctx.fillStyle='#000'; ctx.fill(); ctx.restore();
+  oct(65,26,770,448,96,28); let g=ctx.createLinearGradient(0,26,0,474); g.addColorStop(0,'#FBE6A6'); g.addColorStop(.5,'#E9C25A'); g.addColorStop(1,'#C79A34'); ctx.fillStyle=g; ctx.fill(); ctx.lineWidth=2.5; ctx.strokeStyle='rgba(20,15,5,.5)'; ctx.stroke();
+  oct(77,38,746,424,86,25); g=ctx.createLinearGradient(0,38,0,462); g.addColorStop(0,'#2f6fbf'); g.addColorStop(1,'#1c4a8f'); ctx.fillStyle=g; ctx.fill();
+  oct(91,52,718,396,76,22); g=ctx.createRadialGradient(450,215,50,450,250,430); g.addColorStop(0,'#22345f'); g.addColorStop(1,'#0f1b3a'); ctx.fillStyle=g; ctx.fill();
+  ctx.save(); oct(91,52,718,396,76,22); ctx.clip(); ctx.fillStyle='rgba(255,255,255,.07)'; for(let yy=74;yy<440;yy+=30) for(let xx=112;xx<792;xx+=30){ ctx.beginPath(); ctx.arc(xx,yy,2,0,7); ctx.fill(); } ctx.restore();
+  const fit = (txt,tw,sp) => { ctx.letterSpacing=sp+'px'; ctx.font='120px "Luckiest Guy", sans-serif'; return 120*tw/ctx.measureText(txt).width; };
+  const block = (txt,y,size,sp,stops,side,ol) => { ctx.textAlign='center'; ctx.font='400 '+size+'px "Luckiest Guy", sans-serif'; ctx.letterSpacing=sp+'px'; ctx.lineJoin='round'; const dp=Math.round(size*0.13); ctx.lineWidth=size*0.16; ctx.strokeStyle=ol; ctx.strokeText(txt,450,y+dp); for(let d=dp;d>=1;d--){ ctx.fillStyle=side; ctx.fillText(txt,450,y+d); } ctx.lineWidth=size*0.14; ctx.strokeStyle=ol; ctx.strokeText(txt,450,y); const gg=ctx.createLinearGradient(0,y-size*0.82,0,y+size*0.14); stops.forEach(s=>gg.addColorStop(s[0],s[1])); ctx.fillStyle=gg; ctx.fillText(txt,450,y); };
+  block('IRYO',258,Math.min(200,fit('IRYO',500,4)),4,[[0,'#FFF0B0'],[.5,'#F6C23A'],[1,'#D98A12']],'#8a5a08','#5a3a05');
+  block('GAMESHOW',372,Math.min(112,fit('GAMESHOW',540,4)),4,[[0,'#FFFFFF'],[.5,'#DCE8FF'],[1,'#A9C4EE']],'#4a5f88','#28324e');
+  const sparkle = (x,y,r,rot) => { const i=r*0.17; ctx.save(); ctx.translate(x,y); ctx.rotate((rot||0)*Math.PI/180); ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(i,-i); ctx.lineTo(r,0); ctx.lineTo(i,i); ctx.lineTo(0,r); ctx.lineTo(-i,i); ctx.lineTo(-r,0); ctx.lineTo(-i,-i); ctx.closePath(); ctx.fillStyle='#FFF3C8'; ctx.fill(); ctx.restore(); };
+  [[152,128,19,8],[120,190,8,-6],[758,158,15,10],[150,352,12,-8],[766,338,9,12]].forEach(s=>sparkle(s[0],s[1],s[2],s[3]));
+  cv.style.cssText = 'width:min(400px,88vw);height:auto;filter:drop-shadow(0 6px 24px rgba(0,0,0,.45));';
+  el.innerHTML = ''; el.appendChild(cv);
+}
+
 let finaleQuestions = [];
 
 let questions = [
@@ -2301,7 +2339,7 @@ function showScreen(id) {
   // genau wie das alte Popup-Fenster das auch nie automatisch geschlossen hat.
   if (id === 'menu-screen') document.getElementById('gm-embed-overlay').classList.remove('visible');
   // Logo per context
-  if (id === 'menu-screen') renderLogo('KELLER', 'GAMESHOWS', 30);
+  if (id === 'menu-screen') renderIryoHubLogo();
   else if (id === 'tournament-screen') renderLogo('TURNIER', null, null, 'trophy');
   else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, 'danger');
   else if (id.startsWith('wwds')) renderLogo('WER WEISS', 'DENN SOWAS', 26, 'wwds');
@@ -4999,7 +5037,10 @@ loadHostNotes();
 loadTournament();
 ensureImgHoverPreview();
 ensureEditorTopBtn();
-renderLogo('KELLER', 'GAMESHOWS', 30);
+renderMenuIcons();
+renderIryoHubLogo();
+// Schriftart „Luckiest Guy" ist evtl. beim ersten Zeichnen noch nicht geladen -> danach neu rendern.
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (document.getElementById('menu-screen').classList.contains('active')) renderIryoHubLogo(); });
 document.getElementById('sfx-toggle').textContent = SFX.enabled ? '🔊 Sound an' : '🔇 Sound aus';
 
 // ── MENU ──
