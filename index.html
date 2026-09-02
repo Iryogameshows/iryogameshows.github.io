@@ -2109,10 +2109,11 @@ function logoIconMarkup(icon) {
         <path d="M68,64 Q68,45 80,45 Q92,45 92,64 Z" fill="url(#goldGrad)"/>
         <circle cx="80" cy="37" r="9" fill="url(#goldGrad)"/>
       </g>`;
-    case 'trophy': // Siegertreppchen - Podium, Erster gefüllt (Turnier)
-      return `<rect x="6"  y="46" width="22" height="34" rx="4" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
-        <rect x="29" y="28" width="22" height="52" rx="4" fill="url(#goldGrad)"/>
-        <rect x="52" y="54" width="22" height="26" rx="4" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>`;
+    case 'trophy': // Rangliste - Stern über absteigenden Balken, Gesamtwertung (Turnier)
+      return `<path d="M40,5 L43.2,13.6 L52.4,14 L45.2,19.7 L47.6,28.5 L40,23.5 L32.4,28.5 L34.8,19.7 L27.6,14 L36.8,13.6 Z" fill="url(#goldGrad)"/>
+        <rect x="14" y="40" width="52" height="10" rx="2.5" fill="url(#goldGrad)"/>
+        <rect x="14" y="54" width="40" height="10" rx="2.5" fill="url(#goldGrad)" opacity=".72"/>
+        <rect x="14" y="68" width="28" height="10" rx="2.5" fill="url(#goldGrad)" opacity=".5"/>`;
     default: // drei Balken - Family Feud / Menü
       return `<rect x="0" y="0" width="80" height="20" rx="5" fill="url(#goldGrad)"/>
         <rect x="0" y="30" width="80" height="20" rx="5" fill="none" stroke="url(#goldGrad)" stroke-width="6"/>
