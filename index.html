@@ -697,18 +697,22 @@ body {
 .editor-layout > .editor-card, .editor-layout > .editor-main { flex: 1; min-width: 0; }
 .editor-main { display: flex; flex-direction: column; }
 .editor-side {
-  position: sticky; top: 16px; align-self: flex-start;
+  position: sticky; top: 50%; transform: translateY(-50%); align-self: flex-start;
   display: flex; flex-direction: column; gap: 8px;
-  width: 190px; flex-shrink: 0;
+  width: 190px; flex-shrink: 0; box-sizing: border-box;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,210,63,.35);
+  border-radius: 14px; padding: 14px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.4);
 }
 .editor-side .btn { width: 100%; padding: 12px 14px; text-align: center; box-sizing: border-box; }
 .editor-side .side-label {
   font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
-  color: rgba(255,255,255,.3); margin: 4px 2px 2px; text-align: center;
+  color: rgba(255,255,255,.4); margin: 2px 2px 2px; text-align: center;
 }
 @media (max-width: 760px) {
   .editor-layout { flex-direction: column; }
-  .editor-side { position: static; width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .editor-side { position: static; transform: none; width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; }
   .editor-side .btn { width: auto; }
   .editor-side .side-label { display: none; }
 }
