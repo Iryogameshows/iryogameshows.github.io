@@ -2127,7 +2127,7 @@ function renderLogo(line1, line2, size2, icon) {
   // Schriftgrösse variabel war - bei der Standardgrösse 48 lief sie deshalb
   // 24px in die Zeile darüber. Grundlinie und viewBox-Höhe richten sich jetzt
   // nach der tatsächlichen Schriftgrösse.
-  const y1 = 76;
+  const y1 = 86;
   const y2 = y1 + Math.round(fs2 * 0.78) + 6;
   const vbH = Math.max(120, y2 + 12);
   let inner;
@@ -2161,11 +2161,11 @@ function renderLogo(line1, line2, size2, icon) {
         </linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <g transform="translate(127,6) scale(0.575)">${logoIconMarkup(icon)}</g>
+      <g transform="translate(128,2) scale(0.55)">${logoIconMarkup(icon)}</g>
       ${line2
         ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
            <text x="150" y="${y2}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
-        : `<text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
+        : `<text x="150" y="104" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
       }
     </svg>`;
   }
