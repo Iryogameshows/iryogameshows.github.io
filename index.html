@@ -1679,7 +1679,6 @@ body {
 
 <!-- JEOPARDY SETUP -->
 <div id="jeopardy-setup-screen" class="screen">
-  <div class="page-title"><em>Jeopardy</em> Setup</div>
   <div class="team-setup" id="jeopardy-team-setup">
     <div class="team-card red">
       <div class="label">Team 1</div>
@@ -1735,7 +1734,6 @@ body {
 
 <!-- WWM SETUP -->
 <div id="wwm-setup-screen" class="screen">
-  <div class="page-title"><em>Wer wird Millionär</em> Setup</div>
   <div class="team-setup">
     <div class="team-card blue">
       <div class="label">Kandidat</div>
@@ -1781,7 +1779,6 @@ body {
 
 <!-- WWDS SETUP -->
 <div id="wwds-setup-screen" class="screen">
-  <div class="page-title"><em>Wer weiß denn sowas</em> Setup</div>
   <div class="team-setup">
     <div class="team-card red">
       <div class="label">Team 1</div>
@@ -1891,7 +1888,6 @@ body {
 
 <!-- DDF SETUP -->
 <div id="ddf-setup-screen" class="screen">
-  <div class="page-title"><em>Der Dümmste</em> fliegt</div>
   <div class="wwds-sub">Alle bekommen dieselbe Frage. Nach jeder Runde stimmen die Verbliebenen ab, wer ein Leben verliert.</div>
 
   <div style="max-width:620px;margin:18px auto;">
@@ -1994,7 +1990,7 @@ body {
 
 <!-- TURNIER -->
 <div id="tournament-screen" class="screen">
-  <div class="page-title"><em>🏆 Turnier</em>-Modus</div>
+  <div class="page-title" style="margin-bottom:22px;"><em>🏆 Turnier</em>-Modus</div>
   <div id="tournament-content" style="width:100%;"></div>
   <div class="edit-bar" style="margin-top:12px;">
     <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zum Menü</button>
@@ -2346,6 +2342,12 @@ function showScreen(id) {
   else if (id.startsWith('wwm')) renderLogo('MILLIONÄR', null, null, 'wwm');
   else if (id.startsWith('ddf')) renderLogo('DER DÜMMSTE', 'FLIEGT', 26, 'ddf');
   else renderLogo('KELLER', 'FEUD');
+  // WWDS-, DDF- und Turnier-Logo etwas größer und ein Stück tiefer.
+  const logoBox = document.querySelector('.logo');
+  const logoSvg = document.querySelector('#main-logo svg');
+  const bigLogo = ['wwds-setup-screen','wwds-edit-screen','ddf-setup-screen','ddf-edit-screen','tournament-screen'].includes(id);
+  if (logoBox) logoBox.style.marginTop = bigLogo ? '48px' : '';
+  if (logoSvg) logoSvg.style.width = bigLogo ? '440px' : '';
   // Beim Screenwechsel ganz nach oben und den Hoch-Button neu bewerten.
   window.scrollTo(0, 0);
   updateEditorTopBtn();
