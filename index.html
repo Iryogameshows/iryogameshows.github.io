@@ -72,7 +72,7 @@ body {
 
 /* ── SETUP ── */
 #setup-screen { gap: 28px; margin-top: 10px; }
-.team-setup { display: flex; gap: 16px; width: 100%; justify-content: center; flex-wrap: wrap; }
+.team-setup { display: flex; gap: 16px; width: 100%; justify-content: center; flex-wrap: wrap; margin: 8px 0 16px; }
 .team-card {
   flex: 1; min-width: 200px; max-width: 300px;
   border-radius: 16px; padding: 28px 24px; text-align: center;
@@ -101,12 +101,12 @@ body {
 }
 .team-card input:focus { border-color: rgba(255,210,63,.5); box-shadow: 0 0 0 3px rgba(255,210,63,.1); }
 .team-card input::placeholder { color: rgba(255,255,255,.2); }
-.team-toggle { display: flex; gap: 8px; align-items: center; justify-content: center; }
+.team-toggle { display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 10px; }
 .team-toggle label { font-size: .8rem; color: rgba(255,255,255,.5); font-weight: 600; }
 .team-toggle input[type=checkbox] {
   width: 18px; height: 18px; accent-color: #22C55E; cursor: pointer;
 }
-.setup-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.setup-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
 
 /* ── GAME ── */
 #game-screen { gap: 14px; }
@@ -1679,7 +1679,7 @@ body {
 
 <!-- JEOPARDY SETUP -->
 <div id="jeopardy-setup-screen" class="screen">
-  <div class="page-title"><em>Setup</em></div>
+  <div class="page-title"><em>Jeopardy</em> Setup</div>
   <div class="team-setup" id="jeopardy-team-setup">
     <div class="team-card red">
       <div class="label">Team 1</div>
@@ -1713,7 +1713,7 @@ body {
 
 <!-- JEOPARDY EDIT -->
 <div id="jeopardy-edit-screen" class="screen wide-editor">
-  <div class="page-title"><em>Fragen</em> bearbeiten</div>
+  <div class="page-title"><em>Jeopardy</em> Fragen bearbeiten</div>
   <div class="editor-layout">
     <div class="editor-card">
       <div id="jeopardy-editor-grid"></div>
@@ -1735,7 +1735,7 @@ body {
 
 <!-- WWM SETUP -->
 <div id="wwm-setup-screen" class="screen">
-  <div class="page-title"><em>Setup</em></div>
+  <div class="page-title"><em>Wer wird Millionär</em> Setup</div>
   <div class="team-setup">
     <div class="team-card blue">
       <div class="label">Kandidat</div>
@@ -1751,7 +1751,7 @@ body {
 
 <!-- WWM EDIT -->
 <div id="wwm-edit-screen" class="screen wide-editor">
-  <div class="page-title"><em>Fragen</em> bearbeiten</div>
+  <div class="page-title"><em>Wer wird Millionär</em> Fragen bearbeiten</div>
   <div class="editor-layout">
     <div class="editor-card">
       <div id="wwm-editor-grid"></div>
@@ -1781,7 +1781,7 @@ body {
 
 <!-- WWDS SETUP -->
 <div id="wwds-setup-screen" class="screen">
-  <div class="page-title"><em>Setup</em></div>
+  <div class="page-title"><em>Wer weiß denn sowas</em> Setup</div>
   <div class="team-setup">
     <div class="team-card red">
       <div class="label">Team 1</div>
@@ -1812,7 +1812,7 @@ body {
 
 <!-- WWDS EDIT -->
 <div id="wwds-edit-screen" class="screen wide-editor">
-  <div class="page-title"><em>Fragen</em> bearbeiten</div>
+  <div class="page-title"><em>Wer weiß denn sowas</em> Fragen bearbeiten</div>
   <div class="editor-layout">
     <div class="editor-card">
       <div id="wwds-editor-grid"></div>
@@ -1891,7 +1891,7 @@ body {
 
 <!-- DDF SETUP -->
 <div id="ddf-setup-screen" class="screen">
-  <div class="page-title"><em>Setup</em></div>
+  <div class="page-title"><em>Der Dümmste</em> fliegt</div>
   <div class="wwds-sub">Alle bekommen dieselbe Frage. Nach jeder Runde stimmen die Verbliebenen ab, wer ein Leben verliert.</div>
 
   <div style="max-width:620px;margin:18px auto;">
@@ -1922,7 +1922,7 @@ body {
 
 <!-- DDF EDIT -->
 <div id="ddf-edit-screen" class="screen wide-editor">
-  <div class="page-title"><em>Fragen</em> bearbeiten</div>
+  <div class="page-title"><em>Der Dümmste fliegt</em> Fragen bearbeiten</div>
   <div class="editor-layout">
     <div class="editor-card">
       <div id="ddf-editor"></div>
@@ -2127,7 +2127,7 @@ function renderLogo(line1, line2, size2, icon) {
   // Schriftgrösse variabel war - bei der Standardgrösse 48 lief sie deshalb
   // 24px in die Zeile darüber. Grundlinie und viewBox-Höhe richten sich jetzt
   // nach der tatsächlichen Schriftgrösse.
-  const y1 = 86;
+  const y1 = 76;
   const y2 = y1 + Math.round(fs2 * 0.78) + 6;
   const vbH = Math.max(120, y2 + 12);
   let inner;
@@ -2161,11 +2161,11 @@ function renderLogo(line1, line2, size2, icon) {
         </linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <g transform="translate(128,2) scale(0.55)">${logoIconMarkup(icon)}</g>
+      <g transform="translate(127,6) scale(0.575)">${logoIconMarkup(icon)}</g>
       ${line2
         ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
            <text x="150" y="${y2}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
-        : `<text x="150" y="104" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
+        : `<text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
       }
     </svg>`;
   }
