@@ -2159,9 +2159,9 @@ function renderLogo(line1, line2, size2, icon) {
       </defs>
       <g transform="translate(127,6) scale(0.575)">${logoIconMarkup(icon)}</g>
       ${line2
-        ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="26" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
+        ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="22" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
            <text x="150" y="${y2}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
-        : `<text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="44" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
+        : `<text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="38" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
       }
     </svg>`;
   }
@@ -2338,16 +2338,16 @@ function showScreen(id) {
   if (id === 'menu-screen') renderIryoHubLogo();
   else if (id === 'tournament-screen') renderLogo('TURNIER', null, null, 'trophy');
   else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, 'danger');
-  else if (id.startsWith('wwds')) renderLogo('WER WEISS', 'DENN SOWAS', 26, 'wwds');
-  else if (id.startsWith('wwm')) renderLogo('WER WIRD', 'MILLIONÄR', 26, 'wwm');
-  else if (id.startsWith('ddf')) renderLogo('DER DÜMMSTE', 'FLIEGT', 26, 'ddf');
+  else if (id.startsWith('wwds')) renderLogo('WER WEISS', 'DENN SOWAS', 22, 'wwds');
+  else if (id.startsWith('wwm')) renderLogo('WER WIRD', 'MILLIONÄR', 22, 'wwm');
+  else if (id.startsWith('ddf')) renderLogo('DER DÜMMSTE', 'FLIEGT', 22, 'ddf');
   else renderLogo('KELLER', 'FEUD');
   // WWDS-, DDF- und Turnier-Logo etwas größer und ein Stück tiefer.
   const logoBox = document.querySelector('.logo');
   const logoSvg = document.querySelector('#main-logo svg');
   const bigLogo = ['wwm-setup-screen','wwm-edit-screen','wwds-setup-screen','wwds-edit-screen','ddf-setup-screen','ddf-edit-screen','tournament-screen'].includes(id);
   if (logoBox) logoBox.style.marginTop = bigLogo ? '44px' : '';
-  if (logoSvg) logoSvg.style.width = bigLogo ? 'min(660px, 94vw)' : '';
+  if (logoSvg) logoSvg.style.width = bigLogo ? 'min(600px, 92vw)' : '';
   // Beim Screenwechsel ganz nach oben und den Hoch-Button neu bewerten.
   window.scrollTo(0, 0);
   updateEditorTopBtn();
