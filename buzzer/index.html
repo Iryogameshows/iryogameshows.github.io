@@ -284,7 +284,7 @@
   let live=false, armed=false, buzzedThisRound=false, lastRound=0, results=[], lockUntil=0, excludedSet={};
   let online=false, buzzFailed=false;
   let myTeam=null, teamNames=[], presenceCount=0, joinLocked=false, lockedNames=[];
-  let estActive=false, estQuestion='', estRound=0, estSubmitted=false;
+  let estActive=false, estQuestion='', estRound=0, estSubmitted=false, estTeamless=false;
 
   function myName(){ return acc ? acc.name : ''; }
   function locked(){ return Date.now() < lockUntil; }
@@ -326,6 +326,19 @@
     };
     preload.src = pick;
   }
+  // Ohne Team (Der Preis ist heiß) bleibt der Team-Chip weg - er zeigte sonst
+  // "Team NaN".
+  function showEstimate(){
+    showScreen('screen-estimate');
+    const chip = document.getElementById('est-team-chip');
+    const hasTeam = myTeam !== null && myTeam !== undefined;
+    chip.style.display = hasTeam ? '' : 'none';
+    if (hasTeam) {
+      chip.textContent = teamNames[myTeam] || ('Team ' + (myTeam+1));
+      chip.style.background = TEAM_COLORS_HEX[myTeam] || '#888';
+    }
+    document.getElementById('est-question').textContent = estQuestion || 'Gib deine Schätzung ab.';
+  }
   function refreshRoot(){
     if (!acc) { showScreen('screen-login'); return; }
     if (document.getElementById('screen-signup').classList.contains('active')) return;
@@ -337,6 +350,11 @@
     // Der Dümmste fliegt kennt keine Teams - die Abstimmung muss deshalb vor
     // der Teamprüfung kommen, sonst hingen die Spieler in der Lobby fest.
     if (mayVote()) { showScreen('screen-vote'); renderVote(); return; }
+    // Der Preis ist heiß kennt ebenfalls keine Teams. Der Host setzt dafür
+    // estTeamless, dann muss die Eingabe genau wie die Abstimmung vor die
+    // Teamprüfung - sonst wartet das Handy in der Lobby auf ein Team, das
+    // in diesem Spiel nie kommt.
+    if (estActive && !estSubmitted && estTeamless) { showEstimate(); return; }
     if (myTeam === null || myTeam === undefined) {
       showScreen('screen-lobby');
       document.getElementById('lobby-count').textContent = presenceCount > 1 ? `${presenceCount} Leute in der Lobby` : '';
@@ -344,14 +362,7 @@
     }
     // Schätzfrage läuft und ich habe noch nicht abgegeben → Eingabe zeigen.
     // Nach dem Abschicken geht es automatisch zurück in den Buzzer-Screen.
-    if (estActive && !estSubmitted) {
-      showScreen('screen-estimate');
-      const chip = document.getElementById('est-team-chip');
-      chip.textContent = teamNames[myTeam] || ('Team ' + (myTeam+1));
-      chip.style.background = TEAM_COLORS_HEX[myTeam] || '#888';
-      document.getElementById('est-question').textContent = estQuestion || 'Gib deine Schätzung ab.';
-      return;
-    }
+    if (estActive && !estSubmitted) { showEstimate(); return; }
     showScreen('screen-buzz');
     teamChip.textContent = teamNames[myTeam] || ('Team ' + (myTeam+1));
     teamChip.style.background = TEAM_COLORS_HEX[myTeam] || '#888';
@@ -432,6 +443,7 @@
     if (r !== estRound) { estRound = r; estSubmitted = false; document.getElementById('est-input').value = ''; }
     estActive = !!e.active;
     estQuestion = e.question || '';
+    estTeamless = !!e.teamless;
     if (estActive && acc && e.answers && e.answers[acc.key]) estSubmitted = true;
     document.getElementById('est-hint').textContent = estSubmitted ? 'Schätzung abgegeben ✔' : '';
     refreshRoot();
