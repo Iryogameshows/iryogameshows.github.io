@@ -43,6 +43,18 @@
   .lobby-gif{width:260px;height:260px;border-radius:16px;object-fit:contain;object-position:center;background:rgba(0,0,0,.25);box-shadow:0 10px 30px rgba(0,0,0,.5);}
   .lobby-sub{font-size:.85rem;color:rgba(255,255,255,.45);text-align:center;max-width:280px;line-height:1.5;}
   .lobby-count{font-size:.72rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;}
+  /* „Spiel laeuft" muss man aus zwei Metern Entfernung erkennen, wenn das Handy
+     auf dem Tisch liegt - deshalb Gruen, fett und mit Puls statt als Fliesstext. */
+  .lobby-badge{
+    display:inline-block;padding:9px 18px;border-radius:99px;
+    background:rgba(34,197,94,.16);border:1.5px solid #22C55E;color:#6EE7A0;
+    font-weight:900;font-size:.95rem;letter-spacing:.5px;text-align:center;
+    animation:lobbyPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes lobbyPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.45);}
+    50%    {box-shadow:0 0 0 10px rgba(34,197,94,0);}
+  }
   .team-chip{display:inline-block;padding:8px 20px;border-radius:99px;font-weight:900;font-size:1.05rem;letter-spacing:.5px;box-shadow:0 6px 16px rgba(0,0,0,.35);}
   #vote-list { display:flex; flex-direction:column; gap:10px; width:100%; margin:14px 0; }
   .vote-opt {
@@ -110,10 +122,11 @@
 
   <!-- LOBBY -->
   <div id="screen-lobby" class="screen">
-    <div class="lobby-title">Du bist drin! 🎉</div>
+    <div class="lobby-title" id="lobby-title">Du bist drin! 🎉</div>
+    <div class="lobby-badge" id="lobby-badge" style="display:none;">● Spiel läuft — halt dich bereit</div>
     <img class="lobby-gif" id="lobby-gif" alt="" style="visibility:hidden">
     <div class="me-row"><span class="me-av" id="lobby-av"></span><b id="lobby-name"></b></div>
-    <div class="lobby-sub">Der Host teilt dich gleich einem Team zu.<br>Nicht weggehen, das dauert nicht lang!</div>
+    <div class="lobby-sub" id="lobby-sub">Gleich geht es los.<br>Nicht weggehen, das dauert nicht lang!</div>
     <div class="lobby-count" id="lobby-count"></div>
   </div>
 
@@ -173,8 +186,11 @@
   const AVATARS = ['🦊','🐼','🐸','🐵','🦁','🐯','🐨','🐷','🐰','🐙','🦄','🐲','👽','🤖','🦖','🐝','🦉','🐢','🦈','🌟'];
   const COLORS = ['#E8453C','#F97316','#FFD23F','#22C55E','#3B82F6','#8B5CF6','#EC4899','#14B8A6'];
 
+  // Ohne Team das neutrale Gold statt Team-Rot - sonst sieht ein teamloser
+  // Spieler aus wie Team 1.
+  const BUZZ_NEUTRAL = { light:'#FFE066', mid:'#FFD23F', dark:'#C6930A', shadow:'#8a6406' };
   function applyBuzzColor(team){
-    const g = BUZZ_GRADIENTS[team] || BUZZ_GRADIENTS[0];
+    const g = (team === null || team === undefined) ? BUZZ_NEUTRAL : (BUZZ_GRADIENTS[team] || BUZZ_NEUTRAL);
     const r = document.documentElement.style;
     r.setProperty('--buzz-light',g.light); r.setProperty('--buzz-mid',g.mid);
     r.setProperty('--buzz-dark',g.dark); r.setProperty('--buzz-shadow',g.shadow);
@@ -284,7 +300,7 @@
   let live=false, armed=false, buzzedThisRound=false, lastRound=0, results=[], lockUntil=0, excludedSet={};
   let online=false, buzzFailed=false;
   let myTeam=null, teamNames=[], presenceCount=0, joinLocked=false, lockedNames=[];
-  let estActive=false, estQuestion='', estRound=0, estSubmitted=false, estTeamless=false;
+  let estActive=false, estQuestion='', estRound=0, estSubmitted=false;
 
   function myName(){ return acc ? acc.name : ''; }
   function locked(){ return Date.now() < lockUntil; }
@@ -326,19 +342,44 @@
     };
     preload.src = pick;
   }
-  // Ohne Team (Der Preis ist heiß) bleibt der Team-Chip weg - er zeigte sonst
+  function hasTeam(){ return myTeam !== null && myTeam !== undefined; }
+
+  // Team-Kaestchen fuellen oder ausblenden. Ohne Team stand dort frueher
   // "Team NaN".
+  function fillTeamChip(chip){
+    chip.style.display = hasTeam() ? '' : 'none';
+    if (!hasTeam()) return;
+    chip.textContent = teamNames[myTeam] || ('Team ' + (myTeam+1));
+    chip.style.background = TEAM_COLORS_HEX[myTeam] || '#888';
+  }
+
   function showEstimate(){
     showScreen('screen-estimate');
-    const chip = document.getElementById('est-team-chip');
-    const hasTeam = myTeam !== null && myTeam !== undefined;
-    chip.style.display = hasTeam ? '' : 'none';
-    if (hasTeam) {
-      chip.textContent = teamNames[myTeam] || ('Team ' + (myTeam+1));
-      chip.style.background = TEAM_COLORS_HEX[myTeam] || '#888';
-    }
+    fillTeamChip(document.getElementById('est-team-chip'));
     document.getElementById('est-question').textContent = estQuestion || 'Gib deine Schätzung ab.';
   }
+
+  function showBuzz(){
+    showScreen('screen-buzz');
+    fillTeamChip(teamChip);
+    applyBuzzColor(hasTeam() ? myTeam : null);
+    refreshBuzz();
+  }
+
+  // Wartezimmer zwischen den Fragen. joinLocked setzt der Host beim echten
+  // Spielstart - das ist hier das verlaesslichste Signal dafuer, dass die Show
+  // laeuft und man sein Handy nicht weglegen sollte.
+  function showLobby(){
+    showScreen('screen-lobby');
+    const running = joinLocked;
+    document.getElementById('lobby-title').textContent = running ? 'Du bist dabei!' : 'Du bist drin! 🎉';
+    document.getElementById('lobby-badge').style.display = running ? '' : 'none';
+    document.getElementById('lobby-sub').innerHTML = running
+      ? 'Gleich kommt die nächste Frage — dann wird der Buzzer hier automatisch scharf.'
+      : 'Gleich geht es los.<br>Nicht weggehen, das dauert nicht lang!';
+    document.getElementById('lobby-count').textContent = presenceCount > 1 ? `${presenceCount} Leute dabei` : '';
+  }
+
   function refreshRoot(){
     if (!acc) { showScreen('screen-login'); return; }
     if (document.getElementById('screen-signup').classList.contains('active')) return;
@@ -347,27 +388,16 @@
     document.getElementById('lobby-av').style.background = acc.color;
     document.getElementById('lobby-name').textContent = acc.name;
     if (!nameAllowed()) { showScreen('screen-blocked'); return; }
-    // Der Dümmste fliegt kennt keine Teams - die Abstimmung muss deshalb vor
-    // der Teamprüfung kommen, sonst hingen die Spieler in der Lobby fest.
+    // Abstimmung (Der Dümmste fliegt) und Schätzung/Gebot (Jeopardy, Der Preis
+    // ist heiß) haben Vorrang - beide sind ohnehin teamunabhängig.
     if (mayVote()) { showScreen('screen-vote'); renderVote(); return; }
-    // Der Preis ist heiß kennt ebenfalls keine Teams. Der Host setzt dafür
-    // estTeamless, dann muss die Eingabe genau wie die Abstimmung vor die
-    // Teamprüfung - sonst wartet das Handy in der Lobby auf ein Team, das
-    // in diesem Spiel nie kommt.
-    if (estActive && !estSubmitted && estTeamless) { showEstimate(); return; }
-    if (myTeam === null || myTeam === undefined) {
-      showScreen('screen-lobby');
-      document.getElementById('lobby-count').textContent = presenceCount > 1 ? `${presenceCount} Leute in der Lobby` : '';
-      return;
-    }
-    // Schätzfrage läuft und ich habe noch nicht abgegeben → Eingabe zeigen.
-    // Nach dem Abschicken geht es automatisch zurück in den Buzzer-Screen.
     if (estActive && !estSubmitted) { showEstimate(); return; }
-    showScreen('screen-buzz');
-    teamChip.textContent = teamNames[myTeam] || ('Team ' + (myTeam+1));
-    teamChip.style.background = TEAM_COLORS_HEX[myTeam] || '#888';
-    applyBuzzColor(myTeam);
-    refreshBuzz();
+    // Der Buzzer hängt nicht mehr am Team: sobald der Host eine Frage
+    // vorbereitet, bekommt ihn jeder - mit Team wie ohne. Dazwischen wartet
+    // man in der Lobby. buzzedThisRound haelt den Screen noch kurz, damit man
+    // seinen Platz sieht, wenn der Host die Frage gleich wieder schliesst.
+    if (live || armed || buzzedThisRound) { showBuzz(); return; }
+    showLobby();
   }
   function refreshBuzz(){
     buzz.disabled = !(online && live && !buzzedThisRound && !locked() && !amExcluded());
@@ -424,14 +454,18 @@
       .filter(b => { if (seen[b.name]) return false; seen[b.name] = 1; return true; });
     if (results.some(b => b.name === myName())) buzzedThisRound = true;
   }
-  ref.child('live').on('value', s => { live = !!s.val(); refreshBuzz(); });
-  ref.child('armed').on('value', s => { armed = !!s.val(); refreshBuzz(); });
+  // refreshRoot statt refreshBuzz: live/armed entscheiden jetzt darueber, ob
+  // ueberhaupt der Buzzer-Screen oder die Lobby dran ist. refreshBuzz allein
+  // wuerde nur den Inhalt eines Screens auffrischen, der gar nicht sichtbar
+  // ist - das Handy bliebe in der Lobby haengen.
+  ref.child('live').on('value', s => { live = !!s.val(); refreshRoot(); });
+  ref.child('armed').on('value', s => { armed = !!s.val(); refreshRoot(); });
   ref.child('excluded').on('value', s => { excludedSet = s.val() || {}; refreshBuzz(); });
   ref.child('round').on('value', s => {
     const round = s.val() || 0;
     if (round !== lastRound){ lastRound = round; buzzedThisRound = false; lockUntil = 0; buzzFailed = false; }
     recomputeResults();
-    refreshBuzz();
+    refreshRoot();
   });
   ref.child('buzzes').on('value', s => { rawBuzzes = s.val() || {}; recomputeResults(); refreshBuzz(); });
   // ── SCHÄTZFRAGE ──
@@ -443,7 +477,6 @@
     if (r !== estRound) { estRound = r; estSubmitted = false; document.getElementById('est-input').value = ''; }
     estActive = !!e.active;
     estQuestion = e.question || '';
-    estTeamless = !!e.teamless;
     if (estActive && acc && e.answers && e.answers[acc.key]) estSubmitted = true;
     document.getElementById('est-hint').textContent = estSubmitted ? 'Schätzung abgegeben ✔' : '';
     refreshRoot();

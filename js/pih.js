@@ -11,9 +11,8 @@
    Die Eingabe läuft über dieselbe Firebase-Leitung wie die Jeopardy-
    Schätzfrage (buzzer/estimate). Das ist Absicht: es ist exakt dieselbe
    Interaktion - "alle tippen eine Zahl" - und der Host moderiert immer nur
-   ein Spiel gleichzeitig. Neu ist nur das Flag teamless, damit die Handys die
-   Eingabe auch ohne Teamzuordnung anzeigen (Der Preis ist heiß kennt keine
-   Teams, genau wie DDF).
+   ein Spiel gleichzeitig. Teams braucht es dafuer keine: seit der Buzzer
+   nicht mehr teamgebunden ist, zeigt das Handy die Eingabe ohnehin jedem.
 
    Spieler werden wie bei DDF über eine uid identifiziert, nie über den Namen.
    ════════════════════════════════════════════════════════════════════════ */
@@ -445,7 +444,6 @@ function pihBeginBids(){
       active: true,
       round: pihBidRound,
       question: 'Was kostet: ' + (it.name || '?'),
-      teamless: true,   // Handys zeigen die Eingabe auch ohne Teamzuordnung
       answers: null,
     }).then(pihAttachBids).catch(()=>{});
   }
