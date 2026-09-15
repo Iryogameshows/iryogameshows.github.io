@@ -7936,9 +7936,12 @@ let ddfData = {
   ]
 };
 
+// Identität läuft durchgehend über uid, nie über den Namen: zwei Teilnehmer
+// dürfen gleich heißen, ohne sich gegenseitig Herzen abzuziehen. Für Accounts
+// ist uid der Account-Key, für Gäste ein beim Start vergebener Pseudokey.
 let ddfState = {
   active:false,
-  players:[],            // [{ name, avatar, color, key, lives, out }]
+  players:[],            // [{ uid, name, avatar, color, key, lives, out }]
   maxLives:3,
   roundTime:30,
   order:[], idx:0,       // gemischte Fragenreihenfolge
@@ -7947,8 +7950,10 @@ let ddfState = {
   timer:0, timerInt:null, timeUp:false,
   votes:{},              // von den Handys (Firebase spiegelt hier herein)
   hostVotes:{},          // vom Host für Gäste ohne Handy eingetragen
-  runoff:null, tied:null, lastCounts:null, loser:null,
-  lastEliminated:null,
+  runoff:null,           // uids der Stichwahl-Kandidaten
+  tied:null,             // uids bei Gleichstand
+  lastCounts:null,       // { uid: Stimmen }
+  loser:null,            // uid
 };
 
 /* ── Setup ─────────────────────────────────────────────────────────────── */
@@ -8071,6 +8076,16 @@ function ddfShuffledOrder(avoid){
   return a;
 }
 
+// Anzeigename. Kommt ein Name doppelt vor, wird durchnummeriert - sonst
+// stehen auf den Handys zwei gleich beschriftete Knöpfe und niemand weiß,
+// welcher Max gemeint ist.
+function ddfLabelFor(people, i){
+  const name = people[i].name;
+  if (people.filter(p => p.name === name).length < 2) return name;
+  const nth = people.slice(0, i + 1).filter(p => p.name === name).length;
+  return `${name} (${nth})`;
+}
+
 function startDdf(){
   const people = ddfContestants();
   if (people.length < 2) { alert('Mindestens zwei Teilnehmer — per QR beitreten lassen oder Gäste eintragen.'); return; }
@@ -8081,7 +8096,13 @@ function startDdf(){
 
   ddfState = {
     active:true,
-    players: people.map(p => ({ name:p.name, avatar:p.avatar, color:p.color, key:p.key, lives, out:false })),
+    // uid einmal hier vergeben und nie wieder ändern: Accounts über ihren Key,
+    // Gäste über ihre Position - so bleiben auch zwei "Max" auseinander.
+    players: people.map((p,i) => ({
+      uid: p.key || ('guest:' + i),
+      label: ddfLabelFor(people, i),
+      name:p.name, avatar:p.avatar, color:p.color, key:p.key, lives, out:false,
+    })),
     maxLives: lives,
     roundTime: time,
     order: ddfShuffledOrder(-1),
@@ -8090,7 +8111,6 @@ function startDdf(){
     timer:0, timerInt:null, timeUp:false,
     votes:{}, hostVotes:{},
     runoff:null, tied:null, lastCounts:null, loser:null,
-    lastEliminated:null,
   };
   ddfSaveSettings();
   showScreen('ddf-screen');
@@ -8101,6 +8121,12 @@ function startDdf(){
 
 function ddfAlive(){ return ddfState.players.filter(p => !p.out); }
 
+function ddfByUid(uid){ return ddfState.players.find(p => p.uid === uid) || null; }
+
+// Anzeigename zu einer uid - für Listen, die nur uids führen (lastCounts, tied).
+function ddfNameOf(uid){ const p = ddfByUid(uid); return p ? p.label : ''; }
+
+// picked: uid des hervorzuhebenden Spielers (Verlierer bzw. Sieger).
 function ddfRenderPlayers(picked){
   const box = document.getElementById('ddf-players');
   if (!box) return;
@@ -8108,10 +8134,10 @@ function ddfRenderPlayers(picked){
     let hearts = '';
     for (let i = 0; i < ddfState.maxLives; i++)
       hearts += `<span class="ddf-heart ${i < p.lives ? 'full' : 'empty'}">❤</span>`;
-    const cls = 'ddf-player' + (p.out ? ' out' : '') + (picked === p.name ? ' picked' : '');
+    const cls = 'ddf-player' + (p.out ? ' out' : '') + (picked === p.uid ? ' picked' : '');
     const av = p.avatar ? playerAvatarHtml(p) + ' ' : '';
     return `<div class="${cls}">
-      <div class="ddf-player-name">${av}${escAttr(p.name)}</div>
+      <div class="ddf-player-name">${av}${escAttr(p.label)}</div>
       <div>${hearts}</div>
     </div>`;
   }).join('');
@@ -8219,29 +8245,28 @@ function ddfRenderVoteGrid(){
        </div>` +
       (guests.length ? hint('Gäste ohne Handy — Stimme eintragen:') +
         guests.map(g => {
-          const gk = ddfVoterKey(g);
-          const chosen = ddfState.hostVotes[gk];
+          const chosen = ddfState.hostVotes[g.uid];
           return `<div style="width:100%;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:6px;">
-            <span style="min-width:110px;text-align:right;font-size:.8rem;color:#9a9a9a;">${escAttr(g.name)} →</span>
-            ${cands.map(c => {
-              const ck = ddfVoterKey(c);
-              return `<button class="btn ${chosen === ck ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:.7rem;"
-                onclick="ddfHostVote(${escJsArg(gk)}, ${escJsArg(ck)})">${escAttr(c.name)}</button>`;
-            }).join('')}
+            <span style="min-width:110px;text-align:right;font-size:.8rem;color:#9a9a9a;">${escAttr(g.label)} →</span>
+            ${cands.map(c =>
+              `<button class="btn ${chosen === c.uid ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:.7rem;"
+                onclick="ddfHostVote(${escJsArg(g.uid)}, ${escJsArg(c.uid)})">${escAttr(c.label)}</button>`
+            ).join('')}
           </div>`;
         }).join('') : '');
     return;
   }
 
   if (ddfState.phase === 'runoffAnnounce') {
-    grid.innerHTML = hint('Gleichstand zwischen: <b>' + (ddfState.tied || []).map(escAttr).join('</b>, <b>') + '</b>');
+    grid.innerHTML = hint('Gleichstand zwischen: <b>' +
+      (ddfState.tied || []).map(u => escAttr(ddfNameOf(u))).join('</b>, <b>') + '</b>');
     return;
   }
 
   if (ddfState.phase === 'tiebreak') {
     grid.innerHTML = hint('Auch die Stichwahl endet gleich — du entscheidest:') +
-      (ddfState.tied || []).map(n =>
-        `<button class="btn btn-danger ddf-vote-btn" onclick="ddfVoteOut(${escJsArg(n)})">${escAttr(n)}</button>`
+      (ddfState.tied || []).map(u =>
+        `<button class="btn btn-danger ddf-vote-btn" onclick="ddfVoteOut(${escJsArg(u)})">${escAttr(ddfNameOf(u))}</button>`
       ).join('');
     return;
   }
@@ -8249,13 +8274,13 @@ function ddfRenderVoteGrid(){
   if (ddfState.phase === 'result') {
     const c = ddfState.lastCounts || {};
     const rows = Object.keys(c).sort((a,b) => c[b]-c[a])
-      .map(n => `<div style="display:flex;gap:10px;align-items:center;justify-content:center;font-size:1rem;${n===ddfState.loser?'font-weight:800;color:#e23b3b;':''}">
-          <span style="min-width:140px;text-align:right;">${escAttr(n)}</span>
-          <span style="min-width:40px;text-align:left;">${c[n]}</span>
+      .map(u => `<div style="display:flex;gap:10px;align-items:center;justify-content:center;font-size:1rem;${u===ddfState.loser?'font-weight:800;color:#e23b3b;':''}">
+          <span style="min-width:140px;text-align:right;">${escAttr(ddfNameOf(u))}</span>
+          <span style="min-width:40px;text-align:left;">${c[u]}</span>
         </div>`).join('');
     grid.innerHTML = hint('Ergebnis — wer wen gewählt hat, bleibt geheim') +
       `<div style="width:100%;">${rows}</div>` +
-      hint(`<b>${escAttr(ddfState.loser||'')}</b> verliert ein Herz.`);
+      hint(`<b>${escAttr(ddfNameOf(ddfState.loser))}</b> verliert ein Herz.`);
     return;
   }
 
@@ -8286,9 +8311,6 @@ function ddfReveal(){ ddfStopTimer(); ddfState.phase = 'answer'; ddfRenderRound(
 let ddfVoteRef = null;
 let ddfVoteRound = 0;
 let ddfVotesCb = null;
-
-// Einheitlicher Schlüssel pro Person: Account-Key, für Gäste ein Pseudokey.
-function ddfVoterKey(p){ return p.key || ('guest:' + p.name); }
 
 function ddfVoteRefInit(){
   if (ddfVoteRef) return ddfVoteRef;
@@ -8323,7 +8345,7 @@ function ddfBeginVote(candidates){
   ddfState.phase = 'vote';
   ddfState.votes = {};
   ddfState.hostVotes = {};
-  ddfState.runoff = candidates ? cands.map(p => p.name) : null;
+  ddfState.runoff = candidates ? cands.map(p => p.uid) : null;
   ddfVoteRound = nextRoundId(ddfVoteRound);
 
   ddfDetachVotes();
@@ -8332,7 +8354,8 @@ function ddfBeginVote(candidates){
     ddfVoteRef.set({
       active: true,
       round: ddfVoteRound,
-      candidates: cands.map(p => ({ key: ddfVoterKey(p), name: p.name, avatar: p.avatar || null, color: p.color || null })),
+      // key ist die uid: das Handy schickt sie unverändert zurück.
+      candidates: cands.map(p => ({ key: p.uid, name: p.label, avatar: p.avatar || null, color: p.color || null })),
       voters: alive.filter(p => p.key).map(p => p.key),
       votes: null,
     }).then(ddfAttachVotes).catch(()=>{});
@@ -8353,16 +8376,17 @@ function ddfGuestVoters(){ return ddfAlive().filter(p => !p.key); }
 // Wer gewählt werden kann - in der Stichwahl nur die Gleichstand-Kandidaten.
 function ddfCandidates(){
   const alive = ddfAlive();
-  return ddfState.runoff ? alive.filter(p => ddfState.runoff.includes(p.name)) : alive;
+  return ddfState.runoff ? alive.filter(p => ddfState.runoff.includes(p.uid)) : alive;
 }
 
-// Handy-Stimmen und vom Host eingetragene Gast-Stimmen zusammengeführt.
-// Stimmen von Ausgeschiedenen fallen dabei raus.
+// Handy-Stimmen und vom Host eingetragene Gast-Stimmen zusammengeführt, in
+// beiden Fällen nach uid des Wählers. Stimmen von Ausgeschiedenen fallen raus.
+// Handys schreiben unter ihrem Account-Key - der ist für Accounts die uid.
 function ddfAllVotes(){
   const out = {};
-  const phones = new Set(ddfPhoneVoters().map(p => p.key));
+  const phones = new Set(ddfPhoneVoters().map(p => p.uid));
   Object.keys(ddfState.votes || {}).forEach(k => { if (phones.has(k)) out[k] = ddfState.votes[k]; });
-  const guests = new Set(ddfGuestVoters().map(ddfVoterKey));
+  const guests = new Set(ddfGuestVoters().map(p => p.uid));
   Object.keys(ddfState.hostVotes || {}).forEach(k => { if (guests.has(k)) out[k] = ddfState.hostVotes[k]; });
   return out;
 }
@@ -8371,13 +8395,12 @@ function ddfVoteProgress(){
   return { done: Object.keys(ddfAllVotes()).length, total: ddfAlive().length };
 }
 
+// { uid: Stimmen } - nur für die aktuell wählbaren Kandidaten.
 function ddfVoteCounts(){
   const counts = {};
-  ddfCandidates().forEach(p => counts[p.name] = 0);
-  const byKey = new Map(ddfState.players.map(p => [ddfVoterKey(p), p]));
-  Object.values(ddfAllVotes()).forEach(candKey => {
-    const target = byKey.get(candKey);
-    if (target && counts[target.name] !== undefined) counts[target.name]++;
+  ddfCandidates().forEach(p => counts[p.uid] = 0);
+  Object.values(ddfAllVotes()).forEach(uid => {
+    if (counts[uid] !== undefined) counts[uid]++;
   });
   return counts;
 }
@@ -8387,7 +8410,7 @@ function ddfVoteCounts(){
 function ddfEvaluateVote(){
   const counts = ddfVoteCounts();
   const max = Math.max(...Object.values(counts), 0);
-  const top = Object.keys(counts).filter(n => counts[n] === max);
+  const top = Object.keys(counts).filter(u => counts[u] === max);
 
   // Erst prüfen, dann schließen: sonst wäre die Abstimmung auf den Handys zu,
   // während der Host noch in der Vote-Phase feststeckt.
@@ -8413,21 +8436,21 @@ function ddfEvaluateVote(){
   ddfApplyLoss(top[0]);
 }
 
-function ddfApplyLoss(name){
-  const p = ddfState.players.find(x => x.name === name && !x.out);
-  if (!p) return;
+function ddfApplyLoss(uid){
+  const p = ddfByUid(uid);
+  if (!p || p.out) return;
   p.lives--;
-  if (p.lives <= 0) { p.lives = 0; p.out = true; ddfState.lastEliminated = p.name; }
+  if (p.lives <= 0) { p.lives = 0; p.out = true; }
   ddfState.phase = 'result';
-  ddfState.loser = p.name;
+  ddfState.loser = p.uid;
   ddfRenderRound();   // hebt den Verlierer über ddfRenderPlayers(loser) hervor
 }
 // Manuelle Auswahl - für Gäste ohne Handy und als Notausgang des Hosts.
-function ddfVoteOut(name){ ddfCloseVote(); ddfApplyLoss(name); }
+function ddfVoteOut(uid){ ddfCloseVote(); ddfApplyLoss(uid); }
 
 function ddfStartRunoff(){
   const tied = ddfState.tied || [];
-  ddfBeginVote(ddfAlive().filter(p => tied.includes(p.name)));
+  ddfBeginVote(ddfAlive().filter(p => tied.includes(p.uid)));
 }
 
 function ddfAfterResult(){
@@ -8484,7 +8507,7 @@ function ddfFinish(){
   ddfState.active = false;
   ddfState.timeUp = false;
   const winner = ddfAlive()[0];
-  ddfRenderPlayers(winner ? winner.name : null);
+  ddfRenderPlayers(winner ? winner.uid : null);
   // Direkt leeren: ddfStopTimer() lässt ein "Zeit um!" bewusst stehen, auf dem
   // Siegerbild hat es nichts zu suchen.
   document.getElementById('ddf-timer').textContent = '';
