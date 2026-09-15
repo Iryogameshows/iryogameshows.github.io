@@ -331,9 +331,9 @@ function showScreen(id) {
   if (id === 'wwds-edit-screen') renderWwdsEditor();
   if (id === 'wwds-setup-screen') { wwdsToggleTeam3(); ensureWwdsLobbyConnected(); }
   if (id === 'ddf-edit-screen') renderDdfEditor();
-  if (id === 'ddf-setup-screen') { ddfLoadSettings(); renderDdfPlayerInputs(); ensureDdfLobbyConnected(); }
+  if (id === 'ddf-setup-screen') { ddfLoadSettings(); renderRosterInputs('ddf'); ensureRosterConnected('ddf'); }
   if (id === 'pih-edit-screen') renderPihEditor();
-  if (id === 'pih-setup-screen') { pihLoadSettings(); renderPihRulePick(); renderPihPlayerInputs(); ensurePihLobbyConnected(); }
+  if (id === 'pih-setup-screen') { pihLoadSettings(); renderPihRulePick(); renderRosterInputs('pih'); ensureRosterConnected('pih'); }
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
@@ -793,7 +793,10 @@ function addAnswerField(text='', points='') {
   if (f.children.length >= 8) return;
   const r = document.createElement('div');
   r.className = 'answer-edit-row';
-  r.innerHTML = `<input type="text" placeholder="Antwort" value="${text}"><input type="number" placeholder="Pkt" value="${points}" min="1"><button class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>`;
+  // escAttr ist hier Pflicht, nicht Kosmetik: eine Antwort wie Anna "die
+  // Schnelle" beendete das value-Attribut mitten im Text. Das Feld zeigte nur
+  // den Teil davor - und genau der wurde beim Speichern zurueckgeschrieben.
+  r.innerHTML = `<input type="text" placeholder="Antwort" value="${escAttr(text)}"><input type="number" placeholder="Pkt" value="${escAttr(points)}" min="1"><button class="btn btn-danger" onclick="this.parentElement.remove()">✕</button>`;
   f.appendChild(r);
 }
 function saveQuestion() {
@@ -986,8 +989,7 @@ function ensurePlayersConnected(){
       const v = snap.val() || {};
       allPlayers = Object.entries(v).map(([key, p]) => ({ key, ...p, stats: p.stats || { buzzes:0, bestBuzz:null, wins:0, games:0 } }));
       if (document.getElementById('players-screen').classList.contains('active')) setPlayersTab(playersTab, true);
-      if (document.getElementById('ddf-setup-screen').classList.contains('active')) renderDdfLobby();
-      if (document.getElementById('pih-setup-screen').classList.contains('active')) renderPihLobby();
+      refreshOpenRosterLobby();
     });
     playersPresenceRef = firebase.database().ref('buzzer/presence');
     playersPresenceRef.on('value', snap => {
@@ -995,8 +997,7 @@ function ensurePlayersConnected(){
       const v = snap.val() || {};
       Object.keys(v).forEach(key => onlinePlayerKeys[key] = true);
       if (document.getElementById('players-screen').classList.contains('active') && playersTab === 'list') renderPlayersList();
-      if (document.getElementById('ddf-setup-screen').classList.contains('active')) renderDdfLobby();
-      if (document.getElementById('pih-setup-screen').classList.contains('active')) renderPihLobby();
+      refreshOpenRosterLobby();
     });
   } catch {}
 }

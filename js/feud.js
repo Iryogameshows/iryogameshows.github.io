@@ -1426,7 +1426,9 @@ function updateGamemasterJeopardy() {
         const used = jeopardyState.used[col][row];
         boardHtml += used
           ? `<div class="jcell used"></div>`
-          : `<div class="jcell" onclick="opener.openJeopardyClue(${col},${row})" title="${cat.clues[row].q}">${val}</div>`;
+          // Ohne escAttr zerlegt ein Anfuehrungszeichen in der Frage
+          // ("Ich bin ein Berliner") das title-Attribut und damit die Zelle.
+          : `<div class="jcell" onclick="opener.openJeopardyClue(${col},${row})" title="${escAttr(cat.clues[row].q)}">${val}</div>`;
       });
     });
     boardHtml += `</div>`;

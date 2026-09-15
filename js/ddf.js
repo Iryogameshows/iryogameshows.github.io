@@ -49,107 +49,7 @@ let ddfState = {
 // Teilnehmer werden aus den Spieler-Accounts gewählt - nicht nur aus den
 // gerade verbundenen Geräten. Wer offline ist, kann trotzdem mitspielen: der
 // Host tippt für ihn, das Handy braucht DDF ohnehin nur zum Beitreten.
-// ddfSelected hält die Account-Keys, die mitspielen. Beim ersten Öffnen sind
-// die Online-Accounts vorausgewählt, alles Weitere entscheidet der Host.
-let ddfSetupNames = [];
-let ddfSelected = new Set();
-let ddfSeeded = false;
-
-function ddfSeedSelection(){
-  if (ddfSeeded) return;
-  const online = Object.keys(onlinePlayerKeys || {}).filter(k => onlinePlayerKeys[k]);
-  if (!online.length && !(allPlayers || []).length) return;  // noch nichts geladen
-  online.forEach(k => ddfSelected.add(k));
-  ddfSeeded = true;
-}
-
-function renderDdfLobby(){
-  const box = document.getElementById('ddf-setup-lobby');
-  if (!box) return;
-  ddfSeedSelection();
-
-  const accounts = [...(allPlayers || [])].sort((a,b) => {
-    const aOn = !!onlinePlayerKeys[a.key], bOn = !!onlinePlayerKeys[b.key];
-    if (aOn !== bOn) return aOn ? -1 : 1;
-    return a.name.localeCompare(b.name, 'de');
-  });
-
-  const rows = accounts.length
-    ? accounts.map(p => {
-        const on = ddfSelected.has(p.key);
-        const online = !!onlinePlayerKeys[p.key];
-        return `<div class="pr-row" style="${on ? '' : 'opacity:.45;'}">
-          <span class="online-dot${online ? '' : ' offline'}" title="${online ? 'Online' : 'Offline'}"></span>
-          ${playerAvatarHtml(p)}
-          <span style="flex:1;">${escAttr(p.name)}</span>
-          <button class="btn ${on ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:.7rem;"
-                  onclick="ddfTogglePlayer('${escAttr(p.key)}')">${on ? '✓ spielt mit' : 'dazu'}</button>
-        </div>`;
-      }).join('')
-    : `<div class="pr-empty">Noch keine Spieler-Accounts angelegt — QR-Code scannen oder Gäste eintragen</div>`;
-
-  const count = ddfContestants().length;
-  box.innerHTML = `
-    <div class="panel-head"><span>👥 Teilnehmer</span><span class="badge">${count}</span></div>
-    <div class="pr-list">${rows}</div>
-    <div class="panel-row">
-      <button class="btn btn-secondary" onclick="ddfSelectAll(true)">Alle</button>
-      <button class="btn btn-secondary" onclick="ddfSelectAll(false)">Keinen</button>
-      <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
-      <button class="btn btn-secondary" onclick="openPlayersScreen('ddf-setup-screen')">👥 Accounts verwalten</button>
-    </div>`;
-}
-
-function ddfTogglePlayer(key){
-  if (ddfSelected.has(key)) ddfSelected.delete(key); else ddfSelected.add(key);
-  ddfSeeded = true;
-  renderDdfLobby();
-}
-function ddfSelectAll(on){
-  ddfSelected = on ? new Set((allPlayers || []).map(p => p.key)) : new Set();
-  ddfSeeded = true;
-  renderDdfLobby();
-}
-
-// DDF buzzert nicht, braucht die Buzzer-Leitung also gar nicht - nur die
-// Account-Liste. Die QR-Verbindung bleibt trotzdem verfügbar, damit neue
-// Spieler sich spontan einen Account anlegen können.
-function ensureDdfLobbyConnected(){
-  activeBuzzerContext = 'ddf';
-  ensurePlayersConnected();
-  const isFresh = !feudBuzzer.fbRef;
-  feudBuzzConnect();
-  if (isFresh && feudBuzzer.fbRef) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
-  renderDdfLobby();
-}
-
-// Gewählte Accounts plus Gäste ohne Account.
-function ddfContestants(){
-  const byKey = new Map((allPlayers || []).map(p => [p.key, p]));
-  const chosen = [...ddfSelected]
-    .map(k => byKey.get(k))
-    .filter(Boolean)
-    .map(p => ({ name: p.name, avatar: p.avatar, color: p.color, key: p.key }));
-  const guests = ddfSetupNames
-    .map(n => (n||'').trim()).filter(Boolean)
-    .map(n => ({ name: n, avatar: null, color: null, key: null }));
-  return chosen.concat(guests);
-}
-
-function renderDdfPlayerInputs(){
-  const box = document.getElementById('ddf-player-inputs');
-  if (!box) return;
-  box.innerHTML = ddfSetupNames.map((n,i) => `
-    <div style="display:flex;gap:6px;margin-bottom:6px;">
-      <input type="text" value="${escAttr(n)}" placeholder="Name..." style="flex:1;"
-             oninput="ddfSetupNames[${i}]=this.value; renderDdfLobby()">
-      <button class="btn btn-danger" style="padding:6px 12px;" onclick="ddfRemovePlayerInput(${i})">✕</button>
-    </div>`).join('');
-}
-function ddfAddPlayerInput(){ ddfSetupNames.push(''); renderDdfPlayerInputs(); renderDdfLobby(); }
-function ddfRemovePlayerInput(i){
-  ddfSetupNames.splice(i,1); renderDdfPlayerInputs(); renderDdfLobby();
-}
+// Die Auswahl selbst steckt in roster.js, geteilt mit Der Preis ist heiß.
 
 // Fisher-Yates - sort(() => Math.random()-.5) mischt nachweislich schief.
 // avoid: Fragenindex, der nicht vorne stehen soll. Beim Nachmischen ist das
@@ -164,18 +64,8 @@ function ddfShuffledOrder(avoid){
   return a;
 }
 
-// Anzeigename. Kommt ein Name doppelt vor, wird durchnummeriert - sonst
-// stehen auf den Handys zwei gleich beschriftete Knöpfe und niemand weiß,
-// welcher Max gemeint ist.
-function ddfLabelFor(people, i){
-  const name = people[i].name;
-  if (people.filter(p => p.name === name).length < 2) return name;
-  const nth = people.slice(0, i + 1).filter(p => p.name === name).length;
-  return `${name} (${nth})`;
-}
-
 function startDdf(){
-  const people = ddfContestants();
+  const people = rosterContestants('ddf');
   if (people.length < 2) { alert('Mindestens zwei Teilnehmer — per QR beitreten lassen oder Gäste eintragen.'); return; }
   if (!ddfData.questions.length) { alert('Keine Fragen vorhanden.'); return; }
 
@@ -188,7 +78,7 @@ function startDdf(){
     // Gäste über ihre Position - so bleiben auch zwei "Max" auseinander.
     players: people.map((p,i) => ({
       uid: p.key || ('guest:' + i),
-      label: ddfLabelFor(people, i),
+      label: rosterLabelFor(people, i),
       name:p.name, avatar:p.avatar, color:p.color, key:p.key, lives, out:false,
     })),
     maxLives: lives,

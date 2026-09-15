@@ -14,7 +14,6 @@ const WWDS_LETTERS = ['A','B','C'];
 const WWDS_WIN = 500;
 const WWDS_COLORS = ['red','blue','green'];
 const WWDS_HEX  = ['#E8453C','#3B82F6','#22C55E'];
-const WWDS_HEX2 = ['#C62828','#1D4ED8','#16A34A'];
 
 let wwdsData = {
   categories: [
@@ -746,7 +745,7 @@ function renderWwdsEditor(){
       <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">
         <input type="text" value="${escAttr(t.q)}" placeholder="Schätzfrage"
           onchange="wwdsData.tiebreakers[${i}].q=this.value" style="flex:3;${inp}">
-        <input type="number" value="${t.answer}" placeholder="Zahl"
+        <input type="number" value="${escAttr(t.answer)}" placeholder="Zahl"
           onchange="wwdsData.tiebreakers[${i}].answer=Number(this.value)" style="flex:1;${inp}text-align:center;">
         <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="wwdsDeleteTiebreaker(${i})">✕</button>
       </div>`).join('');

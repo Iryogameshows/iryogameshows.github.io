@@ -52,104 +52,7 @@ let pihState = {
 
 /* ── Setup ─────────────────────────────────────────────────────────────── */
 
-// Teilnehmerauswahl wie bei DDF: gewählte Accounts plus Gäste ohne Account.
-let pihSetupNames = [];
-let pihSelected = new Set();
-let pihSeeded = false;
-
-function pihSeedSelection(){
-  if (pihSeeded) return;
-  const online = Object.keys(onlinePlayerKeys || {}).filter(k => onlinePlayerKeys[k]);
-  if (!online.length && !(allPlayers || []).length) return;  // noch nichts geladen
-  online.forEach(k => pihSelected.add(k));
-  pihSeeded = true;
-}
-
-function renderPihLobby(){
-  const box = document.getElementById('pih-setup-lobby');
-  if (!box) return;
-  pihSeedSelection();
-
-  const accounts = [...(allPlayers || [])].sort((a,b) => {
-    const aOn = !!onlinePlayerKeys[a.key], bOn = !!onlinePlayerKeys[b.key];
-    if (aOn !== bOn) return aOn ? -1 : 1;
-    return a.name.localeCompare(b.name, 'de');
-  });
-
-  const rows = accounts.length
-    ? accounts.map(p => {
-        const on = pihSelected.has(p.key);
-        const online = !!onlinePlayerKeys[p.key];
-        return `<div class="pr-row" style="${on ? '' : 'opacity:.45;'}">
-          <span class="online-dot${online ? '' : ' offline'}" title="${online ? 'Online' : 'Offline'}"></span>
-          ${playerAvatarHtml(p)}
-          <span style="flex:1;">${escAttr(p.name)}</span>
-          <button class="btn ${on ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:.7rem;"
-                  onclick="pihTogglePlayer('${escAttr(p.key)}')">${on ? '✓ spielt mit' : 'dazu'}</button>
-        </div>`;
-      }).join('')
-    : `<div class="pr-empty">Noch keine Spieler-Accounts angelegt — QR-Code scannen oder Gäste eintragen</div>`;
-
-  const count = pihContestants().length;
-  box.innerHTML = `
-    <div class="panel-head"><span>👥 Teilnehmer</span><span class="badge">${count}</span></div>
-    <div class="pr-list">${rows}</div>
-    <div class="panel-row">
-      <button class="btn btn-secondary" onclick="pihSelectAll(true)">Alle</button>
-      <button class="btn btn-secondary" onclick="pihSelectAll(false)">Keinen</button>
-      <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
-      <button class="btn btn-secondary" onclick="openPlayersScreen('pih-setup-screen')">👥 Accounts verwalten</button>
-    </div>`;
-}
-
-function pihTogglePlayer(key){
-  if (pihSelected.has(key)) pihSelected.delete(key); else pihSelected.add(key);
-  pihSeeded = true;
-  renderPihLobby();
-}
-function pihSelectAll(on){
-  pihSelected = on ? new Set((allPlayers || []).map(p => p.key)) : new Set();
-  pihSeeded = true;
-  renderPihLobby();
-}
-
-// Wie DDF: gebuzzert wird nicht, gebraucht wird nur die Account-Liste. Die
-// QR-Verbindung bleibt offen, damit sich spontan jemand anmelden kann.
-function ensurePihLobbyConnected(){
-  activeBuzzerContext = 'pih';
-  ensurePlayersConnected();
-  const isFresh = !feudBuzzer.fbRef;
-  feudBuzzConnect();
-  if (isFresh && feudBuzzer.fbRef) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
-  renderPihLobby();
-}
-
-function pihContestants(){
-  const byKey = new Map((allPlayers || []).map(p => [p.key, p]));
-  const chosen = [...pihSelected]
-    .map(k => byKey.get(k))
-    .filter(Boolean)
-    .map(p => ({ name: p.name, avatar: p.avatar, color: p.color, key: p.key }));
-  const guests = pihSetupNames
-    .map(n => (n||'').trim()).filter(Boolean)
-    .map(n => ({ name: n, avatar: null, color: null, key: null }));
-  return chosen.concat(guests);
-}
-
-function renderPihPlayerInputs(){
-  const box = document.getElementById('pih-player-inputs');
-  if (!box) return;
-  box.innerHTML = pihSetupNames.map((n,i) => `
-    <div style="display:flex;gap:6px;margin-bottom:6px;">
-      <input type="text" value="${escAttr(n)}" placeholder="Name..." style="flex:1;"
-             oninput="pihSetupNames[${i}]=this.value; renderPihLobby()">
-      <button class="btn btn-danger" style="padding:6px 12px;" onclick="pihRemovePlayerInput(${i})">✕</button>
-    </div>`).join('');
-}
-function pihAddPlayerInput(){ pihSetupNames.push(''); renderPihPlayerInputs(); renderPihLobby(); }
-function pihRemovePlayerInput(i){
-  pihSetupNames.splice(i,1); renderPihPlayerInputs(); renderPihLobby();
-}
+// Teilnehmerauswahl wie bei DDF - der gemeinsame Code steckt in roster.js.
 
 function renderPihRulePick(){
   const box = document.getElementById('pih-rule-pick');
@@ -167,15 +70,6 @@ function pihSetRule(key){
   pihSaveSettings();
 }
 
-// Anzeigename, doppelte Namen durchnummeriert - dieselbe Begründung wie bei
-// DDF: sonst stehen in der Auflösung zwei identische Zeilen.
-function pihLabelFor(people, i){
-  const name = people[i].name;
-  if (people.filter(p => p.name === name).length < 2) return name;
-  const nth = people.slice(0, i + 1).filter(p => p.name === name).length;
-  return `${name} (${nth})`;
-}
-
 function pihShuffledOrder(){
   const a = pihData.items.map((_,i) => i);
   for (let i = a.length - 1; i > 0; i--) {
@@ -186,7 +80,7 @@ function pihShuffledOrder(){
 }
 
 function startPih(){
-  const people = pihContestants();
+  const people = rosterContestants('pih');
   if (!people.length) { alert('Mindestens ein Teilnehmer — per QR beitreten lassen oder Gäste eintragen.'); return; }
 
   const usable = pihData.items.filter(it => typeof it.price === 'number' && isFinite(it.price));
@@ -206,7 +100,7 @@ function startPih(){
     active:true,
     players: people.map((p,i) => ({
       uid: p.key || ('guest:' + i),
-      label: pihLabelFor(people, i),
+      label: rosterLabelFor(people, i),
       name:p.name, avatar:p.avatar, color:p.color, key:p.key, score:0,
     })),
     order, idx:0,
