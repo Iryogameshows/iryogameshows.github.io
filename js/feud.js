@@ -18,8 +18,8 @@ function startGameActual() {
   state.scores = new Array(state.teamCount).fill(0);
   state.teamStrikes = new Array(state.teamCount).fill(0);
   state.currentRound = 0; state.currentTeam = Math.floor(Math.random() * state.teamCount);
-  state.roundQuestions = [...questions].sort(() => Math.random() - .5);
-  finaleState.questions = [...finaleQuestions].sort(() => Math.random() - .5);
+  state.roundQuestions = shuffled(questions);
+  finaleState.questions = shuffled(finaleQuestions);
   finaleState.active = false;
   finaleState.scores = [0, 0];
   finaleState.teamAnswers = [[], []];
@@ -89,13 +89,14 @@ function toggleIntroPicker() {
 
 // Anpassbarer Show-Name im Intro: "___ Feud". Default "Keller".
 function getFeudName() {
-  try { const v = localStorage.getItem('feudShowName'); if (v !== null) return v.trim() || 'Keller'; } catch {}
+  const v = storeGet('feudShowName');
+  if (v !== null) return v.trim() || 'Keller';
   return 'Keller';
 }
 function saveFeudName() {
   const inp = document.getElementById('feud-show-name');
   const v = inp ? inp.value : '';
-  try { localStorage.setItem('feudShowName', v); } catch {}
+  storeSet('feudShowName', v);
 }
 function feudTitle() { return getFeudName() + ' Feud'; }
 
@@ -142,12 +143,13 @@ function showGameshowIntro(onDone) {
 
 // Name des Geburtstagskinds im Intro (wie getFeudName: merkbar, überschreibbar)
 function getBdayName() {
-  try { const v = localStorage.getItem('bdayName'); if (v !== null) return v.trim() || 'Ajdin'; } catch {}
+  const v = storeGet('bdayName');
+  if (v !== null) return v.trim() || 'Ajdin';
   return 'Ajdin';
 }
 function saveBdayName() {
   const inp = document.getElementById('bday-name');
-  try { localStorage.setItem('bdayName', inp ? inp.value : ''); } catch {}
+  storeSet('bdayName', inp ? inp.value : '');
 }
 
 function showBirthdayIntro(onDone) {

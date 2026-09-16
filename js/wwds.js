@@ -793,7 +793,7 @@ function importWwds(e){
     renderWwdsEditor(); wwdsSave();
   });
 }
-function wwdsSave(){ try { localStorage.setItem('wwdsData', JSON.stringify(wwdsData)); } catch {} }
-function wwdsLoad(){ try { const s = localStorage.getItem('wwdsData'); if (s) wwdsData = JSON.parse(s); } catch {} }
+function wwdsSave(){ storeSetJson('wwdsData', wwdsData); }
+function wwdsLoad(){ wwdsData = storeGetJson('wwdsData', wwdsData); }
 wwdsLoad();
 

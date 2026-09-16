@@ -1769,3 +1769,35 @@ body {
   35%  { transform: scale(1.18); text-shadow: 0 0 26px rgba(var(--gold-rgb), .6); }
   100% { transform: scale(1); }
 }
+
+/* ── Massen-Eingabe in den Editoren ──────────────────────────────────────
+   Der Kasten "Mehrere einfuegen" steht in mehreren Editoren. Sein Aussehen
+   lag bisher als Inline-Style-String im JavaScript, in jedem Editor eine
+   eigene Kopie - der Style des Textfelds allein war 230 Zeichen lang und
+   stand zweimal wortgleich da. Jetzt einmal hier. */
+.editor-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.btn.btn-xs { padding: 7px 12px; font-size: .72rem; }
+.btn.btn-sm { padding: 8px 14px; font-size: .75rem; }
+.bulk-box {
+  margin-bottom: 12px; padding: 12px; background: #0F1436;
+  border: 1px solid rgba(var(--gold-rgb), .3); border-radius: 10px;
+}
+.bulk-box label {
+  display: block; font-size: .65rem; color: rgba(255,255,255,.4); margin: 0 0 4px;
+}
+.bulk-box textarea {
+  width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.35); color: #fff;
+  font-family: inherit; font-size: .85rem; line-height: 1.5; outline: none;
+  resize: vertical;
+  transition: border-color var(--t-med) var(--ease-out), box-shadow var(--t-med) var(--ease-out);
+}
+.bulk-box textarea:focus {
+  border-color: rgba(var(--gold-rgb), .45);
+  box-shadow: 0 0 0 3px rgba(var(--gold-rgb), .09);
+}
+.bulk-actions { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.bulk-hint { font-size: .66rem; color: rgba(255,255,255,.4); }

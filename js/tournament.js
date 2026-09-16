@@ -17,17 +17,17 @@ function tournamentConnect(){
     tournamentRef.on('value', (snap) => {
       tournament = snap.val() || null;
       if (tournament && !Array.isArray(tournament.games)) tournament.games = [];
-      try { localStorage.setItem('tournamentCache', JSON.stringify(tournament)); } catch {}
+      storeSetJson('tournamentCache', tournament);
       if (document.getElementById('tournament-screen').classList.contains('active')) renderTournament();
     });
   } catch {}
 }
 function loadTournament(){
-  try { const s = localStorage.getItem('tournamentCache'); tournament = s ? JSON.parse(s) : null; } catch { tournament = null; }
+  tournament = storeGetJson('tournamentCache', null);
   tournamentConnect();
 }
 function saveTournament(){
-  try { localStorage.setItem('tournamentCache', JSON.stringify(tournament)); } catch {}
+  storeSetJson('tournamentCache', tournament);
   if (tournamentRef) tournamentRef.set(tournament).catch(()=>{});
   renderTournament();
   if (gamemasterWin && !gamemasterWin.closed) updateGamemaster();
@@ -114,7 +114,7 @@ function tournamentRemoveGame(i){
 function tournamentDelete(){
   if (!confirm('Turnier wirklich komplett löschen? Alle Ergebnisse gehen verloren.')) return;
   tournament = null;
-  try { localStorage.removeItem('tournamentCache'); } catch {}
+  storeRemove('tournamentCache');
   if (tournamentRef) tournamentRef.remove().catch(()=>{});
   renderTournament();
 }

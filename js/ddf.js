@@ -51,15 +51,10 @@ let ddfState = {
 // Host tippt für ihn, das Handy braucht DDF ohnehin nur zum Beitreten.
 // Die Auswahl selbst steckt in roster.js, geteilt mit Der Preis ist heiß.
 
-// Fisher-Yates - sort(() => Math.random()-.5) mischt nachweislich schief.
 // avoid: Fragenindex, der nicht vorne stehen soll. Beim Nachmischen ist das
 // die zuletzt gestellte Frage, sonst käme sie sofort ein zweites Mal.
 function ddfShuffledOrder(avoid){
-  const a = ddfData.questions.map((_,i) => i);
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
+  const a = shuffledIndices(ddfData.questions.length);
   if (a.length > 1 && a[0] === avoid) [a[0], a[1]] = [a[1], a[0]];
   return a;
 }
@@ -454,28 +449,8 @@ function ddfNext(){
   ddfRenderRound();
 }
 
-function ddfStartTimer(){
-  ddfStopTimer();
-  ddfState.timer = ddfState.roundTime;
-  ddfState.timeUp = false;
-  const el = document.getElementById('ddf-timer');
-  if (!el) return;
-  const tick = () => {
-    el.textContent = ddfState.timer > 0 ? `⏱ ${ddfState.timer}s` : '⏱ Zeit um!';
-    el.style.color = ddfState.timer <= 5 && ddfState.timer > 0 ? '#e23b3b' : '';
-    // timeUp vor dem Stoppen setzen: ddfStopTimer() löscht die Anzeige nur,
-    // solange die Zeit nicht abgelaufen ist - sonst verschwindet "Zeit um!" sofort.
-    if (ddfState.timer <= 0) { ddfState.timeUp = true; ddfStopTimer(); return; }
-    ddfState.timer--;
-  };
-  tick();
-  ddfState.timerInt = setInterval(tick, 1000);
-}
-function ddfStopTimer(){
-  if (ddfState.timerInt) { clearInterval(ddfState.timerInt); ddfState.timerInt = null; }
-  const el = document.getElementById('ddf-timer');
-  if (el && !ddfState.timeUp) el.textContent = '';
-}
+function ddfStartTimer(){ startRoundClock(ddfState, 'ddf-timer'); }
+function ddfStopTimer(){ stopRoundClock(ddfState, 'ddf-timer'); }
 
 function ddfFinish(){
   ddfStopTimer();
@@ -526,19 +501,17 @@ function renderDdfEditor(){
   const sectCss  = 'display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:0 0 4px;';
   const n = ddfData.questions.length;
 
-  const toolbar = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+  const toolbar = `<div class="editor-toolbar">
     <span class="ddf-card-head" style="margin:0;">${n} ${n === 1 ? 'Frage' : 'Fragen'}</span>
-    <button class="btn btn-secondary" style="padding:7px 12px;font-size:.72rem;" onclick="ddfToggleBulk()">${ddfBulkVisible ? '✕ Abbrechen' : '⇊ Mehrere einfügen'}</button>
+    <button class="btn btn-secondary btn-xs" onclick="ddfToggleBulk()">${ddfBulkVisible ? '✕ Abbrechen' : '⇊ Mehrere einfügen'}</button>
   </div>`;
 
-  const bulk = ddfBulkVisible ? `<div style="margin-bottom:12px;padding:12px;background:#0F1436;border:1px solid rgba(255,210,63,.3);border-radius:10px;">
-    <label style="${sectCss}">Eine Frage pro Zeile · Frage und Antwort mit „#" (Vorrang), „/" oder „|" trennen (Antwort optional).</label>
-    <textarea id="ddf-bulk-text" rows="8" placeholder="Welches Tier kann nicht rückwärts laufen? / Das Känguru&#10;Wie viele Streifen hat die US-Flagge? / 13&#10;Frage ganz ohne Antwort" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-size:.85rem;line-height:1.5;outline:none;resize:vertical;"></textarea>
-    <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-      <button class="btn btn-accent" style="padding:8px 14px;font-size:.75rem;" onclick="ddfBulkAdd()">Hinzufügen</button>
-      <span style="font-size:.66rem;color:rgba(255,255,255,.4);">wird ans Ende angehängt</span>
-    </div>
-  </div>` : '';
+  const bulk = ddfBulkVisible ? bulkPanelHtml({
+    id: 'ddf-bulk-text',
+    label: 'Eine Frage pro Zeile · Frage und Antwort mit „#" (Vorrang), „/", „|", Tabulator oder „;" trennen (Antwort optional).',
+    placeholder: 'Welches Tier kann nicht rückwärts laufen? / Das Känguru&#10;Wie viele Streifen hat die US-Flagge? / 13&#10;Frage ganz ohne Antwort',
+    onAdd: 'ddfBulkAdd()',
+  }) : '';
 
   const rows = ddfData.questions.map((q,i) => {
     const isOpen = ddfEditOpen === i;
@@ -581,22 +554,17 @@ function ddfToggleBulk(){
 // Trennzeichen getrennt, damit ein "/" in der Antwort (z.B. "km/h") heil bleibt.
 // Ans Ende angehängt.
 function ddfBulkAdd(){
-  const t = document.getElementById('ddf-bulk-text');
-  if (!t) return;
-  const lines = t.value.split('\n').map(s => s.trim()).filter(Boolean);
+  const lines = bulkLines('ddf-bulk-text');
+  if (!lines) return;
   let added = 0;
   lines.forEach(line => {
-    // "#" hat Vorrang: ist eins da, wird dort getrennt (egal wo ein "/" steht).
-    // Sonst am ersten "/", "|", Tab oder ";".
-    const m = line.match(/^(.*?)\s*#\s*(.*)$/) || line.match(/^(.*?)\s*[/|\t;]\s*(.*)$/);
-    const q = (m ? m[1] : line).trim();
-    const answer = (m ? m[2] : '').trim();
+    const { left: q, right: answer } = splitBulkLine(line);
     if (!q) return;
     ddfData.questions.push({ q, answer, note:'', qMedia:[], aMedia:[] });
     added++;
   });
   if (!added) { alert('Keine Zeilen erkannt.\nFormat: Frage | Antwort (eine pro Zeile)'); return; }
-  t.value = '';
+  document.getElementById('ddf-bulk-text').value = '';
   ddfBulkVisible = false;
   ddfSave(); renderDdfEditor();
 }
@@ -647,25 +615,21 @@ function importDdf(e){
   });
 }
 
-function ddfSave(){ try { localStorage.setItem('ddfData', JSON.stringify(ddfData)); } catch {} }
-function ddfLoad(){ try { const s = localStorage.getItem('ddfData'); if (s) ddfData = JSON.parse(s); } catch {} }
+function ddfSave(){ storeSetJson('ddfData', ddfData); }
+function ddfLoad(){ ddfData = storeGetJson('ddfData', ddfData); }
 ddfLoad();
 
 // Herzen und Rundenzeit bleiben pro Gerät gemerkt - sonst muss der Host sie
 // vor jeder Show neu eintippen.
 function ddfSaveSettings(){
-  try {
-    localStorage.setItem('ddfSettings', JSON.stringify({ lives: ddfState.maxLives, time: ddfState.roundTime }));
-  } catch {}
+  storeSetJson('ddfSettings', { lives: ddfState.maxLives, time: ddfState.roundTime });
 }
 function ddfLoadSettings(){
-  try {
-    const s = JSON.parse(localStorage.getItem('ddfSettings') || 'null');
-    if (!s) return;
-    const lives = document.getElementById('ddf-lives');
-    const time  = document.getElementById('ddf-time');
-    if (lives && s.lives != null) lives.value = s.lives;
-    if (time  && s.time  != null) time.value  = s.time;
-  } catch {}
+  const s = storeGetJson('ddfSettings');
+  if (!s) return;
+  const lives = document.getElementById('ddf-lives');
+  const time  = document.getElementById('ddf-time');
+  if (lives && s.lives != null) lives.value = s.lives;
+  if (time  && s.time  != null) time.value  = s.time;
 }
 

@@ -70,14 +70,7 @@ function pihSetRule(key){
   pihSaveSettings();
 }
 
-function pihShuffledOrder(){
-  const a = pihData.items.map((_,i) => i);
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+function pihShuffledOrder(){ return shuffledIndices(pihData.items.length); }
 
 function startPih(){
   const people = rosterContestants('pih');
@@ -458,27 +451,8 @@ function pihNext(){
   pihRenderRound();
 }
 
-function pihStartTimer(){
-  pihStopTimer();
-  pihState.timer = pihState.roundTime;
-  pihState.timeUp = false;
-  const el = document.getElementById('pih-timer');
-  if (!el) return;
-  const tick = () => {
-    el.textContent = pihState.timer > 0 ? `⏱ ${pihState.timer}s` : '⏱ Zeit um!';
-    el.style.color = pihState.timer <= 5 && pihState.timer > 0 ? '#e23b3b' : '';
-    // timeUp vor dem Stoppen setzen, sonst löscht pihStopTimer() das "Zeit um!".
-    if (pihState.timer <= 0) { pihState.timeUp = true; pihStopTimer(); return; }
-    pihState.timer--;
-  };
-  tick();
-  pihState.timerInt = setInterval(tick, 1000);
-}
-function pihStopTimer(){
-  if (pihState.timerInt) { clearInterval(pihState.timerInt); pihState.timerInt = null; }
-  const el = document.getElementById('pih-timer');
-  if (el && !pihState.timeUp) el.textContent = '';
-}
+function pihStartTimer(){ startRoundClock(pihState, 'pih-timer'); }
+function pihStopTimer(){ stopRoundClock(pihState, 'pih-timer'); }
 
 function pihFinish(){
   pihStopTimer();
@@ -531,19 +505,17 @@ function renderPihEditor(){
   const sectCss  = 'display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:0 0 4px;';
   const n = pihData.items.length;
 
-  const toolbar = `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+  const toolbar = `<div class="editor-toolbar">
     <span class="pih-card-head">${n} ${n === 1 ? 'Artikel' : 'Artikel'}</span>
-    <button class="btn btn-secondary" style="padding:7px 12px;font-size:.72rem;" onclick="pihToggleBulk()">${pihBulkVisible ? '✕ Abbrechen' : '⇊ Mehrere einfügen'}</button>
+    <button class="btn btn-secondary btn-xs" onclick="pihToggleBulk()">${pihBulkVisible ? '✕ Abbrechen' : '⇊ Mehrere einfügen'}</button>
   </div>`;
 
-  const bulk = pihBulkVisible ? `<div style="margin-bottom:12px;padding:12px;background:#0F1436;border:1px solid rgba(255,210,63,.3);border-radius:10px;">
-    <label style="${sectCss}">Ein Artikel pro Zeile · Name und Preis mit „#" (Vorrang), „/" oder „|" trennen.</label>
-    <textarea id="pih-bulk-text" rows="8" placeholder="Eine Kugel Eis / 1,80&#10;Ein Döner / 7,50&#10;Ein Kleinwagen, neu / 18500" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-size:.85rem;line-height:1.5;outline:none;resize:vertical;"></textarea>
-    <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-      <button class="btn btn-accent" style="padding:8px 14px;font-size:.75rem;" onclick="pihBulkAdd()">Hinzufügen</button>
-      <span style="font-size:.66rem;color:rgba(255,255,255,.4);">wird ans Ende angehängt</span>
-    </div>
-  </div>` : '';
+  const bulk = pihBulkVisible ? bulkPanelHtml({
+    id: 'pih-bulk-text',
+    label: 'Ein Artikel pro Zeile · Name und Preis mit „#" (Vorrang), „/", „|", Tabulator oder „;" trennen.',
+    placeholder: 'Eine Kugel Eis / 1,80&#10;Ein Döner / 7,50&#10;Ein Kleinwagen, neu / 18500',
+    onAdd: 'pihBulkAdd()',
+  }) : '';
 
   const rows = pihData.items.map((it,i) => {
     const isOpen = pihEditOpen === i;
@@ -598,21 +570,15 @@ function pihToggleBulk(){
 }
 
 function pihBulkAdd(){
-  const t = document.getElementById('pih-bulk-text');
-  if (!t) return;
-  const added = t.value.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
-    // „#" hat Vorrang, damit Artikelnamen mit / (z.B. "Kaffee/Tee") heil bleiben.
-    const sep = line.includes('#') ? '#' : (line.includes('|') ? '|' : (line.includes('/') ? '/' : null));
-    if (!sep) return { name: line, price: null, note:'', media:[] };
-    const at = line.indexOf(sep);
-    return {
-      name: line.slice(0, at).trim(),
-      price: pihParsePrice(line.slice(at + 1)),
-      note: '', media: [],
-    };
-  });
-  if (!added.length) return;
+  const lines = bulkLines('pih-bulk-text');
+  if (!lines) return;
+  const added = lines.map(line => {
+    const { left: name, right: price } = splitBulkLine(line);
+    return { name, price: price ? pihParsePrice(price) : null, note: '', media: [] };
+  }).filter(it => it.name);
+  if (!added.length) { alert('Keine Zeilen erkannt.\nFormat: Artikel | Preis (eine pro Zeile)'); return; }
   pihData.items = pihData.items.concat(added);
+  document.getElementById('pih-bulk-text').value = '';
   pihBulkVisible = false;
   renderPihEditor();
   pihSave();
@@ -656,28 +622,24 @@ function importPih(e){
   });
 }
 
-function pihSave(){ try { localStorage.setItem('pihData', JSON.stringify(pihData)); } catch {} }
-function pihLoad(){ try { const s = localStorage.getItem('pihData'); if (s) pihData = JSON.parse(s); } catch {} }
+function pihSave(){ storeSetJson('pihData', pihData); }
+function pihLoad(){ pihData = storeGetJson('pihData', pihData); }
 pihLoad();
 
 function pihSaveSettings(){
-  try {
-    localStorage.setItem('pihSettings', JSON.stringify({
-      rounds: Number((document.getElementById('pih-rounds')||{}).value) || 0,
-      time: pihState.roundTime,
-      rule: pihState.rule,
-    }));
-  } catch {}
+  storeSetJson('pihSettings', {
+    rounds: Number((document.getElementById('pih-rounds')||{}).value) || 0,
+    time: pihState.roundTime,
+    rule: pihState.rule,
+  });
 }
 function pihLoadSettings(){
-  try {
-    const s = JSON.parse(localStorage.getItem('pihSettings') || 'null');
-    if (!s) return;
-    if (s.rule && PIH_RULES.some(r => r.key === s.rule)) pihState.rule = s.rule;
-    const rounds = document.getElementById('pih-rounds');
-    const time   = document.getElementById('pih-time');
-    if (rounds && s.rounds != null) rounds.value = s.rounds;
-    if (time   && s.time   != null) { time.value = s.time; pihState.roundTime = s.time; }
-  } catch {}
+  const s = storeGetJson('pihSettings');
+  if (!s) return;
+  if (s.rule && PIH_RULES.some(r => r.key === s.rule)) pihState.rule = s.rule;
+  const rounds = document.getElementById('pih-rounds');
+  const time   = document.getElementById('pih-time');
+  if (rounds && s.rounds != null) rounds.value = s.rounds;
+  if (time   && s.time   != null) { time.value = s.time; pihState.roundTime = s.time; }
 }
 

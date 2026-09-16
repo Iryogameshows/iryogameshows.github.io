@@ -16,11 +16,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "589064661958",
   appId: "1:589064661958:web:1c1024eab161ad8e53e0c7",
 };
-// Auch das läuft beim Laden auf oberster Ebene - siehe SFX weiter oben.
-const BUZZER_URL = (() => {
-  try { return localStorage.getItem('buzzerUrl') || 'http://localhost:3777'; }
-  catch { return 'http://localhost:3777'; }
-})();
+const BUZZER_URL = storeGet('buzzerUrl') || 'http://localhost:3777';
 // Wo die Seite oeffentlich liegt. Wird nur gebraucht, wenn index.html lokal per
 // Doppelklick geoeffnet wurde - dann gibt es kein location.origin, aus dem sich
 // die Buzzer-Adresse fuer den QR-Code ableiten liesse.

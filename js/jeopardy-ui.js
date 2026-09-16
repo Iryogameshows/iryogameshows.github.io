@@ -210,7 +210,7 @@ function popOutQR(){
 // ── PASSWORT-GATE (nur Host-Seite; die /buzzer-Seite ist NICHT geschützt) ──
 const HOST_PASSWORD = 'keller2024'; // hier dein Wunsch-Passwort setzen
 function ensureHostGate(){
-  try { if (localStorage.getItem('hostUnlocked') === HOST_PASSWORD) return; } catch {}
+  if (storeGet('hostUnlocked') === HOST_PASSWORD) return;
   const gate = document.createElement('div');
   gate.id = 'host-gate';
   gate.innerHTML = `
@@ -226,7 +226,7 @@ function ensureHostGate(){
     if (input.value === HOST_PASSWORD){
       // Merken ist Komfort, nicht Bedingung: schlägt es fehl, geht die Sperre
       // trotzdem auf - sonst käme der Host gar nicht ins Spiel.
-      try { localStorage.setItem('hostUnlocked', HOST_PASSWORD); } catch {}
+      storeSet('hostUnlocked', HOST_PASSWORD);
       gate.remove();
     } else {
       gate.classList.add('err');

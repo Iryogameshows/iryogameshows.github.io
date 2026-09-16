@@ -5,6 +5,128 @@
    Skripte, kein type="module": die App haengt an rund 330 Inline-Handlern im
    Markup, und die finden ihre Funktionen nur im globalen Scope. Die Ladereihen-
    folge in index.html entspricht exakt der frueheren Reihenfolge in der Datei. */
+/* ── Speicher ──────────────────────────────────────────────────────────────
+   localStorage kann nicht nur fehlschlagen, es wirft: bei einer per Doppel-
+   klick geoeffneten Datei (file://), bei gesperrtem Seitenspeicher, im
+   privaten Fenster oder wenn das Kontingent voll ist. Weil das Skript auf
+   oberster Ebene laeuft, haette eine einzige ungefangene Exception frueher
+   den kompletten Block sterben lassen und die App waere gar nicht gestartet.
+
+   Deshalb stand um jeden einzelnen Zugriff ein eigenes try/catch - 35 Stueck
+   ueber zehn Dateien verteilt, jedes mit derselben stillen Annahme. Diese
+   vier Helfer halten das Wissen an einer Stelle: sie werfen nie. Ein
+   fehlgeschlagenes Lesen liefert den Rueckfallwert, ein fehlgeschlagenes
+   Schreiben meldet false - die App laeuft dann eben ohne Gedaechtnis weiter,
+   statt abzustuerzen.
+
+   storeGet/storeSet arbeiten mit rohen Zeichenketten, storeGetJson/
+   storeSetJson serialisieren. Fehlender Schluessel und kaputter Inhalt
+   liefern beide den Rueckfallwert - fuer die Aufrufer ist das dasselbe:
+   "nichts Brauchbares gespeichert". */
+function storeGet(key, fallback = null) {
+  try { const v = localStorage.getItem(key); return v === null ? fallback : v; }
+  catch { return fallback; }
+}
+function storeSet(key, value) {
+  try { localStorage.setItem(key, String(value)); return true; } catch { return false; }
+}
+function storeGetJson(key, fallback = null) {
+  try { const s = localStorage.getItem(key); return s === null ? fallback : JSON.parse(s); }
+  catch { return fallback; }
+}
+function storeSetJson(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch { return false; }
+}
+function storeRemove(key) { try { localStorage.removeItem(key); } catch {} }
+
+/* ── Mischen ───────────────────────────────────────────────────────────────
+   Fisher-Yates. Der naheliegende Einzeiler sort(() => Math.random() - .5)
+   mischt nachweislich schief: Vergleichsfunktionen muessen konsistent sein,
+   eine zufaellige ist es nicht, und je nach Sortierverfahren bleiben Elemente
+   ueberdurchschnittlich oft in ihrer Ausgangsposition. Bei fuenf Fragen faellt
+   das im Spiel auf. Diese Variante zieht fuer jede Position gleichverteilt.
+
+   shuffled() gibt eine neue Liste zurueck und laesst die Vorlage in Ruhe -
+   die Aufrufer mischen durchweg Fragenbestaende, die erhalten bleiben muessen. */
+function shuffled(list) {
+  const a = [...list];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+/* Dieselbe Mischung, aber nur die Positionen 0..n-1 - fuer Spiele, die ihre
+   Reihenfolge als Index-Liste fuehren statt die Fragen selbst umzusortieren. */
+function shuffledIndices(n) { return shuffled(Array.from({ length: n }, (_, i) => i)); }
+
+/* ── Rundenuhr ─────────────────────────────────────────────────────────────
+   "Der Duemmste fliegt" und "Der Preis ist heiss" zaehlen dieselbe Rundenzeit
+   herunter. Beide Umsetzungen waren zeichengleich - nur Praefix und Element-ID
+   unterschieden sich. Jetzt fuehren beide hierher.
+
+   Erwartet an state: roundTime (Startwert), timer, timeUp, timerInt. */
+function startRoundClock(state, elId) {
+  stopRoundClock(state, elId);
+  state.timer = state.roundTime;
+  state.timeUp = false;
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const tick = () => {
+    el.textContent = state.timer > 0 ? `⏱ ${state.timer}s` : '⏱ Zeit um!';
+    el.style.color = state.timer <= 5 && state.timer > 0 ? '#e23b3b' : '';
+    // timeUp vor dem Stoppen setzen: stopRoundClock() loescht die Anzeige nur,
+    // solange die Zeit nicht abgelaufen ist - sonst verschwindet "Zeit um!"
+    // im selben Moment, in dem es erscheinen soll.
+    if (state.timer <= 0) { state.timeUp = true; stopRoundClock(state, elId); return; }
+    state.timer--;
+  };
+  tick();
+  state.timerInt = setInterval(tick, 1000);
+}
+function stopRoundClock(state, elId) {
+  if (state.timerInt) { clearInterval(state.timerInt); state.timerInt = null; }
+  const el = document.getElementById(elId);
+  if (el && !state.timeUp) el.textContent = '';
+}
+
+/* ── Massen-Eingabe in den Editoren ────────────────────────────────────────
+   "Der Duemmste fliegt" und "Der Preis ist heiss" haben beide einen Kasten,
+   in den man viele Zeilen auf einmal einfuegt. Beide hatten ihre eigene
+   Trennlogik - und die liefen auseinander: DDF trennte bei #, /, |, Tabulator
+   und Semikolon, PIH nur bei #, | und /. Wer eine Tabelle aus einem
+   Tabellenprogramm in den Preis-Editor einfuegte (Spalten per Tabulator),
+   bekam alles in einer Spalte. Jetzt gilt fuer beide dieselbe Regel.
+
+   "#" hat Vorrang vor allen anderen Trennern, damit ein "/" im Text heil
+   bleibt - "km/h" als Antwort, "Kaffee/Tee" als Artikelname. Ohne Trenner ist
+   die ganze Zeile die linke Seite. */
+function splitBulkLine(line) {
+  const m = line.match(/^(.*?)\s*#\s*(.*)$/) || line.match(/^(.*?)\s*[/|\t;]\s*(.*)$/);
+  return m ? { left: m[1].trim(), right: m[2].trim() } : { left: line.trim(), right: '' };
+}
+/* Inhalt eines Massen-Eingabefelds als getrimmte, nicht leere Zeilen.
+   null, wenn es das Feld nicht gibt. */
+function bulkLines(textareaId) {
+  const t = document.getElementById(textareaId);
+  if (!t) return null;
+  return t.value.split('\n').map(s => s.trim()).filter(Boolean);
+}
+/* Das Markup des Kastens. Lag vorher zweimal fast wortgleich im JS, samt
+   eines 230 Zeichen langen Inline-Styles fuer das Textfeld - der steht jetzt
+   als .bulk-box in styles.css. placeholder wird bewusst nicht maskiert: die
+   Aufrufer geben dort feste eigene Texte mit &#10; als Zeilenumbruch mit. */
+function bulkPanelHtml({ id, label, placeholder, onAdd }) {
+  return `<div class="bulk-box">
+    <label>${label}</label>
+    <textarea id="${id}" rows="8" placeholder="${placeholder}"></textarea>
+    <div class="bulk-actions">
+      <button class="btn btn-accent btn-sm" onclick="${onAdd}">Hinzufügen</button>
+      <span class="bulk-hint">wird ans Ende angehängt</span>
+    </div>
+  </div>`;
+}
+
 // ── SFX ── Synthetisierte Soundeffekte (Web Audio API, keine externen Dateien nötig)
 const SFX = (() => {
   let ctx = null;
@@ -19,16 +141,12 @@ const SFX = (() => {
     o.connect(g); g.connect(c.destination);
     o.start(c.currentTime + start); o.stop(c.currentTime + start + dur + 0.05);
   }
-  // Abgesichert, weil das hier beim Laden auf oberster Ebene läuft: wirft
-  // localStorage (Datei per Doppelklick geöffnet, Speicher gesperrt), stirbt
-  // sonst der komplette Skriptblock und es startet gar nichts mehr.
-  let enabled = true;
-  try { enabled = localStorage.getItem('sfxEnabled') !== 'off'; } catch {}
+  let enabled = storeGet('sfxEnabled') !== 'off';
   return {
     get enabled(){ return enabled; },
     toggle(){
       enabled = !enabled;
-      try { localStorage.setItem('sfxEnabled', enabled ? 'on' : 'off'); } catch {}
+      storeSet('sfxEnabled', enabled ? 'on' : 'off');
       return enabled;
     },
     buzz(){ if(!enabled) return; tone(880, 0, .09, 'square', .12); },
@@ -746,7 +864,7 @@ function gmHeaderHtml(title, subtitle, chip) {
 // nicht im Weg sind, aber immer einen Klick entfernt.
 function gmNotesPanelHtml() {
   let notes = '';
-  try { notes = localStorage.getItem('hostNotes') || ''; } catch {}
+  notes = storeGet('hostNotes', '');
   return `<details class="panel notes-panel">
     <summary class="panel-head"><span>📋 Notizen</span><span class="car">▸</span></summary>
     <textarea placeholder="Ablaufplan / Notizen…" oninput="opener.saveHostNotesRemote(this.value)">${escapeHtml(notes)}</textarea>
@@ -878,22 +996,27 @@ function importJSON(e, callback) {
 function importQuestions(e) { importJSON(e, d => { questions = d; }); }
 function importFinaleQuestions(e) { importJSON(e, d => { finaleQuestions = d; }); }
 function saveToStorage(){
-  try { localStorage.setItem('familyFeudQuestions',JSON.stringify(questions)); localStorage.setItem('familyFeudFinaleQuestions',JSON.stringify(finaleQuestions)); } catch {}
+  storeSetJson('familyFeudQuestions', questions);
+  storeSetJson('familyFeudFinaleQuestions', finaleQuestions);
 }
 function loadFromStorage(){
-  try { const s=localStorage.getItem('familyFeudQuestions');if(s){questions=JSON.parse(s);} } catch {}
-  try { const f=localStorage.getItem('familyFeudFinaleQuestions');if(f){finaleQuestions=JSON.parse(f);} } catch {}
-  try { const inp=document.getElementById('feud-show-name'); if(inp){ const v=localStorage.getItem('feudShowName'); if(v!==null) inp.value=v; } } catch {}
-  try { const inp=document.getElementById('bday-name'); if(inp){ const v=localStorage.getItem('bdayName'); if(v!==null) inp.value=v; } } catch {}
+  questions = storeGetJson('familyFeudQuestions', questions);
+  finaleQuestions = storeGetJson('familyFeudFinaleQuestions', finaleQuestions);
+  const showInp = document.getElementById('feud-show-name');
+  const showVal = storeGet('feudShowName');
+  if (showInp && showVal !== null) showInp.value = showVal;
+  const bdayInp = document.getElementById('bday-name');
+  const bdayVal = storeGet('bdayName');
+  if (bdayInp && bdayVal !== null) bdayInp.value = bdayVal;
 }
 
 // ── REAKTIONSZEIT-BESTENLISTE ── (übers ganze Event hinweg, geräteseitig gespeichert)
 let reactionBoard = [];
 function loadReactionBoard(){
-  try { const s = localStorage.getItem('reactionBoard'); reactionBoard = s ? JSON.parse(s) : []; } catch { reactionBoard = []; }
+  reactionBoard = storeGetJson('reactionBoard', []);
 }
 function saveReactionBoard(){
-  try { localStorage.setItem('reactionBoard', JSON.stringify(reactionBoard.slice(0, 300))); } catch {}
+  storeSetJson('reactionBoard', reactionBoard.slice(0, 300));
 }
 function recordReaction(name, t, game){
   if (!name || !(t >= 0)) return;
@@ -1111,18 +1234,18 @@ function renderPlayersLeaderboard(){
 
 // ── HOST-NOTIZEN ── (automatisch gespeichert, geräteseitig)
 function loadHostNotes(){
-  try { document.getElementById('host-notes-text').value = localStorage.getItem('hostNotes') || ''; } catch {}
+  document.getElementById('host-notes-text').value = storeGet('hostNotes', '');
   renderNotesChecklist();
 }
 function saveHostNotes(){
-  try { localStorage.setItem('hostNotes', document.getElementById('host-notes-text').value); } catch {}
+  storeSet('hostNotes', document.getElementById('host-notes-text').value);
   renderNotesChecklist();
 }
 // Wird von der Notizen-Box im GM-Panel (und darüber vom Gamepad-Handy) aufgerufen.
 // Rendert bewusst NICHT das GM-Panel neu (kein updateGamemaster()) - sonst würde
 // jeder Tastendruck das eigene Eingabefeld unterbrechen.
 function saveHostNotesRemote(text){
-  try { localStorage.setItem('hostNotes', text); } catch {}
+  storeSet('hostNotes', text);
   const el = document.getElementById('host-notes-text');
   if (el && el.value !== text) el.value = text;
   renderNotesChecklist();
@@ -1140,10 +1263,10 @@ function parseNoteChecklist(text){
     .filter(Boolean);
 }
 function loadNotesChecked(){
-  try { return new Set(JSON.parse(localStorage.getItem('hostNotesChecked') || '[]')); } catch { return new Set(); }
+  return new Set(storeGetJson('hostNotesChecked', []));
 }
 function saveNotesChecked(set){
-  try { localStorage.setItem('hostNotesChecked', JSON.stringify([...set])); } catch {}
+  storeSetJson('hostNotesChecked', [...set]);
 }
 let noteChecklistItems = [];
 function renderNotesChecklist(){
