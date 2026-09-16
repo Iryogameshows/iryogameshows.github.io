@@ -577,7 +577,15 @@ function updateActiveTeam() {
 }
 function updateScores() {
   for (let i = 0; i < state.teamCount; i++) {
-    document.getElementById(`team${i}-score`).textContent = state.scores[i];
+    const el = document.getElementById(`team${i}-score`);
+    const next = String(state.scores[i]);
+    // Nur bei echter Aenderung anfassen: updateScores() laeuft bei jedem
+    // Rendern mit, der Impuls soll aber nur bei vergebenen Punkten kommen.
+    if (el.textContent === next) continue;
+    el.textContent = next;
+    el.classList.remove('score-bump');
+    void el.offsetWidth; // Reflow erzwingen, sonst startet die Animation nicht neu
+    el.classList.add('score-bump');
   }
 }
 

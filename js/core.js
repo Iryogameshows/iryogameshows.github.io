@@ -187,6 +187,23 @@ function gameCardIcon(key){
 }
 function renderMenuIcons(){
   document.querySelectorAll('.menu-card-icon[data-game]').forEach(el => { el.innerHTML = gameCardIcon(el.getAttribute('data-game')); });
+  // Die Menuekarten sind divs mit onclick - fuer die Tastatur waren sie damit
+  // gar nicht erreichbar: kein Tabstopp, kein Enter. tabindex macht sie
+  // anspringbar, Enter und Leertaste loesen denselben Klick aus wie die Maus,
+  // role/aria-label sagen Vorlesewerkzeugen, dass es Knoepfe sind und welcher.
+  document.querySelectorAll('.menu-card').forEach(card => {
+    if (card.dataset.kbdReady) return;
+    card.dataset.kbdReady = '1';
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    const title = card.querySelector('.menu-card-title');
+    if (title) card.setAttribute('aria-label', title.textContent.trim());
+    card.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault(); // Leertaste wuerde sonst die Seite scrollen
+      card.click();
+    });
+  });
 }
 
 // Hub-Logo: das IRYO-GAMESHOW-Schild (Blau & Gold) statt Schriftzug + Balken.
