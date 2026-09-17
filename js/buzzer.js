@@ -331,56 +331,39 @@ function feudBuzzConnect(){
 // beitreten und der Host sie schon hier den Teams zuteilen kann. Teams
 // bleiben zwischen Spielen bestehen (Accounts sind permanent) - der Host
 // setzt sie nur explizit über einen der "Teams zurücksetzen"-Buttons zurück.
-function ensureFeudLobbyConnected(){
-  activeBuzzerContext = 'feud';
-  const isFresh = !feudBuzzer.fbRef;
-  feudBuzzConnect();
-  if (isFresh) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
-  broadcastFeudSetupTeamNames();
-  renderSetupLobby('feud');
+// Alle drei Lobbys laufen gleich an: Kontext setzen, verbinden, beim ersten
+// Mal die Beitrittssperre loesen, Teamnamen an die Handys schicken, Liste
+// zeichnen. Unterschiedlich ist nur, welche Verbindung dahintersteckt -
+// Jeopardy hat eine eigene, Feud und "Wer weiss denn sowas" teilen sich eine
+// (dort wird nicht gebuzzert, es braucht nur Presence und Teamzuteilung).
+// Welche Eingabefelder die Teamnamen liefern, steht in LOBBY_SETUP. Das las
+// vorher nur die WWDS-Fassung aus; Feud und Jeopardy hatten dieselben IDs
+// noch einmal fest verdrahtet.
+function ensureLobbyConnected(game){
+  activeBuzzerContext = game;
+  const isJeopardy = game === 'jeopardy';
+  const buzzer = isJeopardy ? jeopardyBuzzer : feudBuzzer;
+  // Vor dem Verbinden pruefen - danach steht die Referenz immer.
+  const isFresh = !buzzer.fbRef;
+  (isJeopardy ? jeopardyBuzzConnect : feudBuzzConnect)();
+  // Nur beim ersten Verbinden: eine noch offene Sperre aus der letzten Show
+  // wuerde sonst neue Gaeste aussperren.
+  if (isFresh && buzzer.fbRef) buzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
+  broadcastSetupTeamNames(game);
 }
-function broadcastFeudSetupTeamNames(){
-  const names = [
-    document.getElementById('team1-name').value || 'Team 1',
-    document.getElementById('team2-name').value || 'Team 2',
-  ];
-  if (document.getElementById('enable-team3').checked) names.push(document.getElementById('team3-name').value || 'Team 3');
-  buzzerBroadcastTeams(names);
-  renderSetupLobby('feud');
-}
-
-// Wer weiss denn sowas: gleiche Lobby wie Feud (Presence + Teamzuteilung),
-// nur ohne Buzzer-Scharfschaltung - in diesem Modus wird nicht gebuzzert.
-function ensureWwdsLobbyConnected(){
-  activeBuzzerContext = 'wwds';
-  const isFresh = !feudBuzzer.fbRef;
-  feudBuzzConnect();
-  if (isFresh && feudBuzzer.fbRef) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
-  broadcastWwdsSetupTeamNames();
-}
-function broadcastWwdsSetupTeamNames(){
-  buzzerBroadcastTeams(lobbyTeamNames('wwds'));
-  renderSetupLobby('wwds');
+function broadcastSetupTeamNames(game){
+  buzzerBroadcastTeams(lobbyTeamNames(game));
+  renderSetupLobby(game);
 }
 
-// Aufgerufen, sobald der Jeopardy-Setup-Screen erscheint (siehe Family-Feud-Pendant oben).
-function ensureJeopardyLobbyConnected(){
-  activeBuzzerContext = 'jeopardy';
-  const isFresh = !jeopardyBuzzer.presenceRef;
-  jeopardyBuzzConnect();
-  if (isFresh) jeopardyBuzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
-  broadcastJeopardySetupTeamNames();
-  renderSetupLobby('jeopardy');
-}
-function broadcastJeopardySetupTeamNames(){
-  const names = [
-    document.getElementById('jt1-name').value || 'Team 1',
-    document.getElementById('jt2-name').value || 'Team 2',
-  ];
-  if (document.getElementById('jeopardy-enable-team3').checked) names.push(document.getElementById('jt3-name').value || 'Team 3');
-  buzzerBroadcastTeams(names);
-  renderSetupLobby('jeopardy');
-}
+// Diese Namen ruft das Markup direkt auf (oninput=...) und showScreen() waehlt
+// nach ihnen aus - sie bleiben als Einstiegspunkte bestehen.
+function ensureFeudLobbyConnected(){ ensureLobbyConnected('feud'); }
+function ensureWwdsLobbyConnected(){ ensureLobbyConnected('wwds'); }
+function ensureJeopardyLobbyConnected(){ ensureLobbyConnected('jeopardy'); }
+function broadcastFeudSetupTeamNames(){ broadcastSetupTeamNames('feud'); }
+function broadcastWwdsSetupTeamNames(){ broadcastSetupTeamNames('wwds'); }
+function broadcastJeopardySetupTeamNames(){ broadcastSetupTeamNames('jeopardy'); }
 
 function feudBuzzDisconnect(){
   if (feudBuzzer.fbRef) { try { feudBuzzer.fbRef.off(); } catch {} }

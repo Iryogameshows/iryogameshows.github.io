@@ -286,35 +286,14 @@ function pihHostBid(i){
 
 /* ── Gebote über die Handys ───────────────────────────────────────────── */
 
-let pihBidRef = null;
 let pihBidRound = 0;
-let pihBidsCb = null;
 
-function pihBidRefInit(){
-  if (pihBidRef) return pihBidRef;
-  try {
-    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    pihBidRef = firebase.database().ref('buzzer/estimate');
-  } catch { pihBidRef = null; }
-  return pihBidRef;
-}
-
-// Erst anhängen, wenn die neue Runde geschrieben ist - sonst zählen die
-// Gebote der vorigen Runde mit (dieselbe Falle wie bei der DDF-Abstimmung).
-function pihAttachBids(){
-  pihDetachBids();
-  if (!pihBidRef) return;
-  pihBidsCb = pihBidRef.child('answers').on('value', snap => {
-    pihState.bids = snap.val() || {};
-    // Nur den Zähler auffrischen, nicht das ganze Grid: dort stehen die
-    // Eingabefelder der Gäste und ein Neuaufbau würde das Getippte wegwerfen.
-    if (pihState.phase === 'bid') pihUpdateBidProgress();
-  });
-}
-function pihDetachBids(){
-  if (pihBidRef && pihBidsCb) pihBidRef.child('answers').off('value', pihBidsCb);
-  pihBidsCb = null;
-}
+const pihBids = makeRoundChannel('buzzer/estimate', 'answers', bids => {
+  pihState.bids = bids;
+  // Nur den Zähler auffrischen, nicht das ganze Grid: dort stehen die
+  // Eingabefelder der Gäste und ein Neuaufbau würde das Getippte wegwerfen.
+  if (pihState.phase === 'bid') pihUpdateBidProgress();
+});
 
 function pihBeginBids(){
   const it = pihCurrentItem();
@@ -324,23 +303,23 @@ function pihBeginBids(){
   pihState.hostBids = {};
   pihBidRound = nextRoundId(pihBidRound);
 
-  pihDetachBids();
-  pihBidRefInit();
-  if (pihBidRef) {
-    pihBidRef.set({
+  pihBids.detach();
+  const ref = pihBids.open();
+  if (ref) {
+    ref.set({
       active: true,
       round: pihBidRound,
       question: 'Was kostet: ' + (it.name || '?'),
       answers: null,
-    }).then(pihAttachBids).catch(()=>{});
+    }).then(() => pihBids.attach()).catch(()=>{});
   }
   if (pihState.roundTime) pihStartTimer();
   pihRenderRound();
 }
 
 function pihCloseBids(){
-  pihDetachBids();
-  if (pihBidRef) pihBidRef.update({ active: false }).catch(()=>{});
+  pihBids.detach();
+  if (pihBids.ref) pihBids.ref.update({ active: false }).catch(()=>{});
 }
 
 function pihPhoneBidders(){ return pihState.players.filter(p => p.key); }

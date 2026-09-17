@@ -127,6 +127,48 @@ function bulkPanelHtml({ id, label, placeholder, onAdd }) {
   </div>`;
 }
 
+/* ── Runden-Kanal (Firebase) ───────────────────────────────────────────────
+   "Der Duemmste fliegt" sammelt Stimmen, "Der Preis ist heiss" sammelt
+   Gebote. Technisch ist das dasselbe: ein Zweig in der Datenbank, an dem
+   genau ein Listener haengt, der pro Runde neu angehaengt wird. Beide Spiele
+   hatten dafuer eine eigene, strukturgleiche Umsetzung - nur Pfad,
+   Unterschluessel und Rueckruf unterschieden sich.
+
+   Auf den Zeitpunkt kommt es an: der Listener darf erst haengen, wenn die
+   neue Runde geschrieben ist. Haengt er frueher, liefert er beim Start noch
+   die Eingaben der vorigen Runde und die zaehlen mit.
+
+   open()  legt den Zweig einmalig an und gibt ihn zurueck; scheitert das
+           (keine Verbindung), bleibt er null und alles Weitere tut nichts -
+           das Spiel laeuft dann ohne Handys weiter.
+   .ref    ist der bereits geoeffnete Zweig oder null, ohne ihn anzulegen.
+           Zum Aufraeumen: wer nie verbunden war, soll beim Beenden auch
+           nichts in die Datenbank schreiben. */
+function makeRoundChannel(path, childKey, onData) {
+  let ref = null, cb = null;
+  const ch = {
+    open() {
+      if (ref) return ref;
+      try {
+        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        ref = firebase.database().ref(path);
+      } catch { ref = null; }
+      return ref;
+    },
+    get ref() { return ref; },
+    attach() {
+      ch.detach();
+      if (!ref) return;
+      cb = ref.child(childKey).on('value', snap => onData(snap.val() || {}));
+    },
+    detach() {
+      if (ref && cb) ref.child(childKey).off('value', cb);
+      cb = null;
+    },
+  };
+  return ch;
+}
+
 // ── SFX ── Synthetisierte Soundeffekte (Web Audio API, keine externen Dateien nötig)
 const SFX = (() => {
   let ctx = null;

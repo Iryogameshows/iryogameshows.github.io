@@ -281,34 +281,12 @@ function ddfReveal(){ ddfStopTimer(); ddfState.phase = 'answer'; ddfRenderRound(
    aber nie, wer wen gewählt hat.
    ──────────────────────────────────────────────────────────────────────── */
 
-let ddfVoteRef = null;
 let ddfVoteRound = 0;
-let ddfVotesCb = null;
 
-function ddfVoteRefInit(){
-  if (ddfVoteRef) return ddfVoteRef;
-  try {
-    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
-    ddfVoteRef = firebase.database().ref('buzzer/ddfvote');
-  } catch { ddfVoteRef = null; }
-  return ddfVoteRef;
-}
-
-// Der Listener wird erst angehängt, wenn die neue Runde geschrieben ist -
-// sonst liefert er beim Start noch die Stimmen der vorigen Runde und die
-// zählen mit.
-function ddfAttachVotes(){
-  ddfDetachVotes();
-  if (!ddfVoteRef) return;
-  ddfVotesCb = ddfVoteRef.child('votes').on('value', snap => {
-    ddfState.votes = snap.val() || {};
-    if (ddfState.phase === 'vote') ddfRenderRound();
-  });
-}
-function ddfDetachVotes(){
-  if (ddfVoteRef && ddfVotesCb) ddfVoteRef.child('votes').off('value', ddfVotesCb);
-  ddfVotesCb = null;
-}
+const ddfVotes = makeRoundChannel('buzzer/ddfvote', 'votes', votes => {
+  ddfState.votes = votes;
+  if (ddfState.phase === 'vote') ddfRenderRound();
+});
 
 // candidates: wer gewählt werden kann. voters: wer abstimmen darf.
 // Beides sind die noch lebenden Spieler - Selbstvotum ist erlaubt.
@@ -321,24 +299,24 @@ function ddfBeginVote(candidates){
   ddfState.runoff = candidates ? cands.map(p => p.uid) : null;
   ddfVoteRound = nextRoundId(ddfVoteRound);
 
-  ddfDetachVotes();
-  ddfVoteRefInit();
-  if (ddfVoteRef) {
-    ddfVoteRef.set({
+  ddfVotes.detach();
+  const ref = ddfVotes.open();
+  if (ref) {
+    ref.set({
       active: true,
       round: ddfVoteRound,
       // key ist die uid: das Handy schickt sie unverändert zurück.
       candidates: cands.map(p => ({ key: p.uid, name: p.label, avatar: p.avatar || null, color: p.color || null })),
       voters: alive.filter(p => p.key).map(p => p.key),
       votes: null,
-    }).then(ddfAttachVotes).catch(()=>{});
+    }).then(() => ddfVotes.attach()).catch(()=>{});
   }
   ddfRenderRound();
 }
 
 function ddfCloseVote(){
-  ddfDetachVotes();
-  if (ddfVoteRef) ddfVoteRef.update({ active: false }).catch(()=>{});
+  ddfVotes.detach();
+  if (ddfVotes.ref) ddfVotes.ref.update({ active: false }).catch(()=>{});
 }
 
 // Abstimmen dürfen alle noch lebenden Spieler. Wer einen Account hat, stimmt
