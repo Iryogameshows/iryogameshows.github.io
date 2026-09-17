@@ -129,9 +129,16 @@ if (open !== close) {
 
 /* ── 4. Typpruefung (nur mit --types) ─────────────────────────────────── */
 
-// Dateien, die am Anfang "// @ts-check" tragen, laesst TypeScript pruefen -
-// ohne dass daraus ein Build-Step wird: tsc liest nur und erzeugt nichts
-// (noEmit in jsconfig.json). Die ausgelieferten Dateien bleiben unveraendert.
+// TypeScript prueft alles unter js/ - checkJs steht in jsconfig.json auf
+// true, seit alle Dateien sauber sind. Ein Build-Step wird daraus nicht:
+// tsc liest nur und erzeugt nichts (noEmit). Die ausgelieferten Dateien
+// bleiben unveraendert.
+//
+// Der Marker "// @ts-check" oben in jeder Datei ist damit nicht mehr noetig,
+// bleibt aber stehen: er sagt beim Oeffnen einer Datei sofort, woran man ist,
+// und faengt den Fall ab, dass jemand ohne jsconfig.json in die Datei schaut.
+// Traegt eine Datei ihn nicht, wird das unten gemeldet - nicht als Fehler,
+// sondern als Hinweis.
 //
 // Ein Durchlauf dauert rund eine halbe Minute und braucht beim ersten Mal das
 // Netz, um TypeScript zu holen. Deshalb laeuft er nicht bei jedem Commit mit,
@@ -160,11 +167,13 @@ if (process.argv.includes('--types')) {
     if (found.length) found.forEach(l => problems.push('Typ: ' + l.trim()));
     else problems.push('Typpruefung fehlgeschlagen: ' + out.trim().slice(0, 300));
   } else {
-    notes.push(tsChecked.length + ' Dateien mit // @ts-check typgeprueft');
+    notes.push(jsFiles.length + ' js-Dateien typgeprueft - keine Meldung');
   }
 } else {
-  notes.push(tsChecked.length + ' von ' + jsFiles.length + ' Dateien tragen // @ts-check'
-    + ' (pruefen mit --types)');
+  notes.push(tsChecked.length === jsFiles.length
+    ? 'alle ' + jsFiles.length + ' js-Dateien tragen // @ts-check (pruefen mit --types)'
+    : tsChecked.length + ' von ' + jsFiles.length + ' Dateien tragen // @ts-check'
+      + ' - ohne Marker wird trotzdem geprueft (pruefen mit --types)');
 }
 
 /* ── Ergebnis ─────────────────────────────────────────────────────────── */

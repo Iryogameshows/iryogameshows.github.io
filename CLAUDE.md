@@ -119,14 +119,17 @@ Wichtig: das ist **kein Build-Step**. TypeScript liest nur (`noEmit` in
 werden weiter direkt ausgeliefert. Es gibt nichts zu kompilieren, `git push`
 bleibt der ganze Deploy.
 
-Geprüft wird nur, was am Dateianfang `// @ts-check` trägt. Stand heute sieben
-von elf: `roster.js`, `wwm.js`, `ddf.js`, `wwds.js`, `buzzer.js`,
-`tournament.js`, `pih.js`.
+**Alle elf Dateien in `js/` sind geprüft und melden nichts.** Das ist der
+Zustand, in dem die Prüfung etwas wert ist: eine neue Meldung gehört dann zur
+Änderung, die gerade gemacht wurde, und niemand muss sie aus einem Rauschen
+von Altlasten heraussuchen.
 
-Offen sind noch `jeopardy-ui.js` (56 Meldungen), `core.js` (31), `feud.js` (29)
-und `jeopardy.js` (18). **Wer eine davon sauber bekommt, setzt `// @ts-check`
-in Zeile 1 und lässt es dort.** Nie wieder entfernen, um Meldungen
-loszuwerden.
+`checkJs` steht deshalb auf `true` — eine neu angelegte Datei ist ab der
+ersten Zeile mit dabei, auch wenn jemand das `// @ts-check` oben vergisst. Die
+Marker bleiben trotzdem in den Dateien stehen; sie sagen beim Öffnen sofort,
+woran man ist. **Nie entfernen, um Meldungen loszuwerden** — und `checkJs`
+nicht zurückdrehen. Wer eine Meldung nicht auflösen kann, fragt nach, statt
+die Prüfung abzuschalten.
 
 Typen stehen als JSDoc-Kommentare am Code, nicht in eigenen Dateien:
 
@@ -136,22 +139,33 @@ Typen stehen als JSDoc-Kommentare am Code, nicht in eigenen Dateien:
 function fieldEl(id) { ... }
 ```
 
+Die Jeopardy-Daten haben einen eigenen Bauplan: `JeopardyClue` und
+`JeopardyCategory` stehen als `@typedef` oben in `js/jeopardy.js`, direkt über
+`makeEmptyBoard`. Dort steht, was in einem Feld stecken kann — Bilder, Ton,
+Staffelbild, Bilderreihe, Schätzfrage. **Wer eine neue Sorte Frage einbaut,
+trägt sie dort ein**, sonst kennt sie weder der Editor-Code noch die Prüfung.
+
 Globale Objekte vom CDN (`firebase`, `QRCode`) sind in `types/globals.d.ts`
 deklariert.
 
-### Formularfelder
+### Felder und Anzeigen
 
-`document.getElementById(id).value` ist in dieser App rund 160-mal zu finden.
-TypeScript kann dort nichts sagen (der Rückgabetyp ist `HTMLElement`, nicht
-`HTMLInputElement`), und fehlt das Element, wirft der Zugriff. Für neuen Code
-stattdessen die Helfer aus `core.js` benutzen:
+`document.getElementById(id).value` war in dieser App rund 160-mal zu finden,
+`.textContent = …` noch 17-mal. Beides wirft, wenn es das Element nicht gibt —
+ein Tippfehler in der ID oder ein Screen, der noch nicht aufgebaut ist, reicht.
+Für neuen Code stattdessen die Helfer aus `core.js`:
 
 ```js
-fieldVal('ddf-lives')          // Inhalt, oder '' wenn es das Feld nicht gibt
-fieldChecked('enable-team3')   // Haken gesetzt? Fehlt das Feld: false
-fieldSet('tour-game-weight', 2) // schreibt; Rueckgabe sagt, ob es das Feld gab
-fieldEl('ddf-bulk-text')       // das Element selbst, oder null
+fieldVal('ddf-lives')             // Inhalt, oder '' wenn es das Feld nicht gibt
+fieldChecked('enable-team3')      // Haken gesetzt? Fehlt das Feld: false
+fieldSet('tour-game-weight', 2)   // schreibt; Rückgabe sagt, ob es das Feld gab
+fieldEl('ddf-bulk-text')          // das Element selbst, oder null
+setText('round-pts', 123)         // textContent, Zahl wird umgewandelt
 ```
+
+Noch offen und billig zu haben: `getElementById(id).style.display = …` steht
+noch 17-mal im Projekt und wirft genauso. Ein `showEl(id, sichtbar)` nach
+demselben Muster würde das abräumen.
 
 ## Deploy
 

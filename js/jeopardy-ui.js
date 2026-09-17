@@ -1,3 +1,4 @@
+// @ts-check
 /* Jeopardy, Teil 2: Buzzer-Steuerung, Host-Sperre, Wertung, Editor.
 
    Herausgeloest aus index.html (Zeilen 6302-6881). Die Dateien sind klassische
@@ -221,7 +222,7 @@ function ensureHostGate(){
       <button class="btn btn-primary" id="hg-go">OK</button>
     </div>`;
   document.body.appendChild(gate);
-  const input = gate.querySelector('#hg-input');
+  const input = /** @type {HTMLInputElement} */ (gate.querySelector('#hg-input'));
   const tryUnlock = () => {
     if (input.value === HOST_PASSWORD){
       // Merken ist Komfort, nicht Bedingung: schlägt es fehl, geht die Sperre
@@ -387,6 +388,9 @@ function showJeopardyResults() {
 }
 
 // ── JEOPARDY EDIT ──
+/** Ein Feld aus einem beliebigen Board - der Editor arbeitet auch am gerade
+ *  nicht bespielten.
+ *  @returns {JeopardyClue} */
 function jeopardyClue(b,col,row){ return jeopardyData.boards[b].categories[col].clues[row]; }
 function jeopardyEditMedia(b,col,row,slot,input){
   const c = jeopardyClue(b,col,row);
@@ -440,7 +444,7 @@ function jeopardyEditSeriesImg(b,col,row,idx,input){
   const r = new FileReader();
   r.onload = () => {
     const c = jeopardyClue(b,col,row);
-    c.seriesImgs = c.seriesImgs || []; c.seriesImgs[idx] = r.result;
+    c.seriesImgs = c.seriesImgs || []; c.seriesImgs[idx] = String(r.result);
     c.seriesNames = c.seriesNames || []; c.seriesNames[idx] = f.name; // Dateiname zum Identifizieren
     renderJeopardyEditor();
   };

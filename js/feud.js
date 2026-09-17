@@ -1,3 +1,4 @@
+// @ts-check
 /* Family Feud samt Intros, Tutorials, Finale und den Gamemaster-Panels.
 
    Herausgeloest aus index.html (Zeilen 3554-5183). Die Dateien sind klassische
@@ -14,7 +15,7 @@ function startGameActual() {
   jeopardyState.active = false;
   wwmState.active = false;
   wwdsState.active = false;
-  state.teamCount = document.getElementById('enable-team3').checked ? 3 : 2;
+  state.teamCount = fieldChecked('enable-team3') ? 3 : 2;
   state.scores = new Array(state.teamCount).fill(0);
   state.teamStrikes = new Array(state.teamCount).fill(0);
   state.currentRound = 0; state.currentTeam = Math.floor(Math.random() * state.teamCount);
@@ -26,7 +27,7 @@ function startGameActual() {
 
   const names = [];
   for (let i = 0; i < state.teamCount; i++) {
-    names.push(document.getElementById(`team${i+1}-name`).value || `Team ${i+1}`);
+    names.push(fieldVal(`team${i+1}-name`) || `Team ${i+1}`);
   }
   state.teamNames = names;
 
@@ -70,19 +71,18 @@ function showIntro() {
 }
 
 function afterStar() {
-  const introOn = document.getElementById('enable-gameshow-intro');
-  if (!introOn || !introOn.checked) return showWelcomeIntro();
-  const variant = (document.getElementById('intro-variant') || {}).value;
+  if (!fieldChecked('enable-gameshow-intro')) return showWelcomeIntro();
+  const variant = fieldVal('intro-variant');
   if (variant === 'bday') showBirthdayIntro(showWelcomeIntro);
   else showGameshowIntro(showWelcomeIntro);
 }
 
 // Intro-Auswahl nur zeigen, wenn ein Intro läuft; Namensfeld nur beim Geburtstag
 function toggleIntroPicker() {
-  const on = document.getElementById('enable-gameshow-intro').checked;
+  const on = fieldChecked('enable-gameshow-intro');
   const picker = document.getElementById('intro-picker');
   picker.style.display = on ? '' : 'none';
-  const bday = document.getElementById('intro-variant').value === 'bday';
+  const bday = fieldVal('intro-variant') === 'bday';
   document.getElementById('bday-name').style.display = bday ? '' : 'none';
   document.getElementById('bday-name-label').style.display = bday ? '' : 'none';
 }
@@ -94,8 +94,7 @@ function getFeudName() {
   return 'Keller';
 }
 function saveFeudName() {
-  const inp = document.getElementById('feud-show-name');
-  const v = inp ? inp.value : '';
+  const v = fieldVal('feud-show-name');
   storeSet('feudShowName', v);
 }
 function feudTitle() { return getFeudName() + ' Feud'; }
@@ -148,8 +147,7 @@ function getBdayName() {
   return 'Ajdin';
 }
 function saveBdayName() {
-  const inp = document.getElementById('bday-name');
-  storeSet('bdayName', inp ? inp.value : '');
+  storeSet('bdayName', fieldVal('bday-name'));
 }
 
 function showBirthdayIntro(onDone) {
@@ -462,7 +460,7 @@ function loadRound() {
   actionHistory = [];
   resetMediaOverlay();
 
-  document.getElementById('round-info').textContent = `Runde ${state.currentRound+1} / ${state.roundQuestions.length}`;
+  setText('round-info', `Runde ${state.currentRound+1} / ${state.roundQuestions.length}`);
 
   const qEl = document.getElementById('question-display');
   qEl.classList.add('hidden-q');
@@ -554,7 +552,7 @@ function updateStrikes(){
     });
   }
 }
-function updateRoundPts(){document.getElementById('round-pts').textContent=state.roundPoints;}
+function updateRoundPts(){ setText('round-pts', state.roundPoints); }
 
 function switchTeam() {
   for (let attempt = 1; attempt <= state.teamCount; attempt++) {
@@ -722,9 +720,9 @@ function loadFinaleQuestion() {
   }
   const q = finaleState.questions[finaleState.currentQ];
   const ti = finaleState.teams[finaleState.currentTeamIdx];
-  document.getElementById('finale-team-label').textContent = state.teamNames[ti] + ' spielt';
-  document.getElementById('finale-q-info').textContent = `Frage ${finaleState.currentQ + 1} / ${finaleState.questions.length}`;
-  document.getElementById('finale-question').textContent = q.question;
+  setText('finale-team-label', state.teamNames[ti] + ' spielt');
+  setText('finale-q-info', `Frage ${finaleState.currentQ + 1} / ${finaleState.questions.length}`);
+  setText('finale-question', q.question);
   document.getElementById('finale-question').className = 'finale-big-q';
   document.getElementById('finale-board').style.display = 'none';
   renderFinaleScores();
@@ -738,7 +736,7 @@ function finalePickAnswer(i) {
   // Die Punktekarte existiert waehrend des Antwortens nicht (siehe
   // renderFinaleScores) - der Stand wird erst in der Aufloesung gezeigt.
   const ptsEl = document.getElementById(`finale-pts-${finaleState.currentTeamIdx}`);
-  if (ptsEl) ptsEl.textContent = finaleState.scores[finaleState.currentTeamIdx];
+  if (ptsEl) ptsEl.textContent = String(finaleState.scores[finaleState.currentTeamIdx]);
   showFlash();
   updateGamemaster();
   finaleState.currentQ++;
@@ -763,7 +761,7 @@ function startFinaleReveal() {
     finaleState.phase = 'reveal';
     finaleState.revealQ = 0;
     showScreen('finale-screen');
-    document.getElementById('finale-team-label').textContent = 'Auflösung';
+    setText('finale-team-label', 'Auflösung');
     loadRevealQuestion();
     fadeOutBackdrop(bd);
   });
@@ -776,8 +774,8 @@ function loadRevealQuestion() {
   }
   const q = finaleState.questions[finaleState.revealQ];
   const qi = finaleState.revealQ;
-  document.getElementById('finale-q-info').textContent = `Auflösung · Frage ${qi + 1} / ${finaleState.questions.length}`;
-  document.getElementById('finale-question').textContent = q.question;
+  setText('finale-q-info', `Auflösung · Frage ${qi + 1} / ${finaleState.questions.length}`);
+  setText('finale-question', q.question);
   document.getElementById('finale-question').className = 'q-text';
   document.getElementById('finale-board').style.display = '';
   document.getElementById('finale-board').innerHTML = q.answers.map((a, i) => {
@@ -965,7 +963,7 @@ function startBoardMirror() {
 // funktioniert, obwohl es sich technisch nicht mehr um ein echtes Popup handelt.
 function openGamemaster() {
   const overlay = document.getElementById('gm-embed-overlay');
-  const frame = document.getElementById('gm-embed-frame');
+  const frame = /** @type {HTMLIFrameElement} */ (document.getElementById('gm-embed-frame'));
   overlay.classList.add('visible');
   if (!gamemasterWin) {
     gamemasterWin = frame.contentWindow;
@@ -1315,7 +1313,7 @@ function updateGamemasterJeopardy() {
     const wertbar = jeopardyState.teamNames
       .map((name, i) => ({ name, i }))
       .filter(t => jeopardyTeamMayAnswer(t.i))
-      .sort((a, b) => (b.i === buzzTeam) - (a.i === buzzTeam));
+      .sort((a, b) => Number(b.i === buzzTeam) - Number(a.i === buzzTeam));
     const scoreRows = `<div class="score-rows">${wertbar.map(({ name, i }) => {
       const dran = i === buzzTeam;
       return `
@@ -1641,7 +1639,7 @@ renderMenuIcons();
 renderIryoHubLogo();
 // Schriftart „Luckiest Guy" ist evtl. beim ersten Zeichnen noch nicht geladen -> danach neu rendern.
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (document.getElementById('menu-screen').classList.contains('active')) renderIryoHubLogo(); });
-document.getElementById('sfx-toggle').textContent = SFX.enabled ? '🔊 Sound an' : '🔇 Sound aus';
+setText('sfx-toggle', SFX.enabled ? '🔊 Sound an' : '🔇 Sound aus');
 
 // ── MENU ──
 function handleLogoClick() {

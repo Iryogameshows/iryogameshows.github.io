@@ -1,3 +1,4 @@
+// @ts-check
 /* Gemeinsame Basis: Sound, Logos, Screenwechsel, Overlays, Medien,
    Gamemaster-Grundlagen, Fragen-Editor, Bestenliste, Accounts, Host-Notizen.
 
@@ -108,7 +109,7 @@ function splitBulkLine(line) {
 /* Inhalt eines Massen-Eingabefelds als getrimmte, nicht leere Zeilen.
    null, wenn es das Feld nicht gibt. */
 function bulkLines(textareaId) {
-  const t = document.getElementById(textareaId);
+  const t = fieldEl(textareaId);
   if (!t) return null;
   return t.value.split('\n').map(s => s.trim()).filter(Boolean);
 }
@@ -209,6 +210,22 @@ function fieldSet(id, value) {
   const el = fieldEl(id);
   if (!el) return false;
   el.value = String(value);
+  return true;
+}
+
+/* Dieselbe Geschichte fuer Anzeigen statt Eingaben: rund 17-mal steht im
+   Projekt document.getElementById(id).textContent = wert. Fehlt das Element,
+   wirft auch das - und mit einer Zahl auf der rechten Seite wandelt der
+   Browser zwar still um, die Typpruefung meldet es aber zu Recht an. */
+
+/** Schreibt einen Text in ein Element. Fehlt es, passiert nichts.
+ *  @param {string} id
+ *  @param {string|number} value
+ *  @returns {boolean} ob geschrieben wurde */
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return false;
+  el.textContent = String(value);
   return true;
 }
 
@@ -394,7 +411,8 @@ function renderMenuIcons(){
   // gar nicht erreichbar: kein Tabstopp, kein Enter. tabindex macht sie
   // anspringbar, Enter und Leertaste loesen denselben Klick aus wie die Maus,
   // role/aria-label sagen Vorlesewerkzeugen, dass es Knoepfe sind und welcher.
-  document.querySelectorAll('.menu-card').forEach(card => {
+  const cards = /** @type {NodeListOf<HTMLElement>} */ (document.querySelectorAll('.menu-card'));
+  cards.forEach(card => {
     if (card.dataset.kbdReady) return;
     card.dataset.kbdReady = '1';
     card.tabIndex = 0;
@@ -511,7 +529,8 @@ function setGmFeudTab(tab) { gmFeudTab = tab; updateGamemaster(); }
 // Der GM-Button simuliert einfach einen echten Klick darauf - kein Umbau der
 // einzelnen Overlay-Funktionen nötig, deckt auch künftige Overlays automatisch ab.
 const GM_OVERLAY_SELECTOR = '.intro-overlay, .welcome-overlay, .tut-overlay, .elim-overlay, #kg-overlay, .finale-click-overlay';
-function gmActiveOverlay() { return document.querySelector(GM_OVERLAY_SELECTOR); }
+/** @returns {HTMLElement|null} */
+function gmActiveOverlay() { return /** @type {HTMLElement|null} */ (document.querySelector(GM_OVERLAY_SELECTOR)); }
 function gmAdvance() { const el = gmActiveOverlay(); if (el) el.click(); }
 function gmSkipTutorial() {
   if (activeTutorialSkip) activeTutorialSkip();
@@ -534,7 +553,7 @@ function startGmPoller() {
 }
 
 function toggleTeam3() {
-  const on = document.getElementById('enable-team3').checked;
+  const on = fieldChecked('enable-team3');
   document.getElementById('team3-card').style.display = on ? '' : 'none';
 }
 
@@ -574,8 +593,8 @@ function showScreen(id) {
   else if (id.startsWith('pih')) renderLogo('DER PREIS', 'IST HEISS', 22, 'pih');
   else renderLogo('KELLER', 'FEUD');
   // WWDS-, DDF- und Turnier-Logo etwas größer und ein Stück tiefer.
-  const logoBox = document.querySelector('.logo');
-  const logoSvg = document.querySelector('#main-logo svg');
+  const logoBox = /** @type {HTMLElement|null} */ (document.querySelector('.logo'));
+  const logoSvg = /** @type {SVGSVGElement|null} */ (document.querySelector('#main-logo svg'));
   const bigLogo = ['wwm-setup-screen','wwm-edit-screen','wwds-setup-screen','wwds-edit-screen','ddf-setup-screen','ddf-edit-screen','pih-setup-screen','pih-edit-screen','tournament-screen'].includes(id);
   if (logoBox) logoBox.style.marginTop = bigLogo ? '44px' : '';
   if (logoSvg) logoSvg.style.width = bigLogo ? 'min(600px, 92vw)' : '';
@@ -676,7 +695,8 @@ function ensureImgHoverPreview() {
   document.body.appendChild(el);
   const imgEl = el.querySelector('img'), vidEl = el.querySelector('video'), nameEl = el.querySelector('.ihp-name');
   document.addEventListener('mouseover', (e) => {
-    const t = e.target.closest && e.target.closest('[data-preview-name]');
+    const tgt = /** @type {Element} */ (e.target);
+    const t = tgt.closest && tgt.closest('[data-preview-name]');
     if (!t) return;
     const inner = t.matches('img,video') ? t : t.querySelector('img,video');
     const src = t.getAttribute('data-preview-src') || (inner && inner.getAttribute('src')) || '';
@@ -697,7 +717,8 @@ function ensureImgHoverPreview() {
     el.style.left = Math.max(4, x) + 'px'; el.style.top = Math.max(4, y) + 'px';
   });
   document.addEventListener('mouseout', (e) => {
-    if (e.target.closest && e.target.closest('[data-preview-name]')) el.style.display = 'none';
+    const tgt = /** @type {Element} */ (e.target);
+    if (tgt.closest && tgt.closest('[data-preview-name]')) el.style.display = 'none';
   });
 }
 // Floating „nach ganz oben"-Button — nur in den Editor-Screens, sobald man
@@ -984,8 +1005,8 @@ function renderQuestionList() {
 function newQuestion(isFinale) {
   state.editingIndex = -1;
   state.editingFinale = !!isFinale;
-  document.getElementById('edit-question').value = '';
-  document.getElementById('edit-note').value = '';
+  fieldSet('edit-question', '');
+  fieldSet('edit-note', '');
   document.getElementById('answer-fields').innerHTML = '';
   for (let i = 0; i < 5; i++) addAnswerField();
   document.getElementById('edit-question').focus();
@@ -996,8 +1017,8 @@ function editQuestion(i, isFinale) {
   state.editingIndex = i;
   state.editingFinale = !!isFinale;
   const list = isFinale ? finaleQuestions : questions;
-  document.getElementById('edit-question').value = list[i].question;
-  document.getElementById('edit-note').value = list[i].note || '';
+  fieldSet('edit-question', list[i].question);
+  fieldSet('edit-note', list[i].note || '');
   document.getElementById('answer-fields').innerHTML = '';
   list[i].answers.forEach(a => addAnswerField(a.text, a.points));
   document.getElementById('edit-question').focus();
@@ -1021,7 +1042,7 @@ function addAnswerField(text='', points='') {
 }
 function saveQuestion() {
   try {
-    const question = document.getElementById('edit-question').value.trim();
+    const question = fieldVal('edit-question').trim();
     if (!question) return alert('Bitte eine Frage eingeben!');
     const answers = [];
     document.querySelectorAll('#answer-fields .answer-edit-row').forEach(row => {
@@ -1034,13 +1055,13 @@ function saveQuestion() {
     const isFinale = state.editingFinale;
     const list = isFinale ? finaleQuestions : questions;
     const media = (state.editingMedia || []).filter(m => m);
-    const note = document.getElementById('edit-note').value.trim();
+    const note = fieldVal('edit-note').trim();
     if (state.editingIndex >= 0) list[state.editingIndex] = {question, answers, media, note};
     else list.push({question, answers, media, note});
     saveToStorage(); renderQuestionList();
     state.editingIndex = -1; state.editingFinale = false; state.editingMedia = [];
-    document.getElementById('edit-question').value = '';
-    document.getElementById('edit-note').value = '';
+    fieldSet('edit-question', '');
+    fieldSet('edit-note', '');
     document.getElementById('answer-fields').innerHTML = '';
     renderFeudMediaSlots();
   } catch(err) { alert('Fehler beim Speichern: ' + err.message); }
@@ -1064,7 +1085,7 @@ function readJsonFile(e, apply) {
   const file = e.target.files[0]; if(!file) return;
   const r = new FileReader();
   r.onload = () => {
-    try { apply(JSON.parse(r.result.replace(/^﻿/, ''))); }
+    try { apply(JSON.parse(String(r.result).replace(/^﻿/, ''))); }
     catch(err) { alert('Import fehlgeschlagen' + (err && err.message ? ': ' + err.message : '')); }
   };
   r.onerror = () => { alert('Datei konnte nicht gelesen werden'); };
@@ -1087,12 +1108,10 @@ function saveToStorage(){
 function loadFromStorage(){
   questions = storeGetJson('familyFeudQuestions', questions);
   finaleQuestions = storeGetJson('familyFeudFinaleQuestions', finaleQuestions);
-  const showInp = document.getElementById('feud-show-name');
   const showVal = storeGet('feudShowName');
-  if (showInp && showVal !== null) showInp.value = showVal;
-  const bdayInp = document.getElementById('bday-name');
+  if (showVal !== null) fieldSet('feud-show-name', showVal);
   const bdayVal = storeGet('bdayName');
-  if (bdayInp && bdayVal !== null) bdayInp.value = bdayVal;
+  if (bdayVal !== null) fieldSet('bday-name', bdayVal);
 }
 
 // ── REAKTIONSZEIT-BESTENLISTE ── (übers ganze Event hinweg, geräteseitig gespeichert)
@@ -1319,11 +1338,11 @@ function renderPlayersLeaderboard(){
 
 // ── HOST-NOTIZEN ── (automatisch gespeichert, geräteseitig)
 function loadHostNotes(){
-  document.getElementById('host-notes-text').value = storeGet('hostNotes', '');
+  fieldSet('host-notes-text', storeGet('hostNotes', ''));
   renderNotesChecklist();
 }
 function saveHostNotes(){
-  storeSet('hostNotes', document.getElementById('host-notes-text').value);
+  storeSet('hostNotes', fieldVal('host-notes-text'));
   renderNotesChecklist();
 }
 // Wird von der Notizen-Box im GM-Panel (und darüber vom Gamepad-Handy) aufgerufen.
@@ -1331,7 +1350,7 @@ function saveHostNotes(){
 // jeder Tastendruck das eigene Eingabefeld unterbrechen.
 function saveHostNotesRemote(text){
   storeSet('hostNotes', text);
-  const el = document.getElementById('host-notes-text');
+  const el = fieldEl('host-notes-text');
   if (el && el.value !== text) el.value = text;
   renderNotesChecklist();
 }
@@ -1357,8 +1376,7 @@ let noteChecklistItems = [];
 function renderNotesChecklist(){
   const el = document.getElementById('host-notes-checklist');
   if (!el) return;
-  const notesEl = document.getElementById('host-notes-text');
-  noteChecklistItems = parseNoteChecklist(notesEl ? notesEl.value : '');
+  noteChecklistItems = parseNoteChecklist(fieldVal('host-notes-text'));
   if (!noteChecklistItems.length){ el.innerHTML = ''; el.style.display = 'none'; return; }
   const checked = loadNotesChecked();
   el.style.display = '';

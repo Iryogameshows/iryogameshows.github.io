@@ -19,4 +19,7 @@ interface Window {
   /* buzzer.js prueft vor dem Verbinden, ob das CDN-Skript ueberhaupt geladen
      wurde - ohne Netz fehlt es, und die App soll dann trotzdem starten. */
   firebase?: any;
+  /* jeopardy-ui.js prueft dasselbe, bevor es einen QR-Code zeichnet: fehlt
+     die Bibliothek, bleibt der Code aus, die Runde laeuft trotzdem. */
+  QRCode?: any;
 }

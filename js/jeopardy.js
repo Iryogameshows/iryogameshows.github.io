@@ -1,3 +1,4 @@
+// @ts-check
 /* Jeopardy, Teil 1: Board, Fragen, Schaetzfrage, Medien, Sounds.
 
    Herausgeloest aus index.html (Zeilen 5184-5717). Die Dateien sind klassische
@@ -9,6 +10,42 @@ const JEOPARDY_VALUES = [100, 200, 300, 400, 500];
 const JEOPARDY_CATS = 5;
 const JEOPARDY_BOARDS = 2;
 
+/* Was in einem Feld stecken kann. q und a sind immer da - alles andere legt
+   erst der Editor an, wenn der Host es braucht. Deshalb steht hier der
+   vollstaendige Bauplan: wer eine neue Sorte Frage einbaut, traegt sie hier
+   ein und bekommt sie ueberall angerechnet. */
+
+/** Ein Medien-Platz (Bild oder Video), das der Host waehrend der Frage
+ *  einblenden kann. null heisst: Platz frei.
+ *  @typedef {{ type: 'image'|'video', data: string, name: string }|null} MediaSlot */
+
+/** @typedef {Object} JeopardyClue
+ *  @property {string} q            Fragetext
+ *  @property {string} a            Antwort
+ *  @property {string} [note]       Notiz, die nur der Spielleiter sieht
+ *  @property {string} [qImg]       Bild zur Frage (Data-URL)
+ *  @property {string} [aImg]       Bild zur Antwort (Data-URL)
+ *  @property {boolean} [estimate]  Schaetzfrage: keine Buzzer, alle Handys tippen
+ *  @property {boolean} [staged]    Staffelbild, das kachelweise aufgedeckt wird
+ *  @property {string} [stageImg]
+ *  @property {number} [stageCols]
+ *  @property {number} [stageRows]
+ *  @property {boolean} [series]    Bilderreihe, die von links nach rechts aufgeht
+ *  @property {(string|null)[]} [seriesImgs]
+ *  @property {string[]} [seriesNames]
+ *  @property {number} [seriesCount]
+ *  @property {string} [sound]      Ton als Data-URL
+ *  @property {string} [soundName]
+ *  @property {MediaSlot[]} [media] */
+
+/** Eine Spalte des Boards.
+ *  @typedef {Object} JeopardyCategory
+ *  @property {string} name
+ *  @property {JeopardyClue[]} clues
+ *  @property {boolean} [noDD]      Kategorie vom Daily Double ausnehmen */
+
+/** @param {number} boardNum
+ *  @returns {{ categories: JeopardyCategory[] }} */
 function makeEmptyBoard(boardNum) {
   return {
     categories: Array.from({ length: JEOPARDY_CATS }, (_, c) => ({
@@ -41,6 +78,8 @@ let jeopardyState = {
 };
 
 // Returns the categories array for the active board
+/** Die Kategorien des gerade bespielten Boards.
+ *  @returns {JeopardyCategory[]} */
 function jBoard() { return jeopardyData.boards[jeopardyState.currentBoard].categories; }
 
 let jeopardyHistory = [];
@@ -90,11 +129,11 @@ function startJeopardyActual() {
   wwmState.active = false;
   wwdsState.active = false;
   finaleState.active = false;
-  jeopardyState.teamCount = document.getElementById('jeopardy-enable-team3').checked ? 3 : 2;
+  jeopardyState.teamCount = fieldChecked('jeopardy-enable-team3') ? 3 : 2;
   jeopardyState.teamNames = [];
   jeopardyState.scores = [];
   for (let i = 0; i < jeopardyState.teamCount; i++) {
-    jeopardyState.teamNames.push(document.getElementById(`jt${i+1}-name`).value || `Team ${i+1}`);
+    jeopardyState.teamNames.push(fieldVal(`jt${i+1}-name`) || `Team ${i+1}`);
     jeopardyState.scores.push(0);
   }
   jeopardyState.currentBoard = 0;
@@ -142,8 +181,7 @@ function showJeopardyIntro() {
 }
 
 function afterJeopardyStar() {
-  const introOn = document.getElementById('enable-jeopardy-intro');
-  if (introOn && introOn.checked) showGameshowIntroTag2(showJeopardyTitle);
+  if (fieldChecked('enable-jeopardy-intro')) showGameshowIntroTag2(showJeopardyTitle);
   else showJeopardyTitle();
 }
 
@@ -325,6 +363,8 @@ function jeopardyRevealQuestion() {
   updateGamemaster();
 }
 
+/** Das Feld, das gerade offen ist - oder null, wenn keins offen ist.
+ *  @returns {JeopardyClue|null} */
 function jeopardyCurrentClue(){
   const c = jeopardyState.currentClue;
   if (!c) return null;
@@ -397,12 +437,14 @@ function jeopardyEstimateListHtml(){
 }
 
 // Staged image helpers
+/** @param {JeopardyClue} clue */
 function jeopardyStageGrid(clue){
   const cols = Math.max(1, Math.min(5, clue.stageCols || 3));
   const rows = Math.max(1, Math.min(4, clue.stageRows || 3));
   return { cols, rows, total: cols * rows };
 }
 
+/** @param {JeopardyClue} clue */
 function jeopardyStageHtml(clue){
   const { cols, rows, total } = jeopardyStageGrid(clue);
   let tiles = '';
@@ -417,8 +459,11 @@ function jeopardyStageHtml(clue){
 }
 
 // Bilder-Reihe: eingestellte Anzahl (2-5) und die tatsächlich hochgeladenen Bilder
+/** @param {JeopardyClue} clue */
 function jeopardySeriesCount(clue){ return Math.max(2, Math.min(5, clue.seriesCount || 5)); }
+/** @param {JeopardyClue} clue */
 function jeopardySeriesImgs(clue){ return (clue.seriesImgs || []).slice(0, jeopardySeriesCount(clue)).filter(Boolean); }
+/** @param {JeopardyClue} clue */
 function jeopardySeriesHtml(clue){
   const imgs = jeopardySeriesImgs(clue);
   const shown = jeopardyState.seriesRevealed;
