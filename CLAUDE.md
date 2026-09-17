@@ -160,12 +160,23 @@ https://iryogameshows.github.io/
 
 ## Antwortformat
 
-**Jede Nachricht an David beginnt mit einem Backslash `\`.**
+**Jeder Absatz beginnt mit einem Backslash `\`.**
 
-Das ist Davids Kontrollzeichen. Es ist bewusst etwas, das nur aus einer echten,
-frisch erzeugten Antwort stammen kann — fehlt es, ist die Antwort verdächtig.
-Der Backslash steht ganz am Anfang der Nachricht, vor dem ersten Wort.
-Nicht weglassen, auch nicht bei kurzen Antworten, Rückfragen oder Fehlermeldungen.
+Nicht nur der erste. Jeder neue Absatz, durchgehend bis zum Ende der Nachricht.
+
+\ Das ist Davids Kontrollzeichen. Es ist bewusst etwas, das nur aus einer
+echten, frisch erzeugten Antwort stammen kann — fehlt es, ist die Antwort
+verdächtig. Stünde es nur einmal ganz oben, wäre bloß der Anfang abgesichert;
+über alle Absätze verteilt ist die ganze Nachricht abgedeckt.
+
+\ Als Absatz zählt alles, was nach einer Leerzeile neu anfängt. Also auch die
+kurze Zwischenzeile zwischen zwei Arbeitsschritten, die Rückfrage, die
+Fehlermeldung und der einzelne Satz am Schluss. Genau dort fällt der Backslash
+sonst weg, weil die Zeile wie ein Nebensatz wirkt und nicht wie eine Nachricht.
+
+\ Ausgenommen sind nur Bestandteile, die der Backslash zerschießen würde:
+Überschriften, Code-Blöcke, Tabellen sowie Aufzählungs- und Listenpunkte.
+Dort trägt ihn der Absatz davor oder danach.
 
 ## Ton
 
