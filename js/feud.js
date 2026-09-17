@@ -83,8 +83,8 @@ function toggleIntroPicker() {
   const picker = document.getElementById('intro-picker');
   picker.style.display = on ? '' : 'none';
   const bday = fieldVal('intro-variant') === 'bday';
-  document.getElementById('bday-name').style.display = bday ? '' : 'none';
-  document.getElementById('bday-name-label').style.display = bday ? '' : 'none';
+  showEl('bday-name', bday);
+  showEl('bday-name-label', bday);
 }
 
 // Anpassbarer Show-Name im Intro: "___ Feud". Default "Keller".
@@ -623,7 +623,7 @@ function showResults() {
   document.getElementById('winner-text').textContent =
     winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
   const recordedToTournament = tournamentAutoRecordIfActive(state.teamNames, state.scores);
-  document.getElementById('tour-goto-btn').style.display = recordedToTournament ? '' : 'none';
+  showEl('tour-goto-btn', recordedToTournament);
   if (!recordedToTournament) offerTournamentResult('Family Feud', state.teamNames, state.scores);
   recordAccountGameResult(state.teamNames, state.scores);
   showScreen('result-screen');
@@ -669,7 +669,7 @@ function startFinale() {
   finaleState.phase = 'answer';
   finaleState.revealQ = 0;
   showScreen('finale-screen');
-  document.getElementById('finale-timer').style.display = 'none';
+  showEl('finale-timer', false);
   renderFinaleScores();
   loadFinaleQuestion();
   fadeOutBackdrop(document.querySelector('.black-backdrop'));
@@ -724,7 +724,7 @@ function loadFinaleQuestion() {
   setText('finale-q-info', `Frage ${finaleState.currentQ + 1} / ${finaleState.questions.length}`);
   setText('finale-question', q.question);
   document.getElementById('finale-question').className = 'finale-big-q';
-  document.getElementById('finale-board').style.display = 'none';
+  showEl('finale-board', false);
   renderFinaleScores();
   updateGamemaster();
 }
@@ -777,7 +777,7 @@ function loadRevealQuestion() {
   setText('finale-q-info', `Auflösung · Frage ${qi + 1} / ${finaleState.questions.length}`);
   setText('finale-question', q.question);
   document.getElementById('finale-question').className = 'q-text';
-  document.getElementById('finale-board').style.display = '';
+  showEl('finale-board', true);
   document.getElementById('finale-board').innerHTML = q.answers.map((a, i) => {
     const team1Picked = finaleState.teamAnswers[0][qi] === i;
     const team2Picked = finaleState.teamAnswers[1][qi] === i;

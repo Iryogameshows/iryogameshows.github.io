@@ -55,7 +55,7 @@ function wwdsQPerTeam(){ return Math.floor(wwdsData.categories.length / wwdsStat
 
 function wwdsToggleTeam3(){
   const on = fieldChecked('wwds-enable-team3');
-  document.getElementById('wwds-t3-card').style.display = on ? '' : 'none';
+  showEl('wwds-t3-card', on);
   const n = on ? 3 : 2;
   const per = Math.floor(wwdsData.categories.length / n);
   document.getElementById('wwds-split-info').textContent =
@@ -488,9 +488,9 @@ function wwdsFinish(forceDraw){
     `${n}: <strong>${wwdsMoney(wwdsState.scores[i])}</strong>`).join('<br>');
   document.getElementById('winner-text').textContent =
     (forceDraw || winners.length > 1) ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
-  document.getElementById('tour-record-btn').style.display = 'none';
+  showEl('tour-record-btn', false);
   const recorded = tournamentAutoRecordIfActive(wwdsState.teamNames, wwdsState.scores);
-  document.getElementById('tour-goto-btn').style.display = recorded ? '' : 'none';
+  showEl('tour-goto-btn', recorded);
   if (!recorded) offerTournamentResult('Wer weiß denn sowas', wwdsState.teamNames, wwdsState.scores);
   recordAccountGameResult(wwdsState.teamNames, wwdsState.scores);
   showScreen('result-screen');

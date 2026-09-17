@@ -379,7 +379,7 @@ function showJeopardyResults() {
   jeopardyState.active = false;
   closeJeopardyClue();
   const recordedToTournament = tournamentAutoRecordIfActive(jeopardyState.teamNames, jeopardyState.scores);
-  document.getElementById('tour-goto-btn').style.display = recordedToTournament ? '' : 'none';
+  showEl('tour-goto-btn', recordedToTournament);
   if (!recordedToTournament) offerTournamentResult('Jeopardy', jeopardyState.teamNames, jeopardyState.scores);
   recordAccountGameResult(jeopardyState.teamNames, jeopardyState.scores);
   showScreen('result-screen');

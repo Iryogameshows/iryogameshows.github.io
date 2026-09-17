@@ -68,7 +68,7 @@ function loadWwmQuestion(){
   wwmState.removed = [];
   wwmState.audienceShown = false;
   wwmState.audienceData = null;
-  document.getElementById('wwm-audience').style.display = 'none';
+  showEl('wwm-audience', false);
   resetMediaOverlay();
   renderWwm();
   updateGamemaster();
@@ -187,9 +187,9 @@ function wwmEnd(amount, jackpot){
     ? `${wwmState.name} ist Millionär! 🎉`
     : `${wwmState.name} gewinnt ${wwmMoney(amount)}`;
   document.getElementById('final-scores').innerHTML = `Gewonnen: <strong>${wwmMoney(amount)}</strong>`;
-  document.getElementById('tour-record-btn').style.display = 'none';
+  showEl('tour-record-btn', false);
   const recordedToTournament = tournamentAutoRecordIfActive([wwmState.name], [amount]);
-  document.getElementById('tour-goto-btn').style.display = recordedToTournament ? '' : 'none';
+  showEl('tour-goto-btn', recordedToTournament);
   showScreen('result-screen');
   updateGamemaster();
   if (amount > 0) confetti(jackpot);

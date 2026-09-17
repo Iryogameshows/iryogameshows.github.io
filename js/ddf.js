@@ -445,7 +445,7 @@ function ddfFinish(){
   document.getElementById('ddf-timer').textContent = '';
   document.getElementById('ddf-question').innerHTML =
     winner ? `🏆 ${escAttr(winner.name)} gewinnt!` : 'Spiel beendet';
-  document.getElementById('ddf-answer').style.display = 'none';
+  showEl('ddf-answer', false);
   document.getElementById('ddf-note').innerHTML = '';
   document.getElementById('ddf-media-bar').innerHTML = '';
   document.getElementById('ddf-vote-grid').innerHTML = '';

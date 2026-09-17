@@ -229,6 +229,22 @@ function setText(id, value) {
   return true;
 }
 
+/** Blendet ein Element ein oder aus. Fehlt es, passiert nichts.
+ *
+ *  Eingeblendet wird mit '' und nicht mit 'block' oder 'flex': das nimmt den
+ *  Inline-Wert weg und laesst wieder gelten, was in styles.css steht. Ein fest
+ *  eingetragenes display wuerde dort jede spaetere Aenderung aushebeln - und
+ *  zwar still, weil ein Inline-Style jede Regel schlaegt.
+ *  @param {string} id
+ *  @param {boolean} visible
+ *  @returns {boolean} ob geschaltet wurde */
+function showEl(id, visible) {
+  const el = document.getElementById(id);
+  if (!el) return false;
+  el.style.display = visible ? '' : 'none';
+  return true;
+}
+
 // ── SFX ── Synthetisierte Soundeffekte (Web Audio API, keine externen Dateien nötig)
 const SFX = (() => {
   let ctx = null;
@@ -554,7 +570,7 @@ function startGmPoller() {
 
 function toggleTeam3() {
   const on = fieldChecked('enable-team3');
-  document.getElementById('team3-card').style.display = on ? '' : 'none';
+  showEl('team3-card', on);
 }
 
 function showScreen(id) {

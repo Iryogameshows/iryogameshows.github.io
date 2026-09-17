@@ -151,9 +151,10 @@ deklariert.
 ### Felder und Anzeigen
 
 `document.getElementById(id).value` war in dieser App rund 160-mal zu finden,
-`.textContent = …` noch 17-mal. Beides wirft, wenn es das Element nicht gibt —
-ein Tippfehler in der ID oder ein Screen, der noch nicht aufgebaut ist, reicht.
-Für neuen Code stattdessen die Helfer aus `core.js`:
+`.textContent = …` 17-mal, `.style.display = …` noch einmal 17-mal. Alle drei
+werfen, wenn es das Element nicht gibt — ein Tippfehler in der ID oder ein
+Screen, der noch nicht aufgebaut ist, reicht. Für neuen Code stattdessen die
+Helfer aus `core.js`:
 
 ```js
 fieldVal('ddf-lives')             // Inhalt, oder '' wenn es das Feld nicht gibt
@@ -161,11 +162,17 @@ fieldChecked('enable-team3')      // Haken gesetzt? Fehlt das Feld: false
 fieldSet('tour-game-weight', 2)   // schreibt; Rückgabe sagt, ob es das Feld gab
 fieldEl('ddf-bulk-text')          // das Element selbst, oder null
 setText('round-pts', 123)         // textContent, Zahl wird umgewandelt
+showEl('team3-card', on)          // ein- und ausblenden
 ```
 
-Noch offen und billig zu haben: `getElementById(id).style.display = …` steht
-noch 17-mal im Projekt und wirft genauso. Ein `showEl(id, sichtbar)` nach
-demselben Muster würde das abräumen.
+Alle sechs geben `false` zurück (bzw. `null`/den Rückfallwert), wenn es das
+Element nicht gibt, statt zu werfen. Ein Knopf, den es gerade nicht gibt, darf
+keine ganze Show abbrechen.
+
+`showEl` blendet mit `''` ein, nicht mit `'block'` oder `'flex'`: das nimmt den
+Inline-Wert weg und lässt wieder gelten, was in `styles.css` steht. Ein fest
+eingetragenes `display` würde dort jede spätere Änderung aushebeln — und zwar
+still, weil ein Inline-Style jede Regel schlägt.
 
 ## Deploy
 

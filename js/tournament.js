@@ -256,7 +256,7 @@ function tournamentCelebrate(){
     : `${winners[0]} gewinnt das Turnier! 🏆`;
   document.getElementById('final-scores').innerHTML = tournament.teams
     .map((t, i) => `${t}: <strong>${totals[i]}</strong> Turnierpunkte`).join('<br>');
-  document.getElementById('tour-record-btn').style.display = 'none';
+  showEl('tour-record-btn', false);
   showScreen('result-screen');
   confetti(true);
 }
@@ -286,7 +286,7 @@ function tournamentRecordPending(){
   tournament.games[gi].done = true;
   saveTournament();
   pendingTournamentResult = null;
-  document.getElementById('tour-record-btn').style.display = 'none';
+  showEl('tour-record-btn', false);
   showScreen('tournament-screen');
 }
 
