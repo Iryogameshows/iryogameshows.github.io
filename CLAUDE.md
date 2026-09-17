@@ -119,10 +119,12 @@ Wichtig: das ist **kein Build-Step**. TypeScript liest nur (`noEmit` in
 werden weiter direkt ausgeliefert. Es gibt nichts zu kompilieren, `git push`
 bleibt der ganze Deploy.
 
-Geprüft wird nur, was am Dateianfang `// @ts-check` trägt. Stand heute:
-`roster.js`, `wwm.js`, `ddf.js`, `wwds.js`, `buzzer.js`. Die übrigen Dateien
-sind noch nicht so weit — `jeopardy-ui.js`, `core.js` und `feud.js` haben die
-meisten offenen Stellen. **Wer eine davon sauber bekommt, setzt `// @ts-check`
+Geprüft wird nur, was am Dateianfang `// @ts-check` trägt. Stand heute sieben
+von elf: `roster.js`, `wwm.js`, `ddf.js`, `wwds.js`, `buzzer.js`,
+`tournament.js`, `pih.js`.
+
+Offen sind noch `jeopardy-ui.js` (56 Meldungen), `core.js` (31), `feud.js` (29)
+und `jeopardy.js` (18). **Wer eine davon sauber bekommt, setzt `// @ts-check`
 in Zeile 1 und lässt es dort.** Nie wieder entfernen, um Meldungen
 loszuwerden.
 
@@ -147,6 +149,7 @@ stattdessen die Helfer aus `core.js` benutzen:
 ```js
 fieldVal('ddf-lives')          // Inhalt, oder '' wenn es das Feld nicht gibt
 fieldChecked('enable-team3')   // Haken gesetzt? Fehlt das Feld: false
+fieldSet('tour-game-weight', 2) // schreibt; Rueckgabe sagt, ob es das Feld gab
 fieldEl('ddf-bulk-text')       // das Element selbst, oder null
 ```
 

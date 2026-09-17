@@ -1,3 +1,4 @@
+// @ts-check
 /* Turnier: mehrtaegige Gameshow mit gleichen Teams und gewichteten Spielen.
 
    Herausgeloest aus index.html (Zeilen 3269-3553). Die Dateien sind klassische
@@ -85,8 +86,8 @@ function tournamentAutoRecordIfActive(gameTeamNames, gameScores){
   return true;
 }
 function tournamentCreate(){
-  const name = document.getElementById('tour-name').value.trim() || 'Keller-Turnier';
-  const teams = [1,2,3].map(i => document.getElementById('tour-team'+i).value.trim()).filter(Boolean);
+  const name = fieldVal('tour-name').trim() || 'Keller-Turnier';
+  const teams = [1,2,3].map(i => fieldVal('tour-team'+i).trim()).filter(Boolean);
   if (teams.length < 2) return alert('Mindestens 2 Teams eingeben!');
   tournament = { name, teams, games: [], created: Date.now() };
   saveTournament();
@@ -95,14 +96,14 @@ function tournamentCreate(){
 // Gewichtungsfeld übernommen (kann vor dem Hinzufügen noch manuell geändert werden).
 const TOURNAMENT_DEFAULT_WEIGHTS = { 'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Wer weiß denn sowas': 1, 'Der Dümmste fliegt': 1, 'Sonstiges': 1 };
 function tournamentGameTypeChanged(){
-  const type = document.getElementById('tour-game-type').value;
-  document.getElementById('tour-game-weight').value = TOURNAMENT_DEFAULT_WEIGHTS[type] || 1;
+  const type = fieldVal('tour-game-type');
+  fieldSet('tour-game-weight', TOURNAMENT_DEFAULT_WEIGHTS[type] || 1);
 }
 function tournamentAddGame(){
-  const game = document.getElementById('tour-game-type').value;
-  const weight = Math.max(1, parseInt(document.getElementById('tour-game-weight').value) || 1);
-  const date = document.getElementById('tour-game-date').value.trim();
-  const secret = document.getElementById('tour-game-secret').checked;
+  const game = fieldVal('tour-game-type');
+  const weight = Math.max(1, parseInt(fieldVal('tour-game-weight')) || 1);
+  const date = fieldVal('tour-game-date').trim();
+  const secret = fieldChecked('tour-game-secret');
   tournament.games.push({ game, weight, date, scores: null, done: false, secret });
   saveTournament();
 }

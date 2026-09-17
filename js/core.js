@@ -176,7 +176,7 @@ function makeRoundChannel(path, childKey, onData) {
    Zwei Folgen: die Typpruefung kann dort nichts sagen, und fehlt das Element
    (Tippfehler in der ID, Screen noch nicht aufgebaut), wirft der Zugriff.
 
-   Diese drei Helfer geben dem Aufrufer beides - einen festen Typ und ein
+   Diese vier Helfer geben dem Aufrufer beides - einen festen Typ und ein
    definiertes Verhalten, wenn es das Feld nicht gibt. */
 
 /** Das Eingabefeld zu einer ID, oder null.
@@ -199,6 +199,17 @@ function fieldVal(id, fallback = '') {
 function fieldChecked(id) {
   const el = fieldEl(id);
   return !!(el && el.checked);
+}
+/** Setzt den Inhalt eines Eingabefelds. Fehlt das Feld, passiert nichts -
+ *  ein Vorbelegen ist nie so wichtig, dass dafuer ein Screen abbrechen darf.
+ *  @param {string} id
+ *  @param {string|number} value
+ *  @returns {boolean} ob gesetzt wurde */
+function fieldSet(id, value) {
+  const el = fieldEl(id);
+  if (!el) return false;
+  el.value = String(value);
+  return true;
 }
 
 // ── SFX ── Synthetisierte Soundeffekte (Web Audio API, keine externen Dateien nötig)

@@ -1,3 +1,4 @@
+// @ts-check
 /* Der Preis ist heiss.
 
    Herausgeloest aus index.html (Zeilen 8821-9605). Die Dateien sind klassische
@@ -81,8 +82,8 @@ function startPih(){
   if (usable.length < pihData.items.length)
     alert(`${pihData.items.length - usable.length} Artikel ohne gültigen Preis werden übersprungen.`);
 
-  const wanted = Math.max(0, Number(document.getElementById('pih-rounds').value) || 0);
-  const time   = Math.max(0, Number(document.getElementById('pih-time').value) || 0);
+  const wanted = Math.max(0, Number(fieldVal('pih-rounds')) || 0);
+  const time   = Math.max(0, Number(fieldVal('pih-time')) || 0);
 
   // Nur Artikel mit Preis in die Runde nehmen - ein Artikel ohne Preis wäre
   // nicht auflösbar und würde das Spiel mitten drin blockieren.
@@ -273,7 +274,7 @@ function pihUpdateBidProgress(){
 // Firebase die Handy-Gebote hereinspiegelt und eingetragene wieder wegwürfe.
 function pihHostBid(i){
   const p = pihState.players[i];
-  const inp = document.getElementById('pih-bid-input-' + i);
+  const inp = fieldEl('pih-bid-input-' + i);
   if (!p || !inp) return;
   const num = pihParsePrice(inp.value);
   if (num === null) { inp.style.borderColor = '#e23b3b'; return; }
@@ -399,9 +400,12 @@ function pihEvaluate(){
   });
 
   // Sieger oben, danach nach Abstand. Gebote ohne Zahl ganz ans Ende.
+  // Die Number() stehen da, weil win und der Null-Vergleich Wahrheitswerte
+  // sind: JavaScript rechnet damit klaglos, die Typpruefung nicht. Nicht
+  // wieder wegkuerzen.
   rows.sort((a,b) =>
-    (b.win - a.win) ||
-    ((a.num === null) - (b.num === null)) ||
+    (Number(b.win) - Number(a.win)) ||
+    (Number(a.num === null) - Number(b.num === null)) ||
     (Math.abs(a.diff ?? Infinity) - Math.abs(b.diff ?? Infinity)));
 
   pihState.lastResult = { price, rows, winners: winners.map(r => r.uid) };
@@ -557,7 +561,7 @@ function pihBulkAdd(){
   }).filter(it => it.name);
   if (!added.length) { alert('Keine Zeilen erkannt.\nFormat: Artikel | Preis (eine pro Zeile)'); return; }
   pihData.items = pihData.items.concat(added);
-  document.getElementById('pih-bulk-text').value = '';
+  fieldSet('pih-bulk-text', '');
   pihBulkVisible = false;
   renderPihEditor();
   pihSave();
@@ -607,7 +611,7 @@ pihLoad();
 
 function pihSaveSettings(){
   storeSetJson('pihSettings', {
-    rounds: Number((document.getElementById('pih-rounds')||{}).value) || 0,
+    rounds: Number(fieldVal('pih-rounds')) || 0,
     time: pihState.roundTime,
     rule: pihState.rule,
   });
@@ -616,9 +620,7 @@ function pihLoadSettings(){
   const s = storeGetJson('pihSettings');
   if (!s) return;
   if (s.rule && PIH_RULES.some(r => r.key === s.rule)) pihState.rule = s.rule;
-  const rounds = document.getElementById('pih-rounds');
-  const time   = document.getElementById('pih-time');
-  if (rounds && s.rounds != null) rounds.value = s.rounds;
-  if (time   && s.time   != null) { time.value = s.time; pihState.roundTime = s.time; }
+  if (s.rounds != null) fieldSet('pih-rounds', s.rounds);
+  if (s.time   != null && fieldSet('pih-time', s.time)) pihState.roundTime = s.time;
 }
 
