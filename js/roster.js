@@ -1,3 +1,4 @@
+// @ts-check
 /* Teilnehmer-Auswahl fuer die teamlosen Spiele (Der Duemmste fliegt, Der Preis
    ist heiss).
 

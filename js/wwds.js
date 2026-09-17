@@ -1,3 +1,4 @@
+// @ts-check
 /* Wer weiss denn sowas.
 
    Herausgeloest aus index.html (Zeilen 7252-8045). Die Dateien sind klassische
@@ -53,7 +54,7 @@ function wwdsMoney(n){ return (n||0).toLocaleString('de-DE') + ' €'; }
 function wwdsQPerTeam(){ return Math.floor(wwdsData.categories.length / wwdsState.teamCount); }
 
 function wwdsToggleTeam3(){
-  const on = document.getElementById('wwds-enable-team3').checked;
+  const on = fieldChecked('wwds-enable-team3');
   document.getElementById('wwds-t3-card').style.display = on ? '' : 'none';
   const n = on ? 3 : 2;
   const per = Math.floor(wwdsData.categories.length / n);
@@ -74,7 +75,7 @@ function startWwdsActual(){
   wwmState.active = false;
   finaleState.active = false;
 
-  wwdsState.teamCount = document.getElementById('wwds-enable-team3').checked ? 3 : 2;
+  wwdsState.teamCount = fieldChecked('wwds-enable-team3') ? 3 : 2;
   wwdsState.teamNames = [];
   wwdsState.scores = [];
   wwdsState.audienceUsed = [];
@@ -82,7 +83,7 @@ function startWwdsActual(){
   wwdsState.masterPick = [];
   wwdsState.tieGuesses = [];
   for (let i = 0; i < wwdsState.teamCount; i++){
-    wwdsState.teamNames.push(document.getElementById(`wwds-t${i+1}-name`).value || `Team ${i+1}`);
+    wwdsState.teamNames.push(fieldVal(`wwds-t${i+1}-name`) || `Team ${i+1}`);
     wwdsState.scores.push(0);
     wwdsState.audienceUsed.push(false);
     wwdsState.bets.push(0);
@@ -133,7 +134,7 @@ function wwdsStartTimer(){
 function wwdsRenderTimer(){
   const el = document.getElementById('wwds-timer');
   if (!el) return;
-  el.textContent = wwdsState.timeUp ? 'Zeit!' : wwdsState.timer;
+  el.textContent = wwdsState.timeUp ? 'Zeit!' : String(wwdsState.timer);
   el.className = 'wwds-timer' + (wwdsState.timeUp ? ' done' : (wwdsState.timer <= 5 ? ' urgent' : ''));
 }
 
@@ -650,7 +651,8 @@ function updateGamemasterWwds(){
 function gmBackToMenu(){ showScreen('menu-screen'); updateGamemaster(); }
 function gmGotoTournament(){ showScreen('tournament-screen'); updateGamemaster(); }
 function gmPlayAgain(){
-  const btn = document.querySelector('#result-screen .result-btns .btn-primary');
+  const btn = /** @type {HTMLElement|null} */ (
+    document.querySelector('#result-screen .result-btns .btn-primary'));
   if (btn) btn.click();
 }
 

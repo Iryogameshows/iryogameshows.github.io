@@ -1,3 +1,4 @@
+// @ts-check
 /* Firebase, Buzzer, Lobby, Team-Verteilung, QR-Code und GM-Fernsteuerung.
    Wird von allen Spielen benutzt.
 
@@ -121,10 +122,9 @@ const LOBBY_SETUP = {
 };
 function lobbyTeamNames(game){
   const cfg = LOBBY_SETUP[game];
-  const val = (id, fb) => (document.getElementById(id) || {}).value || fb;
+  const val = (id, fb) => fieldVal(id) || fb;
   const names = [val(cfg.names[0], 'Team 1'), val(cfg.names[1], 'Team 2')];
-  const t3 = document.getElementById(cfg.team3);
-  if (t3 && t3.checked) names.push(val(cfg.names[2], 'Team 3'));
+  if (fieldChecked(cfg.team3)) names.push(val(cfg.names[2], 'Team 3'));
   return names;
 }
 
@@ -563,7 +563,10 @@ function startGmRemoteCommandListener() {
     snap.ref.remove().catch(() => {});
     if (!cmd || !cmd.fn || !cmd.t || cmd.t < startedAt - 5000) return;
     if (!GM_REMOTE_ALLOWED_FNS.has(cmd.fn)) return;
-    const fn = window[cmd.fn];
+    // Der Zugriff ueber den Namen kann alles Moegliche liefern. Erst
+    // unknown, dann engt die typeof-Pruefung darunter auf etwas Aufrufbares
+    // ein - das ist zugleich die eigentliche Absicherung zur Laufzeit.
+    const fn = /** @type {unknown} */ (window[cmd.fn]);
     if (typeof fn === 'function') { try { fn(...(cmd.args || [])); } catch (e) {} }
   });
 }

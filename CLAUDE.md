@@ -104,6 +104,52 @@ Ein Handler, dessen Funktionsname selbst eingesetzt wird
 (`onclick="opener.${togglerName}(...)"`), ist statisch nicht auflösbar. Solche
 Stellen weist der Prüfer als „nicht prüfbar" aus, statt sie zu bemängeln.
 
+## Typprüfung
+
+```bash
+node check.js --types
+```
+
+Läuft nicht bei jedem Commit mit (ein Durchlauf dauert rund eine halbe Minute
+und holt TypeScript beim ersten Mal übers Netz), aber **nach größeren
+Änderungen** und bevor etwas Größeres gepusht wird.
+
+Wichtig: das ist **kein Build-Step**. TypeScript liest nur (`noEmit` in
+`jsconfig.json`), die `js/`-Dateien bleiben unverändertes JavaScript und
+werden weiter direkt ausgeliefert. Es gibt nichts zu kompilieren, `git push`
+bleibt der ganze Deploy.
+
+Geprüft wird nur, was am Dateianfang `// @ts-check` trägt. Stand heute:
+`roster.js`, `wwm.js`, `ddf.js`, `wwds.js`, `buzzer.js`. Die übrigen Dateien
+sind noch nicht so weit — `jeopardy-ui.js`, `core.js` und `feud.js` haben die
+meisten offenen Stellen. **Wer eine davon sauber bekommt, setzt `// @ts-check`
+in Zeile 1 und lässt es dort.** Nie wieder entfernen, um Meldungen
+loszuwerden.
+
+Typen stehen als JSDoc-Kommentare am Code, nicht in eigenen Dateien:
+
+```js
+/** @param {string} id
+ *  @returns {HTMLInputElement|null} */
+function fieldEl(id) { ... }
+```
+
+Globale Objekte vom CDN (`firebase`, `QRCode`) sind in `types/globals.d.ts`
+deklariert.
+
+### Formularfelder
+
+`document.getElementById(id).value` ist in dieser App rund 160-mal zu finden.
+TypeScript kann dort nichts sagen (der Rückgabetyp ist `HTMLElement`, nicht
+`HTMLInputElement`), und fehlt das Element, wirft der Zugriff. Für neuen Code
+stattdessen die Helfer aus `core.js` benutzen:
+
+```js
+fieldVal('ddf-lives')          // Inhalt, oder '' wenn es das Feld nicht gibt
+fieldChecked('enable-team3')   // Haken gesetzt? Fehlt das Feld: false
+fieldEl('ddf-bulk-text')       // das Element selbst, oder null
+```
+
 ## Deploy
 
 Push auf `master` → GitHub Action (`.github/workflows/pages.yml`) → live auf

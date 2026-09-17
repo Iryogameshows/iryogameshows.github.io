@@ -169,6 +169,38 @@ function makeRoundChannel(path, childKey, onData) {
   return ch;
 }
 
+/* ── Formularfelder ────────────────────────────────────────────────────────
+   document.getElementById() liefert HTMLElement - dass dahinter ein Eingabe-
+   feld steckt, weiss nur der Aufrufer. Deshalb steht in der App rund 160-mal
+   ein .value oder .checked auf einem Element, dessen Typ nicht feststeht.
+   Zwei Folgen: die Typpruefung kann dort nichts sagen, und fehlt das Element
+   (Tippfehler in der ID, Screen noch nicht aufgebaut), wirft der Zugriff.
+
+   Diese drei Helfer geben dem Aufrufer beides - einen festen Typ und ein
+   definiertes Verhalten, wenn es das Feld nicht gibt. */
+
+/** Das Eingabefeld zu einer ID, oder null.
+ *  @param {string} id
+ *  @returns {HTMLInputElement|null} */
+function fieldEl(id) {
+  return /** @type {HTMLInputElement|null} */ (document.getElementById(id));
+}
+/** Inhalt eines Eingabefelds. Fehlt das Feld, kommt der Rueckfallwert.
+ *  @param {string} id
+ *  @param {string} [fallback]
+ *  @returns {string} */
+function fieldVal(id, fallback = '') {
+  const el = fieldEl(id);
+  return el ? el.value : fallback;
+}
+/** Zustand eines Kontrollkaestchens. Fehlt es, gilt es als nicht angehakt.
+ *  @param {string} id
+ *  @returns {boolean} */
+function fieldChecked(id) {
+  const el = fieldEl(id);
+  return !!(el && el.checked);
+}
+
 // ── SFX ── Synthetisierte Soundeffekte (Web Audio API, keine externen Dateien nötig)
 const SFX = (() => {
   let ctx = null;

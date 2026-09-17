@@ -127,6 +127,46 @@ if (open !== close) {
   problems.push('styles.css: ' + open + ' oeffnende, ' + close + ' schliessende Klammern - unausgeglichen');
 }
 
+/* ── 4. Typpruefung (nur mit --types) ─────────────────────────────────── */
+
+// Dateien, die am Anfang "// @ts-check" tragen, laesst TypeScript pruefen -
+// ohne dass daraus ein Build-Step wird: tsc liest nur und erzeugt nichts
+// (noEmit in jsconfig.json). Die ausgelieferten Dateien bleiben unveraendert.
+//
+// Ein Durchlauf dauert rund eine halbe Minute und braucht beim ersten Mal das
+// Netz, um TypeScript zu holen. Deshalb laeuft er nicht bei jedem Commit mit,
+// sondern auf Zuruf:
+//
+//     node check.js --types
+//
+// Fehlt TypeScript und ist kein Netz da, wird uebersprungen statt zu scheitern.
+const tsChecked = jsFiles.filter(f =>
+  fs.readFileSync(path.join(jsDir, f), 'utf8').startsWith('// @ts-check'));
+
+if (process.argv.includes('--types')) {
+  const { spawnSync } = require('child_process');
+  // Unter Windows ist npx eine .cmd-Datei, und die laesst Node seit einer
+  // Sicherheitskorrektur nur ueber die Shell starten. Der Befehl steht
+  // deshalb als eine Zeichenkette da statt als Argumentliste: so entfaellt
+  // die Warnung DEP0190, die vor unmaskierten Argumenten warnt. Hier sind
+  // ohnehin alle Bestandteile feste Literale, nichts davon kommt von aussen.
+  const run = spawnSync('npx --yes -p typescript@5 tsc -p jsconfig.json',
+    { cwd: root, encoding: 'utf8', shell: true });
+  if (run.error || run.status === null) {
+    notes.push('Typpruefung uebersprungen - TypeScript nicht verfuegbar');
+  } else if (run.status !== 0) {
+    const out = String(run.stdout || '') + String(run.stderr || '');
+    const found = out.split(/\r?\n/).filter(l => l.includes('error TS'));
+    if (found.length) found.forEach(l => problems.push('Typ: ' + l.trim()));
+    else problems.push('Typpruefung fehlgeschlagen: ' + out.trim().slice(0, 300));
+  } else {
+    notes.push(tsChecked.length + ' Dateien mit // @ts-check typgeprueft');
+  }
+} else {
+  notes.push(tsChecked.length + ' von ' + jsFiles.length + ' Dateien tragen // @ts-check'
+    + ' (pruefen mit --types)');
+}
+
 /* ── Ergebnis ─────────────────────────────────────────────────────────── */
 
 notes.push(jsFiles.length + ' js-Dateien syntaktisch geprueft');

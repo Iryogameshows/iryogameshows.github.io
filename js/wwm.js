@@ -1,3 +1,4 @@
+// @ts-check
 /* Wer wird Millionaer.
 
    Herausgeloest aus index.html (Zeilen 6882-7251). Die Dateien sind klassische
@@ -49,7 +50,7 @@ function startWwmActual(){
   jeopardyState.active = false;
   finaleState.active = false;
   wwdsState.active = false;
-  wwmState.name = document.getElementById('wwm-name').value || 'Kandidat';
+  wwmState.name = fieldVal('wwm-name') || 'Kandidat';
   wwmState.currentQ = 0;
   wwmState.lifelines = {fifty:false, phone:false, audience:false};
   wwmState.gameOver = false;

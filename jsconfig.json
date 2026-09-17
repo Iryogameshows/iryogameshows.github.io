@@ -1,0 +1,30 @@
+{
+  "//": [
+    "Typprüfung für eine Seite ohne Build-Step.",
+    "",
+    "Die Dateien bleiben ganz normales JavaScript und werden unverändert",
+    "ausgeliefert - TypeScript liest sie hier nur, es erzeugt nichts (noEmit).",
+    "Der Editor bekommt dadurch Sprungmarken, Autovervollständigung und",
+    "Typhinweise über Dateigrenzen hinweg, obwohl es keine Module gibt.",
+    "",
+    "checkJs steht bewusst auf false: geprüft wird nur, was am Dateianfang",
+    "ausdrücklich '// @ts-check' trägt. So lässt sich Datei für Datei",
+    "nachziehen, statt auf einen Schlag 200 Meldungen zu erzeugen, die dann",
+    "doch niemand abarbeitet.",
+    "",
+    "Es gibt keine import/export-Anweisungen; TypeScript behandelt die Dateien",
+    "deshalb als klassische Skripte, die sich einen globalen Namensraum teilen",
+    "- genau wie der Browser es auch tut."
+  ],
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "allowJs": true,
+    "checkJs": false,
+    "noEmit": true,
+    "strict": false,
+    "resolveJsonModule": false
+  },
+  "include": ["js/**/*.js", "types/**/*.d.ts"],
+  "exclude": ["node_modules", "buzzer", "gamepad"]
+}

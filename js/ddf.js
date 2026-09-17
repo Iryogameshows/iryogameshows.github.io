@@ -1,3 +1,4 @@
+// @ts-check
 /* Der Duemmste fliegt.
 
    Herausgeloest aus index.html (Zeilen 8046-8820). Die Dateien sind klassische
@@ -64,8 +65,8 @@ function startDdf(){
   if (people.length < 2) { alert('Mindestens zwei Teilnehmer — per QR beitreten lassen oder Gäste eintragen.'); return; }
   if (!ddfData.questions.length) { alert('Keine Fragen vorhanden.'); return; }
 
-  const lives = Math.max(1, Number(document.getElementById('ddf-lives').value) || 3);
-  const time  = Math.max(0, Number(document.getElementById('ddf-time').value) || 0);
+  const lives = Math.max(1, Number(fieldVal('ddf-lives')) || 3);
+  const time  = Math.max(0, Number(fieldVal('ddf-time')) || 0);
 
   ddfState = {
     active:true,
@@ -542,7 +543,8 @@ function ddfBulkAdd(){
     added++;
   });
   if (!added) { alert('Keine Zeilen erkannt.\nFormat: Frage | Antwort (eine pro Zeile)'); return; }
-  document.getElementById('ddf-bulk-text').value = '';
+  const bulkBox = fieldEl('ddf-bulk-text');
+  if (bulkBox) bulkBox.value = '';
   ddfBulkVisible = false;
   ddfSave(); renderDdfEditor();
 }
@@ -605,9 +607,9 @@ function ddfSaveSettings(){
 function ddfLoadSettings(){
   const s = storeGetJson('ddfSettings');
   if (!s) return;
-  const lives = document.getElementById('ddf-lives');
-  const time  = document.getElementById('ddf-time');
-  if (lives && s.lives != null) lives.value = s.lives;
-  if (time  && s.time  != null) time.value  = s.time;
+  const lives = fieldEl('ddf-lives');
+  const time  = fieldEl('ddf-time');
+  if (lives && s.lives != null) lives.value = String(s.lives);
+  if (time  && s.time  != null) time.value  = String(s.time);
 }
 
