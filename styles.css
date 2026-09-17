@@ -1430,7 +1430,18 @@ body {
 .wwm-rung.current .wwm-lvl,.wwm-rung.current .wwm-amt{color:#fff;}
 .wwm-rung.won{color:var(--green);}
 .wwm-audience{display:flex;gap:14px;align-items:flex-end;justify-content:center;height:120px;margin-top:4px;}
-.wwm-abar{width:44px;background:linear-gradient(180deg,var(--blue),var(--blue-deep));border-radius:6px 6px 0 0;position:relative;transition:height .5s ease;}
+/* Der Balken wird bei jedem Render per innerHTML neu erzeugt und bekommt seine
+   Hoehe inline. Ein transition:height lief deshalb nie - das Publikumsergebnis
+   stand fertig im Bild, statt zu wachsen. Jetzt waechst es aus dem Boden:
+   from{height:0} laeuft auf die inline gesetzte Hoehe zu.
+   Bewusst ohne Verzoegerung und ohne fill-mode - beides zusammen liesse im
+   gedrosselten Popout-Fenster im schlimmsten Fall einen Balken auf Hoehe 0
+   stehen. Den Versatz machen stattdessen unterschiedliche Laufzeiten. */
+.wwm-abar{width:44px;background:linear-gradient(180deg,var(--blue),var(--blue-deep));border-radius:6px 6px 0 0;position:relative;animation:abarGrow .5s var(--ease-out);}
+.wwm-abar:nth-child(2){animation-duration:.62s;}
+.wwm-abar:nth-child(3){animation-duration:.74s;}
+.wwm-abar:nth-child(4){animation-duration:.86s;}
+@keyframes abarGrow{from{height:0;}}
 .wwm-abar .wwm-apct{position:absolute;top:-20px;left:0;right:0;text-align:center;font-weight:700;font-size:.8rem;color:var(--gold);}
 .wwm-abar .wwm-alet{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-weight:700;color:#fff;}
 @media (max-width:720px){
@@ -1508,7 +1519,11 @@ body {
 @keyframes wwdsTick{0%,100%{transform:scale(1);}50%{transform:scale(1.09);}}
 
 .wwds-aud{display:flex;gap:14px;align-items:flex-end;justify-content:center;height:110px;margin-top:2px;}
-.wwds-abar{width:46px;background:linear-gradient(180deg,var(--blue),var(--blue-deep));border-radius:6px 6px 0 0;position:relative;transition:height .5s ease;}
+/* Wie bei WWM: neu erzeugtes Element, Hoehe inline - siehe abarGrow oben. */
+.wwds-abar{width:46px;background:linear-gradient(180deg,var(--blue),var(--blue-deep));border-radius:6px 6px 0 0;position:relative;animation:abarGrow .5s var(--ease-out);}
+.wwds-abar:nth-child(2){animation-duration:.62s;}
+.wwds-abar:nth-child(3){animation-duration:.74s;}
+.wwds-abar:nth-child(4){animation-duration:.86s;}
 .wwds-abar .wa-pct{position:absolute;top:-20px;left:0;right:0;text-align:center;font-weight:700;font-size:.78rem;color:var(--gold);}
 .wwds-abar .wa-let{position:absolute;bottom:-21px;left:0;right:0;text-align:center;font-weight:700;color:#fff;}
 

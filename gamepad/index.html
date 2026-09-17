@@ -8,14 +8,24 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
-  :root{color-scheme:dark;}
+  /* Gleiche Tokens wie styles.css und der Handy-Buzzer - sonst laufen drei
+     Oberflaechen mit drei Gelbtoenen nebeneinander. */
+  :root{
+    color-scheme:dark;
+    --gold:#FFD23F; --ink:#0b0e2c; --green-deep:#15803D;
+    --ease-out:cubic-bezier(.22,.61,.36,1);
+  }
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{background:#0b0e2c;height:100%;}
+  html,body{background:var(--ink);height:100%;}
   body{font-family:system-ui,sans-serif;color:#fff;overflow:hidden;}
+  /* Der Status ist das Einzige, was man sieht, bis das GM-Fenster da ist -
+     ohne Einblendung steht er beim Laden schlagartig im Bild. */
   #status{
     position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:16px;padding:24px;text-align:center;
+    animation:padIn .4s var(--ease-out);
   }
+  @keyframes padIn{from{opacity:0;transform:translateY(10px);}}
   #status h1{font-size:1.1rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.6);}
   #status p{font-size:.85rem;color:rgba(255,255,255,.4);max-width:320px;line-height:1.5;}
   #gmFrame{position:fixed;inset:0;width:100%;height:100%;border:none;display:none;}
@@ -26,7 +36,11 @@
     transform:translateY(-100%);transition:transform .25s ease;
   }
   #conn.show{transform:none;}
-  #conn.back{background:#15803D;}
+  #conn.back{background:var(--green-deep);}
+
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;}
+  }
 </style>
 </head>
 <body>
