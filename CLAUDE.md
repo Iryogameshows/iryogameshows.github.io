@@ -61,7 +61,7 @@ js/
   pih.js        Der Preis ist heiß
   tournament.js Turnier-Modus
   buzzer.js     Firebase-Buzzer, GM-Remote
-  roster.js     Spielerverwaltung
+  roster.js     Teilnehmer-Auswahl (DDF, Preis ist heiß)
 buzzer/index.html   Handy-Buzzer
 gamepad/index.html  Handy-Gamepad
 ```
