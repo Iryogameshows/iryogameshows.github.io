@@ -102,7 +102,11 @@ function resetAllTeams(){ resetAllPlayerTeams(false); }
 // hier der Account-Key (Presence-Key == Account-Key).
 function playerTeamButtonsHtml(p, teamNames, prefix){
   prefix = prefix || '';
-  return teamNames.map((name, i) => `<button class="pr-team-btn ${p.team===i?'active':''}" onclick="${prefix}assignPlayerTeam('${p.id}',${i})">${name}</button>`).join('');
+  // escJsArg statt '…': der Account-Schluessel entsteht auf dem Handy aus dem
+  // Namen und filtert nur . # $ / [ ] heraus - ein Apostroph bleibt stehen.
+  // Bei einem Spieler namens O'Brien stand hier assignPlayerTeam('o'brien',0),
+  // und der Knopf tat wortlos nichts.
+  return teamNames.map((name, i) => `<button class="pr-team-btn ${p.team===i?'active':''}" onclick="${prefix}assignPlayerTeam(${escJsArg(p.id)},${i})">${escapeHtml(name)}</button>`).join('');
 }
 // Avatar und Farbe stammen aus fremden Accounts und landen hier in einem
 // style-Attribut bzw. im Markup - beides muss escaped werden.

@@ -1350,10 +1350,10 @@ function renderPlayersList(){
         <span class="player-stats">🔔${s.buzzes||0} · 🏆${s.wins||0}/${s.games||0}${s.bestBuzz!=null?' · ⚡'+s.bestBuzz.toFixed(2)+'s':''}</span>
       </span>
       <div class="q-btns">
-        ${[0,1,2].map(i => `<button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam('${p.key}',${i})">${currentTeamLabel(i)}</button>`).join('')}
-        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam('${p.key}',null)">✕</button>
-        <button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="resetPlayerPassword('${p.key}', ${escJsArg(p.name)})">🔑 Passwort</button>
-        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="deletePlayerAccount('${p.key}', ${escJsArg(p.name)})">🗑️ Löschen</button>
+        ${[0,1,2].map(i => `<button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam(${escJsArg(p.key)},${i})">${escapeHtml(currentTeamLabel(i))}</button>`).join('')}
+        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam(${escJsArg(p.key)},null)">✕</button>
+        <button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="resetPlayerPassword(${escJsArg(p.key)}, ${escJsArg(p.name)})">🔑 Passwort</button>
+        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="deletePlayerAccount(${escJsArg(p.key)}, ${escJsArg(p.name)})">🗑️ Löschen</button>
       </div>
     </div>`;
   }).join('')}</div>`;
