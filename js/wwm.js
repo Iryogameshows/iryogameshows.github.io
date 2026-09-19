@@ -296,7 +296,7 @@ function updateGamemasterWwm(){
   ${gmHeaderHtml('Gamemaster', `Millionär · Frage ${wwmState.currentQ+1} / ${wwmData.questions.length}`)}
   <div class="gm-body">
   <div class="gm-main">
-  <div class="question">${q.q}</div>
+  <div class="question">${escapeHtml(q.q)}</div>
   ${qNoteHtml(q.note)}
   <div class="answer-list">${answersHtml}</div>
   ${mediaControlButtonsHtml(q.media, 'wwmToggleMedia')}

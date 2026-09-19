@@ -187,15 +187,15 @@ function wwdsGridHtml(){
     wwdsData.categories.map((c,i) => `
       <div class="wwds-cat ${wwdsState.used[i]?'done':''}" ${wwdsState.used[i]?'':`onclick="wwdsPick(${i})"`}>
         <span class="wc-num">${i+1}</span>
-        <span class="wc-name">${c.cat || 'Kategorie'}</span>
+        <span class="wc-name">${escapeHtml(c.cat || 'Kategorie')}</span>
       </div>`).join('') + `</div>`;
 }
 
 function wwdsQuestionHtml(){
   const c = wwdsData.categories[wwdsState.currentCat];
-  return `<div style="text-align:center;"><span class="wwds-cat-chip">${c.cat||''}</span></div>
+  return `<div style="text-align:center;"><span class="wwds-cat-chip">${escapeHtml(c.cat||'')}</span></div>
     <div style="display:flex;justify-content:center;margin-bottom:10px;"><div class="wwds-timer" id="wwds-timer">20</div></div>
-    <div class="wwds-q" style="margin-bottom:14px;">${c.q}</div>
+    <div class="wwds-q" style="margin-bottom:14px;">${escapeHtml(c.q)}</div>
     <div class="wwds-opts">${wwdsOptsHtml(c, wwdsState.selected, wwdsState.revealed, i => `wwdsSelect(${i})`)}</div>
     ${wwdsAudienceHtml(c)}`;
 }
@@ -210,7 +210,7 @@ function wwdsOptsHtml(q, sel, revealed, onClickFn, tags){
       ? `<span class="wo-tags">${tags[i].map(t => `<span class="wwds-tag" style="background:${t.color}">${t.label}</span>`).join('')}</span>` : '';
     const click = onClickFn ? ` onclick="${onClickFn(i)}"` : '';
     return `<div class="wwds-opt ${cls}"${click}>
-      <span class="wo-let">${WWDS_LETTERS[i]}</span><span>${a}</span>${tagHtml}
+      <span class="wo-let">${WWDS_LETTERS[i]}</span><span>${escapeHtml(a)}</span>${tagHtml}
     </div>`;
   }).join('');
 }
@@ -245,7 +245,7 @@ function wwdsMasterHtml(){
       ? { label:n, color:WWDS_HEX[t] } : null).filter(Boolean));
   return `<div style="text-align:center;"><span class="wwds-cat-chip">Masterfrage</span></div>
     <div style="display:flex;justify-content:center;margin-bottom:10px;"><div class="wwds-timer" id="wwds-timer">20</div></div>
-    <div class="wwds-q" style="margin-bottom:14px;">${m.q}</div>
+    <div class="wwds-q" style="margin-bottom:14px;">${escapeHtml(m.q)}</div>
     <div class="wwds-opts">${wwdsOptsHtml(m, null, wwdsState.masterRevealed, null, tags)}</div>
     <div class="wwds-sub" style="margin-top:12px;">${wwdsState.masterRevealed
       ? 'Aufgelöst.' : 'Die Teams legen ihre Antwort fest — sichtbar erst bei der Auflösung.'}</div>`;
@@ -258,7 +258,7 @@ function wwdsTieHtml(){
   return `<div style="text-align:center;"><span class="wwds-cat-chip">Stichfrage ${wwdsState.tieIdx+1}</span></div>
     <div class="wwds-banner">Gleichstand!</div>
     <div class="wwds-sub" style="margin:6px 0 14px;">Wer am nächsten dran ist, gewinnt.</div>
-    <div class="wwds-q" style="margin-bottom:14px;">${t.q}</div>` +
+    <div class="wwds-q" style="margin-bottom:14px;">${escapeHtml(t.q)}</div>` +
     wwdsState.teamNames.map((n,i) => wwdsState.scores[i] === Math.max(...wwdsState.scores) ? `
       <div class="wwds-bet-row">
         <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${n}</span>
@@ -267,7 +267,7 @@ function wwdsTieHtml(){
             : (wwdsState.tieGuessesShown ? wwdsState.tieGuesses[i] : '000')}</span>
       </div>` : '').join('') +
     (wwdsState.tieRevealed
-      ? `<div class="wwds-banner" style="margin-top:14px;">Richtig: ${t.answer}</div>`
+      ? `<div class="wwds-banner" style="margin-top:14px;">Richtig: ${escapeHtml(String(t.answer))}</div>`
       : `<div class="wwds-sub" style="margin-top:14px;">${wwdsState.tieGuessesShown
             ? 'Die Auflösung kommt gleich…'
             : 'Die Schätzungen sind abgegeben — noch nicht verraten!'}</div>`);
@@ -544,13 +544,13 @@ function updateGamemasterWwds(){
           ? 'opacity:.35;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)'
           : 'background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);cursor:pointer'}"
           ${s.used[i]?'':`onclick="opener.wwdsPick(${i})"`}>
-          <span><span class="num">${i+1}.</span> <span class="text">${c.cat||'—'}</span></span>
+          <span><span class="num">${i+1}.</span> <span class="text">${escapeHtml(c.cat||'—')}</span></span>
           <span class="pts">${s.used[i]?'gespielt':'frei'}</span>
         </div>`).join('') + `</div>`;
   } else if (q){
     const teamTag = (i) => s.teamNames.map((n,t) =>
       (isMaster && s.masterPick[t] === i) ? `<span style="color:${WWDS_HEX[t]};font-size:.7rem;font-weight:700;"> ●${n}</span>` : '').join('');
-    body = `<div class="question">${q.q}</div>
+    body = `<div class="question">${escapeHtml(q.q)}</div>
       ${qNoteHtml(q.note)}
       <div class="answer-list">` + q.answers.map((a,i) => {
         const right = i === q.correct;
@@ -600,8 +600,8 @@ function updateGamemasterWwds(){
     const t = wwdsData.tiebreakers[s.tieIdx];
     const max = Math.max(...s.scores);
     const tied = s.teamNames.map((_,i) => i).filter(i => s.scores[i] === max);
-    body = `<div class="question">${t ? t.q : 'Keine Schätzfrage hinterlegt'}</div>
-      ${t ? `<div class="hint-line">Richtige Antwort: <b style="color:#FFD23F;">${t.answer}</b></div>` : ''}
+    body = `<div class="question">${t ? escapeHtml(t.q) : 'Keine Schätzfrage hinterlegt'}</div>
+      ${t ? `<div class="hint-line">Richtige Antwort: <b style="color:#FFD23F;">${escapeHtml(String(t.answer))}</b></div>` : ''}
       <div class="hint-line">Schätzungen hier eintragen — der Hauptbildschirm zeigt sie mit an.</div>` +
       tied.map(i => `
         <div class="panel-row" style="align-items:center;gap:8px;margin-bottom:6px;">

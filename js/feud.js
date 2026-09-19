@@ -390,7 +390,7 @@ function wwdsTutorialSlides() {
      <div class="tut-big tut-gold" style="font-size:3.2rem;">Wer weiß<br>denn sowas?</div>`,
     `<div class="tut-big tut-gold" style="font-size:2.4rem;margin-bottom:12px;">${wwdsData.categories.length} Kategorien</div>
      <div class="tut-wwds-grid">
-       ${wwdsData.categories.slice(0,8).map((c,i) => `<div class="tut-wwds-cat ${i===2?'pick':''} ${i===5?'used':''}">${c.cat||'—'}</div>`).join('')}
+       ${wwdsData.categories.slice(0,8).map((c,i) => `<div class="tut-wwds-cat ${i===2?'pick':''} ${i===5?'used':''}">${escapeHtml(c.cat||'—')}</div>`).join('')}
      </div>
      <div class="tut-sub">Die Teams sind <b>abwechselnd</b> dran.<br>Wer am Zug ist, wählt eine Kategorie.</div>`,
     `<div class="tut-big tut-white" style="font-size:2.3rem;margin-bottom:4px;">Drei Antworten</div>
@@ -1384,12 +1384,12 @@ function updateGamemasterJeopardy() {
       : `<div class="hint-line">🔔 Buzzer ${jeopardyBuzzer.armed?'scharf — warte auf Buzz…':'aus'} ${connChip}${excludedTag}</div>`;
     const revealed = jeopardyState.questionRevealed;
     body = `
-      <div class="round-label">${revealed ? 'Frage offen' : 'Frage verdeckt'} · ${cat.name} · ${val}${ddBadge}</div>
+      <div class="round-label">${revealed ? 'Frage offen' : 'Frage verdeckt'} · ${escapeHtml(cat.name)} · ${val}${ddBadge}</div>
       ${revealed ? '' : `<div class="scores-row">${scoresHtml}</div>`}
       <div class="clue-box">
-        ${clue.q?`<div class="clue-q">${clue.q}</div>`:''}
+        ${clue.q?`<div class="clue-q">${escapeHtml(clue.q)}</div>`:''}
         ${media?`<div class="media-row">${media}</div>`:''}
-        <div class="clue-a">Lösung: <strong>${clue.a||'(nur Bild)'}</strong></div>
+        <div class="clue-a">Lösung: <strong>${escapeHtml(clue.a||'(nur Bild)')}</strong></div>
       </div>
       ${qNoteHtml(clue.note)}
       ${mediaControlButtonsHtml(clue.media, 'jeopardyToggleMedia')}
@@ -1426,7 +1426,7 @@ function updateGamemasterJeopardy() {
     const cols = cats.length;
     let boardHtml = `<div class="jboard" style="grid-template-columns:repeat(${cols},1fr);">`;
     cats.forEach(cat => {
-      boardHtml += `<div class="jcat">${cat.name}</div>`;
+      boardHtml += `<div class="jcat">${escapeHtml(cat.name)}</div>`;
     });
     JEOPARDY_VALUES.forEach((val, row) => {
       cats.forEach((cat, col) => {

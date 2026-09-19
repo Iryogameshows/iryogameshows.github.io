@@ -246,7 +246,7 @@ function renderJeopardyBoard() {
   let html = '';
   // Category headers
   cats.forEach(cat => {
-    html += `<div class="jeopardy-cat">${cat.name}</div>`;
+    html += `<div class="jeopardy-cat">${escapeHtml(cat.name)}</div>`;
   });
   // Value rows
   JEOPARDY_VALUES.forEach((val, row) => {
@@ -493,7 +493,7 @@ function renderJeopardyClueOverlay() {
 
   const revealed = jeopardyState.questionRevealed;
   const questionArea = revealed
-    ? `${clue.q ? `<div class="jeopardy-clue-text">${clue.q}</div>` : ''}
+    ? `${clue.q ? `<div class="jeopardy-clue-text">${escapeHtml(clue.q)}</div>` : ''}
        ${series ? jeopardySeriesHtml(clue) : staged ? jeopardyStageHtml(clue) : qImgHtml}`
     : `<div class="jeopardy-clue-blank">Frage verdeckt</div>`;
 
@@ -506,10 +506,10 @@ function renderJeopardyClueOverlay() {
   }
   ov.innerHTML = `
     ${jeopardyState.currentIsDaily ? `<div class="jeopardy-dd-banner">★ DAILY DOUBLE ★</div>` : ''}
-    <div class="jeopardy-clue-cat">${cat.name}</div>
+    <div class="jeopardy-clue-cat">${escapeHtml(cat.name)}</div>
     <div class="jeopardy-clue-pts">${val}</div>
     ${questionArea}
-    <div class="jeopardy-answer-text ${jeopardyState.answerShown?'visible':''}">${clue.a || ''}</div>
+    <div class="jeopardy-answer-text ${jeopardyState.answerShown?'visible':''}">${escapeHtml(clue.a || '')}</div>
     ${revealed ? aImgHtml : ''}
   `;
 }
