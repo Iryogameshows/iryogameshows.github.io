@@ -142,8 +142,7 @@ function rosterRemoveGuest(game, i) {
 // Nach einer Aenderung an den Accounts die gerade offene Auswahl auffrischen.
 function refreshOpenRosterLobby() {
   Object.keys(ROSTERS).forEach(game => {
-    const el = document.getElementById(ROSTERS[game].screen);
-    if (el && el.classList.contains('active')) renderRosterLobby(game);
+    if (screenActive(ROSTERS[game].screen)) renderRosterLobby(game);
   });
 }
 

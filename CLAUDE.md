@@ -80,14 +80,17 @@ Kein `import`/`export` einbauen, ohne die Tags auf `type="module"` umzustellen.
 node check.js
 ```
 
-Muss ohne Fehler durchlaufen, bevor committet wird. Der Prüfer macht drei Dinge:
+Muss ohne Fehler durchlaufen, bevor committet wird. Der Prüfer macht vier Dinge:
 
 1. **Syntax** aller `js/`-Dateien.
 2. **Inline-Handler**: ob jeder Funktionsname, der aus einem `onclick=`/`onchange=`
    usw. heraus aufgerufen wird, im JavaScript auch existiert.
-3. **styles.css**: ob die geschweiften Klammern aufgehen.
+3. **Element-IDs**: ob zu jeder festen ID im Code (`setText('round-pts', …)`,
+   `getElementById('gm-bar')`, …) auch ein Element existiert — im Markup oder
+   im HTML, das die `js/`-Dateien zur Laufzeit erzeugen.
+4. **styles.css**: ob die geschweiften Klammern aufgehen.
 
-Punkt 2 ist der Grund für das Skript. Die App hängt an rund 320 Inline-Handlern,
+Punkte 2 und 3 sind der Grund für das Skript. Die App hängt an rund 320 Inline-Handlern,
 etwa 230 davon werden zur Laufzeit als Zeichenkette zusammengebaut:
 
 ```js
@@ -99,6 +102,12 @@ sieht dort einen Funktionsnamen. Wer eine Funktion umbenennt und eine dieser
 Zeichenketten übersieht, merkt das erst, wenn während der Show jemand auf den
 Knopf drückt. Deshalb **vor jedem Commit** laufen lassen, besonders nach
 Umbenennungen.
+
+Dasselbe gilt für die IDs: die stehen ebenfalls als Zeichenketten im Code, und
+seit die Helfer bei einem fehlenden Element stillhalten, merkt es sonst
+niemand mehr — die Stelle tut dann einfach nichts. Punkt 3 hat genau so einen
+Fall gefunden: `#jeopardy-corner` wurde noch zweimal gelesen und in
+`styles.css` gestaltet, war aber nirgends mehr erzeugt.
 
 Ein Handler, dessen Funktionsname selbst eingesetzt wird
 (`onclick="opener.${togglerName}(...)"`), ist statisch nicht auflösbar. Solche

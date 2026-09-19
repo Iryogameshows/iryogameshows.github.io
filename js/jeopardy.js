@@ -257,7 +257,6 @@ function renderJeopardyBoard() {
   });
   board.innerHTML = html;
   setText('jeopardy-board-label', `Board ${jeopardyState.currentBoard + 1} / ${JEOPARDY_BOARDS}`);
-  renderJeopardyControls();
   renderBuzzer();
 }
 
@@ -513,7 +512,6 @@ function renderJeopardyClueOverlay() {
     <div class="jeopardy-answer-text ${jeopardyState.answerShown?'visible':''}">${clue.a || ''}</div>
     ${revealed ? aImgHtml : ''}
   `;
-  renderJeopardyControls();
 }
 
 // Reveal one more tile of a staged image

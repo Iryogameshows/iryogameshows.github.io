@@ -1311,13 +1311,20 @@ function setPlayersTab(tab, silent){
   setClass('players-tab-board', 'active', tab === 'board');
   if (tab === 'list') renderPlayersList(); else renderPlayersLeaderboard();
 }
-// Aktuelle Teamnamen des zuletzt aktiven Kontexts (Feud/Jeopardy), zum
-// Anzeigen des Team-Tags - fällt auf "Team N" zurück wenn kein Spiel offen ist.
+// Aktuelle Teamnamen des zuletzt aktiven Kontexts, zum Anzeigen des Team-Tags
+// - fällt auf "Team N" zurück wenn kein Spiel offen ist.
+//
+// Die teamlosen Spiele (Der Dümmste fliegt, Der Preis ist heiß) setzen den
+// Kontext ebenfalls. Ohne eigenen Zweig landeten sie im Rückfall auf
+// state.teamNames und zeigten in der Spielerübersicht die Teamnamen einer
+// Feud-Runde an - aus einem Spiel, das gerade gar nicht läuft.
 function currentTeamLabel(i){
+  const generisch = 'Team ' + (i+1);
+  if (ROSTERS[activeBuzzerContext]) return generisch;
   const names = activeBuzzerContext === 'jeopardy' ? jeopardyState.teamNames
               : activeBuzzerContext === 'wwds' ? (wwdsState.teamNames.length ? wwdsState.teamNames : lobbyTeamNames('wwds'))
               : state.teamNames;
-  return (names && names[i]) || ('Team ' + (i+1));
+  return (names && names[i]) || generisch;
 }
 function renderPlayersList(){
   const el = document.getElementById('players-content');

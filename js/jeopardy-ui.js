@@ -336,12 +336,6 @@ function closeJeopardyClue() {
   if (jeopardyEstimate.open) jeopardyEstimateClose();
 }
 
-// No controls on the main screen — controls live in the GM bar / GM window only
-function renderJeopardyControls() {
-  const el = document.getElementById('jeopardy-corner');
-  if (el) el.remove();
-}
-
 function showJeopardyBoardTransition() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   addBlackBackdrop();
@@ -365,8 +359,6 @@ function showJeopardyBoardTransition() {
 
 function showJeopardyResults() {
   jeopardyBuzzDisconnect();
-  const corner = document.getElementById('jeopardy-corner');
-  if (corner) corner.remove();
   const bz = document.getElementById('jeopardy-buzzer');
   if (bz) bz.remove();
   setClass('gm-bar', 'visible', false);

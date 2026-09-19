@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 /* Pruefer fuer die Gameshow-Seite.  Aufruf:  node check.js
  *
- * Prueft drei Dinge, die hier erfahrungsgemaess schiefgehen koennen:
+ * Prueft vier Dinge, die hier erfahrungsgemaess schiefgehen koennen:
  *
  *  1. Syntax aller js/-Dateien.
  *  2. Ob jeder Funktionsname, der aus einem Inline-Handler heraus aufgerufen
  *     wird, im JavaScript auch wirklich existiert.
- *  3. Ob in styles.css die geschweiften Klammern aufgehen.
+ *  3. Ob zu jeder festen Element-ID im Code auch ein Element existiert.
+ *  4. Ob in styles.css die geschweiften Klammern aufgehen.
  *
- * Punkt 2 ist der eigentliche Grund fuer dieses Skript. Die App haengt an rund
- * 320 Inline-Handlern; etwa 230 davon stehen nicht im Markup, sondern werden
- * zur Laufzeit als Zeichenkette zusammengebaut:
+ * Punkte 2 und 3 sind der eigentliche Grund fuer dieses Skript. Die App haengt
+ * an rund 320 Inline-Handlern; etwa 230 davon stehen nicht im Markup, sondern
+ * werden zur Laufzeit als Zeichenkette zusammengebaut:
  *
  *     onclick="resetPlayerPassword('${p.key}', ${escJsArg(p.name)})"
  *
@@ -118,7 +119,58 @@ for (const { name, text } of sourcesToScan) {
   });
 }
 
-/* ── 3. styles.css ────────────────────────────────────────────────────── */
+/* ── 3. Element-IDs ───────────────────────────────────────────────────── */
+
+// Dieselbe Luecke wie bei den Handlern, nur andersherum: die IDs stehen als
+// Zeichenketten im Code, und ob dazu ein Element existiert, sieht kein
+// Werkzeug. Ein Tippfehler oder ein Element, das aus dem Markup verschwindet,
+// faellt sonst erst auf, wenn die Stelle waehrend der Show aufgerufen wird -
+// oder gar nicht, weil die Helfer bei einer fehlenden ID stillhalten.
+//
+// Diese Pruefung hat genau das gefunden: #jeopardy-corner wurde noch zweimal
+// gelesen und in styles.css gestaltet, war aber nirgends mehr erzeugt.
+//
+// Bekannt sind IDs aus dem Markup und aus dem HTML, das die js-Dateien zur
+// Laufzeit erzeugen, dazu per el.id gesetzte und als { id: '…' } weiter-
+// gegebene. Zusammengesetzte IDs (`team${i}-score`) sind statisch nicht
+// aufloesbar und werden gezaehlt, nicht bemaengelt.
+
+const idSources = [
+  { name: 'index.html', text: fs.readFileSync(path.join(root, 'index.html'), 'utf8') },
+  ...sources,
+];
+const knownIds = new Set();
+const knownPrefixes = [];
+for (const { text } of idSources) {
+  for (const m of text.matchAll(/\bid\s*=\s*["']([^"'${}]+)["']/g)) knownIds.add(m[1]);
+  for (const m of text.matchAll(/\.id\s*=\s*["']([^"']+)["']/g)) knownIds.add(m[1]);
+  for (const m of text.matchAll(/\bid\s*:\s*["']([^"']+)["']/g)) knownIds.add(m[1]);
+  // id="rung-${i}" -> Praefix "rung-" gilt als bekannt
+  for (const m of text.matchAll(/\bid\s*=\s*["']([^"'$]+)\$\{/g)) knownPrefixes.push(m[1]);
+}
+
+const idHelpers = ['getElementById', 'setText', 'setHtml', 'showEl', 'screenActive',
+                   'setClass', 'fieldVal', 'fieldChecked', 'fieldSet', 'fieldEl'];
+let idsChecked = 0, idsDynamic = 0;
+for (const { name, text } of sources) {
+  const lines = stripCommentLines(text);
+  lines.forEach((line, i) => {
+    for (const helper of idHelpers) {
+      for (const m of line.matchAll(new RegExp('\\b' + helper + '\\(\\s*([^,)]+)', 'g'))) {
+        const arg = m[1].trim();
+        const lit = arg.match(/^['"]([^'"]+)['"]$/);
+        if (!lit) { idsDynamic++; continue; }
+        const id = lit[1];
+        idsChecked++;
+        if (knownIds.has(id)) continue;
+        if (knownPrefixes.some(p => id.startsWith(p))) continue;
+        problems.push(name + ':' + (i + 1) + ': ' + helper + "('" + id + "') - kein Element mit dieser ID");
+      }
+    }
+  });
+}
+
+/* ── 4. styles.css ────────────────────────────────────────────────────── */
 
 const css = fs.readFileSync(path.join(root, 'styles.css'), 'utf8');
 const open = (css.match(/\{/g) || []).length;
@@ -127,7 +179,7 @@ if (open !== close) {
   problems.push('styles.css: ' + open + ' oeffnende, ' + close + ' schliessende Klammern - unausgeglichen');
 }
 
-/* ── 4. Typpruefung (nur mit --types) ─────────────────────────────────── */
+/* ── 5. Typpruefung (nur mit --types) ─────────────────────────────────── */
 
 // TypeScript prueft alles unter js/ - checkJs steht in jsconfig.json auf
 // true, seit alle Dateien sauber sind. Ein Build-Step wird daraus nicht:
@@ -183,6 +235,8 @@ notes.push(callsChecked + ' Handler-Aufrufe gegen ' + defined.size + ' globale N
 if (callsDynamic) {
   notes.push(callsDynamic + ' Handler mit zur Laufzeit eingesetztem Funktionsnamen - nicht pruefbar');
 }
+notes.push(idsChecked + ' feste Element-IDs gegen ' + knownIds.size + ' IDs im Markup geprueft'
+  + (idsDynamic ? ' (' + idsDynamic + ' zur Laufzeit gebildet)' : ''));
 notes.push('styles.css: ' + open + ' Klammernpaare');
 
 console.log(notes.map(n => '  ' + n).join('\n'));
