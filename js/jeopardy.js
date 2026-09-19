@@ -229,12 +229,12 @@ function showJeopardyTitle() {
 }
 
 function renderJeopardyScores() {
-  document.getElementById('jeopardy-scores').innerHTML = jeopardyState.teamNames.map((name, i) => `
+  setHtml('jeopardy-scores', jeopardyState.teamNames.map((name, i) => `
     <div class="jeopardy-team ${TEAM_COLORS[i]}">
       <div class="jt-name">${name}</div>
       <div class="jt-score" id="jscore-${i}">${jeopardyState.scores[i]}</div>
     </div>
-  `).join('');
+  `).join(''));
 }
 
 function renderJeopardyBoard() {
@@ -256,7 +256,7 @@ function renderJeopardyBoard() {
     });
   });
   board.innerHTML = html;
-  document.getElementById('jeopardy-board-label').textContent = `Board ${jeopardyState.currentBoard + 1} / ${JEOPARDY_BOARDS}`;
+  setText('jeopardy-board-label', `Board ${jeopardyState.currentBoard + 1} / ${JEOPARDY_BOARDS}`);
   renderJeopardyControls();
   renderBuzzer();
 }

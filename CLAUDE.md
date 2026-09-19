@@ -151,10 +151,10 @@ deklariert.
 ### Felder und Anzeigen
 
 `document.getElementById(id).value` war in dieser App rund 160-mal zu finden,
-`.textContent = …` 17-mal, `.style.display = …` noch einmal 17-mal. Alle drei
-werfen, wenn es das Element nicht gibt — ein Tippfehler in der ID oder ein
-Screen, der noch nicht aufgebaut ist, reicht. Für neuen Code stattdessen die
-Helfer aus `core.js`:
+`.textContent`/`.innerHTML = …` 45-mal, `.style.display = …` 17-mal und
+`.classList.…` 29-mal. Alle werfen, wenn es das Element nicht gibt — ein
+Tippfehler in der ID oder ein Screen, der noch nicht aufgebaut ist, reicht.
+**Alle sind abgelöst; für neuen Code die Helfer aus `core.js` benutzen:**
 
 ```js
 fieldVal('ddf-lives')             // Inhalt, oder '' wenn es das Feld nicht gibt
@@ -162,12 +162,24 @@ fieldChecked('enable-team3')      // Haken gesetzt? Fehlt das Feld: false
 fieldSet('tour-game-weight', 2)   // schreibt; Rückgabe sagt, ob es das Feld gab
 fieldEl('ddf-bulk-text')          // das Element selbst, oder null
 setText('round-pts', 123)         // textContent, Zahl wird umgewandelt
+setHtml('wwm-ladder', markup)     // innerHTML — Eingaben vorher escapen!
 showEl('team3-card', on)          // ein- und ausblenden
+screenActive('result-screen')     // ist dieser Screen gerade sichtbar?
+setClass('gm-bar', 'visible', on) // Klasse setzen oder wegnehmen
 ```
 
-Alle sechs geben `false` zurück (bzw. `null`/den Rückfallwert), wenn es das
+Alle neun geben `false` zurück (bzw. `null`/den Rückfallwert), wenn es das
 Element nicht gibt, statt zu werfen. Ein Knopf, den es gerade nicht gibt, darf
 keine ganze Show abbrechen.
+
+`setHtml` nimmt niemandem das Escapen ab: was aus Benutzereingaben kommt —
+Spielernamen, getippte Schätzungen — muss vorher durch `escapeHtml` bzw.
+`escAttr`. Der Name sagt bewusst „Html", damit an der Aufrufstelle sichtbar
+bleibt, dass dort Markup landet.
+
+`screenActive` und `setClass` sind auch deshalb wichtig, weil der Zugriff in
+`showScreen` selbst ungesichert war: eine einzige vertippte Screen-ID hätte
+die komplette Navigation lahmgelegt.
 
 `showEl` blendet mit `''` ein, nicht mit `'block'` oder `'flex'`: das nimmt den
 Inline-Wert weg und lässt wieder gelten, was in `styles.css` steht. Ein fest

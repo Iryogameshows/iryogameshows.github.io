@@ -172,7 +172,7 @@ function pihRenderRound(){
   if (!it) { pihFinish(); return; }
 
   pihRenderScores(pihState.phase === 'result' && pihState.lastResult ? pihState.lastResult.winners : []);
-  document.getElementById('pih-item').innerHTML = escAttr(it.name);
+  setHtml('pih-item', escAttr(it.name));
   pihRenderStage();
 
   // Preis und Notiz erst bei der Auflösung - vorher wäre das Spiel vorbei.
@@ -449,19 +449,18 @@ function pihFinish(){
   const top = rank.length && rank[0].score > 0 ? rank.filter(p => p.score === rank[0].score) : [];
   pihRenderScores(top.map(p => p.uid));
 
-  document.getElementById('pih-timer').textContent = '';
-  document.getElementById('pih-item').innerHTML =
-    top.length === 1 ? `🏆 ${escAttr(top[0].label)} gewinnt!`
+  setText('pih-timer', '');
+  setHtml('pih-item', top.length === 1 ? `🏆 ${escAttr(top[0].label)} gewinnt!`
     : top.length     ? `🏆 Gleichstand: ${top.map(p => escAttr(p.label)).join(', ')}`
-                     : 'Spiel beendet';
-  document.getElementById('pih-stage').innerHTML = '';
-  document.getElementById('pih-media-bar').innerHTML = '';
-  document.getElementById('pih-price').innerHTML = '';
-  document.getElementById('pih-note').innerHTML = '';
+                     : 'Spiel beendet');
+  setHtml('pih-stage', '');
+  setHtml('pih-media-bar', '');
+  setHtml('pih-price', '');
+  setHtml('pih-note', '');
   pihRenderBidGrid();
-  document.getElementById('pih-controls').innerHTML = `
+  setHtml('pih-controls', `
     <button class="btn btn-primary" onclick="showScreen('pih-setup-screen')">Nochmal</button>
-    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>`;
+    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>`);
 }
 
 function pihQuit(){

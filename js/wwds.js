@@ -58,8 +58,7 @@ function wwdsToggleTeam3(){
   showEl('wwds-t3-card', on);
   const n = on ? 3 : 2;
   const per = Math.floor(wwdsData.categories.length / n);
-  document.getElementById('wwds-split-info').textContent =
-    `${wwdsData.categories.length} Kategorien · je ${per} Fragen pro Team · max. ${wwdsMoney(per*WWDS_WIN)} in der Hauptrunde`;
+  setText('wwds-split-info', `${wwdsData.categories.length} Kategorien · je ${per} Fragen pro Team · max. ${wwdsMoney(per*WWDS_WIN)} in der Hauptrunde`);
   // Drittes Team an-/abschalten ändert die Auswahl auf den Handys
   if (document.getElementById('wwds-setup-lobby')) broadcastWwdsSetupTeamNames();
 }
@@ -160,7 +159,7 @@ function renderWwds(){
 }
 
 function wwdsRenderTeams(){
-  document.getElementById('wwds-teams').innerHTML = wwdsState.teamNames.map((n,i) => {
+  setHtml('wwds-teams', wwdsState.teamNames.map((n,i) => {
     const isTurn = (wwdsState.phase === 'pick' || wwdsState.phase === 'question') && wwdsState.currentTeam === i;
     let lock = '';
     if (wwdsState.phase === 'master')
@@ -177,7 +176,7 @@ function wwdsRenderTeams(){
       <div class="wt-meta">Joker ${wwdsState.audienceUsed[i]?'verbraucht':'frei'} · ${per} Fragen</div>
       ${lock ? `<div class="wt-lock">${lock}</div>` : ''}
     </div>`;
-  }).join('');
+  }).join(''));
 }
 
 function wwdsGridHtml(){
@@ -481,13 +480,12 @@ function wwdsFinish(forceDraw){
   wwdsStopTimer();
   wwdsState.phase = 'done';
   wwdsState.active = false;
-  document.getElementById('gm-bar').classList.remove('visible');
+  setClass('gm-bar', 'visible', false);
   const max = Math.max(...wwdsState.scores);
   const winners = wwdsState.teamNames.filter((_, i) => wwdsState.scores[i] === max);
-  document.getElementById('final-scores').innerHTML = wwdsState.teamNames.map((n,i) =>
-    `${n}: <strong>${wwdsMoney(wwdsState.scores[i])}</strong>`).join('<br>');
-  document.getElementById('winner-text').textContent =
-    (forceDraw || winners.length > 1) ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
+  setHtml('final-scores', wwdsState.teamNames.map((n,i) =>
+    `${n}: <strong>${wwdsMoney(wwdsState.scores[i])}</strong>`).join('<br>'));
+  setText('winner-text', (forceDraw || winners.length > 1) ? 'Unentschieden!' : `${winners[0]} gewinnt!`);
   showEl('tour-record-btn', false);
   const recorded = tournamentAutoRecordIfActive(wwdsState.teamNames, wwdsState.scores);
   showEl('tour-goto-btn', recorded);

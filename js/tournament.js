@@ -19,7 +19,7 @@ function tournamentConnect(){
       tournament = snap.val() || null;
       if (tournament && !Array.isArray(tournament.games)) tournament.games = [];
       storeSetJson('tournamentCache', tournament);
-      if (document.getElementById('tournament-screen').classList.contains('active')) renderTournament();
+      if (screenActive('tournament-screen')) renderTournament();
     });
   } catch {}
 }
@@ -251,11 +251,11 @@ function tournamentCelebrate(){
   const totals = tournamentTotals();
   const max = Math.max(...totals);
   const winners = tournament.teams.filter((_, i) => totals[i] === max);
-  document.getElementById('winner-text').textContent = winners.length > 1
+  setText('winner-text', winners.length > 1
     ? 'Unentschieden im Turnier!'
-    : `${winners[0]} gewinnt das Turnier! 🏆`;
-  document.getElementById('final-scores').innerHTML = tournament.teams
-    .map((t, i) => `${t}: <strong>${totals[i]}</strong> Turnierpunkte`).join('<br>');
+    : `${winners[0]} gewinnt das Turnier! 🏆`);
+  setHtml('final-scores', tournament.teams
+    .map((t, i) => `${t}: <strong>${totals[i]}</strong> Turnierpunkte`).join('<br>'));
   showEl('tour-record-btn', false);
   showScreen('result-screen');
   confetti(true);

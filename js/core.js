@@ -229,6 +229,22 @@ function setText(id, value) {
   return true;
 }
 
+/** Schreibt Markup in ein Element. Fehlt es, passiert nichts.
+ *
+ *  Das Gegenstueck zu setText fuer die rund 30 Stellen, an denen ein fertig
+ *  gebautes HTML-Stueck in einen Container geht. Der Name sagt zugleich, dass
+ *  hier Markup erwartet wird: was aus Benutzereingaben kommt, muss vorher
+ *  durch escapeHtml oder escAttr - das nimmt diese Funktion niemandem ab.
+ *  @param {string} id
+ *  @param {string} html
+ *  @returns {boolean} ob geschrieben wurde */
+function setHtml(id, html) {
+  const el = document.getElementById(id);
+  if (!el) return false;
+  el.innerHTML = html;
+  return true;
+}
+
 /** Blendet ein Element ein oder aus. Fehlt es, passiert nichts.
  *
  *  Eingeblendet wird mit '' und nicht mit 'block' oder 'flex': das nimmt den
@@ -242,6 +258,34 @@ function showEl(id, visible) {
   const el = document.getElementById(id);
   if (!el) return false;
   el.style.display = visible ? '' : 'none';
+  return true;
+}
+
+/* Dasselbe fuer Klassen. Zwei Muster machten fast alle Vorkommen aus: die
+   Frage, ob ein Screen gerade sichtbar ist (20-mal), und eine Klasse setzen
+   oder wegnehmen (8-mal). Beide hingen an einem ungesicherten
+   getElementById - und der Zugriff in showScreen warf bei einer falschen ID,
+   wodurch eine einzige vertippte Screen-ID die ganze Navigation lahmlegte. */
+
+/** Ob der Screen mit dieser ID gerade sichtbar ist. Fehlt er, gilt er als
+ *  nicht sichtbar: nach einem Screen zu fragen, den es nicht gibt, ist eine
+ *  legitime Frage mit der Antwort "nein" - kein Grund zu werfen.
+ *  @param {string} id
+ *  @returns {boolean} */
+function screenActive(id) {
+  const el = document.getElementById(id);
+  return !!el && el.classList.contains('active');
+}
+
+/** Setzt eine Klasse oder nimmt sie weg. Fehlt das Element, passiert nichts.
+ *  @param {string} id
+ *  @param {string} cls
+ *  @param {boolean} on
+ *  @returns {boolean} ob geschaltet wurde */
+function setClass(id, cls, on) {
+  const el = document.getElementById(id);
+  if (!el) return false;
+  el.classList.toggle(cls, on);
   return true;
 }
 
@@ -409,7 +453,7 @@ function renderLogo(line1, line2, size2, icon) {
       }
     </svg>`;
   }
-  document.getElementById('main-logo').innerHTML = inner;
+  setHtml('main-logo', inner);
 }
 
 // Menü-Karten: das eigene Gold-Logo jedes Spiels statt eines Emojis.
@@ -579,7 +623,7 @@ function showScreen(id) {
   const leaving = document.querySelector('.screen.active');
   if (leaving && leaving.id === 'wwds-edit-screen' && id !== 'wwds-edit-screen') wwdsSave();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+  setClass(id, 'active', true);
   if (id === 'edit-screen') renderQuestionList();
   if (id === 'jeopardy-edit-screen') renderJeopardyEditor();
   if (id === 'wwm-edit-screen') renderWwmEditor();
@@ -598,7 +642,7 @@ function showScreen(id) {
   // Eingebettetes GM-Panel nur beim echten Rücksprung zum Hauptmenü wieder
   // ausblenden - bleibt bei internen Übergängen (z.B. Feud → Finale) sichtbar,
   // genau wie das alte Popup-Fenster das auch nie automatisch geschlossen hat.
-  if (id === 'menu-screen') document.getElementById('gm-embed-overlay').classList.remove('visible');
+  if (id === 'menu-screen') setClass('gm-embed-overlay', 'visible', false);
   // Logo per context
   if (id === 'menu-screen') renderIryoHubLogo();
   else if (id === 'tournament-screen') renderLogo('TURNIER', null, null, 'trophy');
@@ -1001,29 +1045,29 @@ function qNoteHtml(note) {
 
 // ── EDIT ──
 function renderQuestionList() {
-  document.getElementById('question-list').innerHTML = questions.map((q,i) => `
+  setHtml('question-list', questions.map((q,i) => `
     <div class="q-list-item">
       <span class="q-label"><span class="q-num">${i+1}.</span>${q.question}<span class="q-meta">${q.answers.length} Antworten</span></span>
       <div class="q-btns">
         <button class="btn btn-secondary" onclick="editQuestion(${i})">Edit</button>
         <button class="btn btn-danger" onclick="deleteQuestion(${i})">Del</button>
       </div>
-    </div>`).join('');
-  document.getElementById('finale-question-list').innerHTML = finaleQuestions.map((q,i) => `
+    </div>`).join(''));
+  setHtml('finale-question-list', finaleQuestions.map((q,i) => `
     <div class="q-list-item">
       <span class="q-label"><span class="q-num">${i+1}.</span>${q.question}<span class="q-meta">${q.answers.length} Antworten</span></span>
       <div class="q-btns">
         <button class="btn btn-secondary" onclick="editQuestion(${i},true)">Edit</button>
         <button class="btn btn-danger" onclick="deleteQuestion(${i},true)">Del</button>
       </div>
-    </div>`).join('');
+    </div>`).join(''));
 }
 function newQuestion(isFinale) {
   state.editingIndex = -1;
   state.editingFinale = !!isFinale;
   fieldSet('edit-question', '');
   fieldSet('edit-note', '');
-  document.getElementById('answer-fields').innerHTML = '';
+  setHtml('answer-fields', '');
   for (let i = 0; i < 5; i++) addAnswerField();
   document.getElementById('edit-question').focus();
   state.editingMedia = [];
@@ -1035,7 +1079,7 @@ function editQuestion(i, isFinale) {
   const list = isFinale ? finaleQuestions : questions;
   fieldSet('edit-question', list[i].question);
   fieldSet('edit-note', list[i].note || '');
-  document.getElementById('answer-fields').innerHTML = '';
+  setHtml('answer-fields', '');
   list[i].answers.forEach(a => addAnswerField(a.text, a.points));
   document.getElementById('edit-question').focus();
   state.editingMedia = (list[i].media || []).slice();
@@ -1043,7 +1087,7 @@ function editQuestion(i, isFinale) {
 }
 function feudEditMedia(slot, input) { setMediaSlot(state.editingMedia, slot, input, renderFeudMediaSlots); }
 function renderFeudMediaSlots() {
-  document.getElementById('feud-media-slots').innerHTML = mediaSlotsHtml(state.editingMedia, (slot, inputExpr) => `feudEditMedia(${slot},${inputExpr})`);
+  setHtml('feud-media-slots', mediaSlotsHtml(state.editingMedia, (slot, inputExpr) => `feudEditMedia(${slot},${inputExpr})`));
 }
 function addAnswerField(text='', points='') {
   const f = document.getElementById('answer-fields');
@@ -1078,7 +1122,7 @@ function saveQuestion() {
     state.editingIndex = -1; state.editingFinale = false; state.editingMedia = [];
     fieldSet('edit-question', '');
     fieldSet('edit-note', '');
-    document.getElementById('answer-fields').innerHTML = '';
+    setHtml('answer-fields', '');
     renderFeudMediaSlots();
   } catch(err) { alert('Fehler beim Speichern: ' + err.message); }
 }
@@ -1143,7 +1187,7 @@ function recordReaction(name, t, game){
   reactionBoard.push({ name, t, game, ts: Date.now() });
   reactionBoard.sort((a,b) => a.t - b.t);
   saveReactionBoard();
-  if (document.getElementById('reaction-board-screen').classList.contains('active')) renderReactionBoard();
+  if (screenActive('reaction-board-screen')) renderReactionBoard();
 }
 function resetReactionBoard(){
   if (!confirm('Bestenliste wirklich löschen?')) return;
@@ -1248,7 +1292,7 @@ function ensurePlayersConnected(){
     playersRef.on('value', snap => {
       const v = snap.val() || {};
       allPlayers = Object.entries(v).map(([key, p]) => ({ key, ...p, stats: p.stats || { buzzes:0, bestBuzz:null, wins:0, games:0 } }));
-      if (document.getElementById('players-screen').classList.contains('active')) setPlayersTab(playersTab, true);
+      if (screenActive('players-screen')) setPlayersTab(playersTab, true);
       refreshOpenRosterLobby();
     });
     playersPresenceRef = firebase.database().ref('buzzer/presence');
@@ -1256,15 +1300,15 @@ function ensurePlayersConnected(){
       onlinePlayerKeys = {};
       const v = snap.val() || {};
       Object.keys(v).forEach(key => onlinePlayerKeys[key] = true);
-      if (document.getElementById('players-screen').classList.contains('active') && playersTab === 'list') renderPlayersList();
+      if (screenActive('players-screen') && playersTab === 'list') renderPlayersList();
       refreshOpenRosterLobby();
     });
   } catch {}
 }
 function setPlayersTab(tab, silent){
   playersTab = tab;
-  document.getElementById('players-tab-list').classList.toggle('active', tab === 'list');
-  document.getElementById('players-tab-board').classList.toggle('active', tab === 'board');
+  setClass('players-tab-list', 'active', tab === 'list');
+  setClass('players-tab-board', 'active', tab === 'board');
   if (tab === 'list') renderPlayersList(); else renderPlayersLeaderboard();
 }
 // Aktuelle Teamnamen des zuletzt aktiven Kontexts (Feud/Jeopardy), zum

@@ -55,7 +55,7 @@ function startWwmActual(){
   wwmState.lifelines = {fifty:false, phone:false, audience:false};
   wwmState.gameOver = false;
   wwmState.active = true;
-  document.getElementById('wwm-name-label').textContent = wwmState.name;
+  setText('wwm-name-label', wwmState.name);
   showScreen('wwm-screen');
   loadWwmQuestion();
   setTimeout(() => openGamemaster(), 120);
@@ -82,10 +82,10 @@ function wwmToggleMedia(slot) {
 function renderWwm(){
   const q = wwmData.questions[wwmState.currentQ];
   if (!q) return;
-  document.getElementById('wwm-info').textContent = `Frage ${wwmState.currentQ+1} / ${wwmData.questions.length}`;
-  document.getElementById('wwm-name-label').textContent = wwmState.name;
-  document.getElementById('wwm-question').textContent = q.q;
-  document.getElementById('wwm-answers').innerHTML = q.answers.map((a,i) => {
+  setText('wwm-info', `Frage ${wwmState.currentQ+1} / ${wwmData.questions.length}`);
+  setText('wwm-name-label', wwmState.name);
+  setText('wwm-question', q.q);
+  setHtml('wwm-answers', q.answers.map((a,i) => {
     let cls = '';
     if (wwmState.removed.includes(i)) cls = 'removed';
     if (wwmState.revealed && i === q.correct) cls = 'correct';
@@ -94,20 +94,20 @@ function renderWwm(){
     return `<div class="wwm-opt ${cls}" onclick="wwmSelect(${i})">
       <span class="wwm-letter">${WWM_LETTERS[i]}</span><span class="wwm-text">${escapeHtml(a)}</span>
     </div>`;
-  }).join('');
+  }).join(''));
   // Lifelines
-  document.getElementById('wwm-lifelines').innerHTML = `
+  setHtml('wwm-lifelines', `
     <div class="wwm-ll ${wwmState.lifelines.fifty?'used':''}">50:50</div>
     <div class="wwm-ll ${wwmState.lifelines.phone?'used':''}">📞</div>
-    <div class="wwm-ll ${wwmState.lifelines.audience?'used':''}">👥</div>`;
+    <div class="wwm-ll ${wwmState.lifelines.audience?'used':''}">👥</div>`);
   // Ladder
-  document.getElementById('wwm-ladder').innerHTML = WWM_LADDER.map((amt,i) => {
+  setHtml('wwm-ladder', WWM_LADDER.map((amt,i) => {
     let cls = 'wwm-rung';
     if (WWM_SAFE.includes(i)) cls += ' safe';
     if (i === wwmState.currentQ) cls += ' current';
     if (i < wwmState.currentQ) cls += ' won';
     return `<div class="${cls}"><span class="wwm-lvl">${i+1}</span><span class="wwm-amt">${wwmMoney(amt)}</span></div>`;
-  }).join('');
+  }).join(''));
   // Audience chart
   const aud = document.getElementById('wwm-audience');
   if (wwmState.audienceShown && wwmState.audienceData){
@@ -182,11 +182,11 @@ function wwmWalkAway(){
 function wwmEnd(amount, jackpot){
   wwmState.gameOver = true;
   wwmState.active = false;
-  document.getElementById('gm-bar').classList.remove('visible');
-  document.getElementById('winner-text').textContent = jackpot
+  setClass('gm-bar', 'visible', false);
+  setText('winner-text', jackpot
     ? `${wwmState.name} ist Millionär! 🎉`
-    : `${wwmState.name} gewinnt ${wwmMoney(amount)}`;
-  document.getElementById('final-scores').innerHTML = `Gewonnen: <strong>${wwmMoney(amount)}</strong>`;
+    : `${wwmState.name} gewinnt ${wwmMoney(amount)}`);
+  setHtml('final-scores', `Gewonnen: <strong>${wwmMoney(amount)}</strong>`);
   showEl('tour-record-btn', false);
   const recordedToTournament = tournamentAutoRecordIfActive([wwmState.name], [amount]);
   showEl('tour-goto-btn', recordedToTournament);

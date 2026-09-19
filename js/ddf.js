@@ -159,12 +159,11 @@ function ddfRenderRound(){
   if (!q || (ddfAlive().length <= 1 && ddfState.phase !== 'result')) { ddfFinish(); return; }
 
   ddfRenderPlayers(ddfState.phase === 'result' ? ddfState.loser : null);
-  document.getElementById('ddf-question').innerHTML = escAttr(q.q);
+  setHtml('ddf-question', escAttr(q.q));
   const ans = document.getElementById('ddf-answer');
   ans.style.display = ddfAnswerRevealed() ? '' : 'none';
   ans.innerHTML = escAttr(q.answer);
-  document.getElementById('ddf-note').innerHTML =
-    (ddfAnswerRevealed() && q.note) ? escAttr(q.note) : '';
+  setHtml('ddf-note', (ddfAnswerRevealed() && q.note) ? escAttr(q.note) : '');
 
   ddfRenderMediaBar();
   ddfRenderVoteGrid();
@@ -442,16 +441,15 @@ function ddfFinish(){
   ddfRenderPlayers(winner ? winner.uid : null);
   // Direkt leeren: ddfStopTimer() lässt ein "Zeit um!" bewusst stehen, auf dem
   // Siegerbild hat es nichts zu suchen.
-  document.getElementById('ddf-timer').textContent = '';
-  document.getElementById('ddf-question').innerHTML =
-    winner ? `🏆 ${escAttr(winner.name)} gewinnt!` : 'Spiel beendet';
+  setText('ddf-timer', '');
+  setHtml('ddf-question', winner ? `🏆 ${escAttr(winner.name)} gewinnt!` : 'Spiel beendet');
   showEl('ddf-answer', false);
-  document.getElementById('ddf-note').innerHTML = '';
-  document.getElementById('ddf-media-bar').innerHTML = '';
-  document.getElementById('ddf-vote-grid').innerHTML = '';
-  document.getElementById('ddf-controls').innerHTML = `
+  setHtml('ddf-note', '');
+  setHtml('ddf-media-bar', '');
+  setHtml('ddf-vote-grid', '');
+  setHtml('ddf-controls', `
     <button class="btn btn-primary" onclick="showScreen('ddf-setup-screen')">Nochmal</button>
-    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>`;
+    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>`);
 }
 
 function ddfQuit(){

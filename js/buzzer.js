@@ -441,7 +441,7 @@ function feudAutoSetStartTeam(i){
 
 function renderFeudBuzzer(){
   let el = document.getElementById('feud-buzzer');
-  const boardShown = document.getElementById('game-screen').classList.contains('active');
+  const boardShown = screenActive('game-screen');
   const shouldShow = state.roundQuestions && state.roundQuestions.length && boardShown
     && !feudBuzzer.hidden && feudBuzzer.poppedForQuestion;
   if (!shouldShow) { if (el) el.remove(); return; }

@@ -111,7 +111,7 @@ document.addEventListener('keydown', jeopardyKeyHandler);
 
 function renderBuzzer(){
   let el = document.getElementById('jeopardy-buzzer');
-  const boardShown = document.getElementById('jeopardy-screen').classList.contains('active');
+  const boardShown = screenActive('jeopardy-screen');
   // Bleibt komplett unsichtbar im Main-Fenster: solange kein Feld offen ist,
   // manuell ausgeblendet wurde, oder noch niemand für diese Frage gebuzzert hat.
   const shouldShow = jeopardyState.active && boardShown && !jeopardyBuzzer.hidden
@@ -369,13 +369,12 @@ function showJeopardyResults() {
   if (corner) corner.remove();
   const bz = document.getElementById('jeopardy-buzzer');
   if (bz) bz.remove();
-  document.getElementById('gm-bar').classList.remove('visible');
+  setClass('gm-bar', 'visible', false);
   const maxScore = Math.max(...jeopardyState.scores);
   const winners = jeopardyState.teamNames.filter((_, i) => jeopardyState.scores[i] === maxScore);
-  document.getElementById('final-scores').innerHTML = jeopardyState.teamNames.map((name, i) =>
-    `${name}: <strong>${jeopardyState.scores[i]}</strong> Punkte`).join('<br>');
-  document.getElementById('winner-text').textContent =
-    winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
+  setHtml('final-scores', jeopardyState.teamNames.map((name, i) =>
+    `${name}: <strong>${jeopardyState.scores[i]}</strong> Punkte`).join('<br>'));
+  setText('winner-text', winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`);
   jeopardyState.active = false;
   closeJeopardyClue();
   const recordedToTournament = tournamentAutoRecordIfActive(jeopardyState.teamNames, jeopardyState.scores);

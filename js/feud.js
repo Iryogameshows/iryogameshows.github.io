@@ -572,7 +572,7 @@ function switchTeam() {
 }
 function updateActiveTeam() {
   for (let i = 0; i < state.teamCount; i++) {
-    document.getElementById(`team${i}-display`).classList.toggle('active-team', state.currentTeam === i);
+    setClass(`team${i}-display`, 'active-team', state.currentTeam === i);
   }
 }
 function updateScores() {
@@ -598,7 +598,7 @@ function nextRound() {
 }
 
 function endGame() {
-  document.getElementById('gm-bar').classList.remove('visible');
+  setClass('gm-bar', 'visible', false);
   feudBuzzDisconnect(); // ab jetzt läuft das Finale, kein Buzzer mehr nötig
   if (state.teamCount === 3) {
     const sorted = state.scores.map((s,i) => ({score:s, idx:i})).sort((a,b) => b.score - a.score);
@@ -617,11 +617,10 @@ function showResults() {
   fadeOutBackdrop(document.querySelector('.black-backdrop'));
   const maxScore = Math.max(...state.scores);
   const winners = state.teamNames.filter((_, i) => state.scores[i] === maxScore);
-  document.getElementById('final-scores').innerHTML = state.teamNames.map((name, i) =>
+  setHtml('final-scores', state.teamNames.map((name, i) =>
     `${name}: <strong>${state.scores[i]}</strong> Punkte`
-  ).join('<br>');
-  document.getElementById('winner-text').textContent =
-    winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`;
+  ).join('<br>'));
+  setText('winner-text', winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`);
   const recordedToTournament = tournamentAutoRecordIfActive(state.teamNames, state.scores);
   showEl('tour-goto-btn', recordedToTournament);
   if (!recordedToTournament) offerTournamentResult('Family Feud', state.teamNames, state.scores);
@@ -778,7 +777,7 @@ function loadRevealQuestion() {
   setText('finale-question', q.question);
   document.getElementById('finale-question').className = 'q-text';
   showEl('finale-board', true);
-  document.getElementById('finale-board').innerHTML = q.answers.map((a, i) => {
+  setHtml('finale-board', q.answers.map((a, i) => {
     const team1Picked = finaleState.teamAnswers[0][qi] === i;
     const team2Picked = finaleState.teamAnswers[1][qi] === i;
     let indicator = '';
@@ -796,7 +795,7 @@ function loadRevealQuestion() {
           <div class="tile-pts">${a.points}</div>
         </div>
       </div>`;
-  }).join('');
+  }).join(''));
 
   let revealDiv = document.getElementById('finale-reveal-comparison');
   if (!revealDiv) {
@@ -1037,11 +1036,11 @@ function updateGamemaster() {
   if (wwdsState.active) return updateGamemasterWwds();
   if (jeopardyState.active) return updateGamemasterJeopardy();
   if (finaleState.active) return updateGamemasterFinale();
-  if (document.getElementById('tournament-screen').classList.contains('active')) return updateGamemasterTournament();
+  if (screenActive('tournament-screen')) return updateGamemasterTournament();
   // Ohne diesen Zweig bleibt das GM-Fenster am Spielende auf dem letzten Stand
   // stehen: alle Modus-Flags sind aus, und der Feud-Fallback unten steigt bei
   // fehlender Frage wortlos aus - der Host kam nicht mehr zurück ins Menü.
-  if (document.getElementById('result-screen').classList.contains('active')) return updateGamemasterResult();
+  if (screenActive('result-screen')) return updateGamemasterResult();
   const q = state.roundQuestions[state.currentRound];
   if (!q) return;
 
@@ -1504,12 +1503,12 @@ function showTutorial() { runTutorial(feudTutorialSlides()); }
 
 function toggleGMBar() {
   const bar = document.getElementById('gm-bar');
-  const gameActive = document.getElementById('game-screen').classList.contains('active');
-  const finaleActive = document.getElementById('finale-screen').classList.contains('active');
-  const jeopardyActive = document.getElementById('jeopardy-screen').classList.contains('active');
-  const wwmActive = document.getElementById('wwm-screen').classList.contains('active');
-  const wwdsActive = document.getElementById('wwds-screen').classList.contains('active');
-  const resultActive = document.getElementById('result-screen').classList.contains('active');
+  const gameActive = screenActive('game-screen');
+  const finaleActive = screenActive('finale-screen');
+  const jeopardyActive = screenActive('jeopardy-screen');
+  const wwmActive = screenActive('wwm-screen');
+  const wwdsActive = screenActive('wwds-screen');
+  const resultActive = screenActive('result-screen');
   // Während eines Tutorials ist kein Screen aktiv - die Leiste soll sich aber
   // öffnen lassen, weil dort jetzt der Überspringen-Knopf sitzt.
   if (!gameActive && !finaleActive && !jeopardyActive && !wwmActive && !wwdsActive && !resultActive && !activeTutorialSkip) return;
@@ -1539,7 +1538,7 @@ function updateGMBar() {
     return;
   }
 
-  if (document.getElementById('result-screen').classList.contains('active')) {
+  if (screenActive('result-screen')) {
     bar.innerHTML = `<span class="gm-label">Spiel beendet</span>
       <button class="gm-btn gm-gold" onclick="gmBackToMenu()">🏠 Zum Menü</button>
       <button class="gm-btn gm-blue" onclick="gmPlayAgain()">↻ Nochmal spielen</button>`;
@@ -1638,15 +1637,15 @@ ensureEditorTopBtn();
 renderMenuIcons();
 renderIryoHubLogo();
 // Schriftart „Luckiest Guy" ist evtl. beim ersten Zeichnen noch nicht geladen -> danach neu rendern.
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (document.getElementById('menu-screen').classList.contains('active')) renderIryoHubLogo(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (screenActive('menu-screen')) renderIryoHubLogo(); });
 setText('sfx-toggle', SFX.enabled ? '🔊 Sound an' : '🔇 Sound aus');
 
 // ── MENU ──
 function handleLogoClick() {
-  const gameActive = document.getElementById('game-screen').classList.contains('active');
-  const finaleActive = document.getElementById('finale-screen').classList.contains('active');
-  const jeopardyActive = document.getElementById('jeopardy-screen').classList.contains('active');
-  const wwmActive = document.getElementById('wwm-screen').classList.contains('active');
+  const gameActive = screenActive('game-screen');
+  const finaleActive = screenActive('finale-screen');
+  const jeopardyActive = screenActive('jeopardy-screen');
+  const wwmActive = screenActive('wwm-screen');
   if (gameActive || finaleActive || jeopardyActive || wwmActive) toggleGMBar();
 }
 
