@@ -131,15 +131,45 @@ function pihParsePrice(s){
 }
 
 // picked: uids, die hervorgehoben werden (Rundensieger bzw. Gesamtsieger).
+/* Die Wertung. Sie stand in Beitrittsreihenfolge da und jede Karte sah gleich
+   aus - wer fuehrt, musste man sich aus fuenf Zahlen zusammensuchen. Jetzt
+   steht sie sortiert, mit Platzziffer, und die Spitze ist hervorgehoben.
+
+   Bei Gleichstand bleibt die urspruengliche Reihenfolge stehen (die Sortierung
+   faellt auf den Ausgangsindex zurueck). Ohne das springen zwei
+   Punktgleiche zwischen zwei Runden ohne Grund umeinander, und der Host
+   sucht seine Leute jedes Mal neu.
+
+   Gleiche Punktzahl heisst gleicher Platz: zwei mit je einem Punkt stehen
+   beide auf 2., nicht auf 2. und 3. */
 function pihRenderScores(picked){
   const box = document.getElementById('pih-scores');
   if (!box) return;
   const hot = picked || [];
-  box.innerHTML = pihState.players.map(p => {
+  // rank gehoert von Anfang an ins Objekt: wird es erst spaeter angehaengt,
+  // kennt die Typpruefung die Eigenschaft nicht (TS2339).
+  const ranked = pihState.players.map((p, i) => ({ p, i, rank: 0 }))
+    .sort((a, b) => b.p.score - a.p.score || a.i - b.i);
+  let rank = 0, prev = null;
+  ranked.forEach((r, idx) => {
+    if (r.p.score !== prev) { rank = idx + 1; prev = r.p.score; }
+    r.rank = rank;
+  });
+  const best = ranked.length ? ranked[0].p.score : 0;
+  box.innerHTML = ranked.map(r => {
+    const p = r.p;
     const av = p.avatar ? playerAvatarHtml(p) + ' ' : '';
-    return `<div class="pih-score${hot.includes(p.uid) ? ' picked' : ''}">
-      <div class="pih-score-name">${av}${escAttr(p.label)}</div>
-      <div class="pih-score-pts">${p.score}</div>
+    // Die Krone nur, wenn ueberhaupt schon jemand gepunktet hat - zu Beginn
+    // stehen alle auf null, und fuenf Kronen sagen nichts.
+    const fuehrt = best > 0 && p.score === best;
+    const cls = 'pih-score'
+      + (hot.includes(p.uid) ? ' picked' : '')
+      + (fuehrt ? ' lead' : '')
+      + (p.score ? '' : ' leer');
+    return `<div class="${cls}">
+      <span class="pih-rank">${fuehrt ? '👑' : r.rank + '.'}</span>
+      <span class="pih-score-name">${av}${escAttr(p.label)}</span>
+      <span class="pih-score-pts">${p.score}</span>
     </div>`;
   }).join('');
 }

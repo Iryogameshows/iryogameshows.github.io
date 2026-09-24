@@ -11,6 +11,38 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-24 — Wertung bei „Der Preis ist heiß"
+
+**Gemacht:** Die Punkteleiste ist eine Rangliste geworden: nach Punkten
+sortiert, mit Platzziffer, Krone für die Spitze, graue Null statt goldener.
+Aus den Kästen sind Pillen geworden, darunter eine Trennlinie.
+
+**Warum:** Sie stand in Beitrittsreihenfolge da und jede Karte sah gleich aus —
+wer führt, musste man sich aus fünf Zahlen zusammensuchen. Bei Gleichstand
+fällt die Sortierung auf den Ausgangsindex zurück, sonst springen zwei
+Punktgleiche zwischen zwei Runden ohne Grund umeinander. Gleiche Punktzahl
+heißt gleicher Platz (2./2./4.), nicht fortlaufend durchnummeriert.
+
+Die Krone kommt erst, wenn überhaupt jemand gepunktet hat — zu Beginn stehen
+alle auf null, und fünf Kronen sagen nichts. Das Leuchten bleibt `.picked`
+vorbehalten, dem Moment, in dem jemand den Punkt holt; „führt" ist nur getönt.
+
+Die Trennlinie bindet die Leiste an den Kopf der Seite. Vorher schwebte sie
+zwischen Logo und Artikel, ohne erkennbar zu einem von beiden zu gehören.
+
+**Geprüft:** `node check.js --types` ohne Befund. Mit fünf Teilnehmern:
+👑 Anna 3 · 2. David 2 · 3. Ben 1 · 3. Emil 1 · 5. Clara 0 — Gleichstand teilt
+sich den Platz, der nächste Platz überspringt entsprechend. Mit acht
+Teilnehmern zwei Zeilen, kein Querüberlauf, keine Überlappung mit der
+Gebotsliste (Leiste endet bei 204+x, Grid beginnt bei 423). Keine
+Konsolenfehler. Firebase während des Tests abgeklemmt, zwei Schreibversuche
+abgefangen, keiner davon `joinLocked`.
+
+**Fallstrick:** `r.rank` erst nachträglich an ein Objektliteral zu hängen gibt
+TS2339 — die Eigenschaft muss beim `map` schon drinstehen (`{ p, i, rank: 0 }`).
+
+---
+
 ## 2026-09-24 — Regeln in den Editor, Lobby-Kasten geordnet
 
 **Gemacht:** Die zwei Regel-Haken sind vom Setup- in den Fragen-Editor

@@ -1592,15 +1592,48 @@ body {
 .ddf-card .media-slots { margin-bottom: 10px; }
 
 /* ── Der Preis ist heiß ─────────────────────────────────────────────────── */
-.pih-scores { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 16px; }
-.pih-score {
-  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
-  border-radius: 10px; padding: 8px 14px; min-width: 104px; text-align: center;
-  transition: border-color .2s, box-shadow .2s, transform .2s;
+/* Die Wertung sitzt zwischen Logo und Artikel. Eine Trennlinie darunter
+   bindet sie an den Kopf der Seite, statt sie frei dazwischen schweben zu
+   lassen - vorher war nicht zu sehen, ob sie zum Logo oder zum Artikel
+   gehoert. */
+.pih-scores {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  margin: 0 auto 14px; padding-bottom: 13px; max-width: 900px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
 }
-.pih-score.picked { border-color: var(--gold); box-shadow: 0 0 18px rgba(var(--gold-rgb),.38); }
-.pih-score-name { font-weight: 700; margin-bottom: 4px; font-size: .9rem; }
-.pih-score-pts { font-size: 1.25rem; font-weight: 800; color: var(--gold); line-height: 1; }
+/* Pille statt Kasten: Platz, Name und Punkte stehen in einer Zeile. Das ist
+   flacher, passt bei acht Teilnehmern noch in eine Reihe - und liest sich wie
+   eine Rangliste statt wie eine Werkzeugleiste. */
+.pih-score {
+  display: flex; align-items: center; gap: 9px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
+  border-radius: 99px; padding: 7px 15px 7px 11px;
+  transition: border-color .2s var(--ease-out), box-shadow .2s var(--ease-out),
+              background .2s var(--ease-out), transform .2s var(--ease-out);
+}
+.pih-rank {
+  font-size: .7rem; font-weight: 900; min-width: 17px; text-align: center;
+  color: rgba(255,255,255,.3); font-variant-numeric: tabular-nums;
+}
+.pih-score-name { font-weight: 700; font-size: .88rem; }
+.pih-score-pts {
+  font-size: 1.1rem; font-weight: 900; color: var(--gold); line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+/* Wer fuehrt, faellt ins Auge, ohne zu leuchten - das Leuchten ist fuer den
+   Moment reserviert, in dem jemand den Punkt holt (.picked). */
+.pih-score.lead {
+  background: rgba(var(--gold-rgb),.09);
+  border-color: rgba(var(--gold-rgb),.45);
+}
+.pih-score.lead .pih-rank { font-size: .85rem; }
+/* Null Punkte bleiben lesbar, nehmen aber kein Gold in Anspruch. */
+.pih-score.leer .pih-score-pts { color: rgba(255,255,255,.25); }
+.pih-score.leer .pih-score-name { color: rgba(255,255,255,.6); }
+.pih-score.picked {
+  border-color: var(--gold); box-shadow: 0 0 18px rgba(var(--gold-rgb),.38);
+  transform: translateY(-2px);
+}
 .pih-item { text-align: center; font-size: 1.9rem; font-weight: 800; padding: 6px 12px 12px; }
 /* Das Artikelbild teilt sich die Höhe mit der Gebotsliste - deshalb eine feste
    Obergrenze statt max-height:100%, sonst drückt ein hohes Bild alles darunter
