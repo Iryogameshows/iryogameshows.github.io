@@ -2075,5 +2075,57 @@ body {
   border-radius:99px;padding:2px 11px;font-size:.72rem;font-weight:800;
   font-variant-numeric:tabular-nums;
 }
-.tp-editor-grid .panel-head{align-items:center;gap:10px;}
+/* .panel-head ist ausserhalb des Lobby-Kastens display:block - ohne flex
+   rutschen Zaehler und Loeschknopf unter die Namenszeile. */
+.tp-editor-grid .panel-head{display:flex;align-items:center;gap:10px;}
 .tp-editor-grid .q-list-item{flex-wrap:wrap;}
+
+/* ── Wertung bei „Der Dümmste fliegt" ─────────────────────────────────────
+   Dieselbe Ordnung wie bei „Der Preis ist heiß": die Leiste gehört zum Kopf
+   der Seite, nicht zur Frage darunter. Ausgeschiedene stehen hinten, das
+   laufende Feld bleibt zusammen. */
+.ddf-players {
+  padding-bottom: 12px; margin-bottom: 6px; max-width: 1000px;
+  margin-left: auto; margin-right: auto;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.ddf-hearts { line-height: 1; }
+/* Letztes Herz. Der Rand schlägt nicht Alarm, er ist nur wärmer als der
+   normale - das Rot ist für .picked reserviert, den Moment des Rauswurfs. */
+.ddf-player.last {
+  border-color: rgba(226,59,59,.45);
+  background: rgba(226,59,59,.07);
+}
+.ddf-player.last .ddf-player-name { color: #FFC9C9; }
+/* Wie viele noch im Spiel sind. Steht sonst nirgends - man musste die roten
+   Herzen zählen. */
+.ddf-alive {
+  text-align: center; font-size: .72rem; font-weight: 800; letter-spacing: 2px;
+  text-transform: uppercase; color: rgba(255,255,255,.35); margin-bottom: 10px;
+}
+
+/* ── Trivial Pursuit: eigene Kategorien ───────────────────────────────────
+   Farbe, Zeichen und Name stehen im Editor nebeneinander in der Kopfzeile
+   der Kategorie - dort, wo man sie sucht, und nicht in einem Untermenü. */
+.tp-cat-edit { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+/* Der Farbwähler ist in jedem Browser anders gebaut. Rahmen und Polster weg,
+   dann bleibt überall dasselbe Farbfeld übrig.
+
+   Der Selektor braucht den Elementnamen davor: die allgemeine Editor-Regel
+   für Eingabefelder ist spezifischer als eine blosse Klasse und drückte dem
+   Feld 11px 14px Polster auf - vom Farbfeld blieb ein Strich übrig. */
+.tp-editor-grid input.tp-cat-color {
+  width: 34px; height: 32px; padding: 0; border: none; border-radius: 8px;
+  background: transparent; cursor: pointer; flex: 0 0 34px;
+}
+.tp-editor-grid input.tp-cat-color::-webkit-color-swatch-wrapper { padding: 0; }
+.tp-editor-grid input.tp-cat-color::-webkit-color-swatch {
+  border: 2px solid rgba(255,255,255,.28); border-radius: 8px;
+}
+.tp-editor-grid input.tp-cat-color::-moz-color-swatch {
+  border: 2px solid rgba(255,255,255,.28); border-radius: 8px;
+}
+.tp-cat-icon {
+  width: 46px; text-align: center; font-size: 1.05rem; flex: 0 0 46px;
+}
+.tp-cat-name { flex: 1; min-width: 0; max-width: 260px; }

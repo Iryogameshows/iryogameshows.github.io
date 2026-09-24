@@ -100,21 +100,47 @@ function ddfByUid(uid){ return ddfState.players.find(p => p.uid === uid) || null
 // Anzeigename zu einer uid - für Listen, die nur uids führen (lastCounts, tied).
 function ddfNameOf(uid){ const p = ddfByUid(uid); return p ? p.label : ''; }
 
-// picked: uid des hervorzuhebenden Spielers (Verlierer bzw. Sieger).
+/* Die Wertung. picked ist die uid des hervorzuhebenden Spielers (Verlierer
+   bzw. Sieger).
+
+   Sortiert wird nach Spielstand, nicht nach Beitrittsreihenfolge: wer noch
+   drin ist, steht vorn, danach die Ausgeschiedenen. Das haelt das laufende
+   Feld zusammen - bei acht Teilnehmern standen die drei noch Lebenden sonst
+   verteilt zwischen den Ausgeschiedenen, und der Host musste bei jeder
+   Abstimmung neu suchen.
+
+   Innerhalb einer Gruppe entscheidet die urspruengliche Reihenfolge (die
+   Sortierung faellt auf den Ausgangsindex zurueck). Ohne das tauschen zwei
+   Gleichstehende nach jeder Runde grundlos die Plaetze.
+
+   Bewusst NICHT nach Leben sortiert: in diesem Spiel entscheidet die
+   Abstimmung, nicht der Punktestand - eine Rangfolge nach Herzen waere eine
+   Aussage, die das Spiel gar nicht macht. */
 function ddfRenderPlayers(picked){
   const box = document.getElementById('ddf-players');
   if (!box) return;
-  box.innerHTML = ddfState.players.map(p => {
+  const sorted = ddfState.players
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => (a.p.out === b.p.out ? a.i - b.i : (a.p.out ? 1 : -1)));
+  const alive = ddfState.players.filter(p => !p.out).length;
+  box.innerHTML = sorted.map(({ p }) => {
     let hearts = '';
     for (let i = 0; i < ddfState.maxLives; i++)
       hearts += `<span class="ddf-heart ${i < p.lives ? 'full' : 'empty'}">❤</span>`;
-    const cls = 'ddf-player' + (p.out ? ' out' : '') + (picked === p.uid ? ' picked' : '');
+    // Letztes Herz: der Moment, auf den in dieser Show alles zulaeuft. Er
+    // steht bisher nur in der Zahl der roten Herzen - bei fuenf Leben sieht
+    // man den Unterschied zwischen zwei und einem erst auf den zweiten Blick.
+    const cls = 'ddf-player'
+      + (p.out ? ' out' : '')
+      + (!p.out && p.lives === 1 ? ' last' : '')
+      + (picked === p.uid ? ' picked' : '');
     const av = p.avatar ? playerAvatarHtml(p) + ' ' : '';
     return `<div class="${cls}">
       <div class="ddf-player-name">${av}${escAttr(p.label)}</div>
-      <div>${hearts}</div>
+      <div class="ddf-hearts">${hearts}</div>
     </div>`;
   }).join('');
+  setText('ddf-alive', alive === 1 ? 'Einer übrig' : alive + ' noch dabei');
 }
 
 function ddfCurrentQuestion(){ return ddfData.questions[ddfState.order[ddfState.idx]] || null; }

@@ -416,6 +416,7 @@
 <div id="ddf-screen" class="screen">
   <div style="display:flex;flex-direction:column;height:100%;">
     <div class="ddf-players" id="ddf-players"></div>
+    <div class="ddf-alive" id="ddf-alive"></div>
     <div id="ddf-timer" style="text-align:center;font-size:1.4rem;font-weight:800;letter-spacing:.05em;"></div>
     <div class="ddf-question" id="ddf-question"></div>
     <div class="ddf-media-bar" id="ddf-media-bar"></div>
@@ -514,7 +515,7 @@
     <label for="tp-enable-team3">3. Team aktivieren</label>
   </div>
   <div class="tp-setup-panel">
-    <div class="tp-setup-head">Die sechs Tortenstücke</div>
+    <div class="tp-setup-head" id="tp-cat-head">Tortenstücke</div>
     <div class="tp-cats" id="tp-cat-preview"></div>
   </div>
   <div class="setup-lobby" id="tp-setup-lobby"></div>
@@ -550,6 +551,7 @@
       <div id="tp-editor-grid" class="tp-editor-grid"></div>
     </div>
     <div class="editor-side">
+      <button class="btn btn-accent" onclick="tpAddCat()">+ Kategorie</button>
       <button class="btn btn-secondary" onclick="exportTp()">Exportieren</button>
       <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importTp(event)" style="display:none;"></label>
       <button class="btn btn-primary" onclick="showScreen('tp-setup-screen')">Zurück</button>

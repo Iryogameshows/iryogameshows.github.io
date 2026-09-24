@@ -27,7 +27,13 @@
  *  sonst ist nicht erkennbar, worum gerade gespielt wird.
  *  @typedef {{ name: string, color: string, icon: string, questions: TpQuestion[] }} TpCategory */
 
-const TP_CATS = 6;
+/* Wie viele Tortenstuecke es gibt, bestimmt der Host. Sechs sind das Original
+   und die Voreinstellung; unter drei bleibt vom Spiel nichts uebrig, ueber
+   acht wird das Rad unlesbar. Rad, Torte und Wertung rechnen deshalb ueberall
+   mit tpCatCount(), nicht mit einer festen Zahl. */
+const TP_MIN_CATS = 3;
+const TP_MAX_CATS = 8;
+function tpCatCount(){ return tpData.categories.length; }
 
 /* Die sechs Kategorien sind fest - sie sind die sechs Tortenstuecke. Ihre
    Namen darf der Host aendern, ihre Anzahl nicht: bei fuenf oder sieben
@@ -125,17 +131,26 @@ function renderTpCatPreview(){
     </div>`;
   }).join('');
   setHtml('tp-cat-preview', html);
+  setText('tp-cat-head', tpData.categories.length + ' Tortenstücke');
 }
 
 function broadcastTpSetupTeamNames(){ broadcastSetupTeamNames('tp'); }
 function ensureTpLobbyConnected(){ ensureLobbyConnected('tp'); }
 
 function startTp(){
+  // Eine Kategorie ohne Frage kann das Rad zwar treffen, aber nie vergeben -
+  // das Tortenstueck bliebe fuer immer leer und niemand koennte gewinnen. Das
+  // faellt sonst erst nach einer halben Stunde auf.
+  const leer = tpData.categories.filter(c => !c.questions.length).map(c => c.name);
+  if (leer.length){
+    alert('Ohne Fragen geht es nicht: ' + leer.join(', ') + '\nDiese Tortenstücke wären nie zu gewinnen.');
+    return;
+  }
   const names = lobbyTeamNames('tp');
   tpState.active = true;
   tpState.teamNames = names;
-  tpState.wedges = names.map(() => Array.from({ length: TP_CATS }, () => false));
-  tpState.used = Array.from({ length: TP_CATS }, () => []);
+  tpState.wedges = names.map(() => Array.from({ length: tpCatCount() }, () => false));
+  tpState.used = Array.from({ length: tpCatCount() }, () => []);
   tpState.turn = 0;
   tpState.phase = 'spin';
   tpState.cat = -1;
@@ -173,7 +188,7 @@ function tpQuit(){
    Rendern neu aufgebaut, ginge die laufende Drehung verloren - ein frisches
    Element hat keine Animation. */
 function tpBuildWheel(){
-  const seg = 360 / TP_CATS;
+  const seg = 360 / tpCatCount();
   const stops = tpData.categories
     .map((c, i) => `${c.color} ${i*seg}deg ${(i+1)*seg}deg`)
     .join(',');
@@ -192,7 +207,7 @@ function tpBuildWheel(){
  *  @returns {number[]} */
 function tpOpenCats(){
   const open = [];
-  for (let i = 0; i < TP_CATS; i++){
+  for (let i = 0; i < tpCatCount(); i++){
     const cat = tpData.categories[i];
     if (cat && cat.questions.length > (tpState.used[i] || []).length) open.push(i);
   }
@@ -215,7 +230,7 @@ function tpSpin(){
   // Spiel abzubrechen. Eine Wiederholung ist unangenehmer als ein Abbruch
   // mitten in der Show - aber nur ein bisschen, und der Host merkt es sofort.
   if (!pool.length){
-    tpState.used = Array.from({ length: TP_CATS }, () => []);
+    tpState.used = Array.from({ length: tpCatCount() }, () => []);
     pool = tpOpenCats();
   }
   if (!pool.length) return;
@@ -223,7 +238,7 @@ function tpSpin(){
 
   tpState.spinning = true;
   tpRender();
-  const seg = 360 / TP_CATS;
+  const seg = 360 / tpCatCount();
   // Der Zeiger steht oben. Damit die Mitte des Segments unter ihm landet,
   // muss um dessen Mittelwinkel zurueckgedreht werden - plus vier volle
   // Umdrehungen, damit es nach Drehen aussieht und nicht nach Umschalten.
@@ -300,7 +315,7 @@ function tpAward(team, cat){
 /** @param {number} team */
 function tpHasAll(team){
   const w = tpState.wedges[team] || [];
-  return w.length === TP_CATS && w.every(Boolean);
+  return w.length === tpCatCount() && w.every(Boolean);
 }
 
 function tpNextTeam(){
@@ -393,7 +408,7 @@ function tpJudgeFinal(ok){
 function tpWedgeSvg(team, size){
   const r = 46, cx = 50, cy = 50;
   const owned = tpState.wedges[team] || [];
-  const seg = 360 / TP_CATS;
+  const seg = 360 / tpCatCount();
   const parts = tpData.categories.map((c, i) => {
     const a0 = (i*seg - 90) * Math.PI/180;
     const a1 = ((i+1)*seg - 90) * Math.PI/180;
@@ -415,7 +430,7 @@ function tpRenderTeams(){
     return `<div class="tp-team ${TEAM_COLORS[i] || ''}${isTurn ? ' turn' : ''}">
       ${tpWedgeSvg(i, 92)}
       <div class="tp-team-name">${escAttr(name)}</div>
-      <div class="tp-team-sub">${tpState.winner === i ? '🏆 Sieger' : isFinal ? '🏁 Schlussfrage' : count + ' von ' + TP_CATS}</div>
+      <div class="tp-team-sub">${tpState.winner === i ? '🏆 Sieger' : isFinal ? '🏁 Schlussfrage' : count + ' von ' + tpCatCount()}</div>
     </div>`;
   }).join('');
   setHtml('tp-teams', html);
@@ -509,8 +524,17 @@ function renderTpEditor(){
       </div>`).join('') || `<div class="pr-empty">Noch keine Frage in dieser Kategorie.</div>`;
     return `<div class="editor-card" style="border-left:6px solid ${c.color};">
       <div class="panel-head" onclick="tpToggleCat(${i})" style="cursor:pointer;">
-        <span>${c.icon} <input type="text" value="${escAttr(c.name)}" onclick="event.stopPropagation()" oninput="tpSetCatName(${i},this)" style="width:220px;"></span>
+        <span class="tp-cat-edit" onclick="event.stopPropagation()">
+          <input type="color" class="tp-cat-color" value="${escAttr(c.color)}" title="Farbe des Tortenstücks"
+                 oninput="tpSetCatColor(${i},this)">
+          <input type="text" class="tp-cat-icon" value="${escAttr(c.icon)}" maxlength="4" title="Zeichen"
+                 oninput="tpSetCatIcon(${i},this)">
+          <input type="text" class="tp-cat-name" value="${escAttr(c.name)}" placeholder="Kategorie"
+                 oninput="tpSetCatName(${i},this)">
+        </span>
         <span class="badge">${c.questions.length}</span>
+        <button class="btn btn-danger btn-sm" title="Kategorie löschen" ${tpCatCount() <= TP_MIN_CATS ? 'disabled' : ''}
+                onclick="event.stopPropagation();tpDelCat(${i})">✕</button>
       </div>
       ${open ? `<div style="margin-top:10px;">${rows}
         <div class="panel-row">
@@ -527,7 +551,45 @@ function renderTpEditor(){
 
 function tpSetQ(i, j, input){ tpData.categories[i].questions[j].q = input.value; tpSave(); }
 function tpSetA(i, j, input){ tpData.categories[i].questions[j].a = input.value; tpSave(); }
-function tpSetCatName(i, input){ tpData.categories[i].name = input.value; tpSave(); }
+function tpSetCatName(i, input){ tpData.categories[i].name = input.value; tpSave(); renderTpCatPreview(); }
+function tpSetCatIcon(i, input){ tpData.categories[i].icon = input.value; tpSave(); renderTpCatPreview(); }
+/* Die Farbe wird im Editor als Streifen am Kartenrand gezeigt - der muss
+   mitgehen, deshalb hier ein Neuzeichnen. Name und Zeichen stehen in
+   Eingabefeldern; die duerfen NICHT neu gebaut werden, sonst springt beim
+   Tippen der Cursor ans Ende. */
+function tpSetCatColor(i, input){
+  tpData.categories[i].color = input.value;
+  tpSave();
+  renderTpEditor();
+  renderTpCatPreview();
+}
+
+/* Startfarben fuer neue Kategorien. Der Host darf jede aendern - hier steht
+   nur, womit eine neue anfaengt, damit zwei frische nicht denselben Ton
+   bekommen und auf dem Rad verschmelzen. */
+const TP_NEW_COLORS = ['#8B5CF6','#14B8A6','#F43F5E','#84CC16','#0EA5E9','#D946EF','#FB923C','#64748B'];
+
+function tpAddCat(){
+  if (tpCatCount() >= TP_MAX_CATS) { alert('Mehr als ' + TP_MAX_CATS + ' Tortenstücke werden auf dem Rad unlesbar.'); return; }
+  const used = tpData.categories.map(c => String(c.color || '').toUpperCase());
+  const color = TP_NEW_COLORS.find(c => !used.includes(c.toUpperCase())) || TP_NEW_COLORS[0];
+  tpData.categories.push({ name:'Neue Kategorie', color, icon:'❓', questions:[] });
+  tpEditOpen = tpCatCount() - 1;
+  tpSave();
+  renderTpEditor();
+  renderTpCatPreview();
+}
+
+function tpDelCat(i){
+  if (tpCatCount() <= TP_MIN_CATS) { alert('Unter ' + TP_MIN_CATS + ' Tortenstücken bleibt vom Spiel nichts übrig.'); return; }
+  const c = tpData.categories[i];
+  if (c.questions.length && !confirm('"' + c.name + '" mit ' + c.questions.length + ' Fragen löschen?')) return;
+  tpData.categories.splice(i, 1);
+  if (tpEditOpen >= tpCatCount()) tpEditOpen = tpCatCount() - 1;
+  tpSave();
+  renderTpEditor();
+  renderTpCatPreview();
+}
 function tpAddQuestion(i){ tpData.categories[i].questions.push({ q:'', a:'' }); tpSave(); renderTpEditor(); }
 function tpDelQuestion(i, j){ tpData.categories[i].questions.splice(j, 1); tpSave(); renderTpEditor(); }
 
@@ -571,11 +633,11 @@ function importTp(e){
   r.onload = () => {
     try {
       const d = JSON.parse(String(r.result));
-      // Sechs Kategorien sind Bedingung, nicht Empfehlung: die Torte hat sechs
-      // Stuecke. Eine Datei mit vier Kategorien wuerde das Spiel unspielbar
-      // machen, und zwar erst mitten in der Show.
-      if (!d || !Array.isArray(d.categories) || d.categories.length !== TP_CATS){
-        alert('Die Datei braucht genau ' + TP_CATS + ' Kategorien.');
+      // Die Spanne ist Bedingung, nicht Empfehlung. Ohne diese Pruefung faellt
+      // eine kaputte Datei erst mitten in der Show auf.
+      if (!d || !Array.isArray(d.categories)
+          || d.categories.length < TP_MIN_CATS || d.categories.length > TP_MAX_CATS){
+        alert('Die Datei braucht ' + TP_MIN_CATS + ' bis ' + TP_MAX_CATS + ' Kategorien.');
         return;
       }
       tpData = d;

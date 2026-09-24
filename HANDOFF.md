@@ -11,6 +11,49 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-24 — DDF-Wertung, eigene Kategorien in Trivial Pursuit
+
+**Gemacht:** Die Spielerleiste bei „Der Dümmste fliegt" sortiert jetzt
+Ausgeschiedene nach hinten, hebt das letzte Herz hervor und zählt, wie viele
+noch dabei sind. In Trivial Pursuit sind die Kategorien frei: Anzahl (3–8),
+Farbe, Zeichen und Name.
+
+**Warum:**
+
+DDF wird **nicht** nach Leben sortiert, nur nach drin/raus. In diesem Spiel
+entscheidet die Abstimmung, nicht der Punktestand — eine Rangfolge nach Herzen
+wäre eine Aussage, die das Spiel gar nicht macht. Innerhalb einer Gruppe
+entscheidet die ursprüngliche Reihenfolge, sonst tauschen zwei Gleichstehende
+nach jeder Runde grundlos die Plätze. Das letzte Herz bekommt einen wärmeren
+Rand, nicht den roten — Rot ist für `.picked` reserviert, den Rauswurf.
+
+TP rechnet überall mit `tpCatCount()` statt mit einer festen Zahl; Rad, Torte,
+Vorschau und „x von y" gehen mit. Grenzen 3 und 8: darunter bleibt vom Spiel
+nichts übrig, darüber wird das Rad unlesbar. **Neue Startprüfung:** eine
+Kategorie ohne Frage kann das Rad zwar treffen, aber nie vergeben — das
+Tortenstück bliebe für immer leer und niemand könnte gewinnen. `startTp()`
+weigert sich jetzt und nennt die betroffenen Kategorien.
+
+**Geprüft:** `node check.js --types` ohne Befund. DDF mit sechs Teilnehmern:
+Reihenfolge Anna, Ben (letztes Herz), David, Frieda, dann Clara und Emil als
+ausgeschieden; Zähler „4 noch dabei". TP: hinzufügen, Farbe ändern, löschen bis
+zur Untergrenze (Knopf dann gesperrt), Überschrift und Vorschau folgen. Spiel
+mit **vier** Kategorien gestartet: vier Radsegmente, vier Tortensektoren, vier
+Stücke je Team, und nach der Drehung steht der Zeiger auf genau der gezogenen
+Kategorie. Start mit leerer Kategorie wird abgelehnt. Auslieferungszustand nach
+`localStorage`-Reset weiterhin sechs Kategorien. Keine Konsolenfehler. Firebase
+abgeklemmt.
+
+**Fallstricke:** Zwei CSS-Regeln griffen nicht, weil etwas Spezifischeres
+davorstand — `.panel-head` ist außerhalb des Lobby-Kastens `display:block`
+(Zähler und Löschknopf rutschten unter die Zeile), und die allgemeine
+Editor-Regel für Eingabefelder drückte dem Farbwähler `11px 14px` Polster auf,
+sodass vom Farbfeld ein Strich übrig blieb. Beides mit höherer Spezifität
+gelöst, nicht mit `!important`. Merke: im Editor immer die *berechneten* Werte
+nachsehen, bevor man an der eigenen Regel zweifelt.
+
+---
+
 ## 2026-09-24 — Wertung bei „Der Preis ist heiß"
 
 **Gemacht:** Die Punkteleiste ist eine Rangliste geworden: nach Punkten
