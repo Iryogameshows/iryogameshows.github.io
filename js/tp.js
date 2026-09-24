@@ -111,6 +111,22 @@ function tpToggleTeam3(){
   showEl('tp-t3-card', fieldChecked('tp-enable-team3'));
   broadcastTpSetupTeamNames();
 }
+/* Die sechs Kategorien auf dem Setup-Screen. Das ist nicht Schmuck: der Host
+   sieht hier vor dem Start, was geladen ist und wie viele Fragen je Farbe
+   bereitliegen. Eine leere Kategorie faellt sonst erst auf, wenn das Rad im
+   Spiel darauf stehen bleibt - und dann ist der Zug weg. */
+function renderTpCatPreview(){
+  const html = tpData.categories.map(c => {
+    const n = c.questions.length;
+    return `<div class="tp-chip${n ? '' : ' leer'}" style="--c:${escAttr(c.color)};">
+      <span class="tp-chip-icon">${c.icon}</span>
+      <span class="tp-chip-name">${escAttr(c.name)}</span>
+      <span class="tp-chip-count">${n ? n : '!'}</span>
+    </div>`;
+  }).join('');
+  setHtml('tp-cat-preview', html);
+}
+
 function broadcastTpSetupTeamNames(){ broadcastSetupTeamNames('tp'); }
 function ensureTpLobbyConnected(){ ensureLobbyConnected('tp'); }
 

@@ -1910,3 +1910,71 @@ body {
 @media (prefers-reduced-motion: reduce){
   .tp-wheel-rotor{transition-duration:.4s !important;}
 }
+
+/* ── Trivial-Pursuit-Setup ────────────────────────────────────────────────
+   Vorher standen die Regeln als drei einzeln zentrierte Haken-Zeilen da.
+   Jede Zeile war anders breit, also sass jedes Kaestchen woanders - das Auge
+   findet darin keine Kante. Jetzt eine Tafel mit fester linker Kante: die
+   Kaestchen stehen untereinander, die Erklaerung haengt am Text. */
+.tp-setup-panel{
+  width:100%;max-width:640px;margin:4px auto 0;
+  padding:18px 22px;border-radius:16px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+  display:flex;flex-direction:column;gap:10px;
+}
+.tp-setup-head{
+  font-size:.66rem;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.35);
+}
+.tp-setup-head + .tp-setup-head,
+.tp-cats + .tp-setup-head{margin-top:8px;}
+
+/* Raster statt Umbruch: bei freiem Umbruch endet jede Zeile woanders, weil die
+   Namen verschieden lang sind. Drei gleich breite Spalten geben den sechs
+   Stuecken eine Kante - und nebenbei dieselbe Anordnung wie auf dem Rad. */
+.tp-cats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.tp-chip{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 12px 7px 9px;border-radius:99px;
+  background:rgba(255,255,255,.04);
+  /* Der Rand traegt die Kategoriefarbe, nicht die Flaeche: sechs volle Farben
+     nebeneinander erschlagen den Screen, und das Rad soll der bunte Teil
+     bleiben. */
+  border:1.5px solid var(--c);
+  transition:background var(--t-med) var(--ease-out),transform var(--t-med) var(--ease-out);
+}
+.tp-chip:hover{background:rgba(255,255,255,.07);transform:translateY(-1px);}
+.tp-chip-icon{font-size:1rem;line-height:1;}
+.tp-chip-name{font-size:.8rem;font-weight:700;color:rgba(255,255,255,.82);}
+.tp-chip-count{
+  margin-left:auto;
+  min-width:20px;padding:1px 6px;border-radius:99px;text-align:center;
+  font-size:.7rem;font-weight:900;color:#0b0e2c;background:var(--c);
+  font-variant-numeric:tabular-nums;
+}
+/* Eine Kategorie ohne Frage ist ein Spielabbruch in Zeitlupe - der Host muss
+   das vor dem Start sehen, nicht mittendrin. */
+.tp-chip.leer{border-color:var(--red);background:rgba(var(--red-rgb),.1);}
+.tp-chip.leer .tp-chip-count{background:var(--red);color:#fff;}
+.tp-chip.leer .tp-chip-name{color:rgba(255,255,255,.55);}
+
+.tp-rule{
+  display:flex;align-items:flex-start;gap:12px;cursor:pointer;
+  padding:9px 10px;border-radius:12px;
+  transition:background var(--t-fast) var(--ease-out);
+}
+.tp-rule:hover{background:rgba(255,255,255,.04);}
+.tp-rule input[type=checkbox]{
+  width:18px;height:18px;accent-color:var(--green);cursor:pointer;
+  margin-top:2px;flex:0 0 18px;
+}
+.tp-rule-text{display:flex;flex-direction:column;gap:2px;}
+.tp-rule-text b{font-size:.88rem;font-weight:800;color:rgba(255,255,255,.88);}
+.tp-rule-text em{font-size:.74rem;font-style:normal;color:rgba(255,255,255,.4);line-height:1.45;}
+
+@media (max-width:760px){ .tp-cats{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:620px){
+  .tp-setup-panel{padding:14px 16px;}
+  .tp-chip-name{font-size:.74rem;}
+}
+@media (max-width:420px){ .tp-cats{grid-template-columns:1fr;} }

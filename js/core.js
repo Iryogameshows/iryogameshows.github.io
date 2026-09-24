@@ -645,7 +645,7 @@ function showScreen(id) {
   if (id === 'pih-edit-screen') renderPihEditor();
   if (id === 'pih-setup-screen') { pihLoadSettings(); renderPihRulePick(); renderRosterInputs('pih'); ensureRosterConnected('pih'); }
   if (id === 'tp-edit-screen') renderTpEditor();
-  if (id === 'tp-setup-screen') { tpLoadSettings(); tpToggleTeam3(); ensureTpLobbyConnected(); }
+  if (id === 'tp-setup-screen') { tpLoadSettings(); tpToggleTeam3(); renderTpCatPreview(); ensureTpLobbyConnected(); }
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();

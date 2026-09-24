@@ -513,13 +513,24 @@
     <input type="checkbox" id="tp-enable-team3" onchange="tpToggleTeam3()">
     <label for="tp-enable-team3">3. Team aktivieren</label>
   </div>
-  <div class="team-toggle">
-    <input type="checkbox" id="tp-again-check" checked>
-    <label for="tp-again-check">Richtig = nochmal drehen</label>
-  </div>
-  <div class="team-toggle">
-    <input type="checkbox" id="tp-steal-check" checked>
-    <label for="tp-steal-check">Nachfassen per Buzzer, wenn das Team danebenliegt</label>
+  <div class="tp-setup-panel">
+    <div class="tp-setup-head">Die sechs Tortenstücke</div>
+    <div class="tp-cats" id="tp-cat-preview"></div>
+    <div class="tp-setup-head">Regeln</div>
+    <label class="tp-rule">
+      <input type="checkbox" id="tp-again-check" checked>
+      <span class="tp-rule-text">
+        <b>Richtig = nochmal drehen</b>
+        <em>Wie im Original. Aus: nach jeder Frage ist das nächste Team dran.</em>
+      </span>
+    </label>
+    <label class="tp-rule">
+      <input type="checkbox" id="tp-steal-check" checked>
+      <span class="tp-rule-text">
+        <b>Nachfassen per Buzzer</b>
+        <em>Liegt das Team am Zug daneben, dürfen die anderen darum buzzern.</em>
+      </span>
+    </label>
   </div>
   <div class="setup-lobby" id="tp-setup-lobby"></div>
   <div class="setup-actions">

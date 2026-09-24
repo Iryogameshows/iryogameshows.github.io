@@ -11,6 +11,29 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-24 — Setup-Screen von Trivial Pursuit
+
+**Gemacht:** Die zwei Regel-Haken stehen jetzt in einer eigenen Tafel, darüber
+eine Vorschau der sechs Kategorien mit Farbe und Fragenzahl.
+
+**Warum:** Vorher waren es drei einzeln zentrierte `.team-toggle`-Zeilen. Jede
+war anders breit, also saß jedes Kästchen woanders — das Auge findet darin
+keine Kante. Die Tafel gibt eine feste linke Kante, die Erklärung hängt am Text
+statt in der Zeile zu stehen. Die Kategorien liegen in einem Raster aus drei
+gleich breiten Spalten, nicht im freien Umbruch: sonst endet jede Zeile
+woanders, weil die Namen verschieden lang sind.
+
+Die Vorschau ist nicht Schmuck. Eine Kategorie ohne Frage fällt sonst erst auf,
+wenn das Rad im Spiel darauf stehen bleibt — sie wird jetzt rot ausgewiesen,
+vor dem Start.
+
+**Geprüft:** `node check.js --types` ohne Befund. Im Browser: sechs Chips,
+gleiche Breite (191 px), drei Spaltenpositionen; beide Kästchen auf derselben
+x-Position (208,1 px) — vorher drei verschiedene. Bei 400 px Fensterbreite eine
+Spalte, kein Querüberlauf (`scrollWidth` 400 = `innerWidth`).
+
+---
+
 ## 2026-09-24 — Trivial Pursuit, Schätzfragen mit Text (`36cdbc5`)
 
 ### Gemacht
