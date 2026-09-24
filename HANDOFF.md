@@ -11,6 +11,42 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-24 — GM-Panels für die drei neuen Shows
+
+**Gemacht:** „Der Dümmste fliegt", „Der Preis ist heiß" und Trivial Pursuit
+haben jetzt ein eigenes Gamemaster-Panel. Es öffnet beim Start, noch vor dem
+Intro, und die Fernsteuerung vom Handy-Gamepad kennt ihre Funktionen.
+
+**Warum das vorher fehlte — und warum das falsch war:** Ich hatte sie bewusst
+weggelassen, weil `updateGamemaster()` sonst auf den Feud-Zweig zurückfällt.
+Der Schluss daraus war falsch: nicht „dann kein GM-Fenster", sondern „dann ein
+eigener Zweig". Ohne Panel ist die Show nur am Hauptrechner moderierbar, denn
+`gamepad/index.html` spiegelt genau dieses Fenster. Das GM-„Fenster" ist
+übrigens kein Popup, sondern das eingebettete iframe `gm-embed-frame` — es
+lässt sich deshalb direkt aus der Seite heraus prüfen.
+
+**Aufbau:** Je Spiel `xGmControlsHtml(pfx)` für die Knopfleiste und
+`updateGamemasterX()` für das Dokument, wie `wwdsControlsHtml` /
+`updateGamemasterWwds`. Dispatch in `updateGamemaster()` vor dem Feud-Rückfall.
+
+Die Lösung steht im GM-Fenster **immer**, auch solange sie auf der Leinwand
+verdeckt ist — DDF die Antwort, PIH der echte Preis, TP die Antwort. Sonst
+kann der Host nicht urteilen.
+
+Gäste ohne Handy sind vom GM aus bedienbar: DDF stimmt über
+`ddfHostVote(voterUid, candUid)` ab, PIH über das neue
+`pihHostBidValue(uid, value)`. Nötig, weil `pihHostBid(i)` seinen Wert aus
+einem Eingabefeld im **Hauptfenster** liest — das gibt es im GM-Fenster nicht.
+
+**Geprüft:** `node check.js --types` ohne Befund. Alle drei Shows gestartet,
+durchs Intro geklickt und **aus dem GM-Fenster heraus gespielt**: TP gedreht,
+Frage gezogen, falsch geurteilt → Nachfassen mit Knopf je Gegner; DDF
+aufgedeckt und zur Abstimmung, neun Gast-Stimmknöpfe (3 Wähler × 3
+Kandidaten); PIH Gebote geöffnet, drei Gast-Eingabefelder, echter Preis im GM
+sichtbar und auf der Leinwand leer. Keine Konsolenfehler.
+
+---
+
 ## 2026-09-24 — Popout und Intros für die drei neuen Shows
 
 **Gemacht:** „Der Dümmste fliegt", „Der Preis ist heiß" und Trivial Pursuit

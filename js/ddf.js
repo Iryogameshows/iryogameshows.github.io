@@ -198,6 +198,7 @@ function ddfRenderRound(){
   ddfRenderMediaBar();
   ddfRenderVoteGrid();
   ddfRenderControls();
+  updateGamemaster();
 }
 
 function ddfRenderControls(){
@@ -655,6 +656,9 @@ function ddfIntroThenGame(){
   const old = document.querySelector('.black-backdrop');
   if (old) old.remove();
   addBlackBackdrop();
+  // Schon jetzt oeffnen, damit Intro und Anleitung vom GM-Fenster (und vom
+  // Handy-Gamepad) aus weitergeklickt werden koennen.
+  openGamemaster();
   const ov = document.createElement('div');
   ov.className = 'intro-overlay';
   ov.innerHTML = `<div class="game-intro-sign">${gameCardIcon('ddf')}</div>`;
@@ -716,4 +720,105 @@ function ddfTutorialSlides(){
      <div class="tut-sub">Nicht der Klügste gewinnt, sondern der,<br>
        den keiner rauswählen wollte.</div>`,
   ];
+}
+
+/* ── GAMEMASTER-PANEL ──────────────────────────────────────────────────────
+   Ohne dieses Panel war die Show nur am Hauptrechner moderierbar: das
+   Handy-Gamepad (gamepad/index.html) spiegelt genau dieses Fenster. Fehlte
+   es, fiel updateGamemaster() auf den Feud-Zweig zurueck und zeigte einen
+   Stand, der gar nicht laeuft.
+
+   Die Knopfleiste steht in einer eigenen Funktion mit Praefix, damit sie im
+   GM-Fenster ("opener.") und spaeter auch anderswo aus einer Quelle kommt -
+   dasselbe Muster wie wwdsControlsHtml(). */
+function ddfGmControlsHtml(pfx){
+  const s = ddfState;
+  let b = '';
+  if (s.phase === 'question'){
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfReveal()">Antwort zeigen</button>`;
+    if (s.roundTime) b += `<button class="gm-btn gm-gray" onclick="${pfx}ddfStartTimer()">⏱ Zeit starten</button>`;
+  } else if (s.phase === 'answer'){
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfBeginVote()">Zur Abstimmung</button>`;
+    b += `<button class="gm-btn gm-gray" onclick="${pfx}ddfNext()">Frage überspringen</button>`;
+  } else if (s.phase === 'vote'){
+    const { done, total } = ddfVoteProgress();
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfEvaluateVote()">Auswerten${done < total ? ' (vorzeitig)' : ''}</button>`;
+  } else if (s.phase === 'runoffAnnounce'){
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfStartRunoff()">🔁 Stichwahl starten</button>`;
+  } else if (s.phase === 'result'){
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfAfterResult()">Weiter →</button>`;
+  }
+  b += `<button class="gm-btn gm-gray" onclick="${pfx}ddfQuit()">Beenden</button>`;
+  return b;
+}
+
+function updateGamemasterDdf(){
+  const s = ddfState;
+  const q = ddfCurrentQuestion();
+  const { done, total } = ddfVoteProgress();
+
+  // Die Antwort steht im GM-Fenster IMMER, auch wenn sie auf der Leinwand noch
+  // verdeckt ist - der Host muss wissen, was richtig ist, bevor er aufdeckt.
+  let body = q
+    ? `<div class="question">${escapeHtml(q.q)}</div>
+       <div class="hint-line">Antwort: <b style="color:#FFD23F;">${escapeHtml(q.answer)}</b>${
+         ddfAnswerRevealed() ? ' <span style="color:#22C55E;">· aufgedeckt</span>' : ' <span style="color:rgba(255,255,255,.35);">· noch verdeckt</span>'}</div>
+       ${qNoteHtml(q.note)}
+       ${mediaControlButtonsHtml(ddfAnswerRevealed() ? q.aMedia : q.qMedia, 'ddfShowMedia')}`
+    : `<div class="hint-line">Keine Frage offen.</div>`;
+
+  if (s.phase === 'vote' || s.phase === 'runoffAnnounce'){
+    const counts = ddfVoteCounts();
+    const cands = ddfCandidates();
+    body += `<div class="hint-line" style="margin-top:10px;">Abstimmung: <b>${done}/${total}</b> abgegeben</div>
+      <div class="answer-list">` + cands.map(p => `
+        <div class="answer">
+          <span><span class="text">${escapeHtml(p.label)}</span></span>
+          <span class="pts">${counts[p.uid] || 0}</span>
+        </div>`).join('') + `</div>
+      <div class="hint-line">Gäste ohne Handy stimmen hier ab:</div>
+      <div class="panel-row" style="flex-wrap:wrap;gap:5px;">` +
+        ddfGuestVoters().map(v => cands.map(c =>
+          `<button class="gm-btn ${s.hostVotes[v.uid] === c.uid ? 'gm-gold' : 'gm-gray'} sm"
+             onclick="opener.ddfHostVote('${v.uid}','${c.uid}')">${escapeHtml(v.label)} → ${escapeHtml(c.label)}</button>`).join('')).join('') +
+      `</div>`;
+  }
+  if (s.phase === 'result' && s.loser){
+    body += `<div class="hint-line" style="margin-top:10px;">Verliert ein Herz:
+      <b style="color:#E8453C;">${escapeHtml(ddfNameOf(s.loser))}</b></div>`;
+  }
+
+  const rows = s.players.map(p => {
+    const herz = Array.from({ length: s.maxLives }, (_, i) =>
+      `<span style="color:${i < p.lives ? '#E8453C' : 'rgba(255,255,255,.15)'}">❤</span>`).join('');
+    return `<div class="money" style="${p.out ? 'opacity:.4;' : ''}">
+      <span>${escapeHtml(p.label)}${p.out ? ' <span class="tm">raus</span>' : ''}</span>
+      <strong>${herz}</strong></div>`;
+  }).join('');
+
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}
+  .money{display:flex;justify-content:space-between;gap:10px;font-size:.85rem;margin-bottom:3px;}
+  .tm{font-size:.72rem;color:rgba(255,255,255,.5);}
+</style></head><body>
+  ${gmHeaderHtml('Gamemaster', `Der Dümmste fliegt · ${
+    s.phase === 'vote' ? 'Abstimmung' : s.phase === 'runoffAnnounce' ? 'Stichwahl'
+    : s.phase === 'result' ? 'Ergebnis' : s.phase === 'answer' ? 'Aufgelöst' : 'Frage'}`)}
+  <div class="gm-body">
+  <div class="gm-main">${body}</div>
+  <div class="gm-side">
+  <div class="panel">
+    <div class="panel-head"><span>❤ Leben</span><span class="badge">${ddfAlive().length} übrig</span></div>
+    ${rows}
+    <div class="tm">${s.roundTime ? (s.timeUp ? 'Zeit abgelaufen' : 'Timer: ' + s.timer + ' s') : ''}</div>
+  </div>
+  ${gmNotesPanelHtml()}
+  </div>
+  </div>
+  <div class="gm-actions">${ddfGmControlsHtml('opener.')}</div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
 }

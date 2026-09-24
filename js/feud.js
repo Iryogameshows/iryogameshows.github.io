@@ -1048,6 +1048,9 @@ function updateGamemaster() {
   if (wwmState.active) return updateGamemasterWwm();
   if (wwdsState.active) return updateGamemasterWwds();
   if (jeopardyState.active) return updateGamemasterJeopardy();
+  if (ddfState.active) return updateGamemasterDdf();
+  if (pihState.active) return updateGamemasterPih();
+  if (tpState.active) return updateGamemasterTp();
   if (finaleState.active) return updateGamemasterFinale();
   if (screenActive('tournament-screen')) return updateGamemasterTournament();
   // Ohne diesen Zweig bleibt das GM-Fenster am Spielende auf dem letzten Stand

@@ -217,6 +217,7 @@ function pihRenderRound(){
 
   pihRenderBidGrid();
   pihRenderControls();
+  updateGamemaster();
 }
 
 function pihRenderControls(){
@@ -666,6 +667,9 @@ function pihIntroThenGame(){
   const old = document.querySelector('.black-backdrop');
   if (old) old.remove();
   addBlackBackdrop();
+  // Schon jetzt oeffnen, damit Intro und Anleitung vom GM-Fenster (und vom
+  // Handy-Gamepad) aus weitergeklickt werden koennen.
+  openGamemaster();
   const ov = document.createElement('div');
   ov.className = 'intro-overlay';
   ov.innerHTML = `<div class="game-intro-sign">${gameCardIcon('pih')}</div>`;
@@ -727,4 +731,114 @@ function pihTutorialSlides(){
      <div class="tut-sub">Die Wertung steht die ganze Zeit oben —<br>
        wer führt, trägt die Krone.</div>`,
   ];
+}
+
+/* Gebot eines Gastes setzen, ohne das Eingabefeld auf dem Hauptbildschirm zu
+   brauchen. pihHostBid() liest es aus dem DOM des Hauptfensters - aus dem
+   GM-Fenster heraus gibt es das Feld dort gar nicht. */
+function pihHostBidValue(uid, value){
+  const p = pihByUid(uid);
+  if (!p) return;
+  const num = pihParsePrice(value);
+  pihState.hostBids = pihState.hostBids || {};
+  if (num === null) { delete pihState.hostBids[uid]; }
+  else pihState.hostBids[uid] = { name: p.name, value: String(value).trim(), num, ts: Date.now() };
+  pihUpdateBidProgress();
+  updateGamemaster();
+}
+
+/* ── GAMEMASTER-PANEL ──────────────────────────────────────────────────────
+   Siehe ddf.js: ohne Panel ist die Show nur am Hauptrechner moderierbar, weil
+   das Handy-Gamepad genau dieses Fenster spiegelt. */
+function pihGmControlsHtml(pfx){
+  const s = pihState;
+  let b = '';
+  if (s.phase === 'show'){
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}pihBeginBids()">Gebote öffnen</button>`;
+    b += `<button class="gm-btn gm-gray" onclick="${pfx}pihSkip()">Artikel überspringen</button>`;
+  } else if (s.phase === 'bid'){
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}pihEvaluate()">Auflösen</button>`;
+    if (s.roundTime) b += `<button class="gm-btn gm-gray" onclick="${pfx}pihStartTimer()">⏱ Zeit neu</button>`;
+  } else if (s.phase === 'result'){
+    const last = s.idx + 1 >= s.order.length;
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}pihAfterResult()">${last ? 'Endstand' : 'Weiter →'}</button>`;
+  }
+  b += `<button class="gm-btn gm-gray" onclick="${pfx}pihQuit()">Beenden</button>`;
+  return b;
+}
+
+function updateGamemasterPih(){
+  const s = pihState;
+  const it = pihCurrentItem();
+  const prog = pihBidProgress();
+  const rule = PIH_RULES.find(r => r.key === s.rule) || PIH_RULES[0];
+
+  // Der echte Preis steht im GM-Fenster von Anfang an - der Host muss wissen,
+  // worauf es hinauslaeuft, bevor er aufloest. Auf der Leinwand bleibt er bis
+  // zur Aufloesung verdeckt.
+  let body = it
+    ? `<div class="question">${escapeHtml(it.name)}</div>
+       <div class="hint-line">Echter Preis: <b style="color:#FFD23F;">${pihMoney(Number(it.price))}</b>${
+         s.phase === 'result' ? ' <span style="color:#22C55E;">· aufgelöst</span>'
+                              : ' <span style="color:rgba(255,255,255,.35);">· noch verdeckt</span>'}</div>
+       ${qNoteHtml(it.note)}
+       ${mediaControlButtonsHtml(it.media, 'pihShowMedia')}`
+    : `<div class="hint-line">Kein Artikel offen.</div>`;
+
+  body += `<div class="hint-line" style="margin-top:10px;">Regel: <b>${escapeHtml(rule.label)}</b></div>`;
+
+  if (s.phase === 'bid'){
+    body += `<div class="hint-line">Gebote: <b>${prog.done}/${prog.total}</b> abgegeben</div>`;
+    const guests = pihGuestBidders();
+    if (guests.length){
+      body += `<div class="hint-line">Gäste ohne Handy hier eintragen:</div>` +
+        guests.map(p => {
+          const cur = s.hostBids && s.hostBids[p.uid] ? s.hostBids[p.uid].value : '';
+          return `<div class="panel-row" style="align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="min-width:110px;font-weight:700;font-size:.8rem;">${escapeHtml(p.label)}</span>
+            <input type="text" inputmode="decimal" placeholder="z.B. 12,90" value="${escAttr(cur)}"
+              onchange="opener.pihHostBidValue(${escJsArg(p.uid)}, this.value)"
+              style="flex:1;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.15);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-weight:700;text-align:center;outline:none;">
+          </div>`;
+        }).join('');
+    }
+  }
+
+  if (s.phase === 'result' && s.lastResult){
+    body += `<div class="answer-list" style="margin-top:10px;">` +
+      s.lastResult.rows.map(r => `
+        <div class="answer" style="${r.win ? 'background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.45)' : ''}">
+          <span><span class="text" style="${r.bust ? 'text-decoration:line-through;opacity:.6;' : ''}">${escapeHtml(r.label)}</span></span>
+          <span class="pts">${escapeHtml(r.value || '—')}${
+            r.diff === null ? '' : ` <span class="tm">(${r.diff > 0 ? '+' : ''}${pihMoney(r.diff)})</span>`}</span>
+        </div>`).join('') + `</div>`;
+  }
+
+  const rows = s.players.map(p =>
+    `<div class="money"><span>${escapeHtml(p.label)}</span><strong>${p.score}</strong></div>`).join('');
+
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}
+  .money{display:flex;justify-content:space-between;gap:10px;font-size:.85rem;margin-bottom:3px;}
+  .money strong{color:#FFD23F;}
+  .tm{font-size:.72rem;color:rgba(255,255,255,.5);}
+</style></head><body>
+  ${gmHeaderHtml('Gamemaster', `Der Preis ist heiß · Artikel ${Math.min(s.idx + 1, s.order.length)}/${s.order.length}`)}
+  <div class="gm-body">
+  <div class="gm-main">${body}</div>
+  <div class="gm-side">
+  <div class="panel">
+    <div class="panel-head"><span>🏆 Wertung</span></div>
+    ${rows}
+    <div class="tm">${s.roundTime ? (s.timeUp ? 'Zeit abgelaufen' : 'Timer: ' + s.timer + ' s') : ''}</div>
+  </div>
+  ${gmNotesPanelHtml()}
+  </div>
+  </div>
+  <div class="gm-actions">${pihGmControlsHtml('opener.')}</div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
 }

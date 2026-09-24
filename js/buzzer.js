@@ -482,6 +482,14 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia','saveHostNotesRemote',
   'tournamentStartGame','tournamentRevealSecret',
+  // Der Duemmste fliegt
+  'ddfReveal','ddfStartTimer','ddfBeginVote','ddfNext','ddfEvaluateVote','ddfStartRunoff',
+  'ddfAfterResult','ddfQuit','ddfHostVote','ddfShowMedia',
+  // Der Preis ist heiss
+  'pihBeginBids','pihEvaluate','pihSkip','pihAfterResult','pihQuit','pihStartTimer',
+  'pihHostBidValue','pihShowMedia',
+  // Trivial Pursuit
+  'tpSpin','tpShowAnswer','tpJudge','tpStealAward','tpStealNobody','tpQuit',
 ]);
 
 function gmRemoteInitFirebase() {

@@ -660,6 +660,9 @@ function tpIntroThenGame(){
   const old = document.querySelector('.black-backdrop');
   if (old) old.remove();
   addBlackBackdrop();
+  // Schon jetzt oeffnen, damit Intro und Anleitung vom GM-Fenster (und vom
+  // Handy-Gamepad) aus weitergeklickt werden koennen.
+  openGamemaster();
   const ov = document.createElement('div');
   ov.className = 'intro-overlay';
   ov.innerHTML = `<div class="game-intro-sign">${gameCardIcon('tp')}</div>`;
@@ -726,4 +729,95 @@ function tpTutorialSlides(){
        Erst wenn die sitzt, ist das Spiel gewonnen —<br>
        daneben heißt: beim nächsten Zug nochmal.</div>`,
   ];
+}
+
+/* ── GAMEMASTER-PANEL ──────────────────────────────────────────────────────
+   Siehe ddf.js: ohne Panel ist die Show nur am Hauptrechner moderierbar, weil
+   das Handy-Gamepad genau dieses Fenster spiegelt. */
+function tpGmControlsHtml(pfx){
+  const s = tpState;
+  let b = '';
+  if (s.phase === 'spin'){
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}tpSpin()">${s.spinning ? 'dreht…' : '🎡 Rad drehen'}</button>`;
+  } else if (s.phase === 'question' || s.phase === 'final'){
+    b += `<button class="gm-btn gm-blue" onclick="${pfx}tpShowAnswer()">Antwort zeigen</button>`;
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}tpJudge(true)">✓ Richtig</button>`;
+    b += `<button class="gm-btn gm-gray" onclick="${pfx}tpJudge(false)">✕ Falsch</button>`;
+  } else if (s.phase === 'answer'){
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}tpJudge(true)">✓ Richtig</button>`;
+    b += `<button class="gm-btn gm-gray" onclick="${pfx}tpJudge(false)">✕ Falsch</button>`;
+  } else if (s.phase === 'steal'){
+    s.teamNames.forEach((n, i) => {
+      if (i === s.turn) return;
+      b += `<button class="gm-btn gm-gold" onclick="${pfx}tpStealAward(${i})">✓ ${escapeHtml(n)}</button>`;
+    });
+    b += `<button class="gm-btn gm-gray" onclick="${pfx}tpStealNobody()">Niemand</button>`;
+  }
+  b += `<button class="gm-btn gm-gray" onclick="${pfx}tpQuit()">Beenden</button>`;
+  return b;
+}
+
+function updateGamemasterTp(){
+  const s = tpState;
+  const cat = s.cat >= 0 ? tpData.categories[s.cat] : null;
+
+  // Die Antwort steht im GM-Fenster IMMER, auch solange sie auf der Leinwand
+  // verdeckt ist - sonst kann der Host nicht urteilen.
+  let body;
+  if (s.phase === 'done'){
+    body = `<div class="question">🏆 ${escapeHtml(s.teamNames[s.winner] || 'Sieger')} gewinnt</div>
+      <div class="hint-line">Alle ${tpCatCount()} Stücke und die Schlussfrage.</div>`;
+  } else if (s.clue && cat){
+    body = `<div class="hint-line">Kategorie: <b style="color:${escAttr(cat.color)};">${cat.icon} ${escapeHtml(cat.name)}</b>${
+      s.finalTeam >= 0 ? ' · <b style="color:#FFD23F;">Schlussfrage</b>' : ''}</div>
+      <div class="question">${escapeHtml(s.clue.q)}</div>
+      <div class="hint-line">Antwort: <b style="color:#FFD23F;">${escapeHtml(s.clue.a)}</b>${
+        s.phase === 'answer' ? ' <span style="color:#22C55E;">· aufgedeckt</span>'
+                             : ' <span style="color:rgba(255,255,255,.35);">· noch verdeckt</span>'}</div>
+      ${s.phase === 'steal' ? `<div class="hint-line">🔔 Nachfassen läuft — die anderen Teams dürfen buzzern.</div>` : ''}`;
+  } else {
+    body = `<div class="question">${s.finalTeam >= 0 ? 'Schlussfrage' : 'Rad drehen'}</div>
+      <div class="hint-line">${s.finalTeam >= 0
+        ? escapeHtml(s.teamNames[s.finalTeam] || 'Das Team') + ' hat alle Stücke — jetzt geht es um alles.'
+        : 'Das Rad bestimmt die Kategorie.'}</div>`;
+  }
+
+  // Wer welches Stueck hat - als Liste, nicht als Torte: im GM-Fenster zaehlt
+  // Ablesbarkeit, nicht Schauwert.
+  const rows = s.teamNames.map((n, i) => {
+    const w = s.wedges[i] || [];
+    const chips = tpData.categories.map((c, j) =>
+      `<span style="display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:3px;background:${
+        w[j] ? escAttr(c.color) : 'rgba(255,255,255,.1)'};" title="${escAttr(c.name)}"></span>`).join('');
+    return `<div class="money" style="${i === s.turn && s.phase !== 'done' ? 'color:#FFD23F;font-weight:700;' : ''}">
+      <span>${escapeHtml(n)}${i === s.turn && s.phase !== 'done' ? ' ●' : ''}</span>
+      <span>${chips} <strong>${w.filter(Boolean).length}/${tpCatCount()}</strong></span>
+    </div>`;
+  }).join('');
+
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}
+  .money{display:flex;justify-content:space-between;gap:10px;font-size:.85rem;margin-bottom:5px;align-items:center;}
+  .money strong{color:#FFD23F;}
+  .tm{font-size:.72rem;color:rgba(255,255,255,.5);}
+</style></head><body>
+  ${gmHeaderHtml('Gamemaster', `Trivial Pursuit · ${
+    s.phase === 'done' ? 'Gewonnen' : s.finalTeam >= 0 ? 'Schlussfrage'
+    : s.phase === 'steal' ? 'Nachfassen' : 'Am Zug: ' + (s.teamNames[s.turn] || '')}`)}
+  <div class="gm-body">
+  <div class="gm-main">${body}</div>
+  <div class="gm-side">
+  <div class="panel">
+    <div class="panel-head"><span>🥧 Tortenstücke</span></div>
+    ${rows}
+  </div>
+  ${gmNotesPanelHtml()}
+  </div>
+  </div>
+  <div class="gm-actions">${tpGmControlsHtml('opener.')}</div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
 }
