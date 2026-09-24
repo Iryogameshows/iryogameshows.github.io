@@ -146,6 +146,10 @@ function startTp(){
     alert('Ohne Fragen geht es nicht: ' + leer.join(', ') + '\nDiese Tortenstücke wären nie zu gewinnen.');
     return;
   }
+  // Das Zuschauerfenster gehoert zu jeder Show. Erst nach der Pruefung oben:
+  // ein abgebrochener Start soll kein leeres Fenster aufmachen.
+  openBoardPopout();
+
   const names = lobbyTeamNames('tp');
   tpState.active = true;
   tpState.teamNames = names;
@@ -169,10 +173,7 @@ function startTp(){
   lockBuzzerJoins(feudBuzzer);
   feudBuzzClose();
 
-  showScreen('tp-screen');
-  tpBuildWheel();
-  tpRender();
-  updateGamemaster();
+  tpIntroThenGame();
 }
 
 function tpQuit(){
@@ -650,3 +651,79 @@ function importTp(e){
 }
 
 tpLoad();
+
+/* ── INTRO UND ANLEITUNG ───────────────────────────────────────────────────
+   Wie bei Feud und Jeopardy: Zeichen, Anleitung, Titelkarte, dann das Spiel.
+   Kein openGamemaster() - dieses Spiel hat kein GM-Panel. */
+function tpIntroThenGame(){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const old = document.querySelector('.black-backdrop');
+  if (old) old.remove();
+  addBlackBackdrop();
+  const ov = document.createElement('div');
+  ov.className = 'intro-overlay';
+  ov.innerHTML = `<div class="game-intro-sign">${gameCardIcon('tp')}</div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', () => closeOverlay(ov, () => {
+    runTutorial(tpTutorialSlides(), tpShowTitle);
+  }));
+}
+
+function tpShowTitle(){
+  showClickOverlay('welcome-overlay overlay-enter', `
+    <div class="game-title-sign">${gameCardIcon('tp')}</div>
+    <div class="welcome-line1">Es beginnt</div>
+    <div class="welcome-line2">Trivial Pursuit</div>
+  `, 1800, () => {
+    showScreen('tp-screen');
+    tpBuildWheel();
+    tpRender();
+    fadeOutBackdrop(document.querySelector('.black-backdrop'));
+  });
+}
+
+function showTpTutorial(){ runTutorial(tpTutorialSlides()); }
+
+/* Die Anleitung zeigt die echten Kategorien und die eingestellten Regeln -
+   bei eigenen Kategorien wäre eine Erklärung mit "Erdkunde, Sport, ..."
+   schlicht falsch. */
+function tpTutorialSlides(){
+  const n = tpCatCount();
+  const chips = tpData.categories.map(c =>
+    `<div class="tut-tp-chip" style="--c:${escAttr(c.color)};">${c.icon} ${escapeHtml(c.name)}</div>`).join('');
+  const again = tpState.settings.again;
+  const steal = tpState.settings.steal;
+  return [
+    `<div class="tut-star-anim" style="margin-bottom:10px;">${gameCardIcon('tp')}</div>
+     <div class="tut-big tut-gold" style="font-size:3rem;">Trivial<br>Pursuit</div>
+     <div class="tut-sub">${n} Tortenstücke. Wer alle hat, spielt um den Sieg.</div>`,
+
+    `<div class="tut-big tut-white" style="font-size:2.2rem;margin-bottom:10px;">Das Rad entscheidet</div>
+     <div class="tut-tp-chips">${chips}</div>
+     <div class="tut-sub">Kein Würfeln, kein Laufweg: einmal drehen,<br>
+       und die Kategorie steht fest.</div>`,
+
+    `<div class="tut-icon">🥧</div>
+     <div class="tut-big tut-gold" style="font-size:2.3rem;">Richtig = ein Stück</div>
+     <div class="tut-sub">Jede Kategorie gibt es <b>einmal</b> — die Torte ist
+       euer Fortschritt.<br>
+       ${again ? 'Wer richtig liegt, dreht gleich nochmal.' : 'Danach ist das nächste Team dran.'}</div>`,
+
+    steal
+      ? `<div class="tut-icon">🔔</div>
+         <div class="tut-big tut-white" style="font-size:2.3rem;">Falsch? Nachfassen!</div>
+         <div class="tut-sub">Liegt das Team am Zug daneben, dürfen die anderen
+           darum <b>buzzern</b>.<br>
+           Wer nachfasst und trifft, bekommt das Stück <b>und</b> den Zug.</div>`
+      : `<div class="tut-icon">➡️</div>
+         <div class="tut-big tut-white" style="font-size:2.3rem;">Falsch? Weiter.</div>
+         <div class="tut-sub">Liegt das Team daneben, ist das nächste dran.<br>
+           Nachfassen ist in dieser Runde ausgeschaltet.</div>`,
+
+    `<div class="tut-icon tut-trophy-bounce">🏆</div>
+     <div class="tut-big tut-gold" style="font-size:2.5rem;">Alle ${n} Stücke<br>und dann?</div>
+     <div class="tut-sub">Dann kommt die <b>Schlussfrage</b>.<br>
+       Erst wenn die sitzt, ist das Spiel gewonnen —<br>
+       daneben heißt: beim nächsten Zug nochmal.</div>`,
+  ];
+}

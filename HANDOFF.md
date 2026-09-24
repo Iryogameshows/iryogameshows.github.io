@@ -11,6 +11,53 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-24 — Popout und Intros für die drei neuen Shows
+
+**Gemacht:** „Der Dümmste fliegt", „Der Preis ist heiß" und Trivial Pursuit
+öffnen jetzt das Zuschauerfenster und haben Intro, Anleitung und Titelkarte
+wie Feud und Jeopardy. Dazu ein Tutorial-Knopf auf jedem Setup-Screen.
+
+**Was fehlte:** `openBoardPopout()` wurde nur aus `startGame`, `startJeopardy`,
+`startWwds` und `startWwm` gerufen — die drei neuen Shows nie. Und sie sprangen
+ohne ein Wort auf den Spielbildschirm; die Regeln musste der Host ansagen.
+
+**Warum so:**
+
+Der Ablauf ist derselbe wie bei den alten Shows: Zeichen → Anleitung →
+Titelkarte → Spiel, alles über `runTutorial` und `showClickOverlay`, die es
+schon gab. Kein `openGamemaster()` für die drei: sie haben kein GM-Panel, und
+`updateGamemaster()` fällt sonst auf den Feud-Zweig zurück — das Fenster zeigte
+einen Stand, der gar nicht läuft.
+
+Die Anleitungen lesen die **echten** Einstellungen: DDF zeigt die eingestellte
+Zahl Leben als Herzen, PIH nur die aktive Regel (beide nebeneinander wäre
+bequemer, aber genau daraus entsteht am Tisch der Streit), TP die echten
+Kategorien in ihren Farben und die gesetzten Regeln.
+
+Die Ausblendliste im Popout hinkte ebenfalls hinterher: WWDS, DDF, PIH und TP
+fehlten samt Editoren, dazu Spielerliste, Turnier, Notizen und Bestenliste.
+Wechselte der Host während der Show dorthin, stand das auf der Leinwand.
+
+**Gefundener Fehler:** `gameCardIcon()` vergab die Verlaufs-ID fest als
+`cg_<key>`. Sobald dasselbe Symbol zweimal im Dokument steht — genau das machen
+die neuen Intros — trifft `url(#cg_tp)` immer das **erste** Vorkommen. Das lag
+im versteckten Menü, die Füllung löste zu `none` auf und vom Symbol blieb ein
+Punkt übrig. Jetzt zählt ein Zähler hoch.
+
+**Geprüft:** `node check.js --types` ohne Befund. Alle drei Shows durchgespielt
+(Firebase abgeklemmt, `window.open` gezählt statt geöffnet): je ein Popout, ein
+Intro-Zeichen mit schwarzem Grund, fünf Anleitungsfolien mit fünf Punkten,
+Titelkarte, dann der Spielbildschirm und der Grund blendet aus. DDF zeigt sechs
+Herzen auf zwei Beispielkarten, PIH die Regel „Nur drunter zählt" mit drei
+Geboten, TP sechs Kategorie-Chips. Tutorial-Knöpfe auf allen drei
+Setup-Screens vorhanden. Keine Konsolenfehler.
+
+**Fallstrick:** `showClickOverlay` nimmt vor Ablauf seiner Verzögerung (1800 ms)
+keinen Klick an. Beim Testen erst warten, sonst sieht es aus, als hinge die
+Titelkarte.
+
+---
+
 ## 2026-09-24 — DDF-Wertung, eigene Kategorien in Trivial Pursuit
 
 **Gemacht:** Die Spielerleiste bei „Der Dümmste fliegt" sortiert jetzt

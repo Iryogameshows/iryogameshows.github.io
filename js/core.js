@@ -468,10 +468,15 @@ function renderLogo(line1, line2, size2, icon) {
 }
 
 // Menü-Karten: das eigene Gold-Logo jedes Spiels statt eines Emojis.
+let gameIconSeq = 0;
 function gameCardIcon(key){
   if (key === 'feud') return STAR_SVG;
   if (key === 'jeopardy') return DANGER_SVG;
-  const gid = 'cg_' + key;
+  // Die Verlaufs-ID muss bei JEDEM Aufruf eine andere sein. Sonst steht
+  // dieselbe id mehrfach im Dokument, und url(#...) trifft immer das ERSTE
+  // Vorkommen - bei den neuen Intros lag das im versteckten Menue, und das
+  // Symbol blieb bis auf einen Punkt unsichtbar.
+  const gid = 'cg_' + key + '_' + (++gameIconSeq);
   const grad = `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF6E0"/><stop offset="9%" stop-color="#F5CD5E"/><stop offset="45%" stop-color="#DDA828"/><stop offset="100%" stop-color="#A97A10"/></linearGradient></defs>`;
   const body = logoIconMarkup(key).split('url(#goldGrad)').join('url(#' + gid + ')');
   return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">${grad}${body}</svg>`;

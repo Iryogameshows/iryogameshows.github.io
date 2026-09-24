@@ -2129,3 +2129,55 @@ body {
   width: 46px; text-align: center; font-size: 1.05rem; flex: 0 0 46px;
 }
 .tp-cat-name { flex: 1; min-width: 0; max-width: 260px; }
+
+/* ── Intro und Anleitung der neuen Shows ──────────────────────────────────
+   Dieselben Auftritte wie beim Jeopardy-Warnzeichen, nur mit dem jeweiligen
+   Spiel-Icon: erst das grosse Zeichen im Intro, dann klein auf der Titelkarte. */
+.game-intro-sign svg {
+  width: 130px; height: auto; opacity: 0;
+  filter: drop-shadow(0 0 30px rgba(var(--gold-rgb), .4));
+  animation: introStarIn 1.5s ease-out .3s forwards;
+}
+.game-title-sign { opacity: 0; animation: welcomeStarIn 1s ease-out .2s forwards; }
+.game-title-sign svg { width: 92px; height: auto; filter: drop-shadow(0 0 25px rgba(var(--gold-rgb), .4)); }
+.tut-star-anim svg { width: 96px; height: auto; }
+
+/* Der Dümmste fliegt: zwei Beispielkarten, damit man den Unterschied zwischen
+   vollem und verbrauchtem Herz einmal gesehen hat, bevor es zählt. */
+.tut-ddf-row { display: flex; gap: 14px; justify-content: center; margin-bottom: 14px; }
+.tut-ddf-card {
+  padding: 12px 20px; border-radius: 14px;
+  background: rgba(255,255,255,.05); border: 2px solid rgba(255,255,255,.14);
+  display: flex; flex-direction: column; gap: 6px; align-items: center;
+}
+.tut-ddf-card b { font-size: .95rem; }
+
+/* Der Preis ist heiß: drei Gebote und der echte Preis darunter. Die Regel
+   steht als Text daneben - das Bild allein erklärt sie nicht. */
+.tut-pih-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
+.tut-pih-bid {
+  display: flex; flex-direction: column; gap: 3px; align-items: center;
+  padding: 9px 18px; border-radius: 12px;
+  background: rgba(255,255,255,.05); border: 2px solid rgba(255,255,255,.14);
+}
+.tut-pih-bid span { font-size: .72rem; color: rgba(255,255,255,.45); font-weight: 700; }
+.tut-pih-bid b { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.tut-pih-bid.win { border-color: var(--green); background: rgba(var(--green-rgb), .12); }
+.tut-pih-bid.win b { color: var(--green); }
+/* Überbieten fliegt nur bei "Nur drunter zählt" raus - deshalb setzt die
+   Anleitung diese Klasse auch nur dann. */
+.tut-pih-bid.bust { border-color: rgba(var(--red-rgb), .5); opacity: .6; }
+.tut-pih-bid.bust b { text-decoration: line-through; color: var(--red); }
+.tut-pih-price {
+  font-size: .95rem; font-weight: 800; color: var(--gold); margin-bottom: 12px;
+}
+
+/* Trivial Pursuit: die echten Kategorien in ihren echten Farben. */
+.tut-tp-chips {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  max-width: 560px; margin: 0 auto 14px;
+}
+.tut-tp-chip {
+  padding: 7px 14px; border-radius: 99px; font-size: .8rem; font-weight: 700;
+  background: rgba(255,255,255,.05); border: 1.5px solid var(--c);
+}

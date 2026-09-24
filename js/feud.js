@@ -886,7 +886,20 @@ function openBoardPopout() {
 <link rel="stylesheet" href="${cssHref}">
 <style>
 body{pointer-events:none;}
-#gm-bar,#gm-embed-overlay,#host-gate,#menu-screen,#setup-screen,#jeopardy-setup-screen,#wwm-setup-screen,#edit-screen,#jeopardy-edit-screen,#wwm-edit-screen,#qr-overlay{display:none!important;}
+/* Alles, was nur der Host sieht, bleibt im Zuschauerfenster aus. Die Liste
+   hinkte den neuen Shows hinterher: WWDS, Der Duemmste fliegt, Der Preis ist
+   heiss und Trivial Pursuit fehlten samt ihren Editoren, ebenso die
+   Spielerliste, das Turnier und die Notizen. Wechselte der Host waehrend der
+   Show dorthin, stand das auf der Leinwand. */
+#gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay,
+#menu-screen,#players-screen,#tournament-screen,#host-notes-screen,#reaction-board-screen,
+#setup-screen,#edit-screen,
+#jeopardy-setup-screen,#jeopardy-edit-screen,
+#wwm-setup-screen,#wwm-edit-screen,
+#wwds-setup-screen,#wwds-edit-screen,
+#ddf-setup-screen,#ddf-edit-screen,
+#pih-setup-screen,#pih-edit-screen,
+#tp-setup-screen,#tp-edit-screen{display:none!important;}
 </style></head><body></body></html>`);
   boardWin.document.close();
   startBoardMirror();

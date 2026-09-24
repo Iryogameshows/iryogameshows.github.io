@@ -82,6 +82,10 @@ function startPih(){
   if (usable.length < pihData.items.length)
     alert(`${pihData.items.length - usable.length} Artikel ohne gültigen Preis werden übersprungen.`);
 
+  // Das Zuschauerfenster gehoert zu jeder Show. Erst nach den Pruefungen:
+  // ein abgebrochener Start soll kein leeres Fenster aufmachen.
+  openBoardPopout();
+
   const wanted = Math.max(0, Number(fieldVal('pih-rounds')) || 0);
   const time   = Math.max(0, Number(fieldVal('pih-time')) || 0);
 
@@ -106,8 +110,7 @@ function startPih(){
     lastResult:null,
   };
   pihSaveSettings();
-  showScreen('pih-screen');
-  pihRenderRound();
+  pihIntroThenGame();
 }
 
 /* ── Anzeige ───────────────────────────────────────────────────────────── */
@@ -653,3 +656,75 @@ function pihLoadSettings(){
   if (s.time   != null && fieldSet('pih-time', s.time)) pihState.roundTime = s.time;
 }
 
+
+/* ── INTRO UND ANLEITUNG ───────────────────────────────────────────────────
+   Wie bei Feud und Jeopardy: Zeichen, Anleitung, Titelkarte, dann das Spiel.
+   Kein openGamemaster() - dieses Spiel hat kein GM-Panel, das Fenster zeigte
+   sonst den Feud-Rückfall. */
+function pihIntroThenGame(){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const old = document.querySelector('.black-backdrop');
+  if (old) old.remove();
+  addBlackBackdrop();
+  const ov = document.createElement('div');
+  ov.className = 'intro-overlay';
+  ov.innerHTML = `<div class="game-intro-sign">${gameCardIcon('pih')}</div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', () => closeOverlay(ov, () => {
+    runTutorial(pihTutorialSlides(), pihShowTitle);
+  }));
+}
+
+function pihShowTitle(){
+  showClickOverlay('welcome-overlay overlay-enter', `
+    <div class="game-title-sign">${gameCardIcon('pih')}</div>
+    <div class="welcome-line1">Es beginnt</div>
+    <div class="welcome-line2">Der Preis ist heiß</div>
+  `, 1800, () => {
+    showScreen('pih-screen');
+    pihRenderRound();
+    fadeOutBackdrop(document.querySelector('.black-backdrop'));
+  });
+}
+
+function showPihTutorial(){ runTutorial(pihTutorialSlides()); }
+
+/* Die Anleitung erklärt die Regel, die wirklich eingestellt ist. Beide Regeln
+   nebeneinander zu zeigen wäre bequemer, aber genau daraus entsteht am Tisch
+   der Streit: die Hälfte hat die andere Hälfte des Satzes behalten. */
+function pihTutorialSlides(){
+  const rule = PIH_RULES.find(r => r.key === pihState.rule) || PIH_RULES[0];
+  const time = Math.max(0, Number(fieldVal('pih-time')) || 0);
+  const under = pihState.rule === 'under';
+  return [
+    `<div class="tut-star-anim" style="margin-bottom:10px;">${gameCardIcon('pih')}</div>
+     <div class="tut-big tut-gold" style="font-size:3rem;">Der Preis<br>ist heiß</div>
+     <div class="tut-sub">Wie teuer ist das? Alle schätzen gleichzeitig.</div>`,
+
+    `<div class="tut-icon">🏷️</div>
+     <div class="tut-big tut-white" style="font-size:2.3rem;">Ein Artikel, ein Preis</div>
+     <div class="tut-sub">Der Artikel kommt auf die Leinwand.
+       ${time ? `Ihr habt <b>${time} Sekunden</b>, ` : 'Dann '}
+       tippt jeder seinen Tipp ins Handy.<br>
+       Niemand sieht, was die anderen schreiben.</div>`,
+
+    `<div class="tut-big tut-gold" style="font-size:2.2rem;margin-bottom:10px;">${escapeHtml(rule.label)}</div>
+     <div class="tut-pih-row">
+       <div class="tut-pih-bid ${under ? 'bust' : ''}"><span>Anna</span><b>210 €</b></div>
+       <div class="tut-pih-bid win"><span>Ben</span><b>185 €</b></div>
+       <div class="tut-pih-bid"><span>Clara</span><b>120 €</b></div>
+     </div>
+     <div class="tut-pih-price">Echter Preis: 199 €</div>
+     <div class="tut-sub">${escapeHtml(rule.hint)}</div>`,
+
+    `<div class="tut-icon">👑</div>
+     <div class="tut-big tut-white" style="font-size:2.3rem;">Ein Punkt pro Runde</div>
+     <div class="tut-sub">Wer am besten geschätzt hat, bekommt ihn.<br>
+       Bei Gleichstand bekommen ihn beide.</div>`,
+
+    `<div class="tut-icon tut-trophy-bounce">🏆</div>
+     <div class="tut-big tut-gold" style="font-size:2.8rem;">Die meisten Punkte<br>gewinnen</div>
+     <div class="tut-sub">Die Wertung steht die ganze Zeit oben —<br>
+       wer führt, trägt die Krone.</div>`,
+  ];
+}

@@ -65,6 +65,11 @@ function startDdf(){
   if (people.length < 2) { alert('Mindestens zwei Teilnehmer — per QR beitreten lassen oder Gäste eintragen.'); return; }
   if (!ddfData.questions.length) { alert('Keine Fragen vorhanden.'); return; }
 
+  // Das Zuschauerfenster gehoert zu jeder Show, nicht nur zu den vier alten.
+  // Erst nach den Pruefungen: ein abgebrochener Start soll kein leeres
+  // Fenster aufmachen.
+  openBoardPopout();
+
   const lives = Math.max(1, Number(fieldVal('ddf-lives')) || 3);
   const time  = Math.max(0, Number(fieldVal('ddf-time')) || 0);
 
@@ -87,8 +92,7 @@ function startDdf(){
     runoff:null, tied:null, lastCounts:null, loser:null,
   };
   ddfSaveSettings();
-  showScreen('ddf-screen');
-  ddfRenderRound();
+  ddfIntroThenGame();
 }
 
 /* ── Anzeige ───────────────────────────────────────────────────────────── */
@@ -637,3 +641,79 @@ function ddfLoadSettings(){
   if (time  && s.time  != null) time.value  = String(s.time);
 }
 
+
+/* ── INTRO UND ANLEITUNG ───────────────────────────────────────────────────
+   Dieselbe Abfolge wie bei Feud und Jeopardy: Zeichen, Anleitung, Titelkarte,
+   dann das Spiel. Die drei neuen Shows hatten das nicht - sie sprangen ohne
+   ein Wort auf den Spielbildschirm, und die Regeln musste der Host ansagen.
+
+   Kein openGamemaster() hier: "Der Dümmste fliegt" hat kein GM-Panel (wie
+   "Der Preis ist heiß" auch nicht). Das Fenster zu öffnen zeigte den
+   Feud-Rückfall - also einen Stand, der gar nicht läuft. */
+function ddfIntroThenGame(){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const old = document.querySelector('.black-backdrop');
+  if (old) old.remove();
+  addBlackBackdrop();
+  const ov = document.createElement('div');
+  ov.className = 'intro-overlay';
+  ov.innerHTML = `<div class="game-intro-sign">${gameCardIcon('ddf')}</div>`;
+  document.body.appendChild(ov);
+  ov.addEventListener('click', () => closeOverlay(ov, () => {
+    runTutorial(ddfTutorialSlides(), ddfShowTitle);
+  }));
+}
+
+function ddfShowTitle(){
+  showClickOverlay('welcome-overlay overlay-enter', `
+    <div class="game-title-sign">${gameCardIcon('ddf')}</div>
+    <div class="welcome-line1">Es beginnt</div>
+    <div class="welcome-line2">Der Dümmste fliegt</div>
+  `, 1800, () => {
+    showScreen('ddf-screen');
+    ddfRenderRound();
+    fadeOutBackdrop(document.querySelector('.black-backdrop'));
+  });
+}
+
+// Über den Knopf auf dem Setup-Screen, ohne dass ein Spiel startet.
+function showDdfTutorial(){ runTutorial(ddfTutorialSlides()); }
+
+/* Die Anleitung zieht ihre Zahlen aus den echten Einstellungen - eine Runde
+   mit fünf Leben darf nicht mit drei Herzen erklärt werden. */
+function ddfTutorialSlides(){
+  const lives = Math.max(1, Number(fieldVal('ddf-lives')) || 3);
+  const time  = Math.max(0, Number(fieldVal('ddf-time')) || 0);
+  const herz = (n) => Array.from({ length: lives }, (_, i) =>
+    `<span class="ddf-heart ${i < n ? 'full' : 'empty'}">❤</span>`).join('');
+  return [
+    `<div class="tut-star-anim" style="margin-bottom:10px;">${gameCardIcon('ddf')}</div>
+     <div class="tut-big tut-gold" style="font-size:3rem;">Der Dümmste<br>fliegt</div>
+     <div class="tut-sub">Alle gegen alle. Am Ende bleibt einer übrig.</div>`,
+
+    `<div class="tut-big tut-white" style="font-size:2.3rem;margin-bottom:10px;">
+       Jeder hat ${lives} Leben</div>
+     <div class="tut-ddf-row">
+       <div class="tut-ddf-card"><b>Anna</b><div>${herz(lives)}</div></div>
+       <div class="tut-ddf-card"><b>Ben</b><div>${herz(lives - 1)}</div></div>
+     </div>
+     <div class="tut-sub">Ein Leben ist weg, wenn die Gruppe gegen dich stimmt.<br>
+       Wer keins mehr hat, ist raus.</div>`,
+
+    `<div class="tut-icon">❓</div>
+     <div class="tut-big tut-white" style="font-size:2.2rem;">Eine Frage für alle</div>
+     <div class="tut-sub">${time ? `Ihr habt <b>${time} Sekunden</b>. ` : ''}Jeder sagt laut, was er glaubt.<br>
+       Es zählt nicht, wer recht hat — es zählt, wer überzeugt.</div>`,
+
+    `<div class="tut-icon">🗳️</div>
+     <div class="tut-big tut-gold" style="font-size:2.4rem;">Dann wird gewählt</div>
+     <div class="tut-sub">Auf jedem Handy erscheint die Liste.<br>
+       Wer die <b>meisten Stimmen</b> bekommt, verliert ein Herz.<br>
+       Bei Gleichstand gibt es eine Stichwahl.</div>`,
+
+    `<div class="tut-icon tut-trophy-bounce">🏆</div>
+     <div class="tut-big tut-gold" style="font-size:2.8rem;">Der Letzte gewinnt</div>
+     <div class="tut-sub">Nicht der Klügste gewinnt, sondern der,<br>
+       den keiner rauswählen wollte.</div>`,
+  ];
+}
