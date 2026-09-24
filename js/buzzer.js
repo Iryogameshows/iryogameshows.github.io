@@ -123,6 +123,7 @@ const LOBBY_SETUP = {
   feud:     { container:'feud-setup-lobby',     screen:'setup-screen',            names:['team1-name','team2-name','team3-name'], team3:'enable-team3' },
   jeopardy: { container:'jeopardy-setup-lobby', screen:'jeopardy-setup-screen',   names:['jt1-name','jt2-name','jt3-name'],       team3:'jeopardy-enable-team3' },
   wwds:     { container:'wwds-setup-lobby',     screen:'wwds-setup-screen',       names:['wwds-t1-name','wwds-t2-name','wwds-t3-name'], team3:'wwds-enable-team3' },
+  tp:       { container:'tp-setup-lobby',       screen:'tp-setup-screen',         names:['tp-t1-name','tp-t2-name','tp-t3-name'],       team3:'tp-enable-team3' },
 };
 function lobbyTeamNames(game){
   const cfg = LOBBY_SETUP[game];

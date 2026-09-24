@@ -394,6 +394,17 @@ function logoIconMarkup(icon) {
         <rect x="44" y="37" width="24" height="5" rx="2.5" fill="#0b0e2c"/>
         <rect x="44" y="46" width="24" height="5" rx="2.5" fill="#0b0e2c"/>
         <rect x="44" y="55" width="14" height="5" rx="2.5" fill="#0b0e2c"/>`;
+    case 'tp': // Torte mit sechs Stuecken, drei davon gewonnen (Trivial Pursuit)
+      return `<circle cx="40" cy="40" r="34" fill="none" stroke="url(#goldGrad)" stroke-width="5"/>
+        <path d="M40,40 L40,6 A34,34 0 0,1 69.4,23 Z" fill="url(#goldGrad)"/>
+        <path d="M40,40 L69.4,57 A34,34 0 0,1 40,74 Z" fill="url(#goldGrad)"/>
+        <path d="M40,40 L10.6,23 A34,34 0 0,1 40,6 Z" fill="url(#goldGrad)" opacity=".45"/>
+        <g stroke="url(#goldGrad)" stroke-width="3" stroke-linecap="round">
+          <line x1="40" y1="40" x2="40" y2="6"/><line x1="40" y1="40" x2="69.4" y2="23"/>
+          <line x1="40" y1="40" x2="69.4" y2="57"/><line x1="40" y1="40" x2="40" y2="74"/>
+          <line x1="40" y1="40" x2="10.6" y2="57"/><line x1="40" y1="40" x2="10.6" y2="23"/>
+        </g>
+        <circle cx="40" cy="40" r="7" fill="#0b0e2c" stroke="url(#goldGrad)" stroke-width="3"/>`;
     case 'trophy': // Rangliste - Stern über absteigenden Balken, Gesamtwertung (Turnier)
       return `<path d="M40,5 L43.2,13.6 L52.4,14 L45.2,19.7 L47.6,28.5 L40,23.5 L32.4,28.5 L34.8,19.7 L27.6,14 L36.8,13.6 Z" fill="url(#goldGrad)"/>
         <rect x="14" y="40" width="52" height="10" rx="2.5" fill="url(#goldGrad)"/>
@@ -633,6 +644,8 @@ function showScreen(id) {
   if (id === 'ddf-setup-screen') { ddfLoadSettings(); renderRosterInputs('ddf'); ensureRosterConnected('ddf'); }
   if (id === 'pih-edit-screen') renderPihEditor();
   if (id === 'pih-setup-screen') { pihLoadSettings(); renderPihRulePick(); renderRosterInputs('pih'); ensureRosterConnected('pih'); }
+  if (id === 'tp-edit-screen') renderTpEditor();
+  if (id === 'tp-setup-screen') { tpLoadSettings(); tpToggleTeam3(); ensureTpLobbyConnected(); }
   if (id === 'setup-screen') ensureFeudLobbyConnected();
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
@@ -651,11 +664,12 @@ function showScreen(id) {
   else if (id.startsWith('wwm')) renderLogo('WER WIRD', 'MILLIONÄR', 22, 'wwm');
   else if (id.startsWith('ddf')) renderLogo('DER DÜMMSTE', 'FLIEGT', 22, 'ddf');
   else if (id.startsWith('pih')) renderLogo('DER PREIS', 'IST HEISS', 22, 'pih');
+  else if (id.startsWith('tp-')) renderLogo('TRIVIAL', 'PURSUIT', 22, 'tp');
   else renderLogo('KELLER', 'FEUD');
   // WWDS-, DDF- und Turnier-Logo etwas größer und ein Stück tiefer.
   const logoBox = /** @type {HTMLElement|null} */ (document.querySelector('.logo'));
   const logoSvg = /** @type {SVGSVGElement|null} */ (document.querySelector('#main-logo svg'));
-  const bigLogo = ['wwm-setup-screen','wwm-edit-screen','wwds-setup-screen','wwds-edit-screen','ddf-setup-screen','ddf-edit-screen','pih-setup-screen','pih-edit-screen','tournament-screen'].includes(id);
+  const bigLogo = ['wwm-setup-screen','wwm-edit-screen','wwds-setup-screen','wwds-edit-screen','ddf-setup-screen','ddf-edit-screen','pih-setup-screen','pih-edit-screen','tp-setup-screen','tp-edit-screen','tournament-screen'].includes(id);
   if (logoBox) logoBox.style.marginTop = bigLogo ? '44px' : '';
   if (logoSvg) logoSvg.style.width = bigLogo ? 'min(600px, 92vw)' : '';
   // Beim Screenwechsel ganz nach oben und den Hoch-Button neu bewerten.
@@ -1323,6 +1337,7 @@ function currentTeamLabel(i){
   if (ROSTERS[activeBuzzerContext]) return generisch;
   const names = activeBuzzerContext === 'jeopardy' ? jeopardyState.teamNames
               : activeBuzzerContext === 'wwds' ? (wwdsState.teamNames.length ? wwdsState.teamNames : lobbyTeamNames('wwds'))
+              : activeBuzzerContext === 'tp' ? (tpState.teamNames.length ? tpState.teamNames : lobbyTeamNames('tp'))
               : state.teamNames;
   return (names && names[i]) || generisch;
 }

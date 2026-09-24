@@ -26,6 +26,8 @@ const JEOPARDY_BOARDS = 2;
  *  @property {string} [qImg]       Bild zur Frage (Data-URL)
  *  @property {string} [aImg]       Bild zur Antwort (Data-URL)
  *  @property {boolean} [estimate]  Schaetzfrage: keine Buzzer, alle Handys tippen
+ *  @property {boolean} [estimateText] Antwort ist Text: die Handys bekommen die
+ *                                  normale Tastatur statt des Ziffernblocks
  *  @property {boolean} [staged]    Staffelbild, das kachelweise aufgedeckt wird
  *  @property {string} [stageImg]
  *  @property {number} [stageCols]
@@ -394,7 +396,12 @@ function jeopardyEstimateOpen(){
   jeopardyEstimate.round = nextRoundId(jeopardyEstimate.round);
   jeopardyEstimate.answers = [];
   jeopardyEstimate.question = clue.q || '';
-  if (r) r.set({ active:true, round:jeopardyEstimate.round, question:jeopardyEstimate.question, answers:null }).catch(()=>{});
+  // text sagt dem Handy, welche Tastatur es aufmachen soll. Es geht mit, nicht
+  // hinterher: kaeme es als zweiter Schreibvorgang, stuende auf langsamen
+  // Verbindungen fuer einen Moment der Ziffernblock offen - und wer in dem
+  // Moment schon tippt, kommt an keinen Buchstaben.
+  if (r) r.set({ active:true, round:jeopardyEstimate.round, question:jeopardyEstimate.question,
+                 text: !!clue.estimateText, answers:null }).catch(()=>{});
   updateGamemaster();
 }
 

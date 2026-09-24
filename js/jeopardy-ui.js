@@ -502,6 +502,11 @@ function jeopardyClueEditorHtml(b, col, row){
       <label style="${uploadLbl}background:${clue.estimate?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Statt Buzzer geben alle Handys eine Schätzung ein">
         <input type="checkbox" ${clue.estimate?'checked':''} onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].estimate=this.checked;renderJeopardyEditor();" style="accent-color:#FFD23F;"> 📊 Schätzfrage
       </label>
+      ${clue.estimate?`
+        <label style="${uploadLbl}background:${clue.estimateText?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Die Handys bekommen die normale Tastatur statt des Ziffernblocks - für Antworten wie Namen oder Orte">
+          <input type="checkbox" ${clue.estimateText?'checked':''} onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].estimateText=this.checked;renderJeopardyEditor();" style="accent-color:#FFD23F;"> 🔤 Buchstaben
+        </label>
+      `:''}
       ${clue.series?`
         <select onchange="jeopardyEditSeriesCount(${b},${col},${row},this.value)" title="Anzahl Bilder" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
           ${[2,3,4,5].map(n=>`<option value="${n}" ${jeopardySeriesCount(clue)===n?'selected':''}>${n} Bilder</option>`).join('')}

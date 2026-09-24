@@ -236,7 +236,7 @@
     <div class="team-chip" id="est-team-chip">Team</div>
     <div class="lobby-title">📊 Schätzfrage</div>
     <div class="lobby-sub" id="est-question"></div>
-    <input id="est-input" type="text" inputmode="decimal" placeholder="Deine Schätzung" autocomplete="off">
+    <input id="est-input" type="text" inputmode="decimal" placeholder="Deine Schätzung" autocomplete="off" maxlength="60">
     <button class="btn" id="est-send">Abschicken</button>
     <div class="lobby-sub" id="est-hint" style="color:rgba(255,255,255,.3);"></div>
   </div>
@@ -399,7 +399,7 @@
   let online=false, buzzFailed=false;
   let lastStatusText='';
   let myTeam=null, teamNames=[], presenceCount=0, joinLocked=false, lockedNames=[];
-  let estActive=false, estQuestion='', estRound=0, estSubmitted=false;
+  let estActive=false, estQuestion='', estRound=0, estSubmitted=false, estText=false;
 
   function myName(){ return acc ? acc.name : ''; }
   function locked(){ return Date.now() < lockUntil; }
@@ -457,6 +457,13 @@
     showScreen('screen-estimate');
     fillTeamChip(document.getElementById('est-team-chip'));
     document.getElementById('est-question').textContent = estQuestion || 'Gib deine Schätzung ab.';
+    // Bei einer Textantwort muss die normale Tastatur aufgehen. Mit
+    // inputmode="decimal" zeigt das Handy einen reinen Ziffernblock - dort
+    // gibt es schlicht keinen Buchstaben, die Antwort waere nicht eintippbar.
+    const inp = document.getElementById('est-input');
+    inp.setAttribute('inputmode', estText ? 'text' : 'decimal');
+    inp.setAttribute('autocapitalize', estText ? 'sentences' : 'off');
+    inp.placeholder = estText ? 'Deine Antwort' : 'Deine Schätzung';
   }
 
   function showBuzz(){
@@ -586,6 +593,7 @@
     if (r !== estRound) { estRound = r; estSubmitted = false; document.getElementById('est-input').value = ''; }
     estActive = !!e.active;
     estQuestion = e.question || '';
+    estText = !!e.text;
     if (estActive && acc && e.answers && e.answers[acc.key]) estSubmitted = true;
     document.getElementById('est-hint').textContent = estSubmitted ? 'Schätzung abgegeben ✔' : '';
     refreshRoot();

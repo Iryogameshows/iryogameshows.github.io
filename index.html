@@ -52,6 +52,11 @@
       <div class="menu-card-title">Der Preis ist heiß</div>
       <div class="menu-card-sub">Preise schätzen, näher dran gewinnt</div>
     </div>
+    <div class="menu-card" onclick="showScreen('tp-setup-screen')">
+      <div class="menu-card-icon" data-game="tp"></div>
+      <div class="menu-card-title">Trivial Pursuit</div>
+      <div class="menu-card-sub">Sechs Kategorien, sechs Tortenstücke</div>
+    </div>
     <div class="menu-card" onclick="showScreen('tournament-screen')">
       <div class="menu-card-icon" data-game="trophy"></div>
       <div class="menu-card-title">Turnier</div>
@@ -488,6 +493,78 @@
   </div>
 </div>
 
+<!-- TRIVIAL PURSUIT - SETUP -->
+<div id="tp-setup-screen" class="screen">
+  <div class="team-setup">
+    <div class="team-card red">
+      <div class="label">Team 1</div>
+      <input type="text" id="tp-t1-name" placeholder="Teamname..." value="Team Rot" oninput="broadcastTpSetupTeamNames()">
+    </div>
+    <div class="team-card blue">
+      <div class="label">Team 2</div>
+      <input type="text" id="tp-t2-name" placeholder="Teamname..." value="Team Blau" oninput="broadcastTpSetupTeamNames()">
+    </div>
+    <div class="team-card green" id="tp-t3-card" style="display:none;">
+      <div class="label">Team 3</div>
+      <input type="text" id="tp-t3-name" placeholder="Teamname..." value="Team Grün" oninput="broadcastTpSetupTeamNames()">
+    </div>
+  </div>
+  <div class="team-toggle">
+    <input type="checkbox" id="tp-enable-team3" onchange="tpToggleTeam3()">
+    <label for="tp-enable-team3">3. Team aktivieren</label>
+  </div>
+  <div class="team-toggle">
+    <input type="checkbox" id="tp-again-check" checked>
+    <label for="tp-again-check">Richtig = nochmal drehen</label>
+  </div>
+  <div class="team-toggle">
+    <input type="checkbox" id="tp-steal-check" checked>
+    <label for="tp-steal-check">Nachfassen per Buzzer, wenn das Team danebenliegt</label>
+  </div>
+  <div class="setup-lobby" id="tp-setup-lobby"></div>
+  <div class="setup-actions">
+    <button class="btn btn-primary" onclick="startTp()">Spiel starten</button>
+    <button class="btn btn-secondary" onclick="showScreen('tp-edit-screen')">Fragen bearbeiten</button>
+    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
+  </div>
+</div>
+
+<!-- TRIVIAL PURSUIT - EDIT -->
+<div id="tp-edit-screen" class="screen wide-editor">
+  <div class="page-title"><em>Trivial Pursuit</em> Fragen bearbeiten</div>
+  <div class="editor-layout">
+    <div class="tp-editor-col" id="tp-editor-grid"></div>
+    <div class="editor-side">
+      <button class="btn btn-secondary" onclick="exportTp()">Exportieren</button>
+      <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importTp(event)" style="display:none;"></label>
+      <button class="btn btn-primary" onclick="showScreen('tp-setup-screen')">Zurück</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRIVIAL PURSUIT - GAME -->
+<div id="tp-screen" class="screen">
+  <div class="tp-top" id="tp-teams"></div>
+  <div class="round-bar">
+    <span id="tp-info">Runde läuft</span>
+    <span>·</span>
+    <span>Am Zug: <span class="pts" id="tp-turn"></span></span>
+  </div>
+  <div class="tp-board">
+    <div class="tp-wheel">
+      <div class="tp-wheel-rotor" id="tp-wheel-rotor">
+        <div class="tp-wheel-labels" id="tp-wheel-labels"></div>
+      </div>
+      <div class="tp-wheel-hub">?</div>
+      <div class="tp-wheel-pointer"></div>
+    </div>
+    <div class="tp-side">
+      <div class="tp-stage" id="tp-stage"></div>
+      <div class="tp-controls" id="tp-controls"></div>
+    </div>
+  </div>
+</div>
+
 <!-- RESULT -->
 <div id="result-screen" class="screen">
   <div class="result-icon">🏆</div>
@@ -560,5 +637,6 @@
 <script src="js/roster.js"></script>
 <script src="js/ddf.js"></script>
 <script src="js/pih.js"></script>
+<script src="js/tp.js"></script>
 </body>
 </html>
