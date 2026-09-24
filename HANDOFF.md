@@ -1,6 +1,7 @@
 # Handoff
 
 Was zuletzt passiert ist und warum. Neueste Einträge oben.
+Angelegt mit `452ac83`.
 
 Die Git-History sagt, *was* geändert wurde. Hier steht, was gemessen,
 verworfen oder bewusst liegen gelassen wurde — das geht sonst verloren und
@@ -11,7 +12,7 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
-## 2026-09-24 — GM-Panels für die drei neuen Shows
+## 2026-09-24 — GM-Panels für die drei neuen Shows (`ed25b18`)
 
 **Gemacht:** „Der Dümmste fliegt", „Der Preis ist heiß" und Trivial Pursuit
 haben jetzt ein eigenes Gamemaster-Panel. Es öffnet beim Start, noch vor dem
@@ -47,7 +48,7 @@ sichtbar und auf der Leinwand leer. Keine Konsolenfehler.
 
 ---
 
-## 2026-09-24 — Popout und Intros für die drei neuen Shows
+## 2026-09-24 — Popout und Intros für die drei neuen Shows (`022066f`)
 
 **Gemacht:** „Der Dümmste fliegt", „Der Preis ist heiß" und Trivial Pursuit
 öffnen jetzt das Zuschauerfenster und haben Intro, Anleitung und Titelkarte
@@ -94,7 +95,7 @@ Titelkarte.
 
 ---
 
-## 2026-09-24 — DDF-Wertung, eigene Kategorien in Trivial Pursuit
+## 2026-09-24 — DDF-Wertung, eigene Kategorien in Trivial Pursuit (`52700f0`)
 
 **Gemacht:** Die Spielerleiste bei „Der Dümmste fliegt" sortiert jetzt
 Ausgeschiedene nach hinten, hebt das letzte Herz hervor und zählt, wie viele
@@ -137,7 +138,7 @@ nachsehen, bevor man an der eigenen Regel zweifelt.
 
 ---
 
-## 2026-09-24 — Wertung bei „Der Preis ist heiß"
+## 2026-09-24 — Wertung bei „Der Preis ist heiß" (`29c668f`)
 
 **Gemacht:** Die Punkteleiste ist eine Rangliste geworden: nach Punkten
 sortiert, mit Platzziffer, Krone für die Spitze, graue Null statt goldener.
@@ -169,7 +170,7 @@ TS2339 — die Eigenschaft muss beim `map` schon drinstehen (`{ p, i, rank: 0 }`
 
 ---
 
-## 2026-09-24 — Regeln in den Editor, Lobby-Kasten geordnet
+## 2026-09-24 — Regeln in den Editor, Lobby-Kasten geordnet (`f14dd4c`)
 
 **Gemacht:** Die zwei Regel-Haken sind vom Setup- in den Fragen-Editor
 gewandert. Der Lobby-Kasten hat jetzt ein Raster aus zwei gleich breiten
@@ -205,7 +206,7 @@ CRLF einsetzten. Auf CRLF normalisiert, wie der Rest des Arbeitsbaums.
 
 ---
 
-## 2026-09-24 — Setup-Screen von Trivial Pursuit
+## 2026-09-24 — Setup-Screen von Trivial Pursuit (`fde849b`)
 
 **Gemacht:** Die zwei Regel-Haken stehen jetzt in einer eigenen Tafel, darüber
 eine Vorschau der sechs Kategorien mit Farbe und Fragenzahl.

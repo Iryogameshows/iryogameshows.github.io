@@ -218,6 +218,35 @@ still, weil ein Inline-Style jede Regel schlägt.
 Push auf `master` → GitHub Action (`.github/workflows/pages.yml`) → live auf
 https://iryogameshows.github.io/
 
+## HANDOFF.md — bei JEDER Änderung, ohne Ausnahme
+
+`HANDOFF.md` im Wurzelverzeichnis wird **mitgeschrieben, nicht nachgepflegt**.
+Sie gilt als Teil der Änderung, genau wie der Code und die Prüfung.
+
+**Pflicht bei jedem Arbeitsschritt, der committet wird:**
+
+1. Neuen Eintrag **oben** anlegen, mit Datum und Commit-Hash in der
+   Überschrift. Der Hash ist erst nach dem Commit bekannt — also: Code
+   committen, Hash ablesen, Eintrag damit schreiben und als eigenen kleinen
+   Commit hinterherschicken. Lieber ein Commit mehr als ein Eintrag ohne Hash.
+2. Je Eintrag: **Gemacht · Warum so (samt verworfener Wege) · Geprüft (mit
+   Zahlen) · Offen · Fallstricke**. Was nicht geprüft wurde, wird als
+   ungeprüft benannt.
+3. **In der Antwort an David ausdrücklich sagen, dass es in der HANDOFF.md
+   steht.** Er sieht die Datei sonst nicht und kann nicht nachhalten, ob es
+   passiert ist. Ein Satz reicht: "Steht in der HANDOFF.md."
+
+Kein Eintrag heißt: der Arbeitsschritt ist nicht fertig.
+
+Warum: eine Sitzung endet, der Kontext wird komprimiert, eine andere Session
+übernimmt — dann ist nur noch die Git-History da. Die sagt, *was* geändert
+wurde, aber nicht, was gemessen, verworfen oder bewusst liegen gelassen wurde.
+Genau das geht sonst verloren und wird ein zweites Mal erarbeitet.
+
+Nach einer Kompaktierung ist `HANDOFF.md` die erste Datei, die gelesen wird —
+ihre Aussagen gelten trotzdem als veraltet, bis sie gegen das Repo geprüft
+sind.
+
 ## Antwortformat
 
 **Jeder Absatz beginnt mit einem Backslash `\`.**
