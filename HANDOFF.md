@@ -11,6 +11,42 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-24 — Regeln in den Editor, Lobby-Kasten geordnet
+
+**Gemacht:** Die zwei Regel-Haken sind vom Setup- in den Fragen-Editor
+gewandert. Der Lobby-Kasten hat jetzt ein Raster aus zwei gleich breiten
+Spalten statt eines Umbruchs.
+
+**Warum:** Die Regeln sind Eigenschaften der Fragerunde, kein Startparameter —
+der Setup-Screen soll zeigen, *was* gespielt wird, nicht *wie*. Sie sichern
+sich jetzt sofort beim Umschalten (`tpSaveRules()`), sonst käme man über das
+Menü mit dem alten Stand zurück. `startTp()` liest weiter dieselben Feld-IDs;
+die liegen im DOM, egal welcher Screen sichtbar ist.
+
+Im Lobby-Kasten brachen vier verschieden breite Knöpfe als 2+1+1 um, keine
+Kante stand unter der anderen. Zwei Spalten ordnen das und stellen die Paare
+zusammen: oben QR, unten Teams. „Teams zuteilen" war `btn-primary` und damit
+lauter als „Spiel starten" darunter — es bleibt der wichtigste Knopf *im
+Kasten*, aber der Vorrang gehört dem Start, also jetzt Goldrand statt
+Goldfläche. Die Zahl im Kopf ist bei 0 grau: ein grünes „0" versprach
+Verbundene, die es nicht gab.
+
+**Betroffen sind sechs Screens**, nicht nur Trivial Pursuit: der Kasten ist
+geteilt (`renderSetupLobby` in `js/buzzer.js`, dazu `js/roster.js` für DDF und
+Der Preis ist heiß).
+
+**Geprüft:** `node check.js --types` ohne Befund. Alle sechs Setup-Screens: je
+vier Knöpfe, zwei Spaltenpositionen, gleiche Breite. Regel abschalten schreibt
+sofort nach `localStorage`, `tpLoadSettings()` holt sie zurück, `fieldChecked`
+liest sie aus dem Editor heraus. Bei 400 px eine Spalte, kein Querüberlauf.
+Keine Konsolenfehler.
+
+**Fallstrick:** `js/tp.js` hatte gemischte Zeilenenden (26 CRLF gegen 564 LF),
+weil die Datei per Write-Werkzeug mit LF entstand und spätere Perl-Einschübe
+CRLF einsetzten. Auf CRLF normalisiert, wie der Rest des Arbeitsbaums.
+
+---
+
 ## 2026-09-24 — Setup-Screen von Trivial Pursuit
 
 **Gemacht:** Die zwei Regel-Haken stehen jetzt in einer eigenen Tafel, darüber

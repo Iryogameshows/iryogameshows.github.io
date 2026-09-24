@@ -503,8 +503,8 @@ function renderTpEditor(){
     const open = tpEditOpen === i;
     const rows = c.questions.map((q, j) => `
       <div class="q-list-item" style="gap:8px;">
-        <input type="text" value="${escAttr(q.q)}" placeholder="Frage" style="flex:2;" oninput="tpSetQ(${i},${j},this)">
-        <input type="text" value="${escAttr(q.a)}" placeholder="Antwort" style="flex:1;" oninput="tpSetA(${i},${j},this)">
+        <input type="text" value="${escAttr(q.q)}" placeholder="Frage" style="flex:3;min-width:0;" oninput="tpSetQ(${i},${j},this)">
+        <input type="text" value="${escAttr(q.a)}" placeholder="Antwort" style="flex:2;min-width:0;" oninput="tpSetA(${i},${j},this)">
         <button class="btn btn-danger btn-sm" onclick="tpDelQuestion(${i},${j})">✕</button>
       </div>`).join('') || `<div class="pr-empty">Noch keine Frage in dieser Kategorie.</div>`;
     return `<div class="editor-card" style="border-left:6px solid ${c.color};">
@@ -547,6 +547,16 @@ function tpBulkAdd(i){
 function tpSave(){ storeSetJson('tpData', tpData); }
 function tpLoad(){ tpData = storeGetJson('tpData', tpData); }
 function tpSaveSettings(){ storeSetJson('tpSettings', tpState.settings); }
+/* Die Regeln stehen im Fragen-Editor, nicht mehr im Setup: es sind
+   Eigenschaften der Fragerunde, kein Startparameter, und der Setup-Screen
+   soll zeigen, was gespielt wird, statt wie. Sie werden deshalb sofort beim
+   Umschalten gesichert - wer sie setzt und dann ueber das Menue in ein
+   anderes Spiel geht, kommt sonst mit dem alten Stand zurueck. */
+function tpSaveRules(){
+  tpState.settings.again = fieldChecked('tp-again-check');
+  tpState.settings.steal = fieldChecked('tp-steal-check');
+  tpSaveSettings();
+}
 function tpLoadSettings(){
   tpState.settings = storeGetJson('tpSettings', tpState.settings);
   const el = fieldEl('tp-steal-check'); if (el) el.checked = !!tpState.settings.steal;

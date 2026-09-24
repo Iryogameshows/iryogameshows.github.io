@@ -151,15 +151,18 @@ function renderSetupLobby(game){
           : `<span class="player-team-tag" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);">kein Team</span>`;
         return `<div class="pr-row"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${escapeHtml(p.name)}</span>${teamTag}</div>`;
       }).join('')
-    : `<div class="pr-empty">Noch niemand verbunden — QR-Code scannen zum Beitreten</div>`;
+    : `<div class="pr-empty">
+         <b>Noch niemand verbunden</b>
+         <span>QR-Code zeigen und scannen lassen — verbundene Handys erscheinen hier von selbst.</span>
+       </div>`;
   container.innerHTML = `
-    <div class="panel-head"><span>👥 Lobby</span><span class="badge">${buzzer.presence.length}</span></div>
+    <div class="panel-head"><span>👥 Lobby</span><span class="badge${buzzer.presence.length ? '' : ' leer'}">${buzzer.presence.length}</span></div>
     <div class="pr-list">${rows}</div>
     <div class="panel-row">
       <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code zeigen'}</button>
       <button class="btn btn-secondary" onclick="popOutQR()">🗗 QR als Fenster</button>
-      <button class="btn btn-primary" onclick="openPlayersScreen('${cfg.screen}')">👥 Teams zuteilen</button>
-      <button class="btn btn-secondary" onclick="resetAllTeams()">↺ Teams zurücksetzen</button>
+      <button class="btn btn-secondary lobby-main" onclick="openPlayersScreen('${cfg.screen}')">👥 Teams zuteilen</button>
+      <button class="btn btn-secondary lobby-reset" onclick="resetAllTeams()">↺ Teams zurücksetzen</button>
     </div>`;
 }
 

@@ -1,5 +1,23 @@
 # Iryo Gameshows
 
+> ## ⛔ VOR JEDEM ABSENDEN PRÜFEN
+>
+> **Beginnt JEDER Absatz dieser Nachricht mit einem Backslash `\` ?**
+>
+> Nicht nur der erste. Auch:
+> - die eine kurze Zeile vor einem Werkzeugaufruf ← **hier fällt er weg**
+> - die Rückfrage, die Fehlermeldung, der letzte Satz
+> - die Einleitungszeile über einer Liste, Tabelle oder einem Code-Block
+> - der Satz nach einer Tabelle, Liste oder Überschrift
+>
+> Keinen bekommen nur: Überschriften, Code-Blöcke, Tabellenzeilen, einzelne
+> Listenpunkte.
+>
+> Nach dem Backslash folgt ein Buchstabe, eine Ziffer oder ein Leerzeichen —
+> nie direkt `*`, `_`, `` ` ``, `[`, `#`, `>`, sonst frisst Markdown ihn auf.
+>
+> Das Warum steht unten unter „Antwortformat". Hier oben steht nur die Prüfung.
+
 ## ZUERST: Repo-Stand prüfen — nicht verhandelbar
 
 **Vor jeder Aussage über die Struktur und vor der ersten Änderung:**

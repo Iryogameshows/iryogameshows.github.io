@@ -1978,3 +1978,69 @@ body {
   .tp-chip-name{font-size:.74rem;}
 }
 @media (max-width:420px){ .tp-cats{grid-template-columns:1fr;} }
+
+/* ── Lobby-Kasten, Feinschliff ────────────────────────────────────────────
+   Gilt fuer alle Setup-Screens, die ihn benutzen: Feud, Jeopardy, WWDS,
+   Trivial Pursuit und ueber roster.js auch DDF und Der Preis ist heiss.
+
+   Vorher lagen vier Knoepfe in einem flex-wrap. Weil sie verschieden breit
+   sind, brach die Reihe bei 2+1+1 um und keine Kante stand unter der
+   anderen. Zwei gleich breite Spalten ordnen das - und stellen nebenbei die
+   Paare zusammen, die zusammengehoeren: oben QR, unten Teams. */
+.setup-lobby .panel-row{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  padding-top:12px;margin-top:2px;
+  border-top:1px solid rgba(255,255,255,.07);
+}
+.setup-lobby .panel-row .btn{
+  width:100%;justify-content:center;text-align:center;
+  padding:10px 10px;font-size:.74rem;
+}
+/* "Teams zuteilen" war btn-primary und damit der lauteste Knopf auf dem
+   ganzen Screen - lauter als "Spiel starten", das darunter steht. Es bleibt
+   der wichtigste im Kasten, aber der Vorrang gehoert dem Start. */
+.setup-lobby .lobby-main{
+  border-color:rgba(var(--gold-rgb),.45);
+  color:var(--gold);
+}
+.setup-lobby .lobby-main:hover{background:rgba(var(--gold-rgb),.1);}
+/* Zuruecksetzen wirft die Teamzuteilung aller Spieler weg. Es darf nicht
+   aussehen wie die anderen drei, aber auch nicht nach Warnung schreien -
+   es steht hier schliesslich absichtlich. */
+.setup-lobby .lobby-reset{color:rgba(255,255,255,.4);}
+.setup-lobby .lobby-reset:hover{color:var(--red);border-color:rgba(var(--red-rgb),.4);}
+
+/* Null ist kein Erfolg. Die Zahl wird erst gruen, wenn wirklich jemand da
+   ist - vorher stand dort ein gruenes "0", das Verbundene versprach. */
+.setup-lobby .badge.leer{background:rgba(255,255,255,.07);color:rgba(255,255,255,.4);}
+
+.setup-lobby .pr-empty{
+  display:flex;flex-direction:column;gap:3px;
+  padding:10px 2px 12px;line-height:1.45;
+}
+.setup-lobby .pr-empty b{font-size:.85rem;font-weight:800;color:rgba(255,255,255,.5);}
+.setup-lobby .pr-empty span{font-size:.75rem;color:rgba(255,255,255,.3);}
+
+@media (max-width:460px){
+  .setup-lobby .panel-row{grid-template-columns:1fr;}
+}
+
+/* ── Regeln im Fragen-Editor ──────────────────────────────────────────────
+   Dieselbe Tafel wie vorher im Setup, nur an ihrem richtigen Platz: die
+   Regeln gehoeren zu den Fragen, nicht zum Spielstart. */
+.tp-rules-panel{
+  padding:16px 20px;border-radius:14px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
+  display:flex;flex-direction:column;gap:6px;margin-bottom:4px;
+}
+.tp-editor-grid{display:flex;flex-direction:column;gap:12px;}
+
+/* Die Fragenzahl je Kategorie. .badge ist ausserhalb des Lobby-Kastens
+   ungestylt - dort stand bisher eine nackte Ziffer neben dem Namensfeld. */
+.tp-editor-grid .badge{
+  background:rgba(255,255,255,.08);color:rgba(255,255,255,.55);
+  border-radius:99px;padding:2px 11px;font-size:.72rem;font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+.tp-editor-grid .panel-head{align-items:center;gap:10px;}
+.tp-editor-grid .q-list-item{flex-wrap:wrap;}
