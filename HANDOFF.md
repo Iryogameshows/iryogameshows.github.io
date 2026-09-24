@@ -12,6 +12,30 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-24 — HANDOFF-Regel festgeschrieben (`c3afa5f`)
+
+**Gemacht:** Die Pflicht, `HANDOFF.md` bei jeder Änderung mitzuschreiben,
+steht jetzt ausdrücklich in beiden `CLAUDE.md` (Projekt und `Coding/`). Die
+sechs Einträge ohne Commit-Hash haben ihren nachgetragen, und die Datei weist
+oben aus, mit welchem Commit sie angelegt wurde.
+
+**Warum:** Inhaltlich war alles erfasst, aber sechs von acht Einträgen hatten
+keinen Hash — sie entstanden jeweils **vor** dem Commit, da war er noch nicht
+bekannt. Die Regel nennt deshalb die Reihenfolge, die das löst: Code
+committen, Hash ablesen, Eintrag damit schreiben und als eigenen kleinen
+Commit hinterherschicken. Lieber ein Commit mehr als ein Eintrag ohne Hash.
+Dieser Eintrag hier ist genau dieser Fall.
+
+Zweiter Punkt der Regel: in der Antwort ausdrücklich sagen, dass es in der
+`HANDOFF.md` steht. Die Datei ist sonst unsichtbar, und ob sie gepflegt wurde,
+lässt sich von außen nicht nachhalten.
+
+**Geprüft:** `node check.js` ohne Befund (Markdown berührt ihn nicht, aber der
+Lauf gehört zum Schritt). Alle acht Einträge tragen jetzt einen Hash, alle
+neun Commits seit `36cdbc5` sind abgedeckt.
+
+---
+
 ## 2026-09-24 — GM-Panels für die drei neuen Shows (`ed25b18`)
 
 **Gemacht:** „Der Dümmste fliegt", „Der Preis ist heiß" und Trivial Pursuit
