@@ -12,6 +12,88 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Jeopardy: Frage in Schritten einblenden, Zeile/Bild gemischt (`9cfa74f`)
+
+**Gemacht:** Neuer Schalter **📜 Nacheinander** im Frage-Editor. Eine Frage kann
+aus bis zu fünf Schritten bestehen, die der Host einzeln einblendet. Jeder
+Schritt ist eine Zeile, ein Bild oder beides — frei gemischt, also z. B. 1+4
+Zeile und 2+3+5 Bild. Leere Schritte fallen raus.
+
+- `js/jeopardy.js`: `JeopardyClue` um `steps`, `stepTexts`, `stepImgs`,
+  `stepNames`, `stepCount` erweitert; Zustand `stepsRevealed` (in Snapshot,
+  Undo und Reset beim Öffnen); Helfer `jeopardyStepCount`, `jeopardyStepItems`,
+  `jeopardyStepsHtml`; `jeopardyStepsReveal()`.
+- `js/jeopardy-ui.js`: Schalter, Anzahl-Auswahl, je Schritt ein Textfeld und
+  ein Bild-Knopf bzw. Thumbnail mit ✕; Badge 📜 im Board-Gitter.
+- `js/feud.js`: Knopf „📜 Nächster Schritt (n/5)" im GM-Panel und „📜 Schritt"
+  in der Sternleiste, dazu eine Vorschau aller Schritte im Panel — der Host
+  liest vor, bevor er zeigt — und der Tag „📜 Nacheinander (n)".
+- `styles.css`: `.jeopardy-steps`, `.jeopardy-step`, `-text`, `-img`.
+
+**Warum so:** Erst war es nur „Zeilen"; auf Davids zweite Nachricht hin wurde
+daraus ein Schritt, der Zeile **und** Bild tragen kann. Das ist ein Feld mehr
+im Editor statt zweier getrennter Betriebsarten, die man nicht mischen könnte.
+Gebaut wie die Bilder-Reihe (derselbe Zähler, derselbe Undo, derselbe Knopf),
+damit nichts Neues zu lernen ist. Die **Bilder-Reihe bleibt daneben bestehen**:
+sie stellt Bilder nebeneinander, die Schritte stapeln untereinander. Text geht
+durch `escapeHtml`, Bild-`src` durch `escAttr`. Die Bilder liegen wie `qImg`
+als Data-URL in `jeopardyData`, JSON-Export und -Import brauchten keine
+Anpassung (geprüft).
+
+**Ein Fund beim Testen:** Fünf Schritte mit drei Bildern schoben die Lösung
+aus dem Bild (Inhalt 806 px bei 768 px Fenster, nichts scrollte). Behoben über
+`min-height: 0` an Schritt und Bild — ohne das darf ein Flex-Kind nicht unter
+seine Inhaltsgröße schrumpfen. Dazu teilen sich die Bilder die Höhe über die
+CSS-Variablen `--jstep-n` und `--jstep-imgs`, die `jeopardyStepsHtml` setzt.
+Danach: Inhalt 768 px, Lösung sichtbar, nichts scrollt.
+
+**Geprüft:** `node check.js --types` ohne Meldung (13 Dateien, 395 Handler,
+256 IDs, 911 Klammernpaare). Im Browser **117 Prüfungen, alle grün**, bei
+abgeklemmtem Firebase (144 Schreibversuche abgefangen) und gezähltem Popout
+(3 Aufrufe), keine Konsolenfehler.
+
+Zu den Schritten im Einzelnen: Editor legt 5 Text- und 5 Bildfelder an, Muster
+`T,B,B,T,B` kommt so im Overlay an; Fokus bleibt beim Tippen im Feld; ✕ nimmt
+ein Bild raus, ohne die Zeilen zu verlieren; Einblenden geht eins nach dem
+anderen, kein Überlauf über 5, Undo nimmt einen zurück; Zähler ist beim
+nächsten Feld wieder 0; eine Frage ohne Schritte zeigt keinen Block.
+Fernbedienung: Knopf mit Zähler 0/5 → 1/5, am Ende „✓ Alle Schritte
+eingeblendet", Vorschau listet 1.–5., Tag „Nacheinander (5)". Sternleiste
+ebenso. Bei 400 px kein Querüberlauf, alle fünf Schritte im Bild
+(Bildschirmfoto).
+
+Der übrige Durchlauf: Feud (Antworten, Strikes, Teamwechsel, Runde 2),
+Jeopardy (25 Felder, +100, Abzug −100 = halber Wert, Kategorie-Bild in Board
+und Overlay, Schätzfrage auf/zu), WWM (15 Stufen, 4 Antworten, alle drei
+Joker, Sicherheitsstufe 500 €), WWDS (12 Kategorien, Joker, Punkte,
+Teamwechsel), DDF (3 Teilnehmer à 3 Leben, Abstimmung 2:1, Leben ab, nächste
+Runde), PIH (Regel „nur drunter": Gebote 50 %, 90 %, 150 % → das 90-%-Gebot
+gewinnt, das Gebot drüber zählt nicht), TP (Frage ziehen, richtig → Stück,
+falsch → kein Stück), sieben Editoren, Turnier mit sieben startbaren Shows,
+zehn Screens bei 1024 px und bei 400 px ohne Querüberlauf, Handy-Buzzer und
+Gamepad ohne Konsolenfehler.
+
+**Ungeprüft:** echtes Board-Popout, Daily Double zusammen mit Schritten, Ton
+in einer Schritt-Frage, echter Datei-Dialog per Mausklick, Firebase im
+Echtbetrieb.
+
+**Fallstricke:**
+
+- **Im versteckten Browser-Panel stehen CSS-Animationen bei 0.** `document.hidden`
+  ist dann `true`, und eine gerade eingeblendete Zeile misst `opacity: 0`,
+  obwohl die Klasse `shown` sitzt. Das kostete eine Fehlersuche an einer
+  Stelle, an der nichts kaputt war. Abhilfe im Test:
+  `el.getAnimations().forEach(a => a.finish())` vor dem Messen.
+- `updateGMBar()` zeichnet **nur**, wenn `#gm-bar` die Klasse `visible` hat —
+  sonst kommt eine leere Leiste zurück und sieht aus wie ein fehlender Knopf.
+- Ein Feld, das schon gespielt wurde, lässt sich nicht erneut öffnen
+  (`openJeopardyClue` steigt bei `used` sofort aus). Ein Test, der dasselbe
+  Feld zweimal nimmt, prüft danach eine leere Frage.
+- Die Firebase-Attrappe braucht `firebase.database.ServerValue.TIMESTAMP`,
+  sonst wirft `jeopardyBuzzArm`.
+- WWM heißt `currentQ`/`removed`/`lifelines`, WWDS-Antworten heißen `answers`
+  (nicht `options`), der Jeopardy-Abzug ist die **Hälfte** des Feldwerts.
+
 ## 2026-09-25 — Kategorie-Bild in Frage-Overlay und GM-Board getestet (kein Code geändert)
 
 **Gemacht:** Die zwei offenen Prüfpunkte aus `674f8cd` und `6c920bd` im
