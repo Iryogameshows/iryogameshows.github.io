@@ -12,6 +12,48 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Jeopardy: Bild als Kategorie-Name, nur Anzeige (`674f8cd`)
+
+**Gemacht:** `JeopardyCategory` hat zwei neue optionale Felder, `img` (Data-URL)
+und `imgName`. Der neue Helfer `jeopardyCatHeadHtml(cat, imgClass)` in
+`js/jeopardy.js` liefert das Bild, wenn eins gesetzt ist, sonst wie bisher den
+escapten Namen. Er wird an drei Stellen benutzt: im Board-Kopf
+(`.jeopardy-cat.has-img` / `.jeopardy-cat-img`), im Frage-Overlay
+(`.jeopardy-clue-cat-img`) und im gespiegelten Board der GM-Fernbedienung
+(`.jcat-img` im Inline-CSS in `feud.js`). Außerdem gibt es
+`jeopardyEditCatImg(b, col, input)` und `jeopardyClearCatImg(b, col)` in
+`js/jeopardy-ui.js`.
+
+**Warum so:** Der Name bleibt als Feld erhalten. Er ist der alt-Text des Bilds,
+und der Host sieht ihn weiter im Editor und in der Zeile „Frage offen · Name ·
+Wert“ der Fernbedienung, weiß also, was hinter dem Bild steckt. `object-fit:
+contain` statt `cover`, damit von Logos oder Motiven nichts abgeschnitten wird,
+das zum Erraten gebraucht wird. Das Bild liegt wie `qImg` als Data-URL in
+`jeopardyData`, deshalb funktionieren JSON-Export und -Import ohne Anpassung.
+Das `src` läuft durch `escAttr`, weil importierte JSON-Dateien beliebigen Text
+enthalten können.
+
+**Geprüft:** `node check.js --types` meldet „alles in Ordnung“ (13 Dateien ohne
+Meldung, 385 Handler, 256 IDs, 905 Klammernpaare). Im Browser mit einem Testbild
+in Kategorie 1: Der Board-Kopf zeigt das Bild in 181 × 83 px, alt-Text
+„Logos“. Ein Name mit `"` und `<b>` erscheint escaped als Text. Die Spalten ohne
+Bild sehen aus wie vorher.
+
+**Ungeprüft:** das Frage-Overlay mit Bild, das GM-Spiegel-Board mit Bild und die
+Handy-Breite.
+
+**Offen:** **Im Editor fehlt der Upload-Knopf.** Die Funktionen sind fertig, es
+fehlt nur ein `<input type="file">` im Kategorie-Kopf von
+`renderJeopardyEditor()`, das `jeopardyEditCatImg(b, col, this)` aufruft, dazu
+ein Thumbnail mit ✕ für `jeopardyClearCatImg`. Bis dahin kommt ein Bild nur
+über eine importierte JSON-Datei ans Board.
+
+**Fallstricke:** Beim Einbau des Editor-Knopfs brach die Session zweimal ab, der
+Knopf ist deshalb nicht von hier. Die Host-Seite hat eine Passwort-Sperre
+(`#host-gate`). Wer im Browser testet, meldet sich vorher selbst an.
+
+---
+
 ## 2026-09-25 — Zweiter Komplettdurchlauf (kein Commit, reiner Test)
 
 **Gemacht:** Alles erneut durchgetestet, inklusive der neuen Turnier-Eintragung
