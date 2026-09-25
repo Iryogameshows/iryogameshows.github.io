@@ -502,6 +502,30 @@ const DANGER_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg
   <polygon points="70,24 70,86 84,90 84,20" fill="#3a3f6b"/>
 </svg>`;
 
+/* Beide handgezeichneten Logos bringen ihren Farbverlauf selbst mit:
+   STAR_SVG als <linearGradient id="sg">, DANGER_SVG als "dg". Steht dasselbe
+   SVG zweimal im Dokument - und das tut es, sobald eine Menuekachel und ein
+   Intro gleichzeitig existieren -, gibt es die id doppelt. `url(#dg)` trifft
+   dann das ERSTE Vorkommen, und liegt das in einem abgeschalteten Screen
+   (`.screen` ohne `.active`, also display:none), baut der Browser den Verlauf
+   gar nicht: der Balken bleibt ungefuellt und ist auf schwarzem Grund weg.
+
+   Genau so fehlte am 2026-09-25 der goldene Balken im Jeopardy-Titel. Deshalb
+   bekommt JEDE ausgegebene Kopie ihre eigene id. gameCardIcon machte das fuer
+   die anderen Shows schon, nur fuer diese beiden nicht - die gaben das SVG
+   unveraendert zurueck. */
+let svgGradSeq = 0;
+/** @param {string} svg @param {string} id @returns {string} */
+function withOwnGradId(svg, id){
+  const neu = id + '_' + (++svgGradSeq);
+  return svg.split('id="' + id + '"').join('id="' + neu + '"')
+            .split('url(#' + id + ')').join('url(#' + neu + ')');
+}
+/** Das Family-Feud-Logo mit eigener Verlaufs-ID. @returns {string} */
+function starSvg(){ return withOwnGradId(STAR_SVG, 'sg'); }
+/** Das Jeopardy-Logo mit eigener Verlaufs-ID. @returns {string} */
+function dangerSvg(){ return withOwnGradId(DANGER_SVG, 'dg'); }
+
 const TEAM_COLORS = ['red','blue','green'];
 
 // ── LOGO ──
@@ -626,8 +650,8 @@ function renderLogo(line1, line2, size2, icon) {
 // Menü-Karten: das eigene Gold-Logo jedes Spiels statt eines Emojis.
 let gameIconSeq = 0;
 function gameCardIcon(key){
-  if (key === 'feud') return STAR_SVG;
-  if (key === 'jeopardy') return DANGER_SVG;
+  if (key === 'feud') return starSvg();
+  if (key === 'jeopardy') return dangerSvg();
   // Die Verlaufs-ID muss bei JEDEM Aufruf eine andere sein. Sonst steht
   // dieselbe id mehrfach im Dokument, und url(#...) trifft immer das ERSTE
   // Vorkommen - bei den neuen Intros lag das im versteckten Menue, und das

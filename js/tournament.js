@@ -61,12 +61,15 @@ const TOURNAMENT_STARTABLE = {
 const TOURNAMENT_AUTO_RESULT = new Set([
   'Family Feud', 'Jeopardy', 'Wer wird Millionär', 'Wer weiß denn sowas', 'Trivial Pursuit',
 ]);
-// Nutzt die echten, handgezeichneten Logos (STAR_SVG/DANGER_SVG) statt
-// generischer Emoji - jede Einbindung braucht aber eine eigene Gradient-ID,
-// sonst kollidieren mehrere Zeilen im Spielplan auf dieselbe id="sg"/"dg".
-function tournamentGameIcon(name, uid){
-  if (name === 'Family Feud') return `<span class="tour-icon-svg">${STAR_SVG.replace('id="sg"', `id="sg-t${uid}"`).replace('url(#sg)', `url(#sg-t${uid})`)}</span>`;
-  if (name === 'Jeopardy') return `<span class="tour-icon-svg">${DANGER_SVG.replace('id="dg"', `id="dg-t${uid}"`).replace('url(#dg)', `url(#dg-t${uid})`)}</span>`;
+// Nutzt die echten, handgezeichneten Logos statt generischer Emoji. Jede
+// Einbindung braucht eine eigene Gradient-ID, sonst kollidieren mehrere Zeilen
+// im Spielplan auf dieselbe id="sg"/"dg" - darum kuemmern sich starSvg() und
+// dangerSvg() aus core.js. Das stand hier frueher von Hand, half aber nur
+// innerhalb des Spielplans; die Kollision mit der Menuekachel blieb.
+/** @param {string} name @returns {string} */
+function tournamentGameIcon(name){
+  if (name === 'Family Feud') return `<span class="tour-icon-svg">${starSvg()}</span>`;
+  if (name === 'Jeopardy') return `<span class="tour-icon-svg">${dangerSvg()}</span>`;
   if (name === 'Wer wird Millionär') return '💰';
   if (name === 'Wer weiß denn sowas') return '🧠';
   if (name === 'Der Dümmste fliegt') return '❤';
@@ -295,7 +298,7 @@ function renderTournament(){
   const gamesHtml = tournament.games.map((g, i) => {
     const pts = tournamentGamePoints(g, tournament.teams.length);
     const hidden = g.secret && !g.done;
-    const icon = hidden ? '❓' : tournamentGameIcon(g.game, i);
+    const icon = hidden ? '❓' : tournamentGameIcon(g.game);
     const label = hidden ? '???' : g.game;
     const result = g.done
       ? tournament.teams.map((t, ti) => `${t}: ${g.scores[ti]} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')

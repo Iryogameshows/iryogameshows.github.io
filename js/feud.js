@@ -65,7 +65,7 @@ function buildScoreboard() {
 function showIntro() {
   const overlay = document.createElement('div');
   overlay.className = 'intro-overlay';
-  overlay.innerHTML = STAR_SVG;
+  overlay.innerHTML = starSvg();
   document.body.appendChild(overlay);
   overlay.addEventListener('click', () => closeOverlay(overlay, afterStar));
 }
@@ -88,7 +88,7 @@ function feudTitle() { return getFeudName() + ' Feud'; }
 
 function showWelcomeIntro() {
   showClickOverlay('welcome-overlay overlay-enter', `
-    <div class="welcome-star">${STAR_SVG}</div>
+    <div class="welcome-star">${starSvg()}</div>
     <div class="welcome-line1">Willkommen zu</div>
     <div class="welcome-line2">${feudTitle()}</div>
   `, 1800, showTutorialThenGame);
@@ -339,7 +339,7 @@ function feudTutorialSlides() {
 // Abzug, Daily Double, zwei Runden, Sieg.
 function jeopardyTutorialSlides() {
   return [
-    `<div class="tut-danger">${DANGER_SVG}</div>
+    `<div class="tut-danger">${dangerSvg()}</div>
      <div class="tut-big tut-gold">Jeopardy</div>`,
     `<div class="tut-big tut-gold" style="font-size:2.4rem; margin-bottom:12px;">Kategorien &amp; Punkte</div>
      <div class="tut-jboard">
@@ -419,7 +419,7 @@ function showBlackPause() {
 
 function showWelcome() {
   showClickOverlay('welcome-overlay overlay-enter', `
-    <div class="welcome-star">${STAR_SVG}</div>
+    <div class="welcome-star">${starSvg()}</div>
     <div class="welcome-line1">Los geht's</div>
     <div class="welcome-line2">Runde 1</div>
   `, 1800, () => {
@@ -631,7 +631,7 @@ function showFinaleIntroScreen(onDone) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   if (!document.querySelector('.black-backdrop')) addBlackBackdrop();
   showClickOverlay('finale-click-overlay', `
-    <div class="welcome-star">${STAR_SVG}</div>
+    <div class="welcome-star">${starSvg()}</div>
     <div class="welcome-line1">Jetzt kommt</div>
     <div class="welcome-line2">Das große Finale</div>
   `, 2000, onDone);
@@ -639,7 +639,7 @@ function showFinaleIntroScreen(onDone) {
 
 function showFinaleMatchup() {
   showClickOverlay('finale-click-overlay', `
-    <div class="welcome-star">${STAR_SVG}</div>
+    <div class="welcome-star">${starSvg()}</div>
     <div class="welcome-line2" style="font-size:3.5rem;">${state.teamNames[finaleState.teams[0]]}</div>
     <div class="welcome-line1" style="animation-delay:1s;">vs</div>
     <div class="welcome-line2" style="font-size:3.5rem;animation-delay:1.2s;">${state.teamNames[finaleState.teams[1]]}</div>
@@ -743,7 +743,7 @@ function startFinaleReveal() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const bd = addBlackBackdrop();
   showClickOverlay('welcome-overlay overlay-enter', `
-    <div class="welcome-star">${STAR_SVG}</div>
+    <div class="welcome-star">${starSvg()}</div>
     <div class="welcome-line1">Und jetzt</div>
     <div class="welcome-line2">Die Auflösung</div>
   `, 1500, () => {
@@ -833,7 +833,7 @@ function showFinaleSwitch() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const bd = addBlackBackdrop();
   showClickOverlay('welcome-overlay overlay-enter', `
-    <div class="welcome-star">${STAR_SVG}</div>
+    <div class="welcome-star">${starSvg()}</div>
     <div class="welcome-line1">Jetzt spielt</div>
     <div class="welcome-line2">${state.teamNames[finaleState.teams[1]]}</div>
   `, 1500, () => {

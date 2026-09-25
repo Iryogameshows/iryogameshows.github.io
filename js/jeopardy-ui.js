@@ -340,7 +340,7 @@ function showJeopardyBoardTransition() {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   addBlackBackdrop();
   showClickOverlay('welcome-overlay overlay-enter', `
-    <div class="danger-title-sign">${DANGER_SVG}</div>
+    <div class="danger-title-sign">${dangerSvg()}</div>
     <div class="welcome-line1">Weiter geht's mit</div>
     <div class="welcome-line2" style="color:#FFD23F;">Board ${jeopardyState.currentBoard + 2}</div>
   `, 1500, () => {

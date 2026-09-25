@@ -198,7 +198,7 @@ function startJeopardyActual() {
 function showJeopardyIntro() {
   const ov = document.createElement('div');
   ov.className = 'intro-overlay';
-  ov.innerHTML = `<div class="danger-intro-sign">${DANGER_SVG}</div>`;
+  ov.innerHTML = `<div class="danger-intro-sign">${dangerSvg()}</div>`;
   document.body.appendChild(ov);
   ov.addEventListener('click', () => closeOverlay(ov, afterJeopardyStar));
 }
@@ -237,7 +237,7 @@ function showGameshowIntroTag2(onDone) {
 
 function showJeopardyTitle() {
   showClickOverlay('welcome-overlay overlay-enter', `
-    <div class="danger-title-sign">${DANGER_SVG}</div>
+    <div class="danger-title-sign">${dangerSvg()}</div>
     <div class="welcome-line2" style="color:#FFD23F;">Jeopardy</div>
   `, 1800, () => {
     showScreen('jeopardy-screen');
