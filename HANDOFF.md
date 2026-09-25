@@ -12,6 +12,40 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Kategorie-Bild in Frage-Overlay und GM-Board getestet (kein Code geändert)
+
+**Gemacht:** Die zwei offenen Prüfpunkte aus `674f8cd` und `6c920bd` im
+Browser nachgeholt. Code ist nicht geändert.
+
+**Aufbau:** localhost:3000, Host-Sperre per JS ausgeblendet. Firebase war
+abgeklemmt: `firebase.database` lieferte eine Attrappe, `jeopardyBuzzConnect`
+und `lockBuzzerJoins` waren leer, 10 Aufrufe wurden abgefangen. Popout und
+Intro wurden übersprungen (`startJeopardyActual()`, danach von Hand
+`showScreen` + `renderJeopardyBoard`). Das Testbild `logos.png` (300 × 120)
+kam über den echten Editor-Knopf in Kategorie 1. Als Name war absichtlich
+`Logos "Firmen" <b>x</b>` gesetzt.
+
+**Geprüft:**
+- Board-Kopf: `img.jeopardy-cat-img` 183 × 84 px, alt-Text escaped als
+  reiner Text.
+- Frage-Overlay (`openJeopardyClue(0,0)`, aufgedeckt): `img.jeopardy-clue-cat-img`
+  180 × 72 px, vollständig geladen, per Screenshot sichtbar über „100“ und
+  der Frage. In der GM-Kopfzeile „Frage verdeckt · Name · Wert“ steht der Name
+  escaped.
+- GM-Spiegel-Board im iframe nach dem Überspringen: 1 × `img.jcat-img`
+  111 × 34 px in Spalte 1, die anderen vier Spalten mit Namen. Das benutzte
+  Feld 100 ist leer. Per Screenshot geprüft.
+- Keine Konsolenfehler. Danach neu geladen, es bleibt nichts zurück.
+
+**Ungeprüft:** das echte Board-Popout (`window.open`, spiegelt das DOM des
+Hauptfensters, sollte also dasselbe zeigen), ein Daily Double mit
+Kategorie-Bild, die Handy-Breite, der echte Datei-Dialog.
+
+**Fallstricke:** Nach `startJeopardyActual()` ohne Intro liegen der
+`.black-backdrop` und das GM-iframe (`#gm-embed-overlay.visible`) über dem
+Hauptfenster. Ein Screenshot zeigt dann nur Schwarz bzw. die Fernbedienung.
+Beides muss für den Test weg, die Backdrop ist eine **Klasse**, keine ID.
+
 ## 2026-09-25 — Jeopardy-Editor: Upload-Knopf für Kategorie-Bild (`6c920bd`)
 
 **Gemacht:** In `renderJeopardyEditor()` (`js/jeopardy-ui.js`) steht unter dem
