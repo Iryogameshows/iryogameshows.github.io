@@ -79,11 +79,13 @@ es ab. Im Browser: Knopf da, sperrt sich, gibt nach 6,5 s wieder frei, meldet
 bei ausgeschaltetem Ton „🔇 Ton ist aus"; keine Konsolenfehler; bei 400 px
 kein Querüberlauf in der Knopfreihe.
 
-**Ungeprüft und wichtig:** **Ob es gut klingt, habe ich nicht gehört.** Ich
-kann nur messen, nicht hören. Beurteilt ist der Aufbau (Obertöne, Hüllkurven,
-Intervalle, Hall) und der Pegel. Ob die Auswahl gefällt, muss David über
-„🎧 Töne probehören" selbst entscheiden — Tonhöhen, Längen und Lautstärken
-stehen als benannte Werte beieinander und sind leicht zu drehen.
+**Abgehört und abgenommen:** Ich kann nur messen, nicht hören — beurteilt
+habe ich den Aufbau (Obertöne, Hüllkurven, Intervalle, Hall) und den Pegel.
+**David hat sie am 2026-09-25 über „🎧 Töne probehören" angehört: „die passen
+gut."** Damit sind die Werte in `SFX` der Stand, auf den man sich beziehen
+kann. Wer sie ändert, ändert etwas Abgenommenes — Tonhöhen, Längen und
+Lautstärken stehen als benannte Werte beieinander und sind leicht zu drehen,
+aber nicht ohne Grund.
 
 **Fallstricke:**
 
