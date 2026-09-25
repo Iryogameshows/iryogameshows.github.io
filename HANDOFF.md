@@ -12,6 +12,37 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Zweiter Komplettdurchlauf (kein Commit, reiner Test)
+
+**Gemacht:** Alles erneut durchgetestet, inklusive der neuen Turnier-Eintragung
+für die teamlosen Shows. Nichts geändert.
+
+**Ergebnis:** `node check.js --types` ohne Befund (13 Dateien, 385 Handler, 256
+Element-IDs). Im Browser **77 Prüfungen, alle grün**, bei abgeklemmtem Firebase
+(97 Schreibversuche abgefangen) und gezähltem Popout (16 Aufrufe). Keine
+Konsolenfehler auf Hostseite, Handy und Gamepad. Bei 400 px kein Querüberlauf
+auf zehn Screens.
+
+Neu gegenüber dem ersten Durchlauf: alle **vier Wege der Turnier-Eintragung**
+geprüft — Team-Show automatisch (TP: Rot 2 / Blau 6), teamlos mit Zuordnung
+(DDF: Rot 4 / Blau 0 aus übrigen Leben), teamlos mit Gast ohne Account (PIH:
+Rot 4 / Blau 1, Gast namentlich ausgewiesen), teamlos ohne jede Zuordnung
+(Zeile unberührt, Platz frei, Grund am Bildschirm). Gesamtwertung rechnet:
+🥇 Rot 5 · 🥈 Blau 4.
+
+**Zwei Fallstricke dazugelernt:**
+
+- Ein Testlauf, der vier Shows nacheinander mit ihren Intros durchklickt,
+  braucht über 80 s und läuft in die 45-s-Grenze des Werkzeugs. Für
+  Zustandstests die Show starten und dann direkt
+  `showScreen(...)` + `render...()` aufrufen — die Intros sind separat geprüft.
+- Bei „Der Preis ist heiß" kann es unter der Regel „nur drunter zählt"
+  **keinen** Sieger geben (im Test: Eis für 1,80 €, alle Gebote drüber). Eine
+  Prüfung, die stur einen Sieger erwartet, meldet dann einen Fehler, der keiner
+  ist.
+
+---
+
 ## 2026-09-25 — Teamlose Shows ins Turnier eintragbar (`b0ca45c`)
 
 **Gemacht:** „Der Dümmste fliegt" und „Der Preis ist heiß" tragen ihr Ergebnis
