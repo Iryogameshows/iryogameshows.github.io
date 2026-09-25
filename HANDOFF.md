@@ -12,6 +12,43 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Alle acht Shows im Turnier startbar (`24556f7`)
+
+**Gemacht:** `TOURNAMENT_STARTABLE` kennt jetzt alle sieben Spiel-Shows statt
+drei. Dazu die fehlenden Typen in der Auswahlliste (Der Preis ist heiß,
+Trivial Pursuit), Gewichtungen und Symbole.
+
+**Zwei Klassen beim Ergebnis — und das steht auch in der Zeile:**
+
+*Wer weiß denn sowas* meldete sein Ergebnis schon immer (`js/wwds.js:492`), war
+aber nicht startbar. Reine Lücke, eine Zeile.
+
+*Trivial Pursuit* meldet jetzt auch. Gewertet wird die **Zahl der
+Tortenstücke**, nicht nur Sieg oder Niederlage: ein Team mit fünf Stücken hat
+mehr geleistet als eines mit einem, und die Gesamtwertung rechnet mit Punkten.
+
+*Der Dümmste fliegt* und *Der Preis ist heiß* können **nicht** automatisch
+eintragen — sie kennen Teilnehmer, keine Teams, und ein Turnier läuft über
+feste Teams. Sie sind trotzdem startbar; der Host trägt das Ergebnis von Hand
+ein. Der Hinweis steht direkt in der Spielplan-Zeile, nicht in einer Fußnote,
+damit niemand vergeblich darauf wartet, dass sich der Plan von selbst füllt.
+
+**Der Fehler, den das sonst gebaut hätte:** `activeTournamentGameIndex` wird
+beim Start gesetzt und nur von `tournamentAutoRecordIfActive` gelöscht. Eine
+teamlose Show hätte ihn stehen lassen — und die nächste Show, die ein Ergebnis
+meldet, hätte es in **deren** Zeile geschrieben. Das fällt erst beim Blick auf
+die Gesamtwertung auf, und dann weiß niemand mehr, woher die Zahl kam. Dafür
+gibt es jetzt `tournamentReleaseActive()`, das beide am Spielende aufrufen.
+
+**Geprüft:** `node check.js --types` ohne Befund. Turnier mit zwei Teams und
+den vier Shows angelegt: alle vier mit Startknopf, die beiden teamlosen
+zusätzlich mit Hinweis. TP aus dem Spielplan gestartet (Platz 3), Sieg
+erzwungen — Ergebnis automatisch drin (Team Rot 3, Team Blau 6 Stücke), Platz
+wieder frei. DDF aus dem Spielplan gestartet (Platz 1) und beendet — Platz
+freigegeben, Zeile unberührt. Keine Konsolenfehler.
+
+---
+
 ## 2026-09-25 — Intro-Auswahl auf dem Turnier-Screen (`7a1cf27`)
 
 **Gemacht:** Der Intro-Block wandert jetzt auch auf den Turnier-Screen. Ein
