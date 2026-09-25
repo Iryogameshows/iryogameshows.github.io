@@ -12,6 +12,42 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Jeopardy-Editor: Upload-Knopf für Kategorie-Bild (`6c920bd`)
+
+**Gemacht:** In `renderJeopardyEditor()` (`js/jeopardy-ui.js`) steht unter dem
+Namensfeld jeder Kategorie ein kleiner Knopf „🖼 Bild“ (verstecktes
+`<input type="file">`, ruft `jeopardyEditCatImg(b, col, this)`). Ist ein Bild
+gesetzt, ersetzt ihn ein Thumbnail (`.jimg-thumb`, mit Hover-Vorschau über
+`data-preview-name`) plus ✕, das `jeopardyClearCatImg(b, col)` aufruft. Damit
+ist der offene Punkt aus `674f8cd` erledigt.
+
+**Warum so:** Knopf und Thumbnail wechseln sich ab, statt nebeneinander zu
+stehen. Bei fünf Spalten ist der Kopf schmal, zwei Elemente pro Zeile hätten
+umgebrochen. Für ein anderes Bild erst ✕, dann neu hochladen. Optik von den
+Frage-Bild-Knöpfen übernommen, nur kleiner. Das `src` des Thumbnails läuft
+durch `escAttr`, wie im Board-Kopf. Das Namensfeld bleibt stehen, weil der
+Name der alt-Text ist und der Host ihn weiter sieht.
+
+**Geprüft:** `node check.js --types` meldet „alles in Ordnung“ (13 Dateien
+ohne Meldung, 387 Handler statt 385, 256 IDs, 905 Klammernpaare). Im Browser
+(localhost:3000, Host-Sperre per JS ausgeblendet): ein erzeugtes PNG
+`logo-test.png` über den echten `change`-Handler in Kategorie 2 von Board 1
+geladen. Danach hatte `cat.img` eine Data-URL, `imgName` war „logo-test.png“,
+es gab 1 Thumbnail und 9 statt 10 Upload-Knöpfe, und
+`jeopardyCatHeadHtml` lieferte das `<img>`. Das ✕ angeklickt: `img` und
+`imgName` waren weg, wieder 10 Knöpfe und 0 Thumbnails. Keine Konsolenfehler.
+Screenshot zeigte das Thumbnail sauber im Kopf.
+
+**Ungeprüft:** ein echter Datei-Dialog mit Klick, Handy-Breite des Editors,
+und aus `674f8cd` weiterhin das Frage-Overlay und das GM-Spiegel-Board mit
+Bild.
+
+**Fallstricke:** Port 3000 war vom Dev-Server einer anderen Session belegt.
+Der served denselben Ordner mit `-c-1`, deshalb reichte
+`preview_start` mit `url: http://localhost:3000`, ohne eigenen Server.
+`jeopardyData` wird nirgends automatisch gespeichert (nur Export/Import),
+Tests im Editor hinterlassen also nichts.
+
 ## 2026-09-25 — Jeopardy: Bild als Kategorie-Name, nur Anzeige (`674f8cd`)
 
 **Gemacht:** `JeopardyCategory` hat zwei neue optionale Felder, `img` (Data-URL)
