@@ -12,6 +12,42 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Komplettdurchlauf (kein Commit, reiner Test)
+
+**Gemacht:** Alles einmal durchgetestet, nichts geändert.
+
+**Ergebnis:** `node check.js --types` ohne Befund (13 Dateien, 385 Handler, 256
+Element-IDs, 902 Klammernpaare). Im Browser **61 Prüfungen, alle grün** — bei
+abgeklemmtem Firebase (68 Schreibversuche abgefangen, keiner ging raus) und
+gezähltem statt geöffnetem Popout (7 Aufrufe).
+
+Durchgespielt: Feud (Intro-Kette, 5 Antwortfelder, Punkte, Strikes, Runde 2),
+Jeopardy (25 Felder, Buzzer scharf, Punkte +100, Abzug −50, Schätzfrage sendet
+`text:true`), WWM (15 Stufen, 4 Antworten), WWDS (12 Kategorien, auflösen),
+DDF (Abstimmung, Verlierer, Leben ab, Zähler „3 noch dabei"), PIH (drei
+Gebote, Regel „nur drunter" korrekt: Preis 161,88 € → Anna mit 100 gewinnt,
+200 und 300 sind drüber), TP (Zeiger trifft die gezogene Kategorie, Stück,
+Nachfassen, Sieg), Turnier (alle sieben startbar, Hinweis nur bei den zwei
+teamlosen), alle vier Intro-Varianten plus „aus", acht Editoren, Handy-Client
+(Bereitschaftsring, grüner Buzzer, Ausschlag, Tastaturwechsel, Parser,
+gestaffelte Abstimmung, Lobby-Zustände), Gamepad. Keine Konsolenfehler auf
+allen drei Seiten. Bei 400 px kein Querüberlauf auf sechs geprüften Screens.
+
+**Fallstrick für den nächsten Durchlauf:** Der Testlauf selbst produziert
+Fehlalarme, wenn man nicht aufpasst.
+
+- Stern-Intro und Schwarzpause haben **dieselbe** Klasse `.intro-overlay` und
+  liegen übereinander. `querySelector` trifft das untere — durchklicken muss
+  immer das **letzte** Element der Liste anklicken.
+- `showClickOverlay` nimmt vor Ablauf seiner 1,8 s keinen Klick an.
+- Zwischen zwei Shows müssen Overlays und Backdrop weg, sonst zeigt das
+  GM-Panel „Zwischensequenz läuft" statt der Show.
+- Container-IDs **nicht raten**: es heißt `ddf-editor` und `pih-editor`, aber
+  `jeopardy-editor-grid`, `wwm-editor-grid`, `wwds-editor-grid`,
+  `tp-editor-grid`, `intro-editor-grid`. Vier meiner Fehlschläge waren nur das.
+
+---
+
 ## 2026-09-25 — Alle acht Shows im Turnier startbar (`24556f7`)
 
 **Gemacht:** `TOURNAMENT_STARTABLE` kennt jetzt alle sieben Spiel-Shows statt
