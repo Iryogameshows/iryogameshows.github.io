@@ -12,6 +12,46 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Cache-Buster beim Deploy (`3316c2e`)
+
+**Gemacht:** Der Pages-Workflow hängt die ersten acht Stellen der Commit-ID
+als `?v=` an `styles.css` und alle zwölf `js/`-Dateien in `index.html`. Das
+Beamer-Popout nimmt die CSS-Adresse jetzt aus dem `<link>` des Hauptdokuments
+statt aus einem festen Pfad.
+
+**Warum:** `index.html` wird beim Besuch neu geholt, die verlinkten Dateien
+aber aus dem Cache. Wer die Seite schon einmal offen hatte, sah eine fertige
+Änderung nicht — hier **zweimal** passiert: erst blieb der neue Stilblock des
+TP-Setups aus, dann fehlten Intro und Anleitung der neuen Shows. Beide Male
+war der Code live, nur der Browser hielt die alte Fassung.
+
+Das Popout musste mit: mit Version wäre `styles.css` ohne Parameter eine
+*andere* Adresse, und das Popout hätte die alte Fassung aus dem Cache gezogen,
+während das Hauptfenster die neue zeigt.
+
+Geändert wird nur die ausgecheckte Kopie im Workflow-Lauf, nicht das Repo — im
+Verzeichnis stehen weiter saubere Pfade.
+
+**Geprüft:** `node check.js --types` ohne Befund. Die `sed`-Zeilen des
+Workflows gegen eine Kopie von `index.html` laufen lassen: 13 Pfade
+umgeschrieben, Form `js/core.js?v=deadbeef`. Popout-Zeile im Browser
+nachgestellt: ohne Version `styles.css`, mit Version `styles.css?v=deadbeef`.
+
+**Nebenbefund zum Intro:** Der Vorwurf „die haben kein Intro" ließ sich nicht
+bestätigen — „Der Dümmste fliegt" komplett über echte Klicks gestartet
+(Menükarte → + Gast → Namen → Spiel starten): Popout-Aufruf, Intro-Zeichen,
+schwarzer Grund, fünf Anleitungsfolien. Der Live-Stand enthält den Code
+ebenfalls (per `curl` gegen iryogameshows.github.io geprüft).
+
+**Aber:** die Anleitung läuft im Hauptfenster und auf dem Beamer-Popout — und
+das **GM-Overlay legt sich im Hauptfenster darüber** und zeigt nur
+„Zwischensequenz läuft · Weiter". Wer am Hauptrechner sitzt und kein
+Popout-Fenster hat (Popup-Blocker!), sieht vom Intro also nichts. Das ist bei
+Feud und Jeopardy genauso. **Offen:** ob das der Grund war — bei David
+nachgefragt, noch keine Antwort.
+
+---
+
 ## 2026-09-24 — HANDOFF-Regel festgeschrieben (`c3afa5f`)
 
 **Gemacht:** Die Pflicht, `HANDOFF.md` bei jeder Änderung mitzuschreiben,
