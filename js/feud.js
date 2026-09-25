@@ -70,26 +70,9 @@ function showIntro() {
   overlay.addEventListener('click', () => closeOverlay(overlay, afterStar));
 }
 
-function afterStar() {
-  if (!fieldChecked('enable-gameshow-intro')) return showWelcomeIntro();
-  const variant = fieldVal('intro-variant');
-  if (variant === 'bday') showBirthdayIntro(showWelcomeIntro);
-  else if (variant === 'custom') showCustomIntro(showWelcomeIntro);
-  else showGameshowIntro(showWelcomeIntro);
-}
+function afterStar() { runIntroThen(showWelcomeIntro); }
 
-// Intro-Auswahl nur zeigen, wenn ein Intro läuft; Namensfeld nur beim Geburtstag
-function toggleIntroPicker() {
-  const on = fieldChecked('enable-gameshow-intro');
-  const picker = document.getElementById('intro-picker');
-  picker.style.display = on ? '' : 'none';
-  const bday = fieldVal('intro-variant') === 'bday';
-  showEl('bday-name', bday);
-  showEl('bday-name-label', bday);
-  // Der Bearbeiten-Knopf nur beim eigenen Intro - bei den beiden festen gibt
-  // es nichts zu bearbeiten.
-  showEl('intro-edit-btn', on && fieldVal('intro-variant') === 'custom');
-}
+// toggleIntroPicker steht in js/intro.js - die Auswahl gilt fuer alle Shows.
 
 // Anpassbarer Show-Name im Intro: "___ Feud". Default "Keller".
 function getFeudName() {

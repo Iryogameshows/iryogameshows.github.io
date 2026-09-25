@@ -659,6 +659,8 @@ function ddfIntroThenGame(){
   // Schon jetzt oeffnen, damit Intro und Anleitung vom GM-Fenster (und vom
   // Handy-Gamepad) aus weitergeklickt werden koennen.
   openGamemaster();
+  // Erst das Show-Intro (falls eingeschaltet), dann das Zeichen dieser Show.
+  runIntroThen(() => {
   const ov = document.createElement('div');
   ov.className = 'intro-overlay';
   ov.innerHTML = `<div class="game-intro-sign">${gameCardIcon('ddf')}</div>`;
@@ -666,6 +668,7 @@ function ddfIntroThenGame(){
   ov.addEventListener('click', () => closeOverlay(ov, () => {
     runTutorial(ddfTutorialSlides(), ddfShowTitle);
   }));
+  });
 }
 
 function ddfShowTitle(){

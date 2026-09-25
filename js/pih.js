@@ -670,6 +670,8 @@ function pihIntroThenGame(){
   // Schon jetzt oeffnen, damit Intro und Anleitung vom GM-Fenster (und vom
   // Handy-Gamepad) aus weitergeklickt werden koennen.
   openGamemaster();
+  // Erst das Show-Intro (falls eingeschaltet), dann das Zeichen dieser Show.
+  runIntroThen(() => {
   const ov = document.createElement('div');
   ov.className = 'intro-overlay';
   ov.innerHTML = `<div class="game-intro-sign">${gameCardIcon('pih')}</div>`;
@@ -677,6 +679,7 @@ function pihIntroThenGame(){
   ov.addEventListener('click', () => closeOverlay(ov, () => {
     runTutorial(pihTutorialSlides(), pihShowTitle);
   }));
+  });
 }
 
 function pihShowTitle(){

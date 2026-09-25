@@ -663,6 +663,8 @@ function tpIntroThenGame(){
   // Schon jetzt oeffnen, damit Intro und Anleitung vom GM-Fenster (und vom
   // Handy-Gamepad) aus weitergeklickt werden koennen.
   openGamemaster();
+  // Erst das Show-Intro (falls eingeschaltet), dann das Zeichen dieser Show.
+  runIntroThen(() => {
   const ov = document.createElement('div');
   ov.className = 'intro-overlay';
   ov.innerHTML = `<div class="game-intro-sign">${gameCardIcon('tp')}</div>`;
@@ -670,6 +672,7 @@ function tpIntroThenGame(){
   ov.addEventListener('click', () => closeOverlay(ov, () => {
     runTutorial(tpTutorialSlides(), tpShowTitle);
   }));
+  });
 }
 
 function tpShowTitle(){

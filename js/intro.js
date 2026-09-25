@@ -221,4 +221,78 @@ function importIntro(e){
   e.target.value = '';
 }
 
+
+/* ── Auswahl auf allen Setup-Screens ────────────────────────────────────────
+   Der Bedienblock steht genau einmal im Dokument (#intro-pick) und wird beim
+   Screenwechsel in den Platzhalter des offenen Setup-Screens verschoben.
+
+   Warum nicht acht Kopien: dann gaebe es acht Mal dieselben IDs. Ein
+   getElementById traefe immer nur die erste, und was der Host auf dem einen
+   Screen einstellt, stuende auf dem naechsten nicht drin. Ein verschobener
+   Block hat dagegen von sich aus ueberall denselben Stand. */
+const INTRO_SLOTS = {
+  'setup-screen':          'feud-intro-slot',
+  'jeopardy-setup-screen': 'jeopardy-intro-slot',
+  'wwm-setup-screen':      'wwm-intro-slot',
+  'wwds-setup-screen':     'wwds-intro-slot',
+  'ddf-setup-screen':      'ddf-intro-slot',
+  'pih-setup-screen':      'pih-intro-slot',
+  'tp-setup-screen':       'tp-intro-slot',
+};
+
+/** Schiebt den Bedienblock in den Screen, der gerade geoeffnet wird.
+ *  @param {string} screenId */
+function moveIntroPickerTo(screenId){
+  const slotId = INTRO_SLOTS[screenId];
+  if (!slotId) return;
+  const slot = document.getElementById(slotId);
+  const pick = document.getElementById('intro-pick');
+  if (!slot || !pick) return;
+  if (pick.parentElement !== slot) slot.appendChild(pick);  // appendChild verschiebt
+  toggleIntroPicker();
+}
+
+/* Auswahl nur zeigen, wenn ein Intro laeuft; Namensfeld nur beim Geburtstag,
+   Bearbeiten-Knopf nur beim eigenen Intro - bei den festen gibt es nichts zu
+   bearbeiten. Stand frueher in feud.js, gilt jetzt fuer alle acht Shows. */
+function toggleIntroPicker(){
+  const on = fieldChecked('enable-gameshow-intro');
+  showEl('intro-picker', on);
+  const variant = fieldVal('intro-variant');
+  showEl('bday-name', on && variant === 'bday');
+  showEl('bday-name-label', on && variant === 'bday');
+  showEl('intro-edit-btn', on && variant === 'custom');
+  introSaveChoice();
+}
+
+/* Die Auswahl ueberlebt das Neuladen. Ohne das muesste der Host sie vor jeder
+   Show neu setzen - und bei einem Neuladen mitten im Abend waere sie weg. */
+function introSaveChoice(){
+  storeSetJson('introChoice', {
+    on: fieldChecked('enable-gameshow-intro'),
+    variant: fieldVal('intro-variant') || 'keller',
+  });
+}
+function introLoadChoice(){
+  const c = storeGetJson('introChoice', null);
+  if (!c) return;
+  const box = fieldEl('enable-gameshow-intro');
+  if (box) box.checked = !!c.on;
+  fieldSet('intro-variant', c.variant || 'keller');
+}
+
+/** Spielt das eingestellte Intro und ruft danach onDone. Ist keins gewaehlt,
+ *  geht es ohne Umweg weiter - jede Show ruft das an der Stelle auf, an der
+ *  sie sonst direkt ihren Bildschirm gezeigt haette.
+ *  @param {() => void} onDone */
+function runIntroThen(onDone){
+  if (!fieldChecked('enable-gameshow-intro')) return onDone();
+  const variant = fieldVal('intro-variant');
+  if (variant === 'bday')        showBirthdayIntro(onDone);
+  else if (variant === 'custom') showCustomIntro(onDone);
+  else if (variant === 'tag2')   showGameshowIntroTag2(onDone);
+  else                           showGameshowIntro(onDone);
+}
+
 introLoad();
+introLoadChoice();

@@ -105,22 +105,30 @@
     <input type="checkbox" id="enable-team3" onchange="toggleTeam3()">
     <label for="enable-team3">3. Team aktivieren</label>
   </div>
-  <div class="team-toggle">
-    <input type="checkbox" id="enable-gameshow-intro" onchange="toggleIntroPicker()">
-    <label for="enable-gameshow-intro">Gameshow-Intro abspielen</label>
+  <!-- Der Intro-Block steht genau EINMAL im Dokument und wird beim
+       Screenwechsel in den Platzhalter des offenen Setup-Screens verschoben
+       (siehe moveIntroPickerTo in js/intro.js). Acht Kopien haetten acht Mal
+       dieselben IDs - und acht Staende, die auseinanderlaufen. -->
+  <div id="intro-pick">
+    <div class="team-toggle">
+      <input type="checkbox" id="enable-gameshow-intro" onchange="toggleIntroPicker()">
+      <label for="enable-gameshow-intro">Gameshow-Intro abspielen</label>
+    </div>
+    <div class="team-toggle" id="intro-picker" style="gap:10px;display:none;">
+      <label for="intro-variant" style="white-space:nowrap;">Welches Intro:</label>
+      <select id="intro-variant" onchange="toggleIntroPicker()" style="padding:8px 10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-weight:700;outline:none;">
+        <option value="keller">Keller Gameshow</option>
+        <option value="tag2">Keller Gameshow — Tag 2</option>
+        <option value="bday">Geburtstag</option>
+        <option value="custom">Eigenes Intro</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" id="intro-edit-btn" style="display:none;"
+              onclick="showScreen('intro-edit-screen')">✏ Intro bearbeiten</button>
+      <label for="bday-name" id="bday-name-label" style="white-space:nowrap;display:none;">Name:</label>
+      <input type="text" id="bday-name" placeholder="z.B. Ajdin" oninput="saveBdayName()" value="Ajdin" style="display:none;flex:1;min-width:110px;max-width:200px;">
+    </div>
   </div>
-  <div class="team-toggle" id="intro-picker" style="gap:10px;display:none;">
-    <label for="intro-variant" style="white-space:nowrap;">Welches Intro:</label>
-    <select id="intro-variant" onchange="toggleIntroPicker()" style="padding:8px 10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-weight:700;outline:none;">
-      <option value="keller">Keller Gameshow</option>
-      <option value="bday">Geburtstag</option>
-      <option value="custom">Eigenes Intro</option>
-    </select>
-    <button class="btn btn-secondary btn-sm" id="intro-edit-btn" style="display:none;"
-            onclick="showScreen('intro-edit-screen')">✏ Intro bearbeiten</button>
-    <label for="bday-name" id="bday-name-label" style="white-space:nowrap;display:none;">Name:</label>
-    <input type="text" id="bday-name" placeholder="z.B. Ajdin" oninput="saveBdayName()" value="Ajdin" style="display:none;flex:1;min-width:110px;max-width:200px;">
-  </div>
+  <div class="intro-slot" id="feud-intro-slot"></div>
   <div class="team-toggle" style="gap:10px;">
     <label for="feud-show-name" style="white-space:nowrap;">Name im Intro:</label>
     <input type="text" id="feud-show-name" placeholder="z.B. Keller" oninput="saveFeudName()" style="flex:1;min-width:120px;max-width:220px;" value="Keller">
@@ -227,10 +235,7 @@
     <input type="checkbox" id="jeopardy-enable-team3" onchange="document.getElementById('jt3-card').style.display=this.checked?'':'none'">
     <label for="jeopardy-enable-team3">3. Team aktivieren</label>
   </div>
-  <div class="team-toggle">
-    <input type="checkbox" id="enable-jeopardy-intro">
-    <label for="enable-jeopardy-intro">Finale-Intro (Tag 2) abspielen</label>
-  </div>
+  <div class="intro-slot" id="jeopardy-intro-slot"></div>
   <div class="setup-lobby" id="jeopardy-setup-lobby"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startJeopardy()">Spiel starten</button>
@@ -270,6 +275,7 @@
       <input type="text" id="wwm-name" placeholder="Name..." value="Kandidat">
     </div>
   </div>
+  <div class="intro-slot" id="wwm-intro-slot"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startWwm()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('wwm-edit-screen')">Fragen bearbeiten</button>
@@ -329,6 +335,7 @@
   </div>
   <div class="wwds-sub" id="wwds-split-info">12 Kategorien · je 6 Fragen pro Team · max. 3.000 € in der Hauptrunde</div>
   <div class="setup-lobby" id="wwds-setup-lobby"></div>
+  <div class="intro-slot" id="wwds-intro-slot"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startWwds()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('wwds-edit-screen')">Fragen bearbeiten</button>
@@ -392,6 +399,7 @@
     <button class="btn btn-secondary" style="margin-top:8px;" onclick="rosterAddGuest('ddf')">+ Gast</button>
   </div>
 
+  <div class="intro-slot" id="ddf-intro-slot"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startDdf()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('ddf-edit-screen')">Fragen bearbeiten</button>
@@ -460,6 +468,7 @@
     <button class="btn btn-secondary" style="margin-top:8px;" onclick="rosterAddGuest('pih')">+ Gast</button>
   </div>
 
+  <div class="intro-slot" id="pih-intro-slot"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startPih()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('pih-edit-screen')">Artikel bearbeiten</button>
@@ -539,6 +548,7 @@
     <div class="tp-cats" id="tp-cat-preview"></div>
   </div>
   <div class="setup-lobby" id="tp-setup-lobby"></div>
+  <div class="intro-slot" id="tp-intro-slot"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startTp()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('tp-edit-screen')">Fragen bearbeiten</button>

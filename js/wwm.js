@@ -56,8 +56,10 @@ function startWwmActual(){
   wwmState.gameOver = false;
   wwmState.active = true;
   setText('wwm-name-label', wwmState.name);
-  showScreen('wwm-screen');
-  loadWwmQuestion();
+  runIntroThen(() => {
+    showScreen('wwm-screen');
+    loadWwmQuestion();
+  });
   setTimeout(() => openGamemaster(), 120);
 }
 

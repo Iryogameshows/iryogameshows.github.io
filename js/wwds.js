@@ -103,9 +103,11 @@ function startWwdsActual(){
   wwdsState.active = true;
   wwdsStopTimer();
 
-  showScreen('wwds-screen');
-  renderWwds();
-  setTimeout(() => openGamemaster(), 120);
+  runIntroThen(() => {
+    showScreen('wwds-screen');
+    renderWwds();
+    setTimeout(() => openGamemaster(), 120);
+  });
 }
 
 // ── TIMER (20 s, blockiert nicht – der Host entscheidet) ──

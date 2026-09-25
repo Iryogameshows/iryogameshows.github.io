@@ -182,10 +182,7 @@ function showJeopardyIntro() {
   ov.addEventListener('click', () => closeOverlay(ov, afterJeopardyStar));
 }
 
-function afterJeopardyStar() {
-  if (fieldChecked('enable-jeopardy-intro')) showGameshowIntroTag2(showJeopardyTitle);
-  else showJeopardyTitle();
-}
+function afterJeopardyStar() { runIntroThen(showJeopardyTitle); }
 
 function showGameshowIntroTag2(onDone) {
   const overlay = document.createElement('div');

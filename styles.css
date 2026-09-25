@@ -2198,3 +2198,7 @@ body {
 .intro-fields label{display:flex;flex-direction:column;gap:4px;font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);}
 .intro-fields input{width:100%;}
 @media (max-width:760px){ .intro-fields{grid-template-columns:1fr;} }
+
+/* Platzhalter fuer den Intro-Block. Er ist leer, solange der Block woanders
+   steht - ohne eigene Hoehe, damit kein Loch im Setup-Screen bleibt. */
+.intro-slot{display:contents;}
