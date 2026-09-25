@@ -12,6 +12,42 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Teamlose Shows ins Turnier eintragbar (`b0ca45c`)
+
+**Gemacht:** „Der Dümmste fliegt" und „Der Preis ist heiß" tragen ihr Ergebnis
+jetzt selbst ins Turnier ein, statt dass der Host Zahlen in einen `prompt()`
+tippt.
+
+**Wie:** Die Brücke gab es schon — jeder Spieler-Account trägt eine
+Team-Zuordnung aus der Lobby („Teams zuteilen"). `tournamentReportTeamless()`
+rechnet das Einzelergebnis darüber auf die Turnier-Teams hoch.
+
+- DDF: **übrige Leben** je Team. Belohnt Durchhalten statt nur den einen Sieg
+  und ergibt bei mehreren Teilnehmern pro Team eine Zahl statt eines Namens.
+- PIH: **Punkte** je Team, aufsummiert.
+
+Gäste ohne Account haben keine Zuordnung. Sie fallen nicht unter den Tisch,
+sondern werden **namentlich gemeldet** — der Host sieht, dass ihre Punkte
+fehlen. Hat *niemand* eine Zuordnung, wird nichts eingetragen: dann wäre jede
+Zahl geraten. Platz freigeben, Grund auf den Bildschirm.
+
+**Eigener Fehler gefunden:** In `24556f7` ist die PIH-Zeile
+`tournamentReleaseActive()` in der **falschen Funktion** gelandet — in
+`pihRenderBidGrid` statt in `pihFinish`. Sie lief bei jedem Aufbau des
+Endstand-Gitters statt einmal am Spielende. Folgenlos, weil der Platz so oder
+so frei wurde, aber falsch. Mein Test damals hat nur DDF geprüft, nicht PIH.
+**Lehre:** eine Ersetzung, die auf `const rank = [...]` ankert, trifft in
+`pih.js` zwei Stellen — vor dem Einfügen prüfen, in welcher Funktion man
+landet.
+
+**Geprüft:** `node check.js --types` ohne Befund. Turnier mit Rot (Anna, Ben)
+und Blau (Clara, David): DDF → Rot 4 / Blau 0 mit Bericht und freiem Platz;
+PIH mit einem Gast ohne Account → Rot 8 / Blau 3, Gast namentlich als nicht
+gezählt gemeldet; ohne jede Zuordnung → Zeile unberührt, Platz frei, Hinweis
+„keine Team-Zuordnung gefunden". Keine Konsolenfehler.
+
+---
+
 ## 2026-09-25 — Komplettdurchlauf (kein Commit, reiner Test)
 
 **Gemacht:** Alles einmal durchgetestet, nichts geändert.
