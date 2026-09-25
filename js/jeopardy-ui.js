@@ -557,6 +557,12 @@ function renderJeopardyEditor() {
     board.categories.forEach((cat, col) => {
       html += `<div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
         <input type="text" value="${esc(cat.name)}" placeholder="Kategorie ${col+1}" onchange="jeopardyData.boards[${b}].categories[${col}].name=this.value;renderJeopardyEditor()" style="width:100%;box-sizing:border-box;padding:7px 6px;border-radius:7px;border:1px solid rgba(255,210,63,.3);background:rgba(0,0,0,.3);color:#FFD23F;font-family:inherit;font-size:.74rem;font-weight:700;text-align:center;outline:none;">
+        ${cat.img
+          ? `<span style="display:inline-flex;align-items:center;justify-content:center;gap:4px;">
+              <img class="jimg-thumb" src="${esc(cat.img)}" data-preview-name="${esc(cat.imgName || 'Kategorie-Bild')}" alt="">
+              <button onclick="jeopardyClearCatImg(${b},${col})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="Bild entfernen, wieder Name anzeigen">✕</button>
+            </span>`
+          : `<label style="display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);cursor:pointer;color:rgba(255,255,255,.6);font-size:.6rem;font-weight:700;" title="Bild statt Name im Kategorie-Kopf zeigen - der Name bleibt für dich als Beschriftung">🖼 Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditCatImg(${b},${col},this)"></label>`}
         <label style="display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:.6rem;font-weight:700;color:${cat.noDD?'rgba(255,255,255,.3)':'#FFD23F'};cursor:pointer;" title="Daily Double in dieser Kategorie erlauben">
           <input type="checkbox" ${cat.noDD?'':'checked'} onchange="jeopardyData.boards[${b}].categories[${col}].noDD=!this.checked;renderJeopardyEditor()" style="accent-color:#FFD23F;transform:scale(.85);"> ★ DD
         </label>
