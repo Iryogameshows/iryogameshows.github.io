@@ -12,6 +12,53 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Daily Double zusammen mit Schritten getestet (kein Commit)
+
+**Gemacht:** Den offenen Punkt aus `9cfa74f` nachgeholt. Code ist nicht
+geändert, es gab nichts zu ändern.
+
+**Aufbau:** Schritt-Frage über den echten Editor auf Feld (Board 1, Spalte 3,
+Wert 400) gelegt, Muster `T,B,B,T,B` — Zeile 1+4, Bild 2+3+5. Danach das
+Daily Double per `jeopardyState.dailyDoubles[0]` genau auf dieses Feld gesetzt.
+Firebase abgeklemmt (38 Aufrufe abgefangen), Popout gezählt, Intro
+übersprungen.
+
+**Geprüft — 30 Prüfungen, alle grün:**
+
+- Warnphase: Leinwand zeigt weiter das Board, kein Overlay, Schritt-Zähler 0.
+  Im GM-Panel steht die Daily-Double-Warnung, aber **noch kein**
+  Schritt-Knopf.
+- Ansage ohne gewähltes Team wird abgelehnt („Erst angeben, welches Team das
+  Feld gewählt hat"), der Zustand bleibt in der Warnphase.
+- Nach Team und Ansage: Rahmen und Banner stehen, Frage noch verdeckt, die
+  Schritte sind noch **gar nicht** im Markup — sie tauchen erst beim Aufdecken
+  auf.
+- Aufgedeckt: 5 Schritte, Muster stimmt, alle verdeckt. Einblenden einzeln,
+  Zeile 1 als Text, Schritt 2 als geladenes Bild (240 px Quelle).
+- Das Banner überlebt jedes Einblenden — `renderJeopardyClueOverlay` baut es
+  bei jedem Schritt neu mit auf.
+- GM-Knopf „📜 Nächster Schritt (2/5)" ist da und zählt mit; Klick im Panel
+  blendet ein.
+- Nur das wählende Team steht im Panel (eine Zeile, „Rot"), Gutschrift **+800**
+  (verdoppelt), Abzug **−200** (halber Originalwert, nicht halbiertes Doppel) —
+  wie im Kommentar an `jeopardyDeductValue` beschrieben.
+- Undo mitten in den Schritten nimmt einen Schritt zurück und lässt Daily
+  Double und Banner stehen.
+- Punkten: Rot +800, danach ist das Daily Double verbraucht
+  (`dailyDoubles[0].done`), `currentIsDaily` wieder false.
+- Nächstes Feld: kein Banner, Schritt-Zähler 0, kein Schritt-Block.
+- Layout: Banner + Frage + 5 Schritte + Lösung passen zusammen ins Bild
+  (Inhalt ≤ 768 px). Bildschirmfoto gemacht.
+- Keine Konsolenfehler.
+
+**Ungeprüft:** weiterhin das echte Board-Popout, Ton in einer Schritt-Frage,
+der echte Datei-Dialog per Mausklick und Firebase im Echtbetrieb.
+
+**Fallstrick:** Im GM-Panel stehen Teamname und Knopf in getrennten Elementen
+(`.sr-name`, `.sr-btn.plus`). Eine Prüfung auf den Text „Rot +800" am Stück
+schlägt fehl, obwohl alles stimmt — über `.score-row` zählen statt über den
+Fließtext suchen.
+
 ## 2026-09-25 — Jeopardy: Frage in Schritten einblenden, Zeile/Bild gemischt (`9cfa74f`)
 
 **Gemacht:** Neuer Schalter **📜 Nacheinander** im Frage-Editor. Eine Frage kann
