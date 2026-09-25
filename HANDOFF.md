@@ -12,6 +12,71 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Zweite Bühne fürs eigene Intro: „Neon-Nacht" (`5e656a2`)
+
+**Gemacht:** Das eigene Intro (`showCustomIntro`) lief bisher immer auf der
+Kellerbühne `#kg`. Jetzt gibt es im Intro-Editor die Auswahl **Bühne** mit
+zwei Einträgen: „Kellerbühne (Gold)" wie bisher und **„Neon-Nacht (Retro)"**
+— neue Bühne `#kgn` mit Nachthimmel und Sternen, Retro-Sonne mit
+Querstreifen, perspektivischem Gitterboden, Horizontlinie, Scanlines und
+Leuchtschrift in Cyan/Magenta.
+
+Gewählt wird über `introData.stage` (`'buehne'` / `'neon'`), die Liste steht
+als `INTRO_STAGES` in `js/intro.js`. **Feste Schlüssel statt Index**, weil der
+Wert gespeichert wird: eine spätere dritte Bühne darf die Reihenfolge ändern,
+ohne alte Einstellungen umzudeuten. Unbekannte Werte fallen über
+`introStage()` auf die Kellerbühne zurück.
+
+**Alle Funktionen sind identisch:** Kopfzeile, Sekunden je Stufe, bis zu zwölf
+Stufen mit je vier Zeilen, Verschieben, Löschen, Vorschau, Export/Import,
+Klicken zum Fortfahren. Unterschiedlich sind nur Aussehen und die Bewegung
+der Stufen: `knBeat` fährt sie seitlich mit Unschärfe ein und wieder hinaus,
+`kgBeat` schiebt sie von unten hoch. Die Taktung kommt weiterhin aus dem
+`style`-Attribut, die Bühne liefert nur `animation-name`.
+
+**Warum nicht die Kellerbühne einfach umfärben:** `#kgb` (Geburtstag) macht
+genau das und bleibt dadurch erkennbar dieselbe Bühne. David wollte etwas,
+das anders *aussieht* — deshalb erbt `#kgn` nichts von `#kg`, sondern bringt
+eigene Wand, eigenen Boden, eigene Schrift mit.
+
+**Eine Änderung außerhalb:** `runKgIntro` in `js/feud.js` baut den
+Lämpchenrahmen aus der Bühnengröße. Die Neon-Bühne hat bewusst kein `.frame`
+— ein Lämpchenrahmen wäre wieder die Kellerbühne. `build()` steigt jetzt bei
+fehlendem `.frame` sofort aus; ohne diese Zeile hätte der Zugriff geworfen.
+Damit entfallen dort auch die Funken.
+
+**Nachgebessert nach dem ersten Bildschirmfoto:** Die Stufen liegen mitten auf
+der Sonne, „HEUTE ABEND" in Cyan auf Orange war nicht lesbar. `.screen` hat
+jetzt ein dunkles Oval als Hintergrund (radialer Verlauf), das mit der Stufe
+ein- und ausblendet; Kopfzeile, kleine Zeile und Klick-Hinweis haben einen
+dunklen Schatten dazubekommen.
+
+**Geprüft:** `node check.js --types` ohne Meldung (13 Dateien, 397 Handler,
+209 IDs, 955 Klammernpaare). Im Browser **29 Prüfungen, alle grün:**
+
+- Editor: Auswahl da, Kellerbühne voreingestellt, Hinweiszeile wechselt mit,
+  alle 20 Textfelder (5 Stufen × 4) unverändert, Auswahl überlebt das
+  Neuladen (`localStorage`).
+- Neon: `#kgn` gebaut, `play` gesetzt, kein `.frame` und keine Funken, alle
+  sechs eigenen Teile da, 5 Stufen im Markup, letzte Stufe hält,
+  `animationName` ist `knBeat`, Verzögerung steht im `style`-Attribut.
+- Kellerbühne danach unverändert: `#kg`, 68 Rahmenlämpchen, 12 Funken,
+  `kgBeat`, zwei Sterne in der Kopfzeile.
+- Klick führt weiter und räumt die Bühne ab (beide Bühnen).
+- JSON: Bühne ist im Export; eine alte Datei **ohne** `stage` und eine mit
+  unbekanntem Wert landen beide auf der Kellerbühne.
+- Bei 400 px: kein Querüberlauf, Schrift auf 50 px, alle vier Zeilen im Bild
+  (Bildschirmfoto).
+- Keine Konsolenfehler.
+
+**Ungeprüft:** wie es auf dem Beamer im Vollbild wirkt, und das Zusammenspiel
+mit `prefers-reduced-motion` (Gitter und Sterne sind dort mit abgeschaltet,
+aber nicht nachgemessen).
+
+**Fallstrick:** Der Dev-Server einer anderen Session war zwischendurch weg,
+`navigate` auf `localhost:3000` schlug fehl. `preview_start` mit dem Namen
+aus `.claude/launch.json` startet einen eigenen.
+
 ## 2026-09-25 — Ton-Anzeige klein, wenn etwas auf der Leinwand steht (`bd92ad9`)
 
 **Gemacht:** Der Befund aus `22f7fa8` ist behoben. `showSoundFx(kompakt)` in
