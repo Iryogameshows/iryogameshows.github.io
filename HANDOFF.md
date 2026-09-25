@@ -12,6 +12,32 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Intro-Auswahl auf dem Turnier-Screen (`7a1cf27`)
+
+**Gemacht:** Der Intro-Block wandert jetzt auch auf den Turnier-Screen. Ein
+Platzhalter mehr im Markup, ein Eintrag mehr in `INTRO_SLOTS`.
+
+**Warum:** Der Turniermodus schickt den Host auf den Setup-Screen des
+jeweiligen Spiels (`tournamentStartGame` → `showScreen(TOURNAMENT_STARTABLE…)`),
+dort steht die Auswahl seit `7383900` ohnehin — das Intro lief also schon.
+Was fehlte, war die Auswahl an der Stelle, an der der Host den Abend **plant**,
+bevor er das erste Spiel öffnet.
+
+**Geprüft:** `node check.js --types` ohne Befund. Der Block landet im
+Platzhalter und überlebt `renderTournament()` — der zeichnet nur
+`#tournament-content` neu, der Platzhalter ist ein Geschwisterelement. Auf dem
+Turnier-Screen „Geburtstag" eingestellt, dann auf den Feud-Setup gewechselt:
+Einstellung steht dort. Danach der ganze Weg: „Eigenes Intro" auf dem
+Turnier-Screen gewählt, auf den Setup-Screen gewechselt (das macht
+`tournamentStartGame`) und gestartet — Stern, dann die eigene Bühne mit fünf
+Stufen. Weiterhin genau ein Block im Dokument. Keine Konsolenfehler.
+
+**Offen:** `TOURNAMENT_STARTABLE` kennt nur Family Feud, Jeopardy und Wer wird
+Millionär. Die fünf neueren Shows lassen sich aus dem Turnier **gar nicht**
+starten — eigene Baustelle, nicht Teil dieser Änderung.
+
+---
+
 ## 2026-09-25 — Intro-Auswahl für alle acht Shows (`7383900`)
 
 **Gemacht:** Eine Intro-Auswahl, die auf jedem Setup-Screen steht. Vier
