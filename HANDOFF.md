@@ -12,6 +12,49 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Goldener Balken im Jeopardy-Logo war weg (`4b9cdfb`)
+
+**Symptom:** David schickte ein Bild vom Jeopardy-Titel: vom Logo standen nur
+noch die dunklen Säulen da, der goldene Balken fehlte.
+
+**Ursache:** `STAR_SVG` und `DANGER_SVG` in `js/core.js` bringen ihren
+Farbverlauf selbst mit — als `<linearGradient id="sg">` bzw. `id="dg"`.
+Dasselbe SVG steht mehrfach im Dokument, sobald eine Menükachel und ein Intro
+gleichzeitig existieren. Damit gibt es die id **doppelt**; `url(#dg)` trifft
+das **erste** Vorkommen, und das lag im Menü-Screen. Während des Intros ist
+der abgeschaltet (`.screen` ohne `.active` → `display:none`), und dort baut
+der Browser den Verlauf gar nicht. Der Balken blieb ungefüllt und war auf
+schwarzem Grund unsichtbar.
+
+**Nicht neu, nur jetzt aufgefallen.** Die Stelle stammt aus `4ed4cf6`
+(2026-09-15, Aufteilung von `index.html`). Zwei andere Stellen hatten
+denselben Fehler schon einzeln umschifft: `gameCardIcon` vergibt seit
+`022066f` eigene IDs (mit genau dieser Begründung im Kommentar), gab aber
+ausgerechnet diese beiden SVGs unverändert zurück; `tournamentGameIcon` baute
+sich von Hand eine eigene um, was nur innerhalb des Spielplans half.
+
+**Behoben:** `withOwnGradId(svg, id)` plus `starSvg()` und `dangerSvg()` in
+`core.js`. Alle elf Einbindungen (6× Stern in `feud.js`, 1× Gefahr in
+`feud.js`, 2× in `jeopardy.js`, 1× in `jeopardy-ui.js`, 2× in `core.js`,
+2× in `tournament.js`) gehen jetzt darüber. Die Handumbenennung in
+`tournament.js` ist raus, ebenso ihr `uid`-Parameter.
+
+**Geprüft:** `node check.js --types` ohne Meldung. Im Browser **zuerst den
+Fehler nachgestellt** (alle Screens abgeschaltet, dann `showJeopardyTitle()`):
+Das Bild sah aus wie Davids Screenshot. Nach dem Fix an derselben Stelle
+wieder vier Balken, der zweite golden — per Bildschirmfoto bestätigt.
+Dazu **6 Prüfungen, alle grün**: Jeopardy-Titel, Jeopardy-Stern-Intro,
+Feud-Willkommen, Menükacheln und Turnier-Spielplan zeigen jeweils nur
+`url(#…)`-Verweise, die auf einen Verlauf **im eigenen SVG** zeigen und deren
+id **im ganzen Dokument einmalig** ist; keine doppelte id mehr im Dokument.
+Keine Konsolenfehler.
+
+**Fallstrick für die Zukunft:** Jedes SVG, das seinen eigenen Verlauf
+mitbringt und mehr als einmal ausgegeben wird, braucht eine eigene id.
+Auffallen tut es erst, wenn die erste Kopie in einem versteckten Element
+landet — im sichtbaren Zustand funktioniert der falsche Verweis zufällig.
+Neue Logos deshalb über `withOwnGradId` ausgeben.
+
 ## 2026-09-25 — Zweite Bühne fürs eigene Intro: „Neon-Nacht" (`5e656a2`)
 
 **Gemacht:** Das eigene Intro (`showCustomIntro`) lief bisher immer auf der
