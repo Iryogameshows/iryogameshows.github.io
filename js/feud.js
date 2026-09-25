@@ -877,7 +877,13 @@ function openBoardPopout() {
   // weil das Popout auf about:blank startet und relative Pfade dort ins Leere
   // laufen. Nebeneffekt: der DDF-/PIH-Block ist jetzt auch dabei, den hat die
   // alte Variante nie erwischt (er stand im body, nicht im head).
-  const cssHref = new URL('styles.css', location.href).href;
+  // Bewusst die URL aus dem Dokument statt eines festen Pfades: seit der
+  // Deploy ein ?v=<commit> anhaengt, waere styles.css ohne Parameter eine
+  // ANDERE Adresse - das Popout haette sich die alte Fassung aus dem Cache
+  // geholt, waehrend das Hauptfenster die neue zeigt.
+  const cssLink = /** @type {HTMLLinkElement|null} */ (
+    document.querySelector('link[rel="stylesheet"][href*="styles.css"]'));
+  const cssHref = new URL(cssLink ? cssLink.getAttribute('href') : 'styles.css', location.href).href;
   boardWin.document.open();
   boardWin.document.write(`<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
