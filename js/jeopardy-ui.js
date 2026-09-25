@@ -440,6 +440,44 @@ function jeopardyEditGrid(b,col,row,val){
   const [cols,rows] = val.split('x').map(Number);
   const c = jeopardyClue(b,col,row); c.stageCols = cols; c.stageRows = rows;
 }
+function jeopardyEditSteps(b,col,row,cb){
+  const c = jeopardyClue(b,col,row); c.steps = cb.checked;
+  if(c.steps){ if(!c.stepTexts) c.stepTexts = []; if(!c.stepImgs) c.stepImgs = []; if(!c.stepCount) c.stepCount = 3; }
+  renderJeopardyEditor();
+}
+function jeopardyEditStepCount(b,col,row,val){
+  const c = jeopardyClue(b,col,row); c.stepCount = Math.max(2, Math.min(5, Number(val)||3));
+  renderJeopardyEditor();
+}
+/** Text eines Schritts speichern. Bewusst ohne erneutes Rendern: sonst
+ *  verliert das Feld beim Tippen den Fokus.
+ *  @param {number} b @param {number} col @param {number} row
+ *  @param {number} idx @param {string} val */
+function jeopardyEditStepText(b,col,row,idx,val){
+  const c = jeopardyClue(b,col,row);
+  c.stepTexts = c.stepTexts || [];
+  c.stepTexts[idx] = val;
+}
+/** @param {number} b @param {number} col @param {number} row
+ *  @param {number} idx @param {HTMLInputElement} input */
+function jeopardyEditStepImg(b,col,row,idx,input){
+  const f = input.files && input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    const c = jeopardyClue(b,col,row);
+    c.stepImgs = c.stepImgs || []; c.stepImgs[idx] = String(r.result);
+    c.stepNames = c.stepNames || []; c.stepNames[idx] = f.name;
+    renderJeopardyEditor();
+  };
+  r.readAsDataURL(f);
+}
+/** @param {number} b @param {number} col @param {number} row @param {number} idx */
+function jeopardyClearStepImg(b,col,row,idx){
+  const c = jeopardyClue(b,col,row);
+  if(c.stepImgs) c.stepImgs[idx] = null;
+  if(c.stepNames) c.stepNames[idx] = null;
+  renderJeopardyEditor();
+}
 function jeopardyEditSeries(b,col,row,cb){
   const c = jeopardyClue(b,col,row); c.series = cb.checked;
   if(c.series){ if(!c.seriesImgs) c.seriesImgs = []; if(!c.seriesCount) c.seriesCount = 5; }
@@ -479,6 +517,7 @@ function jeopardyCellBadges(clue){
   if (clue.sound)    b += '<span title="Sound">🔊</span>';
   if (clue.staged)   b += '<span title="Staffeln">🧩</span>';
   if (clue.series)   b += '<span title="Bilder-Reihe">🎴</span>';
+  if (clue.steps)    b += '<span title="Schritte nacheinander">📜</span>';
   if (clue.estimate) b += '<span title="Schätzfrage">📊</span>';
   return b;
 }
@@ -518,6 +557,14 @@ function jeopardyClueEditorHtml(b, col, row){
       <label style="${uploadLbl}background:${clue.series?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};">
         <input type="checkbox" ${clue.series?'checked':''} onchange="jeopardyEditSeries(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 🎴 Bilder-Reihe
       </label>
+      <label style="${uploadLbl}background:${clue.steps?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Die Frage in Schritten zeigen, die du einzeln einblendest - je Schritt Zeile, Bild oder beides">
+        <input type="checkbox" ${clue.steps?'checked':''} onchange="jeopardyEditSteps(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 📜 Nacheinander
+      </label>
+      ${clue.steps?`
+        <select onchange="jeopardyEditStepCount(${b},${col},${row},this.value)" title="Anzahl Schritte" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
+          ${[2,3,4,5].map(n=>`<option value="${n}" ${jeopardyStepCount(clue)===n?'selected':''}>${n} Schritte</option>`).join('')}
+        </select>
+      `:''}
       <label style="${uploadLbl}background:${clue.estimate?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Statt Buzzer geben alle Handys eine Schätzung ein">
         <input type="checkbox" ${clue.estimate?'checked':''} onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].estimate=this.checked;renderJeopardyEditor();" style="accent-color:#FFD23F;"> 📊 Schätzfrage
       </label>
@@ -538,6 +585,21 @@ function jeopardyClueEditorHtml(b, col, row){
         }).join('')}
       `:''}
     </div>
+    ${clue.steps?`
+      <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:9px 0 4px;">Schritte - du blendest sie einzeln ein. Je Schritt Zeile, Bild oder beides; leere Schritte werden übersprungen.</label>
+      ${Array.from({length: jeopardyStepCount(clue)}, (_,idx)=>{
+        const img = (clue.stepImgs||[])[idx];
+        const nm = (clue.stepNames||[])[idx] || ('Bild ' + (idx+1));
+        return `
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <span style="font-size:.7rem;font-weight:800;color:#FFD23F;width:14px;text-align:right;">${idx+1}</span>
+          <input type="text" placeholder="Zeile ${idx+1} (oder leer lassen)" value="${esc((clue.stepTexts||[])[idx]||'')}" oninput="jeopardyEditStepText(${b},${col},${row},${idx},this.value)" style="${inp}font-size:.82rem;">
+          ${img
+            ? `<img class="jimg-thumb" src="${esc(img)}" data-preview-name="${esc(nm)}" alt=""><button onclick="jeopardyClearStepImg(${b},${col},${row},${idx})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${esc(nm)} entfernen">✕</button>`
+            : `<label style="${uploadLbl}white-space:nowrap;" title="Bild für Schritt ${idx+1}">🖼<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditStepImg(${b},${col},${row},${idx},this)"></label>`}
+        </div>`;
+      }).join('')}
+    `:''}
     <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:9px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
     ${mediaSlotsHtml(clue.media || (clue.media = []), (slot, inputExpr) => `jeopardyEditMedia(${b},${col},${row},${slot},${inputExpr})`)}
     <input type="text" placeholder="📝 Notiz für den Host" value="${esc(clue.note)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].note=this.value" style="${inp}margin-top:7px;border-color:rgba(255,210,63,.25);background:rgba(255,210,63,.05);font-size:.82rem;">

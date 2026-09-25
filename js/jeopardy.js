@@ -32,6 +32,13 @@ const JEOPARDY_BOARDS = 2;
  *  @property {string} [stageImg]
  *  @property {number} [stageCols]
  *  @property {number} [stageRows]
+ *  @property {boolean} [steps]     Frage in Schritten, die nacheinander eingeblendet
+ *                                  werden. Jeder Schritt ist eine Zeile, ein Bild
+ *                                  oder beides - beliebig gemischt.
+ *  @property {string[]} [stepTexts] Text je Schritt (bis zu 5)
+ *  @property {(string|null)[]} [stepImgs] Bild je Schritt (Data-URL)
+ *  @property {string[]} [stepNames] Dateiname je Schritt-Bild
+ *  @property {number} [stepCount]  wie viele Schritte der Editor anbietet (2-5)
  *  @property {boolean} [series]    Bilderreihe, die von links nach rechts aufgeht
  *  @property {(string|null)[]} [seriesImgs]
  *  @property {string[]} [seriesNames]
@@ -87,6 +94,7 @@ let jeopardyState = {
   ddTeam: null,      // welches Team das Daily Double gewählt hat - nur dieses darf antworten
   stageRevealed: [], // revealed tile indices for a staged-image clue
   seriesRevealed: 0, // wie viele Bilder einer Bilder-Reihe schon aufgedeckt sind (links → rechts)
+  stepsRevealed: 0,  // wie viele Schritte einer Schritt-Frage schon stehen (oben → unten)
   questionRevealed: false, // the question text is hidden until the GM reveals it
 };
 
@@ -109,6 +117,7 @@ function jeopardySnapshot() {
     ddTeam: jeopardyState.ddTeam,
     stageRevealed: [...jeopardyState.stageRevealed],
     seriesRevealed: jeopardyState.seriesRevealed,
+    stepsRevealed: jeopardyState.stepsRevealed,
     questionRevealed: jeopardyState.questionRevealed,
   });
 }
@@ -126,6 +135,7 @@ function jeopardyUndo() {
   jeopardyState.ddTeam = prev.ddTeam === undefined ? null : prev.ddTeam;
   jeopardyState.stageRevealed = prev.stageRevealed || [];
   jeopardyState.seriesRevealed = prev.seriesRevealed || 0;
+  jeopardyState.stepsRevealed = prev.stepsRevealed || 0;
   jeopardyState.questionRevealed = prev.questionRevealed;
   renderJeopardyScores();
   renderJeopardyBoard();
@@ -322,6 +332,7 @@ function openJeopardyClue(col, row) {
   jeopardyState.answerShown = false;
   jeopardyState.stageRevealed = [];
   jeopardyState.seriesRevealed = 0;
+  jeopardyState.stepsRevealed = 0;
   jeopardyState.questionRevealed = false;
   jeopardyState.ddTeam = null;
   resetMediaOverlay();
@@ -474,6 +485,45 @@ function jeopardyStageHtml(clue){
 
 // Bilder-Reihe: eingestellte Anzahl (2-5) und die tatsächlich hochgeladenen Bilder
 /** @param {JeopardyClue} clue */
+/* Schritt-Frage: bis zu 5 Schritte, die der Host einzeln einblendet - fuer
+   "Wer bin ich?"-Fragen, bei denen jeder Hinweis den naechsten leichter macht.
+   Ein Schritt ist eine Zeile, ein Bild oder beides, in beliebiger Mischung:
+   1-4 Zeile und 5 Bild geht genauso wie 1+4 Zeile und 2+3+5 Bild. Gebaut wie
+   die Bilder-Reihe: derselbe Zaehler im Zustand, derselbe Undo, derselbe Knopf
+   in der Fernbedienung. */
+/** Wie viele Schritte der Editor anbietet.
+ *  @param {JeopardyClue} clue @returns {number} */
+function jeopardyStepCount(clue){ return Math.max(2, Math.min(5, clue.stepCount || 5)); }
+/** Die tatsaechlich gefuellten Schritte, in ihrer Reihenfolge. Ein leerer
+ *  Schritt zwischendrin faellt raus, sonst blendet der Host ins Nichts.
+ *  @param {JeopardyClue} clue
+ *  @returns {{text:string, img:string|null}[]} */
+function jeopardyStepItems(clue){
+  const n = jeopardyStepCount(clue);
+  const texts = clue.stepTexts || [];
+  const imgs = clue.stepImgs || [];
+  const out = [];
+  for (let i = 0; i < n; i++){
+    const text = (texts[i] || '').trim();
+    const img = imgs[i] || null;
+    if (text || img) out.push({ text, img });
+  }
+  return out;
+}
+/** @param {JeopardyClue} clue @returns {string} */
+function jeopardyStepsHtml(clue){
+  const items = jeopardyStepItems(clue);
+  const shown = jeopardyState.stepsRevealed;
+  // Die Zahlen gehen als CSS-Variablen mit: fuenf Schritte mit drei Bildern
+  // passen sonst nicht auf die Leinwand, und die Loesung darunter rutscht aus
+  // dem Bild. styles.css teilt die verfuegbare Hoehe damit auf.
+  const imgs = Math.max(1, items.filter(it => it.img).length);
+  return `<div class="jeopardy-steps" style="--jstep-n:${items.length};--jstep-imgs:${imgs};">${items.map((it, i) => `
+    <div class="jeopardy-step ${i < shown ? 'shown' : ''}">
+      ${it.text ? `<div class="jeopardy-step-text">${escapeHtml(it.text)}</div>` : ''}
+      ${it.img ? `<img class="jeopardy-step-img" src="${escAttr(it.img)}" alt="">` : ''}
+    </div>`).join('')}</div>`;
+}
 function jeopardySeriesCount(clue){ return Math.max(2, Math.min(5, clue.seriesCount || 5)); }
 /** @param {JeopardyClue} clue */
 function jeopardySeriesImgs(clue){ return (clue.seriesImgs || []).slice(0, jeopardySeriesCount(clue)).filter(Boolean); }
@@ -502,6 +552,7 @@ function renderJeopardyClueOverlay() {
   const val = JEOPARDY_VALUES[row];
   const staged = clue.staged && clue.stageImg;
   const series = clue.series && jeopardySeriesImgs(clue).length > 0;
+  const steps = clue.steps && jeopardyStepItems(clue).length > 0;
 
   const qImgHtml = clue.qImg ? `<img class="jeopardy-clue-img" src="${clue.qImg}" alt="">` : '';
   const aImgHtml = clue.aImg ? `<img class="jeopardy-answer-img ${jeopardyState.answerShown?'visible':''}" src="${clue.aImg}" alt="">` : '';
@@ -509,6 +560,7 @@ function renderJeopardyClueOverlay() {
   const revealed = jeopardyState.questionRevealed;
   const questionArea = revealed
     ? `${clue.q ? `<div class="jeopardy-clue-text">${escapeHtml(clue.q)}</div>` : ''}
+       ${steps ? jeopardyStepsHtml(clue) : ''}
        ${series ? jeopardySeriesHtml(clue) : staged ? jeopardyStageHtml(clue) : qImgHtml}`
     : `<div class="jeopardy-clue-blank">Frage verdeckt</div>`;
 
@@ -547,6 +599,19 @@ function jeopardyStageReveal() {
   if (!hidden.length) return;
   jeopardySnapshot();
   jeopardyState.stageRevealed.push(hidden[Math.floor(Math.random()*hidden.length)]);
+  renderJeopardyClueOverlay();
+  updateGamemaster();
+}
+// Naechsten Schritt einer Schritt-Frage einblenden (oben → unten)
+function jeopardyStepsReveal() {
+  if (!jeopardyState.currentClue) return;
+  const { col, row } = jeopardyState.currentClue;
+  const clue = jBoard()[col].clues[row];
+  if (!clue.steps) return;
+  const total = jeopardyStepItems(clue).length;
+  if (jeopardyState.stepsRevealed >= total) return;
+  jeopardySnapshot();
+  jeopardyState.stepsRevealed++;
   renderJeopardyClueOverlay();
   updateGamemaster();
 }

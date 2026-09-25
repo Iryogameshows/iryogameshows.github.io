@@ -1354,8 +1354,24 @@ function updateGamemasterJeopardy() {
         ? `<button class="gm-btn gold" onclick="opener.jeopardySeriesReveal()">🎴 Nächstes Bild (${done}/${total})</button>`
         : `<span class="hint-ok">✓ Alle Bilder aufgedeckt</span>`;
     }
+    const steps = clue.steps && jeopardyStepItems(clue).length > 0;
+    let stepsBtn = '';
+    if (steps){
+      const total = jeopardyStepItems(clue).length;
+      const done = jeopardyState.stepsRevealed;
+      stepsBtn = done < total
+        ? `<button class="gm-btn gold" onclick="opener.jeopardyStepsReveal()">📜 Nächster Schritt (${done}/${total})</button>`
+        : `<span class="hint-ok">✓ Alle Schritte eingeblendet</span>`;
+    }
+    // Der Host liest den naechsten Schritt vor, bevor er ihn zeigt - deshalb
+    // steht die ganze Folge hier im Panel, nicht nur auf der Leinwand.
+    const stepsPreview = steps
+      ? `<div class="info-card" style="text-align:left;">${jeopardyStepItems(clue).map((it,i) =>
+          `<div style="opacity:${i < jeopardyState.stepsRevealed ? '1' : '.45'};">${i+1}. ${it.text ? escapeHtml(it.text) : ''}${it.img ? ' 🖼' : ''}</div>`).join('')}</div>`
+      : '';
     const media = [
       clue.qImg ? '<span class="tag tag-blue">🖼 Frage-Bild</span>' : '',
+      steps ? `<span class="tag tag-gold">📜 Nacheinander (${jeopardyStepItems(clue).length})</span>` : '',
       staged ? '<span class="tag tag-gold">🧩 Staffel-Bild</span>' : '',
       series ? `<span class="tag tag-gold">🎴 Bilder-Reihe (${jeopardySeriesImgs(clue).length})</span>` : '',
       clue.aImg ? '<span class="tag tag-green">🖼 Lösungs-Bild</span>' : '',
@@ -1409,7 +1425,8 @@ function updateGamemasterJeopardy() {
             : 'Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.'}
         </div>
       ` : `
-        ${(staged||series||soundBtn)?`<div class="btn-grid">${stageBtn}${seriesBtn}${soundBtn}</div>`:''}
+        ${stepsPreview}
+        ${(staged||series||steps||soundBtn)?`<div class="btn-grid">${stageBtn}${seriesBtn}${stepsBtn}${soundBtn}</div>`:''}
         ${scoreRows}
       `}`;
     sideHtml = `${buzzHtml}${connectPanel}`;
@@ -1585,6 +1602,11 @@ function updateGMBar() {
         const g = jeopardyStageGrid(cc); const done = jeopardyState.stageRevealed.length;
         if (done < g.total) stageBtn = `<button class="gm-btn gm-gold" onclick="jeopardyStageReveal();updateGMBar();">🧩 Feld (${done}/${g.total})</button>`;
       }
+      let stepsBtn = '';
+      if (cc.steps){
+        const total = jeopardyStepItems(cc).length; const done = jeopardyState.stepsRevealed;
+        if (done < total) stepsBtn = `<button class="gm-btn gm-gold" onclick="jeopardyStepsReveal();updateGMBar();">📜 Schritt (${done}/${total})</button>`;
+      }
       let soundBtn = '';
       if (cc.sound) soundBtn = jeopardySoundPlaying()
         ? `<button class="gm-btn" style="background:linear-gradient(180deg,#8B5CF6,#6D28D9);color:#fff;" onclick="jeopardyStopSound();updateGMBar();">⏹ Sound</button>`
@@ -1592,6 +1614,7 @@ function updateGMBar() {
       bar.innerHTML = `
         <span class="gm-label">Jeopardy</span>
         ${stageBtn}
+        ${stepsBtn}
         ${soundBtn}
         ${teamBtns}
         <button class="gm-btn gm-blue" onclick="jeopardyToggleAnswer();updateGMBar();">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
