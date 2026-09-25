@@ -1226,6 +1226,29 @@ body {
   animation: jsfxBounce .9s ease-in-out infinite;
 }
 @keyframes jsfxBounce { 0%,100%{transform:scaleY(.18);} 50%{transform:scaleY(1);} }
+/* Kleine Fassung: sobald auf der Leinwand etwas steht (Schritte, Bilder,
+   Fragetext), rutscht die Anzeige nach unten rechts und laesst alles andere
+   in Ruhe - keine Abdunklung, kein Weichzeichner. Oben rechts sitzt schon
+   die Buzzer-Anzeige. */
+.jeopardy-sound-fx.compact {
+  inset: auto 18px 18px auto;
+  flex-direction: row; gap: 14px; align-items: center;
+  padding: 10px 16px; border-radius: 14px;
+  background: rgba(10,13,40,.82); backdrop-filter: blur(6px);
+  box-shadow: 0 8px 30px rgba(0,0,0,.5), inset 0 0 0 1px rgba(var(--gold-rgb),.25);
+}
+.jeopardy-sound-fx.compact .jsfx-ring {
+  width: 44px; height: 44px; font-size: 1.3rem;
+  /* Eigene Pulsfolge: die grosse wirft bis zu 90 px Schein, das waere um
+     einen 44-px-Ring nur noch ein Fleck. */
+  animation: jsfxRingSmall 1.4s ease-in-out infinite;
+}
+@keyframes jsfxRingSmall {
+  0%,100% { transform: scale(1);    box-shadow: 0 0 0 2px rgba(var(--gold-rgb),.4), 0 0 14px rgba(var(--gold-rgb),.3); }
+  50%     { transform: scale(1.06); box-shadow: 0 0 0 3px rgba(var(--gold-rgb),.25), 0 0 24px rgba(var(--gold-rgb),.45); }
+}
+.jeopardy-sound-fx.compact .jsfx-bars { height: 30px; gap: 4px; }
+.jeopardy-sound-fx.compact .jsfx-bar { width: 6px; height: 28px; border-radius: 3px; box-shadow: 0 0 8px rgba(var(--gold-rgb),.35); }
 /* Buzzer corner widget (Jeopardy und Family Feud teilen sich das Aussehen) */
 #jeopardy-buzzer, #feud-buzzer {
   position: fixed; top: 14px; right: 14px; z-index: 1300; width: 236px;

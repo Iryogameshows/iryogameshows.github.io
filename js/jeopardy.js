@@ -640,7 +640,7 @@ function jeopardyPlaySound(){
   jeopardyStopSound(true);
   jeopardyAudio = new Audio(clue.sound);
   jeopardyAudio.onended = () => { hideSoundFx(); jeopardyAudio = null; updateGamemaster(); };
-  showSoundFx();
+  showSoundFx(jeopardyClueHasVisuals(clue));
   jeopardyAudio.play().catch(() => {});
   updateGamemaster();
 }
@@ -649,13 +649,35 @@ function jeopardyStopSound(silent){
   hideSoundFx();
   if (!silent) updateGamemaster();
 }
-function showSoundFx(){
+/** Steht auf der Leinwand etwas, das der Ton-Effekt nicht zudecken darf?
+ *  Gemeint sind Bilder und aufgedeckte Schritte - also alles, was der Host
+ *  gerade zum Raten hergezeigt hat. Ein blosser Fragetext zaehlt bewusst
+ *  NICHT: bei der klassischen "welches Geraeusch ist das?"-Frage soll die
+ *  grosse Anzeige den Bildschirm fuellen, dafuer ist sie da.
+ *  @param {JeopardyClue} clue @returns {boolean} */
+function jeopardyClueHasVisuals(clue){
+  if (!jeopardyState.questionRevealed) return false;   // nur "Frage verdeckt" - nichts zu sehen
+  if (clue.qImg) return true;
+  if (clue.steps && jeopardyStepItems(clue).length) return true;
+  if (clue.series && jeopardySeriesImgs(clue).length) return true;
+  if (clue.staged && clue.stageImg) return true;
+  if (jeopardyState.answerShown && clue.aImg) return true;
+  return false;
+}
+/** Die Schallwellen-Anzeige.
+ *  @param {boolean} [kompakt] true: klein unten rechts, ohne Abdunklung -
+ *  fuer Fragen, bei denen gleichzeitig etwas auf der Leinwand steht. Die
+ *  grosse Fassung deckt den ganzen Bildschirm ab und zeichnet ihn weich;
+ *  bei einer Schritt-Frage waeren die schon eingeblendeten Hinweise damit
+ *  kaum noch lesbar. Buzzer-Anzeige sitzt oben rechts, deshalb unten. */
+function showSoundFx(kompakt){
   hideSoundFx();
   const fx = document.createElement('div');
-  fx.className = 'jeopardy-sound-fx';
+  fx.className = 'jeopardy-sound-fx' + (kompakt ? ' compact' : '');
   fx.id = 'jeopardy-sound-fx';
   let bars = '';
-  for (let i = 0; i < 11; i++) bars += `<span class="jsfx-bar" style="animation-delay:${(i*0.09).toFixed(2)}s"></span>`;
+  const n = kompakt ? 7 : 11;
+  for (let i = 0; i < n; i++) bars += `<span class="jsfx-bar" style="animation-delay:${(i*0.09).toFixed(2)}s"></span>`;
   fx.innerHTML = `<div class="jsfx-ring">🔊</div><div class="jsfx-bars">${bars}</div>`;
   document.body.appendChild(fx);
 }
