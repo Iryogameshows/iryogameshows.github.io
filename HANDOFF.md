@@ -12,6 +12,48 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Ton-Anzeige klein, wenn etwas auf der Leinwand steht (`bd92ad9`)
+
+**Gemacht:** Der Befund aus `22f7fa8` ist behoben. `showSoundFx(kompakt)` in
+`js/jeopardy.js` nimmt jetzt einen Schalter; `jeopardyPlaySound` setzt ihn
+über den neuen Helfer `jeopardyClueHasVisuals(clue)`. In der kompakten
+Fassung (`.jeopardy-sound-fx.compact` in `styles.css`) sitzt die Anzeige
+unten rechts, 176 × 64 px, ohne Abdunklung und ohne Weichzeichner über der
+Leinwand, mit 7 statt 11 Balken und eigener Pulsfolge `jsfxRingSmall`.
+
+**Regel, bewusst so gezogen:** klein wird es bei **Frage-Bild, aufgedeckten
+Schritten, Bilder-Reihe, Staffelbild** und bei gezeigtem Lösungsbild. Ein
+bloßer **Fragetext zählt nicht** als Inhalt — bei der klassischen „welches
+Geräusch ist das?"-Frage soll der große Effekt den Bildschirm füllen, dafür
+ist er da. Solange die Frage noch verdeckt ist, bleibt es ebenfalls groß.
+
+**Warum unten rechts:** oben rechts sitzt schon die Buzzer-Anzeige
+(`#jeopardy-buzzer`, z-index 1300).
+
+**Warum eine eigene Pulsfolge:** `jsfxRing` wirft bis zu 90 px Schein. Um
+einen 44-px-Ring wäre das nur noch ein Fleck. Eine Animation schlägt
+außerdem jede normale Regel, die kleinere `box-shadow`-Angabe im
+`.compact`-Block allein hätte also gar nicht gewirkt.
+
+**Geprüft:** `node check.js --types` ohne Meldung (13 Dateien, 918
+Klammernpaare). Im Browser bei 1280 × 720, Firebase abgeklemmt (43 Aufrufe),
+**20 Prüfungen, alle grün:**
+
+- Schritt-Frage mit zwei aufgedeckten Hinweisen: Anzeige ist `compact`,
+  176 × 64 px = 1,6 % der Fläche, sitzt unten rechts, **überlappt keinen
+  Schritt**, keine Abdunklung. Bildschirmfoto: beide Hinweise voll lesbar.
+- Dieselbe Frage **vor** dem Aufdecken: noch die große Anzeige.
+- Reine Tonfrage (nur Text, kein Bild): große Anzeige, füllt 1280 × 720,
+  11 Balken, Abdunklung wie bisher.
+- Frage mit Frage-Bild: kleine Anzeige, Bild bleibt unverdeckt.
+- Stopp entfernt die Anzeige. Keine Konsolenfehler.
+
+**Fallstrick:** Das Browser-Panel war aus einem früheren Test noch auf 297 px
+Breite. Eine Prüfung „Anzeige < 25 % der Fensterbreite" schlug deshalb fehl,
+obwohl nichts kaputt war — bei 297 px nimmt die kompakte Anzeige eben die
+halbe Breite ein. Vor Layout-Messungen die Fenstergröße setzen, nicht
+annehmen.
+
 ## 2026-09-25 — Soundeffekte neu gebaut + Ton in Schritt-Frage geprüft (`22f7fa8`)
 
 **Gemacht, Teil 1 (Test, nichts geändert):** Ton in einer Schritt-Frage. Über
