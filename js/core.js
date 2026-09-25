@@ -290,39 +290,195 @@ function setClass(id, cls, on) {
 }
 
 // ── SFX ── Synthetisierte Soundeffekte (Web Audio API, keine externen Dateien nötig)
+/* Die Spielgeraeusche. Alles wird zur Laufzeit erzeugt, es liegt keine
+   Audiodatei im Repo - der Deploy bleibt ein git push.
+
+   Vorher waren das nackte Oszillatoren: ein Rechteck-Piep, ein Saegezahn, der
+   von 220 auf 110 Hz rutschte. Technisch richtig, aber es klang duenn und
+   unheimlich, weil drei Dinge fehlten, die einen Ton erst nach Instrument
+   klingen lassen:
+
+   1. Obertoene. Ein einzelner Sinus kommt in der Natur praktisch nicht vor -
+      deshalb wirkt er kuenstlich. Hier traegt der Grundton, darueber liegen
+      leisere Teiltoene, die schneller ausklingen: die Huellkurve von Glocke,
+      Marimba, Klavier.
+   2. Eine Huellkurve ohne Kanten. Ein Ton, der hart einsetzt oder abbricht,
+      knackt. Angerissen wird in Millisekunden, ausgeklungen exponentiell.
+   3. Raum. Ein voellig trockener Ton klingt wie im luftleeren Raum. Ein
+      kurzer Hall (kuenstliche Impulsantwort aus abklingendem Rauschen) setzt
+      alles in denselben Raum und nimmt die Schaerfe.
+
+   Dazu liegen die Toene auf echten Intervallen - Dur-Dreiklang fuer richtig,
+   fallende kleine Terz fuer falsch. Gespielt wird ueber einen gemeinsamen
+   Kompressor, damit zwei gleichzeitige Effekte nicht uebersteuern. */
 const SFX = (() => {
-  let ctx = null;
-  function ac(){ if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); return ctx; }
-  function tone(freq, start, dur, type, gain, glideTo){
-    const c = ac(); const o = c.createOscillator(); const g = c.createGain();
-    o.type = type || 'sine'; o.frequency.setValueAtTime(freq, c.currentTime + start);
-    if (glideTo) o.frequency.exponentialRampToValueAtTime(glideTo, c.currentTime + start + dur);
-    g.gain.setValueAtTime(0.0001, c.currentTime + start);
-    g.gain.exponentialRampToValueAtTime(gain || 0.18, c.currentTime + start + 0.015);
-    g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + start + dur);
-    o.connect(g); g.connect(c.destination);
-    o.start(c.currentTime + start); o.stop(c.currentTime + start + dur + 0.05);
+  let ctx = null, bus = null, verb = null;
+  /** Kuenstlicher Hallraum: abklingendes Rauschen als Impulsantwort.
+   *  @param {AudioContext} c @param {number} sec @param {number} decay */
+  function impulse(c, sec, decay){
+    const n = Math.max(1, Math.floor(c.sampleRate * sec));
+    const b = c.createBuffer(2, n, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++){
+      const d = b.getChannelData(ch);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay);
+    }
+    return b;
   }
+  function ac(){
+    if (!ctx){
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = ctx.createDynamicsCompressor();
+      // Flache Kennlinie, hoch angesetzt: der Kompressor soll nur eingreifen,
+      // wenn mehrere Effekte uebereinander liegen. Mit weitem Knie (26 dB) und
+      // -16 dB Schwelle hat er vorher JEDEN Einzelton gedrueckt - gemessene
+      // Spitze 0.05 statt der gewollten 0.13, also viel zu leise.
+      comp.threshold.value = -6; comp.knee.value = 8; comp.ratio.value = 4;
+      comp.attack.value = .004; comp.release.value = .2;
+      comp.connect(ctx.destination);
+      // Die Einzelstimmen sind absichtlich leise angesetzt (Spitze je .13),
+      // damit sich mehrere ueberlagern koennen, ohne zu uebersteuern. Der
+      // Summenweg hebt das wieder auf einen brauchbaren Pegel - gemessen:
+      // ohne diese Anhebung lag ein Einzelton bei 0.056 Vollaussteuerung. Bei
+      // 3.6 uebersteuerte dafuer die grosse Fanfare (1.085), deren vier
+      // stehende Toene sich addieren. 2.7 haelt alle sechs unter 0.8.
+      bus = ctx.createGain(); bus.gain.value = 2.7; bus.connect(comp);
+      verb = ctx.createConvolver(); verb.buffer = impulse(ctx, 1.5, 2.6);
+      const vg = ctx.createGain(); vg.gain.value = .9;
+      verb.connect(vg); vg.connect(comp);
+    }
+    if (ctx.state === 'suspended' && ctx.resume) ctx.resume();
+    return ctx;
+  }
+  /** Ein Ton aus mehreren Teiltoenen.
+   *  @param {number} freq Grundton in Hz
+   *  @param {number} at   Versatz in Sekunden
+   *  @param {number} dur  Laenge in Sekunden
+   *  @param {{gain?:number, partials?:number[][], send?:number, attack?:number,
+   *           bright?:number, type?:OscillatorType}} [opts] */
+  function note(freq, at, dur, opts){
+    const o = opts || {};
+    const c = ac(), t = c.currentTime + at;
+    const amp = o.gain == null ? .16 : o.gain;
+    // Leicht unharmonische Teiltoene: so klingt eine Glocke, nicht eine Orgel.
+    const partials = o.partials || [[1, 1], [2, .3], [3.01, .12], [4.2, .05]];
+    const out = c.createGain();
+    out.gain.setValueAtTime(.0001, t);
+    out.gain.linearRampToValueAtTime(amp, t + (o.attack == null ? .012 : o.attack));
+    out.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    const lp = c.createBiquadFilter();
+    lp.type = 'lowpass'; lp.Q.value = .7;
+    lp.frequency.setValueAtTime(Math.min(16000, freq * (o.bright || 8)), t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(300, freq * 1.5), t + dur);
+    out.connect(lp); lp.connect(bus);
+    const send = o.send == null ? .22 : o.send;
+    if (send > 0){ const sg = c.createGain(); sg.gain.value = send; lp.connect(sg); sg.connect(verb); }
+    partials.forEach(([mult, g]) => {
+      const osc = c.createOscillator();
+      osc.type = o.type || 'sine';
+      osc.frequency.setValueAtTime(freq * mult, t);
+      const pg = c.createGain();
+      pg.gain.setValueAtTime(g, t);
+      // Obertoene sterben frueher als der Grundton - das macht den Anschlag.
+      pg.gain.exponentialRampToValueAtTime(.0001, t + dur * (mult > 1 ? .5 : 1));
+      osc.connect(pg); pg.connect(out);
+      osc.start(t); osc.stop(t + dur + .08);
+    });
+  }
+  /** Kurzes gefiltertes Rauschen - der Anschlag, den ein reiner Sinus nicht hat.
+   *  @param {number} at @param {number} dur @param {number} freq @param {number} gain */
+  function click(at, dur, freq, gain){
+    const c = ac(), t = c.currentTime + at;
+    const n = Math.max(1, Math.floor(c.sampleRate * dur));
+    const b = c.createBuffer(1, n, c.sampleRate);
+    const d = b.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+    const src = c.createBufferSource(); src.buffer = b;
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass';
+    bp.frequency.value = freq; bp.Q.value = 1.1;
+    const g = c.createGain(); g.gain.value = gain;
+    src.connect(bp); bp.connect(g); g.connect(bus);
+    src.start(t); src.stop(t + dur + .02);
+  }
+  // Toene einer C-Dur-Tonleiter. Namen statt Zahlen, damit an der Aufrufstelle
+  // steht, was gespielt wird.
+  const N = { F3:174.61, A3:220, C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392, A4:440,
+              C5:523.25, D5:587.33, E5:659.25, F5:698.46, G5:783.99, A5:880,
+              C6:1046.5, D6:1174.7, E6:1318.5, G6:1568, C7:2093 };
   let enabled = storeGet('sfxEnabled') !== 'off';
   return {
     get enabled(){ return enabled; },
     toggle(){
       enabled = !enabled;
       storeSet('sfxEnabled', enabled ? 'on' : 'off');
+      if (enabled) this.point();   // sofort hoerbar, dass er wieder an ist
       return enabled;
     },
-    buzz(){ if(!enabled) return; tone(880, 0, .09, 'square', .12); },
-    point(){ if(!enabled) return; tone(660, 0, .07, 'triangle', .14); tone(990, .06, .09, 'triangle', .12); },
-    correct(){ if(!enabled) return; tone(523, 0, .11, 'triangle', .16); tone(659, .09, .11, 'triangle', .16); tone(880, .18, .18, 'triangle', .16); },
-    wrong(){ if(!enabled) return; tone(220, 0, .22, 'sawtooth', .16, 110); },
-    tick(){ if(!enabled) return; tone(1200, 0, .04, 'square', .07); },
+    // Gebuzzert: heller Glockenschlag mit weichem Bauch darunter.
+    buzz(){ if(!enabled) return;
+      click(0, .05, 2600, .05);
+      note(N.A5, 0, .5, { gain:.13, partials:[[1,1],[2.76,.26],[5.4,.1]], bright:6, send:.3 });
+      note(N.A3, 0, .3, { gain:.07, partials:[[1,1],[2,.2]], bright:4, send:.15 });
+    },
+    // Ein Punkt: zwei Toene aufwaerts, kurz und marimbaartig.
+    point(){ if(!enabled) return;
+      note(N.C6, 0, .18, { gain:.12, partials:[[1,1],[2,.22],[3.01,.07]], bright:7 });
+      note(N.E6, .07, .22, { gain:.11, partials:[[1,1],[2,.2]], bright:7 });
+    },
+    // Richtig: Dur-Dreiklang aufwaerts, mit Hall.
+    correct(){ if(!enabled) return;
+      [[N.C5,0],[N.E5,.075],[N.G5,.15],[N.C6,.225]].forEach((pair, i) =>
+        note(pair[0], pair[1], i === 3 ? .75 : .34, { gain:.13, send:.3 }));
+    },
+    // Falsch: fallende kleine Terz, gedaempft, dazu ein dumpfer Schlag.
+    // Bewusst kein Saegezahn-Rutscher mehr - der klang nach Schreckmoment,
+    // nicht nach "leider nicht".
+    wrong(){ if(!enabled) return;
+      note(N.F4, 0, .26, { gain:.14, partials:[[1,1],[2,.16]], bright:3, send:.12 });
+      note(N.D4, .12, .42, { gain:.13, partials:[[1,1],[2,.12]], bright:2.6, send:.12 });
+      note(N.F3, .12, .4, { gain:.07, partials:[[1,1]], bright:2, send:.08 });
+    },
+    // Uhr laeuft: sehr leiser Holzklick, kein Piepser.
+    tick(){ if(!enabled) return;
+      click(0, .035, 1800, .14);
+      note(N.C7, 0, .06, { gain:.06, partials:[[1,1]], bright:4, send:.1 });
+    },
+    // Sieg: Dreiklang hoch, danach der Akkord stehen gelassen.
     fanfare(big){ if(!enabled) return;
-      const notes = big ? [523,659,784,1047,1319,1568] : [523,659,784,1047];
-      notes.forEach((f,i) => tone(f, i*.13, .3, 'triangle', big ? .2 : .16));
-      if (big) tone(1568, notes.length*.13, .6, 'square', .1);
+      const lauf = big ? [N.C5,N.E5,N.G5,N.C6,N.E6,N.G6] : [N.C5,N.E5,N.G5,N.C6];
+      lauf.forEach((f,i) => note(f, i*.11, .5, { gain: big ? .1 : .12, send:.32 }));
+      const ende = lauf.length * .11;
+      (big ? [N.C5,N.E5,N.G5,N.C6] : [N.C5,N.E5,N.G5]).forEach(f =>
+        note(f, ende, big ? 1.6 : 1.1, { gain: big ? .065 : .1, attack:.03, send:.4 }));
+      if (big){
+        note(N.C7, ende + .12, 1.2, { gain:.04, partials:[[1,1],[2.4,.2]], send:.5 });
+        click(ende, .06, 5200, .03);
+      }
+    },
+    /** Alle Geraeusche der Reihe nach - zum Probehoeren im Menue.
+     *  @returns {boolean} false, wenn der Ton gerade aus ist */
+    preview(){
+      if (!enabled) return false;
+      /** @type {{name:string, ms:number}[]} */
+      const folge = [{name:'buzz',ms:0},{name:'point',ms:700},{name:'correct',ms:1400},
+                     {name:'wrong',ms:2500},{name:'tick',ms:3400},{name:'fanfare',ms:3900}];
+      folge.forEach(f => setTimeout(() => {
+        if (f.name === 'fanfare') this.fanfare(true); else this[f.name]();
+      }, f.ms));
+      return true;
     },
   };
 })();
+
+/** Alle Geraeusche der Reihe nach abspielen. Der Knopf sperrt sich solange
+ *  selbst, damit nicht zwei Durchlaeufe uebereinander liegen.
+ *  @param {HTMLButtonElement} btn */
+function sfxPreview(btn){
+  if (btn.disabled) return;
+  if (!SFX.preview()){ btn.textContent = '🔇 Ton ist aus'; setTimeout(() => { btn.textContent = '🎧 Töne probehören'; }, 1600); return; }
+  const alt = btn.textContent;
+  btn.disabled = true; btn.textContent = '🎧 läuft…';
+  setTimeout(() => { btn.disabled = false; btn.textContent = alt; }, 6500);
+}
 
 // Drei Balken: der oberste voll golden (metallischer Verlauf), die zwei
 // darunter nur mit goldenem Rand - das Family-Feud-Logo.
