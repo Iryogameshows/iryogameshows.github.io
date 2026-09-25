@@ -12,6 +12,41 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Intro-Auswahl für alle acht Shows (`7383900`)
+
+**Gemacht:** Eine Intro-Auswahl, die auf jedem Setup-Screen steht. Vier
+Varianten: Keller Gameshow, Keller Gameshow Tag 2, Geburtstag, Eigenes Intro.
+Die eigene Jeopardy-Zeile für das Tag-2-Intro fällt weg — es ist jetzt eine
+Variante wie die anderen.
+
+**Warum so — ein Block, der wandert:** Der Bedienblock steht genau **einmal**
+im Dokument (`#intro-pick`) und wird beim Screenwechsel in den Platzhalter des
+offenen Setup-Screens verschoben (`moveIntroPickerTo`, aus `showScreen`).
+
+Acht Kopien wären der naheliegende Weg gewesen und der falsche: dann gäbe es
+acht Mal dieselben IDs, ein `getElementById` träfe immer nur die erste, und was
+der Host auf dem einen Screen einstellt, stünde auf dem nächsten nicht drin.
+Ein verschobener Block hat von sich aus überall denselben Stand.
+
+`runIntroThen(onDone)` spielt das eingestellte Intro und ruft danach den
+Rückruf; ohne Auswahl geht es ohne Umweg weiter. Jede Show ruft das an der
+Stelle auf, an der sie sonst direkt ihren Bildschirm gezeigt hätte. Bei den
+drei neuen Shows läuft es **vor** dem Show-Zeichen, danach wie gehabt Anleitung
+und Titelkarte.
+
+`toggleIntroPicker` ist von `feud.js` nach `intro.js` gezogen — Intro-Bedienung,
+keine Feud-Logik. Die Auswahl überlebt jetzt das Neuladen (`introChoice` im
+localStorage); ohne das müsste der Host sie vor jeder Show neu setzen.
+
+**Geprüft:** `node check.js --types` ohne Befund, 13 Dateien. Der Block landet
+in allen sieben Setup-Screens und steht dabei genau einmal im Dokument. TP mit
+„Eigenes Intro": erst die Bühne, nach dem Klick das TP-Zeichen. WWM mit „Keller
+Gameshow": Bühne, dann der Spielbildschirm. WWDS mit ausgeschaltetem Intro:
+direkt der Spielbildschirm, keine Bühne. Auswahl nach Neuladen erhalten.
+Keine Konsolenfehler.
+
+---
+
 ## 2026-09-25 — Eigenes Intro, frei befüllbar (`beedc12`)
 
 **Gemacht:** Dritte Intro-Variante „Eigenes Intro" neben Keller Gameshow und
