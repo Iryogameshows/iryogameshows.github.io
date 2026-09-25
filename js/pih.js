@@ -284,9 +284,7 @@ function pihRenderBidGrid(){
   }
 
   if (pihState.phase === 'done') {
-    // Teamlos: siehe ddfFinish - nur den Platz freigeben.
-  tournamentReleaseActive();
-  const rank = [...pihState.players].sort((a,b) => b.score - a.score);
+    const rank = [...pihState.players].sort((a,b) => b.score - a.score);
     const medals = ['🥇','🥈','🥉'];
     grid.innerHTML = hint('Endstand') + rank.map((p,i) =>
       `<div class="pih-bid-row${i === 0 && p.score > 0 ? ' win' : ''}">
@@ -481,6 +479,9 @@ function pihFinish(){
   pihState.active = false;
   pihState.timeUp = false;
 
+  // Fuers Turnier: Punkte je Team, aufsummiert ueber die Teilnehmer.
+  const turnierBericht = tournamentReportTeamless('Der Preis ist heiß', pihState.players, p => p.score);
+
   const rank = [...pihState.players].sort((a,b) => b.score - a.score);
   const top = rank.length && rank[0].score > 0 ? rank.filter(p => p.score === rank[0].score) : [];
   pihRenderScores(top.map(p => p.uid));
@@ -492,7 +493,7 @@ function pihFinish(){
   setHtml('pih-stage', '');
   setHtml('pih-media-bar', '');
   setHtml('pih-price', '');
-  setHtml('pih-note', '');
+  setHtml('pih-note', escAttr(turnierBericht));
   pihRenderBidGrid();
   setHtml('pih-controls', `
     <button class="btn btn-primary" onclick="showScreen('pih-setup-screen')">Nochmal</button>

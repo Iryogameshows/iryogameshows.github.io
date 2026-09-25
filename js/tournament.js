@@ -54,9 +54,10 @@ const TOURNAMENT_STARTABLE = {
   'Der Preis ist heiß':  'pih-setup-screen',
   'Trivial Pursuit':     'tp-setup-screen',
 };
-/* Shows, die ihr Ergebnis selbst melden. Die uebrigen zeigen im Spielplan den
-   Hinweis, dass es von Hand kommt - besser vorher sagen als hinterher
-   suchen lassen. */
+/* Shows, die ihr Ergebnis direkt aus Teampunkten melden. Die uebrigen beiden
+   melden auch, rechnen es aber erst ueber die Team-Zuordnung der Teilnehmer
+   hoch (tournamentReportTeamless) - das steht als Hinweis in der Zeile, damit
+   der Host weiss, dass er die Zuteilung vorher gemacht haben muss. */
 const TOURNAMENT_AUTO_RESULT = new Set([
   'Family Feud', 'Jeopardy', 'Wer wird Millionär', 'Wer weiß denn sowas', 'Trivial Pursuit',
 ]);
@@ -123,6 +124,60 @@ function tournamentReleaseActive(){
   if (activeTournamentGameIndex === null) return false;
   activeTournamentGameIndex = null;
   return true;
+}
+
+/* ── Teamlose Shows ins Turnier ────────────────────────────────────────────
+   "Der Duemmste fliegt" und "Der Preis ist heiss" kennen Teilnehmer, keine
+   Teams - das Turnier laeuft aber ueber feste Teams. Die Bruecke gibt es
+   schon: jeder Spieler-Account traegt eine Team-Zuordnung aus der Lobby
+   ("Teams zuteilen"). Damit laesst sich ein Einzelergebnis auf die Teams
+   hochrechnen, ohne dass der Host etwas doppelt eintraegt.
+
+   Gaeste ohne Account haben keine Zuordnung. Sie fallen nicht unter den
+   Tisch, sie werden gemeldet - der Host sieht, dass ihre Punkte fehlen, und
+   kann das Ergebnis von Hand nachbessern. */
+
+/** @param {any[]} players Teilnehmer der Show (brauchen .key und .label)
+ *  @param {(p:any) => number} punkteVon was ein Teilnehmer wert ist
+ *  @returns {{scores:number[], zugeordnet:number, ohneTeam:string[]}} */
+function tournamentTeamScoresFromPlayers(players, punkteVon){
+  const n = tournament ? tournament.teams.length : 0;
+  const scores = new Array(n).fill(0);
+  const ohneTeam = [];
+  let zugeordnet = 0;
+  const byKey = new Map((allPlayers || []).map(p => [p.key, p]));
+  (players || []).forEach(p => {
+    const acc = p.key ? byKey.get(p.key) : null;
+    const team = acc ? acc.team : null;
+    if (team === undefined || team === null || team < 0 || team >= n){
+      ohneTeam.push(p.label || p.name || '?');
+      return;
+    }
+    scores[team] += Number(punkteVon(p)) || 0;
+    zugeordnet++;
+  });
+  return { scores, zugeordnet, ohneTeam };
+}
+
+/** Meldet das Ergebnis einer teamlosen Show ans Turnier.
+ *  @param {string} gameName
+ *  @param {any[]} players
+ *  @param {(p:any) => number} punkteVon
+ *  @returns {string} Ein Satz fuer den Bildschirm - leer, wenn nichts anliegt */
+function tournamentReportTeamless(gameName, players, punkteVon){
+  if (!tournament){ tournamentReleaseActive(); return ''; }
+  const { scores, zugeordnet, ohneTeam } = tournamentTeamScoresFromPlayers(players, punkteVon);
+  if (!zugeordnet){
+    // Niemand hat ein Team - hochrechnen waere geraten. Platz freigeben und
+    // sagen, warum nichts passiert ist.
+    tournamentReleaseActive();
+    return 'Fürs Turnier: keine Team-Zuordnung gefunden — bitte von Hand eintragen.';
+  }
+  const recorded = tournamentAutoRecordIfActive(tournament.teams, scores);
+  if (!recorded) offerTournamentResult(gameName, tournament.teams, scores);
+  const stand = tournament.teams.map((n2, i) => n2 + ' ' + scores[i]).join(' · ');
+  const rest = ohneTeam.length ? ` — ohne Team und deshalb nicht gezählt: ${ohneTeam.join(', ')}` : '';
+  return (recorded ? 'Ins Turnier eingetragen: ' : 'Fürs Turnier bereit: ') + stand + rest;
 }
 
 function tournamentCreate(){
@@ -258,7 +313,7 @@ function renderTournament(){
           <button class="btn btn-secondary" onclick="tournamentEnterResult(${i})">${g.done ? 'Ergebnis ändern' : 'Ergebnis eintragen'}</button>
           <button class="btn btn-danger" onclick="tournamentRemoveGame(${i})">Del</button>
         </div>
-        <div style="width:100%;font-size:.78rem;color:rgba(255,255,255,.6);">${result}${handEintrag ? ' <span style="color:rgba(255,210,63,.75);">· Ergebnis von Hand eintragen (kein Team-Spiel)</span>' : ''}</div>
+        <div style="width:100%;font-size:.78rem;color:rgba(255,255,255,.6);">${result}${handEintrag ? ' <span style="color:rgba(255,210,63,.75);">· zählt über die Team-Zuordnung der Teilnehmer</span>' : ''}</div>
       </div>`;
   }).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spiele geplant.</div>`;
 

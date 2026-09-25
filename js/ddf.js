@@ -468,9 +468,10 @@ function ddfFinish(){
   ddfState.phase = 'done';
   ddfState.active = false;
   ddfState.timeUp = false;
-  // Teamlos: das Ergebnis passt nicht auf die festen Turnier-Teams, also nur
-  // den Platz freigeben. Eintragen tut der Host von Hand.
-  tournamentReleaseActive();
+  /* Fuers Turnier: uebrige Leben je Team. Wer laenger drinbleibt, bringt mehr
+     - das belohnt Durchhalten statt nur den einen Sieg, und bei mehreren
+     Teilnehmern pro Team ergibt es eine Zahl statt eines Namens. */
+  const turnierBericht = tournamentReportTeamless('Der Dümmste fliegt', ddfState.players, p => p.lives);
   const winner = ddfAlive()[0];
   ddfRenderPlayers(winner ? winner.uid : null);
   // Direkt leeren: ddfStopTimer() lässt ein "Zeit um!" bewusst stehen, auf dem
@@ -478,7 +479,7 @@ function ddfFinish(){
   setText('ddf-timer', '');
   setHtml('ddf-question', winner ? `🏆 ${escAttr(winner.name)} gewinnt!` : 'Spiel beendet');
   showEl('ddf-answer', false);
-  setHtml('ddf-note', '');
+  setHtml('ddf-note', escAttr(turnierBericht));
   setHtml('ddf-media-bar', '');
   setHtml('ddf-vote-grid', '');
   setHtml('ddf-controls', `
