@@ -12,6 +12,44 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Eigenes Intro, frei befüllbar (`beedc12`)
+
+**Gemacht:** Dritte Intro-Variante „Eigenes Intro" neben Keller Gameshow und
+Geburtstag. Neue Datei `js/intro.js` mit Daten und Editor, neuer Screen
+`intro-edit-screen`. Je Stufe vier freiwillige Zeilen (kleine Zeile darüber,
+groß in Gold, groß in Pink, kleine darunter), dazu Kopfzeile und Sekunden je
+Stufe. Stufen anlegen, löschen, verschieben; Export/Import als JSON; Vorschau
+ohne Spielstart.
+
+**Warum:** Die beiden festen Intros stehen als Markup im Code — für einen
+anderen Namen, ein anderes Datum oder einen anderen Preis musste man die Datei
+anfassen.
+
+**Zwei Entscheidungen:**
+
+Die Bühne benutzt dieselbe id wie das Keller-Intro (`#kg`). Daran hängen alle
+Bühnenstile; sie ein zweites Mal unter anderem Namen zu führen hieße, sie ab
+jetzt doppelt zu pflegen. Es läuft immer nur ein Intro, die id ist nie zweimal
+im Dokument.
+
+Die Taktung steht **nicht** im Stylesheet: dort ist sie fest auf sieben Stufen
+verdrahtet (`.s1`–`.s7` mit ausgerechneten Verzögerungen). Hier ist die Zahl
+der Stufen frei, also rechnet JavaScript sie aus und schreibt sie ins
+`style`-Attribut. Im Stylesheet steht nur noch, *welche* Animation läuft.
+
+**Geprüft:** `node check.js --types` ohne Befund, 13 Dateien. Über echte
+Klicks bis in den Editor; eigene Daten eingetragen (Name, Datum, Teams) und
+abgespielt: Kopfzeile auf der Bühne, vier Stufen mit 0,3 / 3,3 / 6,3 / 9,3 s,
+letzte hält, leere Zeilen fielen weg (Stufe 1 zwei Absätze, Stufe 2 drei).
+Klick beendet und ruft den Rückruf. Keine Konsolenfehler.
+
+**Offen:** Das eigene Intro hängt am Feud-Setup (dort steht die
+Intro-Auswahl). Jeopardy hat seine eigene Intro-Option (`enable-jeopardy-intro`
+→ Tag-2-Bühne) und kennt die Variante noch nicht. Die anderen sechs Shows
+haben gar keine Intro-Auswahl.
+
+---
+
 ## 2026-09-25 — Cache-Buster beim Deploy (`3316c2e`)
 
 **Gemacht:** Der Pages-Workflow hängt die ersten acht Stellen der Commit-ID
