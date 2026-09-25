@@ -34,9 +34,32 @@ function saveTournament(){
   if (gamemasterWin && !gamemasterWin.closed) updateGamemaster();
 }
 
-// Welche Turnierspiele die App selbst starten kann (führt direkt in den
-// jeweiligen Setup-/Lobby-Screen), und welches Icon dafür in der Übersicht steht.
-const TOURNAMENT_STARTABLE = { 'Family Feud': 'setup-screen', 'Jeopardy': 'jeopardy-setup-screen', 'Wer wird Millionär': 'wwm-setup-screen' };
+
+/* Welche Show der Turniermodus selbst oeffnen kann. Der Wert ist der
+   Setup-Screen: gestartet wird dort, nicht von hier - der Host braucht ja noch
+   Teamnamen, Lobby und Einstellungen.
+
+   Ob eine Show ihr Ergebnis danach AUTOMATISCH eintraegt, ist eine andere
+   Frage. Team-Shows koennen das (Feud, Jeopardy, WWDS, Trivial Pursuit), die
+   teamlosen nicht: "Der Duemmste fliegt" und "Der Preis ist heiss" kennen
+   Teilnehmer, keine Teams, und ein Turnier laeuft ueber feste Teams. Die geben
+   ihren Platz am Ende nur frei (tournamentReleaseActive), der Host traegt das
+   Ergebnis von Hand ein. */
+const TOURNAMENT_STARTABLE = {
+  'Family Feud':         'setup-screen',
+  'Jeopardy':            'jeopardy-setup-screen',
+  'Wer wird Millionär':  'wwm-setup-screen',
+  'Wer weiß denn sowas': 'wwds-setup-screen',
+  'Der Dümmste fliegt':  'ddf-setup-screen',
+  'Der Preis ist heiß':  'pih-setup-screen',
+  'Trivial Pursuit':     'tp-setup-screen',
+};
+/* Shows, die ihr Ergebnis selbst melden. Die uebrigen zeigen im Spielplan den
+   Hinweis, dass es von Hand kommt - besser vorher sagen als hinterher
+   suchen lassen. */
+const TOURNAMENT_AUTO_RESULT = new Set([
+  'Family Feud', 'Jeopardy', 'Wer wird Millionär', 'Wer weiß denn sowas', 'Trivial Pursuit',
+]);
 // Nutzt die echten, handgezeichneten Logos (STAR_SVG/DANGER_SVG) statt
 // generischer Emoji - jede Einbindung braucht aber eine eigene Gradient-ID,
 // sonst kollidieren mehrere Zeilen im Spielplan auf dieselbe id="sg"/"dg".
@@ -44,6 +67,10 @@ function tournamentGameIcon(name, uid){
   if (name === 'Family Feud') return `<span class="tour-icon-svg">${STAR_SVG.replace('id="sg"', `id="sg-t${uid}"`).replace('url(#sg)', `url(#sg-t${uid})`)}</span>`;
   if (name === 'Jeopardy') return `<span class="tour-icon-svg">${DANGER_SVG.replace('id="dg"', `id="dg-t${uid}"`).replace('url(#dg)', `url(#dg-t${uid})`)}</span>`;
   if (name === 'Wer wird Millionär') return '💰';
+  if (name === 'Wer weiß denn sowas') return '🧠';
+  if (name === 'Der Dümmste fliegt') return '❤';
+  if (name === 'Der Preis ist heiß') return '🏷️';
+  if (name === 'Trivial Pursuit') return '🥧';
   return '🎮';
 }
 // Wenn gesetzt: dieses Spiel läuft gerade als Teil des Turniers (über "Spiel
@@ -85,6 +112,19 @@ function tournamentAutoRecordIfActive(gameTeamNames, gameScores){
   saveTournament();
   return true;
 }
+/* Gibt den laufenden Turnier-Platz frei, ohne etwas einzutragen.
+
+   Ohne das bliebe activeTournamentGameIndex nach einer teamlosen Show stehen -
+   und die naechste Show, die ein Ergebnis meldet, schriebe es in DEREN Zeile.
+   Der Fehler faellt erst beim Blick auf die Gesamtwertung auf, und dann weiss
+   niemand mehr, woher die Zahl kam.
+   @returns {boolean} ob ueberhaupt ein Platz offen war */
+function tournamentReleaseActive(){
+  if (activeTournamentGameIndex === null) return false;
+  activeTournamentGameIndex = null;
+  return true;
+}
+
 function tournamentCreate(){
   const name = fieldVal('tour-name').trim() || 'Keller-Turnier';
   const teams = [1,2,3].map(i => fieldVal('tour-team'+i).trim()).filter(Boolean);
@@ -94,7 +134,10 @@ function tournamentCreate(){
 }
 // Standard-Gewichtung pro Spieltyp - wird beim Auswählen automatisch ins
 // Gewichtungsfeld übernommen (kann vor dem Hinzufügen noch manuell geändert werden).
-const TOURNAMENT_DEFAULT_WEIGHTS = { 'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Wer weiß denn sowas': 1, 'Der Dümmste fliegt': 1, 'Sonstiges': 1 };
+const TOURNAMENT_DEFAULT_WEIGHTS = {
+  'Family Feud': 1, 'Jeopardy': 2, 'Wer wird Millionär': 1, 'Wer weiß denn sowas': 1,
+  'Der Dümmste fliegt': 1, 'Der Preis ist heiß': 1, 'Trivial Pursuit': 2, 'Sonstiges': 1,
+};
 function tournamentGameTypeChanged(){
   const type = fieldVal('tour-game-type');
   fieldSet('tour-game-weight', TOURNAMENT_DEFAULT_WEIGHTS[type] || 1);
@@ -203,6 +246,10 @@ function renderTournament(){
       ? tournament.teams.map((t, ti) => `${t}: ${g.scores[ti]} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')
       : '<span style="color:rgba(255,255,255,.35);">Noch nicht gespielt</span>';
     const canAutoStart = !hidden && !g.done && TOURNAMENT_STARTABLE[g.game];
+    // Bei den teamlosen Shows kommt das Ergebnis von Hand. Das gehoert in die
+    // Zeile, nicht in eine Fussnote: sonst wartet der Host nach dem Spiel
+    // darauf, dass sich der Spielplan von selbst fuellt.
+    const handEintrag = !hidden && !g.done && TOURNAMENT_STARTABLE[g.game] && !TOURNAMENT_AUTO_RESULT.has(g.game);
     return `
       <div class="q-list-item" style="flex-wrap:wrap;gap:6px;">
         <span class="q-label"><span class="q-num">${i+1}.</span><span style="margin-right:2px;">${icon}</span><strong>${label}</strong>${(!hidden && g.date) ? `<span class="q-meta">${g.date}</span>` : ''}<span class="q-meta" style="color:#FFD23F;">Gewichtung ×${g.weight}</span></span>
@@ -211,7 +258,7 @@ function renderTournament(){
           <button class="btn btn-secondary" onclick="tournamentEnterResult(${i})">${g.done ? 'Ergebnis ändern' : 'Ergebnis eintragen'}</button>
           <button class="btn btn-danger" onclick="tournamentRemoveGame(${i})">Del</button>
         </div>
-        <div style="width:100%;font-size:.78rem;color:rgba(255,255,255,.6);">${result}</div>
+        <div style="width:100%;font-size:.78rem;color:rgba(255,255,255,.6);">${result}${handEintrag ? ' <span style="color:rgba(255,210,63,.75);">· Ergebnis von Hand eintragen (kein Team-Spiel)</span>' : ''}</div>
       </div>`;
   }).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spiele geplant.</div>`;
 
@@ -231,6 +278,8 @@ function renderTournament(){
           <option>Wer wird Millionär</option>
           <option>Wer weiß denn sowas</option>
           <option>Der Dümmste fliegt</option>
+          <option>Der Preis ist heiß</option>
+          <option>Trivial Pursuit</option>
           <option>Sonstiges</option>
         </select>
         <input type="number" id="tour-game-weight" value="${TOURNAMENT_DEFAULT_WEIGHTS['Family Feud']}" min="1" title="Gewichtung" style="flex:0 0 80px;margin-bottom:0;text-align:center;" placeholder="×">

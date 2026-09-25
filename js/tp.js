@@ -176,6 +176,15 @@ function startTp(){
   tpIntroThenGame();
 }
 
+/* Ergebnis ans Turnier. Gewertet wird die Zahl der Tortenstuecke, nicht nur
+   Sieg oder Niederlage: ein Team mit fuenf Stuecken hat mehr geleistet als
+   eines mit einem, und die Gesamtwertung rechnet mit Punkten. */
+function tpReportResult(){
+  const punkte = tpState.teamNames.map((_, i) => (tpState.wedges[i] || []).filter(Boolean).length);
+  const recorded = tournamentAutoRecordIfActive(tpState.teamNames, punkte);
+  if (!recorded) offerTournamentResult('Trivial Pursuit', tpState.teamNames, punkte);
+}
+
 function tpQuit(){
   tpState.active = false;
   feudBuzzClose();
@@ -390,6 +399,7 @@ function tpJudgeFinal(ok){
     SFX.fanfare(true);
     tpRender();
     updateGamemaster();
+    tpReportResult();
     return;
   }
   // Danebengelegen: die Torte bleibt, die Schlussfrage kommt beim naechsten

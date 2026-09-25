@@ -468,6 +468,9 @@ function ddfFinish(){
   ddfState.phase = 'done';
   ddfState.active = false;
   ddfState.timeUp = false;
+  // Teamlos: das Ergebnis passt nicht auf die festen Turnier-Teams, also nur
+  // den Platz freigeben. Eintragen tut der Host von Hand.
+  tournamentReleaseActive();
   const winner = ddfAlive()[0];
   ddfRenderPlayers(winner ? winner.uid : null);
   // Direkt leeren: ddfStopTimer() lässt ein "Zeit um!" bewusst stehen, auf dem

@@ -284,7 +284,9 @@ function pihRenderBidGrid(){
   }
 
   if (pihState.phase === 'done') {
-    const rank = [...pihState.players].sort((a,b) => b.score - a.score);
+    // Teamlos: siehe ddfFinish - nur den Platz freigeben.
+  tournamentReleaseActive();
+  const rank = [...pihState.players].sort((a,b) => b.score - a.score);
     const medals = ['🥇','🥈','🥉'];
     grid.innerHTML = hint('Endstand') + rank.map((p,i) =>
       `<div class="pih-bid-row${i === 0 && p.score > 0 ? ' win' : ''}">
