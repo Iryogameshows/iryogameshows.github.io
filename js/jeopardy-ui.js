@@ -398,6 +398,25 @@ function jeopardyEditImg(b,col,row,field,input){
   };
   r.readAsDataURL(f);
 }
+/** Bild als Kategorie-Kopf setzen. Der Name bleibt erhalten und dient dem
+ *  Host weiter als Beschriftung.
+ *  @param {number} b  @param {number} col  @param {HTMLInputElement} input */
+function jeopardyEditCatImg(b, col, input){
+  const f = input.files && input.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    const cat = jeopardyData.boards[b].categories[col];
+    cat.img = String(r.result); cat.imgName = f.name;
+    renderJeopardyEditor();
+  };
+  r.readAsDataURL(f);
+}
+/** @param {number} b  @param {number} col */
+function jeopardyClearCatImg(b, col){
+  const cat = jeopardyData.boards[b].categories[col];
+  delete cat.img; delete cat.imgName;
+  renderJeopardyEditor();
+}
 function jeopardyClearImg(b,col,row,field){
   const c = jeopardyClue(b,col,row);
   delete c[field]; delete c[field + 'Name'];

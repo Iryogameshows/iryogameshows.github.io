@@ -42,9 +42,20 @@ const JEOPARDY_BOARDS = 2;
 
 /** Eine Spalte des Boards.
  *  @typedef {Object} JeopardyCategory
- *  @property {string} name
+ *  @property {string} name         mit Bild: nur noch für den Host (Editor, Fernbedienung)
  *  @property {JeopardyClue[]} clues
- *  @property {boolean} [noDD]      Kategorie vom Daily Double ausnehmen */
+ *  @property {boolean} [noDD]      Kategorie vom Daily Double ausnehmen
+ *  @property {string} [img]        Bild statt Name im Kopf der Spalte (Data-URL)
+ *  @property {string} [imgName]    Dateiname dazu, zum Wiedererkennen im Editor */
+
+/** Kopf einer Spalte fürs Publikum: das Bild, wenn eins gesetzt ist, sonst
+ *  der Name. Der Name bleibt als alt-Text am Bild.
+ *  @param {JeopardyCategory} cat
+ *  @param {string} imgClass */
+function jeopardyCatHeadHtml(cat, imgClass) {
+  if (cat.img) return `<img class="${imgClass}" src="${escAttr(cat.img)}" alt="${escAttr(cat.name)}">`;
+  return escapeHtml(cat.name);
+}
 
 /** @param {number} boardNum
  *  @returns {{ categories: JeopardyCategory[] }} */
@@ -245,7 +256,7 @@ function renderJeopardyBoard() {
   let html = '';
   // Category headers
   cats.forEach(cat => {
-    html += `<div class="jeopardy-cat">${escapeHtml(cat.name)}</div>`;
+    html += `<div class="jeopardy-cat${cat.img ? ' has-img' : ''}">${jeopardyCatHeadHtml(cat, 'jeopardy-cat-img')}</div>`;
   });
   // Value rows
   JEOPARDY_VALUES.forEach((val, row) => {
@@ -510,7 +521,7 @@ function renderJeopardyClueOverlay() {
   }
   ov.innerHTML = `
     ${jeopardyState.currentIsDaily ? `<div class="jeopardy-dd-banner">★ DAILY DOUBLE ★</div>` : ''}
-    <div class="jeopardy-clue-cat">${escapeHtml(cat.name)}</div>
+    <div class="jeopardy-clue-cat">${jeopardyCatHeadHtml(cat, 'jeopardy-clue-cat-img')}</div>
     <div class="jeopardy-clue-pts">${val}</div>
     ${questionArea}
     <div class="jeopardy-answer-text ${jeopardyState.answerShown?'visible':''}">${escapeHtml(clue.a || '')}</div>

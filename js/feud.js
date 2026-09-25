@@ -1435,7 +1435,7 @@ function updateGamemasterJeopardy() {
     const cols = cats.length;
     let boardHtml = `<div class="jboard" style="grid-template-columns:repeat(${cols},1fr);">`;
     cats.forEach(cat => {
-      boardHtml += `<div class="jcat">${escapeHtml(cat.name)}</div>`;
+      boardHtml += `<div class="jcat">${jeopardyCatHeadHtml(cat, 'jcat-img')}</div>`;
     });
     JEOPARDY_VALUES.forEach((val, row) => {
       cats.forEach((cat, col) => {
@@ -1466,6 +1466,7 @@ function updateGamemasterJeopardy() {
   .dd-sub{font-size:.8rem;color:rgba(255,255,255,.7);margin-top:8px;line-height:1.55;}
   .jboard{display:grid;gap:3px;}
   .jcat{background:linear-gradient(180deg,#1a2a8a,#111d6e);text-align:center;padding:6px 3px;font-size:.5rem;font-weight:900;text-transform:uppercase;letter-spacing:1px;color:#fff;display:flex;align-items:center;justify-content:center;min-height:36px;line-height:1.2;border-radius:5px;}
+  .jcat-img{display:block;width:100%;height:34px;object-fit:contain;border-radius:3px;}
   .jcell{background:linear-gradient(180deg,#1a2a8a,#111d6e);text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#FFD23F;display:flex;align-items:center;justify-content:center;min-height:40px;cursor:pointer;border-radius:5px;transition:background .12s, transform .1s;}
   .jcell:hover{background:linear-gradient(180deg,#2a3eb0,#1a2e8a);transform:scale(1.03);}
   .jcell.used{background:#080c1e;cursor:default;}
