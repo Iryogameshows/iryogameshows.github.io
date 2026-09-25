@@ -25,12 +25,28 @@ const INTRO_MAX_SLIDES = 12;
 const INTRO_MIN_SECONDS = 2;
 const INTRO_MAX_SECONDS = 12;
 
+/* Zwei Buehnen fuer dasselbe Intro. Der Text, die Taktung und alles andere
+   bleiben gleich - nur das Aussehen wechselt, damit zwei Abende hintereinander
+   nicht identisch anfangen. 'buehne' ist die Kellerbuehne (#kg), 'neon' die
+   Neon-Nacht (#kgn). Der Schluessel wird gespeichert, deshalb hier feste
+   Namen und kein Index: eine spaetere dritte Buehne darf die Reihenfolge
+   aendern, ohne alte Einstellungen umzudeuten. */
+const INTRO_STAGES = [
+  { key:'buehne', name:'Kellerbühne (Gold)', hint:'Holzwand, Scheinwerfer, Lämpchenrahmen' },
+  { key:'neon',   name:'Neon-Nacht (Retro)', hint:'Sonnenuntergang, Gitterboden, Leuchtschrift' },
+];
+/** @returns {string} */
+function introStage(){
+  return INTRO_STAGES.some(st => st.key === introData.stage) ? introData.stage : 'buehne';
+}
+
 /* Die Voreinstellung ist bewusst die Keller-Show: so sieht der Host beim
    ersten Öffnen ein fertiges Beispiel statt leerer Felder und kann einzelne
    Zeilen austauschen, statt alles selbst zu erfinden. */
 let introData = {
   header: 'Die Große Keller Gameshow',
   seconds: 4.6,
+  stage: 'buehne',
   /** @type {IntroSlide[]} */
   slides: [
     { lbl:'',                        big:'HERZLICH',     pink:'WILLKOMMEN!',  sub:'' },
@@ -78,20 +94,36 @@ function showCustomIntro(onDone){
     </div>`;
   }).join('');
 
+  const kopf = escapeHtml(introData.header || '');
+  // Die Neon-Buehne hat bewusst KEIN .frame: der Lämpchenrahmen wird in
+  // runKgIntro pixelweise aus der Buehnengroesse gebaut und gehoert zur
+  // Kellerbuehne. Fehlt das Element, ueberspringt runKgIntro den Bau.
+  const buehne = introStage() === 'neon'
+    ? `<div id="kgn">
+        <div class="sky"></div>
+        <div class="stars"></div>
+        <div class="sun"></div>
+        <div class="horizon"></div>
+        <div class="grid"></div>
+        <div class="scan"></div>
+        <div class="header">${kopf}</div>
+        ${html}
+        <div class="kg-hint">Klicken um fortzufahren</div>
+      </div>`
+    : `<div id="kg">
+        <div class="wall"></div>
+        <div class="floor"></div>
+        <div class="cone coneL"></div>
+        <div class="cone coneR"></div>
+        <div class="cord"><div class="bulb"></div></div>
+        <div class="frame" id="kgframe"></div>
+        <div class="header"><span class="star">★</span>${kopf}<span class="star">★</span></div>
+        ${html}
+        <div class="kg-hint">Klicken um fortzufahren</div>
+      </div>`;
   const overlay = document.createElement('div');
   overlay.id = 'kg-overlay';
-  overlay.innerHTML = `
-    <div id="kg">
-      <div class="wall"></div>
-      <div class="floor"></div>
-      <div class="cone coneL"></div>
-      <div class="cone coneR"></div>
-      <div class="cord"><div class="bulb"></div></div>
-      <div class="frame" id="kgframe"></div>
-      <div class="header"><span class="star">★</span>${escapeHtml(introData.header || '')}<span class="star">★</span></div>
-      ${html}
-      <div class="kg-hint">Klicken um fortzufahren</div>
-    </div>`;
+  overlay.innerHTML = buehne;
   runKgIntro(overlay, onDone);
 }
 
@@ -143,8 +175,12 @@ function renderIntroEditor(){
         <label>Sekunden je Stufe (${INTRO_MIN_SECONDS}–${INTRO_MAX_SECONDS})
           <input type="number" min="${INTRO_MIN_SECONDS}" max="${INTRO_MAX_SECONDS}" step="0.2"
                  value="${introSeconds()}" onchange="introSetSeconds(this)"></label>
+        <label>Bühne
+          <select onchange="introSetStage(this)">
+            ${INTRO_STAGES.map(st => `<option value="${st.key}" ${introStage() === st.key ? 'selected' : ''}>${escapeHtml(st.name)}</option>`).join('')}
+          </select></label>
       </div>
-      <div class="hint-line">Gesamtlänge: rund ${introTotalSeconds()} Sekunden.</div>
+      <div class="hint-line">${escapeHtml(introStageHint())} · Gesamtlänge: rund ${introTotalSeconds()} Sekunden.</div>
     </div>
     ${rows}`);
 }
@@ -156,7 +192,18 @@ function introTotalSeconds(){
   return n ? Math.round(0.3 + (n - 1) * introSeconds() + 2) : 0;
 }
 
+/** Der Satz unter der Auswahl - sagt, wie die gewaehlte Buehne aussieht.
+ *  @returns {string} */
+function introStageHint(){
+  const st = INTRO_STAGES.find(x => x.key === introStage());
+  return st ? st.hint : '';
+}
 function introSetHeader(input){ introData.header = input.value; introSave(); }
+function introSetStage(sel){
+  introData.stage = sel.value;
+  introSave();
+  renderIntroEditor();
+}
 function introSetSeconds(input){
   introData.seconds = Number(input.value);
   introSave();
@@ -208,6 +255,7 @@ function importIntro(e){
       introData = {
         header: String(d.header || ''),
         seconds: Number(d.seconds) || 4.6,
+        stage: INTRO_STAGES.some(st => st.key === d.stage) ? String(d.stage) : 'buehne',
         slides: d.slides.slice(0, INTRO_MAX_SLIDES).map(s => ({
           lbl: String((s && s.lbl) || ''), big: String((s && s.big) || ''),
           pink: String((s && s.pink) || ''), sub: String((s && s.sub) || ''),

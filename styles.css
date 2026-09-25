@@ -1771,6 +1771,7 @@ body {
   }
   /* Dauerhafte Stimmungs-Animationen ganz aus, statt sie auf 0.01ms zu
      stauchen - sonst springt der Endzustand sichtbar. */
+  #kgn .grid, #kgn .stars,
   #kg .cone, #kg2 .cone, #kgb .cone,
   #kg .cord, #kg2 .cord, #kgb .cord,
   #kg .mb, #kg2 .mb, #kgb .mb,
@@ -2249,6 +2250,78 @@ body {
    WELCHE Animation laeuft - Dauer und Verzoegerung stehen im style-Attribut. */
 #kg.play .cs{animation-name:kgBeat;animation-timing-function:ease;animation-fill-mode:both;}
 #kg.play .cs.hold{animation-name:kgBeatHold;}
+
+/* ── #kgn: Neon-Nacht ──────────────────────────────────────────────────────
+   Die zweite Buehne fuers eigene Intro. Bewusst nichts von der Kellerbuehne
+   geerbt: dort ist alles Holz, Gold und warmes Scheinwerferlicht, hier ist es
+   Nachthimmel, Gitterboden und Leuchtschrift. Wer beide nacheinander sieht,
+   soll sie nicht verwechseln koennen.
+
+   Der Gitterboden ist ein flaches Element, das per perspective/rotateX nach
+   hinten gekippt wird - deshalb laeuft er ueber die Buehnenbreite hinaus
+   (left/right negativ), sonst klafften an den Seiten Luecken. */
+#kgn{position:relative;width:100%;height:100%;overflow:hidden;background:#07031a;font-family:'Luckiest Guy',system-ui,sans-serif;isolation:isolate;}
+#kgn .sky{position:absolute;inset:0;background:linear-gradient(180deg,#05021a 0%,#1b0940 42%,#4a1152 56%,#0a0324 100%);}
+#kgn .stars{position:absolute;left:0;right:0;top:0;bottom:46%;opacity:.8;animation:knTwinkle 4.5s ease-in-out infinite;
+  background-image:
+    radial-gradient(1.7px 1.7px at 12% 24%,#fff,transparent),
+    radial-gradient(1.4px 1.4px at 28% 12%,#cfe8ff,transparent),
+    radial-gradient(1.8px 1.8px at 44% 30%,#fff,transparent),
+    radial-gradient(1.3px 1.3px at 62% 16%,#ffe9f7,transparent),
+    radial-gradient(1.9px 1.9px at 78% 27%,#fff,transparent),
+    radial-gradient(1.4px 1.4px at 88% 9%,#cfe8ff,transparent),
+    radial-gradient(1.5px 1.5px at 7% 45%,#fff,transparent),
+    radial-gradient(1.6px 1.6px at 53% 44%,#fff,transparent);}
+#kgn .sun{position:absolute;left:50%;bottom:46%;width:min(42vh,300px);height:min(42vh,300px);transform:translate(-50%,42%);border-radius:50%;
+  background:linear-gradient(180deg,#FFE86B 0%,#FF9A4D 40%,#FF4E8E 72%,#C22BC9 100%);
+  box-shadow:0 0 90px 26px rgba(255,78,142,.35);}
+/* Die Querstreifen: der klassische Retro-Sonnen-Look. Nach unten hin breiter,
+   deshalb drei Baender statt eines gleichmaessigen Musters. */
+#kgn .sun:after{content:"";position:absolute;left:0;right:0;top:46%;bottom:0;border-radius:0 0 50% 50%;
+  background:repeating-linear-gradient(180deg,transparent 0 7px,#1b0940 7px 12px);}
+#kgn .horizon{position:absolute;left:0;right:0;bottom:46%;height:2px;background:#FF7AC6;box-shadow:0 0 22px 7px rgba(255,122,198,.55);z-index:2;}
+#kgn .grid{position:absolute;left:-60%;right:-60%;bottom:0;height:46%;z-index:2;opacity:.8;
+  background-image:linear-gradient(#FF2E88 2px,transparent 2px),linear-gradient(90deg,#7DF9FF 2px,transparent 2px);
+  background-size:100% 44px,74px 100%;
+  transform:perspective(300px) rotateX(72deg);transform-origin:bottom center;
+  animation:knGrid 1.8s linear infinite;}
+#kgn .scan{position:absolute;inset:0;z-index:6;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,255,255,.045) 0 1px,transparent 1px 3px);}
+#kgn .header{position:absolute;top:22px;left:0;right:0;z-index:7;text-align:center;color:#7DF9FF;font-size:20px;letter-spacing:5px;text-transform:uppercase;
+  text-shadow:0 2px 6px rgba(0,0,0,.8),0 0 10px rgba(125,249,255,.9),0 0 30px rgba(125,249,255,.5);}
+/* Die Stufen liegen mitten auf der Sonne. Ohne das dunkle Oval darunter
+   stehen helle Schrift und helle Sonne uebereinander und die kleine Zeile
+   (Cyan auf Orange) ist nicht mehr zu lesen. Das Oval ist Teil der Stufe,
+   blendet also mit ihr ein und aus. */
+#kgn .screen{position:absolute;left:0;right:0;top:40px;bottom:30px;max-width:none;width:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px;z-index:5;opacity:0;
+  background:radial-gradient(ellipse 54% 34% at 50% 50%,rgba(6,2,22,.72) 0%,rgba(6,2,22,.45) 55%,transparent 78%);}
+#kgn .lbl{font-family:'Inter',system-ui,sans-serif;font-weight:800;letter-spacing:6px;font-size:18px;color:#7DF9FF;text-transform:uppercase;margin:0 0 14px;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 12px rgba(125,249,255,.75);}
+#kgn .big{color:#fff;font-size:76px;line-height:1;margin:0;-webkit-text-stroke:2px #FF2E88;
+  text-shadow:0 0 8px #FF2E88,0 0 26px rgba(255,46,136,.75),0 0 62px rgba(255,46,136,.45);}
+#kgn .big.pink{color:#fff;-webkit-text-stroke:2px #7DF9FF;
+  text-shadow:0 0 8px #7DF9FF,0 0 26px rgba(125,249,255,.75),0 0 62px rgba(125,249,255,.4);}
+#kgn .sub{color:#D9CCFF;font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:22px;letter-spacing:.5px;margin:16px 0 0;text-shadow:0 0 14px rgba(160,120,255,.5);}
+#kgn .kg-hint{position:absolute;bottom:20px;left:0;right:0;z-index:7;text-align:center;font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(200,235,255,.6);text-shadow:0 2px 6px rgba(0,0,0,.9);animation:introPulse 2.5s ease-in-out infinite;}
+@keyframes knGrid{from{background-position:0 0,0 0;}to{background-position:0 44px,0 0;}}
+@keyframes knTwinkle{0%,100%{opacity:.55}50%{opacity:.95}}
+/* Eigene Bewegung: die Kellerbuehne schiebt die Stufen von unten hoch, hier
+   fahren sie seitlich mit Unschaerfe ein. Gleiche Taktung, anderer Eindruck. */
+@keyframes knBeat{
+  0%{opacity:0;transform:translateX(-70px) skewX(-9deg);filter:blur(7px);}
+  11%{opacity:1;transform:translateX(0) skewX(0);filter:blur(0);}
+  86%{opacity:1;transform:translateX(0) skewX(0);filter:blur(0);}
+  100%{opacity:0;transform:translateX(56px) skewX(7deg);filter:blur(6px);}}
+@keyframes knBeatHold{
+  0%{opacity:0;transform:scale(1.35);filter:blur(12px);}
+  58%{opacity:1;transform:scale(.98);filter:blur(0);}
+  100%{opacity:1;transform:scale(1);filter:blur(0);}}
+#kgn.play .cs{animation-name:knBeat;animation-timing-function:ease;animation-fill-mode:both;}
+#kgn.play .cs.hold{animation-name:knBeatHold;}
+@media (max-width:760px){
+  #kgn .big{font-size:50px;}
+  #kgn .lbl{font-size:15px;letter-spacing:4px;}
+  #kgn .sub{font-size:17px;}
+  #kgn .header{font-size:14px;letter-spacing:3px;}
+}
 
 .intro-editor-col{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
 .intro-card .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}

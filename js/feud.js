@@ -203,6 +203,9 @@ function runKgIntro(overlay, onDone) {
   const frame = kg.querySelector('.frame');
   const cols = ['#FFD24D', '#FF5DA2'];
   function build() {
+    // Buehnen ohne Laempchenrahmen (Neon-Nacht) haben kein .frame - dort gibt
+    // es nichts zu bauen, und ohne diese Zeile wuerde der Zugriff werfen.
+    if (!frame) return;
     frame.innerHTML = '';
     kg.querySelectorAll('.spark').forEach(e => e.remove());
     const W = kg.clientWidth || 680, H = kg.clientHeight || 470, step = 40;
