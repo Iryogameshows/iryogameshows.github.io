@@ -23,6 +23,7 @@ const JEOPARDY_BOARDS = 2;
  *  @property {string} q            Fragetext
  *  @property {string} a            Antwort
  *  @property {string} [note]       Notiz, die nur der Spielleiter sieht
+ *  @property {number} [pts]        eigener Punktwert statt des Zeilenwerts
  *  @property {string} [qImg]       Bild zur Frage (Data-URL)
  *  @property {string} [aImg]       Bild zur Antwort (Data-URL)
  *  @property {boolean} [estimate]  Schaetzfrage: keine Buzzer, alle Handys tippen
@@ -103,6 +104,31 @@ let jeopardyState = {
  *  @returns {JeopardyCategory[]} */
 function jBoard() { return jeopardyData.boards[jeopardyState.currentBoard].categories; }
 
+/* Was ein Feld wert ist. Normalerweise sagt das die Zeile (100 bis 500), aber
+   jede Frage darf einen eigenen Wert tragen. Gedacht fuer die eine Frage, die
+   deutlich schwerer ist als der Rest ihrer Zeile - ohne dass dafuer das ganze
+   Board umgestellt werden muss.
+
+   Bewusst eine einzige Stelle: an dem Wert haengen Spielbrett, Frage-Overlay,
+   Fernbedienung, Editor, Gutschrift, Abzug und die Frage, wo das Daily Double
+   liegen darf. Stuende die Rechnung mehrfach im Code, waere genau eine davon
+   beim naechsten Mal vergessen.
+
+   0 und Leer zaehlen als "nicht gesetzt", negative Werte ebenso - ein Feld,
+   das nichts oder Minuspunkte bringt, waere kein Feld, sondern eine Falle. */
+/** @param {JeopardyClue|null|undefined} clue @param {number} row @returns {number} */
+function jeopardyValueOf(clue, row) {
+  const eigen = clue ? Number(clue.pts) : NaN;
+  if (isFinite(eigen) && eigen > 0) return Math.round(eigen);
+  return JEOPARDY_VALUES[row];
+}
+/** Der Wert eines Feldes ueber seine Koordinaten, auf dem aktuellen Board.
+ *  @param {number} col @param {number} row @returns {number} */
+function jeopardyCellValue(col, row) {
+  const cat = jBoard()[col];
+  return jeopardyValueOf(cat && cat.clues[row], row);
+}
+
 let jeopardyHistory = [];
 
 function jeopardySnapshot() {
@@ -166,11 +192,16 @@ function startJeopardyActual() {
   jeopardyState.active = true;
   // Verstecktes Daily Double: EINS PRO BOARD, nur auf Feldern ab 300 Punkten
   // und nur in Kategorien, in denen es der Host erlaubt hat (cat.noDD !== true).
-  const ddRows = JEOPARDY_VALUES.map((v, i) => i).filter(i => JEOPARDY_VALUES[i] >= 300);
+  // "Ab 300 Punkte" meint den Wert, den das Feld wirklich hat - traegt eine
+  // Frage einen eigenen, zaehlt der. Sonst laege das Daily Double auf einer
+  // 100er-Zeile, in der jemand 800 eingetragen hat, gar nicht erst.
   jeopardyState.dailyDoubles = jeopardyData.boards.map(board => {
     const spots = [];
     board.categories.forEach((cat, col) => {
-      if (!cat.noDD) ddRows.forEach(row => spots.push({ col, row }));
+      if (cat.noDD) return;
+      cat.clues.forEach((clue, row) => {
+        if (jeopardyValueOf(clue, row) >= 300) spots.push({ col, row });
+      });
     });
     return spots.length ? { ...spots[Math.floor(Math.random() * spots.length)], done: false } : null;
   });
@@ -269,9 +300,10 @@ function renderJeopardyBoard() {
     html += `<div class="jeopardy-cat${cat.img ? ' has-img' : ''}">${jeopardyCatHeadHtml(cat, 'jeopardy-cat-img')}</div>`;
   });
   // Value rows
-  JEOPARDY_VALUES.forEach((val, row) => {
+  JEOPARDY_VALUES.forEach((_, row) => {
     cats.forEach((cat, col) => {
       const used = jeopardyState.used[col][row];
+      const val = jeopardyValueOf(cat.clues[row], row);
       html += `<div class="jeopardy-cell ${used ? 'used' : ''}" onclick="openJeopardyClue(${col},${row})">${used ? '' : val}</div>`;
     });
   });
@@ -305,14 +337,14 @@ function jeopardyIsDaily(col, row) {
 // verraten, sonst ist die Überraschung weg.
 function jeopardyClueValue() {
   if (!jeopardyState.currentClue) return 0;
-  const base = JEOPARDY_VALUES[jeopardyState.currentClue.row];
+  const base = jeopardyCellValue(jeopardyState.currentClue.col, jeopardyState.currentClue.row);
   return jeopardyState.currentIsDaily ? base * 2 : base;
 }
 // Abgezogen wird immer die Hälfte des ORIGINALWERTS - beim Daily Double also
 // nicht die Hälfte der verdoppelten Punkte.
 function jeopardyDeductValue() {
   if (!jeopardyState.currentClue) return 0;
-  return Math.round(JEOPARDY_VALUES[jeopardyState.currentClue.row] / 2);
+  return Math.round(jeopardyCellValue(jeopardyState.currentClue.col, jeopardyState.currentClue.row) / 2);
 }
 // Beim Daily Double darf nur das Team antworten, das das Feld gewählt hat.
 function jeopardyTeamMayAnswer(teamIdx) {
@@ -549,7 +581,7 @@ function renderJeopardyClueOverlay() {
   const { col, row } = jeopardyState.currentClue;
   const cat = jBoard()[col];
   const clue = cat.clues[row];
-  const val = JEOPARDY_VALUES[row];
+  const val = jeopardyValueOf(clue, row);
   const staged = clue.staged && clue.stageImg;
   const series = clue.series && jeopardySeriesImgs(clue).length > 0;
   const steps = clue.steps && jeopardyStepItems(clue).length > 0;

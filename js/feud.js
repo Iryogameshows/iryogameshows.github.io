@@ -1287,8 +1287,8 @@ function updateGamemasterJeopardy() {
         <div class="dd-title">★ DAILY DOUBLE ★</div>
         <div class="dd-sub">Dieses Feld ist das versteckte Daily Double.<br>
           Nur das Team, das es gewählt hat, darf antworten — es gibt <b>doppelte Punkte</b>
-          (${JEOPARDY_VALUES[jeopardyState.currentClue.row] * 2}), bei falscher Antwort
-          −${Math.round(JEOPARDY_VALUES[jeopardyState.currentClue.row] / 2)}.</div>
+          (${jeopardyCellValue(jeopardyState.currentClue.col, jeopardyState.currentClue.row) * 2}), bei falscher Antwort
+          −${Math.round(jeopardyCellValue(jeopardyState.currentClue.col, jeopardyState.currentClue.row) / 2)}.</div>
         <div class="dd-sub" style="margin-top:10px;">Welches Team hat das Feld gewählt?</div>
         <div class="btn-grid" style="margin-top:6px;">
           ${jeopardyState.teamNames.map((name, i) => `
@@ -1457,9 +1457,10 @@ function updateGamemasterJeopardy() {
     cats.forEach(cat => {
       boardHtml += `<div class="jcat">${jeopardyCatHeadHtml(cat, 'jcat-img')}</div>`;
     });
-    JEOPARDY_VALUES.forEach((val, row) => {
+    JEOPARDY_VALUES.forEach((_, row) => {
       cats.forEach((cat, col) => {
         const used = jeopardyState.used[col][row];
+        const val = jeopardyValueOf(cat.clues[row], row);
         boardHtml += used
           ? `<div class="jcell used"></div>`
           // Ohne escAttr zerlegt ein Anfuehrungszeichen in der Frage

@@ -431,6 +431,17 @@ function jimgThumb(clue, field, b, col, row, label) {
     <button onclick="jeopardyClearImg(${b},${col},${row},'${field}')" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${escAttr(name)} entfernen">✕</button>
   </span>`;
 }
+/** Eigener Punktwert einer Frage. Leer, 0 oder Unsinn loescht ihn wieder -
+ *  dann gilt der Wert der Zeile.
+ *  @param {number} b @param {number} col @param {number} row
+ *  @param {HTMLInputElement} input */
+function jeopardyEditPts(b,col,row,input){
+  const c = jeopardyClue(b,col,row);
+  const n = Math.round(Number(input.value));
+  if (input.value.trim() === '' || !isFinite(n) || n <= 0) delete c.pts;
+  else c.pts = n;
+  renderJeopardyEditor();
+}
 function jeopardyEditStaged(b,col,row,cb){
   const c = jeopardyClue(b,col,row); c.staged = cb.checked;
   if(c.staged){ if(!c.stageCols) c.stageCols = 3; if(!c.stageRows) c.stageRows = 3; }
@@ -533,7 +544,13 @@ function jeopardyClueEditorHtml(b, col, row){
   const gridOpts = [[2,2],[3,2],[4,2],[3,3],[5,1]];
   return `<div style="background:#0F1436;border:1px solid rgba(255,210,63,.35);border-radius:11px;padding:13px;">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <span style="color:#FFD23F;font-size:.85rem;font-weight:800;">${escAttr(catName)} · ${JEOPARDY_VALUES[row]}</span>
+      <span style="color:#FFD23F;font-size:.85rem;font-weight:800;">${escAttr(catName)} · ${jeopardyValueOf(clue, row)}</span>
+      <label style="${uploadLbl}background:${clue.pts?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};margin-left:auto;" title="Punkte nur für diese Frage. Leer lassen = Wert der Zeile (${JEOPARDY_VALUES[row]}).">
+        Punkte
+        <input type="number" min="1" step="10" placeholder="${JEOPARDY_VALUES[row]}" value="${clue.pts != null && clue.pts !== 0 ? escAttr(String(clue.pts)) : ''}"
+               onchange="jeopardyEditPts(${b},${col},${row},this)"
+               style="width:66px;padding:3px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-size:.72rem;font-weight:700;outline:none;">
+      </label>
     </div>
     <input type="text" placeholder="Frage / Clue" value="${esc(clue.q)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].q=this.value;renderJeopardyEditor()" style="${inp}font-weight:600;margin-bottom:7px;">
     <input type="text" placeholder="Lösung" value="${esc(clue.a)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].a=this.value;renderJeopardyEditor()" style="${inp}margin-bottom:9px;">
@@ -639,7 +656,7 @@ function renderJeopardyEditor() {
         const filled = !!(clue.q || clue.a);
         const isSel = sel.b === b && sel.col === col && sel.row === row;
         html += `<div onclick="jeopardySelectClue(${b},${col},${row})" style="cursor:pointer;min-height:50px;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;background:${isSel?'#3a2e00':(filled?'rgba(255,255,255,.05)':'rgba(255,255,255,.02)')};border:1px solid ${isSel?'#FFD23F':(filled?'rgba(255,255,255,.1)':'rgba(255,255,255,.05)')};">
-          <span style="color:${filled?'#FFD23F':'rgba(255,255,255,.35)'};font-weight:700;font-size:1rem;">${JEOPARDY_VALUES[row]}</span>
+          <span style="color:${filled?'#FFD23F':'rgba(255,255,255,.35)'};font-weight:700;font-size:1rem;${clue.pts?'text-decoration:underline;text-decoration-color:#FFD23F;text-underline-offset:3px;':''}" ${clue.pts?`title="Eigener Punktwert statt ${JEOPARDY_VALUES[row]}"`:''}>${jeopardyValueOf(clue, row)}</span>
           <span style="position:absolute;top:3px;right:4px;font-size:.6rem;line-height:1;display:flex;gap:1px;">${jeopardyCellBadges(clue)}</span>
           <span style="position:absolute;bottom:3px;left:5px;font-size:.62rem;line-height:1;color:${filled?'#22C55E':'rgba(255,255,255,.25)'};">${filled?'✓':'○'}</span>
         </div>`;
