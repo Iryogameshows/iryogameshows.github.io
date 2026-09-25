@@ -12,6 +12,62 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Jeopardy: eigener Punktwert je Frage (`5191743`)
+
+**Gemacht:** `JeopardyClue` hat das optionale Feld `pts`. Im Frage-Editor
+steht neben „Kategorie · Wert" ein Eingabefeld **Punkte**. Leer heißt wie
+bisher: der Wert der Zeile (Platzhalter zeigt ihn an). Steht eine Zahl drin,
+gilt die überall.
+
+**Gerechnet wird an genau einer Stelle:** `jeopardyValueOf(clue, row)` und
+`jeopardyCellValue(col, row)` in `js/jeopardy.js`. Daran hängen sieben
+Anzeigen — Spielbrett, Frage-Overlay, Editor-Kopfzeile, Editor-Gitter,
+GM-Spiegelbrett, DD-Warnung, Gutschrift/Abzug. Stünde die Rechnung mehrfach
+im Code, wäre beim nächsten Mal genau eine davon vergessen. Deshalb nimmt
+`renderJeopardyBoard` jetzt `JEOPARDY_VALUES.forEach((_, row) => …)` und holt
+den Wert je Zelle.
+
+**Eingaben:** 0, Leer, negative Zahlen und Buchstaben löschen `pts` wieder,
+statt einen unsinnigen Wert zu speichern. Ein Feld, das nichts oder
+Minuspunkte bringt, wäre keine Frage, sondern eine Falle. Nachkommastellen
+werden gerundet, `250,7` (deutsches Komma) ist für `Number` keine Zahl und
+fällt damit auf den Zeilenwert zurück — geprüft.
+
+**Daily Double:** Die Regel „nur auf Feldern ab 300" meint jetzt den
+**tatsächlichen** Wert. Vorher filterte der Code über den Zeilenindex. Eine
+100er-Frage, in die der Host 900 einträgt, wäre sonst nie Daily Double
+geworden, eine 500er-Frage mit 50 dagegen schon. Der Abzug bleibt die Hälfte
+des **Originalwerts** (ohne Verdopplung), jetzt eben des eigenen.
+
+**Sichtbar im Editor:** Ein Feld mit eigenem Wert ist im Gitter unterstrichen
+und trägt als `title` „Eigener Punktwert statt 100" — sonst fällt beim
+Durchsehen nicht auf, warum da 800 steht.
+
+**Geprüft:** `node check.js --types` ohne Meldung (398 Handler, 209 IDs). Im
+Browser **36 Prüfungen, alle grün**, Firebase abgeklemmt (40 Aufrufe):
+
+- Editor: Feld da, leer mit Platzhalter 100; 800 eingetragen → gespeichert,
+  Kopfzeile „· 800", Gitterfeld zeigt 800 unterstrichen; leeren stellt 100
+  wieder her; `-50`, `0`, `abc`, `250,7` werden alle verworfen.
+- Brett: 800 in Feld 1, 50 in der 500er-Zeile, Nachbarn unverändert.
+- Overlay zeigt 800 bzw. 50; Gutschrift +800 gebucht; Abzug bei 50 ist 25
+  und wurde gebucht.
+- GM-Spiegelbrett zeigt 75, die vier Nachbarn weiter 300.
+- Daily Double auf einer Frage mit 700: Warnung nennt 1400 und −350, nach
+  der Ansage `jeopardyClueValue()` = 1400, Abzug 350, Knopf „+1400".
+- **300 Spielstarts gezählt:** Das Daily Double landete auf 15 verschiedenen
+  Feldern, darunter 16-mal auf der 900er-Frage in der 100er-Zeile, **nie**
+  auf der 50er-Frage in der 500er-Zeile, sonst nur auf Zeilen ab 300.
+- JSON-Export/Import trägt `pts` mit; Fragen ohne das Feld nehmen weiter den
+  Zeilenwert.
+
+**Ungeprüft:** wie sich sehr lange Zahlen (fünfstellig) im Brett-Kästchen
+umbrechen, und das Zusammenspiel mit der Turnier-Wertung.
+
+**Fallstrick:** Ein Testfeld, das im selben Durchlauf schon gespielt wurde,
+steht im GM-Spiegelbrett leer da (`.jcell.used`). Eine Prüfung, die dort noch
+den Wert sucht, meldet einen Fehler, der keiner ist.
+
 ## 2026-09-25 — Goldener Balken im Jeopardy-Logo war weg (`4b9cdfb`)
 
 **Symptom:** David schickte ein Bild vom Jeopardy-Titel: vom Logo standen nur
