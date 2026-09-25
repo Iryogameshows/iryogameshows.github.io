@@ -659,6 +659,11 @@
 <div id="tournament-screen" class="screen">
   <div class="page-title" style="margin-bottom:22px;"><em>🏆 Turnier</em>-Modus</div>
   <div id="tournament-content" style="width:100%;"></div>
+  <!-- Der Turniermodus schickt den Host auf den Setup-Screen des jeweiligen
+       Spiels, dort steht dieselbe Auswahl. Hier steht sie trotzdem: der Host
+       plant den Abend an dieser Stelle und soll das Intro einstellen
+       koennen, bevor er das erste Spiel oeffnet. -->
+  <div class="intro-slot" id="tournament-intro-slot"></div>
   <div class="edit-bar" style="margin-top:12px;">
     <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zum Menü</button>
   </div>

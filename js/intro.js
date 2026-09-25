@@ -238,6 +238,7 @@ const INTRO_SLOTS = {
   'ddf-setup-screen':      'ddf-intro-slot',
   'pih-setup-screen':      'pih-intro-slot',
   'tp-setup-screen':       'tp-intro-slot',
+  'tournament-screen':     'tournament-intro-slot',
 };
 
 /** Schiebt den Bedienblock in den Screen, der gerade geoeffnet wird.
