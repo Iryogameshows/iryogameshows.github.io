@@ -2181,3 +2181,20 @@ body {
   padding: 7px 14px; border-radius: 99px; font-size: .8rem; font-weight: 700;
   background: rgba(255,255,255,.05); border: 1.5px solid var(--c);
 }
+
+/* ── Eigenes Intro ────────────────────────────────────────────────────────
+   Die Buehne kommt vom Keller-Intro (#kg). Nur die Taktung ist anders: dort
+   steht je Stufe eine ausgerechnete Verzoegerung im Stylesheet, hier rechnet
+   JavaScript sie aus, weil die Zahl der Stufen frei ist. Deshalb hier nur,
+   WELCHE Animation laeuft - Dauer und Verzoegerung stehen im style-Attribut. */
+#kg.play .cs{animation-name:kgBeat;animation-timing-function:ease;animation-fill-mode:both;}
+#kg.play .cs.hold{animation-name:kgBeatHold;}
+
+.intro-editor-col{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
+.intro-card .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+/* Zwei Spalten, solange Platz ist: die vier Zeilen einer Stufe gehoeren
+   zusammen und sollen nicht ueber den halben Bildschirm auseinanderlaufen. */
+.intro-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.intro-fields label{display:flex;flex-direction:column;gap:4px;font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.4);}
+.intro-fields input{width:100%;}
+@media (max-width:760px){ .intro-fields{grid-template-columns:1fr;} }

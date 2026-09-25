@@ -74,6 +74,7 @@ function afterStar() {
   if (!fieldChecked('enable-gameshow-intro')) return showWelcomeIntro();
   const variant = fieldVal('intro-variant');
   if (variant === 'bday') showBirthdayIntro(showWelcomeIntro);
+  else if (variant === 'custom') showCustomIntro(showWelcomeIntro);
   else showGameshowIntro(showWelcomeIntro);
 }
 
@@ -85,6 +86,9 @@ function toggleIntroPicker() {
   const bday = fieldVal('intro-variant') === 'bday';
   showEl('bday-name', bday);
   showEl('bday-name-label', bday);
+  // Der Bearbeiten-Knopf nur beim eigenen Intro - bei den beiden festen gibt
+  // es nichts zu bearbeiten.
+  showEl('intro-edit-btn', on && fieldVal('intro-variant') === 'custom');
 }
 
 // Anpassbarer Show-Name im Intro: "___ Feud". Default "Keller".

@@ -114,7 +114,10 @@
     <select id="intro-variant" onchange="toggleIntroPicker()" style="padding:8px 10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-weight:700;outline:none;">
       <option value="keller">Keller Gameshow</option>
       <option value="bday">Geburtstag</option>
+      <option value="custom">Eigenes Intro</option>
     </select>
+    <button class="btn btn-secondary btn-sm" id="intro-edit-btn" style="display:none;"
+            onclick="showScreen('intro-edit-screen')">✏ Intro bearbeiten</button>
     <label for="bday-name" id="bday-name-label" style="white-space:nowrap;display:none;">Name:</label>
     <input type="text" id="bday-name" placeholder="z.B. Ajdin" oninput="saveBdayName()" value="Ajdin" style="display:none;flex:1;min-width:110px;max-width:200px;">
   </div>
@@ -496,6 +499,21 @@
   </div>
 </div>
 
+<!-- EIGENES INTRO - EDITOR -->
+<div id="intro-edit-screen" class="screen wide-editor">
+  <div class="page-title"><em>Eigenes Intro</em> bearbeiten</div>
+  <div class="editor-layout">
+    <div class="intro-editor-col" id="intro-editor-grid"></div>
+    <div class="editor-side">
+      <button class="btn btn-accent" onclick="introAddSlide()">+ Stufe</button>
+      <button class="btn btn-primary" onclick="previewCustomIntro()">▶ Vorschau</button>
+      <button class="btn btn-secondary" onclick="exportIntro()">Exportieren</button>
+      <label class="btn btn-secondary" style="cursor:pointer;">Importieren <input type="file" accept=".json" onchange="importIntro(event)" style="display:none;"></label>
+      <button class="btn btn-primary" onclick="showScreen('setup-screen')">Zurück</button>
+    </div>
+  </div>
+</div>
+
 <!-- TRIVIAL PURSUIT - SETUP -->
 <div id="tp-setup-screen" class="screen">
   <div class="team-setup">
@@ -647,6 +665,7 @@
      teilen wuerden. Die Reihenfolge entspricht der frueheren Reihenfolge innerhalb
      der einen grossen Datei und darf nicht vertauscht werden. -->
 <script src="js/core.js"></script>
+<script src="js/intro.js"></script>
 <script src="js/tournament.js"></script>
 <script src="js/feud.js"></script>
 <script src="js/jeopardy.js"></script>
