@@ -12,6 +12,96 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-25 — Soundeffekte neu gebaut + Ton in Schritt-Frage geprüft (`22f7fa8`)
+
+**Gemacht, Teil 1 (Test, nichts geändert):** Ton in einer Schritt-Frage. Über
+den Editor eine Frage mit 4 Schritten (Zeile 1+3, Bild 2+4) **und** einem Ton
+angelegt, beides trägt dieselbe Frage. **22 Prüfungen, alle grün:** Badges
+zeigen 📜 und 🔊, der Ton startet und läuft, während Schritte eingeblendet
+werden; das Einblenden zeichnet die Frage neu, der Ton läuft trotzdem weiter
+und der Sicht-Effekt überlebt es; Stopp im GM-Panel beendet ihn und lässt die
+Schritte stehen; Überspringen beendet ihn ebenfalls. Firebase abgeklemmt
+(33 Aufrufe abgefangen), keine Konsolenfehler.
+
+**Befund dabei, nicht behoben:** `.jeopardy-sound-fx` liegt mit `z-index:1050`
+über dem Frage-Overlay (1000) und bringt `rgba(5,8,26,.55)` plus
+`backdrop-filter: blur(4px)` mit. Bei einer reinen Tonfrage ist das richtig —
+es gibt nichts zu lesen. Bei einer **Schritt-Frage** werden damit die schon
+eingeblendeten Hinweise abgedunkelt und weichgezeichnet, während der Ton
+läuft (im Bildschirmfoto kaum noch lesbar). Vorschlag für später: den
+Sicht-Effekt klein an den Rand setzen, sobald die Frage sichtbaren Inhalt hat
+(Schritte, Bilder, Text). **Davids Entscheidung, deshalb hier nur notiert.**
+
+**Gemacht, Teil 2 (Code):** Die sechs Spielgeräusche in `js/core.js` neu
+gebaut. David: „das hört sich ja an wie liminal horror" — zu Recht. Vorher war
+jeder Effekt ein nackter Oszillator, `wrong()` etwa ein Sägezahn, der von 220
+auf 110 Hz rutschte. Jetzt:
+
+- **Obertöne.** Ein Ton besteht aus Teiltönen, die schneller ausklingen als
+  der Grundton — die Hüllkurve von Glocke und Marimba. Beim Buzzer bewusst
+  unharmonisch (2.76, 5.4), das ergibt das „Ding".
+- **Hüllkurve ohne Kanten.** Anriss in 12 ms, exponentiell aus. Kein Knacken.
+- **Tiefpass** je Ton, der beim Ausklingen mitfährt.
+- **Hall** aus künstlich erzeugter Impulsantwort (abklingendes Rauschen,
+  1,5 s). Nimmt die Schärfe und setzt alles in denselben Raum.
+- **Echte Intervalle:** `correct` C-E-G-C aufwärts, `wrong` eine fallende
+  Terz F4→D4 mit dumpfem Schlag statt Schreckmoment, `fanfare` Dreiklang
+  hoch und danach der Akkord stehen gelassen.
+- **Kompressor** auf dem Summenweg.
+
+Dazu neu im Menü: **„🎧 Töne probehören"** spielt alle sechs nacheinander
+(`sfxPreview` in `core.js`, Knopf in `index.html`). Der Knopf sperrt sich für
+6,5 s selbst und meldet „🔇 Ton ist aus", wenn der Ton aus ist. Der
+An/Aus-Schalter spielt beim Einschalten sofort `point()`, damit hörbar ist,
+dass er wirkt.
+
+**Warum erzeugt statt Audiodateien:** kein Build-Step, nichts nachzuladen,
+`git push` bleibt der ganze Deploy. Sechs anständige WAV/MP3 wären einige
+hundert KB im Repo und müssten lizenzrechtlich sauber sein.
+
+**Geprüft (mit Zahlen):** `node check.js --types` ohne Meldung (13 Dateien,
+396 Handler, 208 IDs im Markup). Jeder Effekt einzeln über eine
+`OfflineAudioContext` gerendert und gemessen — Spitze / Länge:
+
+| Effekt | Spitze | Länge |
+|---|---|---|
+| buzz | 0,158 | 0,84 s |
+| point | 0,191 | 0,49 s |
+| correct | 0,469 | 1,14 s |
+| wrong | 0,417 | 0,63 s |
+| tick | 0,045 | 0,04 s |
+| fanfare klein | 0,653 | 1,45 s |
+| fanfare groß | 0,690 | 1,82 s |
+
+Kein Übersteuern, keine Stille, keine NaN. Drei Effekte gleichzeitig
+(`fanfare(true)` + `correct` + `buzz`): Spitze 0,693 — der Kompressor fängt
+es ab. Im Browser: Knopf da, sperrt sich, gibt nach 6,5 s wieder frei, meldet
+bei ausgeschaltetem Ton „🔇 Ton ist aus"; keine Konsolenfehler; bei 400 px
+kein Querüberlauf in der Knopfreihe.
+
+**Ungeprüft und wichtig:** **Ob es gut klingt, habe ich nicht gehört.** Ich
+kann nur messen, nicht hören. Beurteilt ist der Aufbau (Obertöne, Hüllkurven,
+Intervalle, Hall) und der Pegel. Ob die Auswahl gefällt, muss David über
+„🎧 Töne probehören" selbst entscheiden — Tonhöhen, Längen und Lautstärken
+stehen als benannte Werte beieinander und sind leicht zu drehen.
+
+**Fallstricke:**
+
+- **Der Kompressor hat die Einzeltöne erschlagen.** Mit `knee: 26` und
+  `threshold: -16` beginnt die Kompression schon bei −29 dBFS, also unterhalb
+  von allem, was hier gespielt wird: gemessene Spitze 0,056 statt der
+  gewollten 0,13. Jetzt `threshold: -6`, `knee: 8`, und der Summenweg hebt um
+  2,7 an. Bei 3,6 übersteuerte dafür die große Fanfare (1,085), deren vier
+  stehende Töne sich addieren.
+- `exponentialRampToValueAtTime` darf **nie** auf 0 laufen und nicht von 0
+  starten — deshalb überall `.0001` als Ziel und ein `setValueAtTime(.0001)`
+  vor dem Anriss.
+- Zum Messen lässt sich `window.AudioContext` durch eine Unterklasse von
+  `OfflineAudioContext` ersetzen, die `resume()` überschreibt. Aber: `SFX`
+  merkt sich den Kontext beim ersten Ton. Für **jeden** Effekt braucht es
+  deshalb einen frischen Seitenaufruf, sonst landet alles im selben Rendering
+  auf `t=0`.
+
 ## 2026-09-25 — Daily Double zusammen mit Schritten getestet (kein Commit)
 
 **Gemacht:** Den offenen Punkt aus `9cfa74f` nachgeholt. Code ist nicht
