@@ -12,6 +12,84 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-26 — Teams in der Lobby · Nachfassen nur fürs andere Team (`e24b4aa`)
+
+Drei Meldungen von David, alle berechtigt.
+
+### 1. „dpih team? da kann man nix auswählen"
+
+**Stimmt.** Beim Teamstand hatte ich zwei Namensfelder ins PIH-Setup gebaut,
+aber keine Möglichkeit, jemanden einem Team zuzuordnen. Die Lobby von
+„Der Preis ist heiß" und „Der Dümmste fliegt" (`renderRosterLobby` in
+`js/roster.js`) kannte nur „spielt mit / dazu" — die Team-Knöpfe hat nur
+`renderSetupLobby`, die die anderen vier Shows benutzen.
+
+Jetzt hat jede **ausgewählte** Zeile „Rot"/„Blau" und ein ✕. Beschriftet
+wird über `rosterTeamNames(game)`: bei PIH aus den Setup-Feldern, sonst aus
+einem laufenden Turnier, sonst „Team 1/2". Geschrieben wird über
+`assignPlayerTeam` — **dieselbe Stelle wie überall sonst**, damit es nicht
+zwei Stände gibt.
+
+### 2. „die spieler werden dann als einzeln angezeigt"
+
+Auch nach dem Zuteilen stand in der Lobby nur eine Namensliste. Jetzt steht
+darunter die **Aufstellung** in einer Zeile: `Rot Anna, Ben · Blau Clara,
+David · ohne Team Emil, Gustav (Gast)`. Gäste ohne Account stehen dort
+ausdrücklich mit drin — sie spielen mit, zählen aber auf kein Team ein.
+
+Dazu: `assignPlayerTeam` setzt den Wert jetzt **sofort lokal** in
+`allPlayers` und ruft `refreshOpenRosterLobby()`. Vorher wartete die Anzeige
+auf die Antwort der Datenbank; ohne Verbindung kam die nie und der Knopf sah
+aus, als hätte er nicht reagiert.
+
+### 3. „beim Rad drehen steht da, dass man gebuzzert hat"
+
+**Zwei Fehler in einem.**
+
+**a)** Nach dem Nachfassen blieb auf dem Handy dessen, der gebuzzert hatte,
+„Gebuzzert! ✔" stehen. Grund: `buzzedThisRound` wird auf dem Handy erst bei
+einer **neuen Runde** zurückgesetzt (`round !== lastRound`), und
+`feudBuzzClose` zählt die Runde nicht weiter. Danach ging es sofort ans Rad —
+und auf dem Handy stand weiter, man habe gebuzzert.
+
+Neu: `feudBuzzEndRound()` in `js/buzzer.js` schließt **und** zählt die Runde
+weiter. TP benutzt sie an allen vier Stellen statt `feudBuzzClose`.
+**Family Feud bleibt, wie es war**: dort ist das Nachleuchten gewollt (man
+soll seinen Platz noch sehen, wenn der Host gleich weitermacht) — deshalb
+keine Änderung an `feudBuzzClose` selbst.
+
+**b)** Beim Nachfassen war der Buzzer für **alle** offen, auch für das Team,
+das gerade daneben lag — das konnte seinen eigenen Fehler wieder
+einsammeln. Neu sperrt `tpExcludeTurnTeam()` dessen Handys über die
+vorhandene `excluded`-Liste (nach Namen, so wertet das Handy sie aus). Dort
+steht dann „Für diese Frage gesperrt 🚫" und der Knopf ist aus.
+
+### Geprüft
+
+`node check.js --types` ohne Meldung (388 Handler, 974 Klammernpaare).
+**24 Prüfungen, alle grün**, Firebase durch eine mitschreibende Attrappe
+ersetzt:
+
+- Lobby: 2 Knöpfe je ausgewähltem Spieler, Beschriftung folgt den
+  Setup-Namen (Test mit „Feuer"/„Eis"), Zuteilung wirkt sofort, ✕ nimmt sie
+  weg, vier aktive Knöpfe markiert, Aufstellung gruppiert richtig, Gast
+  unter „ohne Team". DDF-Lobby hat sie auch. Bildschirmfoto.
+- TP: nach falscher Antwort läuft das Nachfassen, `excluded` enthält genau
+  `Anna, Ben` (das Team am Zug), der Zustand kennt die Sperre; nach der
+  Entscheidung wird eine neue Buzzer-Runde geschrieben, der Buzzer ist aus
+  und die Sperre wieder weg.
+- Handy: gesperrtes Team kann nicht buzzern und sieht den Grund, das andere
+  Team kann; eine neue Runde löscht „Gebuzzert".
+- Keine Konsolenfehler.
+
+**Fallstrick:** Die Lobby baut sich nach **jedem** Klick neu auf. Ein Test,
+der sich Knöpfe vorher in eine Liste holt und dann nacheinander anklickt,
+klickt ab dem zweiten Mal auf tote Elemente. Nach jedem Klick neu suchen.
+
+**Vorsicht beim Testen:** Ohne Firebase-Attrappe verbindet sich die Seite mit
+der **echten** Datenbank und zeigt die echten Accounts. Ein Klick auf einen
+Team-Knopf schreibt dann wirklich. Erst abklemmen, dann klicken.
+
 ## 2026-09-26 — Komplettdurchlauf (`bac0cd5`, ein Fund behoben)
 
 Alles einmal durchgetestet. **89 Prüfungen, alle grün**, davon 80 auf der
