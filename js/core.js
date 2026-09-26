@@ -926,6 +926,51 @@ function closeOverlay(overlay, onDone) {
 // ── EINBLENDUNGEN (0-3 Bilder/Videos pro Frage, für alle drei Spiele) ──
 // arr ist das media-Array direkt auf der Frage/Clue (per Referenz mutiert,
 // daher funktioniert das gleich für ein Live-Objekt wie für ein Temp-Array).
+/* Ein Bild auf Bildschirmgroesse herunterrechnen, bevor es als Data-URL im
+   Datensatz landet.
+
+   Warum das sein muss: die Spieldaten liegen in localStorage, und das ist je
+   nach Browser bei rund 5 MB zu Ende. Ein Ordner mit zwanzig Handyfotos hat
+   leicht 60 MB; als Base64 wird daraus noch ein Drittel mehr. storeSetJson
+   faengt den Fehler ab und gibt still false zurueck - die Artikel waeren nach
+   dem naechsten Neuladen weg, ohne dass es jemand gemerkt haette. Auf der
+   Leinwand bringt ein 4000-Pixel-Foto ohnehin nichts.
+
+   PNG behaelt seine Transparenz, solange das Ergebnis klein genug ist. Erst
+   wenn es das nicht ist, wird JPEG daraus - dann aber mit weissem Grund,
+   sonst werden durchsichtige Stellen schwarz.
+   @param {File} file @param {number} maxPx @param {number} quality
+   @returns {Promise<string|null>} Data-URL, oder null wenn das Bild nicht lesbar war */
+function shrinkImageToDataUrl(file, maxPx, quality) {
+  return new Promise(resolve => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const gross = Math.max(img.naturalWidth, img.naturalHeight) || 1;
+      const f = Math.min(1, maxPx / gross);
+      const w = Math.max(1, Math.round(img.naturalWidth * f));
+      const h = Math.max(1, Math.round(img.naturalHeight * f));
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d');
+      if (!ctx) { URL.revokeObjectURL(url); resolve(null); return; }
+      const png = file.type === 'image/png' || file.type === 'image/webp';
+      if (!png) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      let out = png ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', quality);
+      if (png && out.length > 500000) {
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+        out = c.toDataURL('image/jpeg', quality);
+      }
+      resolve(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.src = url;
+  });
+}
+
 function setMediaSlot(arr, slot, input, afterFn) {
   if (!input) { arr[slot] = null; afterFn(); return; }
   const f = input.files[0]; if (!f) return;

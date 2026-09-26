@@ -515,6 +515,102 @@ function pihQuit(){
 let pihEditOpen = -1;
 let pihBulkVisible = false;
 
+/* ── Ordner einlesen ──────────────────────────────────────────────────────
+   Ein ganzer Ordner Produktbilder auf einmal: je Bild ein Artikel. Name und
+   Preis stehen im Dateinamen, das Bild wandert auf den ersten Medienplatz.
+
+   Warum aus dem Dateinamen und nicht aus einer Begleitdatei: David benennt
+   die Bilder beim Sammeln ohnehin, und eine zweite Datei, die zu den Bildern
+   passen muss, ist eine Fehlerquelle mehr. Erkannt werden
+
+     Kaffeemaschine_49,99.jpg     Kaffeemaschine - 49,99.jpg
+     Kaffeemaschine 49,99 €.jpg   Kaffeemaschine # 49,99.jpg
+     49,99 - Kaffeemaschine.jpg   03_Kaffeemaschine_49,99.jpg
+
+   Eine blosse Zahl am Ende ohne Trennzeichen zaehlt bewusst NICHT als Preis:
+   "Playstation 5.jpg" ist ein Name, kein Artikel fuer 5 Euro. Ohne erkannten
+   Preis wird der Artikel trotzdem angelegt, nur mit leerem Preisfeld - das
+   faellt im Editor durch den roten Rahmen sofort auf. */
+let pihImportInfo = '';
+
+/** Name und Preis aus einem Dateinamen.
+ *  @param {string} fname @returns {{name:string, price:number|null}} */
+function pihParseFileName(fname){
+  let s = String(fname || '').replace(/\.[a-z0-9]{2,5}$/i, '');   // Endung weg
+  s = s.replace(/^\s*\d{1,3}\s*[._)\-]\s*/, '');                // "03_" / "3. " weg
+  let price = null, name = s;
+  const nimm = (roh, rest) => {
+    const n = pihParsePrice(roh);
+    if (n !== null && n > 0) { price = n; name = rest; }
+  };
+  let m;
+  if ((m = s.match(/^(.*?)\s*#\s*(.+)$/)))                                          nimm(m[2], m[1]);
+  else if ((m = s.match(/^(.*?)[\s_|;,-]+([\d][\d.,]*)\s*(?:€|eur)\s*$/i)))          nimm(m[2], m[1]);
+  else if ((m = s.match(/^(.*?)\s*[_|;]\s*([\d][\d.,]*)\s*$/)))                     nimm(m[2], m[1]);
+  else if ((m = s.match(/^(.*?)\s+[-–]\s+([\d][\d.,]*)\s*$/)))                      nimm(m[2], m[1]);
+  else if ((m = s.match(/^(.*?)[\s-]*(\d+[.,]\d{1,2})\s*$/)))                       nimm(m[2], m[1]);
+  else if ((m = s.match(/^([\d][\d.,]*)\s*(?:€|eur)?\s*[_|;\-–]\s*(.+)$/i)))        nimm(m[1], m[2]);
+  name = name.replace(/_+/g, ' ').replace(/\s{2,}/g, ' ')
+             .replace(/^[\s\-–|;,.]+|[\s\-–|;,.]+$/g, '').trim();
+  return { name, price };
+}
+
+/** @param {string} text */
+function pihSetImportInfo(text){
+  pihImportInfo = text;
+  const el = document.getElementById('pih-import-info');
+  if (!el) return;
+  el.textContent = text;
+  el.style.display = text ? '' : 'none';
+}
+
+/** Alle Bilder eines Ordners als Artikel anlegen.
+ *  @param {HTMLInputElement} input */
+async function pihImportFolder(input){
+  const alle = [...(input.files || [])];
+  input.value = '';                       // sonst loest derselbe Ordner kein zweites Mal aus
+  const bilder = alle
+    .filter(f => f.type.startsWith('image/'))
+    .sort((a, b) => a.name.localeCompare(b.name, 'de', { numeric: true }));
+  if (!bilder.length){
+    alert(alle.length
+      ? 'In dem Ordner sind keine Bilder.'
+      : 'Kein Ordner ausgewählt.');
+    return;
+  }
+  const neu = [];
+  let ohnePreis = 0, unlesbar = 0;
+  for (let i = 0; i < bilder.length; i++){
+    const f = bilder[i];
+    pihSetImportInfo(`Liest ${i + 1} von ${bilder.length} …`);
+    const { name, price } = pihParseFileName(f.name);
+    // 1280 px reichen fuer jede Leinwand und halten den Datensatz klein.
+    const data = await shrinkImageToDataUrl(f, 1280, 0.82);
+    if (!data){ unlesbar++; continue; }
+    if (price === null) ohnePreis++;
+    neu.push({
+      name: name || f.name,
+      price,
+      note: '',
+      media: [{ type: 'image', data, name: f.name }],
+    });
+  }
+  if (!neu.length){ pihSetImportInfo(''); alert('Keins der Bilder ließ sich lesen.'); return; }
+  pihData.items = pihData.items.concat(neu);
+  pihEditOpen = -1;
+  // pihSave meldet false, wenn localStorage voll ist. Das darf nicht still
+  // bleiben: die Artikel stehen dann zwar im Editor, waeren aber nach dem
+  // naechsten Neuladen weg.
+  const gespeichert = pihSave();
+  renderPihEditor();
+  const teile = [`${neu.length} ${neu.length === 1 ? 'Artikel' : 'Artikel'} aus dem Ordner`];
+  teile.push(ohnePreis ? `${ohnePreis} ohne erkannten Preis (rot markiert)` : 'alle mit Preis');
+  if (unlesbar) teile.push(`${unlesbar} Datei(en) nicht lesbar`);
+  if (!gespeichert) teile.push('⚠ NICHT gespeichert — Speicher voll. Exportiere als JSON, bevor du neu lädst.');
+  pihSetImportInfo(teile.join(' · '));
+  if (!gespeichert) alert('Die Artikel sind da, konnten aber nicht gespeichert werden — der Browser-Speicher ist voll.\nExportiere sie als JSON, sonst sind sie nach dem Neuladen weg.');
+}
+
 function renderPihEditor(){
   const box = document.getElementById('pih-editor');
   if (!box) return;
@@ -527,7 +623,12 @@ function renderPihEditor(){
   const toolbar = `<div class="editor-toolbar">
     <span class="pih-card-head">${n} ${n === 1 ? 'Artikel' : 'Artikel'}</span>
     <button class="btn btn-secondary btn-xs" onclick="pihToggleBulk()">${pihBulkVisible ? '✕ Abbrechen' : '⇊ Mehrere einfügen'}</button>
-  </div>`;
+    <label class="btn btn-secondary btn-xs" style="cursor:pointer;" title="Einen ganzen Ordner mit Bildern einlesen. Name und Preis kommen aus dem Dateinamen, z.B. „Kaffeemaschine_49,99.jpg".">
+      📁 Ordner einlesen
+      <input type="file" webkitdirectory directory multiple style="display:none;" onchange="pihImportFolder(this)">
+    </label>
+  </div>
+  <div id="pih-import-info" class="hint-line" style="${pihImportInfo ? '' : 'display:none;'}">${escapeHtml(pihImportInfo)}</div>`;
 
   const bulk = pihBulkVisible ? bulkPanelHtml({
     id: 'pih-bulk-text',
@@ -641,7 +742,8 @@ function importPih(e){
   });
 }
 
-function pihSave(){ storeSetJson('pihData', pihData); }
+/** @returns {boolean} false, wenn der Browser-Speicher voll ist */
+function pihSave(){ return storeSetJson('pihData', pihData); }
 function pihLoad(){ pihData = storeGetJson('pihData', pihData); }
 pihLoad();
 
