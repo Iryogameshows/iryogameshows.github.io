@@ -78,6 +78,12 @@ function assignPlayerTeam(key, teamIdx){
   firebase.database().ref('buzzer/players/' + key + '/team').set(teamIdx).catch(e => console.error('assignPlayerTeam failed', e));
   const presenceRef = currentBuzzer().presenceRef;
   if (presenceRef) presenceRef.child(key).update({ team: teamIdx }).catch(()=>{});
+  // Sofort anzeigen, statt auf die Antwort der Datenbank zu warten: ohne
+  // Verbindung kaeme sie nie, und der Knopf saehe aus, als haette er nicht
+  // reagiert. Die echte Runde ueberschreibt das gleich danach.
+  const acc = (allPlayers || []).find(a => a.key === key);
+  if (acc) acc.team = (teamIdx === null ? null : teamIdx);
+  if (typeof refreshOpenRosterLobby === 'function') refreshOpenRosterLobby();
 }
 // Alle Team-Zuteilungen löschen (für ein frisches Event) - wirkt auf ALLE
 // jemals angelegten Accounts, nicht nur die gerade verbundenen.
@@ -411,6 +417,18 @@ function feudBuzzClose(){
   if (feudBuzzer.fbRef) feudBuzzer.fbRef.update({ live: false, armed: false, armStart: 0, buzzes: null, excluded: null }).catch(()=>{});
   feudBuzzer.armed = false; feudBuzzer.results = [];
   renderFeudBuzzer();
+}
+
+/* Buzzer aus UND Runde weiterzaehlen. Ohne den Rundenwechsel bleibt auf dem
+   Handy dessen, der gebuzzert hat, "Gebuzzert! ✔" stehen - buzzedThisRound
+   wird erst bei einer neuen Runde zurueckgesetzt. In Family Feud ist das
+   gewollt (man soll seinen Platz noch sehen), bei Trivial Pursuit nicht: dort
+   geht es danach sofort ans Rad, und auf dem Handy stand weiter, man habe
+   gebuzzert. */
+function feudBuzzEndRound(){
+  feudBuzzClose();
+  feudBuzzer.round = nextRoundId(feudBuzzer.round);
+  if (feudBuzzer.fbRef) feudBuzzer.fbRef.update({ round: feudBuzzer.round }).catch(()=>{});
 }
 
 function feudBuzzToggleHidden(){

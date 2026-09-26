@@ -32,6 +32,22 @@ function rosterSeed(game) {
   r.seeded = true;
 }
 
+/* Wie die Teams heissen. Bei "Der Preis ist heiss" stehen die Namen im
+   Setup, sonst kommen sie aus einem laufenden Turnier. Die ZUORDNUNG steht
+   nicht hier, sondern am Account - dieselbe Quelle wie beim Turnier.
+   @param {string} game @returns {string[]} */
+function rosterTeamNames(game) {
+  if (game === 'pih' && typeof pihTeamNames === 'function') return pihTeamNames();
+  const t = (typeof tournament !== 'undefined' && tournament && tournament.teams) || [];
+  return [t[0] || 'Team 1', t[1] || 'Team 2'];
+}
+
+/** Team-Index eines Accounts, oder null. @param {any} p @returns {number|null} */
+function rosterTeamOf(p) {
+  const t = p ? p.team : null;
+  return (t === undefined || t === null || t < 0 || t > 1) ? null : t;
+}
+
 function renderRosterLobby(game) {
   const cfg = ROSTERS[game];
   const box = cfg && document.getElementById(cfg.lobby);
@@ -45,6 +61,18 @@ function renderRosterLobby(game) {
     return a.name.localeCompare(b.name, 'de');
   });
 
+  /* Team-Knoepfe je Zeile. Die gab es hier nie - in dieser Lobby liess sich
+     nur auswaehlen, WER mitspielt, nicht in welchem Team. Bei "Der Preis ist
+     heiss" braucht es die Teams inzwischen fuer den Teamstand und fuers
+     Finale, und ohne Knopf stand der Host davor und konnte nichts zuteilen.
+     assignPlayerTeam schreibt an dieselbe Stelle wie alle anderen Lobbys. */
+  const namen = rosterTeamNames(game);
+  const teamBtns = p => `<span class="roster-teams">${namen.map((n, i) =>
+      `<button class="pr-team-btn ${rosterTeamOf(p) === i ? 'active' : ''}"
+               onclick="assignPlayerTeam(${escJsArg(p.key)},${i})">${escapeHtml(n)}</button>`).join('')
+    }${rosterTeamOf(p) === null ? '' :
+      `<button class="pr-team-btn" title="Team wegnehmen" onclick="assignPlayerTeam(${escJsArg(p.key)},null)">✕</button>`}</span>`;
+
   const rows = accounts.length
     ? accounts.map(p => {
         const on = r.selected.has(p.key);
@@ -55,13 +83,28 @@ function renderRosterLobby(game) {
           <span style="flex:1;">${escAttr(p.name)}</span>
           <button class="btn ${on ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:.7rem;"
                   onclick="rosterToggle('${game}', ${escJsArg(p.key)})">${on ? '✓ spielt mit' : 'dazu'}</button>
+          ${on ? teamBtns(p) : ''}
         </div>`;
       }).join('')
     : `<div class="pr-empty">Noch keine Spieler-Accounts angelegt — QR-Code scannen oder Gäste eintragen</div>`;
 
+  /* Die Aufstellung als eine Zeile. Untereinander stand bisher nur, WER
+     mitspielt - wer in welchem Team ist, musste man sich aus den Knoepfen
+     zusammensuchen. */
+  const mit = accounts.filter(p => r.selected.has(p.key));
+  const proTeam = namen.map((n, i) => {
+    const drin = mit.filter(p => rosterTeamOf(p) === i).map(p => escAttr(p.name));
+    return `<span class="roster-team-sum t${i}"><b>${escAttr(n)}</b> ${drin.length ? drin.join(', ') : '—'}</span>`;
+  }).join('');
+  const ohne = mit.filter(p => rosterTeamOf(p) === null).map(p => escAttr(p.name))
+    .concat(r.guests.map(g => (g || '').trim()).filter(Boolean).map(g => escAttr(g) + ' (Gast)'));
+  const aufstellung = `<div class="roster-lineup">${proTeam}${
+    ohne.length ? `<span class="roster-team-sum ohne"><b>ohne Team</b> ${ohne.join(', ')}</span>` : ''}</div>`;
+
   box.innerHTML = `
     <div class="panel-head"><span>👥 Teilnehmer</span><span class="badge">${rosterContestants(game).length}</span></div>
     <div class="pr-list">${rows}</div>
+    ${aufstellung}
     <div class="panel-row">
       <button class="btn btn-secondary" onclick="rosterSelectAll('${game}', true)">Alle</button>
       <button class="btn btn-secondary" onclick="rosterSelectAll('${game}', false)">Keinen</button>

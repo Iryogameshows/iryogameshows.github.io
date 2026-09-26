@@ -2356,6 +2356,15 @@ body {
 /* Wer vom Handy aus gedreht hat - steht nur kurz in der Rundenleiste. */
 .tp-spin-by{color:#FFD23F;font-weight:800;}
 
+/* Aufstellung unter der Teilnehmerliste: wer steht in welchem Team. */
+.roster-teams{display:inline-flex;gap:4px;flex-shrink:0;}
+.roster-lineup{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.07);font-size:.72rem;}
+.roster-team-sum{color:rgba(255,255,255,.65);}
+.roster-team-sum b{font-weight:800;margin-right:5px;}
+.roster-team-sum.t0 b{color:var(--red);}
+.roster-team-sum.t1 b{color:var(--blue);}
+.roster-team-sum.ohne b{color:rgba(255,255,255,.35);}
+
 .intro-editor-col{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
 .intro-card .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 /* Zwei Spalten, solange Platz ist: die vier Zeilen einer Stufe gehoeren

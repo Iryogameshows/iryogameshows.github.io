@@ -171,7 +171,7 @@ function startTp(){
   feudBuzzConnect();
   buzzerBroadcastTeams(names);
   lockBuzzerJoins(feudBuzzer);
-  feudBuzzClose();
+  feudBuzzEndRound();
 
   tpIntroThenGame();
 }
@@ -188,7 +188,7 @@ function tpReportResult(){
 function tpQuit(){
   tpState.active = false;
   tpCloseSpin();
-  feudBuzzClose();
+  feudBuzzEndRound();
   showScreen('menu-screen');
   updateGamemaster();
 }
@@ -391,7 +391,7 @@ function tpHasAll(team){
 }
 
 function tpNextTeam(){
-  feudBuzzClose();
+  feudBuzzEndRound();
   tpState.turn = (tpState.turn + 1) % Math.max(1, tpState.teamNames.length);
   // Wer schon alle sechs Stuecke hat, spielt sofort wieder um die
   // Schlussfrage. Ohne diese Zeile faellt ein Finalist nach einem Fehlversuch
@@ -411,9 +411,28 @@ function tpOpenSteal(){
   // Die Handys entscheiden nur die Reihenfolge, nicht die Wertung: wer zuerst
   // buzzert, darf zuerst sagen - ob es stimmt, urteilt weiterhin der Host.
   feudBuzzPrepare();
+  // Nachfassen heisst: die ANDEREN sind dran. Das Team, das gerade daneben
+  // lag, darf nicht noch einmal - vorher konnte es einfach nachbuzzern und
+  // seinen eigenen Fehler einsammeln. Gesperrt wird ueber die Namensliste,
+  // die das Handy ohnehin auswertet (excluded).
+  tpExcludeTurnTeam();
   feudBuzzArm();
   tpRender();
   updateGamemaster();
+}
+
+/** Alle Handys des Teams am Zug fuer das Nachfassen sperren. */
+function tpExcludeTurnTeam(){
+  const raus = (feudBuzzer.presence || [])
+    .filter(p => p.team === tpState.turn)
+    .map(p => p.name)
+    .filter(Boolean);
+  feudBuzzer.excluded = raus;
+  if (!feudBuzzer.fbRef) return;
+  /** @type {Record<string, boolean>} */
+  const obj = {};
+  raus.forEach(n => { obj[n] = true; });
+  feudBuzzer.fbRef.child('excluded').set(raus.length ? obj : null).catch(()=>{});
 }
 
 /** Ein anderes Team hat nachgefasst und lag richtig.
@@ -423,7 +442,7 @@ function tpStealAward(team){
   if (tpState.phase !== 'steal' || tpState.cat < 0) return;
   SFX.correct();
   tpAward(team, tpState.cat);
-  feudBuzzClose();
+  feudBuzzEndRound();
   if (tpHasAll(team)) return tpEnterFinal(team);
   // Wer nachfasst, ist als Naechstes dran - sonst lohnt sich das Nachfassen
   // nur halb und alle warten lieber ab.
