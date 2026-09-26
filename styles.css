@@ -803,7 +803,11 @@ body {
 }
 .result-scores { line-height: 2.2; font-size: 1rem; color: rgba(255,255,255,.5); }
 .result-scores strong { color: var(--gold); font-size: 1.5rem; font-family: 'Bebas Neue', sans-serif; }
-.result-btns { display: flex; gap: 12px; }
+/* Vier Knoepfe nebeneinander passen auf einen Beamer, aber nicht auf ein
+   schmales Fenster: mit laufendem Turnier stehen hier "Ins Turnier
+   uebernehmen", "Zur Turnieruebersicht", "Nochmal spielen" und "Zum Menue"
+   - gemessen 430 px bei 400 px Fensterbreite. Umbrechen statt ueberstehen. */
+.result-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
 .confetti-p { position: fixed; top: -20px; z-index: 999; animation: confDrop linear forwards; }
 @keyframes confDrop { to { transform: translateY(110vh) translateX(40px) rotate(720deg); } }
 
