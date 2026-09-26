@@ -2323,6 +2323,29 @@ body {
   #kgn .header{font-size:14px;letter-spacing:3px;}
 }
 
+/* ── Preis ist heiss: Teamstand ───────────────────────────────────────────
+   Gespielt wird in zwei Teams, gezaehlt werden Einzelpunkte. Damit waehrend
+   des Spiels trotzdem klar ist, wie es zwischen den Teams steht, liegt diese
+   Leiste ueber der Einzelwertung. Fuehrendes Team hell, das andere gedaempft
+   - auf zehn Meter Entfernung erkennt man sonst keinen Unterschied. */
+.pih-teamrow{display:flex;gap:10px;justify-content:center;margin:0 auto 8px;max-width:640px;}
+.pih-team{
+  flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:7px 16px;border-radius:10px;
+  background:color-mix(in srgb, var(--team) 14%, transparent);
+  box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--team) 45%, transparent);
+  opacity:.62;transition:opacity .2s ease, box-shadow .2s ease;
+}
+.pih-team.lead{opacity:1;box-shadow:inset 0 0 0 2px var(--team),0 0 22px color-mix(in srgb, var(--team) 35%, transparent);}
+.pih-team-name{font-family:'Inter',sans-serif;font-weight:800;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;color:#fff;}
+.pih-team-pts{font-family:'Bebas Neue',sans-serif;font-size:1.7rem;line-height:1;color:var(--team);}
+.pih-team-hint{text-align:center;font-size:.62rem;color:rgba(255,255,255,.32);margin:-4px 0 8px;}
+@media (max-width:760px){
+  .pih-team{padding:6px 11px;}
+  .pih-team-name{font-size:.68rem;letter-spacing:.5px;}
+  .pih-team-pts{font-size:1.3rem;}
+}
+
 .intro-editor-col{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
 .intro-card .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 /* Zwei Spalten, solange Platz ist: die vier Zeilen einer Stufe gehoeren

@@ -49,6 +49,10 @@ let pihState = {
   bids:{},             // von den Handys (Firebase spiegelt hier herein)
   hostBids:{},         // vom Host für Gäste ohne Handy eingetragen
   lastResult:null,     // { price, rows, winners }
+  teamNames:[],        // ['Rot','Blau'] - nur Beschriftung
+  finalAt:-1,          // Position des Superpreises in order, -1 = kein Finale
+  finalWeight:2,       // so viele Punkte bringt der Superpreis
+  finalists:[],        // uids, die im Finale bieten dürfen (je Team einer)
 };
 
 /* ── Setup ─────────────────────────────────────────────────────────────── */
@@ -92,7 +96,14 @@ function startPih(){
   // Nur Artikel mit Preis in die Runde nehmen - ein Artikel ohne Preis wäre
   // nicht auflösbar und würde das Spiel mitten drin blockieren.
   let order = pihShuffledOrder().filter(i => typeof pihData.items[i].price === 'number' && isFinite(pihData.items[i].price));
+  // Der Superpreis wird aus der Mischung herausgenommen und ganz zum Schluss
+  // gespielt - sonst kaeme das Finale irgendwo in der Mitte. "Artikel pro
+  // Spiel" zaehlt ihn nicht mit: die Zahl meint die normalen Runden.
+  const finalIdx = pihData.items.findIndex(it => it && it.final &&
+    typeof it.price === 'number' && isFinite(it.price));
+  if (finalIdx >= 0) order = order.filter(i => i !== finalIdx);
   if (wanted > 0) order = order.slice(0, wanted);
+  if (finalIdx >= 0) order.push(finalIdx);
 
   pihState = {
     active:true,
@@ -108,6 +119,10 @@ function startPih(){
     timer:0, timerInt:null, timeUp:false,
     bids:{}, hostBids:{},
     lastResult:null,
+    teamNames: pihTeamNames(),
+    finalAt: finalIdx >= 0 ? order.length - 1 : -1,
+    finalWeight: Math.max(1, Math.min(20, Number(fieldVal('pih-final-weight')) || 2)),
+    finalists: [],
   };
   pihSaveSettings();
   pihIntroThenGame();
@@ -131,6 +146,91 @@ function pihParsePrice(s){
   else                                             s = s.replace(',','.');                    // 12,5
   const n = Number(s);
   return isFinite(n) ? n : null;
+}
+
+/* ── Teams ────────────────────────────────────────────────────────────────
+   "Der Preis ist heiss" wird bei uns in zwei Teams gespielt, das Spiel selbst
+   zaehlt aber Einzelpunkte. Beides gilt weiter: die Einzelwertung entscheidet,
+   wer sein Team im Finale vertritt, die Teamwertung entscheidet die Show.
+
+   WER in welchem Team ist, steht nicht hier, sondern am Account (Lobby →
+   "Teams zuteilen"). Genau daraus rechnet auch das Turnier sein Ergebnis -
+   zwei Quellen dafuer waeren zwei Staende, die auseinanderlaufen. Gaeste ohne
+   Account haben kein Team; sie spielen mit, zaehlen aber auf kein Team ein.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Beschriftung der Teams. Leer gelassene Felder holen sich den Namen aus
+ *  einem laufenden Turnier, sonst "Team 1"/"Team 2".
+ *  @returns {string[]} */
+function pihTeamNames(){
+  const ausTurnier = (tournament && tournament.teams) || [];
+  return [
+    fieldVal('pih-t1-name').trim() || ausTurnier[0] || 'Team 1',
+    fieldVal('pih-t2-name').trim() || ausTurnier[1] || 'Team 2',
+  ];
+}
+/** Team-Index eines Mitspielers, oder null.
+ *  @param {any} p @returns {number|null} */
+function pihTeamOf(p){
+  if (!p || !p.key) return null;
+  const acc = (allPlayers || []).find(a => a.key === p.key);
+  const t = acc ? acc.team : null;
+  return (t === undefined || t === null || t < 0 || t > 1) ? null : t;
+}
+/** Punkte je Team plus die Mitspieler ohne Team.
+ *  @returns {{scores:number[], ohneTeam:any[]}} */
+function pihTeamScores(){
+  const scores = [0, 0];
+  const ohneTeam = [];
+  pihState.players.forEach(p => {
+    const t = pihTeamOf(p);
+    if (t === null) { ohneTeam.push(p); return; }
+    scores[t] += p.score;
+  });
+  return { scores, ohneTeam };
+}
+/** Der Punktbeste je Team - er vertritt sein Team im Finale. Bei Gleichstand
+ *  der, der in der Liste vorn steht; das ist die Beitrittsreihenfolge und
+ *  damit wenigstens nachvollziehbar.
+ *  @returns {(any|null)[]} je Team ein Mitspieler oder null */
+function pihTeamChampions(){
+  return [0, 1].map(t => {
+    const drin = pihState.players.filter(p => pihTeamOf(p) === t);
+    if (!drin.length) return null;
+    return drin.reduce((a, b) => (b.score > a.score ? b : a));
+  });
+}
+function pihRenderTeams(){
+  const box = document.getElementById('pih-teams');
+  if (!box) return;
+  const namen = pihState.teamNames.length ? pihState.teamNames : pihTeamNames();
+  const { scores, ohneTeam } = pihTeamScores();
+  const farben = ['#E8453C', '#3B82F6'];
+  const fuehrt = scores[0] === scores[1] ? -1 : (scores[0] > scores[1] ? 0 : 1);
+  box.innerHTML = `<div class="pih-teamrow">${namen.map((n, i) => `
+    <div class="pih-team${fuehrt === i ? ' lead' : ''}" style="--team:${farben[i]};">
+      <span class="pih-team-name">${escAttr(n)}</span>
+      <span class="pih-team-pts">${scores[i]}</span>
+    </div>`).join('')}</div>${ohneTeam.length
+      ? `<div class="pih-team-hint">ohne Team: ${ohneTeam.map(p => escAttr(p.label)).join(', ')}</div>`
+      : ''}`;
+}
+
+/* ── Finale um den Superpreis ─────────────────────────────────────────────
+   Im Fernsehen endet die Sendung mit dem Superpreis. Bei uns: der im Editor
+   mit ★ markierte Artikel wird aus der normalen Reihenfolge herausgenommen
+   und ganz zum Schluss gespielt. Dort bietet nur noch EIN Vertreter je Team -
+   der Punktbeste. Der Artikel zaehlt mehrfach (Feld im Setup, Standard 2).
+
+   Ohne markierten Artikel gibt es kein Finale, und alles laeuft wie vorher.
+   ──────────────────────────────────────────────────────────────────────── */
+/** Laeuft gerade das Finale? @returns {boolean} */
+function pihIsFinal(){ return pihState.finalAt >= 0 && pihState.idx === pihState.finalAt; }
+/** Darf dieser Mitspieler gerade bieten? @param {any} p @returns {boolean} */
+function pihMayBid(p){ return !pihIsFinal() || pihState.finalists.indexOf(p.uid) >= 0; }
+/** Vor dem Finale die Vertreter bestimmen. */
+function pihSetFinalists(){
+  pihState.finalists = pihTeamChampions().filter(Boolean).map(p => p.uid);
 }
 
 // picked: uids, die hervorgehoben werden (Rundensieger bzw. Gesamtsieger).
@@ -205,7 +305,8 @@ function pihRenderRound(){
   if (!it) { pihFinish(); return; }
 
   pihRenderScores(pihState.phase === 'result' && pihState.lastResult ? pihState.lastResult.winners : []);
-  setHtml('pih-item', escAttr(it.name));
+  pihRenderTeams();
+  setHtml('pih-item', (pihIsFinal() ? '★ SUPERPREIS · ' : '') + escAttr(it.name));
   pihRenderStage();
 
   // Preis und Notiz erst bei der Auflösung - vorher wäre das Spiel vorbei.
@@ -234,8 +335,9 @@ function pihRenderControls(){
       <button class="btn btn-secondary" onclick="pihQuit()">Beenden</button>`;
   } else if (pihState.phase === 'result') {
     const last = pihState.idx + 1 >= pihState.order.length;
+    const gleichFinale = pihState.finalAt >= 0 && pihState.idx + 1 === pihState.finalAt;
     box.innerHTML = `
-      <button class="btn btn-primary" onclick="pihAfterResult()">${last ? 'Endstand' : 'Weiter'}</button>
+      <button class="btn btn-primary" onclick="pihAfterResult()">${last ? 'Endstand' : gleichFinale ? '★ Zum Finale' : 'Weiter'}</button>
       <button class="btn btn-secondary" onclick="pihQuit()">Beenden</button>`;
   } else {
     box.innerHTML = `<button class="btn btn-secondary" onclick="pihQuit()">Beenden</button>`;
@@ -250,8 +352,13 @@ function pihRenderBidGrid(){
   if (pihState.phase === 'bid') {
     const guests = pihGuestBidders();
     // Während der Gebote sieht niemand die Zahlen - nur wie viele schon da sind.
+    const wer = pihIsFinal()
+      ? 'Finale — es bieten nur ' + (pihState.finalists
+          .map(u => { const p = pihByUid(u); return p ? escAttr(p.label) : ''; })
+          .filter(Boolean).join(' und ') || '—')
+      : 'Gebote laufen — auf den Handys eintippen';
     grid.innerHTML =
-      hint('Gebote laufen — auf den Handys eintippen') +
+      hint(wer) +
       `<div id="pih-bid-progress" style="width:100%;text-align:center;font-size:1.6rem;font-weight:800;margin-bottom:8px;"></div>` +
       (guests.length ? hint('Gäste ohne Handy — Gebot eintragen:') +
         guests.map(g => {
@@ -357,8 +464,8 @@ function pihCloseBids(){
   if (pihBids.ref) pihBids.ref.update({ active: false }).catch(()=>{});
 }
 
-function pihPhoneBidders(){ return pihState.players.filter(p => p.key); }
-function pihGuestBidders(){ return pihState.players.filter(p => !p.key); }
+function pihPhoneBidders(){ return pihState.players.filter(p => p.key && pihMayBid(p)); }
+function pihGuestBidders(){ return pihState.players.filter(p => !p.key && pihMayBid(p)); }
 
 // Handy-Gebote und vom Host eingetragene Gast-Gebote zusammengeführt.
 // Gebote von Leuten, die gar nicht mitspielen, fallen dabei raus.
@@ -425,11 +532,14 @@ function pihEvaluate(){
   // Punkt für den Rundensieg, ein zweiter für den punktgenauen Treffer.
   // Cent-Toleranz, weil 19,99 getippt und 19.99 gespeichert sonst an der
   // Gleitkomma-Darstellung scheitern könnte.
+  const wert = pihIsFinal() ? pihState.finalWeight : 1;
   winners.forEach(r => {
     r.win = true;
     const p = pihByUid(r.uid);
     if (!p) return;
-    p.score += 1;
+    p.score += wert;
+    // Der Bonus fuer den punktgenauen Treffer bleibt bei einem Punkt, auch im
+    // Finale: sonst entscheidet ein Zufallstreffer die ganze Show doppelt.
     if (Math.abs(r.num - price) < 0.005) { r.exact = true; p.score += 1; }
   });
 
@@ -460,6 +570,9 @@ function pihSkip(){
 function pihNext(){
   pihStopTimer();
   pihCloseBids();
+  // Steht als Naechstes der Superpreis an, stehen jetzt die Vertreter fest -
+  // erst nach der letzten normalen Runde, damit die Punkte davon zaehlen.
+  if (pihState.finalAt >= 0 && pihState.idx + 1 === pihState.finalAt) pihSetFinalists();
   activeMediaSlot = null; renderMediaOverlay(null);
   pihState.bids = {}; pihState.hostBids = {}; pihState.lastResult = null;
   pihState.idx++;
@@ -485,11 +598,24 @@ function pihFinish(){
   const rank = [...pihState.players].sort((a,b) => b.score - a.score);
   const top = rank.length && rank[0].score > 0 ? rank.filter(p => p.score === rank[0].score) : [];
   pihRenderScores(top.map(p => p.uid));
+  pihRenderTeams();
+
+  // Gespielt wird in Teams, also steht das Teamergebnis oben. Der beste
+  // Einzelspieler kommt danach - er hat sein Team ins Finale gebracht.
+  const { scores: tScores } = pihTeamScores();
+  const namen = pihState.teamNames.length ? pihState.teamNames : pihTeamNames();
+  const teamSatz = tScores[0] === tScores[1]
+    ? `🏆 Unentschieden: ${escAttr(namen[0])} und ${escAttr(namen[1])} je ${tScores[0]}`
+    : `🏆 ${escAttr(namen[tScores[0] > tScores[1] ? 0 : 1])} gewinnt · ${tScores[0]} : ${tScores[1]}`;
+  const einzelSatz = top.length === 1 ? ` — bester Einzelspieler: ${escAttr(top[0].label)}`
+    : top.length > 1 ? ` — beste Einzelspieler: ${top.map(p => escAttr(p.label)).join(', ')}`
+                     : '';
 
   setText('pih-timer', '');
-  setHtml('pih-item', top.length === 1 ? `🏆 ${escAttr(top[0].label)} gewinnt!`
-    : top.length     ? `🏆 Gleichstand: ${top.map(p => escAttr(p.label)).join(', ')}`
-                     : 'Spiel beendet');
+  setHtml('pih-item', tScores[0] || tScores[1] ? teamSatz + einzelSatz
+    : top.length === 1 ? `🏆 ${escAttr(top[0].label)} gewinnt!`
+    : top.length       ? `🏆 Gleichstand: ${top.map(p => escAttr(p.label)).join(', ')}`
+                       : 'Spiel beendet');
   setHtml('pih-stage', '');
   setHtml('pih-media-bar', '');
   setHtml('pih-price', '');
@@ -628,7 +754,10 @@ function renderPihEditor(){
       <input type="file" webkitdirectory directory multiple style="display:none;" onchange="pihImportFolder(this)">
     </label>
   </div>
-  <div id="pih-import-info" class="hint-line" style="${pihImportInfo ? '' : 'display:none;'}">${escapeHtml(pihImportInfo)}</div>`;
+  <div id="pih-import-info" class="hint-line" style="${pihImportInfo ? '' : 'display:none;'}">${escapeHtml(pihImportInfo)}</div>
+  <div class="hint-line">${pihData.items.some(it => it && it.final)
+    ? '★ Superpreis gesetzt — er wird aus der Reihenfolge genommen und als Finale zuletzt gespielt.'
+    : '☆ Kein Superpreis markiert — dann gibt es kein Finale. Stern neben einem Artikel klicken.'}</div>`;
 
   const bulk = pihBulkVisible ? bulkPanelHtml({
     id: 'pih-bulk-text',
@@ -646,6 +775,7 @@ function renderPihEditor(){
       <span style="color:#FFD23F;font-weight:700;font-size:.72rem;width:26px;text-align:right;flex-shrink:0;">${i+1}.</span>
       <input id="pih-n-${i}" type="text" value="${escAttr(it.name)}" placeholder="Artikel" style="flex:3 1 0;${fieldCss}" oninput="pihData.items[${i}].name=this.value;pihSave()">
       <input type="text" value="${escAttr(pihPriceText(it.price))}" placeholder="Preis €" style="flex:1 1 0;max-width:120px;${fieldCss}${bad?'border-color:#e23b3b;':''}" oninput="pihSetPrice(${i},this)" onkeydown="pihPriceKey(event,${i})">
+      <button tabindex="-1" onclick="pihSetFinalItem(${i})" title="${it.final ? 'Ist der Superpreis fürs Finale — klicken hebt das auf' : 'Als Superpreis fürs Finale markieren'}" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:${it.final?'#FFD23F':'#6C74A8'};font-size:.9rem;padding:2px 4px;">${it.final?'★':'☆'}</button>
       <button tabindex="-1" onclick="pihToggleOpen(${i})" title="Bild &amp; Notiz" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:${hasExtra?'#FFD23F':'#6C74A8'};font-size:.85rem;padding:2px 4px;display:inline-flex;align-items:center;gap:2px;">${isOpen?'▾':'▸'}<span style="font-size:.6rem;">${imgCount?('🖼'+imgCount):(it.note&&it.note.trim()?'📝':'')}</span></button>
       <button tabindex="-1" class="btn btn-danger" style="padding:5px 9px;font-size:.68rem;flex-shrink:0;" onclick="pihDeleteItem(${i})" title="Löschen">🗑</button>
     </div>`;
@@ -682,6 +812,18 @@ function pihPriceKey(e, i){
   else { const nx = document.getElementById('pih-n-' + (i+1)); if (nx) nx.focus(); }
 }
 
+/** Einen Artikel zum Superpreis machen - oder die Markierung wieder wegnehmen.
+ *  Es kann immer nur EINEN geben: zwei Finalartikel waeren zwei Finals.
+ *  @param {number} i */
+function pihSetFinalItem(i){
+  const it = pihData.items[i];
+  if (!it) return;
+  const an = !it.final;
+  pihData.items.forEach(x => { delete x.final; });
+  if (an) it.final = true;
+  pihSave();
+  renderPihEditor();
+}
 function pihToggleOpen(i){ pihEditOpen = (pihEditOpen === i ? -1 : i); renderPihEditor(); }
 function pihToggleBulk(){
   pihBulkVisible = !pihBulkVisible;
@@ -730,13 +872,20 @@ function importPih(e){
   readJsonFile(e, d => {
     const list = Array.isArray(d.items) ? d.items : (Array.isArray(d) ? d : null);
     if (!list) throw new Error('Datei braucht ein Array "items"');
+    // Der Superpreis kommt mit, aber hoechstens einer: eine Datei mit zwei
+    // Markierungen haette sonst zwei Finals.
+    let finalGesehen = false;
     pihData = {
-      items: list.map(x => ({
-        name: x.name || x.artikel || x.title || '',
-        price: typeof x.price === 'number' ? x.price : pihParsePrice(x.price ?? x.preis),
-        note: x.note || x.notiz || '',
-        media: (x.media || []).slice(0, PIH_MAX_MEDIA),
-      }))
+      items: list.map(x => {
+        const it = {
+          name: x.name || x.artikel || x.title || '',
+          price: typeof x.price === 'number' ? x.price : pihParsePrice(x.price ?? x.preis),
+          note: x.note || x.notiz || '',
+          media: (x.media || []).slice(0, PIH_MAX_MEDIA),
+        };
+        if (x.final && !finalGesehen) { it.final = true; finalGesehen = true; }
+        return it;
+      })
     };
     renderPihEditor(); pihSave();
   });

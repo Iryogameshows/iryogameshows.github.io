@@ -456,6 +456,24 @@
       </div>
     </div>
 
+    <!-- Teams: die Zuordnung, WER in welchem Team ist, steht am Account
+         (Lobby → "Teams zuteilen"). Hier stehen nur die Namen. Leer lassen
+         heisst: die Namen aus dem laufenden Turnier, sonst "Team 1/2". -->
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;">
+      <div class="team-card" style="flex:1;min-width:180px;">
+        <div class="label">Team 1 heißt</div>
+        <input type="text" id="pih-t1-name" placeholder="Team 1">
+      </div>
+      <div class="team-card" style="flex:1;min-width:180px;">
+        <div class="label">Team 2 heißt</div>
+        <input type="text" id="pih-t2-name" placeholder="Team 2">
+      </div>
+      <div class="team-card" style="flex:1;min-width:180px;">
+        <div class="label">Superpreis zählt …fach</div>
+        <input type="number" id="pih-final-weight" min="1" max="20" value="2">
+      </div>
+    </div>
+
     <div class="team-card" style="margin-bottom:16px;">
       <div class="label">Wertung</div>
       <div id="pih-rule-pick" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
@@ -497,6 +515,7 @@
 <!-- DER PREIS IST HEISS - GAME -->
 <div id="pih-screen" class="screen">
   <div style="display:flex;flex-direction:column;height:100%;">
+    <div id="pih-teams"></div>
     <div class="pih-scores" id="pih-scores"></div>
     <div id="pih-timer" style="text-align:center;font-size:1.4rem;font-weight:800;letter-spacing:.05em;"></div>
     <div class="pih-item" id="pih-item"></div>
