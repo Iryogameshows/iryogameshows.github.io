@@ -12,6 +12,97 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-26 — Rad vom Handy · Host-Knöpfe nur im GM · Undo überall (`1673e6d`)
+
+Drei Wünsche in einem Commit, weil sie sich überlappen.
+
+### 1. Trivial Pursuit: Rad vom Handy drehen
+
+Das Team **am Zug** dreht jetzt selbst. Neuer Zweig `buzzer/tpspin` nach dem
+Muster von `ddfvote` und `estimate` (`makeRoundChannel`): der Host schreibt
+`{active, round, team, teamName, by:null}`, auf den Handys dieses Teams
+erscheint „🎡 Rad drehen" (`#screen-tpspin`).
+
+**Genau ein Dreh je Runde**, auf drei Ebenen abgesichert: das Handy setzt
+`by` per **transaction** (kommt nur durch, solange dort `null` steht — zwei
+gleichzeitige Finger ergeben einen Dreh); der Host schließt den Zweig im
+Rückruf **sofort** und noch einmal in `tpSpin`; und jede Runde hat eine
+eigene `round`, sodass ein Handy mit altem Stand in eine Runde schreibt, die
+niemand mehr abhört. `tpSpinOpen` verhindert, dass jedes Neuzeichnen eine
+neue Runde aufmacht.
+
+Der Knopf beim Host **bleibt**: ohne Verbindung, ohne Handy oder bei einem
+hängenden Gerät dreht er wie bisher. Wer gedreht hat, steht kurz in der
+Rundenleiste (`#tp-spin-by`).
+
+### 2. Host-Knöpfe weg vom Hauptbildschirm
+
+David hat ein Foto geschickt: „Antwort zeigen / Richtig / Falsch / Beenden"
+standen bei TP **auf dem Bildschirm, den auch das Publikum sieht**. Nachgesehen:
+**Feud, Jeopardy, WWM und WWDS** haben dort **keine** Steuerung, sie läuft nur
+über das GM-Fenster (und damit auch über das Gamepad, das die GM-Seite
+spiegelt). **DDF, PIH und TP** — die drei neueren Shows — hatten sie doppelt.
+
+Jetzt sind `#tp-controls`, `#ddf-controls` und `#pih-controls` samt ihren
+Render-Funktionen weg. Die GM-Helfer hatten schon **alle** Knöpfe, mit einer
+Lücke: „Nochmal / Zum Menü" nach Spielende stand nur auf dem Hauptbildschirm.
+Das steht jetzt im GM unter `phase === 'done'`.
+
+### 3. Undo in allen Shows
+
+`makeUndo(lies, ueberspringen, danach)` in `core.js`: ein flacher
+JSON-Schnappschuss des Zustandsobjekts, Stapel bis 40 Schritte.
+**`timerInt` wird ausgelassen** — zurückgeschrieben liefe der alte Timer
+weiter und der neue dazu. Bei TP bleibt zusätzlich `spinning` außen vor,
+sonst hängt das Rad nach einem Undo mitten in der Drehung.
+
+Benutzt von **WWM, WWDS, DDF, PIH, TP**. Feud (`undoLast`) und Jeopardy
+(`jeopardyUndo`) hatten schon eigene und bleiben, wie sie sind — zwei
+funktionierende Implementierungen umzubauen wäre Risiko ohne Gewinn.
+
+Gesichert wird vor: WWM `wwmLock/Next/Fifty/Phone/Audience`; WWDS
+`wwdsPick/Lock/Reveal/Next/Audience`; DDF `ddfReveal/ApplyLoss/Next`; PIH
+`pihEvaluate/pihNext`; TP `tpSpin/tpJudge/tpStealAward/tpStealNobody`. Der
+Knopf erscheint nur, wenn der Stapel etwas hergibt (`can()`).
+
+**Was Undo nicht kann:** Gesendetes zurückholen. Was auf den Handys stand,
+stand dort. Der Zustand beim Host und die Anzeige stimmen danach wieder,
+mehr verspricht der Knopf nicht. Steht so auch im Kommentar.
+
+### „Beenden"
+
+Bei DDF, PIH und TP raus — Feud, Jeopardy und WWDS hatten nie eins.
+**Das WWM-„Beenden" bleibt**: es ruft `wwmNext()` und ist der Spielzug nach
+einer falschen Antwort, kein Abbruch. Wer eine Show wirklich verlassen will,
+nimmt „Zum Menü" am Spielende oder lädt neu.
+
+### Geprüft
+
+`node check.js --types` ohne Meldung (386 Handler, 213 IDs, 967
+Klammernpaare). Im Browser **23 Prüfungen, alle grün**, Firebase durch eine
+mitschreibende Attrappe ersetzt:
+
+- TP-Hauptbildschirm hat **0** Knöpfe, das GM-Fenster „🎡 Rad drehen" und
+  „Beenden"… (letzteres ist beim Test noch dagewesen, danach entfernt und
+  gegengeprüft: `tpGmControlsHtml` enthält kein „Beenden" mehr, ebenso DDF
+  und PIH).
+- Rad-Kanal: `active:true`, richtiges Team, Teamname, `by:null`. Eingehender
+  Dreh → Rad läuft, Kanal zu (`active:false` geschickt), Name auf dem
+  Bildschirm; ein zweiter Dreh während der Drehung prallt ab; nach 3,6 s
+  steht die Frage und der Kanal bleibt zu.
+- Undo je Show: WWM nimmt 50:50 zurück und geht eine Frage zurück; WWDS
+  nimmt die Punkte zurück; DDF gibt das Leben zurück; PIH nimmt die Punkte
+  zurück und steht wieder in der Gebotsphase; TP nimmt das Tortenstück
+  zurück, das Team bleibt am Zug und das Rad hängt nicht.
+- Der Undo-Knopf fehlt, solange nichts zurückzunehmen ist, und erscheint
+  nach dem ersten Schritt.
+- Keine Konsolenfehler.
+
+**Ungeprüft:** der Rad-Knopf auf einem echten Handy über Firebase (die
+Handy-Seite ist nur gelesen, nicht gefahren), und ob Undo in jeder denkbaren
+Zwischenphase sinnvoll aussieht — gesichert sind die Schritte, die Punkte,
+Leben oder Runde ändern, nicht jede Kleinigkeit.
+
 ## 2026-09-26 — Handys im Finale stumm · Turnier-Teams umbenennbar (`c3ef922`)
 
 ### Handys im Finale
