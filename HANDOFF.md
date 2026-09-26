@@ -172,6 +172,12 @@ dunklen Schatten dazubekommen.
 mit `prefers-reduced-motion` (Gitter und Sterne sind dort mit abgeschaltet,
 aber nicht nachgemessen).
 
+**Entschieden am 2026-09-26:** David hat die Bühne zuerst in der Liste
+„Welches Intro:" gesucht und nicht gefunden — sie steht im Intro-Editor unter
+„Kopfzeile & Takt". Auf die Frage, ob sie als eigener Eintrag
+(„Eigenes Intro — Neon") in diese Liste soll, hat er **nein** gesagt. Es
+bleibt bei der Einstellung im Editor. **Nicht ungefragt umbauen.**
+
 **Fallstrick:** Der Dev-Server einer anderen Session war zwischendurch weg,
 `navigate` auf `localhost:3000` schlug fehl. `preview_start` mit dem Namen
 aus `.claude/launch.json` startet einen eigenen.
