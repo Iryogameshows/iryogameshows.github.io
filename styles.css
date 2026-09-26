@@ -927,6 +927,9 @@ body {
 .gm-bar .gm-gray { background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.1); }
 .gm-bar .gm-gold { background: linear-gradient(180deg, var(--gold), var(--gold-deep)); color: #1a1200; }
 .gm-bar .gm-blue { background: linear-gradient(180deg, var(--blue), var(--blue-deep)); color: #fff; }
+/* Orange ist in beiden Leisten die Farbe fuers Rueckgaengig - es soll sich
+   von den Spielknoepfen abheben, ohne wie ein Fehler auszusehen (rot). */
+.gm-bar .gm-orange { background: linear-gradient(180deg, #F97316, #C2410C); color: #fff; }
 .gm-bar .gm-label {
   font-size: .6rem; font-weight: 700; letter-spacing: 2px;
   text-transform: uppercase; color: rgba(255,255,255,.3);
@@ -2345,6 +2348,9 @@ body {
   .pih-team-name{font-size:.68rem;letter-spacing:.5px;}
   .pih-team-pts{font-size:1.3rem;}
 }
+
+/* Wer vom Handy aus gedreht hat - steht nur kurz in der Rundenleiste. */
+.tp-spin-by{color:#FFD23F;font-weight:800;}
 
 .intro-editor-col{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
 .intro-card .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}

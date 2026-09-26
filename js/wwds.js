@@ -50,6 +50,13 @@ let wwdsState = {
   timer:0, timerInt:null, timeUp:false,
 };
 
+/* Rueckgaengig - siehe makeUndo in core.js. */
+const wwdsUndoStack = makeUndo(() => wwdsState, ['timerInt'], () => {
+  renderWwds();
+  updateGamemaster();
+});
+function wwdsUndo(){ if (wwdsUndoStack.undo()) SFX.tick(); }
+
 function wwdsMoney(n){ return (n||0).toLocaleString('de-DE') + ' €'; }
 function wwdsQPerTeam(){ return Math.floor(wwdsData.categories.length / wwdsState.teamCount); }
 
@@ -277,6 +284,7 @@ function wwdsTieHtml(){
 
 // ── HAUPTRUNDE ──
 function wwdsPick(i){
+  wwdsUndoStack.save();
   if (wwdsState.phase !== 'pick' || wwdsState.used[i]) return;
   wwdsState.currentCat = i;
   wwdsState.selected = null;
@@ -299,6 +307,7 @@ function wwdsSelect(i){
 }
 
 function wwdsLock(){
+  wwdsUndoStack.save();
   if (wwdsState.phase !== 'question' || wwdsState.selected === null || wwdsState.locked) return;
   wwdsState.locked = true;
   wwdsStopTimer();
@@ -307,6 +316,7 @@ function wwdsLock(){
 }
 
 function wwdsReveal(){
+  wwdsUndoStack.save();
   if (wwdsState.phase !== 'question' || !wwdsState.locked || wwdsState.revealed) return;
   wwdsState.revealed = true;
   wwdsStopTimer();
@@ -320,6 +330,7 @@ function wwdsReveal(){
 }
 
 function wwdsNext(){
+  wwdsUndoStack.save();
   if (wwdsState.phase !== 'question' || !wwdsState.revealed) return;
   wwdsState.used[wwdsState.currentCat] = true;
   wwdsState.currentCat = null;
@@ -336,6 +347,7 @@ function wwdsNext(){
 }
 
 function wwdsAudience(){
+  wwdsUndoStack.save();
   if (wwdsState.phase !== 'question') return;
   const t = wwdsState.currentTeam;
   if (wwdsState.audienceUsed[t] || wwdsState.revealed) return;
@@ -528,6 +540,7 @@ function wwdsControlsHtml(pfx){
     if (!s.tieGuessesShown) b += `<button class="gm-btn gm-blue" onclick="${pfx}wwdsShowTieGuesses()">👁 Schätzungen aufdecken</button>`;
     if (!s.tieRevealed) b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsRevealTie()">Auflösen</button>`;
   }
+  if (wwdsUndoStack.can()) b += `<button class="gm-btn gm-orange" onclick="${pfx}wwdsUndo()">↩ Undo</button>`;
   return b;
 }
 function wwdsBarButtons(){ return wwdsControlsHtml(''); }

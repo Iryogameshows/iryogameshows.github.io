@@ -36,6 +36,13 @@ let wwmState = {
   audienceShown:false, audienceData:null, gameOver:false,
 };
 
+/* Rueckgaengig - siehe makeUndo in core.js. */
+const wwmUndoStack = makeUndo(() => wwmState, [], () => {
+  renderWwm();
+  updateGamemaster();
+});
+function wwmUndo(){ if (wwmUndoStack.undo()) SFX.tick(); }
+
 function wwmMoney(n){ return n.toLocaleString('de-DE') + ' €'; }
 
 function startWwm(){
@@ -134,6 +141,7 @@ function wwmSelect(i){
 }
 
 function wwmLock(){
+  wwmUndoStack.save();
   if (wwmState.selected === null || wwmState.locked) return;
   wwmState.locked = true;
   renderWwm();
@@ -150,6 +158,7 @@ function wwmReveal(){
 }
 
 function wwmNext(){
+  wwmUndoStack.save();
   const q = wwmData.questions[wwmState.currentQ];
   if (!wwmState.revealed) return;
   if (wwmState.selected === q.correct){
@@ -199,6 +208,7 @@ function wwmEnd(amount, jackpot){
 
 // ── LIFELINES ──
 function wwmFifty(){
+  wwmUndoStack.save();
   if (wwmState.lifelines.fifty || wwmState.revealed) return;
   const q = wwmData.questions[wwmState.currentQ];
   // An der tatsächlichen Antwortzahl entlang statt an fest verdrahteten vier:
@@ -215,6 +225,7 @@ function wwmFifty(){
 }
 
 function wwmPhone(){
+  wwmUndoStack.save();
   if (wwmState.lifelines.phone) return;
   wwmState.lifelines.phone = true;
   renderWwm();
@@ -222,6 +233,7 @@ function wwmPhone(){
 }
 
 function wwmAudience(){
+  wwmUndoStack.save();
   if (wwmState.lifelines.audience || wwmState.revealed) return;
   const q = wwmData.questions[wwmState.currentQ];
   const active = q.answers.map((_, i) => i).filter(i => !wwmState.removed.includes(i));
@@ -260,6 +272,7 @@ function wwmControlsHtml(pfx){
       btns += `<button class="gm-btn gm-red" onclick="${pfx}wwmNext()">Beenden</button>`;
     }
   }
+  if (wwmUndoStack.can()) btns += `<button class="gm-btn gm-orange" onclick="${pfx}wwmUndo()">↩ Undo</button>`;
   return btns;
 }
 

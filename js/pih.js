@@ -134,6 +134,14 @@ const PIH_MONEY = new Intl.NumberFormat('de-DE', { style:'currency', currency:'E
 function pihMoney(n){ return (typeof n === 'number' && isFinite(n)) ? PIH_MONEY.format(n) : '—'; }
 
 function pihCurrentItem(){ return pihData.items[pihState.order[pihState.idx]] || null; }
+/* Rueckgaengig - siehe makeUndo in core.js. Gesichert wird vor dem
+   Auswerten und vor jedem Rundenwechsel. */
+const pihUndoStack = makeUndo(() => pihState, ['timerInt'], () => {
+  pihRenderRound();
+  updateGamemaster();
+});
+function pihUndo(){ if (pihUndoStack.undo()) SFX.tick(); }
+
 function pihByUid(uid){ return pihState.players.find(p => p.uid === uid) || null; }
 
 // Zahl aus einer Eingabe lesen. Dieselben Regeln wie parseEstimate auf dem
@@ -317,31 +325,7 @@ function pihRenderRound(){
   noteEl.innerHTML  = (shown && it.note) ? escAttr(it.note) : '';
 
   pihRenderBidGrid();
-  pihRenderControls();
   updateGamemaster();
-}
-
-function pihRenderControls(){
-  const box = document.getElementById('pih-controls');
-  if (!box) return;
-  if (pihState.phase === 'show') {
-    box.innerHTML = `
-      <button class="btn btn-primary" onclick="pihBeginBids()">Gebote öffnen</button>
-      <button class="btn btn-secondary" onclick="pihSkip()">Artikel überspringen</button>
-      <button class="btn btn-secondary" onclick="pihQuit()">Beenden</button>`;
-  } else if (pihState.phase === 'bid') {
-    box.innerHTML = `
-      <button class="btn btn-primary" onclick="pihEvaluate()">Auflösen</button>
-      <button class="btn btn-secondary" onclick="pihQuit()">Beenden</button>`;
-  } else if (pihState.phase === 'result') {
-    const last = pihState.idx + 1 >= pihState.order.length;
-    const gleichFinale = pihState.finalAt >= 0 && pihState.idx + 1 === pihState.finalAt;
-    box.innerHTML = `
-      <button class="btn btn-primary" onclick="pihAfterResult()">${last ? 'Endstand' : gleichFinale ? '★ Zum Finale' : 'Weiter'}</button>
-      <button class="btn btn-secondary" onclick="pihQuit()">Beenden</button>`;
-  } else {
-    box.innerHTML = `<button class="btn btn-secondary" onclick="pihQuit()">Beenden</button>`;
-  }
 }
 
 function pihRenderBidGrid(){
@@ -499,6 +483,7 @@ function pihBidProgress(){
 /* ── Auflösung ─────────────────────────────────────────────────────────── */
 
 function pihEvaluate(){
+  pihUndoStack.save();
   const it = pihCurrentItem();
   if (!it) return;
   const price = Number(it.price);
@@ -582,6 +567,7 @@ function pihSkip(){
 }
 
 function pihNext(){
+  pihUndoStack.save();
   pihStopTimer();
   pihCloseBids();
   // Steht als Naechstes der Superpreis an, stehen jetzt die Vertreter fest -
@@ -635,9 +621,7 @@ function pihFinish(){
   setHtml('pih-price', '');
   setHtml('pih-note', escAttr(turnierBericht));
   pihRenderBidGrid();
-  setHtml('pih-controls', `
-    <button class="btn btn-primary" onclick="showScreen('pih-setup-screen')">Nochmal</button>
-    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>`);
+
 }
 
 function pihQuit(){
@@ -1034,7 +1018,11 @@ function pihGmControlsHtml(pfx){
     const last = s.idx + 1 >= s.order.length;
     b += `<button class="gm-btn gm-gold" onclick="${pfx}pihAfterResult()">${last ? 'Endstand' : 'Weiter →'}</button>`;
   }
-  b += `<button class="gm-btn gm-gray" onclick="${pfx}pihQuit()">Beenden</button>`;
+  if (s.phase === 'done'){
+    return `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('pih-setup-screen')">Nochmal</button>`
+         + `<button class="gm-btn gm-gray" onclick="${pfx}showScreen('menu-screen')">Zum Menü</button>`;
+  }
+  if (pihUndoStack.can()) b += `<button class="gm-btn gm-orange" onclick="${pfx}pihUndo()">↩ Undo</button>`;
   return b;
 }
 

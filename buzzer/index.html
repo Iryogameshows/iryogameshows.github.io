@@ -250,6 +250,17 @@
     <div class="lobby-sub" style="color:rgba(255,255,255,.3);">Zurücklehnen und mitfiebern.</div>
   </div>
 
+  <!-- RAD DREHEN (Trivial Pursuit)
+       Nur das Team am Zug bekommt diesen Bildschirm, und nur einer davon
+       kommt durch: den Zuschlag holt sich der erste Druck per transaction. -->
+  <div id="screen-tpspin" class="screen">
+    <div class="team-chip" id="tpspin-team-chip">Team</div>
+    <div class="lobby-title">🎡 Ihr seid dran</div>
+    <div class="lobby-sub" id="tpspin-sub">Dreh das Rad!</div>
+    <button class="btn" id="tpspin-btn">🎡 Rad drehen</button>
+    <div class="lobby-sub" id="tpspin-hint" style="color:rgba(255,255,255,.3);"></div>
+  </div>
+
   <!-- ABSTIMMUNG (Der Dümmste fliegt) -->
   <div id="screen-vote" class="screen">
     <div class="lobby-title">🗳️ Abstimmung</div>
@@ -516,6 +527,9 @@
     if (mayVote()) { showScreen('screen-vote'); renderVote(); return; }
     if (estActive && !mayEstimate()) { showEstWatch(); return; }
     if (estActive && !estSubmitted) { showEstimate(); return; }
+    // Rad drehen: nur das Team am Zug. Die anderen warten in der Lobby -
+    // ein Knopf, der nichts tut, ist schlimmer als kein Knopf.
+    if (myTeamSpins()) { showTpSpin(); return; }
     // Der Buzzer hängt nicht mehr am Team: sobald der Host eine Frage
     // vorbereitet, bekommt ihn jeder - mit Team wie ohne. Dazwischen wartet
     // man in der Lobby. buzzedThisRound haelt den Screen noch kurz, damit man
@@ -622,6 +636,56 @@
     document.getElementById('est-hint').textContent = estSubmitted ? 'Schätzung abgegeben ✔' : '';
     refreshRoot();
   });
+
+  // ── RAD DREHEN (Trivial Pursuit) ──
+  // Der Host oeffnet buzzer/tpspin, sobald das Rad dran ist, und schreibt
+  // hinein, WELCHES Team drehen darf. Jede Drehung hat eine eigene round -
+  // daran erkennt das Handy, dass es wieder losgeht, und setzt seine Sperre
+  // zurueck. Genau ein Dreh je Runde: wer zuerst drueckt, belegt "by", alle
+  // weiteren Versuche prallen an der transaction ab.
+  let spinActive=false, spinRound=0, spinTeam=null, spinBy=null, spinSending=false;
+  ref.child('tpspin').on('value', s2 => {
+    const v = s2.val() || {};
+    const r = v.round || 0;
+    if (r !== spinRound) { spinRound = r; spinSending = false; }
+    spinActive = !!v.active;
+    spinTeam = (v.team === undefined || v.team === null) ? null : v.team;
+    spinBy = v.by || null;
+    refreshRoot();
+  });
+  /** Bin ich dran? Team am Zug, und noch hat niemand gedreht. */
+  function maySpin(){
+    return spinActive && hasTeam() && spinTeam === myTeam && !spinBy;
+  }
+  /** Mein Team ist dran - egal ob schon gedreht wurde. */
+  function myTeamSpins(){ return spinActive && hasTeam() && spinTeam === myTeam; }
+
+  function showTpSpin(){
+    showScreen('screen-tpspin');
+    fillTeamChip(document.getElementById('tpspin-team-chip'));
+    const btn = document.getElementById('tpspin-btn');
+    const schonGedreht = !!spinBy;
+    btn.disabled = schonGedreht || spinSending;
+    btn.textContent = schonGedreht ? 'Gedreht ✔' : (spinSending ? 'dreht…' : '🎡 Rad drehen');
+    document.getElementById('tpspin-sub').textContent = schonGedreht
+      ? (spinBy.name || 'Jemand') + ' hat gedreht.'
+      : 'Dreh das Rad!';
+    document.getElementById('tpspin-hint').textContent = schonGedreht ? '' : 'Einer aus eurem Team reicht.';
+  }
+
+  function sendSpin(){
+    if (!maySpin() || !acc || spinSending) return;
+    spinSending = true;
+    showTpSpin();
+    // transaction statt set: zwei gleichzeitige Finger ergeben einen Dreh.
+    // Wer zu spaet kommt, bekommt den fremden Wert zurueck und sieht ihn.
+    ref.child('tpspin/by').transaction(
+      cur => (cur === null ? { key: acc.key, name: myName(), ts: Date.now() } : undefined),
+      () => { spinSending = false; refreshRoot(); }
+    );
+    if (navigator.vibrate) navigator.vibrate(60);
+  }
+  document.getElementById('tpspin-btn').addEventListener('click', sendSpin);
 
   // ── ABSTIMMUNG (Der Dümmste fliegt) ──
   // Der Host öffnet sie über buzzer/ddfvote. Jede Runde hat eine eigene

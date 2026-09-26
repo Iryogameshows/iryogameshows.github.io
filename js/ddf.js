@@ -97,6 +97,15 @@ function startDdf(){
 
 /* ── Anzeige ───────────────────────────────────────────────────────────── */
 
+/* Rueckgaengig. Gesichert wird vor jedem Schritt, der Leben kostet oder die
+   Runde weiterschiebt - genau dort tut ein Fehlklick weh. */
+const ddfUndoStack = makeUndo(() => ddfState, ['timerInt'], () => {
+  ddfRenderRound();
+  ddfRenderPlayers();
+  updateGamemaster();
+});
+function ddfUndo(){ if (ddfUndoStack.undo()) SFX.tick(); }
+
 function ddfAlive(){ return ddfState.players.filter(p => !p.out); }
 
 function ddfByUid(uid){ return ddfState.players.find(p => p.uid === uid) || null; }
@@ -197,39 +206,7 @@ function ddfRenderRound(){
 
   ddfRenderMediaBar();
   ddfRenderVoteGrid();
-  ddfRenderControls();
   updateGamemaster();
-}
-
-function ddfRenderControls(){
-  const box = document.getElementById('ddf-controls');
-  if (!box) return;
-  if (ddfState.phase === 'question') {
-    box.innerHTML = `
-      <button class="btn btn-primary" onclick="ddfReveal()">Antwort zeigen</button>
-      ${ddfState.roundTime ? `<button class="btn btn-secondary" onclick="ddfStartTimer()">Zeit starten</button>` : ''}
-      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
-  } else if (ddfState.phase === 'answer') {
-    box.innerHTML = `
-      <button class="btn btn-primary" onclick="ddfBeginVote()">Zur Abstimmung</button>
-      <button class="btn btn-secondary" onclick="ddfNext()">Frage überspringen</button>
-      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
-  } else if (ddfState.phase === 'vote') {
-    const { done, total } = ddfVoteProgress();
-    box.innerHTML = `
-      <button class="btn btn-primary" onclick="ddfEvaluateVote()">Auswerten${done < total ? ' (vorzeitig)' : ''}</button>
-      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
-  } else if (ddfState.phase === 'runoffAnnounce') {
-    box.innerHTML = `
-      <button class="btn btn-primary" onclick="ddfStartRunoff()">🔁 Stichwahl starten</button>
-      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
-  } else if (ddfState.phase === 'result') {
-    box.innerHTML = `
-      <button class="btn btn-primary" onclick="ddfAfterResult()">Weiter</button>
-      <button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
-  } else {
-    box.innerHTML = `<button class="btn btn-secondary" onclick="ddfQuit()">Beenden</button>`;
-  }
 }
 
 function ddfRenderVoteGrid(){
@@ -302,7 +279,7 @@ function ddfHostVote(voterKey, candKey){
 
 /* ── Ablauf ────────────────────────────────────────────────────────────── */
 
-function ddfReveal(){ ddfStopTimer(); ddfState.phase = 'answer'; ddfRenderRound(); }
+function ddfReveal(){ ddfUndoStack.save(); ddfStopTimer(); ddfState.phase = 'answer'; ddfRenderRound(); }
 
 /* ── Abstimmung über die Handys ──────────────────────────────────────────
    Läuft über buzzer/ddfvote, nach demselben Muster wie die Schätzfrage:
@@ -419,6 +396,7 @@ function ddfEvaluateVote(){
 }
 
 function ddfApplyLoss(uid){
+  ddfUndoStack.save();
   const p = ddfByUid(uid);
   if (!p || p.out) return;
   p.lives--;
@@ -441,6 +419,7 @@ function ddfAfterResult(){
 }
 
 function ddfNext(){
+  ddfUndoStack.save();
   ddfStopTimer();
   ddfCloseVote();
   activeMediaSlot = null; renderMediaOverlay(null);
@@ -482,9 +461,7 @@ function ddfFinish(){
   setHtml('ddf-note', escAttr(turnierBericht));
   setHtml('ddf-media-bar', '');
   setHtml('ddf-vote-grid', '');
-  setHtml('ddf-controls', `
-    <button class="btn btn-primary" onclick="showScreen('ddf-setup-screen')">Nochmal</button>
-    <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>`);
+
 }
 
 function ddfQuit(){
@@ -755,7 +732,11 @@ function ddfGmControlsHtml(pfx){
   } else if (s.phase === 'result'){
     b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfAfterResult()">Weiter →</button>`;
   }
-  b += `<button class="gm-btn gm-gray" onclick="${pfx}ddfQuit()">Beenden</button>`;
+  if (s.phase === 'done'){
+    return `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('ddf-setup-screen')">Nochmal</button>`
+         + `<button class="gm-btn gm-gray" onclick="${pfx}showScreen('menu-screen')">Zum Menü</button>`;
+  }
+  if (ddfUndoStack.can()) b += `<button class="gm-btn gm-orange" onclick="${pfx}ddfUndo()">↩ Undo</button>`;
   return b;
 }
 

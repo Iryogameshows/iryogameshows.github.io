@@ -187,9 +187,59 @@ function tpReportResult(){
 
 function tpQuit(){
   tpState.active = false;
+  tpCloseSpin();
   feudBuzzClose();
   showScreen('menu-screen');
   updateGamemaster();
+}
+
+/* ── Rad drehen vom Handy ─────────────────────────────────────────────────
+   Bisher drehte nur der Host. Jetzt darf das Team am Zug selbst drehen - das
+   ist der Moment, auf den am Tisch alle warten, und er gehoert den Spielern.
+
+   Gebaut wie die Abstimmung bei DDF und die Gebote bei PIH: ein eigener Zweig
+   mit einer Rundennummer. Die Nummer ist der Grund, warum **genau ein** Dreh
+   je Runde moeglich ist - ein Handy, das noch die alte Runde im Speicher hat,
+   schreibt in eine Runde, die der Host nicht mehr abhoert.
+
+   Wer zuerst drueckt, dreht: das Handy setzt "by" per transaction und kommt
+   nur durch, solange dort nichts steht. Zwei gleichzeitige Finger ergeben
+   also einen Dreh, nicht zwei. Der Host schliesst den Zweig sofort danach.
+
+   Ohne Verbindung aendert sich nichts: der Knopf beim Host bleibt, wo er
+   war, und dreht wie bisher.
+   ──────────────────────────────────────────────────────────────────────── */
+let tpSpinRound = 0;
+let tpSpinOpen = false;   // laeuft gerade eine offene Dreh-Runde auf den Handys?
+
+const tpSpinCh = makeRoundChannel('buzzer/tpspin', 'by', by => {
+  // by ist {key, name, ts} des Handys, das zuerst gedrueckt hat.
+  if (!by || !by.name) return;
+  if (!tpState.active || tpState.phase !== 'spin' || tpState.spinning) return;
+  tpCloseSpin();
+  setText('tp-spin-by', `${by.name} dreht!`);
+  tpSpin();
+});
+
+/** Den Zweig fuers Handy oeffnen - das Team am Zug darf drehen. */
+function tpOpenSpin(){
+  if (!tpState.active || tpState.phase !== 'spin') return;
+  tpSpinRound = nextRoundId(tpSpinRound);
+  tpSpinCh.detach();
+  const ref = tpSpinCh.open();
+  if (!ref) return;                       // keine Verbindung: Host dreht selbst
+  ref.set({
+    active: true,
+    round: tpSpinRound,
+    team: tpState.turn,
+    teamName: tpState.teamNames[tpState.turn] || ('Team ' + (tpState.turn + 1)),
+    by: null,
+  }).then(() => tpSpinCh.attach()).catch(()=>{});
+}
+function tpCloseSpin(){
+  tpSpinOpen = false;
+  tpSpinCh.detach();
+  if (tpSpinCh.ref) tpSpinCh.ref.update({ active: false }).catch(()=>{});
 }
 
 /* ── Rad ────────────────────────────────────────────────────────────────── */
@@ -215,6 +265,15 @@ function tpBuildWheel(){
 
 /** Welche Kategorien noch ungestellte Fragen haben.
  *  @returns {number[]} */
+/* Rueckgaengig - siehe makeUndo in core.js. Gesichert wird vor dem Drehen
+   und vor jedem Urteil; 'spinning' bleibt aussen vor, sonst haengt das Rad
+   nach einem Undo mitten in der Drehung fest. */
+const tpUndoStack = makeUndo(() => tpState, ['spinning'], () => {
+  tpRender();
+  updateGamemaster();
+});
+function tpUndo(){ if (tpUndoStack.undo()) SFX.tick(); }
+
 function tpOpenCats(){
   const open = [];
   for (let i = 0; i < tpCatCount(); i++){
@@ -234,6 +293,7 @@ function tpSpinMs(){
 }
 
 function tpSpin(){
+  tpUndoStack.save();
   if (tpState.spinning || tpState.phase !== 'spin' || !tpState.active) return;
   let pool = tpOpenCats();
   // Alles einmal durch: die Kategorien werden wieder freigegeben, statt das
@@ -247,6 +307,7 @@ function tpSpin(){
   const cat = pool[Math.floor(Math.random() * pool.length)];
 
   tpState.spinning = true;
+  tpCloseSpin();          // ab jetzt nimmt kein zweiter Dreh mehr an
   tpRender();
   const seg = 360 / tpCatCount();
   // Der Zeiger steht oben. Damit die Mitte des Segments unter ihm landet,
@@ -294,6 +355,7 @@ function tpShowAnswer(){
 /** Der Host urteilt ueber die Antwort des Teams am Zug.
  *  @param {boolean} ok */
 function tpJudge(ok){
+  tpUndoStack.save();
   if (tpState.finalTeam >= 0) return tpJudgeFinal(ok);
   if (tpState.cat < 0) return;
   if (ok){
@@ -357,6 +419,7 @@ function tpOpenSteal(){
 /** Ein anderes Team hat nachgefasst und lag richtig.
  *  @param {number} team */
 function tpStealAward(team){
+  tpUndoStack.save();
   if (tpState.phase !== 'steal' || tpState.cat < 0) return;
   SFX.correct();
   tpAward(team, tpState.cat);
@@ -373,6 +436,7 @@ function tpStealAward(team){
 }
 
 function tpStealNobody(){
+  tpUndoStack.save();
   if (tpState.phase !== 'steal') return;
   SFX.wrong();
   tpNextTeam();
@@ -485,32 +549,18 @@ function tpRenderStage(){
     ${answer}${steal}`);
 }
 
-function tpRenderControls(){
-  const btn = (label, fn, cls) => `<button class="btn ${cls || 'btn-secondary'}" onclick="${fn}">${label}</button>`;
-  let html = '';
-  if (tpState.phase === 'spin'){
-    html = btn(tpState.spinning ? 'dreht…' : '🎡 Rad drehen', 'tpSpin()', 'btn-primary');
-  } else if (tpState.phase === 'question' || tpState.phase === 'final'){
-    html = btn('Antwort zeigen', 'tpShowAnswer()', 'btn-primary')
-         + btn('✓ Richtig', 'tpJudge(true)', 'btn-accent')
-         + btn('✕ Falsch', 'tpJudge(false)', 'btn-danger');
-  } else if (tpState.phase === 'answer'){
-    html = btn('✓ Richtig', 'tpJudge(true)', 'btn-accent')
-         + btn('✕ Falsch', 'tpJudge(false)', 'btn-danger');
-  } else if (tpState.phase === 'steal'){
-    html = tpState.teamNames.map((n, i) => i === tpState.turn ? '' :
-      btn('✓ ' + escAttr(n), `tpStealAward(${i})`, 'btn-accent')).join('')
-      + btn('Niemand', 'tpStealNobody()');
-  }
-  html += btn('Beenden', 'tpQuit()');
-  setHtml('tp-controls', html);
-}
-
 function tpRender(){
   if (!tpState.active) return;
+  // Sobald wieder gedreht werden darf, bekommt das Team am Zug den Knopf aufs
+  // Handy. Der Merker verhindert, dass jedes Neuzeichnen eine neue Runde
+  // aufmacht - sonst wuerde ein schon gedrueckter Dreh wieder freigegeben.
+  if (tpState.phase === 'spin' && !tpState.spinning && !tpSpinOpen){
+    tpSpinOpen = true;
+    setText('tp-spin-by', '');
+    tpOpenSpin();
+  }
   tpRenderTeams();
   tpRenderStage();
-  tpRenderControls();
   const finalNow = tpState.finalTeam >= 0;
   setText('tp-info', finalNow ? 'Schlussfrage' : 'Runde läuft');
   setText('tp-turn', tpState.phase === 'done'
@@ -766,7 +816,13 @@ function tpGmControlsHtml(pfx){
     });
     b += `<button class="gm-btn gm-gray" onclick="${pfx}tpStealNobody()">Niemand</button>`;
   }
-  b += `<button class="gm-btn gm-gray" onclick="${pfx}tpQuit()">Beenden</button>`;
+  if (s.phase === 'done'){
+    // Nach dem Spiel steuert der Host von hier weiter. Frueher standen diese
+    // beiden Knoepfe auf dem Hauptbildschirm - also auf der Leinwand.
+    return `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('tp-setup-screen')">Nochmal</button>`
+         + `<button class="gm-btn gm-gray" onclick="${pfx}showScreen('menu-screen')">Zum Menü</button>`;
+  }
+  if (tpUndoStack.can()) b += `<button class="gm-btn gm-orange" onclick="${pfx}tpUndo()">↩ Undo</button>`;
   return b;
 }
 

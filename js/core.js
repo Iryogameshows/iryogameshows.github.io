@@ -739,6 +739,52 @@ let state = {
   allOut: false,
 };
 
+/* ── Rueckgaengig, allgemein ──────────────────────────────────────────────
+   Family Feud und Jeopardy hatten von Anfang an ein Undo, die fuenf spaeteren
+   Shows nicht. Ein verklickter Punkt liess sich dort nur noch von Hand
+   geradebiegen - mitten in der Show.
+
+   Statt fuenfmal denselben Stapel zu schreiben, steht er hier einmal. Er
+   kopiert den Spielzustand flach ueber JSON; das reicht, weil in allen
+   Zustaenden nur einfache Daten stehen (Zahlen, Zeichenketten, Listen,
+   Objekte). Ausgenommen sind Felder, die keine Daten sind - allen voran
+   timerInt, das Handle eines laufenden Intervalls: wuerde man es
+   zurueckschreiben, liefe der alte Timer weiter und der neue dazu.
+
+   Was Undo NICHT kann: Gesendetes zurueckholen. Was einmal auf den Handys
+   stand, stand dort. Der Zustand beim Host stimmt danach wieder, die
+   Anzeige auch - mehr verspricht der Knopf nicht.
+   @param {() => any} lies       gibt das lebende Zustandsobjekt
+   @param {string[]} ueberspringen  Felder, die nicht mitkopiert werden
+   @param {() => void} danach    neu zeichnen
+   @returns {{save:()=>void, undo:()=>boolean, can:()=>boolean, reset:()=>void}} */
+function makeUndo(lies, ueberspringen, danach){
+  /** @type {any[]} */
+  const stapel = [];
+  return {
+    save(){
+      const o = lies();
+      if (!o) return;
+      /** @type {any} */
+      const kopie = {};
+      Object.keys(o).forEach(k => { if (ueberspringen.indexOf(k) < 0) kopie[k] = o[k]; });
+      try { stapel.push(JSON.parse(JSON.stringify(kopie))); } catch { return; }
+      // Mehr als 40 Schritte braucht niemand, und ein Stapel, der eine ganze
+      // Show mitschleppt, kostet nur Speicher.
+      if (stapel.length > 40) stapel.shift();
+    },
+    can(){ return stapel.length > 0; },
+    undo(){
+      const prev = stapel.pop();
+      if (!prev) return false;
+      Object.assign(lies(), prev);
+      danach();
+      return true;
+    },
+    reset(){ stapel.length = 0; },
+  };
+}
+
 let actionHistory = [];
 
 function saveSnapshot() {
@@ -1240,6 +1286,7 @@ const GM_SHARED_CSS = `
   .gm-btn.gm-gray{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1);}
   .gm-btn.gm-gold{background:linear-gradient(180deg,#FFD23F,#F0B800);color:#1a1200;}
   .gm-btn.gm-blue{background:linear-gradient(180deg,#3B82F6,#1D4ED8);color:#fff;}
+  .gm-btn.gm-orange{background:linear-gradient(180deg,#F97316,#C2410C);color:#fff;}
   .tag{font-size:.62rem;font-weight:800;padding:3px 8px;border-radius:99px;letter-spacing:.3px;}
   .tag-blue{background:rgba(59,130,246,.15);color:#93C5FD;}
   .tag-gold{background:rgba(255,210,63,.15);color:#FFD23F;}
