@@ -134,6 +134,21 @@ function previewCustomIntro(){
 
 /* ── Editor ─────────────────────────────────────────────────────────────── */
 
+/* Der Intro-Editor ist von jedem Setup-Screen aus erreichbar - der
+   Bedienblock #intro-pick wandert ja mit. "Zurueck" zeigte trotzdem fest auf
+   den Family-Feud-Screen: wer das Intro aus Jeopardy heraus bearbeitete, kam
+   danach bei Family Feud heraus und haette im schlimmsten Fall die falsche
+   Show gestartet. Deshalb wird gemerkt, woher der Aufruf kam. */
+let introEditFrom = 'menu-screen';
+function openIntroEditor(){
+  const aktiv = document.querySelector('.screen.active');
+  if (aktiv && aktiv.id && aktiv.id !== 'intro-edit-screen') introEditFrom = aktiv.id;
+  showScreen('intro-edit-screen');
+}
+function closeIntroEditor(){
+  showScreen(document.getElementById(introEditFrom) ? introEditFrom : 'menu-screen');
+}
+
 function renderIntroEditor(){
   const slides = introData.slides || (introData.slides = []);
   const rows = slides.map((s, i) => `
