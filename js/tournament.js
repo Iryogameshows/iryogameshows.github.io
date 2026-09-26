@@ -286,7 +286,7 @@ function renderTournament(){
   const medals = ['🥇','🥈','🥉'];
   const standings = order.map((o, rank) => `
     <div class="q-list-item" style="${rank===0 && o.t>0 ? 'border-color:rgba(255,210,63,.35);background:rgba(255,210,63,.06);' : ''}">
-      <span class="q-label"><span class="q-num">${medals[rank]||rank+1+'.'}</span><strong>${tournament.teams[o.i]}</strong></span>
+      <span class="q-label"><span class="q-num">${medals[rank]||rank+1+'.'}</span><strong>${escapeHtml(tournament.teams[o.i])}</strong></span>
       <div style="display:flex;align-items:center;gap:12px;flex:1;max-width:50%;">
         <div style="flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;">
           <div style="width:${Math.round(o.t/maxT*100)}%;height:100%;background:linear-gradient(90deg,#FFD23F,#F0B800);border-radius:5px;transition:width .5s;"></div>
@@ -301,7 +301,7 @@ function renderTournament(){
     const icon = hidden ? '❓' : tournamentGameIcon(g.game);
     const label = hidden ? '???' : g.game;
     const result = g.done
-      ? tournament.teams.map((t, ti) => `${t}: ${g.scores[ti]} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')
+      ? tournament.teams.map((t, ti) => `${escapeHtml(t)}: ${g.scores[ti]} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')
       : '<span style="color:rgba(255,255,255,.35);">Noch nicht gespielt</span>';
     const canAutoStart = !hidden && !g.done && TOURNAMENT_STARTABLE[g.game];
     // Bei den teamlosen Shows kommt das Ergebnis von Hand. Das gehoert in die
@@ -322,8 +322,9 @@ function renderTournament(){
 
   const allDone = tournament.games.length > 0 && tournament.games.every(g => g.done);
   el.innerHTML = `
-    <div class="page-title" style="margin-bottom:10px;"><em>${tournament.name}</em></div>
+    <div class="page-title" style="margin-bottom:10px;"><em>${escapeHtml(tournament.name)}</em></div>
     <div class="q-list" style="margin-bottom:20px;">${standings}</div>
+    ${tournamentRenamePanelHtml()}
     ${allDone ? `<div class="edit-bar" style="margin-bottom:20px;"><button class="btn btn-primary" onclick="tournamentCelebrate()">🏆 Sieger feiern!</button></div>` : ''}
     <div class="page-title" style="font-size:.9rem;margin-bottom:8px;">Spielplan</div>
     <div class="q-list" style="margin-bottom:14px;">${gamesHtml}</div>
@@ -354,6 +355,56 @@ function renderTournament(){
     </div>`;
 }
 
+/* ── Umbenennen ───────────────────────────────────────────────────────────
+   Turniername und Teamnamen liessen sich nach dem Anlegen nicht mehr aendern
+   - ein Tippfehler im Teamnamen stand den ganzen Abend da, und wer seine
+   Teams erst nach dem ersten Spiel tauft, musste das Turnier neu anlegen und
+   alle Ergebnisse verlieren.
+
+   Umbenennen ist ungefaehrlich: die Punkte haengen am INDEX (scores[0] ist
+   Team 1), nicht am Namen. Die Reihenfolge bleibt deshalb, wie sie ist -
+   zwei Namen zu tauschen wuerde die Ergebnisse NICHT mittauschen. Genau
+   deshalb gibt es hier kein Sortieren und kein Loeschen. */
+let tournamentRenameOpen = false;
+function tournamentToggleRename(){
+  tournamentRenameOpen = !tournamentRenameOpen;
+  renderTournament();
+}
+/** @returns {string} */
+function tournamentRenamePanelHtml(){
+  if (!tournamentRenameOpen){
+    return `<div class="edit-bar" style="margin-bottom:20px;">
+      <button class="btn btn-secondary btn-sm" onclick="tournamentToggleRename()">✏ Namen ändern</button>
+    </div>`;
+  }
+  return `<div class="editor-card" style="margin-bottom:20px;">
+    <label>Turniername</label>
+    <input type="text" id="tour-rename-name" value="${escAttr(tournament.name)}" placeholder="Turniername">
+    <label>Teams — nur die Namen, die Punkte bleiben an ihrem Platz</label>
+    ${tournament.teams.map((t, i) => `
+      <input type="text" id="tour-rename-team${i}" value="${escAttr(t)}" placeholder="Team ${i+1}">`).join('')}
+    <div class="editor-actions">
+      <button class="btn btn-primary" onclick="tournamentRenameSave()">Übernehmen</button>
+      <button class="btn btn-secondary" onclick="tournamentToggleRename()">Abbrechen</button>
+    </div>
+    <div style="font-size:.7rem;color:rgba(255,255,255,.35);margin-top:8px;">
+      Die Reihenfolge bleibt: Zeile 1 ist und bleibt das Team, das bisher als Erstes stand.
+      Zwei Namen zu vertauschen tauscht die Punkte nicht mit.
+    </div>
+  </div>`;
+}
+function tournamentRenameSave(){
+  if (!tournament) return;
+  const name = fieldVal('tour-rename-name').trim();
+  if (name) tournament.name = name;
+  // Ein leer gelassenes Feld behaelt den alten Namen - ein namenloses Team
+  // waere in der Tabelle eine Luecke.
+  tournament.teams = tournament.teams.map((alt, i) => fieldVal('tour-rename-team' + i).trim() || alt);
+  saveTournament();
+  tournamentRenameOpen = false;
+  renderTournament();
+}
+
 function tournamentCelebrate(){
   const totals = tournamentTotals();
   const max = Math.max(...totals);
@@ -362,7 +413,7 @@ function tournamentCelebrate(){
     ? 'Unentschieden im Turnier!'
     : `${winners[0]} gewinnt das Turnier! 🏆`);
   setHtml('final-scores', tournament.teams
-    .map((t, i) => `${t}: <strong>${totals[i]}</strong> Turnierpunkte`).join('<br>'));
+    .map((t, i) => `${escapeHtml(t)}: <strong>${totals[i]}</strong> Turnierpunkte`).join('<br>'));
   showEl('tour-record-btn', false);
   showScreen('result-screen');
   confetti(true);

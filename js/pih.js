@@ -445,6 +445,18 @@ function pihBeginBids(){
   pihState.hostBids = {};
   pihBidRound = nextRoundId(pihBidRound);
 
+  // Im Finale duerfen nur die beiden Vertreter tippen. "only" traegt ihre
+  // Account-Schluessel; das Handy vergleicht sie mit dem eigenen und zeigt
+  // den anderen stattdessen, wer gerade bietet. Ohne das stuende bei allen
+  // das Eingabefeld offen, und ihre Gebote fielen erst in der Auswertung
+  // stillschweigend raus - das sieht auf dem Handy aus wie ein Fehler.
+  // Nur Konten haben einen Schluessel; Gaeste tippen ohnehin beim Host.
+  const nurKeys = pihIsFinal()
+    ? pihState.finalists.map(u => { const p = pihByUid(u); return p && p.key; }).filter(Boolean)
+    : null;
+  const nurNamen = pihIsFinal()
+    ? pihState.finalists.map(u => { const p = pihByUid(u); return p && p.label; }).filter(Boolean)
+    : null;
   pihBids.detach();
   const ref = pihBids.open();
   if (ref) {
@@ -452,6 +464,8 @@ function pihBeginBids(){
       active: true,
       round: pihBidRound,
       question: 'Was kostet: ' + (it.name || '?'),
+      only: nurKeys && nurKeys.length ? nurKeys : null,
+      onlyNames: nurNamen && nurNamen.length ? nurNamen : null,
       answers: null,
     }).then(() => pihBids.attach()).catch(()=>{});
   }

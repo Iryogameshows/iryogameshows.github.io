@@ -241,6 +241,15 @@
     <div class="lobby-sub" id="est-hint" style="color:rgba(255,255,255,.3);"></div>
   </div>
 
+  <!-- SCHAETZFRAGE, aber nicht fuer mich: im Finale von "Der Preis ist heiss"
+       bietet nur ein Vertreter je Team. Die anderen bekommen statt des
+       Eingabefelds diesen Bildschirm - sonst tippen sie ins Leere. -->
+  <div id="screen-estwatch" class="screen">
+    <div class="lobby-title">★ Finale</div>
+    <div class="lobby-sub" id="estwatch-who"></div>
+    <div class="lobby-sub" style="color:rgba(255,255,255,.3);">Zurücklehnen und mitfiebern.</div>
+  </div>
+
   <!-- ABSTIMMUNG (Der Dümmste fliegt) -->
   <div id="screen-vote" class="screen">
     <div class="lobby-title">🗳️ Abstimmung</div>
@@ -466,6 +475,13 @@
     inp.placeholder = estText ? 'Deine Antwort' : 'Deine Schätzung';
   }
 
+  // Finale laeuft, ich bin nicht dabei.
+  function showEstWatch(){
+    showScreen('screen-estwatch');
+    const wer = estOnlyNames.length ? estOnlyNames.join(' und ') : 'die Teamvertreter';
+    document.getElementById('estwatch-who').textContent = 'Es bieten ' + wer + '.';
+  }
+
   function showBuzz(){
     showScreen('screen-buzz');
     fillTeamChip(teamChip);
@@ -498,6 +514,7 @@
     // Abstimmung (Der Dümmste fliegt) und Schätzung/Gebot (Jeopardy, Der Preis
     // ist heiß) haben Vorrang - beide sind ohnehin teamunabhängig.
     if (mayVote()) { showScreen('screen-vote'); renderVote(); return; }
+    if (estActive && !mayEstimate()) { showEstWatch(); return; }
     if (estActive && !estSubmitted) { showEstimate(); return; }
     // Der Buzzer hängt nicht mehr am Team: sobald der Host eine Frage
     // vorbereitet, bekommt ihn jeder - mit Team wie ohne. Dazwischen wartet
@@ -587,6 +604,9 @@
   // ── SCHÄTZFRAGE ──
   // Der Host öffnet/schließt sie über buzzer/estimate. Jede neue Schätzfrage
   // bekommt eine eigene round, damit die Sperre pro Frage zurückgesetzt wird.
+  let estOnly = [], estOnlyNames = [];
+  /** Darf ich bei dieser Schaetzfrage mittippen? */
+  function mayEstimate(){ return !estOnly.length || (!!acc && estOnly.indexOf(acc.key) >= 0); }
   ref.child('estimate').on('value', s => {
     const e = s.val() || {};
     const r = e.round || 0;
@@ -594,6 +614,10 @@
     estActive = !!e.active;
     estQuestion = e.question || '';
     estText = !!e.text;
+    // only: Liste der Account-Schluessel, die tippen duerfen. Fehlt sie,
+    // duerfen alle - so bleibt jede normale Schaetzfrage unveraendert.
+    estOnly = Array.isArray(e.only) ? e.only : [];
+    estOnlyNames = Array.isArray(e.onlyNames) ? e.onlyNames : [];
     if (estActive && acc && e.answers && e.answers[acc.key]) estSubmitted = true;
     document.getElementById('est-hint').textContent = estSubmitted ? 'Schätzung abgegeben ✔' : '';
     refreshRoot();
@@ -664,7 +688,7 @@
   function sendEstimate(){
     const inp = document.getElementById('est-input');
     const raw = (inp.value || '').trim();
-    if (!raw || !acc || estSubmitted) return;
+    if (!raw || !acc || estSubmitted || !mayEstimate()) return;
     estSubmitted = true;
     document.getElementById('est-send').disabled = true;
     const num = parseEstimate(raw);
