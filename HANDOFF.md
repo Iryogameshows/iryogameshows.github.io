@@ -12,6 +12,76 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-26 — Preis ist heiß: Teamstand und Finale (`8ef97a8`)
+
+**Anlass:** David hat gefragt, ob „Der Preis ist heiß" normalerweise ein
+Finale hat. Im Fernsehen ja (drei Spielrunden, zum Schluss der Superpreis),
+bei uns hatte es keins — die Phasen waren `show → bid → result → done`.
+Dazu kam von ihm: **„wir spielen in 2 teams"**. Das Spiel kannte Teams
+vorher **überhaupt nicht**, sie tauchten erst ganz am Ende beim
+Turnier-Eintrag auf.
+
+**Von David entschieden** (über die Auswahlfrage): Finale mit **je einem
+Vertreter** pro Team, Gewicht **im Setup einstellbar**, Teamstand **während
+des ganzen Spiels** sichtbar.
+
+**Gemacht, 1 — Teamstand:** Neue Leiste `#pih-teams` über der Einzelwertung,
+führendes Team hervorgehoben. Die Zuordnung kommt aus `allPlayers[].team`
+(Lobby → „Teams zuteilen"), also **aus derselben Quelle wie das Turnier** —
+zwei Quellen wären zwei Stände, die auseinanderlaufen. Namen aus den neuen
+Feldern `pih-t1-name`/`pih-t2-name`; leer gelassen zieht es die Namen aus
+einem laufenden Turnier, sonst „Team 1"/„Team 2". Gäste ohne Account haben
+kein Team, spielen mit und werden unter der Leiste namentlich ausgewiesen —
+sie fallen sonst stillschweigend aus der Wertung.
+
+**Gemacht, 2 — Finale:** Im Editor markiert ein **★** je Artikel den
+Superpreis (immer nur einen; ein zweiter Klick hebt es auf). `startPih`
+nimmt ihn aus der Mischung und hängt ihn ans **Ende** von `order`;
+`finalAt` merkt sich die Stelle, `pihIsFinal()` fragt sie ab. „Artikel pro
+Spiel" zählt ihn nicht mit — die Zahl meint die normalen Runden.
+
+Im Finale bietet je Team nur der **Punktbeste** (`pihTeamChampions`,
+festgelegt in `pihNext` *vor* dem Eintritt, damit die letzte Vorrunde noch
+zählt). `pihMayBid` filtert `pihPhoneBidders`/`pihGuestBidders`, damit gehen
+Gebote anderer gar nicht erst in die Wertung. Der Superpreis bringt
+`finalWeight` Punkte (Setup, Standard 2). **Der Bonus für den punktgenauen
+Treffer bleibt bei 1** — sonst entscheidet ein Zufallstreffer die Show
+doppelt.
+
+Ohne markierten Artikel ist `finalAt` −1 und alles läuft wie vorher. Ein als
+Superpreis markierter Artikel **ohne gültigen Preis** wird ignoriert.
+
+**Geprüft:** `node check.js --types` ohne Meldung (400 Handler, 214 IDs).
+Im Browser **41 Prüfungen, alle grün**, Firebase abgeklemmt (72 Aufrufe),
+vier Accounts in zwei Teams plus ein Gast:
+
+- Editor: Stern je Artikel, immer nur einer gesetzt, wieder abwählbar,
+  Hinweiszeile wechselt zwischen „kein Superpreis" und „Superpreis gesetzt".
+- Start mit „3 Artikel": `order` hat **4** Einträge, der Superpreis steht an
+  Position 4 und kommt in den Vorrunden nicht vor.
+- Teamleiste da, Gast als „ohne Team" ausgewiesen.
+- Drei Vorrunden durchgespielt: Anna punktgenau (1+1), Clara, Ben →
+  **Rot 3 : Blau 1**. Knopf heißt dann „★ Zum Finale" statt „Endstand".
+- Finale: Vertreter sind **Anna** (2) und **Clara** (1), nur die beiden
+  dürfen bieten, Davids Gebot taucht im Ergebnis **nicht** auf, der Gast
+  bietet nicht mehr mit, Überschrift „★ SUPERPREIS".
+- Clara gewinnt das Finale → **3 Punkte** → Endstand **Rot 3 : Blau 4**, das
+  Finale dreht das Spiel also wie gewollt.
+- Endstand nennt Teamergebnis zuerst, bester Einzelspieler dahinter.
+- Gegenprobe ohne Superpreis: `finalAt` −1, zwei Runden wie eingestellt,
+  alle dürfen bieten. Nur ein besetztes Team: ein Vertreter, kein Absturz.
+- Keine Konsolenfehler. Bildschirmfoto der Teamleiste (Rot 4 : Blau 2).
+
+**Offen / bewusst so gelassen:** Während des Finales zeigen **alle** Handys
+weiter das Eingabefeld — die Gebote der Nicht-Finalisten werden nur nicht
+gewertet. Sie stumm zu schalten hieße, in die gemeinsame Estimate-Leitung
+einzugreifen, die sich PIH mit der Jeopardy-Schätzfrage teilt. Der
+Bildschirm sagt, wer bietet; der Host sagt es ohnehin an.
+
+**Ungeprüft:** ein echter Durchlauf mit Handys über Firebase, drei Teams
+(der Code kennt hier bewusst nur zwei), und was passiert, wenn der
+Punktbeste eines Teams zwischendurch das Spiel verlässt.
+
 ## 2026-09-26 — Preis ist heiß: ganzen Ordner einlesen (`a74661d`)
 
 **Gemacht:** Knopf **„📁 Ordner einlesen"** in der Werkzeugleiste des
