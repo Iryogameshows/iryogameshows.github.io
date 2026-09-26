@@ -12,6 +12,71 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-26 — Preis ist heiß: ganzen Ordner einlesen (`a74661d`)
+
+**Gemacht:** Knopf **„📁 Ordner einlesen"** in der Werkzeugleiste des
+Artikel-Editors (`<input type="file" webkitdirectory>`). Je Bild im Ordner
+entsteht ein Artikel: **Name und Preis aus dem Dateinamen**, das Bild auf
+Medienplatz 1. Darunter eine Meldezeile (`#pih-import-info`) mit dem
+Ergebnis. Nicht-Bilder im Ordner werden übersprungen, sortiert wird
+alphabetisch nach Dateiname (`localeCompare` mit `numeric`, damit `2_` vor
+`10_` kommt).
+
+**Erkannte Muster** (`pihParseFileName`): `Name_49,99` · `Name - 49,99` ·
+`Name 49,99 €` · `Name # 49,99` · `49,99 - Name`, jeweils auch mit führender
+Nummerierung `03_` / `3. `. Auch `18.500` und `1.299,90` (deutsche
+Tausenderpunkte) über das vorhandene `pihParsePrice`.
+
+**Warum aus dem Dateinamen und nicht aus einer Begleit-CSV:** David benennt
+die Bilder beim Sammeln ohnehin; eine zweite Datei, die zu den Bildern passen
+muss, ist eine Fehlerquelle mehr. Er hatte ausdrücklich „Ordner hochladen und
+es geht automatisch" gesagt.
+
+**Bewusst keine blanke Zahl am Ende:** `Playstation 5.jpg` ist ein Name, kein
+Artikel für 5 €. Eine Zahl zählt nur mit klarem Trenner (`_ | ; #`, „ - "),
+mit Nachkommastelle oder mit `€`. Ohne erkannten Preis wird der Artikel
+trotzdem angelegt — Preisfeld leer und rot, das sieht man im Editor sofort.
+
+**Der eigentliche Fallstrick war der Speicher.** Die Spieldaten liegen in
+`localStorage`, das ist bei rund 5 MB zu Ende. Zwanzig Handyfotos sind als
+Data-URL ein Vielfaches davon, und `storeSetJson` fängt den Quota-Fehler ab
+und gibt **still** `false` zurück: die Artikel hätten im Editor gestanden und
+wären nach dem nächsten Neuladen weg gewesen. Deshalb
+
+- neu `shrinkImageToDataUrl(file, maxPx, quality)` in `core.js`: rechnet über
+  ein Canvas auf 1280 px herunter. PNG/WebP behalten ihre Transparenz,
+  solange das Ergebnis unter 500 KB bleibt; darüber wird JPEG daraus, dann
+  mit weißem Grund (sonst werden durchsichtige Stellen schwarz).
+- `pihSave()` gibt jetzt den Rückgabewert von `storeSetJson` weiter, und der
+  Import meldet per Hinweis **und** `alert`, wenn nicht gespeichert werden
+  konnte, samt Rat, als JSON zu exportieren.
+
+Nur der Import benutzt den Verkleinerer; die einzelnen Bild-Knöpfe in
+Jeopardy, DDF und PIH legen ihre Bilder weiter unverändert ab. Das absichtlich
+in einem Schritt zu ändern wäre eine zweite Baustelle gewesen.
+
+**Geprüft:** `node check.js --types` ohne Meldung (13 Dateien, 399 Handler,
+210 IDs). Im Browser **17 Prüfungen, alle grün:**
+
+- **12 Dateinamen-Muster** trocken gegen erwartete Name/Preis-Paare geprüft,
+  alle richtig — inklusive `Playstation 5.jpg` → kein Preis, `iPhone 15_999`
+  → Name „iPhone 15" / 999, `Kleinwagen_18.500` → 18500,
+  `Sofa 1.299,90 €` → 1299,9.
+- Echter Import von fünf erzeugten Bildern (bis 3000 × 2000 px) plus einer
+  `.txt`: 5 Artikel, Textdatei übersprungen, Reihenfolge nach `01_`…`05_`.
+- Bilder nach dem Verkleinern **32–37 KB** statt Megabyte, längste Kante
+  genau 1280 px, das PNG blieb PNG.
+- Meldezeile nennt „5 Artikel · 1 ohne erkannten Preis (rot markiert)", das
+  leere Preisfeld hat den roten Rahmen, das Bild sitzt auf Platz 1.
+- Gesamter Datensatz in `localStorage` unter 1 MB; nach `location.reload()`
+  stehen alle 11 Artikel und 5 Bilder unverändert da.
+- Ordner ohne Bilder, abgebrochene Auswahl und eine kaputte JPEG-Datei geben
+  je eine Meldung und legen nichts an. Keine Konsolenfehler.
+
+**Ungeprüft:** ein echter Ordner aus dem Dateidialog (im Test wurde
+`input.files` gesetzt), ein sehr großer Ordner (50+ Bilder) und wie lange das
+dann dauert, Unterordner, und ob Safari `webkitdirectory` hier mitmacht.
+
 ## 2026-09-25 — Jeopardy: eigener Punktwert je Frage (`5191743`)
 
 **Gemacht:** `JeopardyClue` hat das optionale Feld `pts`. Im Frage-Editor
