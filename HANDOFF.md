@@ -12,6 +12,77 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-26 — Handys im Finale stumm · Turnier-Teams umbenennbar (`c3ef922`)
+
+### Handys im Finale
+
+**Vorher** stand während des Finales bei **allen** Handys das Eingabefeld
+offen; die Gebote der Nicht-Finalisten fielen erst in der Auswertung
+stillschweigend raus. Auf dem Handy sah das aus wie ein Fehler. (Stand als
+„bewusst so gelassen" im Eintrag zu `8ef97a8` — David wollte es anders.)
+
+**Jetzt** schreibt `pihBeginBids` im Finale zwei Felder mit in
+`buzzer/estimate`: `only` (die **Account-Schlüssel** der Vertreter) und
+`onlyNames` (für die Anzeige). Das Handy liest beides, `mayEstimate()`
+vergleicht `only` mit dem eigenen Schlüssel, und wer nicht dabei ist bekommt
+den neuen Bildschirm `#screen-estwatch`: „★ Finale — Es bieten Anna und
+Clara." `sendEstimate` prüft es **noch einmal**, falls jemand den alten
+Bildschirm offen hat.
+
+**Warum Schlüssel und nicht uids:** Das Handy kennt nur seinen Account, nicht
+die spielinterne uid. Gäste haben gar keinen Schlüssel — sie tippen ohnehin
+beim Host und sind im Finale sowieso raus.
+
+**Rückwärtskompatibel:** Fehlt `only`, darf jeder. Die Jeopardy-Schätzfrage
+schreibt ihr `set` ohne diese Felder, und `set` ersetzt den ganzen Knoten —
+eine Einschränkung kann also nicht aus einer alten Runde hängen bleiben.
+
+### Turnier-Teams umbenennen
+
+Turniername und Teamnamen standen nach `tournamentCreate` fest. Ein Tippfehler
+blieb den ganzen Abend, und wer die Teams erst nach dem ersten Spiel tauft,
+musste das Turnier neu anlegen — samt Verlust aller Ergebnisse. Neu:
+`✏ Namen ändern` über der Tabelle, klappt ein Formular auf
+(`tournamentRenamePanelHtml` / `tournamentRenameSave`).
+
+**Bewusst nur Umbenennen, kein Sortieren und kein Löschen:** Die Punkte hängen
+am **Index** (`scores[0]` ist Team 1). Zwei Namen zu tauschen würde die
+Ergebnisse *nicht* mittauschen — das wäre eine Falle. Steht als Hinweis auch
+im Formular. Ein leer gelassenes Feld behält den alten Namen.
+
+**Nebenbefund, mitbehoben:** Team- und Turniernamen gingen an vier Stellen
+**ungeprüft ins Markup** (`<strong>${tournament.teams[o.i]}</strong>` und
+drei weitere). Mit frei eingetippten Namen ist das eine offene Tür; jetzt
+alle durch `escapeHtml`.
+
+### Geprüft
+
+`node check.js --types` ohne Meldung (403 Handler, 215 IDs). Im Browser
+**26 Prüfungen, alle grün**, Firebase durch eine Attrappe ersetzt, die
+mitschreibt, *was* gesendet wird:
+
+- Normale Runde: `only` und `onlyNames` sind `null` — keine Einschränkung.
+- Finale: `only` trägt genau `['k1','k3']` (Anna, Clara), `onlyNames`
+  „Anna und Clara".
+- Handy (`buzzer/index.html` lokal geladen, **nicht** eingeloggt, also keine
+  Schreibzugriffe auf die echte Datenbank): ohne `only` darf jeder; mit
+  `only` und fremdem Schlüssel greift die Sperre, der Warte-Bildschirm wird
+  aktiv und nennt beide Namen, das Eingabefeld bleibt zu; als Vertreter darf
+  man; `sendEstimate` schickt auch dann nichts, wenn der alte Bildschirm noch
+  offen ist. Bildschirmfoto gemacht.
+- Turnier: Formular öffnet vorbelegt, Umbenennen ändert Namen und lässt die
+  Punkte bei **4 : 2**, das alte Ergebnis 300 : 100 bleibt stehen, die
+  Tabelle zeigt die neuen Namen, gespeichert wird unter `tournamentCache`,
+  ein leeres Feld behält den alten Namen, Abbrechen verwirft.
+- Ein Teamname mit `<b>` erscheint als **Text**, kein eingeschleustes Markup.
+- Keine Konsolenfehler.
+
+**Ungeprüft:** der echte Weg über Firebase mit zwei Handys.
+
+**Fallstrick:** Das Turnier liegt unter `tournamentCache`, nicht unter
+`tournament`. Eine Prüfung auf den falschen Schlüssel meldet einen Fehler,
+der keiner ist.
+
 ## 2026-09-26 — Preis ist heiß: Teamstand und Finale (`8ef97a8`)
 
 **Anlass:** David hat gefragt, ob „Der Preis ist heiß" normalerweise ein
