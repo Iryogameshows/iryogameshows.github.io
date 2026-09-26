@@ -12,6 +12,35 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-26 — Intro-Editor landete immer bei Family Feud (`a58aab4`)
+
+**Symptom (David):** „wenn ich in das Intro laden will dann komm ich IMMER
+automatisch zu Family Feud".
+
+**Ursache:** Der „Zurück"-Knopf im Intro-Editor stand als
+`onclick="showScreen('setup-screen')"` im Markup — und `setup-screen` ist der
+Family-Feud-Screen. Der Bedienblock `#intro-pick` wandert über alle acht
+Setup-Screens (`INTRO_SLOTS`), der Rückweg tat das nicht. Wer das Intro aus
+Jeopardy, WWDS oder dem Turnier heraus öffnete, stand danach im
+Family-Feud-Setup — und einen Klick von der falschen Show entfernt.
+
+**Behoben:** `openIntroEditor()` merkt sich den gerade aktiven Screen in
+`introEditFrom`, `closeIntroEditor()` geht dorthin zurück. Gibt es den Screen
+nicht (mehr), führt es ins Menü statt in eine Sackgasse. Beide in
+`js/intro.js`, die zwei `onclick` in `index.html` zeigen jetzt darauf.
+
+**Geprüft:** `node check.js --types` ohne Meldung. Im Browser **5 Prüfungen,
+alle grün**: von **allen acht** Setup-Screens (Feud, Jeopardy, WWM, WWDS,
+DDF, PIH, TP, Turnier) den Editor geöffnet und zurück — jedes Mal auf dem
+Screen gelandet, von dem aus geöffnet wurde. Nach einem JSON-Import bleibt
+man im Editor und kommt danach richtig zurück. Bei unbekannter Herkunft
+landet man im Menü. Keine Konsolenfehler.
+
+**Fallstrick beim Patchen:** `<button ... onclick="showScreen('setup-screen')">Zurück</button>`
+steht **zweimal** in `index.html` — einmal im Feud-Editor, einmal im
+Intro-Editor. Eine Ersetzung darauf muss mit der Zeile davor ankern, sonst
+trifft sie die falsche.
+
 ## 2026-09-26 — Teams in der Lobby · Nachfassen nur fürs andere Team (`e24b4aa`)
 
 Drei Meldungen von David, alle berechtigt.
