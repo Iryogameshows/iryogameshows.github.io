@@ -12,6 +12,73 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-26 — Komplettdurchlauf (`bac0cd5`, ein Fund behoben)
+
+Alles einmal durchgetestet. **89 Prüfungen, alle grün**, davon 80 auf der
+Hostseite und 9 auf dem Handy. `node check.js --types` ohne Meldung
+(13 Dateien, 386 Handler, 213 IDs, 967 Klammernpaare). Firebase war durch
+eine Attrappe ersetzt, die jeden Schreibversuch **mitschreibt** statt ihn zu
+senden (137 abgefangen), Popout gezählt statt geöffnet (4).
+
+**Ein echter Fund, behoben in `bac0cd5`:** Der Ergebnis-Bildschirm lief bei
+400 px Breite über — 430 px statt 400. Ursache: mit laufendem Turnier stehen
+dort **vier** Knöpfe in einer Reihe („Ins Turnier übernehmen", „Zur
+Turnierübersicht", „Nochmal spielen", „Zum Menü"), und `.result-btns` hatte
+kein `flex-wrap`. Ohne Turnier sind zwei davon versteckt, deshalb ist es
+vorher nie aufgefallen. Jetzt bricht die Reihe um.
+
+**Durchgespielt:**
+
+- **Feud**: Antwort, Strike, Teamwechsel, Undo, Runde 2.
+- **WWM**: 15 Stufen, 4 Antworten, 50:50 und dessen Undo, Frage weiter, und
+  das „Beenden" nach einer falschen Antwort (der Spielzug, kein Abbruch).
+- **WWDS**: 12 Kategorien, Publikumsjoker, Punkte, Undo.
+- **Jeopardy**: eigener Punktwert 800 auf einem 100er-Feld (Board zeigt ihn),
+  Kategorie-Bild, Schritt-Frage mit Muster T,B,T, **Daily Double auf genau
+  dieser Frage** → 1600 statt 800, Abzug 400, Schritte einzeln, Undo nimmt
+  einen Schritt zurück, Gutschrift 1600. Ton in einer Schritt-Frage →
+  **kleine** Anzeige, Schritte bleiben lesbar, Stopp räumt auf.
+- **DDF**: vier Teilnehmer à 3 Leben, Abstimmung mit allen vier Stimmen,
+  Mehrheit trifft den Richtigen, Undo gibt das Leben zurück.
+- **PIH**: Ordner-Import (3 Bilder, Reihenfolge nach `01_`, Preise erkannt,
+  „Playstation 5" ohne Preis, Bilder unter 200 KB), Teamleiste, 1 Runde +
+  Finale, `only` geht an die Handys, nur die zwei Vertreter dürfen bieten,
+  Superpreis bringt 3 Punkte (plus 1 nur bei punktgenauem Treffer), Undo,
+  Endstand nennt das Team zuerst.
+- **TP**: Rad-Kanal öffnet mit dem richtigen Team, Stück vergeben, Undo nimmt
+  es zurück und das Rad hängt nicht.
+- **Alle sieben Shows**: Hauptbildschirm hat **0** Host-Knöpfe; DDF, PIH und
+  TP haben im GM kein „Beenden" mehr, dafür Undo.
+- **Sieben Editoren** bauen auf. **Beide Intro-Bühnen** laufen (Kellerbühne
+  mit Lämpchenrahmen, Neon mit Gitter und Sonne, dort korrekt ohne Rahmen).
+- **Logos**: der goldene Balken findet seinen Verlauf, keine doppelte
+  Verlaufs-ID im Dokument.
+- **Töne**: alle acht Einträge in `SFX` da, Knopf „Töne probehören" im Menü.
+- **Handy**: Rad-Knopf frei, wenn das eigene Team dran ist; nach fremdem Dreh
+  gesperrt mit Namen; anderes Team sieht nichts; Finale-Sperre greift und
+  nennt die Bieter; ohne Einschränkung darf jeder.
+- **Gamepad** lädt ohne Fehler.
+- **Kein Querüberlauf** auf zwölf Screens, weder bei 1024 px noch bei 400 px
+  (nach dem Fix). Keine Konsolenfehler auf allen drei Seiten.
+
+**Fünf Fehlalarme, die keine waren** — für den nächsten Durchlauf:
+
+- `ddfHostVote` trägt nur **Gäste** ein; Konten stimmen über Firebase ab.
+  Ein Test muss `ddfState.votes[uid]` direkt setzen, sonst zählt nur eine
+  Stimme. (Dasselbe gilt für `pihHostBid`/`pihState.bids`.)
+- Der **Undo-Knopf verschwindet nach dem Undo** — der Stapel ist dann leer.
+  Wer direkt danach auf den Knopf prüft, findet ihn zu Recht nicht.
+- Das **WWM-„Beenden"** erscheint nur nach einer **falschen** Antwort.
+- Im PIH-Finale gibt ein **punktgenaues** Gebot einen Punkt extra, der
+  Superpreis bringt also 3+1 statt 3.
+- `document.body.textContent` auf der Gamepad-Seite enthält den Inhalt der
+  `<script>`-Blöcke. Das sieht nach ausgeplauderter Konfiguration aus, ist
+  aber keine: `innerText` ist leer. Mit `innerText` prüfen.
+
+**Ungeprüft geblieben:** alles, was zwei echte Geräte über Firebase braucht —
+Rad drehen vom Handy, Gebote im Finale, Buzzer-Wettlauf. Dazu das echte
+Board-Popout und der Datei-Dialog per Mausklick.
+
 ## 2026-09-26 — Rad vom Handy · Host-Knöpfe nur im GM · Undo überall (`1673e6d`)
 
 Drei Wünsche in einem Commit, weil sie sich überlappen.
