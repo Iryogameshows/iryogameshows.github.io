@@ -190,7 +190,11 @@ function renderSetupLobby(game){
         const teamTag = (p.team !== undefined && p.team !== null)
           ? `<span class="player-team-tag" style="background:${teamTagColors[p.team]||'#888'}22;color:${teamTagColors[p.team]||'#888'};">${teamNames[p.team] || ('Team '+(p.team+1))}</span>`
           : `<span class="player-team-tag" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);">kein Team</span>`;
-        return `<div class="pr-row"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${escapeHtml(p.name)}</span>${teamTag}</div>`;
+        // Der Name stand hier als `flex:1` und schob damit alles andere an den
+        // rechten Rand. Mit der Klasse nimmt er nur den Platz, den er braucht -
+        // erst dadurch kann die Zeile mittig stehen (siehe .setup-lobby in
+        // styles.css).
+        return `<div class="pr-row"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span class="pr-name">${escapeHtml(p.name)}</span>${teamTag}</div>`;
       }).join('')
     : `<div class="pr-empty">
          <b>Noch niemand verbunden</b>

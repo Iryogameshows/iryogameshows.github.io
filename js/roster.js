@@ -73,11 +73,18 @@ function renderRosterLobby(game) {
     ? accounts.map(p => {
         const on = r.selected.has(p.key);
         const online = !!onlinePlayerKeys[p.key];
-        return `<div class="pr-row" style="${on ? '' : 'opacity:.45;'}">
+        /* Die Zeile hat zwei Stockwerke: oben wer, unten in welchem Team.
+           Vorher lag alles in einer Reihe - Punkt, Avatar, Name mit `flex:1`,
+           der Mitspielen-Knopf und bis zu vier Team-Knoepfe. In einem Kasten
+           von 520px ging das nicht auf: der Name drueckte alles nach rechts,
+           die Team-Knoepfe rutschten darunter und schoben sich dabei ueber
+           den Knopf daneben. Jetzt steht das Wer mittig in einer Zeile und
+           die Team-Knoepfe mittig darunter (siehe .roster-teams). */
+        return `<div class="pr-row${on ? '' : ' aus'}">
           <span class="online-dot${online ? '' : ' offline'}" title="${online ? 'Online' : 'Offline'}"></span>
           ${playerAvatarHtml(p)}
-          <span style="flex:1;">${escAttr(p.name)}</span>
-          <button class="btn ${on ? 'btn-primary' : 'btn-secondary'}" style="padding:4px 10px;font-size:.7rem;"
+          <span class="pr-name">${escAttr(p.name)}</span>
+          <button class="btn ${on ? 'btn-primary' : 'btn-secondary'} roster-pick"
                   onclick="rosterToggle('${game}', ${escJsArg(p.key)})">${on ? '✓ spielt mit' : 'dazu'}</button>
           ${on ? teamBtns(p) : ''}
         </div>`;

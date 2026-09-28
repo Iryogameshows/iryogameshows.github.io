@@ -733,10 +733,10 @@ body {
 .q-list-item .q-meta { color: rgba(255,255,255,.25); font-size: .75rem; margin-left: 6px; }
 .tour-icon-svg { display: inline-flex; vertical-align: middle; margin-right: 2px; }
 .tour-icon-svg svg { width: 22px; height: 22px; }
-.pmini-av { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+.pmini-av { width: 34px; height: 34px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
 .player-row .q-label { display: flex; align-items: center; gap: 8px; }
 .player-stats { font-size: .7rem; color: rgba(255,255,255,.35); margin-left: 8px; }
-.player-team-tag { font-size: .65rem; font-weight: 800; padding: 2px 8px; border-radius: 99px; margin-left: 6px; }
+.player-team-tag { font-size: .75rem; font-weight: 800; padding: 3px 10px; border-radius: 99px; white-space: nowrap; }
 .online-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--green); box-shadow: 0 0 6px 2px rgba(var(--green-rgb),.7); animation: onlinePulse 1.6s ease-in-out infinite; }
 .online-dot.offline { background: rgba(255,255,255,.15); box-shadow: none; animation: none; }
 @keyframes onlinePulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
@@ -1608,23 +1608,53 @@ body {
   .wwds-team .wt-money{font-size:1.5rem;}
 }
 
-/* ── Setup-Lobby (Team-Zuteilung vor Spielstart) ── */
-.setup-lobby{width:100%;max-width:520px;margin:18px auto 0;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 16px;}
-.setup-lobby .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.68rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:10px;}
-.setup-lobby .badge{background:rgba(var(--green-rgb),.18);color:#4ADE80;border-radius:99px;padding:2px 10px;font-size:.75rem;}
-.setup-lobby .pr-list{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;margin-bottom:10px;}
-.setup-lobby .pr-row{display:flex;align-items:center;gap:8px;font-size:.85rem;font-weight:600;padding:5px 4px;flex-wrap:wrap;}
-.setup-lobby .pr-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
+/* ── Setup-Lobby (Team-Zuteilung vor Spielstart) ──────────────────────────
+   Der Kasten steht auf jedem Setup-Screen und ist das Letzte, was der Host
+   vor dem Start ansieht - meist im Halbdunkel, oft mit dem Handy in der
+   anderen Hand. Er war auf 520px gebaut und durchgehend in 0,68 bis 0,85rem
+   gesetzt; mit Avatar, Namen, Mitspielen-Knopf und bis zu vier Team-Knoepfen
+   in einer Reihe wurde daraus ein Gedraenge, in dem sich Knoepfe ueberlagert
+   haben.
+
+   Deshalb: breiter, groesser, und alles mittig. Mittig ist hier nicht Zierde -
+   die Zeilen sind verschieden lang (ein Name, ein Name mit Team-Tag, ein Name
+   mit vier Knoepfen), und linksbuendig steht dann jede Zeile woanders. */
+.setup-lobby{width:100%;max-width:640px;margin:18px auto 0;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:18px 20px;}
+.setup-lobby .panel-head{display:flex;align-items:center;justify-content:center;gap:10px;font-size:.8rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:14px;}
+.setup-lobby .badge{background:rgba(var(--green-rgb),.18);color:#4ADE80;border-radius:99px;padding:3px 12px;font-size:.85rem;font-weight:800;}
+/* Die Hoehe war auf 220px gedeckelt. Mit den groesseren Zeilen passten dort
+   noch drei Spieler hinein, und die vierte stand angeschnitten da - das sieht
+   aus wie ein Fehler, nicht wie eine Liste, die weitergeht. min() nimmt auf
+   dem Handy den Bildschirm als Mass und auf dem Rechner eine feste Grenze,
+   damit der Kasten nicht den ganzen Setup-Screen verdraengt. */
+.setup-lobby .pr-list{display:flex;flex-direction:column;gap:8px;max-height:min(56vh,470px);overflow-y:auto;margin-bottom:12px;}
+/* Jede Zeile ein eigener Block: so ist zu sehen, was zusammengehoert, wenn
+   die Team-Knoepfe darunter umbrechen. */
+.setup-lobby .pr-row{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-size:1rem;font-weight:600;padding:9px 12px;flex-wrap:wrap;
+  background:rgba(255,255,255,.03);border-radius:10px;
+}
+/* Nicht ausgewaehlt: sichtbar, aber zurueckgenommen. Stand vorher als
+   Inline-Style in roster.js. */
+.setup-lobby .pr-row.aus{opacity:.5;}
+/* Der Name nimmt nur den Platz, den er braucht - mit `flex:1` (so stand es
+   vorher im Markup) waere jede Zeile linksbuendig, egal was daneben steht. */
+.setup-lobby .pr-name{min-width:0;overflow-wrap:anywhere;text-align:center;}
+.setup-lobby .pr-dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
 @keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.4}}
-.setup-lobby .pr-empty{font-size:.8rem;color:rgba(255,255,255,.35);padding:6px 0;}
+.setup-lobby .pr-empty{font-size:.9rem;color:rgba(255,255,255,.4);padding:8px 0;text-align:center;}
+/* Der Mitspielen-Knopf trug seine Groesse als Inline-Style (4px/0,7rem) - zu
+   klein fuer einen Knopf, der im Dunkeln getroffen werden muss. */
+.setup-lobby .roster-pick{padding:7px 16px;font-size:.78rem;letter-spacing:1px;}
 /* Die Team-Knoepfe stehen inzwischen an drei Stellen: in den Setup-Lobbys, in
    der Teilnehmer-Auswahl von DDF/PIH und in der Spielerübersicht. Sie waren
    nur unterhalb von .setup-lobby gestaltet - ausserhalb kamen sie als nackte
    Browser-Knoepfe heraus. Deshalb jetzt ohne Vorfahren-Bedingung. */
-.pr-team-btn{padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.7rem;font-weight:700;font-family:inherit;line-height:1.2;white-space:nowrap;cursor:pointer;}
+.pr-team-btn{padding:8px 15px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.65);font-size:.82rem;font-weight:700;font-family:inherit;line-height:1.2;white-space:nowrap;cursor:pointer;}
 .pr-team-btn:hover{filter:brightness(1.2);}
 .pr-team-btn.active{background:rgba(var(--gold-rgb),.25);border-color:var(--gold);color:var(--gold);}
-.setup-lobby .panel-row{display:flex;gap:8px;flex-wrap:wrap;}
+.setup-lobby .panel-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
 
 /* ── Der Duemmste fliegt & Der Preis ist heiss ─────────────────────────── */
 /* Leben als Herzen. Voll ist kräftig rot, verbraucht bleibt als dunkle
@@ -2110,7 +2140,7 @@ body {
 }
 .setup-lobby .panel-row .btn{
   width:100%;justify-content:center;text-align:center;
-  padding:10px 10px;font-size:.74rem;
+  padding:12px 12px;font-size:.8rem;
 }
 /* "Teams zuteilen" war btn-primary und damit der lauteste Knopf auf dem
    ganzen Screen - lauter als "Spiel starten", das darunter steht. Es bleibt
@@ -2134,8 +2164,8 @@ body {
   display:flex;flex-direction:column;gap:3px;
   padding:10px 2px 12px;line-height:1.45;
 }
-.setup-lobby .pr-empty b{font-size:.85rem;font-weight:800;color:rgba(255,255,255,.5);}
-.setup-lobby .pr-empty span{font-size:.75rem;color:rgba(255,255,255,.3);}
+.setup-lobby .pr-empty b{font-size:.95rem;font-weight:800;color:rgba(255,255,255,.55);}
+.setup-lobby .pr-empty span{font-size:.82rem;color:rgba(255,255,255,.35);}
 
 @media (max-width:460px){
   .setup-lobby .panel-row{grid-template-columns:1fr;}
@@ -2372,12 +2402,14 @@ body {
 .tp-spin-by{color:#FFD23F;font-weight:800;}
 
 /* Aufstellung unter der Teilnehmerliste: wer steht in welchem Team. */
-/* flex-shrink war 0 und kein Umbruch erlaubt: bei drei Teams plus dem
-   ✕-Knopf schob sich die Leiste aus der Zeile heraus und legte sich ueber den
-   "spielt mit"-Knopf daneben. */
-.roster-teams{display:inline-flex;gap:4px;flex-wrap:wrap;}
-.roster-lineup{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.07);font-size:.72rem;}
-.roster-team-sum{color:rgba(255,255,255,.65);}
+/* Die Team-Knoepfe bekommen eine eigene Zeile unter dem Namen: `flex-basis`
+   auf 100% zwingt den Umbruch, statt ihn dem verfuegbaren Platz zu ueberlassen.
+   Vorher standen sie mit flex-shrink:0 und ohne Umbruch in derselben Reihe und
+   schoben sich bei drei Teams plus ✕-Knopf ueber den "spielt mit"-Knopf. Ein
+   erzwungener Umbruch sieht immer gleich aus; ein zufaelliger nie. */
+.roster-teams{display:flex;gap:6px;flex-wrap:wrap;flex-basis:100%;justify-content:center;margin-top:2px;}
+.roster-lineup{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.07);font-size:.85rem;}
+.roster-team-sum{color:rgba(255,255,255,.7);}
 .roster-team-sum b{font-weight:800;margin-right:5px;}
 .roster-team-sum.t0 b{color:var(--red);}
 .roster-team-sum.t1 b{color:var(--blue);}

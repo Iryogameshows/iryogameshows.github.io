@@ -86,6 +86,21 @@ gamepad/index.html  Handy-Gamepad
 
 Eine Änderung an einem Spiel geht in die jeweilige `js/`-Datei, nicht in `index.html`.
 
+## BAUPLAN.md — bevor eine Show angefasst oder gebaut wird
+
+`BAUPLAN.md` im Wurzelverzeichnis ist das Skelett, an dem sich jede Gameshow
+entlanghangelt: die Reihenfolge in der Spieldatei, die elf Stellen, an denen
+eine neue Show angemeldet werden muss, und die Code- und Design-Regeln, die
+aus den bisherigen Shows entstanden sind.
+
+**Jede Regel dort hat einen Anlass**, meist einen Fehler, der in einer Show
+aufgefallen ist — der Commit-Hash steht dabei, der Vorgang in `HANDOFF.md`.
+
+Vor einer neuen Show: ganz lesen. Vor einer Änderung an einer bestehenden:
+mindestens die Abschnitte, die sie berührt. Wer eine Regel bricht, schreibt in
+die `HANDOFF.md`, warum — und wenn sich die Regel als falsch erweist, wird sie
+im `BAUPLAN.md` geändert, statt sie stillschweigend zu umgehen.
+
 ## Scripts
 
 Klassische `<script src>`-Tags, **keine** ES-Module. Alles liegt global, die
