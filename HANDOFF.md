@@ -12,6 +12,99 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Team-Zuteilung in allen Lobbys · Team-Anzeige auf dem Handy (`924a80e`)
+
+**Symptom (David, mit Bild der Jeopardy-Lobby):** „die team zuteilung soll da
+laufen. nicht über ein seperates Fenster. bitte. bau das endlich bei allen um."
+Dazu: „wenn man im Gif Screen ist, soll irgendwo stehen: Du bist in Team ...,
+oder Du bist in noch keinem Team".
+
+### 1 · Zuteilung an der Zeile, in allen sechs Lobbys
+
+In den vier **Team-Lobbys** (Family Feud, Jeopardy, Wer weiß denn sowas,
+Trivial Pursuit) stand je Zeile nur ein Merkzettel — der Team-Tag „kein Team".
+Zugeteilt wurde in der Spielerübersicht, einem eigenen Screen, auf den der
+Knopf „👥 Teams zuteilen" führte. Der Host musste also weg von dem Bildschirm,
+den er gerade einrichtet, dort zuteilen und zurück.
+
+Bei „Der Dümmste fliegt" und „Der Preis ist heiß" ging es längst an der Zeile.
+Jetzt überall — mit `playerTeamButtonsHtml()`, derselben Funktion. Der Knopf
+zur Spielerübersicht heißt nun „👥 Accounts verwalten": dort geht es um
+Passwörter und Löschen, nicht mehr um Teams.
+
+**Dabei aufgefallen — und es hätte den Umbau sonst wertlos gemacht:**
+`assignPlayerTeam()` schrieb den neuen Stand lokal nur nach `allPlayers`. Die
+Setup-Lobbys zeichnen ihre Zeilen aber aus `buzzer.presence` — zwei
+verschiedene Firebase-Knoten (`buzzer/players` und `buzzer/presence`).
+
+Solange die Zuteilung in der Spielerübersicht stattfand, fiel das nicht auf:
+die liest `allPlayers`. In der Lobby hätte der Knopf erst reagiert, wenn
+Firebase die Presence zurückspiegelt — bei stockender Verbindung also gar
+nicht. Genau der Fall, den der Kommentar „Sofort anzeigen, statt auf die
+Antwort der Datenbank zu warten" seit jeher verhindern sollte.
+
+Die Presence-Kopien werden jetzt mitgezogen (beide Kontexte: Jeopardy hat eine
+eigene Verbindung, Feud/WWDS/TP teilen sich eine), und
+`refreshOpenSetupLobby()` zeichnet die offene Lobby neu — Gegenstück zum schon
+vorhandenen `refreshOpenRosterLobby()`.
+
+**Gemessen:** ohne die Presence-Zeilen meldete der Test nach einem Klick
+`{davidTeam: null, aktiv: 0}` — nichts passiert. Mit ihnen
+`{davidTeam: 0, aktiv: 1}`.
+
+### 2 · Team-Zeile im Wartebildschirm des Handys
+
+Neue Zeile zwischen Namen und Hinweistext: **„Du bist in Die Blauen"** in der
+Teamfarbe, oder **„Du bist in noch keinem Team"** zurückgenommen. Davids
+Wortlaut übernommen.
+
+Sie liest denselben Wert wie der Chip auf dem Buzzer-Screen (`myTeam`,
+`teamNames`). Beide Firebase-Listener rufen `refreshRoot()`, sie steht also
+sofort richtig da, wenn der Host zuteilt — während der Spieler wartet, und
+genau dann passiert die Zuteilung.
+
+### Neu im Werkzeugkasten: ein Firebase-Stub für die Tests
+
+Die Handy-Seite ließ sich bisher gar nicht im Browser testen. Sie ruft
+`firebase.initializeApp()` in der ersten Zeile; ohne geladenes CDN — und in
+dieser Sandbox ist es gesperrt — wirft das, und **alles** darunter läuft nie,
+auch die `let`-Deklarationen. Der Test sah davon nur ein
+„Cannot access 'acc' before initialization" und wusste nichts damit anzufangen.
+
+`fbstub.js` im Scratchpad ersetzt Firebase durch ein Gerüst, das nichts tut,
+aber jede Kette durchlaufen lässt (`ref().child().on()`, `set`, `push`,
+`transaction`, `onDisconnect`, `ServerValue.TIMESTAMP`). Damit läuft die Seite
+bis zum Ende durch und ihre Funktionen sind aufrufbar.
+
+**Das ist die erste Möglichkeit überhaupt, `buzzer/index.html` automatisch zu
+prüfen.** Alles, was dort bisher geändert wurde — Buzzer-Sperre, Lobby-GIF,
+Einzelantwort — war nur aus dem Code hergeleitet.
+
+### Geprüft
+
+| | Ergebnis |
+|---|---|
+| Team-Knöpfe in den vier Team-Lobbys | je 8 (3 Leute × 2 Teams + 2 ✕) |
+| Knopftext zur Spielerübersicht | „👥 Accounts verwalten" |
+| Klick auf „Die Roten" in der Lobby | Team gesetzt, Knopf markiert, sofort |
+| Handy ohne Team | „Du bist in noch keinem Team", grau |
+| Handy Team 1 / Team 2 | „Du bist in Die Roten" rot / „Die Blauen" blau |
+| JavaScript-Fehler | 0 in beiden Fenstern |
+
+`node check.js --types` ohne Befund, das Skript von `buzzer/index.html`
+separat mit `node --check`.
+
+### Offen
+
+- Der Firebase-Stub liegt im Scratchpad, nicht im Repo. Wenn die Handy-Seite
+  öfter geprüft werden soll, gehört er samt Testskripten in einen `test/`-Ordner
+  — dieselbe offene Frage wie bei den anderen Skripten.
+- Die Lobby zeigt nur **verbundene** Handys (Presence). Wer einen Account hat,
+  aber gerade offline ist, taucht dort nicht auf und wird weiterhin über die
+  Spielerübersicht zugeteilt. Das ist gewollt, aber nicht mit David besprochen.
+
+---
+
 ## 2026-09-28 — Mainscreen bekommt eine eigene Adresse (`dc03697`)
 
 **Wunsch (David):** „optimal wärs eigentlich wenn das ne eigene Seite wär, also
