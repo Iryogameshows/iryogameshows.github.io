@@ -98,6 +98,11 @@
             transition:background .18s var(--ease-out),transform .12s var(--ease-out);}
   .icon-btn:active{transform:scale(.92);background:rgba(255,255,255,.16);}
 
+  /* Gesperrtes Eingabefeld: sichtbar, aber erkennbar noch nicht dran. */
+  #screen-estimate.gesperrt #est-input,
+  #screen-estimate.gesperrt #est-send{opacity:.4;cursor:not-allowed;}
+  #screen-estimate.gesperrt #est-hint{color:rgba(255,210,63,.75)!important;font-weight:700;}
+
   /* Lobby-Warteanimation */
   #screen-lobby{gap:14px;}
   .lobby-title{font-size:1.3rem;font-weight:900;letter-spacing:1px;color:var(--gold);text-align:center;}
@@ -451,7 +456,7 @@
   let online=false, buzzFailed=false;
   let lastStatusText='';
   let myTeam=null, teamNames=[], presenceCount=0, joinLocked=false, lockedNames=[];
-  let estActive=false, estQuestion='', estRound=0, estSubmitted=false, estText=false;
+  let estActive=false, estQuestion='', estRound=0, estSubmitted=false, estText=false, estLocked=false;
 
   function myName(){ return acc ? acc.name : ''; }
   function locked(){ return Date.now() < lockUntil; }
@@ -508,7 +513,9 @@
   function showEstimate(){
     showScreen('screen-estimate');
     fillTeamChip(document.getElementById('est-team-chip'));
-    document.getElementById('est-question').textContent = estQuestion || 'Gib deine Schätzung ab.';
+    const sorte = estText ? 'Einzelantwort' : 'Schätzfrage';
+    document.getElementById('est-question').textContent = estLocked
+      ? '' : (estQuestion || 'Gib deine Schätzung ab.');
     // Bei einer Textantwort muss die normale Tastatur aufgehen. Mit
     // inputmode="decimal" zeigt das Handy einen reinen Ziffernblock - dort
     // gibt es schlicht keinen Buchstaben, die Antwort waere nicht eintippbar.
@@ -518,8 +525,24 @@
     inp.placeholder = estText ? 'Deine Antwort' : 'Deine Schätzung';
     // Die Überschrift gehört dazu: "Schätzfrage" über einem Textfeld liest
     // sich wie ein Fehler, und wer eine Zahl erwartet, tippt auch eine.
-    document.getElementById('est-title').textContent = estText ? '📝 Einzelantwort' : '📊 Schätzfrage';
+    document.getElementById('est-title').textContent =
+      (estLocked ? '🔒 ' : (estText ? '📝 ' : '📊 ')) + sorte;
+    /* Gesperrt heisst wirklich gesperrt: Feld und Knopf sind aus, nicht nur
+       blass. Ein Feld, in das man tippen kann und dessen Inhalt dann
+       verschwindet, ist schlimmer als eins, das sich gar nicht erst oeffnet. */
+    const btn = document.getElementById('est-send');
+    inp.disabled = estLocked;
+    btn.disabled = estLocked;
+    setClass(document.getElementById('screen-estimate'), 'gesperrt', estLocked);
+    /* Die Zeile IMMER setzen, nicht nur im gesperrten Fall. Sonst blieb der
+       Satz "Du kannst schätzen, wenn der Host die Frage zeigt" stehen,
+       nachdem er die Frage laengst gezeigt hatte - im Test sofort aufgefallen. */
+    document.getElementById('est-hint').textContent = estLocked
+      ? 'Du kannst schätzen, wenn der Host die Frage zeigt.'
+      : (estSubmitted ? (estText ? 'Antwort abgegeben ✔' : 'Schätzung abgegeben ✔') : '');
   }
+  /** Klasse setzen oder wegnehmen - der Helfer aus core.js steht hier nicht. */
+  function setClass(el, name, an){ if (el) el.classList.toggle(name, !!an); }
 
   // Finale laeuft, ich bin nicht dabei.
   function showEstWatch(){
@@ -674,6 +697,12 @@
     const r = e.round || 0;
     if (r !== estRound) { estRound = r; estSubmitted = false; document.getElementById('est-input').value = ''; }
     estActive = !!e.active;
+    /* Gesperrt: der Host hat das Feld geoeffnet, die Frage aber noch nicht
+       gezeigt. Es steht dann schon da - mit Schloss und dem Hinweis, dass es
+       gleich losgeht - statt dass das Handy erst auf den Buzzer springt und
+       dann noch einmal wechselt. Die Frage selbst schickt der Host in diesem
+       Zustand nicht mit. */
+    estLocked = !!e.locked;
     estQuestion = e.question || '';
     estText = !!e.text;
     // only: Liste der Account-Schluessel, die tippen duerfen. Fehlt sie,
@@ -682,7 +711,8 @@
     estOnlyNames = Array.isArray(e.onlyNames) ? e.onlyNames : [];
     if (estActive && acc && e.answers && e.answers[acc.key]) estSubmitted = true;
     document.getElementById('est-hint').textContent = estSubmitted
-      ? (estText ? 'Antwort abgegeben ✔' : 'Schätzung abgegeben ✔') : '';
+      ? (estText ? 'Antwort abgegeben ✔' : 'Schätzung abgegeben ✔')
+      : (estLocked ? 'Du kannst schätzen, wenn der Host die Frage zeigt.' : '');
     refreshRoot();
   });
 
@@ -801,7 +831,9 @@
   function sendEstimate(){
     const inp = document.getElementById('est-input');
     const raw = (inp.value || '').trim();
-    if (!raw || !acc || estSubmitted || !mayEstimate()) return;
+    // estLocked mit in der Wache: der Knopf ist zwar aus, aber die
+    // Eingabetaste im Feld ruft dieselbe Funktion.
+    if (!raw || !acc || estSubmitted || estLocked || !mayEstimate()) return;
     estSubmitted = true;
     document.getElementById('est-send').disabled = true;
     const num = parseEstimate(raw);

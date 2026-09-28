@@ -1586,9 +1586,8 @@ function updateGamemasterJeopardy() {
       ${!revealed ? `
         <div class="info-card">
           Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>${getippt
-            ? (clue.single
-                ? 'Beim Aufdecken geht auf allen Handys ein <b>Textfeld</b> auf.'
-                : 'Beim Aufdecken öffnet sich auf allen Handys das <b>Schätz-Eingabefeld</b>.')
+            ? `Auf den Handys steht das ${clue.single ? 'Textfeld' : 'Schätzfeld'} schon —
+               <b>gesperrt</b>, mit Schloss. Beim Aufdecken geht es auf.`
             : 'Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.'}
         </div>
       ` : `

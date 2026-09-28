@@ -384,6 +384,7 @@ function openJeopardyClue(col, row) {
   // diese zwei Zeilen zeigte sie die Liste der VORIGEN Frage und beschriftete
   // sich nach deren Sorte - "Noch keine Schätzung" ueber einer Wortfrage.
   jeopardyState.scoredTeams = [];
+  jeopardyEstimate.locked = false;
   jeopardyEstimate.answers = [];
   jeopardyEstimate.single = jeopardySingle(jeopardyClue(jeopardyState.currentBoard, col, row));
   resetMediaOverlay();
@@ -397,7 +398,18 @@ function openJeopardyClue(col, row) {
     jeopardyState.ddPending = false;
     jeopardyState.currentIsDaily = false;
     renderJeopardyClueOverlay();  // question line still blank
-    jeopardyBuzzPrepare();        // buzzers live but NOT armed → early buzz = 3s lock
+    /* Bei Schätzfrage und Einzelantwort wird nicht gebuzzert - dort waere ein
+       scharfer oder auch nur offener Buzzer schlicht falsch. Bis hierher
+       sprang das Handy trotzdem erst auf den Buzzer-Screen ("Achtung - noch
+       NICHT buzzern!") und erst beim Aufdecken auf das Eingabefeld. Zwei
+       Wechsel fuer eine Frage, und der erste zeigte etwas, das gar nicht kommt.
+
+       Jetzt geht das Eingabefeld gleich auf, aber gesperrt: mit Schloss und
+       dem Hinweis, dass es losgeht, sobald der Host die Frage zeigt. Die
+       Frage selbst geht dabei NICHT mit - sie steht ja noch nicht auf der
+       Leinwand, und ein Handy, das sie vorher zeigt, waere ein Leck. */
+    if (jeopardyTyped(jeopardyCurrentClue())) { jeopardyBuzzClose(); jeopardyEstimatePrepare(); }
+    else jeopardyBuzzPrepare();   // buzzers live but NOT armed → early buzz = 3s lock
   }
   updateGamemaster();
 }
@@ -465,7 +477,7 @@ function jeopardySingle(clue){ return !!clue && !!clue.single; }
 // ── SCHÄTZFRAGE / EINZELANTWORT (Eingabe auf den Buzzer-Handys) ──
 // `single` merkt sich, welche Sorte gerade offen ist - danach richtet sich
 // Sortierung und Beschriftung, auch wenn das Feld inzwischen zu ist.
-let jeopardyEstimate = { open:false, round:0, answers:[], ref:null, question:'', single:false };
+let jeopardyEstimate = { open:false, locked:false, round:0, answers:[], ref:null, question:'', single:false };
 
 function jeopardyEstimateRef(){
   if (!jeopardyEstimate.ref){
@@ -480,14 +492,27 @@ function jeopardyEstimateRef(){
   return jeopardyEstimate.ref;
 }
 
-function jeopardyEstimateOpen(){
+/* Das Eingabefeld auf den Handys aufmachen.
+
+   `gesperrt` heisst: es steht schon da, nimmt aber noch nichts an - mit
+   Schloss und dem Hinweis, dass es losgeht, sobald der Host die Frage zeigt.
+   So gebaut, weil beides sonst zwei fast gleiche Funktionen waeren, die
+   auseinanderlaufen, sobald am Kanal etwas dazukommt.
+
+   Im gesperrten Zustand geht die FRAGE NICHT mit. Sie steht zu dem Zeitpunkt
+   noch nicht auf der Leinwand; ein Handy, das sie vorher zeigt, waere ein
+   Leck - und bei einer Schaetzfrage ein besonders wirksames, weil man dann in
+   Ruhe nachsehen kann.
+   @param {boolean} [gesperrt] */
+function jeopardyEstimateOpen(gesperrt){
   const clue = jeopardyCurrentClue();
   if (!clue) return;
   const r = jeopardyEstimateRef();
-  jeopardyEstimate.open = true;
+  jeopardyEstimate.open = !gesperrt;
+  jeopardyEstimate.locked = !!gesperrt;
   jeopardyEstimate.round = nextRoundId(jeopardyEstimate.round);
   jeopardyEstimate.answers = [];
-  jeopardyEstimate.question = clue.q || '';
+  jeopardyEstimate.question = gesperrt ? '' : (clue.q || '');
   // estimateText ist die alte Schreibweise aus gespeicherten Boards - siehe
   // Typdefinition oben. Sie zaehlt hier noch mit, damit eine alte Datei nicht
   // still den Ziffernblock aufmacht.
@@ -496,15 +521,20 @@ function jeopardyEstimateOpen(){
   // hinterher: kaeme es als zweiter Schreibvorgang, stuende auf langsamen
   // Verbindungen fuer einen Moment der Ziffernblock offen - und wer in dem
   // Moment schon tippt, kommt an keinen Buchstaben.
-  if (r) r.set({ active:true, round:jeopardyEstimate.round, question:jeopardyEstimate.question,
+  if (r) r.set({ active:true, locked: !!gesperrt, round:jeopardyEstimate.round,
+                 question:jeopardyEstimate.question,
                  text: jeopardyEstimate.single, answers:null }).catch(()=>{});
   updateGamemaster();
 }
 
+/** Feld schon zeigen, aber gesperrt - beim Oeffnen der Frage. */
+function jeopardyEstimatePrepare(){ jeopardyEstimateOpen(true); }
+
 function jeopardyEstimateClose(){
   jeopardyEstimate.open = false;
+  jeopardyEstimate.locked = false;
   const r = jeopardyEstimateRef();
-  if (r) r.update({ active:false }).catch(()=>{});
+  if (r) r.update({ active:false, locked:false }).catch(()=>{});
   updateGamemaster();
 }
 
