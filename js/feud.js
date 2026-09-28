@@ -930,81 +930,114 @@ function openMainscreen() {
   }
 }
 
-function openBoardPopout() {
-  /* Ein Turnierabend sind mehrere Shows hintereinander, und jede rief hier
-     herein. window.open mit demselben Namen liefert zwar dasselbe Fenster,
-     aber der document.write darunter riss seinen Inhalt jedes Mal ab: das
-     Zuschauerfenster wurde zwischen zwei Spielen fuer einen Moment weiss,
-     verlor seine Scrollposition und musste Schriften und styles.css neu
-     holen. Steht das Fenster schon, wird es deshalb nur neu angeheftet - der
-     Mirror schreibt den neuen Screen ohnehin hinein.
+/* Die Stile, die das Zuschauerfenster braucht - als ein Block.
 
-     Die Pruefung braucht keine Markierung im Dokument: `boardWin` steht nur
-     dann, wenn dieses Fenster es selbst geoeffnet hat. Nach einem Neuladen
-     des Hauptfensters ist die Variable leer, und dann wird auch neu
-     geschrieben - richtig so, denn im alten Fenster haengt noch der Stand von
-     vorher. (Eine Markierung im <body> waere ohnehin wirkungslos: der Mirror
-     kopiert die Attribute des Haupt-<body> mit und wuerde sie wegraeumen.) */
-  if (boardWin && !boardWin.closed){
-    boardIdleFromCurrentScreen();
-    renderIryoHubLogo('board-idle', BOARD_IDLE_WIDTH, 4);
-    startBoardMirror();
-    try { boardWin.focus(); } catch {}
-    return;
-  }
-  boardWin = window.open('', 'Board', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
-  if (!boardWin) return; // vom Browser blockiert (Pop-up-Blocker)
-  // Frueher wurde der Inhalt des <style>-Blocks hier hineinkopiert. Seit die
-  // Stile in styles.css liegen, wird die Datei verlinkt - absolut aufgeloest,
-  // weil das Popout auf about:blank startet und relative Pfade dort ins Leere
-  // laufen. Nebeneffekt: der DDF-/PIH-Block ist jetzt auch dabei, den hat die
-  // alte Variante nie erwischt (er stand im body, nicht im head).
-  // Bewusst die URL aus dem Dokument statt eines festen Pfades: seit der
-  // Deploy ein ?v=<commit> anhaengt, waere styles.css ohne Parameter eine
-  // ANDERE Adresse - das Popout haette sich die alte Fassung aus dem Cache
-  // geholt, waehrend das Hauptfenster die neue zeigt.
-  const cssLink = /** @type {HTMLLinkElement|null} */ (
-    document.querySelector('link[rel="stylesheet"][href*="styles.css"]'));
-  const cssHref = new URL(cssLink ? cssLink.getAttribute('href') : 'styles.css', location.href).href;
-  boardWin.document.open();
-  boardWin.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8">
-<meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="${cssHref}">
-<style>
+   Sie stehen hier und nicht in mainscreen/index.html, weil die Liste der
+   Zuschauer-Screens (BOARD_PUBLIC_SCREENS) hier steht. Zwei Kopien liefen
+   irgendwann auseinander, und dann stuende ein Editor auf der Leinwand oder
+   das Spielbrett bliebe schwarz.
+   @returns {string} */
+function boardStyleCss() {
+  return `
 body{pointer-events:none;}
 /* Nur die Zuschauer-Screens, alles andere aus. */
 ${boardHiddenScreensCss()}
-#gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay{display:none!important;}
+#gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay,#ms-warten{display:none!important;}
 /* Wartebildschirm: solange kein Spiel-Screen laeuft, steht hier das grosse
    Logo statt einer schwarzen Flaeche. Die Klasse am <body> setzt das
-   Hauptfenster (setBoardIdle), der Mirror traegt sie herueber.
-   Das kleine Show-Logo oben weicht dabei - zwei Logos uebereinander sind
-   eines zu viel. */
-/* Der Wartebildschirm fuellt das ganze Fenster und das Logo darin so viel
-   davon, wie ohne Anschneiden geht.
-
-   Die Breite war auf min(760px,70vw) gedeckelt - auf einem Beamer mit 1920px
-   blieben davon 760px, also 40% der Flaeche. Jetzt begrenzt nur noch das
-   Fenster selbst: 86vw, und 158vh als zweite Schranke, damit das Bild bei
-   einem schmalen, hohen Fenster nicht oben und unten herausragt (das Logo ist
-   900:500, also 1,8 mal so breit wie hoch - 158vh Breite ergeben 88vh Hoehe). */
+   Hauptfenster (setBoardIdle), der Mirror traegt sie herueber. Das kleine
+   Show-Logo oben weicht dabei - zwei Logos uebereinander sind eines zu viel. */
 #board-idle{
   display:none;position:fixed;inset:0;z-index:5;
   align-items:center;justify-content:center;padding:16px;box-sizing:border-box;
 }
 body.board-idle #board-idle{display:flex;}
-body.board-idle #main-logo{display:none;}
-</style></head><body></body></html>`);
-  boardWin.document.close();
+body.board-idle #main-logo{display:none;}`;
+}
+
+/* Schriften, styles.css und die Regeln in das Zuschauerfenster einsetzen.
+
+   Wird bei jedem Oeffnen gerufen und noch einmal, wenn die Seite dort neu
+   geladen wurde (boardPageReady). Vorhandene Eintraege werden ersetzt, damit
+   nichts doppelt im Kopf landet. */
+function injectBoardStyles() {
+  if (!boardWin || boardWin.closed) return;
+  const doc = boardWin.document;
+  const setzen = (id, bauen) => {
+    const alt = doc.getElementById(id);
+    if (alt) alt.remove();
+    const el = bauen();
+    el.id = id;
+    doc.head.appendChild(el);
+  };
+  setzen('board-fonts', () => {
+    const l = doc.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&display=swap';
+    return l;
+  });
+  /* Bewusst die URL aus dem eigenen Dokument statt eines festen Pfades: seit
+     der Deploy ein ?v=<commit> anhaengt, waere styles.css ohne Parameter eine
+     ANDERE Adresse - das Zuschauerfenster holte sich die alte Fassung aus dem
+     Cache, waehrend das Hauptfenster die neue zeigt. */
+  setzen('board-css', () => {
+    const cssLink = /** @type {HTMLLinkElement|null} */ (
+      document.querySelector('link[rel="stylesheet"][href*="styles.css"]'));
+    const l = doc.createElement('link');
+    l.rel = 'stylesheet';
+    l.href = new URL(cssLink ? cssLink.getAttribute('href') : 'styles.css', location.href).href;
+    return l;
+  });
+  setzen('board-rules', () => {
+    const st = doc.createElement('style');
+    st.textContent = boardStyleCss();
+    return st;
+  });
+}
+
+/* Ruft die Seite im Zuschauerfenster selbst auf, sobald sie geladen ist -
+   auch nach einem Neuladen dort. Ohne das spiegelte das Hauptfenster nach
+   einem F5 im Zuschauerfenster in ein Dokument ohne Regeln, und es stuenden
+   alle Screens auf einmal darin. */
+function boardPageReady() {
+  injectBoardStyles();
   boardIdleFromCurrentScreen();
-  // Erst hier zeichnen, nicht beim Laden der Seite: das Logo entsteht auf
-  // einem Canvas, und dessen Text braucht die Schrift "Luckiest Guy". Beim
-  // Seitenstart ist sie oft noch nicht da, und dann stuende dort die
-  // Ersatzschrift.
   renderIryoHubLogo('board-idle', BOARD_IDLE_WIDTH, 4);
   startBoardMirror();
+}
+
+function openBoardPopout() {
+  /* Ein Turnierabend sind mehrere Shows hintereinander, und jede ruft hier
+     herein. Steht das Fenster schon, wird es nur neu angeheftet statt neu
+     geladen - sonst wuerde es zwischen zwei Spielen kurz weiss und muesste
+     Schriften und styles.css erneut holen.
+
+     Die Pruefung braucht keine Markierung im Dokument: `boardWin` steht nur
+     dann, wenn dieses Fenster es selbst geoeffnet hat. Nach einem Neuladen
+     des Hauptfensters ist die Variable leer, und dann wird auch neu geoeffnet -
+     richtig so, denn im alten Fenster haengt noch der Stand von vorher. */
+  if (boardWin && !boardWin.closed){
+    boardPageReady();
+    try { boardWin.focus(); } catch {}
+    return;
+  }
+  /* Eine echte Seite statt about:blank. Sie hat damit eine Adresse, die in
+     der Adressleiste steht und sich als Lesezeichen setzen laesst - und sie
+     baut sich nach einem Neuladen selbst wieder auf, statt leer zu bleiben.
+
+     Der Pfad wird gegen das eigene Dokument aufgeloest, nicht als "/mainscreen/"
+     fest verdrahtet: so stimmt er auch, wenn die Seite einmal nicht im
+     Wurzelverzeichnis liegt. */
+  const url = new URL('mainscreen/', location.href).href;
+  boardWin = window.open(url, 'Board', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
+  if (!boardWin) return; // vom Browser blockiert (Pop-up-Blocker)
+  /* Die Seite meldet sich selbst ueber boardPageReady(). Der load-Haken hier
+     ist der Rueckfall fuer den Fall, dass sie aus dem Cache kommt und ihr
+     Skript schon gelaufen ist, bevor diese Zeile ueberhaupt erreicht wurde. */
+  try {
+    if (boardWin.document.readyState === 'complete') boardPageReady();
+    else boardWin.addEventListener('load', boardPageReady);
+  } catch { /* noch nicht zugreifbar - dann kommt die Meldung von der Seite */ }
 }
 
 // Patcht target so es source entspricht, ohne unveränderte Knoten neu zu

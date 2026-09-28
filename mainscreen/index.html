@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<!-- Wie index.html: der Deploy haengt an die Asset-Pfade eine Commit-ID, an
+     die Seite selbst aber nicht. Ohne das holte ein Browser, der sie schon
+     einmal offen hatte, die alte Fassung. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>Iryo Gameshow — Mainscreen</title>
+<!-- Der Zuschauerbildschirm.
+
+     Diese Seite hat absichtlich fast nichts in sich: Das Hauptfenster
+     spiegelt seinen Inhalt hierher (morphMirror in js/feud.js) und setzt
+     dabei auch die Stile ein - Schriften, styles.css mit dem Cache-Buster
+     des laufenden Deploys, und die Regeln, welche Screens das Publikum
+     ueberhaupt sehen darf.
+
+     Warum die Stile nicht hier stehen: die Liste der Zuschauer-Screens ist
+     BOARD_PUBLIC_SCREENS in js/feud.js. Stuende sie hier ein zweites Mal,
+     liefen die beiden irgendwann auseinander - und dann steht ein Editor auf
+     der Leinwand oder das Spielbrett bleibt schwarz. Eine Quelle, ein Ort.
+
+     Ohne Hauptfenster bleibt hier der Hinweis unten stehen. Das ist so
+     gewollt: die Seite ist die Anzeige des Hosts, kein zweiter Zugang. -->
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#0b0e2c;color:#fff;
+    font-family:'Inter',system-ui,sans-serif;overflow-x:hidden;}
+  /* Der Host bedient am Hauptfenster; hier soll kein Klick etwas ausloesen. */
+  body{pointer-events:none;}
+  #ms-warten{
+    position:fixed;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;
+  }
+  #ms-warten b{font-size:1.4rem;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.75);}
+  #ms-warten span{font-size:.95rem;line-height:1.6;color:rgba(255,255,255,.4);max-width:420px;}
+</style>
+</head>
+<body>
+  <div id="ms-warten">
+    <b>Mainscreen</b>
+    <span>Diese Seite zeigt, was das Publikum sehen soll.<br>
+      Öffne sie aus der Gameshow heraus über „🖥 Mainscreen öffnen“ —
+      von dort wird sie gefüllt.</span>
+  </div>
+<script>
+  /* Beim Hauptfenster melden, dass diese Seite bereit ist.
+
+     Noetig fuer den Fall, dass der Host hier neu laedt: das Fensterobjekt
+     bleibt dasselbe, aber Dokument und eingesetzte Stile sind weg. Ohne diese
+     Meldung spiegelte das Hauptfenster weiter hinein - in ein Dokument ohne
+     Regeln, auf dem dann alle Screens auf einmal stuenden. */
+  try {
+    if (window.opener && typeof window.opener.boardPageReady === 'function') {
+      window.opener.boardPageReady();
+    }
+  } catch (e) {}
+</script>
+</body>
+</html>
