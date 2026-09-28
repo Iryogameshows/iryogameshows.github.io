@@ -1026,7 +1026,8 @@ function pihGmControlsHtml(pfx){
     b += `<button class="gm-btn gm-gold" onclick="${pfx}pihAfterResult()">${last ? 'Endstand' : 'Weiter →'}</button>`;
   }
   if (s.phase === 'done'){
-    return `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('pih-setup-screen')">Nochmal</button>`
+    return tournamentEndButtonHtml(pfx)
+         + `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('pih-setup-screen')">Nochmal</button>`
          + `<button class="gm-btn gm-gray" onclick="${pfx}showScreen('menu-screen')">Zum Menü</button>`;
   }
   if (pihUndoStack.can()) b += `<button class="gm-btn gm-orange" onclick="${pfx}pihUndo()">↩ Undo</button>`;

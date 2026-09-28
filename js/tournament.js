@@ -45,15 +45,59 @@ function saveTournament(){
    Teilnehmer, keine Teams, und ein Turnier laeuft ueber feste Teams. Die geben
    ihren Platz am Ende nur frei (tournamentReleaseActive), der Host traegt das
    Ergebnis von Hand ein. */
-const TOURNAMENT_STARTABLE = {
-  'Family Feud':         'setup-screen',
-  'Jeopardy':            'jeopardy-setup-screen',
-  'Wer wird Millionär':  'wwm-setup-screen',
-  'Wer weiß denn sowas': 'wwds-setup-screen',
-  'Der Dümmste fliegt':  'ddf-setup-screen',
-  'Der Preis ist heiß':  'pih-setup-screen',
-  'Trivial Pursuit':     'tp-setup-screen',
+/* Alles, was das Turnier ueber eine Show wissen muss, an einer Stelle.
+
+   - setup   Der Setup-Screen. Er wird auch beim Direktstart betreten, denn an
+             ihm haengen die Nebenwirkungen von showScreen(): Lobby verbinden,
+             Einstellungen laden, Teilnehmerfelder bauen. Nur SICHTBAR wird er
+             dabei nicht - das Zuschauerfenster zeigt ihn ohnehin nicht (siehe
+             BOARD_PUBLIC_SCREENS), und der Host ist eine Zeile spaeter im Spiel.
+   - start   Die Funktion, die die Show tatsaechlich startet.
+   - lobby   Der Schluessel, unter dem die Teamnamen-Felder stehen (LOBBY_SETUP
+             in buzzer.js) - daran werden die Turnier-Teams uebernommen.
+             'pih' hat eigene Felder, 'roster' heisst: kein Direktstart.
+   - import  Die Import-Funktion des Editors, fuer das Spieldaten-Depot.
+   - info    Was gerade geladen ist, in einem Satz - fuer "Spieldaten pruefen".
+
+   "Der Duemmste fliegt" und "Der Preis ist heiss" koennen NICHT direkt
+   starten: dort muss der Host erst aussuchen, wer ueberhaupt mitspielt. Bei
+   ihnen bleibt es beim Setup-Screen.
+   @type {Record<string, {setup:string, start:string, lobby:string|null, import:string, info:() => string}>} */
+const TOURNAMENT_GAMES = {
+  'Family Feud':         { setup:'setup-screen',          start:'startGame',    lobby:'feud',
+                           import:'importQuestions',
+                           info:() => `${(questions||[]).length} Fragen · ${(finaleQuestions||[]).length} Finalfragen` },
+  'Jeopardy':            { setup:'jeopardy-setup-screen', start:'startJeopardy',lobby:'jeopardy',
+                           import:'importJeopardy',
+                           info:() => `${jeopardyData.boards.length} Boards · ${jeopardyFilledClues()} von ${jeopardyData.boards.length*JEOPARDY_CATS*JEOPARDY_VALUES.length} Feldern gefüllt` },
+  'Wer wird Millionär':  { setup:'wwm-setup-screen',      start:'startWwm',     lobby:null,
+                           import:'importWwm',
+                           info:() => `${(wwmData.questions||[]).length} Fragen` },
+  'Wer weiß denn sowas': { setup:'wwds-setup-screen',     start:'startWwds',    lobby:'wwds',
+                           import:'importWwds',
+                           info:() => `${(wwdsData.categories||[]).length} Kategorien` },
+  'Der Dümmste fliegt':  { setup:'ddf-setup-screen',      start:'startDdf',     lobby:'roster',
+                           import:'importDdf',
+                           info:() => `${(ddfData.questions||[]).length} Fragen` },
+  'Der Preis ist heiß':  { setup:'pih-setup-screen',      start:'startPih',     lobby:'pih',
+                           import:'importPih',
+                           info:() => `${(pihData.items||[]).length} Artikel` },
+  'Trivial Pursuit':     { setup:'tp-setup-screen',       start:'startTp',      lobby:'tp',
+                           import:'importTp',
+                           info:() => `${tpData.categories.length} Kategorien · ${tpData.categories.reduce((n,c)=>n+c.questions.length,0)} Fragen` },
 };
+/** Wie viele Jeopardy-Felder ueberhaupt eine Frage tragen. @returns {number} */
+function jeopardyFilledClues(){
+  let n = 0;
+  jeopardyData.boards.forEach(b => b.categories.forEach(c => c.clues.forEach(cl => {
+    if ((cl.q || '').trim() || cl.qImg || cl.stageImg) n++;
+  })));
+  return n;
+}
+/** Rueckwaertskompatibler Name: der Setup-Screen je Spiel.
+ *  @type {Record<string, string>} */
+const TOURNAMENT_STARTABLE = Object.fromEntries(
+  Object.entries(TOURNAMENT_GAMES).map(([k, v]) => [k, v.setup]));
 /* Shows, die ihr Ergebnis direkt aus Teampunkten melden. Die uebrigen beiden
    melden auch, rechnen es aber erst ueber die Team-Zuordnung der Teilnehmer
    hoch (tournamentReportTeamless) - das steht als Hinweis in der Zeile, damit
@@ -88,13 +132,175 @@ function tournamentRevealSecret(i){
   tournament.games[i].secret = false;
   saveTournament(); // rendert Turnierübersicht + GM-Panel neu
 }
-function tournamentStartGame(i){
+/* Alter Name, damit nichts bricht, was ihn noch ruft (Handy-Gamepad, alte
+   GM-Fenster). Er fuehrt auf denselben Weg wie der Knopf im Spielplan. */
+function tournamentStartGame(i){ tournamentStartAt(i); }
+
+/* ── Turnier-Teams in die Setup-Felder ─────────────────────────────────────
+   Der Host tippte die Teamnamen vor jedem Spiel neu ein. Das ist nicht nur
+   laestig: schreibt er einmal "Rote" statt "Die Roten", findet
+   tournamentAutoRecordIfActive() den Namen nicht wieder und faellt auf die
+   Reihenfolge zurueck - bei drei Teams landen die Punkte dann still beim
+   falschen.
+
+   Deshalb kommen die Namen jetzt aus dem Turnier. Die Felder stehen in
+   LOBBY_SETUP (buzzer.js); "Der Preis ist heiss" hat eigene.
+   @param {string} gameName */
+function tournamentFillTeamNames(gameName){
+  if (!tournament) return;
+  const cfg = TOURNAMENT_GAMES[gameName];
+  if (!cfg || !cfg.lobby) return;
+  const teams = tournament.teams;
+  if (cfg.lobby === 'pih'){
+    fieldSet('pih-t1-name', teams[0] || '');
+    fieldSet('pih-t2-name', teams[1] || '');
+    return;
+  }
+  const setup = LOBBY_SETUP[cfg.lobby];
+  if (!setup) return;
+  setup.names.forEach((id, i) => fieldSet(id, teams[i] || ''));
+  // Das dritte Team ist ein Haken, kein Feld - ohne ihn bliebe der dritte
+  // Name stehen und wuerde trotzdem nicht mitspielen.
+  const drei = fieldEl(setup.team3);
+  if (drei) { drei.checked = teams.length >= 3; drei.dispatchEvent(new Event('change')); }
+  broadcastSetupTeamNames(cfg.lobby);
+}
+
+/* Das naechste noch nicht gespielte Spiel im Plan.
+   @returns {number} Index, oder -1 */
+function tournamentNextGameIndex(){
+  if (!tournament) return -1;
+  return tournament.games.findIndex(g => !g.done);
+}
+
+/* ── Direktstart aus dem Turnier ───────────────────────────────────────────
+   Davids Ablauf: nach dem Ergebnis steht der Turnierstand auf der Leinwand,
+   und von dort geht es weiter - ohne Umweg ueber Menue und Lobby.
+
+   Der Setup-Screen wird trotzdem betreten, aber nicht gezeigt: an ihm haengen
+   die Nebenwirkungen von showScreen() (Lobby verbinden, Einstellungen laden,
+   Teilnehmerfelder bauen), und ohne sie startet die Show halb eingerichtet.
+   Sichtbar wird er nicht - das Zuschauerfenster zeigt keine Setup-Screens
+   (BOARD_PUBLIC_SCREENS), und der Host ist eine Zeile spaeter im Spiel.
+
+   "Der Duemmste fliegt" und "Der Preis ist heiss" bleiben auf ihrem
+   Setup-Screen stehen: dort muss erst ausgesucht werden, WER mitspielt. Das
+   kann kein Knopf erraten. */
+function tournamentStartNext(){
+  const i = tournamentNextGameIndex();
+  if (i < 0) { alert('Alle Spiele im Plan sind gespielt.'); return; }
+  tournamentStartAt(i);
+}
+/** @param {number} i */
+function tournamentStartAt(i){
   if (!tournament || !tournament.games[i]) return;
   const g = tournament.games[i];
-  const screen = TOURNAMENT_STARTABLE[g.game];
-  if (!screen) { alert('Dieser Spieltyp kann nicht automatisch gestartet werden - bitte manuell spielen und "Ergebnis eintragen" nutzen.'); return; }
+  const cfg = TOURNAMENT_GAMES[g.game];
+  if (!cfg){
+    alert(`"${g.game}" kann nicht automatisch gestartet werden — bitte von Hand spielen und das Ergebnis eintragen.`);
+    return;
+  }
   activeTournamentGameIndex = i;
-  showScreen(screen);
+  showScreen(cfg.setup);
+  tournamentFillTeamNames(g.game);
+  if (cfg.lobby === 'roster'){
+    // Kein Direktstart: der Host waehlt erst die Teilnehmer aus.
+    updateGamemaster();
+    return;
+  }
+  const start = /** @type {unknown} */ (window[cfg.start]);
+  if (typeof start === 'function') start();
+}
+
+/* Der Weg zum Turnierstand aus einem Spiel-Panel heraus.
+
+   Family Feud, Jeopardy, "Wer wird Millionär" und "Wer weiß denn sowas" enden
+   auf dem gemeinsamen Ergebnis-Screen; dort steht der Knopf schon. Trivial
+   Pursuit, "Der Dümmste fliegt" und "Der Preis ist heiß" haben eigene
+   Endzustaende auf ihrem eigenen Screen - bei ihnen fuehrte nach dem Spiel
+   nur "Zum Menue" weiter, und der Host musste sich von dort durch das
+   Turnier-Menue zurueckklicken. Diese Zeile schliesst die Luecke.
+   @param {string} pfx @returns {string} */
+function tournamentEndButtonHtml(pfx){
+  if (!tournament) return '';
+  return `<button class="gm-btn gm-gold" onclick="${pfx}tournamentShowBoard()">📊 Turnierstand anzeigen</button>`;
+}
+
+/* ── Spieldaten-Depot ──────────────────────────────────────────────────────
+   "Ich will ihm vorhinein für alle Games die Fragen und Intros importieren
+   können."
+
+   Die Dateien selbst landen dort, wo sie hingehoeren - in jeopardyData,
+   tpData, wwdsData und so weiter, ueber genau dieselbe Import-Funktion, die
+   auch der Editor benutzt. Ins Turnier kommt nur, WELCHE Datei das war und
+   wann. Das ist Absicht: das Turnier-Objekt liegt in Firebase, und ein
+   Jeopardy-Board mit eingebetteten Bildern ist mehrere Megabyte gross - es
+   dort mitzuschleppen wuerde jede Runde ausbremsen und die Datenbank fuellen.
+
+   Was der Host wirklich braucht, ist die Kontrolle vor dem Abend: steht in
+   "Jeopardy" das Board von heute oder noch das von letzter Woche? Dafuer
+   reichen Dateiname, Uhrzeit und eine Zahl aus den echten Daten. */
+
+/** @param {string} gameName @param {HTMLInputElement} input */
+function tournamentImportFor(gameName, input){
+  const cfg = TOURNAMENT_GAMES[gameName];
+  const file = input.files && input.files[0];
+  if (!cfg || !file) return;
+  const fn = /** @type {unknown} */ (window[cfg.import]);
+  if (typeof fn !== 'function') return;
+  // Erst nach einem geglueckten Import merken - siehe onJsonImportOk in core.js.
+  onJsonImportOk = (name) => {
+    if (!tournament) return;
+    if (!tournament.files) tournament.files = {};
+    tournament.files[gameName] = { name, at: Date.now() };
+    saveTournament();
+  };
+  fn({ target: input });
+}
+
+/** Das Intro gehoert zu keinem einzelnen Spiel - es laeuft vor jeder Show.
+ *  @param {HTMLInputElement} input */
+function tournamentImportIntro(input){
+  if (!input.files || !input.files[0]) return;
+  onJsonImportOk = (name) => {
+    if (!tournament) return;
+    if (!tournament.files) tournament.files = {};
+    tournament.files['Intro'] = { name, at: Date.now() };
+    saveTournament();
+  };
+  importIntro({ target: input });
+}
+
+/** Was zu einem Spiel geladen ist, in einer Zeile.
+ *  @param {string} gameName @returns {string} */
+function tournamentFileInfo(gameName){
+  const f = (tournament && tournament.files && tournament.files[gameName]) || null;
+  const cfg = TOURNAMENT_GAMES[gameName];
+  const stand = cfg ? (() => { try { return cfg.info(); } catch { return ''; } })() : '';
+  if (!f) return stand ? `keine Datei geladen · aktuell: ${stand}` : 'keine Datei geladen';
+  const wann = new Date(f.at).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  return `${f.name} · ${wann}${stand ? ' · ' + stand : ''}`;
+}
+
+/* "Nächste Spieldaten überprüfen": was steht fuer die noch offenen Spiele
+   bereit? Bewusst ein alert und kein weiterer Screen - der Host drueckt das
+   kurz vor dem Start, liest zwei Zeilen und macht weiter. Ein Screen mehr
+   waere ein Screen mehr, den er waehrend der Show verlassen muss. */
+function tournamentCheckData(){
+  if (!tournament) return;
+  const offen = tournament.games.filter(g => !g.done);
+  if (!offen.length) { alert('Alle Spiele im Plan sind gespielt.'); return; }
+  const zeilen = offen.map((g, n) => {
+    const kopf = `${n+1}. ${g.game}${g.secret ? ' (geheim)' : ''}`;
+    return TOURNAMENT_GAMES[g.game]
+      ? `${kopf}\n     ${tournamentFileInfo(g.game)}`
+      : `${kopf}\n     wird von Hand gespielt`;
+  });
+  const intro = tournament.files && tournament.files['Intro'];
+  const introZeile = intro
+    ? `\n\nIntro: ${intro.name}`
+    : `\n\nIntro: keine Datei geladen (es gilt, was gerade eingestellt ist)`;
+  alert('Spieldaten für die offenen Spiele:\n\n' + zeilen.join('\n') + introZeile);
 }
 // Trägt (falls über "Spiel starten" aktiv) das gerade beendete Spiel automatisch
 // ins Turnier ein - per Namensabgleich, sonst per Index/Reihenfolge. Gibt zurück
@@ -261,6 +467,68 @@ function tournamentTotals(){
   return totals;
 }
 
+/* ── Tabelle und Spielplan fuers Publikum ──────────────────────────────────
+   Dieselben Zahlen wie in der Host-Ansicht, aber ohne einen einzigen Knopf.
+   Sie stehen hier als eigene Funktionen, damit beide Ansichten aus derselben
+   Rechnung kommen - zwei Kopien waeren zwei Staende, die auseinanderlaufen.
+   @returns {string} */
+function tournamentStandingsHtml(){
+  const totals = tournamentTotals();
+  const maxT = Math.max(...totals, 1);
+  const order = totals.map((t, i) => ({ t, i })).sort((a, b) => b.t - a.t);
+  const medals = ['🥇','🥈','🥉'];
+  return order.map((o, rank) => `
+    <div class="q-list-item" style="${rank===0 && o.t>0 ? 'border-color:rgba(255,210,63,.35);background:rgba(255,210,63,.06);' : ''}">
+      <span class="q-label"><span class="q-num">${medals[rank]||rank+1+'.'}</span><strong>${escapeHtml(tournament.teams[o.i])}</strong></span>
+      <div style="display:flex;align-items:center;gap:12px;flex:1;max-width:50%;">
+        <div style="flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;">
+          <div style="width:${Math.round(o.t/maxT*100)}%;height:100%;background:linear-gradient(90deg,#FFD23F,#F0B800);border-radius:5px;transition:width .5s;"></div>
+        </div>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#FFD23F;min-width:36px;text-align:right;">${o.t}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderTournamentBoard(){
+  const el = document.getElementById('tournament-board-content');
+  if (!el) return;
+  if (!tournament){
+    el.innerHTML = `<div class="page-title"><em>🏆 Turnier</em></div>
+      <div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch kein Turnier angelegt.</div>`;
+    return;
+  }
+  const naechste = tournamentNextGameIndex();
+  const plan = tournament.games.map((g, i) => {
+    const verdeckt = g.secret && !g.done;
+    const pts = tournamentGamePoints(g, tournament.teams.length);
+    const stand = g.done
+      ? tournament.teams.map((t, ti) => `${escapeHtml(t)} <b style="color:#FFD23F;">+${pts[ti]}</b>`).join(' · ')
+      : (i === naechste ? '<span style="color:#FFD23F;font-weight:700;">jetzt</span>'
+                        : '<span style="color:rgba(255,255,255,.3);">kommt noch</span>');
+    return `<div class="q-list-item"${i === naechste && !g.done ? ' style="border-color:rgba(255,210,63,.35);"' : ''}>
+      <span class="q-label"><span class="q-num">${i+1}.</span>
+        <span style="margin-right:4px;">${verdeckt ? '❓' : tournamentGameIcon(g.game)}</span>
+        <strong>${verdeckt ? '???' : escapeHtml(g.game)}</strong>
+        <span class="q-meta" style="color:#FFD23F;">×${g.weight}</span></span>
+      <span style="font-size:.78rem;color:rgba(255,255,255,.6);">${stand}</span>
+    </div>`;
+  }).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spiele geplant.</div>`;
+
+  el.innerHTML = `
+    <div class="page-title" style="margin-bottom:18px;"><em>🏆 ${escapeHtml(tournament.name)}</em></div>
+    <div class="q-list" style="margin-bottom:24px;">${tournamentStandingsHtml()}</div>
+    <div class="page-title" style="font-size:.9rem;margin-bottom:8px;">Spielplan</div>
+    <div class="q-list">${plan}</div>`;
+}
+
+/* Turnierstand auf die Leinwand. Der Host bleibt danach am GM-Panel und
+   startet von dort das naechste Spiel - er muss dafuer nicht zurueck ins
+   Menue und durch die Lobby. */
+function tournamentShowBoard(){
+  showScreen('tournament-board-screen');
+  updateGamemaster();
+}
+
 function renderTournament(){
   const el = document.getElementById('tournament-content');
   if (!el) return;
@@ -280,20 +548,7 @@ function renderTournament(){
       </div>`;
     return;
   }
-  const totals = tournamentTotals();
-  const maxT = Math.max(...totals, 1);
-  const order = totals.map((t, i) => ({ t, i })).sort((a, b) => b.t - a.t);
-  const medals = ['🥇','🥈','🥉'];
-  const standings = order.map((o, rank) => `
-    <div class="q-list-item" style="${rank===0 && o.t>0 ? 'border-color:rgba(255,210,63,.35);background:rgba(255,210,63,.06);' : ''}">
-      <span class="q-label"><span class="q-num">${medals[rank]||rank+1+'.'}</span><strong>${escapeHtml(tournament.teams[o.i])}</strong></span>
-      <div style="display:flex;align-items:center;gap:12px;flex:1;max-width:50%;">
-        <div style="flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;">
-          <div style="width:${Math.round(o.t/maxT*100)}%;height:100%;background:linear-gradient(90deg,#FFD23F,#F0B800);border-radius:5px;transition:width .5s;"></div>
-        </div>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#FFD23F;min-width:36px;text-align:right;">${o.t}</span>
-      </div>
-    </div>`).join('');
+  const standings = tournamentStandingsHtml();
 
   const gamesHtml = tournament.games.map((g, i) => {
     const pts = tournamentGamePoints(g, tournament.teams.length);
@@ -312,7 +567,7 @@ function renderTournament(){
       <div class="q-list-item" style="flex-wrap:wrap;gap:6px;">
         <span class="q-label"><span class="q-num">${i+1}.</span><span style="margin-right:2px;">${icon}</span><strong>${label}</strong>${(!hidden && g.date) ? `<span class="q-meta">${g.date}</span>` : ''}<span class="q-meta" style="color:#FFD23F;">Gewichtung ×${g.weight}</span></span>
         <div class="q-btns">
-          ${canAutoStart ? `<button class="btn btn-accent" onclick="tournamentStartGame(${i})">▶ Spiel starten</button>` : ''}
+          ${canAutoStart ? `<button class="btn btn-accent" onclick="tournamentStartAt(${i})">▶ Spiel starten</button>` : ''}
           <button class="btn btn-secondary" onclick="tournamentEnterResult(${i})">${g.done ? 'Ergebnis ändern' : 'Ergebnis eintragen'}</button>
           <button class="btn btn-danger" onclick="tournamentRemoveGame(${i})">Del</button>
         </div>
@@ -321,9 +576,17 @@ function renderTournament(){
   }).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spiele geplant.</div>`;
 
   const allDone = tournament.games.length > 0 && tournament.games.every(g => g.done);
+  const naechste = tournamentNextGameIndex();
+  const naechsterName = naechste >= 0 ? tournament.games[naechste].game : '';
   el.innerHTML = `
     <div class="page-title" style="margin-bottom:10px;"><em>${escapeHtml(tournament.name)}</em></div>
     <div class="q-list" style="margin-bottom:20px;">${standings}</div>
+    <div class="edit-bar" style="margin-bottom:20px;">
+      <button class="btn btn-secondary" onclick="tournamentShowBoard()">📊 Turnierstand anzeigen</button>
+      ${naechste >= 0 ? `<button class="btn btn-accent" onclick="tournamentStartNext()">▶ Nächstes Spiel: ${escapeHtml(naechsterName)}</button>` : ''}
+      <button class="btn btn-secondary" onclick="tournamentCheckData()">📦 Spieldaten prüfen</button>
+    </div>
+    ${tournamentDataPanelHtml()}
     ${tournamentRenamePanelHtml()}
     ${allDone ? `<div class="edit-bar" style="margin-bottom:20px;"><button class="btn btn-primary" onclick="tournamentCelebrate()">🏆 Sieger feiern!</button></div>` : ''}
     <div class="page-title" style="font-size:.9rem;margin-bottom:8px;">Spielplan</div>
@@ -353,6 +616,67 @@ function renderTournament(){
     <div class="edit-bar" style="margin-top:12px;">
       <button class="btn btn-danger" onclick="tournamentDelete()">Turnier löschen</button>
     </div>`;
+}
+
+/* Das Spieldaten-Depot auf dem Turnier-Screen: je Spieltyp im Plan eine Zeile
+   mit "Laden" und dem, was gerade drinsteht. Nur die Spiele, die auch geplant
+   sind - eine Liste aller sieben Shows waere an einem Abend mit dreien
+   hauptsaechlich Rauschen.
+   @returns {string} */
+function tournamentDataPanelHtml(){
+  if (!tournamentDataOpen){
+    return `<div class="edit-bar" style="margin-bottom:20px;">
+      <button class="btn btn-secondary btn-sm" onclick="tournamentToggleData()">📦 Spieldaten &amp; Intro laden</button>
+    </div>`;
+  }
+  // Ein Spieltyp kann mehrfach im Plan stehen (zwei Jeopardy-Runden an einem
+  // Abend); geladen wird er trotzdem nur einmal.
+  const typen = [];
+  tournament.games.forEach(g => {
+    if (TOURNAMENT_GAMES[g.game] && !typen.includes(g.game)) typen.push(g.game);
+  });
+  const zeilen = typen.map(name => `
+    <div class="q-list-item" style="flex-wrap:wrap;row-gap:6px;">
+      <span class="q-label"><span style="margin-right:4px;">${tournamentGameIcon(name)}</span><strong>${escapeHtml(name)}</strong></span>
+      <div class="q-btns">
+        <label class="btn btn-secondary" style="padding:6px 14px;font-size:.7rem;cursor:pointer;">📥 Laden
+          <input type="file" accept="application/json,.json" style="display:none;"
+                 onchange="tournamentImportFor(${escJsArg(name)}, this)">
+        </label>
+      </div>
+      <div style="width:100%;font-size:.72rem;color:rgba(255,255,255,.45);">${escapeHtml(tournamentFileInfo(name))}</div>
+    </div>`).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Erst Spiele in den Plan legen.</div>`;
+
+  const intro = (tournament.files && tournament.files['Intro']) || null;
+  return `<div class="editor-card" style="margin-bottom:20px;">
+    <label>Spieldaten für diesen Abend</label>
+    <div class="q-list">${zeilen}
+      <div class="q-list-item" style="flex-wrap:wrap;row-gap:6px;">
+        <span class="q-label"><span style="margin-right:4px;">🎬</span><strong>Intro</strong></span>
+        <div class="q-btns">
+          <label class="btn btn-secondary" style="padding:6px 14px;font-size:.7rem;cursor:pointer;">📥 Laden
+            <input type="file" accept="application/json,.json" style="display:none;" onchange="tournamentImportIntro(this)">
+          </label>
+        </div>
+        <div style="width:100%;font-size:.72rem;color:rgba(255,255,255,.45);">${
+          intro ? escapeHtml(intro.name) : 'keine Datei geladen (es gilt, was gerade eingestellt ist)'}</div>
+      </div>
+    </div>
+    <div class="editor-actions">
+      <button class="btn btn-secondary" onclick="tournamentToggleData()">Zuklappen</button>
+    </div>
+    <div style="font-size:.7rem;color:rgba(255,255,255,.35);margin-top:8px;">
+      Die Dateien gehen genau dorthin, wo auch der Editor sie ablegt — hier steht nur,
+      welche es war. Ein Jeopardy-Board mit Bildern wäre zu groß, um es im Turnier
+      mitzuschleppen; nach einem Neustart des Browsers gehört deshalb ein Blick auf
+      „📦 Spieldaten prüfen“ dazu.
+    </div>
+  </div>`;
+}
+let tournamentDataOpen = false;
+function tournamentToggleData(){
+  tournamentDataOpen = !tournamentDataOpen;
+  renderTournament();
 }
 
 /* ── Umbenennen ───────────────────────────────────────────────────────────
@@ -437,6 +761,13 @@ function offerTournamentResult(gameName, gameTeamNames, gameScores){
   pendingTournamentResult = { gi, scores };
   btn.style.display = '';
 }
+/* Ergebnis eintragen - und BLEIBEN.
+
+   Vorher sprang das hier direkt auf den Turnier-Screen. Damit stand die
+   Werkstatt des Hosts (Spielplan-Editor, Ergebnis-Eingabe) auf der Leinwand,
+   und das Sieger-Bild war weg, bevor jemand es gesehen hatte. Davids Ablauf
+   ist ein anderer: eintragen, das Ergebnis stehen lassen, und erst wenn der
+   Host so weit ist, "Turnierstand anzeigen" - dann wechselt die Leinwand. */
 function tournamentRecordPending(){
   if (!pendingTournamentResult || !tournament) return;
   const { gi, scores } = pendingTournamentResult;
@@ -445,6 +776,7 @@ function tournamentRecordPending(){
   saveTournament();
   pendingTournamentResult = null;
   showEl('tour-record-btn', false);
-  showScreen('tournament-screen');
+  showEl('tour-goto-btn', true);
+  updateGamemaster();
 }
 

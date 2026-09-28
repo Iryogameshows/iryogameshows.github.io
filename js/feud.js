@@ -876,6 +876,10 @@ const BOARD_PUBLIC_SCREENS = [
   'game-screen', 'finale-screen', 'result-screen',
   'jeopardy-screen', 'wwm-screen', 'wwds-screen',
   'ddf-screen', 'pih-screen', 'tp-screen',
+  // Die Schaufensterfassung des Turniers - nur Tabelle und Spielplan.
+  // Der Turnier-Screen selbst (mit Spielplan-Editor, Ergebnis-Eingabe und
+  // Spieldaten-Depot) bleibt beim Host.
+  'tournament-board-screen',
 ];
 /** Die CSS-Regel dazu: `.screen`, die keiner der erlaubten IDs entspricht.
  *  @returns {string} */
@@ -885,6 +889,25 @@ function boardHiddenScreensCss(){
 }
 
 function openBoardPopout() {
+  /* Ein Turnierabend sind mehrere Shows hintereinander, und jede rief hier
+     herein. window.open mit demselben Namen liefert zwar dasselbe Fenster,
+     aber der document.write darunter riss seinen Inhalt jedes Mal ab: das
+     Zuschauerfenster wurde zwischen zwei Spielen fuer einen Moment weiss,
+     verlor seine Scrollposition und musste Schriften und styles.css neu
+     holen. Steht das Fenster schon, wird es deshalb nur neu angeheftet - der
+     Mirror schreibt den neuen Screen ohnehin hinein.
+
+     Die Pruefung braucht keine Markierung im Dokument: `boardWin` steht nur
+     dann, wenn dieses Fenster es selbst geoeffnet hat. Nach einem Neuladen
+     des Hauptfensters ist die Variable leer, und dann wird auch neu
+     geschrieben - richtig so, denn im alten Fenster haengt noch der Stand von
+     vorher. (Eine Markierung im <body> waere ohnehin wirkungslos: der Mirror
+     kopiert die Attribute des Haupt-<body> mit und wuerde sie wegraeumen.) */
+  if (boardWin && !boardWin.closed){
+    startBoardMirror();
+    try { boardWin.focus(); } catch {}
+    return;
+  }
   boardWin = window.open('', 'Board', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
   if (!boardWin) return; // vom Browser blockiert (Pop-up-Blocker)
   // Frueher wurde der Inhalt des <style>-Blocks hier hineinkopiert. Seit die
@@ -1034,6 +1057,7 @@ function updateGamemasterTournament() {
       ${hidden ? `<button class="gm-btn gold sm" onclick="opener.tournamentRevealSecret(${i})">🔓 Aufdecken</button>` : ''}
     </div>`;
   }).join('');
+  const naechste = tournament ? tournamentNextGameIndex() : -1;
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
@@ -1048,6 +1072,12 @@ function updateGamemasterTournament() {
   </div>
   <div class="gm-side">${gmNotesPanelHtml()}</div>
   </div>
+  <div class="gm-actions">
+    ${naechste >= 0 ? `<button class="gm-btn gold" onclick="opener.tournamentStartNext()">▶ Nächstes Spiel starten</button>` : ''}
+    ${tournament ? `<button class="gm-btn blue" onclick="opener.tournamentCheckData()">📦 Nächste Spieldaten überprüfen</button>` : ''}
+    ${tournament ? `<button class="gm-btn gray" onclick="opener.tournamentShowBoard()">📊 Turnierstand anzeigen</button>` : ''}
+    <button class="gm-btn gray" onclick="opener.gmBackToMenu()">🏠 Zum Menü</button>
+  </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
 }
@@ -1055,6 +1085,12 @@ function updateGamemaster() {
   updateGMBar();
   if (!gamemasterWin || gamemasterWin.closed) return;
   if (gmActiveOverlay()) return updateGamemasterOverlay();
+  /* Bewusst VOR den Spiel-Flags: der Turnierstand wird zwischen zwei Shows
+     gezeigt, und ob das Flag der eben beendeten Show schon zurueckgesetzt ist,
+     haengt daran, wie sie geendet hat (regulaer, abgebrochen, per Undo). Steht
+     dieser Screen, gehoert das Panel ihm - sonst stuende der Host vor der
+     Steuerung eines Spiels, das gar nicht mehr laeuft. */
+  if (screenActive('tournament-board-screen')) return updateGamemasterTournamentBoard();
   if (wwmState.active) return updateGamemasterWwm();
   if (wwdsState.active) return updateGamemasterWwds();
   if (jeopardyState.active) return updateGamemasterJeopardy();

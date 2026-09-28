@@ -644,7 +644,7 @@
   </div>
   <div class="result-btns">
     <button class="btn btn-accent" id="tour-record-btn" style="display:none;" onclick="tournamentRecordPending()">🏆 Ins Turnier übernehmen</button>
-    <button class="btn btn-accent" id="tour-goto-btn" style="display:none;" onclick="showScreen('tournament-screen')">🏆 Zur Turnierübersicht</button>
+    <button class="btn btn-accent" id="tour-goto-btn" style="display:none;" onclick="tournamentShowBoard()">📊 Turnierstand anzeigen</button>
     <button class="btn btn-primary" onclick="startGame()">Nochmal spielen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>
   </div>
@@ -674,6 +674,16 @@
 </div>
 
 <!-- TURNIER -->
+<!-- TURNIERSTAND FUERS PUBLIKUM
+     Der Turnier-Screen darunter ist die Werkstatt des Hosts: Spielplan
+     anlegen, Ergebnisse tippen, Spieldaten laden. Das gehoert nicht auf die
+     Leinwand. Dieser hier ist die Schaufensterfassung - nur Tabelle und
+     Spielplan, kein einziger Knopf. Er steht in BOARD_PUBLIC_SCREENS und ist
+     damit der einzige Turnier-Screen, den das Zuschauerfenster zeigt. -->
+<div id="tournament-board-screen" class="screen">
+  <div id="tournament-board-content" style="width:100%;"></div>
+</div>
+
 <div id="tournament-screen" class="screen">
   <div class="page-title" style="margin-bottom:22px;"><em>🏆 Turnier</em>-Modus</div>
   <div id="tournament-content" style="width:100%;"></div>

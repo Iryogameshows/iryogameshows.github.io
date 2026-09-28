@@ -884,6 +884,7 @@ function showScreen(id) {
   if (id === 'reaction-board-screen') renderReactionBoard();
   if (id === 'players-screen') { ensurePlayersConnected(); setPlayersTab(playersTab); }
   if (id === 'tournament-screen') { renderTournament(); updateGamemaster(); }
+  if (id === 'tournament-board-screen') renderTournamentBoard();
   if (id === 'result-screen') renderResultLeaderboard();
   // Eingebettetes GM-Panel nur beim echten Rücksprung zum Hauptmenü wieder
   // ausblenden - bleibt bei internen Übergängen (z.B. Feud → Finale) sichtbar,
@@ -1434,11 +1435,29 @@ function exportFinaleQuestions() { downloadJSON(finaleQuestions, 'family-feud-fi
 // Gemeinsames Datei-Handling für alle JSON-Importe (FF/Jeopardy/WWM):
 // Datei lesen, BOM entfernen, parsen - apply(d) macht die formatspezifische
 // Validierung und darf bei ungültigem Inhalt einfach werfen.
+/* Wer den naechsten readJsonFile-Durchlauf mitbekommen will, legt hier eine
+   Funktion ab. Sie wird GENAU EINMAL gerufen, und nur wenn der Import auch
+   durchlief - eine kaputte Datei meldet nichts.
+
+   Gebraucht wird das vom Spieldaten-Depot im Turnier: es merkt sich, WELCHE
+   Datei geladen wurde, damit der Host vor dem Abend nachsehen kann, ob die
+   richtigen Fragen drin sind. Die Import-Funktionen selbst bleiben dafuer
+   unveraendert - sie sind an sieben Stellen im Editor verdrahtet, und jede
+   einzelne umzubauen waere sieben Gelegenheiten, eine zu uebersehen.
+   @type {((name: string) => void)|null} */
+let onJsonImportOk = null;
 function readJsonFile(e, apply) {
+  // Sofort einsammeln, nicht erst im onload: bis die Datei gelesen ist, koennte
+  // laengst ein zweiter Import laufen, und der Haken gehoerte dann dem falschen.
+  const ok = onJsonImportOk;
+  onJsonImportOk = null;
   const file = e.target.files[0]; if(!file) return;
   const r = new FileReader();
   r.onload = () => {
-    try { apply(JSON.parse(String(r.result).replace(/^﻿/, ''))); }
+    try {
+      apply(JSON.parse(String(r.result).replace(/^﻿/, '')));
+      if (ok) ok(file.name);
+    }
     catch(err) { alert('Import fehlgeschlagen' + (err && err.message ? ': ' + err.message : '')); }
   };
   r.onerror = () => { alert('Datei konnte nicht gelesen werden'); };

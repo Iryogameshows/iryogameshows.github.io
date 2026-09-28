@@ -534,7 +534,8 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'wwdsRevealTie','wwdsToggleMedia','gmBackToMenu','gmPlayAgain','gmGotoTournament',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia','saveHostNotesRemote',
-  'tournamentStartGame','tournamentRevealSecret',
+  'tournamentStartGame','tournamentStartAt','tournamentStartNext','tournamentRevealSecret',
+  'tournamentShowBoard','tournamentCheckData','tournamentRecordPending',
   // Der Duemmste fliegt
   'ddfReveal','ddfStartTimer','ddfBeginVote','ddfNext','ddfEvaluateVote','ddfStartRunoff',
   'ddfAfterResult','ddfQuit','ddfHostVote','ddfShowMedia',

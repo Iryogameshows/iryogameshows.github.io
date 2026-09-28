@@ -259,29 +259,23 @@ function introMoveSlide(i, dir){
 }
 
 function exportIntro(){ downloadJSON(introData, 'intro.json'); }
+/* Wie importTp: ueber readJsonFile, damit BOM, Fehlermeldung und die
+   Erfolgsmeldung (fuer das Spieldaten-Depot im Turnier) dieselben sind. */
 function importIntro(e){
-  const f = e.target.files[0];
-  if (!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    try {
-      const d = JSON.parse(String(r.result));
-      if (!d || !Array.isArray(d.slides)) { alert('Die Datei enthält keine Stufen.'); return; }
-      introData = {
-        header: String(d.header || ''),
-        seconds: Number(d.seconds) || 4.6,
-        stage: INTRO_STAGES.some(st => st.key === d.stage) ? String(d.stage) : 'buehne',
-        slides: d.slides.slice(0, INTRO_MAX_SLIDES).map(s => ({
-          lbl: String((s && s.lbl) || ''), big: String((s && s.big) || ''),
-          pink: String((s && s.pink) || ''), sub: String((s && s.sub) || ''),
-        })),
-      };
-      introSave();
-      renderIntroEditor();
-    } catch { alert('Datei konnte nicht gelesen werden.'); }
-  };
-  r.readAsText(f);
-  e.target.value = '';
+  readJsonFile(e, d => {
+    if (!d || !Array.isArray(d.slides)) throw new Error('Die Datei enthält keine Stufen');
+    introData = {
+      header: String(d.header || ''),
+      seconds: Number(d.seconds) || 4.6,
+      stage: INTRO_STAGES.some(st => st.key === d.stage) ? String(d.stage) : 'buehne',
+      slides: d.slides.slice(0, INTRO_MAX_SLIDES).map(s => ({
+        lbl: String((s && s.lbl) || ''), big: String((s && s.big) || ''),
+        pink: String((s && s.pink) || ''), sub: String((s && s.sub) || ''),
+      })),
+    };
+    introSave();
+    renderIntroEditor();
+  });
 }
 
 

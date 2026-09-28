@@ -733,7 +733,8 @@ function ddfGmControlsHtml(pfx){
     b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfAfterResult()">Weiter →</button>`;
   }
   if (s.phase === 'done'){
-    return `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('ddf-setup-screen')">Nochmal</button>`
+    return tournamentEndButtonHtml(pfx)
+         + `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('ddf-setup-screen')">Nochmal</button>`
          + `<button class="gm-btn gm-gray" onclick="${pfx}showScreen('menu-screen')">Zum Menü</button>`;
   }
   if (ddfUndoStack.can()) b += `<button class="gm-btn gm-orange" onclick="${pfx}ddfUndo()">↩ Undo</button>`;

@@ -780,27 +780,24 @@ function tpLoadSettings(){
 }
 
 function exportTp(){ downloadJSON(tpData, 'trivial-pursuit.json'); }
+/* Laeuft ueber readJsonFile wie alle anderen Importe. Vorher stand hier ein
+   eigener FileReader - dieselbe Mechanik noch einmal, nur ohne BOM-Behandlung,
+   mit einer Fehlermeldung, die bei kaputtem JSON "Datei konnte nicht gelesen
+   werden" sagte statt zu verraten, was daran kaputt ist, und ohne die
+   Erfolgsmeldung, an der das Spieldaten-Depot im Turnier haengt. Genau das
+   fiel im Test auf: die Datei kam an, der Dateiname wurde nicht gemerkt. */
 function importTp(e){
-  const f = e.target.files[0];
-  if (!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    try {
-      const d = JSON.parse(String(r.result));
-      // Die Spanne ist Bedingung, nicht Empfehlung. Ohne diese Pruefung faellt
-      // eine kaputte Datei erst mitten in der Show auf.
-      if (!d || !Array.isArray(d.categories)
-          || d.categories.length < TP_MIN_CATS || d.categories.length > TP_MAX_CATS){
-        alert('Die Datei braucht ' + TP_MIN_CATS + ' bis ' + TP_MAX_CATS + ' Kategorien.');
-        return;
-      }
-      tpData = d;
-      tpSave();
-      renderTpEditor();
-    } catch { alert('Datei konnte nicht gelesen werden.'); }
-  };
-  r.readAsText(f);
-  e.target.value = '';
+  readJsonFile(e, d => {
+    // Die Spanne ist Bedingung, nicht Empfehlung. Ohne diese Pruefung faellt
+    // eine kaputte Datei erst mitten in der Show auf.
+    if (!d || !Array.isArray(d.categories)
+        || d.categories.length < TP_MIN_CATS || d.categories.length > TP_MAX_CATS){
+      throw new Error('Die Datei braucht ' + TP_MIN_CATS + ' bis ' + TP_MAX_CATS + ' Kategorien');
+    }
+    tpData = d;
+    tpSave();
+    renderTpEditor();
+  });
 }
 
 tpLoad();
@@ -914,7 +911,8 @@ function tpGmControlsHtml(pfx){
   if (s.phase === 'done'){
     // Nach dem Spiel steuert der Host von hier weiter. Frueher standen diese
     // beiden Knoepfe auf dem Hauptbildschirm - also auf der Leinwand.
-    return `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('tp-setup-screen')">Nochmal</button>`
+    return tournamentEndButtonHtml(pfx)
+         + `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('tp-setup-screen')">Nochmal</button>`
          + `<button class="gm-btn gm-gray" onclick="${pfx}showScreen('menu-screen')">Zum Menü</button>`;
   }
   if (tpUndoStack.can()) b += `<button class="gm-btn gm-orange" onclick="${pfx}tpUndo()">↩ Undo</button>`;

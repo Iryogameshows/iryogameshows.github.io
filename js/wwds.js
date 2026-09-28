@@ -691,9 +691,68 @@ function updateGamemasterResult(){
   <div class="gm-side">${gmNotesPanelHtml()}</div>
   </div>
   <div class="gm-actions">
-    <button class="gm-btn gold" onclick="opener.gmBackToMenu()">🏠 Zum Menü</button>
+    ${pendingTournamentResult
+      ? `<button class="gm-btn gold" onclick="opener.tournamentRecordPending()">🏆 Ergebnis ins Turnier eintragen</button>` : ''}
+    ${tournament
+      ? `<button class="gm-btn gold" onclick="opener.tournamentShowBoard()">📊 Turnierstand anzeigen</button>` : ''}
     <button class="gm-btn blue" onclick="opener.gmPlayAgain()">↻ Nochmal spielen</button>
-    ${tourVisible ? `<button class="gm-btn gray" onclick="opener.gmGotoTournament()">🏆 Turnierübersicht</button>` : ''}
+    <button class="gm-btn gray" onclick="opener.gmBackToMenu()">🏠 Zum Menü</button>
+    ${tourVisible && !pendingTournamentResult ? `<button class="gm-btn gray" onclick="opener.gmGotoTournament()">🛠 Turnier bearbeiten</button>` : ''}
+  </div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
+}
+
+/* ── GAMEMASTER: TURNIERSTAND AUF DER LEINWAND ─────────────────────────────
+   Davids Ablauf, Schritt drei: der Stand steht vorne, der Host steuert von
+   hier aus weiter - ohne das Turnier-Menue, ohne die Lobby des naechsten
+   Spiels. Alles, was er dafuer braucht, steht auf einer Flaeche: was als
+   Naechstes kommt, ob dessen Fragen geladen sind, und der Startknopf. */
+function updateGamemasterTournamentBoard(){
+  const i = tournament ? tournamentNextGameIndex() : -1;
+  const g = i >= 0 ? tournament.games[i] : null;
+  const cfg = g ? TOURNAMENT_GAMES[g.game] : null;
+  const rows = tournament
+    ? tournament.teams.map((t, ti) => {
+        const totals = tournamentTotals();
+        return `<div class="money"><span>${escapeHtml(t)}</span><strong>${totals[ti]}</strong></div>`;
+      }).join('')
+    : '';
+  const naechstes = !tournament
+    ? `<div class="hint-line">Kein Turnier angelegt.</div>`
+    : !g
+    ? `<div class="hint-line">Alle Spiele im Plan sind gespielt.</div>`
+    : `<div class="question">${g.secret ? '❓ Geheim' : escapeHtml(g.game)}</div>
+       <div class="hint-line">Gewichtung ×${g.weight}${g.date ? ' · ' + escapeHtml(g.date) : ''}</div>
+       <div class="hint-line">Spieldaten: ${escapeHtml(tournamentFileInfo(g.game))}</div>
+       ${cfg && cfg.lobby === 'roster'
+         ? `<div class="info-card">Bei dieser Show wählst du erst aus, wer mitspielt — der Knopf führt dich auf den Setup-Screen.</div>`
+         : ''}`;
+
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}
+  .money{display:flex;justify-content:space-between;gap:10px;font-size:.9rem;margin-bottom:6px;}
+  .money strong{color:#FFD23F;}
+</style></head><body>
+  ${gmHeaderHtml('Gamemaster', tournament ? `Turnierstand · ${tournament.name}` : 'Turnierstand')}
+  <div class="gm-body">
+  <div class="gm-main">
+    <div class="round-label">Als Nächstes</div>
+    ${naechstes}
+  </div>
+  <div class="gm-side">
+    <div class="panel"><div class="panel-head"><span>🏆 Turnierpunkte</span></div>${rows}</div>
+    ${gmNotesPanelHtml()}
+  </div>
+  </div>
+  <div class="gm-actions">
+    ${g ? `<button class="gm-btn gold" onclick="opener.tournamentStartNext()">▶ ${cfg && cfg.lobby === 'roster' ? 'Einrichten' : 'Nächstes Spiel starten'}</button>` : ''}
+    <button class="gm-btn blue" onclick="opener.tournamentCheckData()">📦 Nächste Spieldaten überprüfen</button>
+    <button class="gm-btn gray" onclick="opener.gmGotoTournament()">🛠 Turnier bearbeiten</button>
+    <button class="gm-btn gray" onclick="opener.gmBackToMenu()">🏠 Zum Menü</button>
   </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);
