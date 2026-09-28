@@ -12,6 +12,161 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Einzelantwort, TP-Logik, Buzzer-Sperre, Lobby-GIF (`1db72e0`)
+
+**Vier Meldungen von David in einer Nachricht.** Der Reihe nach.
+
+### 1 · Jeopardy: Schätzfrage mit Wörtern → eigene Sorte „Einzelantwort"
+
+**Symptom (David):** „Jeopardy Schätzfragen auch mit Wörtern haben mal wieder
+nicht funktioniert → bauen wir um in Einzelantwort. Auf dem Handy geht ein
+Textfeld auf."
+
+**Rückfrage gestellt**, weil „Einzelantwort" drei Lesarten hatte (eigener
+Fragetyp für alle / nur einer tippt / Buzzer entscheidet dann Textfeld).
+Davids Antwort: **eigener Fragetyp, alle tippen.**
+
+**Gemacht:**
+- Neues Feld `clue.single` (📝 Einzelantwort) gleichrangig neben
+  `clue.estimate` (📊 Schätzfrage). Der alte Unterhaken `estimateText`
+  („🔤 Buchstaben") ist raus.
+- Die beiden Haken schließen sich gegenseitig aus — `jeopardyEditTyped()` in
+  `js/jeopardy-ui.js` nimmt dem einen das Kreuz weg, wenn der andere gesetzt
+  wird, und löscht `estimateText` gleich mit.
+- `jeopardyTyped(clue)` / `jeopardySingle(clue)` in `js/jeopardy.js` — überall
+  dort eingesetzt, wo vorher `clue.estimate` direkt abgefragt wurde
+  (`jeopardyRevealQuestion`, GM-Panel in `js/feud.js`, GM-Leiste).
+- Sortierung: bei `single` strikt nach Eingang, die Zahlen-Logik läuft gar
+  nicht erst an. Beschriftung im GM-Panel, auf dem Handy (Überschrift,
+  Platzhalter, „Antwort abgegeben ✔") und im Board-Gitter (📝-Abzeichen) folgt.
+- Import alter Boards: `jeopardyMigrateBoard()` macht aus
+  `estimate + estimateText` ein `single`. Zur Laufzeit zählt
+  `estimateText` nur noch in `jeopardyEstimateOpen()` als Rückfall.
+- `openJeopardyClue()` setzt `jeopardyEstimate.answers`/`.single` zurück —
+  sonst zeigte das GM-Panel vor dem Aufdecken noch die Liste der vorigen Frage.
+
+**Warum so:** Die alte Bauart war der Fehler selbst. Eine Wortantwort lief
+weiter durch `parseEstimate()`, das aus allem ohne Ziffer `null` macht; die
+Sortierung hängte sie als „Rest" hinter die Zahlen. Die Liste war also nach
+nichts sortiert, und ein versehentlich stehengebliebener Zahlen-Haken kippte
+die ganze Frage still auf Ziffernblock. Zwei gleichrangige Sorten, die sich
+ausschließen, machen den Zustand am Haken ablesbar.
+
+**Verworfen:** den alten Unterhaken nur zu reparieren. Er war die Ursache,
+nicht das Symptom — und David hat den Umbau ausdrücklich verlangt.
+
+### 2 · Trivial Pursuit: Logikfehler
+
+David hat keine benannt („gibt's Logik Fehler die fixt du bitte"), also
+`js/tp.js` durchgelesen. Gefunden und behoben:
+
+| Stelle | Fehler | Folge |
+|---|---|---|
+| `tpEnterFinal()` | setzte `finalTeam`, aber nicht `turn` | Nach erfolgreichem Nachfassen, das das letzte Stück brachte, stand das falsche Team am Zug: GM-Kopf, Dreh-Knopf auf den Handys und Torten-Markierung zeigten den Vorgänger, gewertet wurde der Finalist |
+| `tpShowAnswer()` | setzte auch beim Nachfassen `phase = 'answer'` | `tpStealAward()`/`tpStealNobody()` prüfen auf `'steal'` und taten danach wortlos nichts — der Host konnte das Nachfassen nicht mehr werten |
+| `tpJudge()` | keine Phasen-Wache | Zweiter Klick (Doppeltipp, doppelt ankommender Fernbefehl) schob den Zug ein zweites Mal weiter, ein Team wurde übersprungen |
+| `tpSpin()`, `tpJudge()`, `tpStealAward()`, `tpStealNobody()` | `tpUndoStack.save()` **vor** der Wache | Jeder abgeprallte Aufruf legte einen Zustand auf den Stapel; „↩ Undo" holte denselben Spielstand zurück und sah aus, als täte es nichts |
+| `startTp()` | kein `tpUndoStack.reset()` | „↩ Undo" im ersten Zug holte den Spielstand des **vorigen** Spiels zurück |
+| `tpDrawQuestion()` | schob bei leerer Auswahl die `0` ein zweites Mal in `used` | `used.length` wuchs über `questions.length`; `tpOpenCats()` hielt die Kategorie danach für erledigt |
+| `tpRender()` | setzte `tpSpinOpen = true` auch ohne Verbindung | Der Dreh-Knopf kam nie mehr auf die Handys, auch wenn Firebase längst wieder da war |
+| `tpStealAward()` | keine Prüfung `team !== turn` | Das Team, das gerade daneben lag, konnte bei sich selbst nachfassen (über einen alten GM-Spiegel) |
+
+Dazu ein neuer Merker `tpState.stealShown`: der Host kann die Antwort jetzt
+**während** des Nachfassens aufdecken, ohne die Phase zu verlassen — im
+GM-Panel liegt dafür ein „Antwort zeigen"-Knopf in der Steal-Leiste.
+
+### 3 · Lobby-GIF zwischen den Fragen
+
+**Symptom (David):** „Zwischen jedem Buzzer geht immer wieder der Lobbyscreen
+mit Gif auf. Soll nicht."
+
+**Ursache:** `refreshRoot()` in `buzzer/index.html` kannte nur
+`live || armed || buzzedThisRound` → Buzzer-Screen, sonst Lobby. Zwischen zwei
+Fragen steht `live` auf `false`, also sprang jedes Handy in die Lobby zurück —
+samt frisch eingeblendetem GIF.
+
+**Gemacht:** Merker `everLive`. Er trennt die beiden Fälle, die `live === false`
+sonst zusammenwirft: „Show hat noch nicht angefangen" (Lobby ist richtig) und
+„nächste Frage kommt gleich" (Buzzer-Screen bleibt stehen, Statuszeile sagt
+„Warte auf die Frage…").
+
+**Bewusst nur im Speicher**, nicht in `localStorage`: nach einem Neuladen
+mitten in der Show sieht man einmal die Lobby, spätestens bei der nächsten
+Frage steht der Buzzer wieder da. Das ist der harmlose Fall — ein persistenter
+Merker müsste dagegen wissen, wann eine Show *endet*, sonst bekäme ein Gast
+beim nächsten Event nie wieder die Lobby zu sehen.
+
+**Nebenwirkung, gewollt:** „Wer weiß denn sowas" setzt `live` nie und behält
+damit wie bisher die Lobby. Trivial Pursuit setzt es beim Nachfassen — dort
+bleibt das Handy danach auf dem Buzzer-Screen statt in der Lobby.
+
+### 4 · Buzzer blieb für die ganze Frage gesperrt
+
+**Symptom (David):** „Wenn man zu nah aneinander die Frage anzeigt und aber
+noch vorher buzzert bleibt der Buzzer permanent gesperrt für die Frage."
+
+**Ursache (aus dem Code hergeleitet, nicht live nachgestellt):** In
+`buzzer/index.html` stand
+
+```js
+setInterval(() => { if (locked()) refreshBuzz(); }, 250);
+```
+
+Solange die 3-Sekunden-Sperre lief, wurde gezeichnet. In dem Takt, in dem sie
+ablief, war die Bedingung falsch — es wurde **nicht** noch einmal gezeichnet.
+Stehen blieb also das letzte Bild, das mit deaktiviertem Knopf. Er ging erst
+wieder auf, wenn von außen ein Ereignis kam (fremder Buzz, Umschalten des
+Hosts, neue Runde).
+
+Genau deshalb hängt es an „zu nah aneinander": deckt der Host kurz nach dem
+Öffnen auf, kommt das `armed`-Ereignis **während** der Sperre. Danach kommt
+keins mehr — der Spieler ist für die ganze Frage raus, und niemand sieht warum.
+Bei genug Abstand kommt `armed` nach der Sperre und räumt sie mit auf; deshalb
+fiel es nur in der Hektik auf.
+
+**Gemacht:** Der Takt läuft jetzt, solange eine Sperre eingetragen ist, und
+räumt sie beim Ablaufen selbst weg — das ergibt genau den einen Durchlauf nach
+dem Ende, der gefehlt hat.
+
+**Dazu (4a):** zweiter Knopf **„🔔 Buzzer neu (alle dürfen)"** neben dem
+bisherigen „(1. gesperrt)" — im GM-Panel und in der GM-Leiste.
+`jeopardyBuzzReopen()` und der neue `jeopardyBuzzReopenAll()` teilen sich
+`jeopardyBuzzReopenCore(sperreErsten)`. Der neue Knopf leert die Sperrliste
+ganz, auch schon bestehende Einträge. Dabei mit aufgefallen: die alte Fassung
+schrieb `excluded: {}` — ein leeres Objekt schreibt Firebase nicht, der alte
+Knoten wäre stehengeblieben. Jetzt `null`, wenn die Liste leer ist.
+`jeopardyBuzzReopenAll` steht in `GM_REMOTE_ALLOWED_FNS`, ist also auch vom
+Handy-Gamepad aus erreichbar.
+
+### Geprüft
+
+- `node check.js` — 13 js-Dateien syntaktisch, 392 Handler-Aufrufe gegen 758
+  globale Namen, 259 feste Element-IDs gegen 213 im Markup, 974
+  Klammernpaare in `styles.css`. Ohne Befund.
+- `node check.js --types` — 13 Dateien typgeprüft, keine Meldung.
+- `buzzer/index.html`: das große `<script>` herausgelöst und mit
+  `node --check` geprüft (`check.js` sieht diese Datei nicht an).
+
+### Ungeprüft / offen
+
+- **Nichts davon lief im Browser oder in einer echten Show.** Alle vier
+  Befunde sind aus dem Code hergeleitet. Besonders Punkt 4 gehört mit zwei
+  Handys nachgestellt: Feld öffnen, sofort drücken, sofort aufdecken — der
+  Knopf muss nach spätestens 3 Sekunden wieder angehen.
+- Punkt 3 und Trivial Pursuit greifen ineinander: seit `everLive` bleibt das
+  Handy auch bei TP zwischen den Zügen auf dem Buzzer-Screen. Falls das dort
+  stört, ist die Stelle `refreshRoot()` in `buzzer/index.html`.
+- `estimateText` lebt noch als Rückfall in `jeopardyEstimateOpen()` und in der
+  Typdefinition. Wenn sicher ist, dass keine alte Board-Datei mehr im Umlauf
+  ist, kann beides raus.
+- Die Fallstricke bei Trivial Pursuit, die **nicht** angefasst wurden:
+  `tpHasAll()` verlangt `wedges[team].length === tpCatCount()` — wer im Editor
+  während eines laufenden Spiels eine Kategorie hinzufügt, macht das Spiel
+  unlösbar. Und `tpRenderTeams()` zeigt „🏁 Schlussfrage" bei **jedem** Team
+  mit voller Torte, nicht nur bei dem, das gerade dran ist.
+
+---
+
 ## 2026-09-26 — Intro-Editor landete immer bei Family Feud (`a58aab4`)
 
 **Symptom (David):** „wenn ich in das Intro laden will dann komm ich IMMER
