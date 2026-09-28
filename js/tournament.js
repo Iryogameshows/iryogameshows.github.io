@@ -55,14 +55,26 @@ function saveTournament(){
    - start   Die Funktion, die die Show tatsaechlich startet.
    - lobby   Der Schluessel, unter dem die Teamnamen-Felder stehen (LOBBY_SETUP
              in buzzer.js) - daran werden die Turnier-Teams uebernommen.
-             'pih' hat eigene Felder, 'roster' heisst: kein Direktstart.
+             'pih' hat eigene Felder, null heisst: keine Teamnamen im Setup.
+   - roster  Die Show braucht eine Teilnehmer-Auswahl. Dann KEIN Direktstart:
+             der Host muss erst aussuchen, wer mitspielt.
    - import  Die Import-Funktion des Editors, fuer das Spieldaten-Depot.
    - info    Was gerade geladen ist, in einem Satz - fuer "Spieldaten pruefen".
 
-   "Der Duemmste fliegt" und "Der Preis ist heiss" koennen NICHT direkt
-   starten: dort muss der Host erst aussuchen, wer ueberhaupt mitspielt. Bei
-   ihnen bleibt es beim Setup-Screen.
-   @type {Record<string, {setup:string, start:string, lobby:string|null, import:string, info:() => string}>} */
+   `roster` stand vorher nicht als eigenes Feld da, sondern als Wert IN `lobby`
+   ('roster' statt eines Lobby-Schluessels). Das ging fuer "Der Duemmste
+   fliegt" gerade noch auf, fuer "Der Preis ist heiss" nicht: die Show hat
+   eigene Teamnamen-Felder und musste deshalb `lobby:'pih'` tragen - womit der
+   Halt verlorenging und sie aus dem Turnier heraus durchstartete. Aufgefallen
+   ist das nicht, weil im Test kein Handy verbunden war: rosterSeed() waehlt
+   die verbundenen Accounts automatisch vor, und ohne Handys war die Liste
+   leer, also brach startPih() mit einer Meldung ab. Mit verbundenen Handys
+   waere die Show ohne Rueckfrage losgelaufen - mit einer Teilnehmerliste, die
+   der Host nie gesehen hat.
+
+   Zwei Fragen, zwei Felder. Ein Wert, der zwei Dinge bedeutet, faellt
+   irgendwann auf die Nase.
+   @type {Record<string, {setup:string, start:string, lobby:string|null, roster?:boolean, import:string, info:() => string}>} */
 const TOURNAMENT_GAMES = {
   'Family Feud':         { setup:'setup-screen',          start:'startGame',    lobby:'feud',
                            import:'importQuestions',
@@ -76,10 +88,10 @@ const TOURNAMENT_GAMES = {
   'Wer weiß denn sowas': { setup:'wwds-setup-screen',     start:'startWwds',    lobby:'wwds',
                            import:'importWwds',
                            info:() => `${(wwdsData.categories||[]).length} Kategorien` },
-  'Der Dümmste fliegt':  { setup:'ddf-setup-screen',      start:'startDdf',     lobby:'roster',
+  'Der Dümmste fliegt':  { setup:'ddf-setup-screen',      start:'startDdf',     lobby:null, roster:true,
                            import:'importDdf',
                            info:() => `${(ddfData.questions||[]).length} Fragen` },
-  'Der Preis ist heiß':  { setup:'pih-setup-screen',      start:'startPih',     lobby:'pih',
+  'Der Preis ist heiß':  { setup:'pih-setup-screen',      start:'startPih',     lobby:'pih', roster:true,
                            import:'importPih',
                            info:() => `${(pihData.items||[]).length} Artikel` },
   'Trivial Pursuit':     { setup:'tp-setup-screen',       start:'startTp',      lobby:'tp',
@@ -203,8 +215,10 @@ function tournamentStartAt(i){
   activeTournamentGameIndex = i;
   showScreen(cfg.setup);
   tournamentFillTeamNames(g.game);
-  if (cfg.lobby === 'roster'){
-    // Kein Direktstart: der Host waehlt erst die Teilnehmer aus.
+  if (cfg.roster){
+    // Kein Direktstart: der Host waehlt erst die Teilnehmer aus. Die
+    // Teamnamen sind trotzdem schon eingetragen, er muss nur noch die
+    // Teilnehmer bestaetigen und selbst starten.
     updateGamemaster();
     return;
   }

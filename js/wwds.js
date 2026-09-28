@@ -725,7 +725,7 @@ function updateGamemasterTournamentBoard(){
     : `<div class="question">${g.secret ? '❓ Geheim' : escapeHtml(g.game)}</div>
        <div class="hint-line">Gewichtung ×${g.weight}${g.date ? ' · ' + escapeHtml(g.date) : ''}</div>
        <div class="hint-line">Spieldaten: ${escapeHtml(tournamentFileInfo(g.game))}</div>
-       ${cfg && cfg.lobby === 'roster'
+       ${cfg && cfg.roster
          ? `<div class="info-card">Bei dieser Show wählst du erst aus, wer mitspielt — der Knopf führt dich auf den Setup-Screen.</div>`
          : ''}`;
 
@@ -749,7 +749,7 @@ function updateGamemasterTournamentBoard(){
   </div>
   </div>
   <div class="gm-actions">
-    ${g ? `<button class="gm-btn gold" onclick="opener.tournamentStartNext()">▶ ${cfg && cfg.lobby === 'roster' ? 'Einrichten' : 'Nächstes Spiel starten'}</button>` : ''}
+    ${g ? `<button class="gm-btn gold" onclick="opener.tournamentStartNext()">▶ ${cfg && cfg.roster ? 'Einrichten' : 'Nächstes Spiel starten'}</button>` : ''}
     <button class="gm-btn blue" onclick="opener.tournamentCheckData()">📦 Nächste Spieldaten überprüfen</button>
     <button class="gm-btn gray" onclick="opener.gmGotoTournament()">🛠 Turnier bearbeiten</button>
     <button class="gm-btn gray" onclick="opener.gmBackToMenu()">🏠 Zum Menü</button>
