@@ -12,6 +12,83 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Mainscreen bekommt eine eigene Adresse (`dc03697`)
+
+**Wunsch (David):** „optimal wärs eigentlich wenn das ne eigene Seite wär, also
+….gameshows/mainscreen. dann weil so isse die gleiche Url".
+
+**Rückfrage gestellt**, weil zwei Lesarten sehr verschieden teuer sind:
+nur eine eigene Adresse (~30 Minuten) oder eine Seite, die auch **allein**
+läuft, an einem zweiten Rechner (großer Umbau: der ganze Anzeigezustand müsste
+über Firebase, in allen sieben Shows einzeln — das bestehende Verfahren scheidet
+aus, es würde bei jedem Buzz Megabyte durch die Datenbank schieben).
+
+Davids Antwort: **„das soll genau das sein, was jetzt grad im popout passiert,
+nur mit eigener URL".** Also die erste Variante.
+
+### Gemacht
+
+`mainscreen/index.html` als echte Seite. `openBoardPopout()` öffnet sie mit
+`window.open(url, 'Board', …)` statt `about:blank` + `document.write`.
+
+**Die Seite hält absichtlich fast nichts.** Schriften, `styles.css` und die
+Regeln, welche Screens das Publikum sehen darf, setzt das Hauptfenster ein
+(`injectBoardStyles()`). Der Grund ist `BOARD_PUBLIC_SCREENS`: die Liste steht
+in `js/feud.js`, und eine zweite Kopie in der HTML-Datei wäre irgendwann
+auseinandergelaufen — dann stünde ein Editor auf der Leinwand oder das
+Spielbrett bliebe schwarz. `styles.css` wird mit der URL aus dem Hauptdokument
+verlinkt, samt `?v=`-Cache-Buster des laufenden Deploys.
+
+**Neuladen im Zuschauerfenster** war der Fall, der beim Entwurf sofort auffiel:
+das Fensterobjekt bleibt dasselbe, aber Dokument und eingesetzte Stile sind
+weg. Das Hauptfenster spiegelte dann in ein Dokument ohne Regeln — und dort
+stünden alle Screens auf einmal. Gelöst, indem die Seite sich selbst meldet:
+
+```js
+if (window.opener && typeof window.opener.boardPageReady === 'function')
+  window.opener.boardPageReady();
+```
+
+`boardPageReady()` setzt die Stile neu, leitet den Wartebildschirm aus dem
+aktiven Screen ab und startet die Spiegelung. Dieselbe Funktion läuft auch
+beim normalen Öffnen — ein Weg, nicht zwei.
+
+**Direkt aufgerufen**, ohne Hauptfenster, zeigt die Seite einen Hinweis, wo sie
+herkommt. Sie ist die Anzeige des Hosts, kein zweiter Zugang; an einem anderen
+Rechner bleibt sie leer. Der Hinweis verschwindet per CSS-Regel, sobald das
+Hauptfenster die Stile einsetzt (`#ms-warten{display:none!important}`).
+
+### Geprüft
+
+Im echten zweiten Fenster, Ablauf am Stück:
+
+| Schritt | Adresse | Wartebildschirm | Regeln + CSS | sichtbarer Screen |
+|---|---|---|---|---|
+| nach dem Öffnen | `/mainscreen/` | **an** | ja | — |
+| Spielbrett zeigen | `/mainscreen/` | aus | ja | `game-screen` |
+| **F5 im Mainscreen** | `/mainscreen/` | aus | **ja, neu gesetzt** | `game-screen` |
+| danach Setup-Screen | `/mainscreen/` | **an** | ja | — |
+
+Direkt aufgerufen: Titel steht, Hinweis sichtbar. Keine JavaScript-Fehler in
+beiden Fenstern. `node check.js --types` ohne Befund, das Skript der neuen
+Seite separat mit `node --check` geprüft.
+
+### Offen / Fallstricke
+
+- **Die Seite funktioniert nur mit dem Hauptfenster.** Das ist die bewusst
+  gewählte Variante, aber es steht jetzt eine Adresse im Netz, die allein
+  aufgerufen nichts tut. Der Hinweistext fängt das ab; wer mehr will, braucht
+  die Firebase-Variante.
+- **`mainscreen/index.html` bekommt keinen Cache-Buster vom Deploy.** Die
+  Action hängt `?v=` nur an die Pfade **in** `index.html`. Die neue Seite trägt
+  deshalb dieselben `no-cache`-Metas wie `index.html`. Ungeprüft, ob GitHub
+  Pages die respektiert — falls der Mainscreen nach einem Deploy einmal veraltet
+  aussieht, ist das die Stelle.
+- Das Fenster heißt weiterhin `'Board'` (der `window.open`-Name). Das ist der
+  Grund, warum ein zweites Öffnen dasselbe Fenster trifft — nicht die URL.
+
+---
+
 ## 2026-09-28 — Wartebildschirm aus dem Menü heraus leer · Logo auf 60% (`b755854`)
 
 **Symptom (David, mit Bild vom Hauptmenü):** „logo kleiner, das soll auch wenn
