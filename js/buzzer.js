@@ -490,7 +490,7 @@ function renderFeudBuzzer(){
 const GM_REMOTE_ALLOWED_FNS = new Set([
   'addStrike','assignPlayerTeam','feudBuzzToggleHidden','feudSetStartTeam','feudToggleMedia','finaleMarkMiss','finaleNextReveal',
   'finalePickAnswer','gmAdvance','gmSkipTutorial',
-  'jeopardyAnnounceDaily','jeopardySetDdTeam','jeopardyBuzzReopen','jeopardyBuzzToggleHidden','jeopardyDeduct',
+  'jeopardyAnnounceDaily','jeopardySetDdTeam','jeopardyBuzzReopen','jeopardyBuzzReopenAll','jeopardyBuzzToggleHidden','jeopardyDeduct',
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySeriesReveal','jeopardySkip','jeopardyStageReveal',
   'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','jeopardyWrongReopen','nextRound','openJeopardyClue',
   'jeopardyEstimateOpen','jeopardyEstimateClose','jeopardyEstimateReopen',

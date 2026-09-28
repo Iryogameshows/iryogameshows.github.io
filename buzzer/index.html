@@ -234,7 +234,7 @@
   <!-- SCHÄTZFRAGE -->
   <div id="screen-estimate" class="screen">
     <div class="team-chip" id="est-team-chip">Team</div>
-    <div class="lobby-title">📊 Schätzfrage</div>
+    <div class="lobby-title" id="est-title">📊 Schätzfrage</div>
     <div class="lobby-sub" id="est-question"></div>
     <input id="est-input" type="text" inputmode="decimal" placeholder="Deine Schätzung" autocomplete="off" maxlength="60">
     <button class="btn" id="est-send">Abschicken</button>
@@ -416,6 +416,25 @@
   const hint = document.getElementById('hint');
   const teamChip = document.getElementById('team-chip');
   let live=false, armed=false, buzzedThisRound=false, lastRound=0, results=[], lockUntil=0, excludedSet={};
+  /* War in dieser Show schon einmal ein Buzzer offen?
+
+     Zwischen zwei Fragen setzt der Host `live` auf false. Bis hierher hiess
+     das: zurueck in die Lobby - mit Titel, Zaehler und einem frisch
+     eingeblendeten GIF. Zwischen JEDER Frage. Das Handy sprang also die ganze
+     Show über hin und her, und wer es aus der Tasche zog, sah als Erstes ein
+     tanzendes Bild statt seines Buzzers.
+
+     Der Merker trennt die beiden Faelle, die `live === false` sonst
+     zusammenwirft: "die Show hat noch nicht angefangen" (Lobby ist richtig)
+     und "die naechste Frage kommt gleich" (Buzzer-Screen bleibt stehen, mit
+     'Warte auf die Frage…' in der Statuszeile).
+
+     Nur ein Merker im Speicher, absichtlich: er gilt fuer die laufende Sitzung
+     und faellt beim Neuladen zurueck auf die Lobby. Das ist der harmlose Fall -
+     spaetestens bei der naechsten Frage steht der Buzzer wieder da. Ein Spiel,
+     das gar nicht buzzert (Wer weiss denn sowas), setzt `live` nie und behaelt
+     damit wie bisher die Lobby. */
+  let everLive=false;
   let online=false, buzzFailed=false;
   let lastStatusText='';
   let myTeam=null, teamNames=[], presenceCount=0, joinLocked=false, lockedNames=[];
@@ -484,6 +503,9 @@
     inp.setAttribute('inputmode', estText ? 'text' : 'decimal');
     inp.setAttribute('autocapitalize', estText ? 'sentences' : 'off');
     inp.placeholder = estText ? 'Deine Antwort' : 'Deine Schätzung';
+    // Die Überschrift gehört dazu: "Schätzfrage" über einem Textfeld liest
+    // sich wie ein Fehler, und wer eine Zahl erwartet, tippt auch eine.
+    document.getElementById('est-title').textContent = estText ? '📝 Einzelantwort' : '📊 Schätzfrage';
   }
 
   // Finale laeuft, ich bin nicht dabei.
@@ -531,10 +553,11 @@
     // ein Knopf, der nichts tut, ist schlimmer als kein Knopf.
     if (myTeamSpins()) { showTpSpin(); return; }
     // Der Buzzer hängt nicht mehr am Team: sobald der Host eine Frage
-    // vorbereitet, bekommt ihn jeder - mit Team wie ohne. Dazwischen wartet
-    // man in der Lobby. buzzedThisRound haelt den Screen noch kurz, damit man
-    // seinen Platz sieht, wenn der Host die Frage gleich wieder schliesst.
-    if (live || armed || buzzedThisRound) { showBuzz(); return; }
+    // vorbereitet, bekommt ihn jeder - mit Team wie ohne. buzzedThisRound
+    // haelt den Screen noch kurz, damit man seinen Platz sieht, wenn der Host
+    // die Frage gleich wieder schliesst. everLive haelt ihn zwischen den
+    // Fragen - siehe oben bei der Deklaration.
+    if (live || armed || buzzedThisRound || everLive) { showBuzz(); return; }
     showLobby();
   }
   function refreshBuzz(){
@@ -605,7 +628,7 @@
   // ueberhaupt der Buzzer-Screen oder die Lobby dran ist. refreshBuzz allein
   // wuerde nur den Inhalt eines Screens auffrischen, der gar nicht sichtbar
   // ist - das Handy bliebe in der Lobby haengen.
-  ref.child('live').on('value', s => { live = !!s.val(); refreshRoot(); });
+  ref.child('live').on('value', s => { live = !!s.val(); if (live) everLive = true; refreshRoot(); });
   ref.child('armed').on('value', s => { armed = !!s.val(); refreshRoot(); });
   ref.child('excluded').on('value', s => { excludedSet = s.val() || {}; refreshBuzz(); });
   ref.child('round').on('value', s => {
@@ -633,7 +656,8 @@
     estOnly = Array.isArray(e.only) ? e.only : [];
     estOnlyNames = Array.isArray(e.onlyNames) ? e.onlyNames : [];
     if (estActive && acc && e.answers && e.answers[acc.key]) estSubmitted = true;
-    document.getElementById('est-hint').textContent = estSubmitted ? 'Schätzung abgegeben ✔' : '';
+    document.getElementById('est-hint').textContent = estSubmitted
+      ? (estText ? 'Antwort abgegeben ✔' : 'Schätzung abgegeben ✔') : '';
     refreshRoot();
   });
 
@@ -761,14 +785,35 @@
       value: raw, num: num, ts: TS
     }).catch(() => { estSubmitted = false; document.getElementById('est-send').disabled = false; });
     if (navigator.vibrate) navigator.vibrate(60);
-    document.getElementById('est-hint').textContent = 'Schätzung abgegeben ✔';
+    document.getElementById('est-hint').textContent = estText ? 'Antwort abgegeben ✔' : 'Schätzung abgegeben ✔';
     document.getElementById('est-send').disabled = false;
     refreshRoot();
   }
   document.getElementById('est-send').addEventListener('click', sendEstimate);
   document.getElementById('est-input').addEventListener('keydown', e => { if (e.key === 'Enter') sendEstimate(); });
 
-  setInterval(() => { if (locked()) refreshBuzz(); }, 250);
+  /* Der Takt, der die "Gesperrt 3s"-Anzeige herunterzaehlt - und der Grund,
+     warum ein Buzzer nach einem Fehlstart hängenblieb.
+
+     Vorher stand hier `if (locked()) refreshBuzz()`. Solange die Sperre lief,
+     wurde gezeichnet; in dem Moment, in dem sie ablief, war die Bedingung
+     falsch - und damit blieb das LETZTE Bild stehen, das mit deaktiviertem
+     Knopf. Der Knopf ging erst wieder auf, wenn von aussen irgendein Ereignis
+     kam (jemand anderes buzzert, der Host schaltet um, neue Runde).
+
+     Genau daran hing der Fehler, der im Spiel auffiel: deckt der Host die
+     Frage kurz nach dem Öffnen auf und jemand drückt dazwischen, kommt das
+     `armed`-Ereignis WÄHREND der Sperre. Danach kommt keins mehr - der
+     Spieler war für die ganze Frage raus, ohne dass jemand sah, warum.
+
+     Jetzt zeichnet der Takt so lange weiter, wie eine Sperre eingetragen ist,
+     und raeumt sie beim Ablaufen selbst weg. Das ergibt genau einen Durchlauf
+     nach dem Ende - den, der gefehlt hat. */
+  setInterval(() => {
+    if (!lockUntil) return;
+    if (!locked()) lockUntil = 0;
+    refreshBuzz();
+  }, 250);
   ref.child('teamNames').on('value', s => { teamNames = s.val()||[]; refreshRoot(); });
   ref.child('joinLocked').on('value', s => { joinLocked = !!s.val(); refreshRoot(); });
   ref.child('lockedNames').on('value', s => { lockedNames = s.val()||[]; refreshRoot(); });

@@ -38,21 +38,38 @@ function jeopardyBuzzArm(){
   updateGamemaster();
 }
 
-// Buzzer nach falscher Antwort wieder freigeben — NUR der zuletzt Erste bleibt gesperrt,
-// alle anderen (auch die, die schon an 2./3. Stelle gebuzzert haben) dürfen wieder ran.
-function jeopardyBuzzReopen(){
-  if (jeopardyBuzzer.results.length){
-    const firstName = jeopardyBuzzer.results[0].name;
-    if (!jeopardyBuzzer.excluded.includes(firstName)) jeopardyBuzzer.excluded.push(firstName);
+/* Buzzer noch einmal scharf machen. Zwei Knoepfe, ein Rumpf - der Unterschied
+   ist eine einzige Frage: bleibt der Erste draussen?
+
+   Nach einer falschen Antwort: ja. Wer schon dran war, soll nicht noch einmal
+   raten duerfen - alle anderen (auch die an 2./3. Stelle) duerfen wieder ran.
+
+   Nach einer Panne: nein. Wird die Frage zu kurz nach dem Aufdecken freigegeben
+   und jemand hat in dem Moment schon gedrueckt, ist er gesperrt worden, ohne
+   je geantwortet zu haben. Dasselbe, wenn ein Buzz verschluckt wurde oder der
+   Host zu frueh aufgedeckt hat. Dafuer gibt es jetzt den zweiten Knopf: neue
+   Runde, niemand gesperrt - auch nicht die, die vorher schon gesperrt waren.
+   @param {boolean} sperreErsten */
+function jeopardyBuzzReopenCore(sperreErsten){
+  if (sperreErsten){
+    if (jeopardyBuzzer.results.length){
+      const firstName = jeopardyBuzzer.results[0].name;
+      if (!jeopardyBuzzer.excluded.includes(firstName)) jeopardyBuzzer.excluded.push(firstName);
+    }
+  } else {
+    jeopardyBuzzer.excluded = [];
   }
   jeopardyBuzzer.round = nextRoundId(jeopardyBuzzer.round);
   if (jeopardyBuzzer.mode === 'firebase' && jeopardyBuzzer.fbRef){
+    /** @type {Record<string, boolean>} */
     const excludedObj = {};
     jeopardyBuzzer.excluded.forEach(n => excludedObj[n] = true);
     jeopardyBuzzer.fbRef.update({
       round: jeopardyBuzzer.round, live: true, armed: true,
       armStart: firebase.database.ServerValue.TIMESTAMP, buzzes: null,
-      excluded: excludedObj,
+      // null statt {} - ein leeres Objekt schreibt Firebase gar nicht erst,
+      // der alte Knoten bliebe stehen und die Sperre mit ihm.
+      excluded: jeopardyBuzzer.excluded.length ? excludedObj : null,
     }).catch(()=>{});
     jeopardyBuzzer.armed = true; jeopardyBuzzer.results = [];
   } else {
@@ -64,6 +81,14 @@ function jeopardyBuzzReopen(){
   renderBuzzer();
   updateGamemaster();
 }
+
+// Buzzer nach falscher Antwort wieder freigeben — NUR der zuletzt Erste bleibt gesperrt,
+// alle anderen (auch die, die schon an 2./3. Stelle gebuzzert haben) dürfen wieder ran.
+function jeopardyBuzzReopen(){ jeopardyBuzzReopenCore(true); }
+
+// Buzzer neu öffnen, ohne jemanden zu sperren - für Pannen, nicht für falsche
+// Antworten. Hebt auch eine schon bestehende Sperre auf.
+function jeopardyBuzzReopenAll(){ jeopardyBuzzReopenCore(false); }
 
 // Question closed — buzzers off
 function jeopardyBuzzClose(){
@@ -530,6 +555,7 @@ function jeopardyCellBadges(clue){
   if (clue.series)   b += '<span title="Bilder-Reihe">🎴</span>';
   if (clue.steps)    b += '<span title="Schritte nacheinander">📜</span>';
   if (clue.estimate) b += '<span title="Schätzfrage">📊</span>';
+  if (clue.single)   b += '<span title="Einzelantwort">📝</span>';
   return b;
 }
 
@@ -582,14 +608,12 @@ function jeopardyClueEditorHtml(b, col, row){
           ${[2,3,4,5].map(n=>`<option value="${n}" ${jeopardyStepCount(clue)===n?'selected':''}>${n} Schritte</option>`).join('')}
         </select>
       `:''}
-      <label style="${uploadLbl}background:${clue.estimate?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Statt Buzzer geben alle Handys eine Schätzung ein">
-        <input type="checkbox" ${clue.estimate?'checked':''} onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].estimate=this.checked;renderJeopardyEditor();" style="accent-color:#FFD23F;"> 📊 Schätzfrage
+      <label style="${uploadLbl}background:${clue.estimate?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Kein Buzzer: alle Handys tippen eine ZAHL ein. Der Host sieht sie der Größe nach sortiert.">
+        <input type="checkbox" ${clue.estimate?'checked':''} onchange="jeopardyEditTyped(${b},${col},${row},'estimate',this)" style="accent-color:#FFD23F;"> 📊 Schätzfrage
       </label>
-      ${clue.estimate?`
-        <label style="${uploadLbl}background:${clue.estimateText?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Die Handys bekommen die normale Tastatur statt des Ziffernblocks - für Antworten wie Namen oder Orte">
-          <input type="checkbox" ${clue.estimateText?'checked':''} onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].estimateText=this.checked;renderJeopardyEditor();" style="accent-color:#FFD23F;"> 🔤 Buchstaben
-        </label>
-      `:''}
+      <label style="${uploadLbl}background:${clue.single?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Kein Buzzer: auf jedem Handy geht ein Textfeld mit normaler Tastatur auf. Jeder tippt seine eine Antwort, der Host sieht sie in Eingangsreihenfolge.">
+        <input type="checkbox" ${clue.single?'checked':''} onchange="jeopardyEditTyped(${b},${col},${row},'single',this)" style="accent-color:#FFD23F;"> 📝 Einzelantwort
+      </label>
       ${clue.series?`
         <select onchange="jeopardyEditSeriesCount(${b},${col},${row},this.value)" title="Anzahl Bilder" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
           ${[2,3,4,5].map(n=>`<option value="${n}" ${jeopardySeriesCount(clue)===n?'selected':''}>${n} Bilder</option>`).join('')}
@@ -671,7 +695,41 @@ function renderJeopardyEditor() {
   grid.innerHTML = html;
 }
 
+/* Schätzfrage und Einzelantwort sind zwei Sorten derselben Sache und teilen
+   sich einen Kanal - beide gleichzeitig gesetzt hiesse: welche Tastatur denn
+   nun? Deshalb nimmt der eine Haken dem anderen das Kreuz weg, statt das dem
+   Host zu ueberlassen. `estimateText` faellt dabei mit raus: das ist die alte
+   Schreibweise, und sie wuerde bei einer reinen Schaetzfrage weiter den
+   Buchstaben-Modus erzwingen.
+   @param {number} b @param {number} col @param {number} row
+   @param {'estimate'|'single'} feld @param {HTMLInputElement} input */
+function jeopardyEditTyped(b, col, row, feld, input){
+  const clue = jeopardyClue(b, col, row);
+  const an = !!input.checked;
+  clue.estimate = (feld === 'estimate') && an;
+  clue.single   = (feld === 'single')   && an;
+  delete clue.estimateText;
+  renderJeopardyEditor();
+}
+
 function exportJeopardy() { downloadJSON(jeopardyData, 'jeopardy-boards.json'); }
+
+/* Boards aus der Zeit vor der Einzelantwort: dort war sie ein Unterhaken der
+   Schaetzfrage (`estimate` + `estimateText`). Beim Laden wird daraus die eigene
+   Sorte - sonst laege eine alte Datei weiter in der Zahlen-Sortierung, obwohl
+   nur Woerter drinstehen.
+   @param {{categories?: JeopardyCategory[]}} board */
+function jeopardyMigrateBoard(board){
+  (board && board.categories || []).forEach(cat => {
+    (cat.clues || []).forEach(clue => {
+      if (clue.estimateText){
+        clue.single = true;
+        clue.estimate = false;
+        delete clue.estimateText;
+      }
+    });
+  });
+}
 
 function importJeopardy(e) {
   readJsonFile(e, d => {
@@ -683,6 +741,7 @@ function importJeopardy(e) {
     // Normalise to exactly 2 boards
     while (boards.length < JEOPARDY_BOARDS) boards.push(makeEmptyBoard(boards.length + 1));
     boards = boards.slice(0, JEOPARDY_BOARDS);
+    boards.forEach(jeopardyMigrateBoard);
     jeopardyData = { boards };
     renderJeopardyEditor();
   });

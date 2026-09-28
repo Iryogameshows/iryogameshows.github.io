@@ -1387,11 +1387,13 @@ function updateGamemasterJeopardy() {
       : '';
     const excludedTag = jeopardyBuzzer.excluded.length
       ? `<div class="excl-tag">🚫 Gesperrt: ${jeopardyBuzzer.excluded.join(', ')}</div>` : '';
-    // Schätzfrage: statt der Buzzer-Reihenfolge die eingegangenen Schätzungen
-    const buzzHtml = clue.estimate
+    // Schätzfrage/Einzelantwort: statt der Buzzer-Reihenfolge die Eingaben
+    const getippt = jeopardyTyped(clue);
+    const eingabeTitel = clue.single ? '📝 Antworten' : '📊 Schätzungen';
+    const buzzHtml = getippt
       ? `<div class="panel">
           <div class="panel-head">
-            <span>📊 Schätzungen</span>
+            <span>${eingabeTitel}</span>
             <span class="badge">${jeopardyEstimate.answers.length}</span>
           </div>
           <div class="answer-list" style="margin-top:8px;">${jeopardyEstimateListHtml()}</div>
@@ -1423,8 +1425,10 @@ function updateGamemasterJeopardy() {
       ${mediaControlButtonsHtml(clue.media, 'jeopardyToggleMedia')}
       ${!revealed ? `
         <div class="info-card">
-          Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>${clue.estimate
-            ? 'Beim Aufdecken öffnet sich auf allen Handys das <b>Schätz-Eingabefeld</b>.'
+          Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>${getippt
+            ? (clue.single
+                ? 'Beim Aufdecken geht auf allen Handys ein <b>Textfeld</b> auf.'
+                : 'Beim Aufdecken öffnet sich auf allen Handys das <b>Schätz-Eingabefeld</b>.')
             : 'Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.'}
         </div>
       ` : `
@@ -1438,15 +1442,20 @@ function updateGamemasterJeopardy() {
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Überspringen</button>
           <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>` : `
           <button class="gm-btn blue" onclick="opener.jeopardyToggleAnswer()">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
-          ${clue.estimate
+          ${getippt
             ? (jeopardyEstimate.open
-                ? `<button class="gm-btn gray" onclick="opener.jeopardyEstimateClose()">📊 Eingabe schließen</button>`
-                : `<button class="gm-btn gray" onclick="opener.jeopardyEstimateReopen()">📊 Eingabe neu öffnen</button>`)
+                ? `<button class="gm-btn gray" onclick="opener.jeopardyEstimateClose()">${clue.single?'📝':'📊'} Eingabe schließen</button>`
+                : `<button class="gm-btn gray" onclick="opener.jeopardyEstimateReopen()">${clue.single?'📝':'📊'} Eingabe neu öffnen</button>`)
             : jeopardyState.currentIsDaily
             // Kein "Buzzer neu" beim Daily Double: es hat nie jemand gebuzzert,
             // und ein zweiter Versuch für die anderen wäre gegen die Regel.
             ? ''
-            : `<button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>`}
+            // Zwei Knöpfe, weil es zwei verschiedene Lagen sind: nach einer
+            // falschen Antwort bleibt der Erste draußen, nach einer Panne
+            // (Fehlstart, verschluckter Buzz, versehentlich zu früh
+            // aufgedeckt) darf niemand dafür büßen.
+            : `<button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>
+               <button class="gm-btn gray" onclick="opener.jeopardyBuzzReopenAll()">🔔 Buzzer neu (alle dürfen)</button>`}
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Niemand / Überspringen</button>
           <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
   } else {
@@ -1622,13 +1631,14 @@ function updateGMBar() {
         ${soundBtn}
         ${teamBtns}
         <button class="gm-btn gm-blue" onclick="jeopardyToggleAnswer();updateGMBar();">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
-        ${cc.estimate
+        ${jeopardyTyped(cc)
           ? (jeopardyEstimate.open
-              ? `<button class="gm-btn gm-gray" onclick="jeopardyEstimateClose();updateGMBar();">📊 Eingabe schließen (${jeopardyEstimate.answers.length})</button>`
-              : `<button class="gm-btn gm-gray" onclick="jeopardyEstimateReopen();updateGMBar();">📊 Eingabe neu öffnen</button>`)
+              ? `<button class="gm-btn gm-gray" onclick="jeopardyEstimateClose();updateGMBar();">${cc.single?'📝':'📊'} Eingabe schließen (${jeopardyEstimate.answers.length})</button>`
+              : `<button class="gm-btn gm-gray" onclick="jeopardyEstimateReopen();updateGMBar();">${cc.single?'📝':'📊'} Eingabe neu öffnen</button>`)
           : jeopardyState.currentIsDaily
           ? ''
-          : `<button class="gm-btn gm-gray" onclick="jeopardyBuzzReopen();updateGMBar();">🔔 Buzzer neu</button>`}
+          : `<button class="gm-btn gm-gray" onclick="jeopardyBuzzReopen();updateGMBar();">🔔 Buzzer neu (1. gesperrt)</button>
+             <button class="gm-btn gm-gray" onclick="jeopardyBuzzReopenAll();updateGMBar();">🔔 Buzzer neu (alle)</button>`}
         <button class="gm-btn gm-gray" onclick="jeopardySkip();updateGMBar();">Überspringen</button>
         <button class="gm-btn gm-blue" onclick="jeopardyUndo();updateGMBar();">↩ Undo</button>
       `;

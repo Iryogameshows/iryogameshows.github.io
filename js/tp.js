@@ -105,6 +105,9 @@ let tpState = {
    *  nie zurueck - sonst dreht das Rad beim naechsten Mal rueckwaerts, weil
    *  CSS den kuerzesten Weg nimmt. */
   angle: 0,
+  /** Beim Nachfassen: ist die Antwort schon aufgedeckt? Eigener Merker statt
+   *  der Phase 'answer' - siehe tpShowAnswer(). */
+  stealShown: false,
   /** Welches Team gerade das Finale spielt, sonst -1. */
   finalTeam: -1,
   winner: -1,
@@ -163,6 +166,10 @@ function startTp(){
   tpState.spinning = false;
   tpState.finalTeam = -1;
   tpState.winner = -1;
+  tpState.stealShown = false;
+  // Ohne das haengt der Stapel der VORIGEN Runde noch dran: ein Druck auf
+  // "↩ Undo" im ersten Zug holte den Spielstand des letzten Spiels zurueck.
+  tpUndoStack.reset();
   tpState.settings.steal = fieldChecked('tp-steal-check');
   tpState.settings.again = fieldChecked('tp-again-check');
   tpSaveSettings();
@@ -221,13 +228,14 @@ const tpSpinCh = makeRoundChannel('buzzer/tpspin', 'by', by => {
   tpSpin();
 });
 
-/** Den Zweig fuers Handy oeffnen - das Team am Zug darf drehen. */
+/** Den Zweig fuers Handy oeffnen - das Team am Zug darf drehen.
+ *  @returns {boolean} ob er wirklich aufging */
 function tpOpenSpin(){
-  if (!tpState.active || tpState.phase !== 'spin') return;
+  if (!tpState.active || tpState.phase !== 'spin') return false;
   tpSpinRound = nextRoundId(tpSpinRound);
   tpSpinCh.detach();
   const ref = tpSpinCh.open();
-  if (!ref) return;                       // keine Verbindung: Host dreht selbst
+  if (!ref) return false;                 // keine Verbindung: Host dreht selbst
   ref.set({
     active: true,
     round: tpSpinRound,
@@ -235,6 +243,7 @@ function tpOpenSpin(){
     teamName: tpState.teamNames[tpState.turn] || ('Team ' + (tpState.turn + 1)),
     by: null,
   }).then(() => tpSpinCh.attach()).catch(()=>{});
+  return true;
 }
 function tpCloseSpin(){
   tpSpinOpen = false;
@@ -293,8 +302,13 @@ function tpSpinMs(){
 }
 
 function tpSpin(){
-  tpUndoStack.save();
   if (tpState.spinning || tpState.phase !== 'spin' || !tpState.active) return;
+  // Sichern erst hinter der Pruefung: vorher legte JEDER abgeprallte Aufruf
+  // (Doppeltipp auf dem Handy, zweiter Klick im GM-Fenster, Fernbefehl
+  // waehrend das Rad laeuft) einen Zustand auf den Stapel. "↩ Undo" holte
+  // dann denselben Spielstand zurueck, in dem man ohnehin schon stand - und
+  // sah aus, als tue der Knopf nichts.
+  tpUndoStack.save();
   let pool = tpOpenCats();
   // Alles einmal durch: die Kategorien werden wieder freigegeben, statt das
   // Spiel abzubrechen. Eine Wiederholung ist unangenehmer als ein Abbruch
@@ -329,9 +343,17 @@ function tpSpin(){
 function tpDrawQuestion(cat){
   const category = tpData.categories[cat];
   if (!category || !category.questions.length) { tpNextTeam(); return; }
-  const used = tpState.used[cat] || (tpState.used[cat] = []);
-  const open = category.questions.map((_, i) => i).filter(i => !used.includes(i));
-  const pick = open.length ? open[Math.floor(Math.random() * open.length)] : 0;
+  let used = tpState.used[cat] || (tpState.used[cat] = []);
+  let open = category.questions.map((_, i) => i).filter(i => !used.includes(i));
+  // Kategorie durch: von vorn, statt Nummer 0 noch einmal in `used` zu
+  // schieben. Sonst wuchs die Liste ueber die Zahl der Fragen hinaus - und
+  // weil tpOpenCats() mit `questions.length > used.length` rechnet, galt die
+  // Kategorie danach als erledigt, obwohl in ihr weiter gefragt wurde.
+  if (!open.length){
+    used = tpState.used[cat] = [];
+    open = category.questions.map((_, i) => i);
+  }
+  const pick = open[Math.floor(Math.random() * open.length)];
   used.push(pick);
   tpState.cat = cat;
   tpState.clue = category.questions[pick];
@@ -344,7 +366,19 @@ function tpDrawQuestion(cat){
 /* ── Fragelauf ──────────────────────────────────────────────────────────── */
 
 function tpShowAnswer(){
-  if (tpState.phase !== 'question' && tpState.phase !== 'final' && tpState.phase !== 'steal') return;
+  /* Beim Nachfassen darf die Phase nicht auf 'answer' springen. Genau das tat
+     sie vorher - und damit war das Nachfassen tot: tpStealAward() und
+     tpStealNobody() pruefen auf phase === 'steal' und taten danach wortlos
+     nichts. Der Host deckte auf, um zu urteilen, und hatte keinen Knopf mehr,
+     mit dem er das Ergebnis eintragen konnte. Deshalb hier ein eigener Merker
+     fuers Aufgedeckt-Sein, der die Phase in Ruhe laesst. */
+  if (tpState.phase === 'steal'){
+    tpState.stealShown = true;
+    tpRender();
+    updateGamemaster();
+    return;
+  }
+  if (tpState.phase !== 'question' && tpState.phase !== 'final') return;
   // Auch im Finale heisst der Zustand 'answer'. Ob es die Schlussfrage war,
   // steht in finalTeam - das entscheidet spaeter, wie geurteilt wird.
   tpState.phase = 'answer';
@@ -355,9 +389,15 @@ function tpShowAnswer(){
 /** Der Host urteilt ueber die Antwort des Teams am Zug.
  *  @param {boolean} ok */
 function tpJudge(ok){
+  /* Wache gegen den zweiten Klick. Das GM-Fenster und das Handy-Gamepad sind
+     Spiegel derselben Seite: ein Doppeltipp oder ein Fernbefehl, der zweimal
+     ankommt, rief tpJudge() zweimal. Beim zweiten Mal war die Frage schon
+     weg - das Tortenstueck sass zwar (tpAward vergibt nichts doppelt), aber
+     der Zug sprang ein zweites Mal weiter und ein Team wurde uebergangen. */
+  if (tpState.phase !== 'question' && tpState.phase !== 'final' && tpState.phase !== 'answer') return;
+  if (tpState.finalTeam < 0 && tpState.cat < 0) return;
   tpUndoStack.save();
   if (tpState.finalTeam >= 0) return tpJudgeFinal(ok);
-  if (tpState.cat < 0) return;
   if (ok){
     SFX.correct();
     tpAward(tpState.turn, tpState.cat);
@@ -408,6 +448,7 @@ function tpNextTeam(){
 
 function tpOpenSteal(){
   tpState.phase = 'steal';
+  tpState.stealShown = false;
   // Die Handys entscheiden nur die Reihenfolge, nicht die Wertung: wer zuerst
   // buzzert, darf zuerst sagen - ob es stimmt, urteilt weiterhin der Host.
   feudBuzzPrepare();
@@ -438,8 +479,9 @@ function tpExcludeTurnTeam(){
 /** Ein anderes Team hat nachgefasst und lag richtig.
  *  @param {number} team */
 function tpStealAward(team){
-  tpUndoStack.save();
   if (tpState.phase !== 'steal' || tpState.cat < 0) return;
+  if (team === tpState.turn) return;   // das Team am Zug fasst nicht bei sich selbst nach
+  tpUndoStack.save();
   SFX.correct();
   tpAward(team, tpState.cat);
   feudBuzzEndRound();
@@ -455,8 +497,8 @@ function tpStealAward(team){
 }
 
 function tpStealNobody(){
-  tpUndoStack.save();
   if (tpState.phase !== 'steal') return;
+  tpUndoStack.save();
   SFX.wrong();
   tpNextTeam();
 }
@@ -466,6 +508,13 @@ function tpStealNobody(){
 /** @param {number} team */
 function tpEnterFinal(team){
   tpState.finalTeam = team;
+  /* Der Zug muss mit. Ohne diese Zeile blieb er bei dem Team stehen, das
+     gerade daneben lag: nach einem erfolgreichen Nachfassen, das das sechste
+     Stueck brachte, stand im Kopf des GM-Fensters das falsche Team, der
+     Dreh-Knopf ging auf die Handys des falschen Teams - und die Schlussfrage
+     wurde trotzdem dem Finalisten gutgeschrieben. Auf dem Weg ueber eine
+     richtige eigene Antwort fiel das nie auf, weil dort turn schon stimmte. */
+  tpState.turn = team;
   tpState.phase = 'spin';
   tpState.clue = null;
   tpState.cat = -1;
@@ -557,7 +606,8 @@ function tpRenderStage(){
   }
   const clue = tpState.clue;
   if (!clue) { setHtml('tp-stage', ''); return; }
-  const answer = (tpState.phase === 'answer')
+  const offen = tpState.phase === 'answer' || (tpState.phase === 'steal' && tpState.stealShown);
+  const answer = offen
     ? `<div class="tp-answer">${escAttr(clue.a)}</div>`
     : `<div class="tp-answer hidden">Antwort verdeckt</div>`;
   const steal = tpState.phase === 'steal'
@@ -574,9 +624,11 @@ function tpRender(){
   // Handy. Der Merker verhindert, dass jedes Neuzeichnen eine neue Runde
   // aufmacht - sonst wuerde ein schon gedrueckter Dreh wieder freigegeben.
   if (tpState.phase === 'spin' && !tpState.spinning && !tpSpinOpen){
-    tpSpinOpen = true;
     setText('tp-spin-by', '');
-    tpOpenSpin();
+    // Nur wenn er wirklich aufging. Sonst stand der Merker nach einem Versuch
+    // ohne Verbindung fuer immer auf "offen", und der Dreh-Knopf kam auch
+    // dann nicht mehr auf die Handys, wenn Firebase laengst wieder da war.
+    tpSpinOpen = tpOpenSpin();
   }
   tpRenderTeams();
   tpRenderStage();
@@ -829,6 +881,8 @@ function tpGmControlsHtml(pfx){
     b += `<button class="gm-btn gm-gold" onclick="${pfx}tpJudge(true)">✓ Richtig</button>`;
     b += `<button class="gm-btn gm-gray" onclick="${pfx}tpJudge(false)">✕ Falsch</button>`;
   } else if (s.phase === 'steal'){
+    // Der Host muss urteilen koennen, ohne das Nachfassen abzubrechen.
+    if (!s.stealShown) b += `<button class="gm-btn gm-blue" onclick="${pfx}tpShowAnswer()">Antwort zeigen</button>`;
     s.teamNames.forEach((n, i) => {
       if (i === s.turn) return;
       b += `<button class="gm-btn gm-gold" onclick="${pfx}tpStealAward(${i})">✓ ${escapeHtml(n)}</button>`;
@@ -860,8 +914,9 @@ function updateGamemasterTp(){
       s.finalTeam >= 0 ? ' · <b style="color:#FFD23F;">Schlussfrage</b>' : ''}</div>
       <div class="question">${escapeHtml(s.clue.q)}</div>
       <div class="hint-line">Antwort: <b style="color:#FFD23F;">${escapeHtml(s.clue.a)}</b>${
-        s.phase === 'answer' ? ' <span style="color:#22C55E;">· aufgedeckt</span>'
-                             : ' <span style="color:rgba(255,255,255,.35);">· noch verdeckt</span>'}</div>
+        (s.phase === 'answer' || (s.phase === 'steal' && s.stealShown))
+          ? ' <span style="color:#22C55E;">· aufgedeckt</span>'
+          : ' <span style="color:rgba(255,255,255,.35);">· noch verdeckt</span>'}</div>
       ${s.phase === 'steal' ? `<div class="hint-line">🔔 Nachfassen läuft — die anderen Teams dürfen buzzern.</div>` : ''}`;
   } else {
     body = `<div class="question">${s.finalTeam >= 0 ? 'Schlussfrage' : 'Rad drehen'}</div>

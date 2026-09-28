@@ -27,8 +27,13 @@ const JEOPARDY_BOARDS = 2;
  *  @property {string} [qImg]       Bild zur Frage (Data-URL)
  *  @property {string} [aImg]       Bild zur Antwort (Data-URL)
  *  @property {boolean} [estimate]  Schaetzfrage: keine Buzzer, alle Handys tippen
- *  @property {boolean} [estimateText] Antwort ist Text: die Handys bekommen die
- *                                  normale Tastatur statt des Ziffernblocks
+ *                                  eine ZAHL ein, der Host sieht sie sortiert
+ *  @property {boolean} [single]    Einzelantwort: keine Buzzer, auf jedem Handy
+ *                                  geht ein Textfeld auf, jeder tippt seine eine
+ *                                  Antwort. Der Host sieht sie in Eingangsreihenfolge
+ *  @property {boolean} [estimateText] VERALTET - war die "Buchstaben"-Variante der
+ *                                  Schaetzfrage. Beim Import wird daraus `single`;
+ *                                  zur Laufzeit zaehlt nur noch `single`
  *  @property {boolean} [staged]    Staffelbild, das kachelweise aufgedeckt wird
  *  @property {string} [stageImg]
  *  @property {number} [stageCols]
@@ -367,6 +372,11 @@ function openJeopardyClue(col, row) {
   jeopardyState.stepsRevealed = 0;
   jeopardyState.questionRevealed = false;
   jeopardyState.ddTeam = null;
+  // Die Eingabe-Anzeige im GM-Panel steht schon, bevor aufgedeckt wird. Ohne
+  // diese zwei Zeilen zeigte sie die Liste der VORIGEN Frage und beschriftete
+  // sich nach deren Sorte - "Noch keine Schätzung" ueber einer Wortfrage.
+  jeopardyEstimate.answers = [];
+  jeopardyEstimate.single = jeopardySingle(jeopardyClue(jeopardyState.currentBoard, col, row));
   resetMediaOverlay();
   if (jeopardyIsDaily(col, row)) {
     // Daily Double: the question does NOT pop yet. The GM gets a private
@@ -405,11 +415,11 @@ function jeopardyRevealQuestion() {
   if (!jeopardyState.currentClue || jeopardyState.ddPending || jeopardyState.questionRevealed) return;
   jeopardyState.questionRevealed = true;
   renderJeopardyClueOverlay();
-  // Schätzfragen laufen nicht über den Buzzer: statt zu armen wird auf den
-  // Handys das Eingabefeld geöffnet und eingesammelt.
+  // Schätzfrage und Einzelantwort laufen nicht über den Buzzer: statt zu armen
+  // wird auf den Handys das Eingabefeld geöffnet und eingesammelt.
   // Das Daily Double ebenso wenig - dort antwortet ausschliesslich das Team,
   // das das Feld gewählt hat, ein scharfer Buzzer würde die anderen einladen.
-  if (jeopardyCurrentClue() && jeopardyCurrentClue().estimate) jeopardyEstimateOpen();
+  if (jeopardyTyped(jeopardyCurrentClue())) jeopardyEstimateOpen();
   else if (jeopardyState.currentIsDaily) jeopardyBuzzClose();
   else jeopardyBuzzArm();
   updateGamemaster();
@@ -423,8 +433,30 @@ function jeopardyCurrentClue(){
   return jBoard()[c.col].clues[c.row];
 }
 
-// ── SCHÄTZFRAGEN (Eingabe auf den Buzzer-Handys) ──
-let jeopardyEstimate = { open:false, round:0, answers:[], ref:null, question:'' };
+/* Felder, bei denen auf den Handys getippt statt gebuzzert wird. Zwei Sorten,
+   ein Kanal (buzzer/estimate):
+
+   - Schätzfrage (📊): die Antwort ist eine ZAHL. Das Handy zeigt den
+     Ziffernblock, der Host bekommt die Eingaben der Größe nach sortiert.
+   - Einzelantwort (📝): die Antwort ist ein WORT. Das Handy zeigt die normale
+     Tastatur, der Host bekommt die Eingaben in Eingangsreihenfolge.
+
+   Vorher war die zweite Sorte ein Unterhaken der ersten (`estimateText`). Das
+   war der Fehler: eine Worteingabe lief damit weiter durch die Zahlen-Logik -
+   `parseEstimate` machte aus jeder Antwort ohne Ziffer `null`, und die
+   Sortierung hängte sie in einen Rest-Block hinter die Zahlen. Wer eine reine
+   Wortfrage stellte, sah eine Liste, die nach nichts sortiert war, und ein
+   versehentlich gesetzter Zahlen-Haken kippte die ganze Frage still um. Jetzt
+   sind es zwei gleichrangige Sorten, die sich gegenseitig ausschließen.
+   @param {JeopardyClue|null} clue */
+function jeopardyTyped(clue){ return !!clue && (!!clue.estimate || !!clue.single); }
+/** Einzelantwort (Text) statt Schätzfrage (Zahl)? @param {JeopardyClue|null} clue */
+function jeopardySingle(clue){ return !!clue && !!clue.single; }
+
+// ── SCHÄTZFRAGE / EINZELANTWORT (Eingabe auf den Buzzer-Handys) ──
+// `single` merkt sich, welche Sorte gerade offen ist - danach richtet sich
+// Sortierung und Beschriftung, auch wenn das Feld inzwischen zu ist.
+let jeopardyEstimate = { open:false, round:0, answers:[], ref:null, question:'', single:false };
 
 function jeopardyEstimateRef(){
   if (!jeopardyEstimate.ref){
@@ -447,12 +479,16 @@ function jeopardyEstimateOpen(){
   jeopardyEstimate.round = nextRoundId(jeopardyEstimate.round);
   jeopardyEstimate.answers = [];
   jeopardyEstimate.question = clue.q || '';
+  // estimateText ist die alte Schreibweise aus gespeicherten Boards - siehe
+  // Typdefinition oben. Sie zaehlt hier noch mit, damit eine alte Datei nicht
+  // still den Ziffernblock aufmacht.
+  jeopardyEstimate.single = !!clue.single || !!clue.estimateText;
   // text sagt dem Handy, welche Tastatur es aufmachen soll. Es geht mit, nicht
   // hinterher: kaeme es als zweiter Schreibvorgang, stuende auf langsamen
   // Verbindungen fuer einen Moment der Ziffernblock offen - und wer in dem
   // Moment schon tippt, kommt an keinen Buchstaben.
   if (r) r.set({ active:true, round:jeopardyEstimate.round, question:jeopardyEstimate.question,
-                 text: !!clue.estimateText, answers:null }).catch(()=>{});
+                 text: jeopardyEstimate.single, answers:null }).catch(()=>{});
   updateGamemaster();
 }
 
@@ -467,10 +503,12 @@ function jeopardyEstimateReopen(){
   jeopardyEstimateOpen();
 }
 
-// Sortierung: Zahlen aufsteigend zuerst, alles ohne Zahl danach in der
-// Reihenfolge des Eingangs.
+// Sortierung: bei der Schätzfrage Zahlen aufsteigend zuerst, alles ohne Zahl
+// danach in der Reihenfolge des Eingangs. Bei der Einzelantwort gibt es nichts
+// zu sortieren - dort zaehlt nur, wer zuerst getippt hat.
 function jeopardyEstimateSorted(){
   const list = jeopardyEstimate.answers.slice();
+  if (jeopardyEstimate.single) return list.sort((a,b) => (a.ts||0) - (b.ts||0));
   const nums = list.filter(a => typeof a.num === 'number' && isFinite(a.num));
   const rest = list.filter(a => !(typeof a.num === 'number' && isFinite(a.num)));
   nums.sort((a,b) => a.num - b.num || (a.ts||0) - (b.ts||0));
@@ -480,7 +518,8 @@ function jeopardyEstimateSorted(){
 
 function jeopardyEstimateListHtml(){
   const rows = jeopardyEstimateSorted();
-  if (!rows.length) return `<div class="pr-empty">Noch keine Schätzung abgegeben</div>`;
+  if (!rows.length) return `<div class="pr-empty">${jeopardyEstimate.single
+    ? 'Noch keine Antwort abgegeben' : 'Noch keine Schätzung abgegeben'}</div>`;
   const hex = ['#E8453C','#3B82F6','#22C55E'];
   return rows.map((a,i) => {
     const col = (typeof a.team === 'number' && hex[a.team]) ? hex[a.team] : 'rgba(255,255,255,.5)';
