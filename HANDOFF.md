@@ -12,6 +12,93 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Schätzfrage: Feld steht beim Öffnen schon, gesperrt (`7d55620`)
+
+**Wunsch (David):** „wenn es ne Schätzfrage ist, dann soll es nicht auf den
+Buzzer umspringen auf der Buzzer seite. wenn die ausgewählte Frage eine
+Schätzfrage ist, dann soll die Schätzzeile auch schon da sein. aber halt mit
+nem Schloss davor, und drunter steht dann: du kannst schätzen wenn der Host die
+Frage zeigt".
+
+(Der erste Teil derselben Nachricht — Teamnamen statt „Rot und Blau" — hat sich
+erledigt: „ne das is geregelt". Nicht angefasst.)
+
+### Was vorher passierte
+
+`openJeopardyClue()` rief für **jede** Frage `jeopardyBuzzPrepare()`, also auch
+für Schätzfrage und Einzelantwort. Das Handy sprang damit auf den
+Buzzer-Screen mit „Achtung — noch NICHT buzzern!", und erst beim Aufdecken auf
+das Eingabefeld. Zwei Wechsel für eine Frage — und der erste zeigte etwas, das
+bei dieser Fragesorte **nie** kommt: dort wird nicht gebuzzert.
+
+### Gemacht
+
+Beim Öffnen einer getippten Frage: `jeopardyBuzzClose()` statt `-Prepare()`,
+dazu `jeopardyEstimatePrepare()`. Das Feld steht damit sofort, aber gesperrt —
+Schloss im Titel, Feld und Knopf deaktiviert, darunter Davids Satz. Beim
+Aufdecken fällt die Sperre und die Frage kommt dazu.
+
+**Die Frage geht im gesperrten Zustand bewusst nicht mit.** Sie steht zu dem
+Zeitpunkt noch nicht auf der Leinwand; ein Handy, das sie vorher zeigt, wäre
+ein Leck — und bei einer Schätzfrage ein besonders wirksames, weil man dann in
+Ruhe nachschlagen kann. `question` bleibt leer, bis der Host aufdeckt.
+
+Gebaut als **ein** Weg mit Schalter, nicht als zwei Funktionen:
+
+```js
+function jeopardyEstimateOpen(gesperrt){ … }
+function jeopardyEstimatePrepare(){ jeopardyEstimateOpen(true); }
+```
+
+Zwei fast gleiche Funktionen wären auseinandergelaufen, sobald am Kanal etwas
+dazukommt — dieselbe Lehre wie bei den Team-Knöpfen.
+
+Auf dem Handy trägt `estLocked` den Zustand. Die Eingabetaste im Feld ruft
+dieselbe Funktion wie der Knopf, deshalb steht die Sperre auch in der Wache von
+`sendEstimate()` — ein deaktivierter Knopf allein hätte nicht gereicht.
+
+Der Hinweis im GM-Panel sagt jetzt „Auf den Handys steht das Feld schon —
+gesperrt, mit Schloss", statt „Beim Aufdecken geht ein Textfeld auf".
+
+### Im Test gefunden
+
+Die Hinweiszeile wurde nur `if (estLocked)` gesetzt und blieb deshalb stehen,
+nachdem der Host längst aufgedeckt hatte: „Du kannst schätzen, wenn der Host
+die Frage zeigt" über einer offenen Frage. Sie wird jetzt in jedem Fall
+gesetzt.
+
+### Geprüft
+
+Handy (mit dem Firebase-Stub aus `924a80e`):
+
+| Zustand | Screen | Titel | Frage | Feld/Knopf | Hinweis |
+|---|---|---|---|---|---|
+| gesperrt | estimate | 🔒 Schätzfrage | leer | **aus** | steht |
+| aufgedeckt | estimate | 📊 Schätzfrage | da | an | weg |
+| Einzelantwort gesperrt | estimate | 🔒 Einzelantwort | leer | **aus** | steht |
+| normale Frage | **buzz** | — | — | — | — |
+| Eingabetaste trotz Sperre | nichts abgegeben | | | | |
+
+Host-Seite (auch mit Stub): beim Öffnen einer Schätzfrage ist der Buzzer zu
+(`armed:false`), das Feld vorbereitet (`locked:true`) und die Frage geheim
+(`question:''`); beim Aufdecken fällt die Sperre und die Frage kommt. Eine
+normale Frage läuft unverändert über den Buzzer — vorbereitet beim Öffnen,
+scharf beim Aufdecken.
+
+Keine JavaScript-Fehler, `node check.js --types` ohne Befund.
+
+### Offen
+
+- „Der Preis ist heiß" benutzt denselben Firebase-Zweig (`buzzer/estimate`),
+  kennt `locked` aber nicht und schreibt es bei `pihBeginBids()` per `.set()`
+  ohnehin weg. Dort bleibt es beim bisherigen Ablauf — die Gebote gehen auf,
+  wenn der Host sie öffnet. Nicht angefasst, weil dort kein Zwischenzustand
+  „Artikel gewählt, aber noch nicht gezeigt" existiert.
+- Das Daily Double bleibt unberührt: dort antwortet nur das wählende Team, und
+  ein Eingabefeld auf allen Handys wäre falsch.
+
+---
+
 ## 2026-09-28 — Team-Zuteilung in allen Lobbys · Team-Anzeige auf dem Handy (`924a80e`)
 
 **Symptom (David, mit Bild der Jeopardy-Lobby):** „die team zuteilung soll da
