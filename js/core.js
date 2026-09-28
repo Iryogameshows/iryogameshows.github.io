@@ -686,10 +686,13 @@ function renderMenuIcons(){
 // Hub-Logo: das IRYO-GAMESHOW-Schild (Blau & Gold) statt Schriftzug + Balken.
 /* Das grosse Iryo-Gameshow-Logo.
  *  @param {string} [elId]   wohin (Vorgabe: das Logo oben im Hauptfenster)
- *  @param {string} [breite] CSS-Breite des Bildes */
-function renderIryoHubLogo(elId, breite){
+ *  @param {string} [breite] CSS-Breite des Bildes
+ *  @param {number} [schaerfe] wie viele echte Pixel je CSS-Pixel gezeichnet
+ *    werden. 2 reicht fuer das kleine Logo oben; der Wartebildschirm fuellt
+ *    einen Beamer und braucht mehr, sonst franst die Schrift aus. */
+function renderIryoHubLogo(elId, breite, schaerfe){
   const el = document.getElementById(elId || 'main-logo'); if (!el) return;
-  const S = 2, W = 900, H = 500;
+  const S = schaerfe || 2, W = 900, H = 500;
   const cv = document.createElement('canvas'); cv.width = W*S; cv.height = H*S;
   const ctx = cv.getContext('2d'); ctx.scale(S,S);
   const octPts = (x,y,w,h,c) => [[x+c,y],[x+w-c,y],[x+w,y+c],[x+w,y+h-c],[x+w-c,y+h],[x+c,y+h],[x,y+h-c],[x,y+c]];

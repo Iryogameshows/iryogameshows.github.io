@@ -922,7 +922,7 @@ function openBoardPopout() {
      vorher. (Eine Markierung im <body> waere ohnehin wirkungslos: der Mirror
      kopiert die Attribute des Haupt-<body> mit und wuerde sie wegraeumen.) */
   if (boardWin && !boardWin.closed){
-    renderIryoHubLogo('board-idle', 'min(760px,70vw)');
+    renderIryoHubLogo('board-idle', 'min(86vw,158vh)', 4);
     startBoardMirror();
     try { boardWin.focus(); } catch {}
     return;
@@ -957,9 +957,17 @@ ${boardHiddenScreensCss()}
    Hauptfenster (setBoardIdle), der Mirror traegt sie herueber.
    Das kleine Show-Logo oben weicht dabei - zwei Logos uebereinander sind
    eines zu viel. */
+/* Der Wartebildschirm fuellt das ganze Fenster und das Logo darin so viel
+   davon, wie ohne Anschneiden geht.
+
+   Die Breite war auf min(760px,70vw) gedeckelt - auf einem Beamer mit 1920px
+   blieben davon 760px, also 40% der Flaeche. Jetzt begrenzt nur noch das
+   Fenster selbst: 86vw, und 158vh als zweite Schranke, damit das Bild bei
+   einem schmalen, hohen Fenster nicht oben und unten herausragt (das Logo ist
+   900:500, also 1,8 mal so breit wie hoch - 158vh Breite ergeben 88vh Hoehe). */
 #board-idle{
   display:none;position:fixed;inset:0;z-index:5;
-  align-items:center;justify-content:center;padding:24px;box-sizing:border-box;
+  align-items:center;justify-content:center;padding:16px;box-sizing:border-box;
 }
 body.board-idle #board-idle{display:flex;}
 body.board-idle #main-logo{display:none;}
@@ -969,7 +977,7 @@ body.board-idle #main-logo{display:none;}
   // einem Canvas, und dessen Text braucht die Schrift "Luckiest Guy". Beim
   // Seitenstart ist sie oft noch nicht da, und dann stuende dort die
   // Ersatzschrift.
-  renderIryoHubLogo('board-idle', 'min(760px,70vw)');
+  renderIryoHubLogo('board-idle', 'min(86vw,158vh)', 4);
   startBoardMirror();
 }
 
