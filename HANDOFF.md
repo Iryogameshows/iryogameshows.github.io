@@ -12,6 +12,131 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Lobbys zentriert und vergrößert · BAUPLAN.md (`230f821`)
+
+### 11 · Lobbys
+
+**Symptom (David):** „Zentrier die Elemente den Lobbys. Und mach dass alles
+Groß genug ist, ohne Überlappungen".
+
+**Ursache:** Der Kasten war auf 520px gebaut und durchgehend in 0,68–0,85rem
+gesetzt. In eine Zeile der Teilnehmer-Auswahl gehörten Punkt, Avatar, Name
+(mit `flex:1`), der Mitspielen-Knopf und bis zu vier Team-Knöpfe. Das passte
+nicht: der Name drückte alles nach rechts, die Team-Knöpfe rutschten darunter
+und schoben sich dabei über den Knopf daneben.
+
+**Gemacht:**
+
+| | vorher | jetzt |
+|---|---|---|
+| Kastenbreite | 520px | 640px |
+| Innenabstand | 14/16px | 18/20px |
+| Zeile | .85rem, 5/4px | 1rem, 9/12px, eigener Block |
+| Team-Knopf | .7rem, 5/12px | .82rem, 8/15px |
+| Mitspielen-Knopf | .7rem, 4/10px inline | .78rem, 7/16px in CSS |
+| Avatar | 28px | 34px |
+| Team-Tag | .65rem | .75rem |
+| Kopfzeile | .68rem | .8rem |
+| Listenhöhe | 220px | min(56vh, 470px) |
+
+Dazu die drei Eingriffe, die das Layout tragen:
+
+1. **Der Name trägt kein `flex:1` mehr**, sondern die Klasse `.pr-name`. Erst
+   dadurch lässt sich die Zeile mittig stellen — mit `flex:1` ist sie immer
+   linksbündig, egal was `justify-content` sagt. Betrifft `js/buzzer.js`
+   (`renderSetupLobby`) und `js/roster.js` (`renderRosterLobby`).
+2. **`.roster-teams` bekommt `flex-basis:100%`** und steht damit immer in einer
+   eigenen, zentrierten Zeile unter dem Namen. Vorher hing der Umbruch am
+   verfügbaren Platz. Ein erzwungener Umbruch sieht immer gleich aus, ein
+   zufälliger nie.
+3. **Jede Zeile ist ein eigener Block** (eigener Hintergrund, 10px Radius). Wenn
+   die Team-Knöpfe darunter umbrechen, ist zu sehen, was zusammengehört.
+
+Der Inline-Style `opacity:.45` für nicht ausgewählte Spieler ist als Klasse
+`.pr-row.aus` ins CSS gewandert.
+
+**Warum mittig:** Die Zeilen sind verschieden lang — mal nur ein Name, mal ein
+Name mit Team-Tag, mal ein Name mit vier Knöpfen. Linksbündig steht dann jede
+Zeile woanders und das Auge findet keine Kante. Das ist dasselbe Argument wie
+bei `f14dd4c` (Knopf-Raster) und `fde849b` (Kategorie-Chips), nur eine Ebene
+tiefer.
+
+**Geprüft — im Browser, mit automatischer Überlappungsprüfung.** Das Skript
+(`lobby.js` im Scratchpad) lädt die Seite über einen lokalen Server, füllt
+sechs Spieler mit langen Namen (Björn-Maximilian, Elisabeth-Charlotte) und
+gemischter Team-Zuteilung ein und vergleicht dann für **jeden** Container die
+Bounding-Boxes aller direkten Geschwister auf Schnittmengen.
+
+Bei 1280px und bei 420px Fensterbreite, in Team-Lobby, Teilnehmer-Auswahl und
+Spielerübersicht:
+
+- **Überlappungen: keine** (alle sechs Kombinationen).
+- **Schrift unter 12px: keine.**
+- Null JavaScript-Fehler.
+
+Screenshots der drei Kästen sind an David gegangen.
+
+### 12 · BAUPLAN.md
+
+**Auftrag (David):** „schreib in die MD eine gewisses Skelett zum langhangeln
+für zukünftige Gameshows, dass sie einheitlich gebaut werden. Ich will das
+alles besser machen. Regeln zum Design und Code sollten helfen. Zieh die Regeln
+aus bisherigen Gameshow arbeiten und Anweisungen/Kritik meinerseits".
+
+**Gemacht:** `BAUPLAN.md` im Wurzelverzeichnis, fünf Teile:
+
+1. **Sieben Fragen vor der ersten Zeile** — Teams oder Teilnehmer, buzzern oder
+   tippen die Handys, was sieht nur der Host, was ist ein Zug, wie endet sie,
+   wie wird gewertet. Sie entscheiden über die halbe Architektur.
+2. **Das Skelett** — die feste Reihenfolge in einer Spieldatei, der bei allen
+   Shows wortgleiche Start- und Intro-Lauf, der Schnitt des GM-Panels
+   (`xxxGmControlsHtml(pfx)` + `updateGamemasterXxx()`), und eine Tabelle mit
+   den **elf Stellen**, an denen eine neue Show angemeldet werden muss.
+3. **Code-Regeln** (10 Stück) — Helfer statt rohes DOM, Escapen als Pflicht,
+   Inline-Handler sind für Werkzeuge unsichtbar, Wache vor Wirkung,
+   Anzeige folgt dem Zustand an allen drei Orten, Rundennummern statt Zähler,
+   Timer müssen nach Ablauf einmal mehr zeichnen, relativ statt gegen null
+   rechnen, eine Quelle für eine Sache, Typen am Code.
+4. **Design-Regeln** (7 Stück) — der Bildschirm gehört dem Publikum, lesbar aus
+   drei Metern, mittig bei ungleichen Zeilen, nur ein lautester Knopf, null ist
+   kein Erfolg, angeschnitten sieht aus wie kaputt, was läuft darf nicht neu
+   anfangen.
+5. **Abnahme** — die Prüfläufe und eine Checkliste mit elf Punkten.
+
+**Warum jede Regel einen Anlass nennt:** Eine Regel ohne Grund wird beim ersten
+Termindruck gebrochen. Eine Regel mit dem Fehler daneben, der sie ausgelöst
+hat, überlebt. Deshalb steht bei jeder der Commit-Hash — `1673e6d` (Host-Knöpfe
+standen auf der Leinwand), `f14dd4c` (vier Knöpfe brachen als 2+1+1),
+`fde849b` (drei verschieden breite Kästchen), `ed25b18` (die Lösung muss im
+GM-Fenster immer stehen), `1db72e0` (Undo vor der Wache, Timer-Sperre),
+`66616c9` (drei Fassungen derselben Teamnamen), `a3fd47c` (eigener FileReader).
+
+**Verworfen:** die Regeln in `CLAUDE.md` unterzubringen. Die Datei wird vor
+**jeder** Änderung gelesen, auch vor einer Zeile im Editor — sie muss kurz
+bleiben. Der Bauplan ist dreimal so lang und nur relevant, wenn es um eine Show
+geht. `CLAUDE.md` verweist jetzt darauf und sagt, wann er zu lesen ist.
+
+**Geprüft:** Alle 23 Funktions- und Konstantennamen, die der Bauplan nennt,
+gegen `js/` geprüft — alle vorhanden. `node check.js --types` ohne Befund.
+
+### Offen
+
+- Der Bauplan beschreibt den **Ist-Zustand**. Zwei Stellen darin sind
+  Beobachtung, keine geprüfte Vorgabe: die „elf Anmeldungen" sind aus dem
+  Bestand abgeleitet, nicht durch das Anlegen einer achten Show erprobt. Wer
+  die nächste Show baut, soll die Tabelle dabei gegenlesen und korrigieren.
+- Die Design-Regeln nennen Mindestgrößen (12px Schrift, 32px Klickfläche).
+  Geprüft ist davon die Schriftgröße, automatisch, in den Lobbys. Für
+  Klickflächen gibt es keine Prüfung — das wäre ein lohnender Zusatz im
+  Testskript.
+- Die Testskripte (`lobby.js`, `smoke.js`, `flow.js`, `imp.js`) liegen im
+  Scratchpad der Sitzung und sind **nicht** im Repo. Sie setzen einen lokalen
+  Server, einen Browserpfad und eine npm-Installation voraus. Wenn solche
+  Läufe öfter gebraucht werden, gehören sie als `test/`-Ordner ins Repo — das
+  ist bewusst offen gelassen und nicht entschieden.
+
+---
+
 ## 2026-09-28 — Turniermodus, TP-Rad, Mehrfachwertung, Zuschauerfenster (`66616c9`, `a3fd47c`)
 
 **Sechs Meldungen von David (Punkte 5–10).** Erstmals im Browser nachgestellt,
