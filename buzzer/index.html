@@ -434,7 +434,7 @@
   const hint = document.getElementById('hint');
   const teamChip = document.getElementById('team-chip');
   let live=false, armed=false, buzzedThisRound=false, lastRound=0, results=[], lockUntil=0, excludedSet={};
-  /* War in dieser Show schon einmal ein Buzzer offen?
+  /* War in dieser Show schon irgendetwas auf dem Handy los?
 
      Zwischen zwei Fragen setzt der Host `live` auf false. Bis hierher hiess
      das: zurueck in die Lobby - mit Titel, Zaehler und einem frisch
@@ -447,12 +447,34 @@
      und "die naechste Frage kommt gleich" (Buzzer-Screen bleibt stehen, mit
      'Warte auf die Frage…' in der Statuszeile).
 
-     Nur ein Merker im Speicher, absichtlich: er gilt fuer die laufende Sitzung
-     und faellt beim Neuladen zurueck auf die Lobby. Das ist der harmlose Fall -
-     spaetestens bei der naechsten Frage steht der Buzzer wieder da. Ein Spiel,
-     das gar nicht buzzert (Wer weiss denn sowas), setzt `live` nie und behaelt
-     damit wie bisher die Lobby. */
-  let everLive=false;
+     Zwei Loecher hatte die erste Fassung, und David hat den GIF-Screen
+     deshalb ein zweites Mal gemeldet:
+
+     1. Sie haing nur an `live`. Seit eine Schaetzfrage den Buzzer gar nicht
+        mehr oeffnet, wurde `live` bei einer Show, die mit einer Schaetzfrage
+        anfaengt, nie true - und nach dem Schliessen stand das GIF wieder da.
+        Jetzt zaehlt JEDE Regung: Buzzer, Schaetzfeld, Rad, Abstimmung.
+
+     2. Sie stand nur im Speicher und war nach einem Neuladen weg. Wer sein
+        Handy zwischen zwei Fragen neu laedt - oder es aus der Tasche holt und
+        der Browser die Seite verworfen hat - landete wieder im GIF.
+        sessionStorage ueberlebt das Neuladen und endet mit dem Tab.
+
+     Zurueckgesetzt wird er, wenn der Host die Beitrittssperre loest: das tut
+     er beim Einrichten der naechsten Show, und dann ist die Lobby wieder
+     richtig. Ein Spiel, das gar nichts auf die Handys schickt (Wer weiss denn
+     sowas), behaelt sie damit durchgehend. */
+  let everActive=false;
+  try { everActive = sessionStorage.getItem('buzzerAktiv') === '1'; } catch {}
+  function markActive(){
+    if (everActive) return;
+    everActive = true;
+    try { sessionStorage.setItem('buzzerAktiv', '1'); } catch {}
+  }
+  function clearActive(){
+    everActive = false;
+    try { sessionStorage.removeItem('buzzerAktiv'); } catch {}
+  }
   let online=false, buzzFailed=false;
   let lastStatusText='';
   let myTeam=null, teamNames=[], presenceCount=0, joinLocked=false, lockedNames=[];
@@ -603,9 +625,9 @@
     // Der Buzzer hängt nicht mehr am Team: sobald der Host eine Frage
     // vorbereitet, bekommt ihn jeder - mit Team wie ohne. buzzedThisRound
     // haelt den Screen noch kurz, damit man seinen Platz sieht, wenn der Host
-    // die Frage gleich wieder schliesst. everLive haelt ihn zwischen den
+    // die Frage gleich wieder schliesst. everActive haelt ihn zwischen den
     // Fragen - siehe oben bei der Deklaration.
-    if (live || armed || buzzedThisRound || everLive) { showBuzz(); return; }
+    if (live || armed || buzzedThisRound || everActive) { showBuzz(); return; }
     showLobby();
   }
   function refreshBuzz(){
@@ -676,8 +698,8 @@
   // ueberhaupt der Buzzer-Screen oder die Lobby dran ist. refreshBuzz allein
   // wuerde nur den Inhalt eines Screens auffrischen, der gar nicht sichtbar
   // ist - das Handy bliebe in der Lobby haengen.
-  ref.child('live').on('value', s => { live = !!s.val(); if (live) everLive = true; refreshRoot(); });
-  ref.child('armed').on('value', s => { armed = !!s.val(); refreshRoot(); });
+  ref.child('live').on('value', s => { live = !!s.val(); if (live) markActive(); refreshRoot(); });
+  ref.child('armed').on('value', s => { armed = !!s.val(); if (armed) markActive(); refreshRoot(); });
   ref.child('excluded').on('value', s => { excludedSet = s.val() || {}; refreshBuzz(); });
   ref.child('round').on('value', s => {
     const round = s.val() || 0;
@@ -697,6 +719,7 @@
     const r = e.round || 0;
     if (r !== estRound) { estRound = r; estSubmitted = false; document.getElementById('est-input').value = ''; }
     estActive = !!e.active;
+    if (estActive) markActive();
     /* Gesperrt: der Host hat das Feld geoeffnet, die Frage aber noch nicht
        gezeigt. Es steht dann schon da - mit Schloss und dem Hinweis, dass es
        gleich losgeht - statt dass das Handy erst auf den Buzzer springt und
@@ -728,6 +751,7 @@
     const r = v.round || 0;
     if (r !== spinRound) { spinRound = r; spinSending = false; }
     spinActive = !!v.active;
+    if (spinActive) markActive();
     spinTeam = (v.team === undefined || v.team === null) ? null : v.team;
     spinBy = v.by || null;
     refreshRoot();
@@ -776,6 +800,7 @@
     const r = v.round || 0;
     if (r !== voteRound) { voteRound = r; voteSubmitted = false; }
     voteActive = !!v.active;
+    if (voteActive) markActive();
     voteCands = Array.isArray(v.candidates) ? v.candidates : [];
     voteVoters = Array.isArray(v.voters) ? v.voters : [];
     if (acc && v.votes && v.votes[acc.key]) voteSubmitted = true;
@@ -872,7 +897,18 @@
     refreshBuzz();
   }, 250);
   ref.child('teamNames').on('value', s => { teamNames = s.val()||[]; refreshRoot(); });
-  ref.child('joinLocked').on('value', s => { joinLocked = !!s.val(); refreshRoot(); });
+  /* joinLocked ist die Beitrittssperre: der Host setzt sie beim Spielstart und
+     loest sie, wenn er die naechste Show einrichtet. Genau dieses Loesen ist
+     das Signal, dass die Lobby wieder dran ist - danach faengt ein Abend von
+     vorne an, und das GIF ist dort richtig.
+     Die Pruefung auf den WECHSEL (war an, ist jetzt aus) ist noetig, weil der
+     Listener beim Laden ohnehin einmal mit dem aktuellen Wert feuert. */
+  ref.child('joinLocked').on('value', s => {
+    const jetzt = !!s.val();
+    if (joinLocked && !jetzt) clearActive();
+    joinLocked = jetzt;
+    refreshRoot();
+  });
   ref.child('lockedNames').on('value', s => { lockedNames = s.val()||[]; refreshRoot(); });
   db.ref('buzzer/presence').on('value', s => { presenceCount = Object.keys(s.val()||{}).length; refreshRoot(); });
 
