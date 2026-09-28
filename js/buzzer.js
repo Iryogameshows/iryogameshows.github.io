@@ -108,11 +108,22 @@ function resetAllTeams(){ resetAllPlayerTeams(false); }
 // hier der Account-Key (Presence-Key == Account-Key).
 function playerTeamButtonsHtml(p, teamNames, prefix){
   prefix = prefix || '';
+  // Presence-Zeilen tragen den Account-Schluessel als `id`, Account-Zeilen
+  // (Spielerübersicht, Teilnehmer-Auswahl) als `key`. Es ist derselbe Wert -
+  // die beiden Listen kommen nur aus verschiedenen Firebase-Knoten.
+  const key = p.id !== undefined && p.id !== null ? p.id : p.key;
   // escJsArg statt '…': der Account-Schluessel entsteht auf dem Handy aus dem
   // Namen und filtert nur . # $ / [ ] heraus - ein Apostroph bleibt stehen.
   // Bei einem Spieler namens O'Brien stand hier assignPlayerTeam('o'brien',0),
   // und der Knopf tat wortlos nichts.
-  return teamNames.map((name, i) => `<button class="pr-team-btn ${p.team===i?'active':''}" onclick="${prefix}assignPlayerTeam(${escJsArg(p.id)},${i})">${escapeHtml(name)}</button>`).join('');
+  const btns = teamNames.map((name, i) =>
+    `<button class="pr-team-btn ${p.team===i?'active':''}" onclick="${prefix}assignPlayerTeam(${escJsArg(key)},${i})">${escapeHtml(name)}</button>`).join('');
+  // Zuteilung wieder wegnehmen. Gab es bisher nur in der Teilnehmer-Auswahl;
+  // in den Lobbys kam man aus einem versehentlich gesetzten Team nicht mehr
+  // heraus, ohne ALLE Zuteilungen zurückzusetzen.
+  const weg = (p.team === undefined || p.team === null) ? ''
+    : `<button class="pr-team-btn" title="Team wegnehmen" onclick="${prefix}assignPlayerTeam(${escJsArg(key)},null)">✕</button>`;
+  return btns + weg;
 }
 // Avatar und Farbe stammen aus fremden Accounts und landen hier in einem
 // style-Attribut bzw. im Markup - beides muss escaped werden.
@@ -137,6 +148,30 @@ function lobbyTeamNames(game){
   const names = [val(cfg.names[0], 'Team 1'), val(cfg.names[1], 'Team 2')];
   if (fieldChecked(cfg.team3)) names.push(val(cfg.names[2], 'Team 3'));
   return names;
+}
+
+/* Die EINE Quelle fuer "wie heissen die Teams gerade".
+
+   Vorher hatte jede Ecke ihre eigene: die Setup-Lobbys lasen LOBBY_SETUP, die
+   Teilnehmer-Auswahl von "Der Preis ist heiss" und "Der Duemmste fliegt"
+   hatte in roster.js eine zweite Fassung mit fest zwei Teams, und die
+   Spielerübersicht baute sich aus currentTeamLabel() drei Knoepfe - immer
+   drei, auch wenn nur zwei Teams spielten.
+
+   Das war Davids Beschwerde: bei "Der Preis ist heiss" liess sich niemand
+   sinnvoll zuteilen, weil dort ein drittes Team gar nicht vorgesehen war -
+   wer ueber die Spielerübersicht in Team 3 gelegt wurde, galt in der
+   Teilnehmer-Auswahl als "ohne Team" und tauchte in keiner Wertung auf.
+
+   Jetzt fragt jede Ecke hier. Ein Spiel, das keine eigenen Namensfelder hat,
+   nimmt die Turnier-Teams - das ist der Fall, in dem die Zuteilung ueberhaupt
+   etwas bedeutet.
+   @param {string} game @returns {string[]} */
+function contextTeamNames(game){
+  if (LOBBY_SETUP[game]) return lobbyTeamNames(game);
+  if (game === 'pih' && typeof pihTeamNames === 'function') return pihTeamNames();
+  const t = (typeof tournament !== 'undefined' && tournament && tournament.teams) || [];
+  return t.length >= 2 ? t.slice(0, 3) : ['Team 1', 'Team 2'];
 }
 
 function renderSetupLobby(game){
@@ -492,7 +527,7 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'finalePickAnswer','gmAdvance','gmSkipTutorial',
   'jeopardyAnnounceDaily','jeopardySetDdTeam','jeopardyBuzzReopen','jeopardyBuzzReopenAll','jeopardyBuzzToggleHidden','jeopardyDeduct',
   'jeopardyPlaySound','jeopardyRevealQuestion','jeopardyScore','jeopardySeriesReveal','jeopardySkip','jeopardyStageReveal',
-  'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','jeopardyWrongReopen','nextRound','openJeopardyClue',
+  'jeopardyStopSound','jeopardyToggleAnswer','jeopardyToggleMedia','jeopardyUndo','jeopardyWrongReopen','jeopardyCloseTyped','nextRound','openJeopardyClue',
   'jeopardyEstimateOpen','jeopardyEstimateClose','jeopardyEstimateReopen',
   'wwdsAdjustBet','wwdsSetGuess','wwdsShowTieGuesses','wwdsStartMaster','wwdsMasterSet','wwdsRevealMaster','wwdsAfterMaster',
   'wwdsPick','wwdsSelect','wwdsLock','wwdsReveal','wwdsNext','wwdsAudience','wwdsStartTimer',

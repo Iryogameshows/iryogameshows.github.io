@@ -32,20 +32,21 @@ function rosterSeed(game) {
   r.seeded = true;
 }
 
-/* Wie die Teams heissen. Bei "Der Preis ist heiss" stehen die Namen im
-   Setup, sonst kommen sie aus einem laufenden Turnier. Die ZUORDNUNG steht
-   nicht hier, sondern am Account - dieselbe Quelle wie beim Turnier.
+/* Wie die Teams heissen - dieselbe Quelle wie alle anderen Lobbys, siehe
+   contextTeamNames() in buzzer.js. Hier stand vorher eine eigene Fassung mit
+   fest zwei Teams; ein drittes Team war damit in dieser Auswahl unsichtbar.
    @param {string} game @returns {string[]} */
 function rosterTeamNames(game) {
-  if (game === 'pih' && typeof pihTeamNames === 'function') return pihTeamNames();
-  const t = (typeof tournament !== 'undefined' && tournament && tournament.teams) || [];
-  return [t[0] || 'Team 1', t[1] || 'Team 2'];
+  return contextTeamNames(game);
 }
 
-/** Team-Index eines Accounts, oder null. @param {any} p @returns {number|null} */
-function rosterTeamOf(p) {
+/** Team-Index eines Accounts, oder null - gemessen an der Zahl der Teams, die
+ *  es gerade wirklich gibt, nicht an einer festen Obergrenze.
+ *  @param {any} p @param {number} anzahl @returns {number|null} */
+function rosterTeamOf(p, anzahl) {
   const t = p ? p.team : null;
-  return (t === undefined || t === null || t < 0 || t > 1) ? null : t;
+  if (t === undefined || t === null || t < 0) return null;
+  return t < (anzahl === undefined ? 3 : anzahl) ? t : null;
 }
 
 function renderRosterLobby(game) {
@@ -61,17 +62,12 @@ function renderRosterLobby(game) {
     return a.name.localeCompare(b.name, 'de');
   });
 
-  /* Team-Knoepfe je Zeile. Die gab es hier nie - in dieser Lobby liess sich
-     nur auswaehlen, WER mitspielt, nicht in welchem Team. Bei "Der Preis ist
-     heiss" braucht es die Teams inzwischen fuer den Teamstand und fuers
-     Finale, und ohne Knopf stand der Host davor und konnte nichts zuteilen.
-     assignPlayerTeam schreibt an dieselbe Stelle wie alle anderen Lobbys. */
+  /* Team-Knoepfe je Zeile - jetzt dieselbe Funktion wie in allen anderen
+     Lobbys und in der Spielerübersicht (playerTeamButtonsHtml in buzzer.js).
+     Hier stand eine eigene, fast gleiche Fassung; sie kannte nur zwei Teams
+     und markierte deshalb ein drittes gar nicht erst. */
   const namen = rosterTeamNames(game);
-  const teamBtns = p => `<span class="roster-teams">${namen.map((n, i) =>
-      `<button class="pr-team-btn ${rosterTeamOf(p) === i ? 'active' : ''}"
-               onclick="assignPlayerTeam(${escJsArg(p.key)},${i})">${escapeHtml(n)}</button>`).join('')
-    }${rosterTeamOf(p) === null ? '' :
-      `<button class="pr-team-btn" title="Team wegnehmen" onclick="assignPlayerTeam(${escJsArg(p.key)},null)">✕</button>`}</span>`;
+  const teamBtns = p => `<span class="roster-teams">${playerTeamButtonsHtml(p, namen, '')}</span>`;
 
   const rows = accounts.length
     ? accounts.map(p => {
@@ -93,10 +89,10 @@ function renderRosterLobby(game) {
      zusammensuchen. */
   const mit = accounts.filter(p => r.selected.has(p.key));
   const proTeam = namen.map((n, i) => {
-    const drin = mit.filter(p => rosterTeamOf(p) === i).map(p => escAttr(p.name));
+    const drin = mit.filter(p => rosterTeamOf(p, namen.length) === i).map(p => escAttr(p.name));
     return `<span class="roster-team-sum t${i}"><b>${escAttr(n)}</b> ${drin.length ? drin.join(', ') : '—'}</span>`;
   }).join('');
-  const ohne = mit.filter(p => rosterTeamOf(p) === null).map(p => escAttr(p.name))
+  const ohne = mit.filter(p => rosterTeamOf(p, namen.length) === null).map(p => escAttr(p.name))
     .concat(r.guests.map(g => (g || '').trim()).filter(Boolean).map(g => escAttr(g) + ' (Gast)'));
   const aufstellung = `<div class="roster-lineup">${proTeam}${
     ohne.length ? `<span class="roster-team-sum ohne"><b>ohne Team</b> ${ohne.join(', ')}</span>` : ''}</div>`;

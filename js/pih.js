@@ -408,6 +408,7 @@ function pihHostBid(i){
   pihState.hostBids[p.uid] = { name: p.name, value: inp.value.trim(), num, ts: Date.now() };
   // Bewusst kein Neuaufbau des Grids: andere Gäste tippen vielleicht gerade.
   pihUpdateBidProgress();
+  updateGamemaster();
 }
 
 /* ── Gebote über die Handys ───────────────────────────────────────────── */
@@ -418,7 +419,13 @@ const pihBids = makeRoundChannel('buzzer/estimate', 'answers', bids => {
   pihState.bids = bids;
   // Nur den Zähler auffrischen, nicht das ganze Grid: dort stehen die
   // Eingabefelder der Gäste und ein Neuaufbau würde das Getippte wegwerfen.
-  if (pihState.phase === 'bid') pihUpdateBidProgress();
+  if (pihState.phase !== 'bid') return;
+  pihUpdateBidProgress();
+  // Das GM-Panel und das Handy-Gamepad zeigen dieselbe Zahl - und die stand
+  // still. Hier fehlte schlicht der Anstoss: aufgefrischt wurde nur die
+  // Anzeige auf dem Hauptbildschirm. Der Host sah auf seinem Panel also
+  // "0/6 Gebote", waehrend auf der Leinwand laengst alle da waren.
+  updateGamemaster();
 });
 
 function pihBeginBids(){

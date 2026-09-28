@@ -285,13 +285,41 @@ function jeopardyToggleAnswer() {
   updateGamemaster();
 }
 
+/* Punkte fuer ein Team.
+
+   Beim Buzzern ist die Frage mit der Wertung vorbei: es hat genau einer
+   gebuzzert, der hat geantwortet, fertig. Bei einer Schaetzfrage oder einer
+   Einzelantwort stimmt das nicht - dort tippen ALLE, und zwei Teams koennen
+   gleich nah dran liegen. Die Frage schliesst sich deshalb nur beim Buzzern
+   von selbst; bei getippten Fragen bleibt sie offen, bis der Host sie mit
+   "Frage abschliessen" beendet.
+
+   `scoredTeams` merkt sich, wer schon Punkte bekommen hat - der Knopf desselben
+   Teams ein zweites Mal soll nicht doppelt zahlen.
+   @param {number} teamIdx */
 function jeopardyScore(teamIdx) {
   if (!jeopardyState.currentClue) return;
   if (!jeopardyTeamMayAnswer(teamIdx)) return;
+  const getippt = jeopardyTyped(jeopardyCurrentClue());
+  if (getippt && jeopardyState.scoredTeams.includes(teamIdx)) return;
   jeopardySnapshot();
+  jeopardyState.scores[teamIdx] += jeopardyClueValue();
+  SFX.correct();
+  if (getippt){
+    jeopardyState.scoredTeams.push(teamIdx);
+    renderJeopardyScores();
+    updateGamemaster();
+    return;
+  }
+  jeopardyFinishClue();
+}
+
+/* Frage zu, Feld abgehakt, Board wieder frei. Stand frueher als Rumpf in
+   jeopardyScore(); seit getippte Fragen mehrere Wertungen zulassen, ist es ein
+   eigener Schritt, den auch der Abschluss-Knopf und "Niemand" nutzen. */
+function jeopardyFinishClue() {
+  if (!jeopardyState.currentClue) return;
   const { col, row } = jeopardyState.currentClue;
-  const val = jeopardyClueValue();
-  jeopardyState.scores[teamIdx] += val;
   jeopardyState.used[col][row] = true;
   jeopardyState.currentClue = null;
   jeopardyState.answerShown = false;
@@ -299,14 +327,24 @@ function jeopardyScore(teamIdx) {
   jeopardyState.ddTeam = null;
   jeopardyState.ddPending = false;
   jeopardyState.questionRevealed = false;
-  SFX.correct();
+  jeopardyState.scoredTeams = [];
   jeopardyStopSound(true);
   jeopardyBuzzClose();
+  if (jeopardyEstimate.open) jeopardyEstimateClose();
   closeJeopardyClue();
   renderJeopardyScores();
   renderJeopardyBoard();
   updateGamemaster();
   if (jeopardyBoardComplete()) jeopardyAdvanceBoard();
+}
+
+/* Der Abschluss-Knopf bei getippten Fragen. Eigener Name statt
+   jeopardyFinishClue direkt am Knopf: hier gehoert ein Undo-Punkt hin, damit
+   ein zu frueher Klick zurueckzunehmen ist. */
+function jeopardyCloseTyped() {
+  if (!jeopardyState.currentClue) return;
+  jeopardySnapshot();
+  jeopardyFinishClue();
 }
 
 // Deduct HALF the question value on a wrong answer
@@ -338,20 +376,7 @@ function jeopardyWrongReopen(teamIdx) {
 function jeopardySkip() {
   if (!jeopardyState.currentClue) return;
   jeopardySnapshot();
-  const { col, row } = jeopardyState.currentClue;
-  jeopardyState.used[col][row] = true;
-  jeopardyState.currentClue = null;
-  jeopardyState.answerShown = false;
-  jeopardyState.currentIsDaily = false;
-  jeopardyState.ddTeam = null;
-  jeopardyState.ddPending = false;
-  jeopardyState.questionRevealed = false;
-  jeopardyStopSound(true);
-  jeopardyBuzzClose();
-  closeJeopardyClue();
-  renderJeopardyBoard();
-  updateGamemaster();
-  if (jeopardyBoardComplete()) jeopardyAdvanceBoard();
+  jeopardyFinishClue();
 }
 
 function closeJeopardyClue() {

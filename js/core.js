@@ -1604,21 +1604,27 @@ function setPlayersTab(tab, silent){
   setClass('players-tab-board', 'active', tab === 'board');
   if (tab === 'list') renderPlayersList(); else renderPlayersLeaderboard();
 }
-// Aktuelle Teamnamen des zuletzt aktiven Kontexts, zum Anzeigen des Team-Tags
-// - fällt auf "Team N" zurück wenn kein Spiel offen ist.
-//
-// Die teamlosen Spiele (Der Dümmste fliegt, Der Preis ist heiß) setzen den
-// Kontext ebenfalls. Ohne eigenen Zweig landeten sie im Rückfall auf
-// state.teamNames und zeigten in der Spielerübersicht die Teamnamen einer
-// Feud-Runde an - aus einem Spiel, das gerade gar nicht läuft.
+/* Die Teams des zuletzt aktiven Kontexts, für die Spielerübersicht.
+
+   Läuft gerade eine Show, zählen deren eingefrorene Namen - sonst die, die im
+   Setup stehen (contextTeamNames in buzzer.js, dieselbe Quelle wie die
+   Lobbys). "Der Dümmste fliegt" und "Der Preis ist heiß" landeten hier früher
+   im Rückfall auf state.teamNames und zeigten die Teamnamen einer
+   Feud-Runde an - aus einem Spiel, das gerade gar nicht läuft.
+   @returns {string[]} */
+function currentTeamNames(){
+  const laufend = activeBuzzerContext === 'jeopardy' ? jeopardyState.teamNames
+                : activeBuzzerContext === 'wwds' ? wwdsState.teamNames
+                : activeBuzzerContext === 'tp' ? tpState.teamNames
+                : activeBuzzerContext === 'feud' ? state.teamNames
+                : null;
+  if (laufend && laufend.length) return laufend;
+  return contextTeamNames(activeBuzzerContext);
+}
+/** Ein einzelner Teamname, mit "Team N" als Rückfall.
+ *  @param {number} i @returns {string} */
 function currentTeamLabel(i){
-  const generisch = 'Team ' + (i+1);
-  if (ROSTERS[activeBuzzerContext]) return generisch;
-  const names = activeBuzzerContext === 'jeopardy' ? jeopardyState.teamNames
-              : activeBuzzerContext === 'wwds' ? (wwdsState.teamNames.length ? wwdsState.teamNames : lobbyTeamNames('wwds'))
-              : activeBuzzerContext === 'tp' ? (tpState.teamNames.length ? tpState.teamNames : lobbyTeamNames('tp'))
-              : state.teamNames;
-  return (names && names[i]) || generisch;
+  return currentTeamNames()[i] || ('Team ' + (i+1));
 }
 function renderPlayersList(){
   const el = document.getElementById('players-content');
@@ -1632,6 +1638,10 @@ function renderPlayersList(){
     return a.name.localeCompare(b.name, 'de');
   });
   const teamTagColors = ['#E8453C','#3B82F6','#22C55E'];
+  // Genau so viele Team-Knöpfe, wie es Teams gibt. Vorher standen hier immer
+  // drei - bei zwei Teams war der dritte Knopf eine Falle: wer ihn traf, war
+  // in keiner Wertung mehr dabei und stand trotzdem als "Team 3" da.
+  const teamNames = currentTeamNames();
   el.innerHTML = `<div class="q-list">${sorted.map(p => {
     const teamTag = (p.team !== undefined && p.team !== null)
       ? `<span class="player-team-tag" style="background:${teamTagColors[p.team]||'#888'}22;color:${teamTagColors[p.team]||'#888'};">${currentTeamLabel(p.team)}</span>`
@@ -1644,8 +1654,7 @@ function renderPlayersList(){
         <span class="player-stats">🔔${s.buzzes||0} · 🏆${s.wins||0}/${s.games||0}${s.bestBuzz!=null?' · ⚡'+s.bestBuzz.toFixed(2)+'s':''}</span>
       </span>
       <div class="q-btns">
-        ${[0,1,2].map(i => `<button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam(${escJsArg(p.key)},${i})">${escapeHtml(currentTeamLabel(i))}</button>`).join('')}
-        <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="assignPlayerTeam(${escJsArg(p.key)},null)">✕</button>
+        <span class="player-team-btns">${playerTeamButtonsHtml(p, teamNames, '')}</span>
         <button class="btn btn-secondary" style="padding:6px 10px;font-size:.7rem;" onclick="resetPlayerPassword(${escJsArg(p.key)}, ${escJsArg(p.name)})">🔑 Passwort</button>
         <button class="btn btn-danger" style="padding:6px 10px;font-size:.7rem;" onclick="deletePlayerAccount(${escJsArg(p.key)}, ${escJsArg(p.name)})">🗑️ Löschen</button>
       </div>

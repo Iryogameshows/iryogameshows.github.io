@@ -859,6 +859,31 @@ let boardMirrorScheduled = false;
 // Größe/Vollbild per JS zu erzwingen (Window-Management-API, moveTo/resizeTo,
 // requestFullscreen) - das war je nach Browser/Fenstermanager unzuverlässig
 // und hat mehr Probleme verursacht als gelöst.
+/* Was im Zuschauerfenster ueberhaupt zu sehen sein darf.
+
+   Frueher stand hier das Gegenteil: eine Liste der Screens, die AUSgeblendet
+   werden. Die hinkte jeder neuen Show hinterher - zuletzt fehlte der
+   Intro-Editor, und wer waehrend der Show ein Intro nachbesserte, tat das vor
+   Publikum. Eine Aufzaehlung, die man beim Anlegen eines Screens pflegen
+   muss, wird irgendwann vergessen; eine, die man beim Anlegen eines
+   ZUSCHAUER-Screens pflegen muss, faellt sofort auf - dann bleibt die
+   Leinwand schwarz.
+
+   Deshalb andersherum: alles aus, diese hier an. Ein neuer Editor, ein neuer
+   Setup-Screen, eine neue Uebersicht ist damit von Haus aus dicht.
+   @type {string[]} */
+const BOARD_PUBLIC_SCREENS = [
+  'game-screen', 'finale-screen', 'result-screen',
+  'jeopardy-screen', 'wwm-screen', 'wwds-screen',
+  'ddf-screen', 'pih-screen', 'tp-screen',
+];
+/** Die CSS-Regel dazu: `.screen`, die keiner der erlaubten IDs entspricht.
+ *  @returns {string} */
+function boardHiddenScreensCss(){
+  const raus = BOARD_PUBLIC_SCREENS.map(id => `:not(#${id})`).join('');
+  return `.screen${raus}{display:none!important;}`;
+}
+
 function openBoardPopout() {
   boardWin = window.open('', 'Board', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
   if (!boardWin) return; // vom Browser blockiert (Pop-up-Blocker)
@@ -882,20 +907,9 @@ function openBoardPopout() {
 <link rel="stylesheet" href="${cssHref}">
 <style>
 body{pointer-events:none;}
-/* Alles, was nur der Host sieht, bleibt im Zuschauerfenster aus. Die Liste
-   hinkte den neuen Shows hinterher: WWDS, Der Duemmste fliegt, Der Preis ist
-   heiss und Trivial Pursuit fehlten samt ihren Editoren, ebenso die
-   Spielerliste, das Turnier und die Notizen. Wechselte der Host waehrend der
-   Show dorthin, stand das auf der Leinwand. */
-#gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay,
-#menu-screen,#players-screen,#tournament-screen,#host-notes-screen,#reaction-board-screen,
-#setup-screen,#edit-screen,
-#jeopardy-setup-screen,#jeopardy-edit-screen,
-#wwm-setup-screen,#wwm-edit-screen,
-#wwds-setup-screen,#wwds-edit-screen,
-#ddf-setup-screen,#ddf-edit-screen,
-#pih-setup-screen,#pih-edit-screen,
-#tp-setup-screen,#tp-edit-screen{display:none!important;}
+/* Nur die Zuschauer-Screens, alles andere aus. */
+${boardHiddenScreensCss()}
+#gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay{display:none!important;}
 </style></head><body></body></html>`);
   boardWin.document.close();
   startBoardMirror();
@@ -1325,8 +1339,14 @@ function updateGamemasterJeopardy() {
       .map((name, i) => ({ name, i }))
       .filter(t => jeopardyTeamMayAnswer(t.i))
       .sort((a, b) => Number(b.i === buzzTeam) - Number(a.i === buzzTeam));
+    /* Bei Schätzfrage und Einzelantwort schließt ein Plus die Frage NICHT -
+       zwei Teams dürfen gleich nah dranliegen und beide Punkte bekommen. Wer
+       schon gewertet wurde, bekommt statt des Knopfs ein Häkchen; sonst
+       klickt der Host im Eifer zweimal und zahlt doppelt. */
+    const getipptScore = jeopardyTyped(clue);
     const scoreRows = `<div class="score-rows">${wertbar.map(({ name, i }) => {
       const dran = i === buzzTeam;
+      const schon = getipptScore && jeopardyState.scoredTeams.includes(i);
       return `
       <div class="score-row${dran ? ' buzzed' : ''}" style="--team:${teamColors[i][0]};">
         <span class="sr-name">${escapeHtml(name)}</span>
@@ -1334,7 +1354,9 @@ function updateGamemasterJeopardy() {
         ${dran ? `<span class="sr-buzz">🔔 ${escapeHtml(buzzName)}</span>` : ''}
         <span class="sr-gap"></span>
         <span class="sr-btns">
-          <button class="sr-btn plus" onclick="opener.jeopardyScore(${i})">+${val}</button>
+          ${schon
+            ? `<span class="hint-ok">✓ +${val}</span>`
+            : `<button class="sr-btn plus" onclick="opener.jeopardyScore(${i})">+${val}</button>`}
           <button class="sr-btn minus" onclick="opener.${dran ? `jeopardyWrongReopen(${i})` : `jeopardyDeduct(${i})`}">−${minus}</button>
         </span>
       </div>`;
@@ -1456,6 +1478,10 @@ function updateGamemasterJeopardy() {
             // aufgedeckt) darf niemand dafür büßen.
             : `<button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>
                <button class="gm-btn gray" onclick="opener.jeopardyBuzzReopenAll()">🔔 Buzzer neu (alle dürfen)</button>`}
+          ${getippt
+            ? `<button class="gm-btn gold" onclick="opener.jeopardyCloseTyped()">✔ Frage abschließen${
+                jeopardyState.scoredTeams.length ? ` (${jeopardyState.scoredTeams.length} gewertet)` : ''}</button>`
+            : ''}
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Niemand / Überspringen</button>
           <button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
   } else {
@@ -1605,11 +1631,16 @@ function updateGMBar() {
     }
     if (jeopardyState.currentClue) {
       // Beim Daily Double bleibt auch in der Sternleiste nur das wählende Team.
+      const cc = jBoard()[jeopardyState.currentClue.col].clues[jeopardyState.currentClue.row];
+      // Schon gewertete Teams (nur bei getippten Fragen möglich) werden
+      // abgeblendet statt weggelassen - sonst springt die Leiste um, während
+      // der Host hinschaut, und der nächste Knopf liegt unter seinem Finger.
       const teamBtns = jeopardyState.teamNames.map((name, i) => ({ name, i }))
         .filter(t => jeopardyTeamMayAnswer(t.i))
-        .map(({ name, i }) =>
-        `<button class="gm-btn" style="background:linear-gradient(180deg,${['#E8453C','#3B82F6','#22C55E'][i]},${['#C62828','#1D4ED8','#16a34a'][i]});color:#fff;" onclick="jeopardyScore(${i})">✓ ${escapeHtml(name)} +${jeopardyClueValue()}</button>`).join('');
-      const cc = jBoard()[jeopardyState.currentClue.col].clues[jeopardyState.currentClue.row];
+        .map(({ name, i }) => {
+          const schon = jeopardyTyped(cc) && jeopardyState.scoredTeams.includes(i);
+          return `<button class="gm-btn" ${schon ? 'disabled' : ''} style="background:linear-gradient(180deg,${['#E8453C','#3B82F6','#22C55E'][i]},${['#C62828','#1D4ED8','#16a34a'][i]});color:#fff;${schon ? 'opacity:.45;' : ''}" onclick="jeopardyScore(${i})">${schon ? '✔' : '✓'} ${escapeHtml(name)} +${jeopardyClueValue()}</button>`;
+        }).join('');
       let stageBtn = '';
       if (cc.staged && cc.stageImg){
         const g = jeopardyStageGrid(cc); const done = jeopardyState.stageRevealed.length;
@@ -1630,6 +1661,7 @@ function updateGMBar() {
         ${stepsBtn}
         ${soundBtn}
         ${teamBtns}
+        ${jeopardyTyped(cc) ? `<button class="gm-btn gm-gold" onclick="jeopardyCloseTyped();updateGMBar();">✔ Frage abschließen</button>` : ''}
         <button class="gm-btn gm-blue" onclick="jeopardyToggleAnswer();updateGMBar();">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
         ${jeopardyTyped(cc)
           ? (jeopardyEstimate.open

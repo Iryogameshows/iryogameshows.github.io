@@ -324,11 +324,33 @@ function tpSpin(){
   tpCloseSpin();          // ab jetzt nimmt kein zweiter Dreh mehr an
   tpRender();
   const seg = 360 / tpCatCount();
-  // Der Zeiger steht oben. Damit die Mitte des Segments unter ihm landet,
-  // muss um dessen Mittelwinkel zurueckgedreht werden - plus vier volle
-  // Umdrehungen, damit es nach Drehen aussieht und nicht nach Umschalten.
-  const target = 360*4 + (360 - (cat*seg + seg/2));
-  tpState.angle += target;
+  /* Der Zeiger steht oben. Damit die Mitte des gezogenen Segments unter ihm
+     landet, muss der Rotor auf den Winkel 360 - Mittelwinkel gedreht werden.
+
+     Hier stand vorher:
+
+         const target = 360*4 + (360 - (cat*seg + seg/2));
+         tpState.angle += target;
+
+     Das rechnete den Zielwinkel so aus, als stuende das Rad auf 0 - und
+     addierte ihn dann auf den Stand, auf dem es tatsaechlich stand. Beim
+     ERSTEN Dreh stimmte das (das Rad stand ja auf 0), ab dem zweiten lief der
+     Fehler mit: der alte Restwinkel blieb als Versatz drin und summierte sich
+     mit jedem Dreh weiter auf. Das Rad zeigte auf eine Farbe, gespielt wurde
+     eine andere - und weil der Versatz wuchs, wurde es im Lauf des Abends
+     immer schlimmer.
+
+     Jetzt wird gerechnet, wie weit von HIER aus noch zu drehen ist. Die
+     Differenz wird immer vorwaerts genommen (bei <= 0 kommt eine Umdrehung
+     drauf), damit das Rad nie rueckwaerts laeuft und nie stillsteht. */
+  const mitte = cat*seg + seg/2;
+  const ziel  = ((360 - mitte) % 360 + 360) % 360;   // wo der Rotor stehen soll
+  const jetzt = ((tpState.angle % 360) + 360) % 360; // wo er gerade steht
+  let delta = ziel - jetzt;
+  if (delta <= 0) delta += 360;
+  // Drei volle Umdrehungen obendrauf, damit es nach Drehen aussieht und nicht
+  // nach Umschalten.
+  tpState.angle += 360*3 + delta;
   const rotor = document.getElementById('tp-wheel-rotor');
   if (rotor) rotor.style.transform = `rotate(${tpState.angle}deg)`;
   SFX.tick();

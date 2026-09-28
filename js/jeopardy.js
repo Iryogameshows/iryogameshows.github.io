@@ -102,6 +102,12 @@ let jeopardyState = {
   seriesRevealed: 0, // wie viele Bilder einer Bilder-Reihe schon aufgedeckt sind (links → rechts)
   stepsRevealed: 0,  // wie viele Schritte einer Schritt-Frage schon stehen (oben → unten)
   questionRevealed: false, // the question text is hidden until the GM reveals it
+  /* Welche Teams fuer die offene Frage schon Punkte bekommen haben. Zaehlt nur
+     bei Schaetzfrage und Einzelantwort: dort tippen alle, zwei Teams koennen
+     gleich nah dranliegen, und die Frage bleibt offen, bis der Host sie
+     abschliesst. Beim Buzzern ist sie mit der ersten Wertung ohnehin vorbei.
+     @type {number[]} */
+  scoredTeams: [],
 };
 
 // Returns the categories array for the active board
@@ -150,6 +156,7 @@ function jeopardySnapshot() {
     seriesRevealed: jeopardyState.seriesRevealed,
     stepsRevealed: jeopardyState.stepsRevealed,
     questionRevealed: jeopardyState.questionRevealed,
+    scoredTeams: [...jeopardyState.scoredTeams],
   });
 }
 
@@ -168,6 +175,7 @@ function jeopardyUndo() {
   jeopardyState.seriesRevealed = prev.seriesRevealed || 0;
   jeopardyState.stepsRevealed = prev.stepsRevealed || 0;
   jeopardyState.questionRevealed = prev.questionRevealed;
+  jeopardyState.scoredTeams = prev.scoredTeams || [];
   renderJeopardyScores();
   renderJeopardyBoard();
   if (jeopardyState.currentClue) renderJeopardyClueOverlay();
@@ -375,6 +383,7 @@ function openJeopardyClue(col, row) {
   // Die Eingabe-Anzeige im GM-Panel steht schon, bevor aufgedeckt wird. Ohne
   // diese zwei Zeilen zeigte sie die Liste der VORIGEN Frage und beschriftete
   // sich nach deren Sorte - "Noch keine Schätzung" ueber einer Wortfrage.
+  jeopardyState.scoredTeams = [];
   jeopardyEstimate.answers = [];
   jeopardyEstimate.single = jeopardySingle(jeopardyClue(jeopardyState.currentBoard, col, row));
   resetMediaOverlay();

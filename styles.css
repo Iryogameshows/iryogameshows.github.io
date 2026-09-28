@@ -742,13 +742,24 @@ body {
 @keyframes onlinePulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
 .q-btns { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .q-btns .btn { padding: 6px 14px; font-size: .7rem; }
-.player-row { flex-wrap: wrap; row-gap: 8px; }
-/* flex-shrink war 0: der Knopfblock konnte damit nie schmaler werden als seine
-   sechs Knöpfe nebeneinander, sein eigenes flex-wrap kam nie zum Zug und die
-   Spielerübersicht lief auf schmalen Fenstern um 150px über. min-width:0 hebt
-   zusätzlich die automatische Mindestbreite von Flex-Elementen auf. */
-.player-row .q-btns { flex: 1 1 auto; min-width: 0; }
-.player-row .q-label { min-width: 0; }
+/* Spielerübersicht: eine Zeile je Account, in zwei Bloecken.
+
+   Vorher standen Name und Knopfleiste als zwei Flex-Geschwister nebeneinander
+   und stritten sich um dieselbe Breite. Beide durften wachsen, keiner durfte
+   richtig schrumpfen (der Name nicht wegen seiner Emoji-Kette aus Statistik
+   und Team-Tag, die Knoepfe nicht wegen white-space:nowrap) - das Ergebnis
+   waren uebereinanderliegende Knoepfe und Text, der unter ihnen verschwand.
+
+   Jetzt bekommt jeder Block eine eigene Zeile, sobald es eng wird: der Name
+   braucht mindestens 200px, die Knoepfe mindestens 260px. Passt das nicht
+   nebeneinander, bricht die Zeile um - zwei Zeilen sind immer noch lesbar,
+   uebereinander liegende Knoepfe nie. */
+.player-row { flex-wrap: wrap; row-gap: 10px; align-items: flex-start; }
+.player-row .q-label { flex: 1 1 200px; min-width: 0; flex-wrap: wrap; row-gap: 4px; }
+.player-row .q-btns { flex: 1 1 260px; min-width: 0; align-items: center; }
+/* Der Name darf umbrechen statt die Zeile aufzudruecken. */
+.player-row .q-label > b { overflow-wrap: anywhere; }
+.player-team-btns { display: inline-flex; gap: 4px; flex-wrap: wrap; }
 .edit-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
 /* Editor mit fester Button-Spalte daneben (bleibt beim Scrollen stehen). */
@@ -1606,9 +1617,13 @@ body {
 .setup-lobby .pr-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0;animation:gmPulse 1.6s ease-in-out infinite;}
 @keyframes gmPulse{0%,100%{opacity:1}50%{opacity:.4}}
 .setup-lobby .pr-empty{font-size:.8rem;color:rgba(255,255,255,.35);padding:6px 0;}
-.setup-lobby .pr-team-btn{padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.7rem;font-weight:700;cursor:pointer;}
-.setup-lobby .pr-team-btn:hover{filter:brightness(1.2);}
-.setup-lobby .pr-team-btn.active{background:rgba(var(--gold-rgb),.25);border-color:var(--gold);color:var(--gold);}
+/* Die Team-Knoepfe stehen inzwischen an drei Stellen: in den Setup-Lobbys, in
+   der Teilnehmer-Auswahl von DDF/PIH und in der Spielerübersicht. Sie waren
+   nur unterhalb von .setup-lobby gestaltet - ausserhalb kamen sie als nackte
+   Browser-Knoepfe heraus. Deshalb jetzt ohne Vorfahren-Bedingung. */
+.pr-team-btn{padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);font-size:.7rem;font-weight:700;font-family:inherit;line-height:1.2;white-space:nowrap;cursor:pointer;}
+.pr-team-btn:hover{filter:brightness(1.2);}
+.pr-team-btn.active{background:rgba(var(--gold-rgb),.25);border-color:var(--gold);color:var(--gold);}
 .setup-lobby .panel-row{display:flex;gap:8px;flex-wrap:wrap;}
 
 /* ── Der Duemmste fliegt & Der Preis ist heiss ─────────────────────────── */
@@ -1750,7 +1765,7 @@ body {
 .menu-pill:focus-visible,
 #editor-top-btn:focus-visible,
 .jbz-qr:focus-visible,
-.setup-lobby .pr-team-btn:focus-visible,
+.pr-team-btn:focus-visible,
 .media-slot.empty:focus-within {
   outline: 3px solid rgba(var(--gold-rgb), .9);
   outline-offset: 3px;
@@ -2357,12 +2372,16 @@ body {
 .tp-spin-by{color:#FFD23F;font-weight:800;}
 
 /* Aufstellung unter der Teilnehmerliste: wer steht in welchem Team. */
-.roster-teams{display:inline-flex;gap:4px;flex-shrink:0;}
+/* flex-shrink war 0 und kein Umbruch erlaubt: bei drei Teams plus dem
+   ✕-Knopf schob sich die Leiste aus der Zeile heraus und legte sich ueber den
+   "spielt mit"-Knopf daneben. */
+.roster-teams{display:inline-flex;gap:4px;flex-wrap:wrap;}
 .roster-lineup{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:10px;padding-top:9px;border-top:1px solid rgba(255,255,255,.07);font-size:.72rem;}
 .roster-team-sum{color:rgba(255,255,255,.65);}
 .roster-team-sum b{font-weight:800;margin-right:5px;}
 .roster-team-sum.t0 b{color:var(--red);}
 .roster-team-sum.t1 b{color:var(--blue);}
+.roster-team-sum.t2 b{color:var(--green);}
 .roster-team-sum.ohne b{color:rgba(255,255,255,.35);}
 
 .intro-editor-col{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
