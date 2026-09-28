@@ -12,6 +12,272 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Turniermodus, TP-Rad, Mehrfachwertung, Zuschauerfenster (`66616c9`, `a3fd47c`)
+
+**Sechs Meldungen von David (Punkte 5–10).** Erstmals im Browser nachgestellt,
+nicht nur aus dem Code hergeleitet — siehe „Geprüft" unten.
+
+### 5 · Das Trivial-Pursuit-Rad zeigte die falsche Kategorie
+
+**Symptom (David):** „Das Trivial Pursuit Rad ist quasi nutzlos weil die
+ausgewählten Kategorien nicht die selben waren wie die, die gedreht wurde."
+
+**Ursache:** `tpSpin()` rechnete den Zielwinkel so aus, als stünde das Rad auf 0,
+und addierte ihn dann auf den Stand, auf dem es tatsächlich stand:
+
+```js
+const target = 360*4 + (360 - (cat*seg + seg/2));
+tpState.angle += target;
+```
+
+Beim **ersten** Dreh stimmte das — das Rad stand ja auf 0. Ab dem zweiten blieb
+der alte Restwinkel als Versatz drin und summierte sich weiter auf.
+
+**Gemessen** (6 Kategorien, Segmentbreite 60°, acht Drehungen nacheinander):
+
+| Dreh | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Abweichung alt | 0° | 30° | 120° | 90° | 120° | 30° | 0° | 30° |
+| Abweichung neu | 0° | 0° | 0° | 0° | 0° | 0° | 0° | 0° |
+
+Ab 30° zeigt der Zeiger auf das Nachbarsegment. Davids „quasi nutzlos" ist
+exakt das, was die Zahlen sagen.
+
+**Gemacht:** Es wird gerechnet, wie weit von der AKTUELLEN Stellung aus noch zu
+drehen ist. Die Differenz wird immer vorwärts genommen (bei ≤ 0 kommt eine
+Umdrehung drauf), damit das Rad nie rückwärts läuft und nie stillsteht.
+
+### 6 · „Gebote abgegeben" stand im GM-Panel still
+
+**Symptom (David):** „Die ‚Gebote Abgegeben' Zahl aufm Gamemaster Panel und
+Gamepad hat nicht funktioniert … Die aufm Mainscreen war aber OK."
+
+**Ursache:** Der Firebase-Handler von `pihBids` rief nur `pihUpdateBidProgress()`
+— das ist die Anzeige auf dem Hauptbildschirm. `updateGamemaster()` fehlte, und
+das GM-Panel baut seine Zahl aus einem eigenen HTML-Durchlauf.
+
+**Gemacht:** `updateGamemaster()` ergänzt, im Handy-Handler und in `pihHostBid()`
+(dem Weg, auf dem der Host Gast-Gebote am Hauptfenster einträgt).
+
+### 7 · Schätzfragen: mehrere Teams werten
+
+**Symptom (David):** „bei Schätzfragen will ich beiden Teams Punkte geben
+können, falls beide gleich weit weg schätzen".
+
+**Gemacht:** `jeopardyScore()` schließt die Frage nur noch beim **Buzzern**. Bei
+Schätzfrage und Einzelantwort — dort tippen alle — bleibt sie offen:
+
+- `jeopardyState.scoredTeams` merkt, wer schon Punkte bekam; derselbe Knopf ein
+  zweites Mal zahlt nicht doppelt, gewertete Teams zeigen ein Häkchen.
+- Der Rumpf „Feld abhaken, Frage zu, Board frei" ist als `jeopardyFinishClue()`
+  herausgelöst — ihn nutzen jetzt auch `jeopardySkip()` (wo er wortgleich
+  dupliziert war) und der neue Knopf **„✔ Frage abschließen"**.
+- `scoredTeams` geht in Snapshot und Undo mit.
+
+**Gemessen:** zwei Teams gewertet → `scores [100,100,0]`, `scoredTeams [0,1]`,
+Frage noch offen; dritter Klick auf Team 0 ändert nichts; nach dem Abschließen
+ist `used[0][0]` gesetzt.
+
+### 8 · Editoren standen auf der Leinwand
+
+**Symptom (David):** „Wenn man Fragen und Intro bearbeitet, sieht man das auch
+auf den Mainscreen."
+
+**Ursache:** Das Zuschauerfenster hatte eine **Liste der auszublendenden**
+Screens. Sie hinkte jeder neuen Show hinterher — zuletzt fehlte
+`#intro-edit-screen`.
+
+**Gemacht:** umgedreht. `BOARD_PUBLIC_SCREENS` zählt die neun Zuschauer-Screens
+auf, `boardHiddenScreensCss()` baut daraus `.screen:not(#…):not(#…){display:none}`.
+Eine Liste, die man beim Anlegen eines Screens pflegen muss, wird vergessen;
+eine, die man beim Anlegen eines **Zuschauer**-Screens pflegen muss, fällt
+sofort auf — dann bleibt die Leinwand schwarz.
+
+**Gemessen:** 20 Screens werden jetzt ausgeblendet, darunter `intro-edit-screen`,
+alle sieben Editoren, alle sieben Setup-Screens, Spielerliste, Notizen und der
+Turnier-Screen.
+
+### 9 · Turniermodus
+
+**Symptom (David):** „das Turnier soll eine richtige Funktion haben, so Grad
+geht da nix." Vier Wünsche: Spieldaten vorab importieren, Spiele nacheinander
+im selben Popout, beim Einrichten nichts auf der Leinwand, und nach dem Spiel
+ein durchgehender Ablauf ohne Umweg über Menü und Lobby.
+
+**Gemacht:**
+
+`TOURNAMENT_GAMES` ist die neue Registry: je Show der Setup-Screen, die
+Startfunktion, der Schlüssel für die Teamnamen-Felder, die Import-Funktion und
+eine Funktion, die sagt, was gerade geladen ist. `TOURNAMENT_STARTABLE` wird
+daraus abgeleitet und bleibt nur als Name bestehen.
+
+**Spieldaten-Depot** (Turnier-Screen, „📦 Spieldaten & Intro laden"): je
+geplantem Spieltyp plus Intro eine Zeile mit „Laden" und dem aktuellen Stand.
+Die Dateien gehen über **dieselbe** Import-Funktion wie im Editor dorthin, wo
+sie hingehören; im Turnier steht nur Dateiname und Uhrzeit.
+
+> **Warum nicht die Daten selbst ins Turnier:** das Turnier-Objekt liegt in
+> Firebase und wird bei jeder Änderung komplett geschrieben. Ein Jeopardy-Board
+> mit eingebetteten Bildern ist mehrere MB — das würde jede Runde ausbremsen.
+
+`readJsonFile()` hat dafür einen einmaligen Erfolgs-Haken bekommen
+(`onJsonImportOk`), der nur bei geglücktem Import feuert. Die sieben
+Import-Funktionen selbst blieben unverändert — jede einzeln umzubauen wären
+sieben Gelegenheiten, eine zu übersehen.
+
+**„📦 Nächste Spieldaten überprüfen"** listet für alle offenen Spiele Datei,
+Uhrzeit und den echten Stand aus dem Speicher („3 Kategorien · 4 Fragen").
+Bewusst ein `alert` und kein weiterer Screen: der Host drückt das kurz vor dem
+Start und macht weiter.
+
+**Direktstart:** `tournamentStartAt(i)` / `tournamentStartNext()` betreten den
+Setup-Screen (wegen der Nebenwirkungen von `showScreen()`: Lobby verbinden,
+Einstellungen laden, Teilnehmerfelder bauen), übernehmen die Turnier-Teams in
+dessen Felder inklusive Team-3-Haken und rufen dann die Startfunktion. Sichtbar
+wird der Setup-Screen nicht — er steht nicht in `BOARD_PUBLIC_SCREENS`.
+
+> „Der Dümmste fliegt" und „Der Preis ist heiß" (`lobby:'roster'`) bleiben auf
+> ihrem Setup-Screen stehen: dort muss erst ausgesucht werden, **wer**
+> mitspielt. Das kann kein Knopf erraten. Der Knopf heißt dort „Einrichten".
+
+**Neuer Zuschauer-Screen `tournament-board-screen`:** Tabelle und Spielplan,
+kein einziger Knopf, das nächste Spiel hervorgehoben. Er und der Host-Screen
+rechnen über dieselbe Funktion (`tournamentStandingsHtml`) — zwei Kopien wären
+zwei Stände, die auseinanderlaufen.
+
+**Der Ablauf** ist jetzt der, den David beschrieben hat:
+
+1. Spiel endet → Mainscreen bleibt beim Ergebnis. `tournamentRecordPending()`
+   springt **nicht** mehr auf den Turnier-Screen (dort steht die Werkstatt des
+   Hosts, und das Sieger-Bild war weg, bevor es jemand gesehen hatte).
+2. „📊 Turnierstand anzeigen" → die Leinwand wechselt.
+3. Im GM-Panel: nächstes Spiel mit Name, Gewichtung und Spieldaten-Zeile,
+   dazu „▶ Nächstes Spiel starten", „📦 Nächste Spieldaten überprüfen",
+   „🛠 Turnier bearbeiten", „🏠 Zum Menü".
+
+Der GM-Zweig für diesen Screen steht **vor** den Spiel-Flags im Dispatch: ob
+das Flag der eben beendeten Show schon zurückgesetzt ist, hängt daran, wie sie
+geendet hat.
+
+Trivial Pursuit, „Der Dümmste fliegt" und „Der Preis ist heiß" enden nicht auf
+dem gemeinsamen Ergebnis-Screen. Bei ihnen führte nach dem Spiel nur „Zum Menü"
+weiter; sie haben den Turnier-Knopf jetzt in ihrem eigenen Endzustand
+(`tournamentEndButtonHtml`).
+
+**Popout über mehrere Shows:** `openBoardPopout()` schrieb das Dokument bei
+jedem Spielstart neu — zwischen zwei Spielen wurde das Zuschauerfenster weiß
+und holte Schriften und `styles.css` erneut. Steht das Fenster schon, wird es
+jetzt nur neu angeheftet. Die Prüfung braucht keine Markierung im Dokument:
+`boardWin` steht nur, wenn dieses Fenster es selbst geöffnet hat. (Eine
+Markierung im `<body>` wäre ohnehin wirkungslos — der Mirror kopiert die
+Attribute des Haupt-`<body>` mit und würde sie wegräumen. Das war der erste
+Versuch und ist verworfen.)
+
+### 10 · Team-Zuteilung
+
+**Symptom (David):** „Da zuteilen in Team bei dpih hat nur schlecht
+funktioniert, mach das wie in den ersten Paar spielen und dann einheitlich bei
+allen gleich. Außerdem gibt's im Team/Spieler Menü Überlappungen von Buttons
+und Feldern."
+
+**Ursache:** drei Fassungen derselben Sache.
+
+| Ort | vorher |
+|---|---|
+| Setup-Lobbys | `lobbyTeamNames()` + `playerTeamButtonsHtml()`, beliebig viele Teams |
+| Teilnehmer-Auswahl (DDF/PIH) | eigene Fassung, **fest zwei Teams** — `rosterTeamOf` gab bei Index > 1 `null` |
+| Spielerübersicht | eigene Fassung, **immer drei Knöpfe**, egal wie viele Teams spielen |
+
+Wer über die Spielerübersicht in „Team 3" gelegt wurde, galt bei „Der Preis ist
+heiß" als „ohne Team" und tauchte in keiner Wertung auf.
+
+**Gemacht:** eine Quelle, eine Funktion.
+- `contextTeamNames(game)` in `buzzer.js` beantwortet „wie heißen die Teams
+  gerade" für alle Kontexte.
+- `playerTeamButtonsHtml()` baut die Knöpfe überall — Setup-Lobbys,
+  Teilnehmer-Auswahl und Spielerübersicht. Es nimmt jetzt `p.id` **oder**
+  `p.key` (derselbe Wert, nur aus verschiedenen Firebase-Knoten) und hat den
+  „✕ Team wegnehmen"-Knopf bekommen, den vorher nur die Teilnehmer-Auswahl hatte.
+- `currentTeamLabel(i)` ist ein Einzeiler über `currentTeamNames()`.
+
+**Überlappungen:** `.player-row` hatte Name und Knopfleiste als zwei
+Flex-Geschwister, die sich um dieselbe Breite stritten — beide durften wachsen,
+keiner richtig schrumpfen (der Name wegen seiner Emoji-Kette aus Statistik und
+Team-Tag, die Knöpfe wegen `white-space:nowrap`). Jetzt hat jeder Block eine
+Mindestbreite (200px / 260px) und bricht darunter in eine eigene Zeile.
+
+Dabei aufgefallen: `.pr-team-btn` war nur unterhalb von `.setup-lobby`
+gestaltet. Außerhalb — also in der Spielerübersicht, wo die Knöpfe jetzt auch
+stehen — wären sie als nackte Browser-Knöpfe herausgekommen. Die Regel gilt
+jetzt ohne Vorfahren-Bedingung. Und `.roster-teams` durfte nicht umbrechen; bei
+drei Teams plus ✕ schob sich die Leiste über den Nachbarknopf.
+
+### Nebenbefund: zwei Importe liefen an `readJsonFile` vorbei
+
+Im Browser-Test fiel auf, dass der Trivial-Pursuit-Import die Datei zwar lud,
+der Dateiname im Depot aber nicht ankam. `importTp` und `importIntro` hatten
+einen **eigenen FileReader** — dieselbe Mechanik noch einmal, aber ohne
+BOM-Behandlung, mit einer Fehlermeldung, die bei kaputtem JSON „Datei konnte
+nicht gelesen werden" sagte statt zu verraten was daran kaputt ist, und ohne
+die Erfolgsmeldung. Beide laufen jetzt über `readJsonFile`; ihre
+spielspezifische Prüfung wirft statt selbst zu melden.
+
+### Geprüft
+
+**Zum ersten Mal im echten Browser.** Chromium ist in dieser Umgebung
+vorinstalliert; die Seite lief über einen lokalen Server, gesteuert per
+Playwright. Die Skripte liegen im Scratchpad der Sitzung (`smoke.js`,
+`flow.js`, `flow2.js`, `imp.js`) — sie sind **nicht** ins Repo gewandert, weil
+sie einen Server, einen Browserpfad und eine npm-Installation voraussetzen.
+
+Nachgestellt und bestanden:
+- Turnier anlegen, drei Spiele in den Plan, Spieldaten-Panel, „Spieldaten
+  prüfen", Turnierstand anzeigen.
+- Direktstart Jeopardy: `jt1/2/3` = Rote/Blaue/Grüne, Team-3-Haken gesetzt,
+  `jeopardyState.teamNames` stimmt, `activeTournamentGameIndex` = 0.
+- Einzelantwort: öffnet, `jeopardyEstimate.single` true; zwei Teams gewertet,
+  Frage bleibt offen, dritter Klick zahlt nicht doppelt; Abschließen hakt ab.
+- Kompletter Turnierlauf TP → Ergebnis automatisch eingetragen (`[6,1]` →
+  `+4/+2`) → Turnierstand → Jeopardy gestartet.
+- Direktstart bei „Der Preis ist heiß": startet **nicht** durch, bleibt auf dem
+  Setup-Screen, Teamnamen sind trotzdem übernommen.
+- Echter Datei-Import durch den echten Datei-Input: Datei kommt an, Name wird
+  gemerkt, Stand stimmt. Kaputte Datei: konkrete Fehlermeldung, der vorherige
+  Eintrag bleibt stehen.
+- Popout: zweiter Aufruf liefert dasselbe Fenster, Inhalt bleibt erhalten.
+- Turnier-Knopf im Endzustand von TP, DDF und PIH vorhanden.
+- Rad-Winkel: acht Drehungen, 0° Abweichung (alt: bis 120°).
+- **Null JavaScript-Fehler** in allen Durchläufen. Die Meldungen in der Konsole
+  sind ausnahmslos Netzwerk (Firebase, Google Fonts, CDN) — in dieser Sandbox
+  ist der Ausgang gesperrt.
+
+Dazu wie immer `node check.js` und `node check.js --types`: 13 Dateien, 410
+Handler-Aufrufe gegen 783 globale Namen, 264 Element-IDs, keine Meldung.
+
+### Ungeprüft / offen
+
+- **Firebase lief in keinem Test.** Alles, was daran hängt — Lobby, Presence,
+  Team-Zuteilung über die Handys, der Turnier-Sync — ist weiterhin nur aus dem
+  Code hergeleitet. Der erste Abend mit echten Handys ist der eigentliche Test.
+- **Das Zuschauerfenster wurde nicht gesehen.** Geprüft ist die erzeugte
+  CSS-Regel und die Liste, nicht das Bild auf dem Beamer.
+- **Der Spieldaten-Speicher ist nicht überall dauerhaft.** `tpData`, `wwdsData`,
+  `ddfData`, `pihData`, `introData` und die Feud-Fragen liegen im
+  `localStorage`; **`jeopardyData` nicht** — ein Neustart des Browsers wirft das
+  geladene Board weg. Deshalb steht unter dem Depot der Hinweis, nach einem
+  Neustart „Spieldaten prüfen" zu drücken. Wenn das stört, wäre die Stelle
+  `jeopardyData` in `js/jeopardy.js` samt einem Paar `storeSetJson/storeGetJson`
+  — mit der Einschränkung, dass Boards mit eingebetteten Bildern die
+  5-MB-Grenze des localStorage reißen können.
+- Ein Spieltyp kann mehrfach im Plan stehen (zwei Jeopardy-Runden an einem
+  Abend); geladen wird er trotzdem nur einmal. Für zwei verschiedene Boards am
+  selben Abend müsste zwischendurch nachgeladen werden.
+- `tournamentEnterResult()` fragt die Punkte weiterhin per `prompt()` ab, eins
+  nach dem anderen. Für die teamlosen Shows ist das der Weg — es ist nicht
+  schön, wurde aber nicht angefasst.
+
+---
+
 ## 2026-09-28 — Einzelantwort, TP-Logik, Buzzer-Sperre, Lobby-GIF (`1db72e0`)
 
 **Vier Meldungen von David in einer Nachricht.** Der Reihe nach.
