@@ -75,14 +75,28 @@ function buzzerBroadcastTeams(names){
 // einen Spieler (per Account-Key) einem Team zu. Presence wird als schnelle
 // Kopie mitgeschrieben (falls der Spieler gerade online ist).
 function assignPlayerTeam(key, teamIdx){
-  firebase.database().ref('buzzer/players/' + key + '/team').set(teamIdx).catch(e => console.error('assignPlayerTeam failed', e));
-  const presenceRef = currentBuzzer().presenceRef;
-  if (presenceRef) presenceRef.child(key).update({ team: teamIdx }).catch(()=>{});
-  // Sofort anzeigen, statt auf die Antwort der Datenbank zu warten: ohne
-  // Verbindung kaeme sie nie, und der Knopf saehe aus, als haette er nicht
-  // reagiert. Die echte Runde ueberschreibt das gleich danach.
+  /* Erst anzeigen, dann schreiben - und das Schreiben abgesichert.
+
+     Die Reihenfolge war umgekehrt, und die Firebase-Zeile stand ungeschuetzt
+     ganz oben. Laedt das CDN nicht (kein Netz, schlechtes WLAN im Keller,
+     Firewall), ist `firebase` nicht definiert - dann warf die erste Zeile,
+     und ALLES danach lief nie: auch nicht die lokale Anzeige, die genau fuer
+     diesen Fall gedacht war. Der Knopf tat dann wortlos nichts, obwohl der
+     Kommentar darunter das ausdruecklich verhindern sollte.
+
+     Aufgefallen im Browser-Test, wo das CDN gesperrt ist: der Team-Klick
+     blieb ohne Wirkung, "firebase is not defined" in der Konsole. */
   const acc = (allPlayers || []).find(a => a.key === key);
   if (acc) acc.team = (teamIdx === null ? null : teamIdx);
+  try {
+    firebase.database().ref('buzzer/players/' + key + '/team').set(teamIdx).catch(e => console.error('assignPlayerTeam failed', e));
+    const presenceRef = currentBuzzer().presenceRef;
+    if (presenceRef) presenceRef.child(key).update({ team: teamIdx }).catch(()=>{});
+  } catch (e) { console.error('assignPlayerTeam: keine Verbindung', e); }
+  // Steht gerade eine Teilnehmer-Auswahl offen (DDF, Der Preis ist heiss),
+  // nimmt ein Team-Klick den Spieler zugleich in die Runde - wer ein Team hat,
+  // spielt mit. Die Reihenfolge zaehlt: erst eintragen, dann neu zeichnen.
+  if (typeof rosterNoteAssigned === 'function') rosterNoteAssigned(key, teamIdx);
   if (typeof refreshOpenRosterLobby === 'function') refreshOpenRosterLobby();
 }
 // Alle Team-Zuteilungen löschen (für ein frisches Event) - wirkt auf ALLE

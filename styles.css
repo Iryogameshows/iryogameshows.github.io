@@ -1635,9 +1635,17 @@ body {
   font-size:1rem;font-weight:600;padding:9px 12px;flex-wrap:wrap;
   background:rgba(255,255,255,.03);border-radius:10px;
 }
-/* Nicht ausgewaehlt: sichtbar, aber zurueckgenommen. Stand vorher als
-   Inline-Style in roster.js. */
-.setup-lobby .pr-row.aus{opacity:.5;}
+/* Wer mitspielt, wird hervorgehoben - statt alle anderen abzublenden.
+
+   Vorher trug jede nicht ausgewaehlte Zeile opacity:.45 (als Inline-Style).
+   Solange niemand ausgewaehlt war - und das ist der Zustand, in dem der Host
+   den Screen oeffnet - stand damit die GANZE Liste blass da und sah aus, als
+   waere sie deaktiviert. Ein Haufen halbdurchsichtiger Namen ist keine
+   Einladung, einen davon anzutippen. */
+.setup-lobby .pr-row.mit{
+  background:rgba(var(--gold-rgb),.09);
+  box-shadow:inset 0 0 0 1px rgba(var(--gold-rgb),.35);
+}
 /* Der Name nimmt nur den Platz, den er braucht - mit `flex:1` (so stand es
    vorher im Markup) waere jede Zeile linksbuendig, egal was daneben steht. */
 .setup-lobby .pr-name{min-width:0;overflow-wrap:anywhere;text-align:center;}
@@ -2402,6 +2410,43 @@ body {
 .tp-spin-by{color:#FFD23F;font-weight:800;}
 
 /* Aufstellung unter der Teilnehmerliste: wer steht in welchem Team. */
+/* Die Karten-Reihen auf den Setup-Screens (Leben, Zeit, Teamnamen, …).
+
+   Vorher ein flex-wrap: bei drei Karten und zu wenig Platz brach die dritte
+   als 2+1 um und stand dann schmaler da als die beiden darueber, weil
+   .team-card ein max-width:300px traegt. Das Auge findet darin keine Kante -
+   dieselbe Sache, die im Lobby-Kasten schon einmal ein Raster bekommen hat.
+
+   auto-fit statt fester Spaltenzahl: solange zwei nebeneinander passen, stehen
+   sie nebeneinander; darunter untereinander. In jedem Fall sind alle Karten
+   in einer Zeile gleich breit, und die letzte fuellt sie aus. */
+.setup-row{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:14px;margin-bottom:16px;
+}
+/* Im Raster bestimmt die Spalte die Breite - die Deckelung aus .team-card
+   wuerde die Karte darin nur wieder verschmaelern. */
+.setup-row .team-card{max-width:none;min-width:0;}
+
+/* Gaeste ohne Handy: derselbe Zuschnitt wie der Lobby-Kasten darueber.
+
+   Vorher lagen Ueberschrift, Eingabefelder und der "+ Gast"-Knopf als drei
+   lose Elemente im Screen und standen deshalb linksbuendig - waehrend alles
+   andere auf dem Setup-Screen mittig ist. Das war die zweite Stelle, die
+   David im Bild rot eingekreist hat. */
+.setup-guests{
+  width:100%;max-width:640px;margin:14px auto 0;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.setup-guests .label{
+  font-size:.8rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(255,255,255,.55);text-align:center;
+}
+/* Die Gastzeilen bauen sich in renderRosterInputs() mit eigenem Flex-Layout;
+   hier bekommen sie nur eine Breite, damit sie nicht ueber den Kasten
+   hinauslaufen. */
+.setup-guests > div{width:100%;max-width:420px;}
+
 /* Die Team-Knoepfe bekommen eine eigene Zeile unter dem Namen: `flex-basis`
    auf 100% zwingt den Umbruch, statt ihn dem verfuegbaren Platz zu ueberlassen.
    Vorher standen sie mit flex-shrink:0 und ohne Umbruch in derselben Reihe und

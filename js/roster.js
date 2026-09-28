@@ -80,13 +80,19 @@ function renderRosterLobby(game) {
            die Team-Knoepfe rutschten darunter und schoben sich dabei ueber
            den Knopf daneben. Jetzt steht das Wer mittig in einer Zeile und
            die Team-Knoepfe mittig darunter (siehe .roster-teams). */
-        return `<div class="pr-row${on ? '' : ' aus'}">
+        /* Die Team-Knoepfe stehen jetzt bei JEDEM, nicht erst nachdem
+           jemand ausgewaehlt wurde. Vorher waren es zwei Schritte: erst
+           "dazu", dann erschienen die Knoepfe, dann das Team - und bis zum
+           ersten Klick sah die Liste aus, als koenne man nur an- und
+           abwaehlen. Ein Klick auf ein Team nimmt den Spieler zugleich in die
+           Runde (siehe rosterNoteAssigned), denn wer ein Team hat, spielt mit. */
+        return `<div class="pr-row${on ? ' mit' : ''}">
           <span class="online-dot${online ? '' : ' offline'}" title="${online ? 'Online' : 'Offline'}"></span>
           ${playerAvatarHtml(p)}
           <span class="pr-name">${escAttr(p.name)}</span>
           <button class="btn ${on ? 'btn-primary' : 'btn-secondary'} roster-pick"
                   onclick="rosterToggle('${game}', ${escJsArg(p.key)})">${on ? '✓ spielt mit' : 'dazu'}</button>
-          ${on ? teamBtns(p) : ''}
+          ${teamBtns(p)}
         </div>`;
       }).join('')
     : `<div class="pr-empty">Noch keine Spieler-Accounts angelegt — QR-Code scannen oder Gäste eintragen</div>`;
@@ -114,6 +120,29 @@ function renderRosterLobby(game) {
       <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
       <button class="btn btn-secondary" onclick="openPlayersScreen('${cfg.screen}')">👥 Accounts verwalten</button>
     </div>`;
+}
+
+/* Wer in einer offenen Teilnehmer-Auswahl ein Team bekommt, spielt mit.
+
+   Gerufen aus assignPlayerTeam() in buzzer.js - also aus genau der Funktion,
+   an der ALLE Team-Knoepfe haengen, egal in welcher Lobby. So bleibt es bei
+   einer Fassung der Knoepfe (playerTeamButtonsHtml); die Alternative waere
+   gewesen, im Roster eine zweite zu bauen, und zwei Fassungen derselben Sache
+   waren schon einmal der Fehler.
+
+   Nur wenn der Teilnehmer-Screen gerade offen ist: aus der Spielerübersicht
+   heraus soll eine Zuteilung niemanden in eine Runde schieben, die der Host
+   noch gar nicht zusammenstellt.
+   @param {string} key @param {number|null} teamIdx */
+function rosterNoteAssigned(key, teamIdx) {
+  if (teamIdx === null || teamIdx === undefined) return;
+  Object.keys(ROSTERS).forEach(game => {
+    if (!screenActive(ROSTERS[game].screen)) return;
+    const r = roster(game);
+    if (r.selected.has(key)) return;
+    r.selected.add(key);
+    r.seeded = true;
+  });
 }
 
 function rosterToggle(game, key) {

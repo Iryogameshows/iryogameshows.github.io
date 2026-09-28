@@ -66,6 +66,7 @@
   <div class="menu-pills">
     <button class="menu-pill" onclick="showScreen('reaction-board-screen')">⚡ Bestenliste</button>
     <button class="menu-pill" onclick="openPlayersScreen('menu-screen')">👤 Spieler</button>
+    <button class="menu-pill" onclick="openMainscreen()">🖥 Mainscreen</button>
     <button class="menu-pill" onclick="showScreen('host-notes-screen')">📋 Notizen</button>
     <button class="menu-pill" id="sfx-toggle" onclick="this.textContent = SFX.toggle() ? '🔊 Sound an' : '🔇 Sound aus'"></button>
     <button class="menu-pill" id="sfx-preview" onclick="sfxPreview(this)" title="Spielt alle Geräusche nacheinander ab">🎧 Töne probehören</button>
@@ -140,6 +141,7 @@
     <button class="btn btn-primary" onclick="startGame()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('edit-screen')">Fragen bearbeiten</button>
     <button class="btn btn-secondary" onclick="showTutorial()">Tutorial</button>
+    <button class="btn btn-secondary" onclick="openMainscreen()">🖥 Mainscreen öffnen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zum Menü</button>
   </div>
 </div>
@@ -242,6 +244,7 @@
     <button class="btn btn-primary" onclick="startJeopardy()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('jeopardy-edit-screen')">Fragen bearbeiten</button>
     <button class="btn btn-secondary" onclick="showJeopardyTutorial()">Tutorial</button>
+    <button class="btn btn-secondary" onclick="openMainscreen()">🖥 Mainscreen öffnen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
   </div>
 </div>
@@ -280,6 +283,7 @@
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startWwm()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('wwm-edit-screen')">Fragen bearbeiten</button>
+    <button class="btn btn-secondary" onclick="openMainscreen()">🖥 Mainscreen öffnen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
   </div>
 </div>
@@ -341,6 +345,7 @@
     <button class="btn btn-primary" onclick="startWwds()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('wwds-edit-screen')">Fragen bearbeiten</button>
     <button class="btn btn-secondary" onclick="showWwdsTutorial()">Tutorial</button>
+    <button class="btn btn-secondary" onclick="openMainscreen()">🖥 Mainscreen öffnen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
   </div>
 </div>
@@ -382,12 +387,12 @@
   <div class="wwds-sub">Alle bekommen dieselbe Frage. Nach jeder Runde stimmen die Verbliebenen ab, wer ein Leben verliert.</div>
 
   <div style="max-width:620px;margin:18px auto;">
-    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;">
-      <div class="team-card" style="flex:1;min-width:180px;">
+    <div class="setup-row">
+      <div class="team-card">
         <div class="label">Leben pro Spieler</div>
         <input type="number" id="ddf-lives" min="1" max="10" value="3">
       </div>
-      <div class="team-card" style="flex:1;min-width:180px;">
+      <div class="team-card">
         <div class="label">Rundenzeit (Sek., 0 = aus)</div>
         <input type="number" id="ddf-time" min="0" max="600" value="30">
       </div>
@@ -395,9 +400,11 @@
 
     <div class="setup-lobby" id="ddf-setup-lobby"></div>
 
-    <div class="label" style="margin:14px 0 6px;">Gäste ohne Handy (optional)</div>
-    <div id="ddf-player-inputs"></div>
-    <button class="btn btn-secondary" style="margin-top:8px;" onclick="rosterAddGuest('ddf')">+ Gast</button>
+    <div class="setup-guests">
+      <div class="label">Gäste ohne Handy (optional)</div>
+      <div id="ddf-player-inputs"></div>
+      <button class="btn btn-secondary" onclick="rosterAddGuest('ddf')">+ Gast</button>
+    </div>
   </div>
 
   <div class="intro-slot" id="ddf-intro-slot"></div>
@@ -405,6 +412,7 @@
     <button class="btn btn-primary" onclick="startDdf()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('ddf-edit-screen')">Fragen bearbeiten</button>
     <button class="btn btn-secondary" onclick="showDdfTutorial()">Tutorial</button>
+    <button class="btn btn-secondary" onclick="openMainscreen()">🖥 Mainscreen öffnen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
   </div>
 </div>
@@ -444,12 +452,12 @@
   <div class="wwds-sub">Ein Artikel, alle schätzen gleichzeitig den Preis. Wer am nächsten dran ist, bekommt den Punkt.</div>
 
   <div style="max-width:620px;margin:18px auto;">
-    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;">
-      <div class="team-card" style="flex:1;min-width:180px;">
+    <div class="setup-row">
+      <div class="team-card">
         <div class="label">Artikel pro Spiel (0 = alle)</div>
         <input type="number" id="pih-rounds" min="0" max="99" value="0">
       </div>
-      <div class="team-card" style="flex:1;min-width:180px;">
+      <div class="team-card">
         <div class="label">Schätzzeit (Sek., 0 = aus)</div>
         <input type="number" id="pih-time" min="0" max="600" value="30">
       </div>
@@ -458,32 +466,37 @@
     <!-- Teams: die Zuordnung, WER in welchem Team ist, steht am Account
          (Lobby → "Teams zuteilen"). Hier stehen nur die Namen. Leer lassen
          heisst: die Namen aus dem laufenden Turnier, sonst "Team 1/2". -->
-    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;">
-      <div class="team-card" style="flex:1;min-width:180px;">
+    <div class="setup-row">
+      <div class="team-card">
         <div class="label">Team 1 heißt</div>
         <input type="text" id="pih-t1-name" placeholder="Team 1">
       </div>
-      <div class="team-card" style="flex:1;min-width:180px;">
+      <div class="team-card">
         <div class="label">Team 2 heißt</div>
         <input type="text" id="pih-t2-name" placeholder="Team 2">
       </div>
-      <div class="team-card" style="flex:1;min-width:180px;">
+      <div class="team-card">
         <div class="label">Superpreis zählt …fach</div>
         <input type="number" id="pih-final-weight" min="1" max="20" value="2">
       </div>
     </div>
 
-    <div class="team-card" style="margin-bottom:16px;">
+    <!-- Alleinstehend, nicht in einer Flex-Zeile: ohne margin:auto zieht die
+         max-width:300px aus .team-card den Kasten an den linken Rand. Genau
+         das hatte David im Bild eingekreist. -->
+    <div class="team-card" style="margin:0 auto 16px;max-width:none;">
       <div class="label">Wertung</div>
-      <div id="pih-rule-pick" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
+      <div id="pih-rule-pick" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px;"></div>
       <div id="pih-rule-hint" style="font-size:.7rem;color:rgba(255,255,255,.45);margin-top:8px;line-height:1.5;"></div>
     </div>
 
     <div class="setup-lobby" id="pih-setup-lobby"></div>
 
-    <div class="label" style="margin:14px 0 6px;">Gäste ohne Handy (optional)</div>
-    <div id="pih-player-inputs"></div>
-    <button class="btn btn-secondary" style="margin-top:8px;" onclick="rosterAddGuest('pih')">+ Gast</button>
+    <div class="setup-guests">
+      <div class="label">Gäste ohne Handy (optional)</div>
+      <div id="pih-player-inputs"></div>
+      <button class="btn btn-secondary" onclick="rosterAddGuest('pih')">+ Gast</button>
+    </div>
   </div>
 
   <div class="intro-slot" id="pih-intro-slot"></div>
@@ -491,6 +504,7 @@
     <button class="btn btn-primary" onclick="startPih()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('pih-edit-screen')">Artikel bearbeiten</button>
     <button class="btn btn-secondary" onclick="showPihTutorial()">Tutorial</button>
+    <button class="btn btn-secondary" onclick="openMainscreen()">🖥 Mainscreen öffnen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
   </div>
 </div>
@@ -571,6 +585,7 @@
     <button class="btn btn-primary" onclick="startTp()">Spiel starten</button>
     <button class="btn btn-secondary" onclick="showScreen('tp-edit-screen')">Fragen bearbeiten</button>
     <button class="btn btn-secondary" onclick="showTpTutorial()">Tutorial</button>
+    <button class="btn btn-secondary" onclick="openMainscreen()">🖥 Mainscreen öffnen</button>
     <button class="btn btn-secondary" onclick="showScreen('menu-screen')">Zurück</button>
   </div>
 </div>
@@ -693,6 +708,7 @@
        koennen, bevor er das erste Spiel oeffnet. -->
   <div class="intro-slot" id="tournament-intro-slot"></div>
   <div class="edit-bar" style="margin-top:12px;">
+    <button class="btn btn-secondary" onclick="openMainscreen()">🖥 Mainscreen öffnen</button>
     <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zum Menü</button>
   </div>
 </div>

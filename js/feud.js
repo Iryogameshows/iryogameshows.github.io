@@ -888,6 +888,24 @@ function boardHiddenScreensCss(){
   return `.screen${raus}{display:none!important;}`;
 }
 
+/* Das Zuschauerfenster von Hand aufmachen, ohne ein Spiel zu starten.
+
+   Bis dahin ging es nur zusammen mit einem Spielstart auf. Wer den Beamer vor
+   der Show einrichten wollte, musste eine Show starten und wieder abbrechen.
+   Zu sehen ist dann das Logo: #main-logo steht ausserhalb aller Screens und
+   wird deshalb immer mitgespiegelt - auf einem Setup-Screen sogar schon das
+   Logo der Show, die gleich kommt.
+
+   Die Rueckmeldung ist der eigentliche Grund fuer die eigene Funktion: wird
+   das Fenster vom Pop-up-Blocker geschluckt, passiert sonst wortlos nichts,
+   und der Host klickt dreimal, bevor er auf die Idee kommt. */
+function openMainscreen() {
+  openBoardPopout();
+  if (!boardWin || boardWin.closed) {
+    alert('Der Browser hat das Fenster blockiert.\n\nPop-ups für diese Seite erlauben und noch einmal klicken.');
+  }
+}
+
 function openBoardPopout() {
   /* Ein Turnierabend sind mehrere Shows hintereinander, und jede rief hier
      herein. window.open mit demselben Namen liefert zwar dasselbe Fenster,
