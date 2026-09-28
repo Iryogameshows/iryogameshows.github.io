@@ -12,6 +12,101 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Wartebildschirm im Zuschauerfenster (`da49b63`)
+
+**Symptom (David, mit Bild vom Beamer):** „genau das soll nicht passieren da
+soll das Logo sein, bis das spiel GESTARTET wird". Zu sehen war das kleine
+Show-Logo („KELLER FEUD") oben in der Ecke und darunter nichts.
+
+### Zwei Ursachen, eine davon nicht offensichtlich
+
+**1 · Ein geklonter Canvas ist leer.** Das grosse Iryo-Logo entsteht in
+`renderIryoHubLogo()` auf einem `<canvas>`. Das Zuschauerfenster ist eine
+Spiegelung des Hauptfensters, und `morphMirror` kopiert mit `cloneNode(true)`.
+Ein geklonter Canvas bringt sein Bild **nicht** mit — die Pixel hängen am
+Zeichenkontext, nicht am Element. Das kleine Show-Logo daneben ist ein SVG und
+wanderte deshalb mit; genau das sah David.
+
+`renderIryoHubLogo()` hängt jetzt ein `<img>` mit `toDataURL()` ein statt des
+Canvas. Das überlebt den Klon — und nebenbei auch jede andere Stelle, an der
+gespiegelt wird.
+
+**2 · Es gab gar keinen Wartebildschirm.** Seit das Popout nur noch die
+Screens aus `BOARD_PUBLIC_SCREENS` zeigt (`66616c9`), ist dort schwarz,
+solange der Host einrichtet. Vorher stand da der Setup-Screen — was auch
+niemand wollte, und genau deswegen wurde die Whitelist gebaut. Der Zustand
+dazwischen („nichts anzuzeigen, aber der Beamer läuft") war schlicht nie
+bedacht.
+
+### Gebaut
+
+`#board-idle`, ein leerer Block **ausserhalb aller Screens**, direkt neben
+`#main-logo`. Ausserhalb, weil die Spiegelung ihn dann immer mitnimmt; im
+Hauptfenster ist er per `styles.css` grundsätzlich unsichtbar.
+
+Gesteuert über eine Klasse am `<body>`:
+
+```js
+function setBoardIdle(an){ document.body.classList.toggle('board-idle', !!an); }
+```
+
+Der Mirror kopiert Body-Attribute mit, also entscheidet das Popout allein per
+CSS, ob es das Logo oder den Screen zeigt. **Kein zweiter Kanal, keine
+Nachricht zwischen den Fenstern** — das war die Alternative und ist verworfen:
+sie hätte einen zweiten Weg gebraucht, der mit dem Mirror synchron bleiben
+muss.
+
+Gesetzt wird die Klasse an zwei Stellen:
+
+- `showScreen()` — anhand **derselben** `BOARD_PUBLIC_SCREENS`-Liste, aus der
+  auch das Popout-CSS gebaut wird. Zwei Quellen würden auseinanderlaufen.
+- `addBlackBackdrop()` löscht sie. Der schwarze Vorhang steht am Anfang
+  **jedes** Intro-Laufs (alle sieben Shows rufen ihn) und ist damit das
+  verlässlichste Signal für „die Show fängt an". Nötig, weil die Intro-Läufe
+  die Screens direkt umschalten (`querySelectorAll('.screen').forEach(…)`),
+  ohne `showScreen()` zu rufen — die Klasse wäre sonst hängengeblieben und das
+  Logo läge über dem Intro.
+
+Gezeichnet wird in `openBoardPopout()`, nicht beim Seitenstart: der Canvas-Text
+braucht die Schrift „Luckiest Guy", und beim Laden ist die oft noch nicht da —
+dann stünde dort die Ersatzschrift. Auch beim Wiederverwenden eines schon
+offenen Fensters wird neu gezeichnet.
+
+Solange das Logo steht, weicht das kleine Show-Logo (`body.board-idle
+#main-logo{display:none}`). Zwei Logos übereinander sind eines zu viel.
+
+### Geprüft — im echten zweiten Fenster
+
+Playwright öffnet das Popup wie der neue Knopf und misst darin:
+
+| Screen im Hauptfenster | Logo | kleines Show-Logo | sichtbarer Screen |
+|---|---|---|---|
+| Setup (Host richtet ein) | **an** | aus | — |
+| Fragen-Editor | **an** | aus | — |
+| Hauptmenü | **an** | aus | — |
+| Spielerübersicht | **an** | aus | — |
+| Turnier-Werkstatt | **an** | aus | — |
+| Spielbrett | aus | an | `game-screen` |
+| Ergebnis | aus | an | `result-screen` |
+| Turnierstand | aus | an | `tournament-board-screen` |
+
+Bild 760×422, `naturalWidth > 0` (also wirklich geladen, nicht nur eingehängt).
+Beim `startGame()` fällt die Klasse zusammen mit dem Vorhang. Keine
+JavaScript-Fehler. Screenshot an David gegangen.
+
+### Offen
+
+- Im Test steht im Logo die Ersatzschrift, weil Google Fonts in dieser Sandbox
+  gesperrt ist. Bei David ist „Luckiest Guy" geladen — sein eigenes Bild vom
+  Menü zeigt das. **Ungeprüft bleibt damit, ob der Canvas beim Öffnen des
+  Popouts die Schrift schon hat.** Falls dort einmal die falsche Schrift steht:
+  `openBoardPopout()` müsste auf `document.fonts.ready` warten.
+- Der Wartebildschirm hat keinen Inhalt ausser dem Logo. Ein „gleich geht es
+  los" oder der Name der nächsten Show wäre denkbar — nicht gebaut, weil
+  David das Logo verlangt hat und nichts sonst.
+
+---
+
 ## 2026-09-28 — Setup-Screens mittig · Team-Knöpfe bei jedem · Mainscreen-Knopf (`21ca4e7`)
 
 **Anlass:** David hat ein Bild des PIH-Setup-Screens geschickt, zwei Stellen
