@@ -12,6 +12,141 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Setup-Screens mittig · Team-Knöpfe bei jedem · Mainscreen-Knopf (`21ca4e7`)
+
+**Anlass:** David hat ein Bild des PIH-Setup-Screens geschickt, zwei Stellen
+rot eingekreist („das is nicht zentriert"), dazu: „dazu hast dus mit den Leuten
+nicht besser gemacht. mach hinter dazu noch buttons für die teams". Mitten in
+der Arbeit kam der Wunsch nach einem Knopf „Mainscreen öffnen" dazu.
+
+### Was nicht zentriert war — und warum
+
+**Der Wertungs-Block.** Er ist eine alleinstehende `.team-card`. Die Klasse
+trägt `max-width:300px`, gedacht für die Karten in einer Flex-Zeile. Ohne
+Flex-Eltern und ohne `margin:auto` zieht diese Deckelung den Kasten an den
+linken Rand. Die Knöpfe darin hatten zusätzlich kein `justify-content:center`.
+
+**Der Gäste-Block.** Überschrift, Eingabefelder und „+ Gast" lagen als drei
+lose Elemente direkt im Screen — also linksbündig, während alles andere mittig
+ist. Jetzt ein eigener Block `.setup-guests`, bei DDF und PIH gleich.
+
+**Dazu, im Bild sichtbar, aber nicht eingekreist:** die drei Karten „Team 1 /
+Team 2 / Superpreis" brachen als 2+1 um, und die dritte stand schmaler da als
+die beiden darüber. Das ist dieselbe Sache, die der `BAUPLAN.md` unter 4.3
+beschreibt — ein flex-wrap mit verschieden breiten Elementen. Die Reihen sind
+jetzt ein Raster (`.setup-row`, `auto-fit` + `minmax(190px,1fr)`); gemessen
+bei 430px: drei Karten zu je 192px.
+
+### Team-Knöpfe bei jedem
+
+Vorher erschienen sie erst, **nachdem** jemand über „dazu" ausgewählt war —
+zwei Schritte, und bis zum ersten Klick sah die Liste aus, als könne man nur
+an- und abwählen. Jetzt stehen sie in jeder Zeile.
+
+Ein Klick auf ein Team nimmt den Spieler **zugleich in die Runde**. Das ist
+eine Zutat von mir, nicht wörtlich verlangt: sonst entstünde der Zustand
+„Team zugeteilt, spielt aber nicht mit", der in keiner Wertung auftaucht und
+den niemand sieht.
+
+Gebaut als `rosterNoteAssigned(key, teamIdx)`, gerufen aus
+`assignPlayerTeam()` — also aus der Funktion, an der **alle** Team-Knöpfe
+hängen. Damit bleibt es bei einer Fassung der Knöpfe
+(`playerTeamButtonsHtml`). Die Alternative wäre gewesen, im Roster eine zweite
+zu bauen; zwei Fassungen derselben Sache waren in `66616c9` schon einmal der
+Fehler. Es greift nur, wenn der Teilnehmer-Screen offen ist: aus der
+Spielerübersicht heraus soll eine Zuteilung niemanden in eine Runde schieben,
+die der Host noch gar nicht zusammenstellt.
+
+**Dazu:** nicht ausgewählte Zeilen werden nicht mehr abgeblendet
+(`opacity:.45`). Solange niemand gewählt war — und das ist der Zustand, in dem
+der Host den Screen öffnet — stand damit die ganze Liste blass da. Ein Haufen
+halbdurchsichtiger Namen ist keine Einladung, einen davon anzutippen.
+Stattdessen bekommen die Mitspielenden einen goldenen Rahmen (`.pr-row.mit`).
+
+### Mainscreen-Knopf
+
+`openMainscreen()` in `js/feud.js`: öffnet das Zuschauerfenster, ohne ein Spiel
+zu starten. Steht auf allen sieben Setup-Screens, im Hauptmenü und im Turnier.
+
+Zu sehen ist das Logo — **ohne dass dafür etwas gebaut werden musste**:
+`#main-logo` steht außerhalb aller Screens und wird deshalb immer mitgespiegelt.
+Auf einem Setup-Screen ist es sogar schon das Logo der Show, die gleich kommt
+(`showScreen` setzt es je Screen um).
+
+Die eigene Funktion statt `openBoardPopout()` direkt am Knopf hat einen Grund:
+schluckt der Pop-up-Blocker das Fenster, passierte sonst wortlos nichts. Jetzt
+sagt es das.
+
+### Nebenbefund: `assignPlayerTeam` starb ohne Firebase
+
+```js
+function assignPlayerTeam(key, teamIdx){
+  firebase.database().ref(…).set(teamIdx)…   // ← erste Zeile, ungeschützt
+  …
+  const acc = (allPlayers || []).find(a => a.key === key);
+  if (acc) acc.team = …;   // "Sofort anzeigen, ohne auf die Datenbank zu warten"
+```
+
+Lädt das CDN nicht (kein Netz, Firewall, schlechtes WLAN), ist `firebase` nicht
+definiert — dann warf die **erste** Zeile, und alles danach lief nie. Auch
+nicht die lokale Anzeige, die laut dem Kommentar darunter genau für diesen Fall
+gedacht war. Der Knopf tat wortlos nichts.
+
+Aufgefallen im Browser-Test, wo das CDN gesperrt ist: der Team-Klick blieb ohne
+Wirkung, „firebase is not defined" in der Konsole. Jetzt erst anzeigen, dann
+schreiben, und das Schreiben in `try/catch`.
+
+> Das ist dieselbe Klasse von Fehler wie der Timer in `1db72e0`: die Absicht
+> stand als Kommentar da, der Code tat etwas anderes.
+
+### Geprüft
+
+Im Browser bei 430px Breite, mit acht Accounts (dieselben Namen wie in Davids
+Bild), keiner vorausgewählt:
+
+| | Ergebnis |
+|---|---|
+| Abweichung von der Screenmitte | Wertungsknöpfe 0px · Gäste-Block 0px · „+ Gast" 0px · Lobby 0px |
+| Kartenbreiten je Reihe | `[192,192]` und `[192,192,192]` |
+| Team-Knöpfe sichtbar | 16 (8 Leute × 2 Teams), auch ohne Auswahl |
+| Klick auf „Team 1" bei Joni | Teilnehmer 0 → 1, `joniTeam:0`, Aufstellung „Team 1 Joni" |
+| Überlappungen | keine |
+| JavaScript-Fehler | 0 (vorher: „firebase is not defined") |
+| Mainscreen-Knopf im Screen | vorhanden |
+
+`node check.js --types` ohne Befund. Screenshot an David gegangen.
+
+### Fallstrick im eigenen Testskript
+
+Die erste Messung meldete den Gäste-Block 215px links der Mitte — also am
+linken Rand. Ursache war nicht der Code, sondern der Test:
+`document.querySelector('.setup-guests')` trifft den **ersten** im Dokument,
+und das ist der von „Der Dümmste fliegt", der weiter oben im Markup steht und
+gerade unsichtbar ist. Eine Bounding-Box von 0×0 sieht in der Rechnung aus wie
+„ganz links". Die Messung läuft jetzt über
+`document.getElementById('pih-setup-screen').querySelector(…)`.
+
+**Für den Bauplan:** In einer App, in der alle Screens gleichzeitig im DOM
+stehen und nur per Klasse sichtbar werden, ist ein globales `querySelector` in
+einem Test fast immer falsch. Gehört zu 3.9 ergänzt — noch nicht getan, wie der
+Punkt aus dem vorigen Eintrag („ein Test muss beim kaputten Code rot sein").
+
+### Offen
+
+- Steht auf dem Branch, **nicht auf master**. Zusammen mit `82e9822` (PIH
+  startete aus dem Turnier ohne Teilnehmer-Auswahl durch) warten zwei Commits
+  auf den Deploy.
+- Die drei Karten in einer Reihe brechen bei schmalem Fenster als 2+1 um. Sie
+  sind jetzt gleich breit, aber die einzelne in Zeile 2 steht links, nicht
+  mittig. Eine in CSS saubere Zentrierung der letzten Grid-Zeile gibt es nicht
+  ohne Media-Query je Kartenzahl; bewusst so gelassen, weil die linke Kante mit
+  der Karte darüber fluchtet.
+- `.setup-row` gilt bisher nur für die drei Reihen, die den Inline-Style
+  wortgleich trugen (DDF eine, PIH zwei). Andere Setup-Screens haben eigene
+  Bauweisen; die sind nicht angefasst.
+
+---
+
 ## 2026-09-28 — „Der Preis ist heiß" startete aus dem Turnier ohne Auswahl (`82e9822`)
 
 **Gefunden beim Erklären, nicht beim Testen.** David fragte, wie der
