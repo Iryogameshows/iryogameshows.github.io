@@ -12,6 +12,78 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — GIF-Screen zwischen Fragen, zweiter Anlauf (`6074253`)
+
+**Symptom (David):** „Man soll den gif screen zwischen fragen NICHT sehen."
+
+**Das ist die zweite Meldung zu derselben Sache.** Die erste Fassung
+(`1db72e0`, Merker `everLive`) war unvollständig, und einen Teil davon habe ich
+danach selbst wieder aufgerissen.
+
+### Die zwei Löcher
+
+**1 · Der Merker hing nur an `live`.** Seit eine Schätzfrage den Buzzer gar
+nicht mehr öffnet (`7d55620`, gestern gebaut), wird `live` bei einer Show, die
+mit einer Schätzfrage anfängt, **nie** true. `everLive` blieb false, und nach
+dem Schließen der Frage stand das GIF wieder da.
+
+Das ist eine Folgewirkung meiner eigenen Änderung von vor einer Stunde: ich
+habe den Buzzer für getippte Fragen abgeschaltet, ohne zu prüfen, wer sonst
+noch an `live` hängt.
+
+**2 · Der Merker stand nur im Speicher.** Das war beim ersten Mal eine bewusste
+Entscheidung, mit der Begründung „nach einem Neuladen sieht man einmal die
+Lobby, das ist der harmlose Fall". Das war falsch eingeschätzt: ein Handy, das
+in der Tasche liegt, wird vom Browser verworfen und beim Herausholen neu
+geladen — genau dann, wenn man den Buzzer braucht.
+
+### Gemacht
+
+`everActive` statt `everLive`:
+
+- **Zählt jede Regung**, nicht nur den Buzzer: `live`, `armed`, Schätzfeld,
+  Rad (Trivial Pursuit), Abstimmung (Der Dümmste fliegt). Sechs Stellen rufen
+  `markActive()`.
+- **Liegt im `sessionStorage`**, überlebt also das Neuladen und endet mit dem
+  Tab. Lesen und Schreiben in `try/catch` — im privaten Modus wirft das.
+
+Zurückgesetzt wird er, wenn die **Beitrittssperre gelöst** wird: das tut der
+Host beim Einrichten der nächsten Show (`ensureLobbyConnected`), und dann ist
+die Lobby wieder richtig. Geprüft wird der WECHSEL (war an, ist jetzt aus) —
+der Listener feuert beim Laden ohnehin einmal mit dem aktuellen Wert.
+
+Ein Spiel, das gar nichts auf die Handys schickt („Wer weiß denn sowas"),
+behält die Lobby durchgehend. Dort ist sie richtig: es gibt keine „zwischen
+zwei Fragen"-Lage, und die Lobby zeigt seit `924a80e` immerhin das Team.
+
+### Geprüft
+
+Mit dem Firebase-Stub, alle sechs Wege am Stück:
+
+| Lage | Screen | vorher |
+|---|---|---|
+| vor der ersten Frage | Lobby | Lobby (richtig) |
+| Host öffnet Frage | Buzzer | Buzzer |
+| zwischen zwei Fragen | **Buzzer** | GIF |
+| Show fängt mit Schätzfrage an, danach zwischen zwei Fragen | **Buzzer** | GIF |
+| F5 zwischen zwei Fragen | **Buzzer** | GIF |
+| Host richtet nächste Show ein | Lobby | Lobby (richtig) |
+
+Keine JavaScript-Fehler.
+
+### Lehre
+
+Beim ersten Mal war der Test derselbe Pfad wie der Code: ich habe „Buzzer auf,
+Buzzer zu" nachgestellt und für gelöst erklärt. Die Fälle, die David trifft —
+eine Show, die mit einer Schätzfrage anfängt, und ein Handy, das aus der Tasche
+kommt — standen nie im Test.
+
+**Das ist jetzt der vierte Eintrag in Folge mit dieser Lehre.** Sie gehört in
+`BAUPLAN.md`, Abschnitt 5: ein Test muss die Wege nehmen, die der Host nimmt,
+nicht die, die der Code vorsieht. Noch nicht getan.
+
+---
+
 ## 2026-09-28 — Schätzfrage: Feld steht beim Öffnen schon, gesperrt (`7d55620`)
 
 **Wunsch (David):** „wenn es ne Schätzfrage ist, dann soll es nicht auf den
