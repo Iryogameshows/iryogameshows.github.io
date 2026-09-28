@@ -86,8 +86,24 @@ function assignPlayerTeam(key, teamIdx){
 
      Aufgefallen im Browser-Test, wo das CDN gesperrt ist: der Team-Klick
      blieb ohne Wirkung, "firebase is not defined" in der Konsole. */
+  const wert = (teamIdx === null || teamIdx === undefined) ? null : teamIdx;
   const acc = (allPlayers || []).find(a => a.key === key);
-  if (acc) acc.team = (teamIdx === null ? null : teamIdx);
+  if (acc) acc.team = wert;
+  /* Auch die Presence-Kopien mitziehen.
+
+     Die Setup-Lobbys zeichnen ihre Zeilen aus `buzzer.presence`, nicht aus
+     `allPlayers` - das sind zwei Firebase-Knoten. Solange die Zuteilung in der
+     Spielerübersicht stattfand, fiel das nicht auf: die liest allPlayers. Seit
+     die Knoepfe in der Lobby stehen, wuerde der Knopf ohne diese Zeilen erst
+     dann reagieren, wenn Firebase die Presence zurueckspiegelt - bei
+     stockender Verbindung also gar nicht.
+
+     Beide Kontexte, weil Jeopardy eine eigene Verbindung hat, waehrend Feud,
+     WWDS und Trivial Pursuit sich eine teilen. */
+  [jeopardyBuzzer, feudBuzzer].forEach(bz => {
+    const pp = bz && (bz.presence || []).find(x => x.id === key);
+    if (pp) pp.team = wert;
+  });
   try {
     firebase.database().ref('buzzer/players/' + key + '/team').set(teamIdx).catch(e => console.error('assignPlayerTeam failed', e));
     const presenceRef = currentBuzzer().presenceRef;
@@ -98,6 +114,7 @@ function assignPlayerTeam(key, teamIdx){
   // spielt mit. Die Reihenfolge zaehlt: erst eintragen, dann neu zeichnen.
   if (typeof rosterNoteAssigned === 'function') rosterNoteAssigned(key, teamIdx);
   if (typeof refreshOpenRosterLobby === 'function') refreshOpenRosterLobby();
+  refreshOpenSetupLobby();
 }
 // Alle Team-Zuteilungen löschen (für ein frisches Event) - wirkt auf ALLE
 // jemals angelegten Accounts, nicht nur die gerade verbundenen.
@@ -188,6 +205,14 @@ function contextTeamNames(game){
   return t.length >= 2 ? t.slice(0, 3) : ['Team 1', 'Team 2'];
 }
 
+/* Die gerade offene Setup-Lobby neu zeichnen - Gegenstueck zu
+   refreshOpenRosterLobby() in roster.js. */
+function refreshOpenSetupLobby(){
+  Object.keys(LOBBY_SETUP).forEach(game => {
+    if (screenActive(LOBBY_SETUP[game].screen)) renderSetupLobby(game);
+  });
+}
+
 function renderSetupLobby(game){
   const cfg = LOBBY_SETUP[game];
   if (!cfg) return;
@@ -198,18 +223,24 @@ function renderSetupLobby(game){
   // Teamzuteilung, deshalb läuft es über dieselbe Verbindung wie Feud.
   const buzzer = isJeopardy ? jeopardyBuzzer : feudBuzzer;
   const teamNames = lobbyTeamNames(game);
-  const teamTagColors = ['#E8453C','#3B82F6','#22C55E'];
+  /* Die Teams werden HIER zugeteilt, direkt an der Zeile.
+
+     Bis hierher stand in jeder Zeile nur ein Merkzettel ("kein Team"), und
+     zugeteilt wurde in der Spielerübersicht - einem eigenen Screen, auf den
+     der Knopf "Teams zuteilen" führte. Der Host musste also weg von dem
+     Bildschirm, den er gerade einrichtet, dort zuteilen und zurück. Bei "Der
+     Dümmste fliegt" und "Der Preis ist heiß" ging es längst an der Zeile;
+     dieselben Knöpfe stehen jetzt in allen Lobbys.
+
+     playerTeamButtonsHtml() ist dieselbe Funktion wie dort und in der
+     Spielerübersicht - ein Bauplatz, nicht drei. */
   const rows = buzzer.presence.length
-    ? buzzer.presence.map(p => {
-        const teamTag = (p.team !== undefined && p.team !== null)
-          ? `<span class="player-team-tag" style="background:${teamTagColors[p.team]||'#888'}22;color:${teamTagColors[p.team]||'#888'};">${teamNames[p.team] || ('Team '+(p.team+1))}</span>`
-          : `<span class="player-team-tag" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);">kein Team</span>`;
-        // Der Name stand hier als `flex:1` und schob damit alles andere an den
-        // rechten Rand. Mit der Klasse nimmt er nur den Platz, den er braucht -
-        // erst dadurch kann die Zeile mittig stehen (siehe .setup-lobby in
-        // styles.css).
-        return `<div class="pr-row"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span class="pr-name">${escapeHtml(p.name)}</span>${teamTag}</div>`;
-      }).join('')
+    ? buzzer.presence.map(p =>
+        `<div class="pr-row${(p.team === undefined || p.team === null) ? '' : ' mit'}">
+          <span class="pr-dot"></span>${playerAvatarHtml(p)}
+          <span class="pr-name">${escapeHtml(p.name)}</span>
+          <span class="roster-teams">${playerTeamButtonsHtml(p, teamNames, '')}</span>
+        </div>`).join('')
     : `<div class="pr-empty">
          <b>Noch niemand verbunden</b>
          <span>QR-Code zeigen und scannen lassen — verbundene Handys erscheinen hier von selbst.</span>
@@ -220,7 +251,7 @@ function renderSetupLobby(game){
     <div class="panel-row">
       <button class="btn btn-secondary" onclick="toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code zeigen'}</button>
       <button class="btn btn-secondary" onclick="popOutQR()">🗗 QR als Fenster</button>
-      <button class="btn btn-secondary lobby-main" onclick="openPlayersScreen('${cfg.screen}')">👥 Teams zuteilen</button>
+      <button class="btn btn-secondary lobby-main" onclick="openPlayersScreen('${cfg.screen}')">👥 Accounts verwalten</button>
       <button class="btn btn-secondary lobby-reset" onclick="resetAllTeams()">↺ Teams zurücksetzen</button>
     </div>`;
 }

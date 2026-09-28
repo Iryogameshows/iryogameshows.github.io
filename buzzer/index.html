@@ -108,6 +108,15 @@
   @keyframes gifIn{from{opacity:0;transform:scale(.94);}}
   .lobby-sub{font-size:.85rem;color:rgba(255,255,255,.45);text-align:center;max-width:280px;line-height:1.5;}
   .lobby-count{font-size:.72rem;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px;}
+  /* Team-Zeile in der Lobby. Mit Team kraeftig in der Teamfarbe, ohne Team
+     zurueckgenommen - der Unterschied muss auf einen Blick sitzen, auch quer
+     ueber einen Tisch. */
+  .lobby-team{
+    font-size:1rem;font-weight:800;padding:8px 18px;border-radius:99px;
+    background:rgba(255,255,255,.06);color:rgba(255,255,255,.45);
+    border:1.5px solid rgba(255,255,255,.1);text-align:center;
+  }
+  .lobby-team.hat-team{color:#fff;}
   /* „Spiel laeuft" muss man aus zwei Metern Entfernung erkennen, wenn das Handy
      auf dem Tisch liegt - deshalb Gruen, fett und mit Puls statt als Fliesstext. */
   .lobby-badge{
@@ -219,6 +228,10 @@
     <div class="lobby-badge" id="lobby-badge" style="display:none;">● Spiel läuft — halt dich bereit</div>
     <img class="lobby-gif" id="lobby-gif" alt="" style="visibility:hidden">
     <div class="me-row"><span class="me-av" id="lobby-av"></span><b id="lobby-name"></b></div>
+    <!-- In welchem Team man ist. Steht hier und nicht nur auf dem
+         Buzzer-Screen: die Zuteilung passiert, WÄHREND man wartet, und wer
+         sie nicht sieht, fragt quer durch den Raum nach. -->
+    <div class="lobby-team" id="lobby-team"></div>
     <div class="lobby-sub" id="lobby-sub">Gleich geht es los.<br>Nicht weggehen, das dauert nicht lang!</div>
     <div class="lobby-count" id="lobby-count"></div>
   </div>
@@ -534,6 +547,18 @@
       ? 'Gleich kommt die nächste Frage — dann wird der Buzzer hier automatisch scharf.'
       : 'Gleich geht es los.<br>Nicht weggehen, das dauert nicht lang!';
     document.getElementById('lobby-count').textContent = presenceCount > 1 ? `${presenceCount} Leute dabei` : '';
+    /* Die Team-Zeile liest denselben Wert wie der Chip auf dem Buzzer-Screen
+       (myTeam) und dieselben Namen (teamNames, vom Host gesendet). Beide
+       Listener - team und teamNames - rufen refreshRoot(), also steht sie
+       sofort richtig da, wenn der Host zuteilt. */
+    const tEl = document.getElementById('lobby-team');
+    const drin = hasTeam();
+    tEl.textContent = drin
+      ? 'Du bist in ' + (teamNames[myTeam] || ('Team ' + (myTeam + 1)))
+      : 'Du bist in noch keinem Team';
+    tEl.classList.toggle('hat-team', drin);
+    tEl.style.background = drin ? (TEAM_COLORS_HEX[myTeam] || '#888') : '';
+    tEl.style.borderColor = drin ? 'rgba(255,255,255,.25)' : '';
   }
 
   function refreshRoot(){
