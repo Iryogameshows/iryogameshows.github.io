@@ -899,6 +899,30 @@ function boardHiddenScreensCss(){
    Die Rueckmeldung ist der eigentliche Grund fuer die eigene Funktion: wird
    das Fenster vom Pop-up-Blocker geschluckt, passiert sonst wortlos nichts,
    und der Host klickt dreimal, bevor er auf die Idee kommt. */
+/* Wie breit das Logo auf dem Wartebildschirm steht.
+
+   Zwei Rueckmeldungen von David liegen dazwischen: bei 40% der Fensterbreite
+   ("min(760px,70vw)", auf einem Beamer immer 760px) war es ihm zu klein, bei
+   86% zu gross. 60% liegt dazwischen und laesst ringsum Luft, wie im Menue.
+   Die zweite Schranke haelt das Bild bei einem hohen, schmalen Fenster in der
+   Hoehe: das Logo ist 900:500, also ergeben 110vh Breite 61vh Hoehe. */
+const BOARD_IDLE_WIDTH = 'min(60vw,110vh)';
+
+/* Zeigt das Zuschauerfenster gerade einen Screen fuers Publikum - oder soll
+   dort der Wartebildschirm stehen?
+
+   Noetig, weil setBoardIdle() bisher NUR in showScreen() lief. Beim Laden der
+   Seite ist das Hauptmenue aktiv, ohne dass showScreen() je gerufen wurde -
+   die Klasse fehlte also, und wer den Mainscreen direkt aus dem frisch
+   geladenen Menue aufmachte, sah dort nichts. Genau das hat David gemeldet.
+
+   Hier wird der Zustand aus dem aktiven Screen abgelesen statt mitgefuehrt;
+   damit stimmt er, egal auf welchem Weg das Fenster aufgeht. */
+function boardIdleFromCurrentScreen() {
+  const aktiv = document.querySelector('.screen.active');
+  setBoardIdle(!aktiv || !BOARD_PUBLIC_SCREENS.includes(aktiv.id));
+}
+
 function openMainscreen() {
   openBoardPopout();
   if (!boardWin || boardWin.closed) {
@@ -922,7 +946,8 @@ function openBoardPopout() {
      vorher. (Eine Markierung im <body> waere ohnehin wirkungslos: der Mirror
      kopiert die Attribute des Haupt-<body> mit und wuerde sie wegraeumen.) */
   if (boardWin && !boardWin.closed){
-    renderIryoHubLogo('board-idle', 'min(86vw,158vh)', 4);
+    boardIdleFromCurrentScreen();
+    renderIryoHubLogo('board-idle', BOARD_IDLE_WIDTH, 4);
     startBoardMirror();
     try { boardWin.focus(); } catch {}
     return;
@@ -973,11 +998,12 @@ body.board-idle #board-idle{display:flex;}
 body.board-idle #main-logo{display:none;}
 </style></head><body></body></html>`);
   boardWin.document.close();
+  boardIdleFromCurrentScreen();
   // Erst hier zeichnen, nicht beim Laden der Seite: das Logo entsteht auf
   // einem Canvas, und dessen Text braucht die Schrift "Luckiest Guy". Beim
   // Seitenstart ist sie oft noch nicht da, und dann stuende dort die
   // Ersatzschrift.
-  renderIryoHubLogo('board-idle', 'min(86vw,158vh)', 4);
+  renderIryoHubLogo('board-idle', BOARD_IDLE_WIDTH, 4);
   startBoardMirror();
 }
 
