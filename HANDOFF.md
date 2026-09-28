@@ -12,6 +12,55 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Wartebildschirm: Logo füllt das Fenster (`02e288b`)
+
+**Symptom (David):** „mach das Loogo größer und in die MItte".
+
+**Ursache für „größer":** Die Breite stand auf `min(760px, 70vw)`. Das zweite
+Glied kam nie zum Tragen — auf einem Beamer mit 1920px griff immer die feste
+Grenze. 760px von 1920px sind 40% der Fläche, der Rest war Rand.
+
+Jetzt `min(86vw, 158vh)`: begrenzt wird nur noch vom Fenster selbst. Die
+zweite Schranke hält das Bild bei einem hohen, schmalen Fenster in der Höhe —
+das Logo ist 900:500, also 1,8 mal so breit wie hoch, und 158vh Breite ergeben
+88vh Höhe.
+
+**Zu „in die Mitte": es war schon exakt mittig.** Gemessen, nicht geschätzt —
+der Versatz vom Fenstermittelpunkt ist in beiden Richtungen 0, bei allen drei
+geprüften Größen. Was David als „nicht mittig" gelesen hat, war vermutlich der
+viele Rand um ein zu kleines Bild. Die Zentrierung ist unverändert
+(`position:fixed; inset:0; display:flex; align-items:center;
+justify-content:center`), nur das Padding ging von 24px auf 16px.
+
+**Dazu die Zeichenschärfe.** `renderIryoHubLogo()` hat einen dritten Parameter
+bekommen: wie viele echte Pixel je CSS-Pixel gezeichnet werden. Das kleine
+Logo oben bleibt bei 2, der Wartebildschirm zeichnet mit 4. Ohne das hätte der
+Canvas 1800px nativ für 1651px Anzeige gehabt — das reicht gerade so für
+1080p, aber nicht für einen 4K-Beamer, und das Bild wird hier fast zwei Meter
+breit an eine Wand geworfen.
+
+### Gemessen
+
+Im echten zweiten Fenster, das per `openMainscreen()` geöffnet wurde:
+
+| Fenster | Bild | Anteil Breite | Anteil Höhe | Versatz | nativ | scharf |
+|---|---|---|---|---|---|---|
+| 1920×1080 | 1651×917 | 86% | 85% | 0/0 | 3600×2000 | ja |
+| 1280×720 | 1101×612 | 86% | 85% | 0/0 | 3600×2000 | ja |
+| 1080×1920 | 929×516 | 86% | 27% | 0/0 | 3600×2000 | ja |
+
+Der geringe Höhenanteil im Hochformat ist richtig: ein 1,8:1-Logo kann ein
+9:16-Fenster nicht füllen, ohne angeschnitten zu werden.
+
+### Offen
+
+- Weiterhin ungeprüft, ob „Luckiest Guy" beim Öffnen des Popouts schon geladen
+  ist (Google Fonts ist in dieser Sandbox gesperrt). Das Bild wird jetzt mit
+  Schärfe 4 gezeichnet — steht dort die falsche Schrift, fällt es umso mehr auf.
+  Der Fix wäre ein `await document.fonts.ready` vor dem Zeichnen.
+
+---
+
 ## 2026-09-28 — Wartebildschirm im Zuschauerfenster (`da49b63`)
 
 **Symptom (David, mit Bild vom Beamer):** „genau das soll nicht passieren da
