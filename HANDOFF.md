@@ -12,6 +12,75 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — Wartebildschirm aus dem Menü heraus leer · Logo auf 60% (`b755854`)
+
+**Symptom (David, mit Bild vom Hauptmenü):** „logo kleiner, das soll auch wenn
+ich auf dem screen bin schon angezeigt werden."
+
+### Der Fehler im zweiten Halbsatz
+
+Wer den Mainscreen aus dem **frisch geladenen Hauptmenü** öffnete, sah dort
+nichts. Gemessen: `body.className` leer, `#board-idle` auf `display:none`.
+
+**Ursache:** `setBoardIdle()` lief ausschliesslich in `showScreen()`. Beim
+Laden der Seite ist `menu-screen` aber schon aktiv — die Klasse steht im
+Markup, `showScreen()` wurde nie gerufen. Also fehlte `board-idle`, und das
+Popout zeigte weder einen Screen (alle sind für das Publikum gesperrt) noch
+den Wartebildschirm.
+
+Der Fehler trat nur auf diesem einen Weg auf. Vom Setup-Screen aus
+funktionierte es, weil man dorthin nur über `showScreen()` kommt — und genau
+so hatte ich es getestet. Wieder ein Test, der die kaputte Stelle nicht
+berührt hat.
+
+**Gemacht:** `boardIdleFromCurrentScreen()` **liest** den Zustand aus dem
+aktiven Screen ab, statt ihn mitzuführen:
+
+```js
+const aktiv = document.querySelector('.screen.active');
+setBoardIdle(!aktiv || !BOARD_PUBLIC_SCREENS.includes(aktiv.id));
+```
+
+Gerufen in `openBoardPopout()`, auf beiden Wegen — frisches Fenster und
+wiederverwendetes. Abgelesener Zustand kann nicht veralten; mitgeführter
+schon, und dann fehlt genau der eine Pfad, auf dem niemand ihn setzt.
+
+### Die Größe
+
+Von 86% auf **60%** der Fensterbreite (`BOARD_IDLE_WIDTH`, jetzt an einer
+Stelle statt zweimal im Code). Das ist zwischen zwei Rückmeldungen
+interpoliert: bei 40% — der alten festen 760px-Grenze — war es David zu klein,
+bei 86% zu groß. Bei 1920px Breite sind das 1152px, mit Luft ringsum wie im
+Menü.
+
+Zum Vergleich: das Logo im Hauptmenü ist 400px bei 1686px Fensterbreite, also
+24%. Auf einem Beamer wäre das zu wenig — dort steht niemand einen halben Meter
+vor dem Bild.
+
+### Geprüft
+
+Alle drei Wege ins Popout, Zielfenster 1920×1080:
+
+| geöffnet … | sichtbar | Breite | Anteil | Versatz |
+|---|---|---|---|---|
+| aus dem frisch geladenen Menü | **ja** | 1152px | 60% | 0/0 |
+| vom Setup-Screen | ja | 1152px | 60% | 0/0 |
+| vom Turnier | ja | 1152px | 60% | 0/0 |
+| während eines Spiels | nein | — | — | — |
+
+`node check.js --types` ohne Befund, keine JavaScript-Fehler.
+
+### Fallstrick
+
+Die erste Fassung des Wartebildschirms (`da49b63`) war über `showScreen()`
+gesteuert, und der Test ging auch über `showScreen()`. Beides stimmte
+miteinander überein und beides war blind für den Fall, dass der Screen schon
+steht, ohne dass jemand ihn gesetzt hat. **Ein Test, der denselben Weg nimmt
+wie der Code, prüft die Annahme mit, statt sie zu prüfen** — dritter Eintrag
+in Folge mit dieser Lehre, sie gehört in den `BAUPLAN.md`.
+
+---
+
 ## 2026-09-28 — Wartebildschirm: Logo füllt das Fenster (`02e288b`)
 
 **Symptom (David):** „mach das Loogo größer und in die MItte".
