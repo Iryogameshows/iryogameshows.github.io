@@ -60,6 +60,11 @@ body {
 }
 .logo svg { width: 360px; height: auto; overflow: visible; filter: drop-shadow(0 4px 30px rgba(255,200,0,.3)); }
 
+/* Der Wartebildschirm gehoert dem Zuschauerfenster. Im Hauptfenster ist er
+   immer aus - der Host hat dort seine Bedienung, und das Logo steht oben
+   ohnehin schon. Das Popout hebt diese Regel auf (siehe openBoardPopout). */
+#board-idle { display: none; }
+
 .screen { display: none; width: 100%; max-width: 880px; padding: 16px; }
 .screen.active {
   display: flex; flex-direction: column; align-items: center;

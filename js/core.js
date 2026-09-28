@@ -684,8 +684,11 @@ function renderMenuIcons(){
 }
 
 // Hub-Logo: das IRYO-GAMESHOW-Schild (Blau & Gold) statt Schriftzug + Balken.
-function renderIryoHubLogo(){
-  const el = document.getElementById('main-logo'); if (!el) return;
+/* Das grosse Iryo-Gameshow-Logo.
+ *  @param {string} [elId]   wohin (Vorgabe: das Logo oben im Hauptfenster)
+ *  @param {string} [breite] CSS-Breite des Bildes */
+function renderIryoHubLogo(elId, breite){
+  const el = document.getElementById(elId || 'main-logo'); if (!el) return;
   const S = 2, W = 900, H = 500;
   const cv = document.createElement('canvas'); cv.width = W*S; cv.height = H*S;
   const ctx = cv.getContext('2d'); ctx.scale(S,S);
@@ -703,8 +706,19 @@ function renderIryoHubLogo(){
   block('GAMESHOW',372,Math.min(112,fit('GAMESHOW',540,4)),4,[[0,'#FFFFFF'],[.5,'#DCE8FF'],[1,'#A9C4EE']],'#4a5f88','#28324e');
   const sparkle = (x,y,r,rot) => { const i=r*0.17; ctx.save(); ctx.translate(x,y); ctx.rotate((rot||0)*Math.PI/180); ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(i,-i); ctx.lineTo(r,0); ctx.lineTo(i,i); ctx.lineTo(0,r); ctx.lineTo(-i,i); ctx.lineTo(-r,0); ctx.lineTo(-i,-i); ctx.closePath(); ctx.fillStyle='#FFF3C8'; ctx.fill(); ctx.restore(); };
   [[152,128,19,8],[120,190,8,-6],[758,158,15,10],[150,352,12,-8],[766,338,9,12]].forEach(s=>sparkle(s[0],s[1],s[2],s[3]));
-  cv.style.cssText = 'width:min(400px,88vw);height:auto;filter:drop-shadow(0 6px 24px rgba(0,0,0,.45));';
-  el.innerHTML = ''; el.appendChild(cv);
+  /* Als BILD, nicht als Canvas.
+
+     Das Zuschauerfenster ist eine Spiegelung des Hauptfensters, und gespiegelt
+     wird mit cloneNode(). Ein geklontes <canvas> kommt LEER an - die
+     gezeichneten Pixel haengen am Zeichenkontext, nicht am Element. Genau
+     deshalb blieb der Wartebildschirm dort schwarz, waehrend im Hauptfenster
+     das Logo stand; das kleine Show-Logo daneben ist ein SVG und wanderte
+     mit. Eine Data-URL in einem <img> ueberlebt den Klon. */
+  const img = new Image();
+  img.src = cv.toDataURL('image/png');
+  img.alt = 'Iryo Gameshow';
+  img.style.cssText = 'width:' + (breite || 'min(400px,88vw)') + ';height:auto;filter:drop-shadow(0 6px 24px rgba(0,0,0,.45));';
+  el.innerHTML = ''; el.appendChild(img);
 }
 
 let finaleQuestions = [];
@@ -877,6 +891,12 @@ function showScreen(id) {
   if (id === 'pih-setup-screen') { pihLoadSettings(); renderPihRulePick(); renderRosterInputs('pih'); ensureRosterConnected('pih'); }
   if (id === 'tp-edit-screen') { tpLoadSettings(); renderTpEditor(); }
   if (id === 'tp-setup-screen') { tpLoadSettings(); tpToggleTeam3(); renderTpCatPreview(); ensureTpLobbyConnected(); }
+  /* Zeigt das Zuschauerfenster gerade einen Screen, der fuers Publikum
+     gedacht ist? Wenn nicht, steht dort der Wartebildschirm mit dem Logo -
+     statt einer schwarzen Flaeche, wie sie David nach dem Umbau auf die
+     Whitelist gesehen hat. BOARD_PUBLIC_SCREENS ist dieselbe Liste, aus der
+     auch das Popout-CSS gebaut wird; zwei Quellen wuerden auseinanderlaufen. */
+  setBoardIdle(!BOARD_PUBLIC_SCREENS.includes(id));
   moveIntroPickerTo(id);
   if (id === 'intro-edit-screen') renderIntroEditor();
   if (id === 'setup-screen') ensureFeudLobbyConnected();
@@ -919,10 +939,25 @@ function showScreen(id) {
 // Legt den schwarzen Hintergrund an, der während Intro-/Zwischensequenzen
 // verhindert, dass darunterliegende Screens durchblitzen.
 function addBlackBackdrop() {
+  // Der schwarze Vorhang steht am Anfang JEDES Intro-Laufs - er ist damit das
+  // verlaesslichste Signal fuer "die Show faengt an". Von hier an gehoert das
+  // Zuschauerfenster dem Spiel, nicht mehr dem Wartebildschirm. Noetig, weil
+  // die Intro-Laeufe die Screens direkt umschalten, ohne showScreen().
+  setBoardIdle(false);
   const bd = document.createElement('div');
   bd.className = 'black-backdrop';
   document.body.appendChild(bd);
   return bd;
+}
+
+/* Wartebildschirm im Zuschauerfenster an oder aus.
+
+   Die Klasse sitzt am <body> - der Mirror kopiert dessen Attribute mit, und
+   das Popout entscheidet allein per CSS, ob es das Logo oder den Screen
+   zeigt. Kein zweiter Kanal, keine Nachricht zwischen den Fenstern.
+   @param {boolean} an */
+function setBoardIdle(an){
+  document.body.classList.toggle('board-idle', !!an);
 }
 // Zeigt ein Vollbild-Overlay, das der Host per Klick weiterschaltet - der
 // Klick zählt erst nach delayMs, damit ein Doppelklick am Ende der vorigen

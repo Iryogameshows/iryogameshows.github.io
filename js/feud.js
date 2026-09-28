@@ -922,6 +922,7 @@ function openBoardPopout() {
      vorher. (Eine Markierung im <body> waere ohnehin wirkungslos: der Mirror
      kopiert die Attribute des Haupt-<body> mit und wuerde sie wegraeumen.) */
   if (boardWin && !boardWin.closed){
+    renderIryoHubLogo('board-idle', 'min(760px,70vw)');
     startBoardMirror();
     try { boardWin.focus(); } catch {}
     return;
@@ -951,8 +952,24 @@ body{pointer-events:none;}
 /* Nur die Zuschauer-Screens, alles andere aus. */
 ${boardHiddenScreensCss()}
 #gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay{display:none!important;}
+/* Wartebildschirm: solange kein Spiel-Screen laeuft, steht hier das grosse
+   Logo statt einer schwarzen Flaeche. Die Klasse am <body> setzt das
+   Hauptfenster (setBoardIdle), der Mirror traegt sie herueber.
+   Das kleine Show-Logo oben weicht dabei - zwei Logos uebereinander sind
+   eines zu viel. */
+#board-idle{
+  display:none;position:fixed;inset:0;z-index:5;
+  align-items:center;justify-content:center;padding:24px;box-sizing:border-box;
+}
+body.board-idle #board-idle{display:flex;}
+body.board-idle #main-logo{display:none;}
 </style></head><body></body></html>`);
   boardWin.document.close();
+  // Erst hier zeichnen, nicht beim Laden der Seite: das Logo entsteht auf
+  // einem Canvas, und dessen Text braucht die Schrift "Luckiest Guy". Beim
+  // Seitenstart ist sie oft noch nicht da, und dann stuende dort die
+  // Ersatzschrift.
+  renderIryoHubLogo('board-idle', 'min(760px,70vw)');
   startBoardMirror();
 }
 

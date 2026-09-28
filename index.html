@@ -18,6 +18,14 @@
 
 <div class="logo" id="main-logo" onclick="handleLogoClick()" style="cursor:pointer;"></div>
 
+<!-- WARTEBILDSCHIRM FUERS ZUSCHAUERFENSTER
+     Steht ausserhalb aller Screens, damit die Spiegelung ihn immer mitnimmt,
+     und ist im Hauptfenster grundsaetzlich unsichtbar (styles.css). Nur das
+     Popout blendet ihn ein, und nur solange dort kein Spiel-Screen laeuft -
+     gesteuert ueber die Klasse `board-idle` am <body>, siehe setBoardIdle()
+     in js/core.js. -->
+<div id="board-idle"></div>
+
 <!-- MENU -->
 <div id="menu-screen" class="screen active">
   <div class="menu-divider"></div>
