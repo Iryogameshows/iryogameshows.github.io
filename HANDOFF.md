@@ -12,6 +12,72 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-09-28 — „Der Preis ist heiß" startete aus dem Turnier ohne Auswahl (`82e9822`)
+
+**Gefunden beim Erklären, nicht beim Testen.** David fragte, wie der
+Turniermodus jetzt funktioniert. Beim Nachlesen im eigenen Code fiel auf, dass
+die Antwort, die ich ihm zwei Nachrichten vorher gegeben hatte, falsch war.
+
+**Der Fehler:** Der Halt vor den Shows mit Teilnehmer-Auswahl hing an
+
+```js
+if (cfg.lobby === 'roster'){ … return; }
+```
+
+„Der Dümmste fliegt" trug `lobby:'roster'`, also griff es dort. „Der Preis ist
+heiß" hat aber **eigene Teamnamen-Felder** (`pih-t1-name`, `pih-t2-name`) und
+musste deshalb `lobby:'pih'` tragen — womit der Halt dort nie griff. Der
+Direktstart rief `startPih()` unmittelbar auf.
+
+**Warum es im Test durchrutschte — das ist der eigentliche Lehrsatz:** Im
+Browser-Durchlauf war kein Handy verbunden. `rosterSeed()` wählt die
+verbundenen Accounts automatisch vor; ohne Handys blieb die Liste leer, und
+`startPih()` brach mit „Mindestens ein Teilnehmer" ab. Der Test meldete
+`{aktiv:false, screen:'pih-setup-screen'}` — **genau das, was der gewollte Halt
+auch gemeldet hätte.** Ich habe das als Bestätigung gelesen und in der Antwort
+an David behauptet, die Show bleibe stehen. Mit verbundenen Handys wäre sie
+ohne Rückfrage losgelaufen, mit einer Teilnehmerliste, die der Host nie gesehen
+hat.
+
+> Ein grüner Test ist nur dann ein Beleg, wenn er beim kaputten Code rot
+> gewesen wäre. Dieser hier wäre in beiden Fällen grün gewesen.
+
+**Gemacht:** Zwei Felder statt eines Werts mit zwei Bedeutungen.
+
+| | vorher | jetzt |
+|---|---|---|
+| Der Dümmste fliegt | `lobby:'roster'` | `lobby:null, roster:true` |
+| Der Preis ist heiß | `lobby:'pih'` | `lobby:'pih', roster:true` |
+
+`lobby` sagt jetzt nur noch, **wo die Teamnamen stehen**; `roster` sagt, **ob
+erst ausgewählt werden muss**. Das sind zwei Fragen, und ein Wert, der beide
+beantwortet, fällt irgendwann auf die Nase. Betroffen: `tournamentStartAt()`
+und das GM-Panel des Turnierstands (`updateGamemasterTournamentBoard` in
+`js/wwds.js`, zweimal).
+
+**Geprüft — diesmal mit dem Fall, der vorher fehlte.** Drei Accounts als
+online gesetzt, damit `rosterSeed()` sie vorwählt:
+
+| Spiel | läuft? | Screen | Teilnehmer | Teamnamen |
+|---|---|---|---|---|
+| Der Preis ist heiß | nein | `pih-setup-screen` | 3 vorgewählt | Rote/Blaue übernommen |
+| Der Dümmste fliegt | nein | `ddf-setup-screen` | 3 vorgewählt | — |
+| Jeopardy | **ja** | — | — | Rote/Blaue übernommen |
+
+Keine Meldung, keine JavaScript-Fehler. Der GM-Knopf heißt bei beiden
+Roster-Shows „▶ Einrichten", bei den anderen „▶ Nächstes Spiel starten".
+`node check.js --types` ohne Befund.
+
+**Offen:** Der Fehler stand rund eine Stunde live auf `master` (`31e6228` bis
+zu diesem Commit). Wer in der Zeit „Der Preis ist heiß" aus dem Turnier heraus
+gestartet hat, ist mit den zufällig verbundenen Handys ins Spiel gesprungen.
+
+**Fallstrick für den Bauplan:** Der Abschnitt „Abnahme" in `BAUPLAN.md` sagt,
+was zu prüfen ist, aber nicht, dass ein Test auch beim kaputten Code hätte
+fehlschlagen müssen. Das gehört dort ergänzt — noch nicht getan.
+
+---
+
 ## 2026-09-28 — Lobbys zentriert und vergrößert · BAUPLAN.md (`230f821`)
 
 ### 11 · Lobbys
