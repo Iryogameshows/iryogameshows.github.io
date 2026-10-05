@@ -12,6 +12,180 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-05 — Eigene Layouts je Richtung (`e3df1d8` … `c114944`)
+
+**Auftrag (David):** „gib den Designs auch verschiedene Layouts. die sind
+1zu1 gleich alle, nur reskins. das sollen schon eigene dinger sein."
+
+### Gemacht
+
+17 Richtungen (B–S, ohne A als Vorlage) haben in `designs/s/` eigene
+Anordnungen bekommen, nicht nur andere Farben. Je Richtung ein Commit:
+
+| Commit | Richtung | neu gebaut |
+|---|---|---|
+| `e3df1d8` | B Arcade | alle 10 Spiel-/Menü-Screens |
+| `47cdba6` | C Pop | alle 10 |
+| `dd9f0a8` | D Late Night | 8 (Menü, Leinwand unverändert) |
+| `3b9a87d` | E 70er | alle 10 |
+| `e80362d` | F Comic | alle 10 |
+| `16fef42` | H Bauhaus | 8 (Menü, Leinwand unverändert) |
+| `818da68` | I Salon | alle 10 |
+| `fd62ea8` | J Kreide | alle 10 |
+| `f28ec6a` | K Neon-Bar | alle 10 |
+| `ef34011` | L New York | 7 (Menü, Leinwand, Handy unverändert) |
+| `648ea92`, `66567a0` | M Aurora | alle 10, danach Menü-Umlaufbahn über das Dock gehoben |
+| `5221c62` | N Papier | alle 10 |
+| `d64080e` | O Terminal | 8 + Lobby und Ergebnis |
+| `0db89a1` | P Memphis | alle 10 |
+| `102c55b` | Q Riso | alle 10 |
+| `ba532fb` | R Jazzplatte | 8 (Menü, Leinwand unverändert) |
+| `c114944` | S Art déco | alle 10 + Lobby und Ergebnis |
+
+Lobby und Ergebnis von O und S stammen nicht aus `5532a96`, sondern aus
+der Ursprungsfassung der Entwürfe, und waren dort das umgefärbte A-Gerüst
+(`grid-template-columns: 330px minmax(0,1fr)` in A, O und S) — deshalb
+nur dort neu. Die 15 aus `5532a96` hatten schon eigene Gerüste.
+
+### Warum so
+
+- **Erzeugt, nicht von Hand.** Je Richtung ein Python-Skript, gemeinsamer
+  Inhalt (Fragen, Namen, Punkte) aus einer `base.py`, damit alle 216
+  Screens dieselbe Spielsituation zeigen und nur das Layout sich
+  unterscheidet. Die Skripte liegen **nur im Scratchpad der Sitzung**, nicht
+  im Repo — siehe Offen.
+- **Layout aus dem Thema abgeleitet, nicht zufällig variiert**: Arcade als
+  Highscore-Liste, Jazzplatte mit Plattenteller und Tonarm, Art déco mit
+  Stufentürmen und Strahlenfächer usw. Verworfen: ein gemeinsames Gerüst
+  mit drei, vier Varianten — genau das wäre wieder „Reskin".
+
+### Geprüft
+
+- Jede Richtung nach dem Bau mit einem Playwright-Prüfer (1280×720,
+  Handy 390×844, Google Fonts lokal eingebunden): überlappende
+  Textkästen, Text außerhalb des Bildes, abgeschnittener `nowrap`-Text,
+  Konsolenfehler. Plus Kontaktabzug aller 12 Screens angesehen.
+- Schlusslauf über alle 18 Richtungen: **0 Seitenfehler**. Übrig bleiben
+  Meldungen in D-Menü (1), I-WWDS (1), O-Leinwand (8), Q (9 Screens),
+  R (3 Screens) — alle angesehen und gewollt: Riso-Überdruck mit
+  versetzter Kopie, riesige Hintergrundzahl, angeschnittene Schallplatte,
+  Terminal-Punktlinien. Der Prüfer kennt Absicht nicht.
+- Bei S beim Prüfen gefunden und behoben: Bodoni-„4" mit Haarstrich las
+  sich bei 34 px wie „1" (Jeopardy „400" → „100") — Zahlen jetzt in
+  Josefin Sans; Stufen-`clip-path` war rechts nicht gespiegelt (schräge
+  Kante statt Stufen); Verlaufsschrift im Handy-Knopf war unsichtbar, weil
+  der Knopf-Hintergrund `background-clip:text` überschrieb.
+- `node check.js` und `node check.js --types`: alles in Ordnung
+  (14 js-Dateien typgeprüft, keine Meldung).
+
+### Offen
+
+- **Generatoren nicht im Repo.** Wer ein Layout ändern will, ändert jetzt
+  das HTML in `designs/s/` direkt. Die Skripte gehen mit dem Container
+  verloren.
+- **Canvas-Artefakt** (claude.ai, Version 32) hat nur die Fixes aus
+  `247cce7`, nicht die neuen Layouts. Ein Re-Export aus dem Canvas würde
+  die Layouts überschreiben.
+- Die Layouts sind **Entwürfe**. In der App selbst (`index.html`) wechselt
+  das Design nur Farben und Schriften (Eintrag `9a78a8f` unten), nicht die
+  Anordnung.
+
+### Fallstricke
+
+- Python 3.11: kein Backslash und keine gleichen Anführungszeichen innerhalb
+  von f-String-Ausdrücken — hat bei acht Skripten geknallt.
+- `background-clip:text` auf einem `<button>` wird vom eigenen
+  `background` des Knopfs überschrieben → Text in ein `<span>`.
+
+---
+
+## 2026-10-05 — Lobby und Ergebnis für 15 Richtungen (`5532a96`)
+
+**Auftrag (David):** „mach außerdem für den Rest der bisher keins hat Lobby
+und Ergebnis"
+
+### Gemacht
+
+30 neue Dateien `designs/s/X-Lobby.html` / `X-Ergebnis.html` für die 15
+Richtungen außer A, O und S (die hatten sie schon), `designs/index.html`
+listet jetzt **216 Screens** (18 × 12).
+
+### Geprüft / Offen
+
+Im Schlusslauf (Eintrag oben) mitgeprüft, 0 Seitenfehler. Die schon
+vorhandenen O- und S-Fassungen waren nur das A-Gerüst umgefärbt — in
+`d64080e` und `c114944` ersetzt.
+
+---
+
+## 2026-10-05 — Design der ganzen Seite umstellbar (`9a78a8f`)
+
+**Auftrag (David):** „ich will dass man mit dem Button in ein Menü kommt,
+wo man das für die Ganze Seite das Design einstellen kann."
+
+### Gemacht
+
+- **`styles.css`**: Farben und Schriften als Variablen auf `:root`
+  (Standard = bisheriges Studio-Blau): `--font-display/-body/-logo`, `--bg`,
+  `--bg-img`, `--bg-size`, `--panel`, `--panel-hi`, `--line`, `--fg`,
+  `--fg-rgb`, `--fg-strong`, `--muted`, `--pill-fg`, `--accent-line`,
+  `--accent-text(-rgb)`, `--on-accent`. Ersetzt: 46× Bebas, 16× Inter,
+  2× Luckiest, 42× `color:#fff`, 174 weiße `rgba(...)` in color/border/
+  background, 55× `color: var(--gold)` → `--accent-text`, 11 goldene
+  `rgba`-Schriftfarben, 5× `#1a1200` → `--on-accent`.
+- **`js/theme.js`** (neu, lädt im `<head>` direkt nach `styles.css`, damit
+  nichts erst blau aufblitzt): `DESIGN_THEMES` mit 18 Sätzen,
+  `applyThemeToDoc(doc, key)`, `applyTheme(key)` (speichert in
+  `localStorage` unter `designTheme`), Design-Screen mit Vorschau-Iframes
+  (`renderDesignScreen`), Sprung in die Entwurfsseite
+  (`openDesignGallery`).
+- **`index.html`**: Knopf „🎨 Design" im Hauptmenü öffnet `#design-screen`.
+- **`js/feud.js`**: Mainscreen-Popout bekommt das Thema per
+  `applyThemeToDoc` — der Spiegel kopiert nur `<body>`, die Variablen auf
+  `<html>` kämen sonst nie an.
+- **Helle Themen** (C, F, H, L, N, P, Q): eigenes `--accent-text`, Logo-
+  Schrift über `.logo-word` eingefärbt, Teamkarten mit deckenden Verläufen
+  und weißer Schrift.
+
+### Warum so
+
+Variablen statt austauschbarer Stylesheets: ein Satz von 18 Werten je
+Thema statt 18 Kopien von 1000 Regeln. Verworfen: Pixelvergleich als
+Beleg, dass Klassik unverändert bleibt — die Einblend-Animation der Screens
+machte ihn zu verrauscht; stattdessen berechnete Styles verglichen.
+
+### Geprüft
+
+- Ohne Thema: **694 Elemente** mit identischen berechneten Styles vor und
+  nach der Umstellung.
+- Kontrast (Schwelle 3:1, halbtransparente Schrift angenähert) auf Menü,
+  Jeopardy-, Feud-, WWM-Setup und Turnier für alle 18 Themen, am Ende
+  dieser Sitzung neu gemessen: 17 Themen **0** Treffer, L (New York) **2** —
+  der Hinweis „QR-Code zeigen und scannen" mit 2,9:1.
+- `node check.js`, `node check.js --types`: in Ordnung.
+
+### Offen
+
+- **Handy-Seiten** (`buzzer/`, `gamepad/`) sind nicht thematisiert.
+- Das Thema gilt **pro Browser** (`localStorage`); ein zweites Gerät
+  startet in Klassik. Der Mainscreen-Popout zieht mit.
+- Nur Farben und Schriften wandern in die App, keine Layout-Möbel der
+  Entwürfe (Platten, Stufen, Rahmen).
+- **Nicht geprüft**: Press Start 2P (B Arcade) und Bangers (F Comic) in
+  den Spiel-Screens auf Überlauf — beide laufen breiter als Bebas. Bangers
+  hat dasselbe ß-Problem wie in den Entwürfen (ß ≈ B), in der App nicht
+  behandelt.
+- L: Hinweistext 2,9:1, knapp unter 3.
+
+### Fallstricke
+
+- Neue Farben in `styles.css` als Variable schreiben, nicht als
+  `#fff`/`rgba(255,255,255,…)` — sonst bleibt die Stelle in hellen Themen
+  weiß auf hell. Für Weiß mit Alpha: `rgba(var(--fg-rgb), .5)`.
+- Gold als **Schrift** heißt `--accent-text`, Gold als **Fläche/Linie**
+  bleibt `--gold`/`--accent-line`. In hellen Themen sind das zwei
+  verschiedene Farben.
+
 ## 2026-10-05 — Entwürfe durchgemessen, drei Fehler behoben, Menü-Knopf (`247cce7`)
 
 **Auftrag (David):** „siehst du die neuen Designs" → „fix alles" → „das liegt
