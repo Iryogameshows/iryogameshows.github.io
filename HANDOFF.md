@@ -12,6 +12,112 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-05 — Entwürfe durchgemessen, drei Fehler behoben, Menü-Knopf (`247cce7`)
+
+**Auftrag (David):** „siehst du die neuen Designs" → „fix alles" → „das liegt
+aktuell auf einer Seperaten url. ich will dass das auf der Seite ein Menü
+dafür gibt."
+
+### Gemacht
+
+Alle **186** Screens aus `designs/s/` im Browser vermessen (Playwright,
+1920×1080) — die Lücke, die der Eintrag darunter als „nicht geprüft"
+ausweist. Gesucht: überlappende Textkästen, abgeschnittener `nowrap`-Text,
+waagerechtes Scrollen, Konsolenfehler.
+
+Drei echte Fehler, alle behoben:
+
+1. **D · Late Night, Menü.** Titel `font-size: 46px` in einer Spalte von
+   330 px (Zeile 03) bzw. 348 px (04). Gemessene Textbreite 348 bzw. 403 px
+   → Umbruch auf zwei Zeilen = 92 px in einer fest `height: 86px` hohen
+   Zeile, also 6 px über die Trennlinie. Jetzt **38 px + `white-space:
+   nowrap`**; gemessen: alle acht Titel einzeilig (38 px hoch),
+   `scrollWidth == clientWidth`, nichts abgeschnitten. 38 px ist die
+   größte Stufe, bei der auch „Wer weiß denn sowas" (333 px) in seine
+   348-px-Spalte passt.
+2. **Q · Riso, Menü.** Die beiden Deko-Kreise (`right: 90px/top: -60px` und
+   `right: 230px/top: 40px`) lagen über „GAMESHOW · AUSGABE 8" (Textkasten
+   530–938 px) und über dem Titel von Karte 4. Dunkelblau auf Magenta ist
+   nicht lesbar. Nach oben rechts geschoben (`right: 10px/top: -110px` und
+   `right: 80px/top: -30px`), so dass die Unterkante über der Kartenreihe
+   (236 px) und die linke Kante rechts vom Text (938 px) bleibt.
+3. **A · Studio und F · Comic, ß.** Bebas Neue und Bangers sind reine
+   Versalschriften; ihr ß wird auf Versalhöhe gezeichnet und liest sich wie
+   ein B — „WER WEIB DENN SOWAS", „DER PREIS IST HEIB". Eine Regel im
+   `<head>` jeder A-/F-Datei setzt `text-transform: uppercase` auf alles,
+   dessen Inline-Style die Schrift nennt; Chrome bildet ß dabei auf SS ab.
+
+Dazu, auf Davids Wunsch, der Weg hin und zurück:
+
+- **`openDesigns()`** in `js/core.js`, Knopf „🎨 Designs" in den
+  `menu-pills` des Hauptmenüs. Öffnet einen eigenen Tab (benannt
+  `iryo-designs`, also höchstens einer), kein Screen-Wechsel.
+- **Rückweg** in `designs/index.html`: Link „← Show" im Kopf.
+
+### Warum so
+
+- **38 px statt zwei Zeilen bei D.** Die Alternative war `line-height: .9`
+  (2 × 41,4 = 82,8 px, passt auch in 86 px). Verworfen: sechs der acht
+  Zeilen sind einzeilig, zwei zweizeilige dazwischen sehen nach Versehen
+  aus, nicht nach Entwurf. Das Menü ist der Host-Bildschirm, nicht die
+  Leinwand — BAUPLAN 4.2 (aus drei Metern lesbar) gilt dort nicht.
+- **Kreise verschieben statt Text verschieben.** Der Riso-Look lebt von den
+  Flächen in der Ecke; die Textpositionen sind die Komposition.
+- **`text-transform` statt „weiss" schreiben.** Die Schreibweise im Entwurf
+  bleibt richtiges Deutsch, nur die Darstellung ändert sich. Geprüft: in
+  allen 22 A-/F-Dateien kein Element mehr, das in der Versalschrift ein ß
+  zeigt — und kein Element, das die Regel versehentlich erwischt (also
+  `uppercase` ohne die Versalschrift).
+- **Eigener Tab statt Screen.** `designs/` hat bewusst keinen Zugriff auf
+  `js/`, `styles.css` oder Firebase. Ein Fehlklick während der Show soll
+  die laufende Seite nicht verlassen.
+- **Regel gebrochen, bewusst:** der Eintrag darunter hält fest „Kein Link
+  aus `index.html`". David hat den Knopf ausdrücklich verlangt. Die Trennung
+  bleibt technisch bestehen — nur der Link ist neu.
+
+### Geprüft
+
+- `node check.js --types`: 13 Dateien typgeprüft, keine Meldung; 420
+  Handler, 263 IDs, 986 Klammernpaare. Alles in Ordnung.
+- **186 Screens, vorher und nachher.** Vorher 12 auffällige Dateien, nachher
+  11 — die verbliebenen sind gewollt: Q-Riso druckt jeden Titel doppelt
+  versetzt (Fehldruck-Effekt), F legt „IRYO!" auf „GAMESHOW", L stapelt den
+  Stempel, O-Leinwand ist ASCII. **0 Konsolenfehler, 0 waagerechtes
+  Scrollen, 0 abgeschnittener nowrap-Text** in allen 186.
+- D-Menu meldet weiter „Show ↔ Host-Steuerung · 8 Shows (328×6)". Das ist
+  **kein** Fehler: bei `font-size: 148px; line-height: .82` ragt der
+  *Inline-Kasten* des `<span>` 6 px tiefer als seine Zeilenhöhe. Im
+  Screenshot liegt zwischen der Unterkante von „SHOW" und der Unterzeile
+  sichtbar Luft. Ich hatte das David zuerst als Fehler gemeldet — falsch.
+- Knopf im Hauptmenü: im DOM vorhanden, `typeof openDesigns === 'function'`,
+  Klick öffnet `designs/#1/Leinwand` in einem zweiten Tab, dessen „← Show"
+  auf die Wurzel zeigt. 0 Seitenfehler.
+- **Nicht geprüft:** ob die Entwürfe auf einem echten Beamer taugen; die
+  Helligkeit der hellen Richtungen ist nur im Screenshot beurteilt.
+
+### Fallstricke
+
+- **Schriften über den Proxy sind unzuverlässig.** Die ersten beiden
+  Durchläufe liefen ohne die Google-Schriften — der Browser im Container
+  geht nicht von selbst über `HTTPS_PROXY`, und selbst mit Proxy kam die
+  Schrift mal an und mal nicht. Mit Ersatzschrift ist Big Shoulders
+  Display viel breiter, und D sah nach vier kaputten Zeilen aus statt nach
+  zwei. **Für jede Messung an `designs/` erst die Schriften lokal ablegen
+  und per `page.route` ausliefern** — sonst misst man den Offline-Fall.
+  Das Gerüst dafür liegt im Scratchpad (`lab.mjs`, `gf/`), nicht im Repo.
+- Die Dateien in `designs/s/` sind **Export**. Dieselben drei Fixes stehen
+  deshalb auch in der Canvas-Quelle
+  (https://claude.ai/artifact/696browiHr6kBspCBfJm6G, Version 32):
+  `project/D-Menu.dc.html`, `project/Q-Menu.dc.html` und die
+  `<helmet><style>`-Blöcke von `project/Main.dc.html` (= A · Menü) sowie
+  allen `A-*` und `F-*`. Wer neu exportiert, bekommt sie mit. Das
+  Export-Skript selbst gibt es weiterhin nicht im Repo.
+- Das Prüfskript findet nur Überlappungen zwischen **Text**kästen. Der
+  Riso-Kreis über dem Text ist ihm entgangen — gesehen habe ich das erst im
+  Screenshot. Messen ersetzt das Hinsehen nicht.
+
+---
+
 ## 2026-10-05 — Design-Entwürfe als eigene Seite `designs/` (`69e3a75`)
 
 **Auftrag (David):** „ein KOMPLETTes visuelles rework, erstmal nur
