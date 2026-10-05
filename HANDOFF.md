@@ -12,6 +12,75 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-05 — Design-Entwürfe als eigene Seite `designs/` (`69e3a75`)
+
+**Auftrag (David):** „ein KOMPLETTes visuelles rework, erstmal nur
+prototypen um sich für eins zu entscheiden“ — dann „mach einen Button wo
+ich durchwechseln kann, mit einer Vorschau, durchnummeriert“ und „push mir
+den Button mit den Designs“ (ausdrücklich: ins Repo, live).
+
+### Gemacht
+
+`designs/index.html` blättert durch **18 Richtungen** (nummeriert 01–18),
+je **Menü, Family-Feud-Leinwand, Handy-Buzzer** und die sieben übrigen
+Shows (Jeopardy, WWM, WWDS, DDF, PIH, TP, Turnier); A, O und S zusätzlich
+Lobby und Ergebnis. **186 Screens** in `designs/s/`, je eine eigenständige
+HTML-Datei. Bedienung: ◀ ▶, Reiter je Screen, Miniaturen, Pfeiltasten;
+der Zustand steht im Hash (`#7/Leinwand`), ein Link zeigt also genau einen
+Entwurf.
+
+Live: https://iryogameshows.github.io/designs/
+
+### Warum so
+
+- **Reine Vorschau, vom Spiel getrennt.** Kein Link aus `index.html`, kein
+  Zugriff auf `js/`, `styles.css` oder Firebase, `noindex`. Nichts davon ist
+  ins Spiel übernommen — die Entscheidung für eine Richtung steht aus.
+- **Jeder Screen als eigenes Dokument im `<iframe>`.** 18 Richtungen bringen
+  18 Schriftfamilien-Sätze und widersprüchliches CSS mit; im iframe stört
+  keiner den anderen. Verworfen: alles in eine Seite mit Klassen-Präfixen —
+  hätte jeden Entwurf umschreiben müssen.
+- **Statisch gerendert.** Die Entwürfe entstehen in einem claude.ai-Design-
+  Canvas (`.dc.html` mit Vorlagen-Syntax, 32 davon mit Schleifen). Ein
+  Export-Skript rendert sie zu reinem HTML; die Canvas-Laufzeit wird nicht
+  gebraucht.
+- Teamfarben bleiben in allen Richtungen Rot `#E8453C` / Blau `#3B82F6`
+  (BAUPLAN 4.4), Leinwand-Screens ohne Host-Knöpfe (4.1).
+
+### Geprüft
+
+- `node check.js`: alles in Ordnung (13 JS-Dateien, 419 Handler, 263 IDs,
+  986 Klammernpaare) — `designs/` liegt außerhalb dessen, was er prüft.
+- Export: 186 Screens, **0** Vorlagenreste (`{{`, `<sc-`, `<dc-import>`).
+- Lokal im Browser (`http-server`, Port 3000): Startansicht #1, Umschalten
+  per Reiter auf einen gerenderten Schleifen-Screen (B · Menü), zweimal ▶
+  → `#4/Menu`, `D · Late Night`, richtiges `src`. **0 Konsolenfehler.**
+  Handybreite 375 px: Reiter brechen um, Vorschau skaliert, Miniaturen
+  scrollen waagerecht.
+- **Nicht geprüft:** jeder einzelne der 186 Screens auf Überlauf; nur
+  Stichproben angesehen.
+
+### Offen
+
+- **Quelle liegt nicht im Repo.** Canvas:
+  https://claude.ai/artifact/696browiHr6kBspCBfJm6G (privat). Generator,
+  Häute und Export-Skript lagen nur im Scratchpad der Sitzung. Wer
+  `designs/` ändern will, ändert den Canvas und exportiert neu — oder die
+  Skripte kommen ins Repo; das wäre der nächste sinnvolle Schritt, falls die
+  Seite länger lebt.
+- David: G (Arena) gestrichen, A und O „passen“, **S soll schöner werden** —
+  steht als Nächstes an und ersetzt dann die S-Dateien hier.
+- Inhalte (Fragen, Namen, Punkte) sind Beispielinhalt.
+
+### Fallstricke
+
+- Im Canvas darf ein `<sc-for>` nicht direkt in `<table>` stehen — der
+  HTML-Parser schiebt es aus der Tabelle. Tabellen dort als CSS-Grid.
+- Der Canvas-Index (`canvas.json`) wird von der Seite selbst normalisiert;
+  vor jedem Schreiben neu lesen, sonst lehnt der Publish ab.
+
+---
+
 ## 2026-10-05 — BAUPLAN: Architektur-Überblick und drei Test-Regeln (`b255a14`)
 
 **Auftrag (David):** Erst „beschreib meine ganze codebase so als wäre ich ein
