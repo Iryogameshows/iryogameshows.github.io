@@ -8,19 +8,16 @@
 <style>html,body{margin:0;background:#000}body{overflow:hidden}</style>
 </head>
 <body>
-<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: radial-gradient(ellipse 90% 70% at 50% 45%, #0B2916 0%, #05140B 60%, #020804 100%); color: #7CFFA0; font-family: 'IBM Plex Mono', monospace; text-shadow: -1px 0 rgba(255,70,70,.32), 1px 0 rgba(70,140,255,.32), 0 0 8px rgba(124,255,160,.6), 0 0 1px rgba(124,255,160,.9); display: flex; flex-direction: column; overflow: hidden">
-  <div style="height: 32px; flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #7CFFA0; color: #031008; text-shadow: none; font-size: 13px; font-weight: 600"><span>IRYO-BUZZER</span><span>● VERBUNDEN</span></div>
-  <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 22px 18px 18px">
-    <section style="position: relative; border: 2px solid #2E7D4A; "><span style="position: absolute; left: 14px; top: -12px; background: #05140B; padding: 0 8px; font-size: 13px; font-weight: 600">┤ SITZUNG ├</span><div style="display: grid; grid-template-columns: 110px minmax(0, 1fr); row-gap: 2px; padding: 16px 14px 10px; font-family: 'VT323', monospace; font-size: 26px"><span style="color: #4FB874">spieler</span><span style="color: #D6FFE2">ANNA</span><span style="color: #4FB874">team</span><span style="color: #FF7A6E">ROT</span><span style="color: #4FB874">frage</span><span>03 / 10</span><span style="color: #4FB874">status</span><span><span style="background: #7CFFA0; color: #031008; text-shadow: none; padding: 0 6px">OFFEN</span></span></div></section>
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px">
-      <button type="button" style="width: 100%; height: 300px; border: 3px double #7CFFA0; background: rgba(124,255,160,.06); box-shadow: 0 0 30px rgba(124,255,160,.3), inset 0 0 40px rgba(124,255,160,.18); color: #D6FFE2; font-family: 'VT323', monospace; font-size: 124px; line-height: 1; cursor: pointer">BUZZ</button>
-      <span style="font-family: 'VT323', monospace; font-size: 24px">&gt; tippen zum antworten<span style="background: #7CFFA0; box-shadow: 0 0 8px #7CFFA0">&nbsp;</span></span>
-    </div>
-    <section style="position: relative; border: 2px solid #2E7D4A; "><span style="position: absolute; left: 14px; top: -12px; background: #05140B; padding: 0 8px; font-size: 13px; font-weight: 600">┤ STAND ├</span><div style="display: flex; flex-direction: column; padding: 12px 14px 6px; font-family: 'VT323', monospace; font-size: 24px"><span><span style="color: #FF7A6E">ROT </span>████████████ 120</span><span><span style="color: #8CB8FF">BLAU</span> ████████<span style="color: #1F5A35; text-shadow: none">░░░░</span> 085</span></div></section>
-    <div style="font-size: 11px; color: #4FB874">[21:47:12] ping 18 ms · signal ▂▄▆█</div>
-  </div>
-  <div style="position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,.24) 0px, rgba(0,0,0,.24) 1px, transparent 1px, transparent 3px)"></div>
-  <div style="position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 130% 100% at 50% 50%, rgba(0,0,0,0) 60%, rgba(0,0,0,.55) 100%)"></div>
-</div>
+<div style="width:390px;height:844px;box-sizing:border-box;background:#121311;padding:16px;overflow:hidden">
+  <div style="position:relative;width:100%;height:100%;box-sizing:border-box;border-radius:30px;background:linear-gradient(180deg,#24251F 0%,#1A1B17 100%);box-shadow:inset 0 2px 0 #34352F,inset 0 -3px 0 #0A0A09,0 10px 30px rgba(0,0,0,.6);padding:14px">
+  <div style="position:relative;width:100%;height:100%;box-sizing:border-box;border-radius:26px / 32px;background:radial-gradient(ellipse 85% 80% at 50% 45%,#0B2916 0%,#05140B 60%,#020804 100%);box-shadow:inset 0 0 80px rgba(0,0,0,.9),inset 0 0 0 2px #000,0 0 0 1px #3A3B35;overflow:hidden;color:#7CFFA0;font-family:'IBM Plex Mono',monospace;text-shadow:-1px 0 rgba(255,70,70,.32),1px 0 rgba(70,140,255,.32),0 0 8px rgba(124,255,160,.6);display:flex;flex-direction:column">
+    <div style="height:32px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#7CFFA0;color:#031008;text-shadow:none;font-size:13px;font-weight:600"><span>BUZZER</span><span>ANNA</span><span>ROT</span></div>
+    <div style="flex:1;min-height:0;position:relative;padding:16px 24px 12px"><div style="display:flex;flex-direction:column;gap:14px;height:100%">
+    <span style="font-family:'VT323',monospace;font-size:26px;line-height:1.05;color:#D6FFE2;">$ buzz --team rot</span><span style="font-family:'VT323',monospace;font-size:24px;line-height:1.05;color:#4FB874;">&gt; verbunden als anna</span><span style="font-family:'VT323',monospace;font-size:30px;line-height:1.05;color:#7CFFA0;">&gt; buzzer offen</span><span style="display:inline-block;align-self:flex-start;width:16px;height:30px;vertical-align:middle;background:#7CFFA0;box-shadow:0 0 10px #7CFFA0"></span>
+    <button type="button" style="margin-top:auto;height:280px;border:3px solid #7CFFA0;background:rgba(124,255,160,.1);box-shadow:0 0 30px rgba(124,255,160,.4),inset 0 0 30px rgba(124,255,160,.2);font-family:'VT323',monospace;font-size:64px;color:#D6FFE2;cursor:pointer;white-space:nowrap">[ ENTER ]</button>
+    <div style="display:flex;justify-content:space-between"><span style="font-family:'VT323',monospace;font-size:34px;line-height:1.05;color:#FF7A6E;">rot 120</span><span style="font-family:'VT323',monospace;font-size:34px;line-height:1.05;color:#7AB8FF;">blau 85</span></div></div></div>
+    <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.24) 0px,rgba(0,0,0,.24) 1px,transparent 1px,transparent 3px)"></div>
+    <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 115% 100% at 50% 50%,rgba(0,0,0,0) 58%,rgba(0,0,0,.6) 100%)"></div>
+  </div></div></div>
 </body>
 </html>
