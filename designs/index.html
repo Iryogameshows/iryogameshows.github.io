@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Design-Entwürfe · Iryo Gameshow</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap">
+<style>
+:root { --bg: #121217; --panel: #1C1C25; --line: #33333F; --fg: #EDEDF2; --muted: #9090A4; --accent: #FFFFFF; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: 'Manrope', system-ui, sans-serif; }
+body { display: flex; flex-direction: column; min-height: 100%; }
+header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+.nav-btn { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font-size: 20px; cursor: pointer; }
+.nav-btn:hover { border-color: var(--accent); }
+.current { display: flex; flex-direction: column; min-width: 220px; }
+.current small { font-size: 12px; font-weight: 700; letter-spacing: 3px; color: var(--muted); }
+.current strong { font-size: 26px; font-weight: 800; line-height: 1.15; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.tab { height: 38px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 700 13px 'Manrope', sans-serif; cursor: pointer; }
+.tab[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.tab:disabled { opacity: .3; cursor: default; }
+main { flex: 1; min-height: 340px; display: flex; align-items: center; justify-content: center; padding: 18px; background: #0B0B0F; }
+.stage { position: relative; overflow: hidden; border-radius: 6px; box-shadow: 0 20px 50px rgba(0,0,0,.55); }
+.stage iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #000; }
+.strip { display: grid; grid-auto-flow: column; grid-auto-columns: 156px; gap: 10px; padding: 12px 20px 14px; border-top: 1px solid var(--line); overflow-x: auto; scrollbar-width: thin; }
+.thumb { display: flex; flex-direction: column; gap: 6px; padding: 6px; border-radius: 10px; border: 2px solid transparent; background: transparent; color: var(--fg); text-align: left; cursor: pointer; font-family: inherit; }
+.thumb:hover { background: var(--panel); }
+.thumb[aria-current="true"] { border-color: var(--accent); background: var(--panel); }
+.thumb .pv { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 4px; background: #000; }
+.thumb .pv iframe { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; border: 0; transform-origin: 0 0; pointer-events: none; }
+.thumb span { font-size: 13px; }
+.thumb b { font-weight: 800; margin-right: 6px; }
+.thumb em { font-style: normal; color: var(--muted); }
+.hint { font-size: 12px; color: var(--muted); padding: 0 20px 14px; }
+@media (max-width: 700px) { .tabs { margin-left: 0; } .current { min-width: 0; } .current strong { font-size: 20px; } }
+</style>
+</head>
+<body>
+<header>
+  <button class="nav-btn" id="prev" type="button" aria-label="Vorherige Richtung">&#9664;</button>
+  <div class="current"><small id="num">RICHTUNG</small><strong id="name"></strong></div>
+  <button class="nav-btn" id="next" type="button" aria-label="Nächste Richtung">&#9654;</button>
+  <nav class="tabs" id="tabs" aria-label="Screen"></nav>
+</header>
+<main><div class="stage" id="stage"><iframe id="frame" title="Vorschau"></iframe></div></main>
+<section class="strip" id="strip" aria-label="Alle Richtungen"></section>
+<p class="hint">Pfeiltasten ← → wechseln die Richtung. Entwürfe zum Vergleichen – nicht die laufende Show.</p>
+<script>
+const DESIGNS = [{"key":"A","name":"Studio","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/A-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/A-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/A-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/A-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/A-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/A-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/A-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/A-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/A-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/A-Turnier.html"},{"id":"Lobby","label":"Lobby","w":1280,"h":720,"file":"s/A-Lobby.html"},{"id":"Ergebnis","label":"Ergebnis","w":1280,"h":720,"file":"s/A-Ergebnis.html"}]},{"key":"B","name":"Arcade","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/B-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/B-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/B-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/B-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/B-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/B-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/B-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/B-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/B-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/B-Turnier.html"}]},{"key":"C","name":"Pop","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/C-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/C-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/C-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/C-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/C-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/C-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/C-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/C-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/C-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/C-Turnier.html"}]},{"key":"D","name":"Late Night","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/D-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/D-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/D-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/D-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/D-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/D-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/D-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/D-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/D-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/D-Turnier.html"}]},{"key":"E","name":"70er","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/E-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/E-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/E-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/E-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/E-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/E-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/E-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/E-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/E-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/E-Turnier.html"}]},{"key":"F","name":"Comic","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/F-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/F-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/F-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/F-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/F-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/F-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/F-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/F-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/F-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/F-Turnier.html"}]},{"key":"H","name":"Bauhaus","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/H-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/H-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/H-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/H-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/H-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/H-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/H-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/H-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/H-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/H-Turnier.html"}]},{"key":"I","name":"Salon","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/I-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/I-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/I-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/I-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/I-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/I-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/I-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/I-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/I-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/I-Turnier.html"}]},{"key":"J","name":"Kreide","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/J-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/J-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/J-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/J-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/J-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/J-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/J-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/J-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/J-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/J-Turnier.html"}]},{"key":"K","name":"Neon-Bar","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/K-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/K-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/K-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/K-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/K-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/K-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/K-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/K-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/K-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/K-Turnier.html"}]},{"key":"L","name":"New York","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/L-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/L-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/L-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/L-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/L-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/L-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/L-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/L-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/L-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/L-Turnier.html"}]},{"key":"M","name":"Aurora","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/M-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/M-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/M-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/M-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/M-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/M-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/M-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/M-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/M-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/M-Turnier.html"}]},{"key":"N","name":"Papier","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/N-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/N-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/N-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/N-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/N-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/N-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/N-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/N-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/N-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/N-Turnier.html"}]},{"key":"O","name":"Terminal","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/O-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/O-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/O-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/O-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/O-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/O-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/O-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/O-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/O-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/O-Turnier.html"},{"id":"Lobby","label":"Lobby","w":1280,"h":720,"file":"s/O-Lobby.html"},{"id":"Ergebnis","label":"Ergebnis","w":1280,"h":720,"file":"s/O-Ergebnis.html"}]},{"key":"P","name":"Memphis","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/P-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/P-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/P-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/P-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/P-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/P-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/P-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/P-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/P-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/P-Turnier.html"}]},{"key":"Q","name":"Riso","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/Q-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/Q-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/Q-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/Q-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/Q-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/Q-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/Q-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/Q-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/Q-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/Q-Turnier.html"}]},{"key":"R","name":"Jazzplatte","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/R-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/R-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/R-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/R-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/R-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/R-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/R-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/R-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/R-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/R-Turnier.html"}]},{"key":"S","name":"Art déco","screens":[{"id":"Menu","label":"Menü","w":1280,"h":800,"file":"s/S-Menu.html"},{"id":"Leinwand","label":"Family Feud","w":1280,"h":720,"file":"s/S-Leinwand.html"},{"id":"Handy","label":"Handy","w":390,"h":844,"file":"s/S-Handy.html"},{"id":"Jeopardy","label":"Jeopardy","w":1280,"h":720,"file":"s/S-Jeopardy.html"},{"id":"WWM","label":"Millionär","w":1280,"h":720,"file":"s/S-WWM.html"},{"id":"WWDS","label":"Wer weiß","w":1280,"h":720,"file":"s/S-WWDS.html"},{"id":"DDF","label":"Dümmste fliegt","w":1280,"h":720,"file":"s/S-DDF.html"},{"id":"PIH","label":"Preis ist heiß","w":1280,"h":720,"file":"s/S-PIH.html"},{"id":"TP","label":"Trivial Pursuit","w":1280,"h":720,"file":"s/S-TP.html"},{"id":"Turnier","label":"Turnier","w":1280,"h":720,"file":"s/S-Turnier.html"},{"id":"Lobby","label":"Lobby","w":1280,"h":720,"file":"s/S-Lobby.html"},{"id":"Ergebnis","label":"Ergebnis","w":1280,"h":720,"file":"s/S-Ergebnis.html"}]}];
+const TABS = [["Menu","Menü"],["Leinwand","Family Feud"],["Handy","Handy"],["Jeopardy","Jeopardy"],["WWM","Millionär"],["WWDS","Wer weiß"],["DDF","Dümmste fliegt"],["PIH","Preis ist heiß"],["TP","Trivial Pursuit"],["Turnier","Turnier"],["Lobby","Lobby"],["Ergebnis","Ergebnis"]];
+let d = 0, s = 'Leinwand';
+const $ = (id) => document.getElementById(id);
+const frame = $('frame'), stage = $('stage');
+
+function readHash() {
+  const m = /^#(\d+)(?:\/(\w+))?$/.exec(location.hash);
+  if (!m) return;
+  const n = Number(m[1]) - 1;
+  if (n >= 0 && n < DESIGNS.length) d = n;
+  if (m[2]) s = m[2];
+}
+function screenOf() {
+  const list = DESIGNS[d].screens;
+  return list.find(x => x.id === s) || list.find(x => x.id === 'Leinwand');
+}
+function fit() {
+  const sc = screenOf();
+  const box = stage.parentElement.getBoundingClientRect();
+  const f = Math.min((box.width - 36) / sc.w, (box.height - 36) / sc.h, 1);
+  stage.style.width = Math.round(sc.w * f) + 'px';
+  stage.style.height = Math.round(sc.h * f) + 'px';
+  frame.style.width = sc.w + 'px';
+  frame.style.height = sc.h + 'px';
+  frame.style.transform = 'scale(' + f + ')';
+}
+function show() {
+  const sc = screenOf();
+  s = sc.id;
+  const des = DESIGNS[d];
+  $('num').textContent = 'RICHTUNG ' + String(d + 1).padStart(2, '0') + ' / ' + DESIGNS.length;
+  $('name').textContent = des.key + ' · ' + des.name;
+  if (frame.getAttribute('src') !== sc.file) frame.setAttribute('src', sc.file);
+  $('tabs').querySelectorAll('.tab').forEach(b => {
+    const ok = des.screens.some(x => x.id === b.dataset.id);
+    b.disabled = !ok;
+    b.setAttribute('aria-pressed', String(b.dataset.id === s));
+  });
+  $('strip').querySelectorAll('.thumb').forEach((b, i) => { b.setAttribute('aria-current', String(i === d)); if (i === d) b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); });
+  history.replaceState(null, '', '#' + (d + 1) + '/' + s);
+  fit();
+}
+TABS.forEach(([id, label]) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'tab'; b.dataset.id = id; b.textContent = label;
+  b.addEventListener('click', () => { s = id; show(); });
+  $('tabs').appendChild(b);
+});
+DESIGNS.forEach((des, i) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'thumb';
+  b.innerHTML = '<div class="pv"><iframe loading="lazy" tabindex="-1" title="" src="' + des.screens.find(x => x.id === 'Leinwand').file + '"></iframe></div><span><b>' + String(i + 1).padStart(2, '0') + '</b><em>' + des.key + ' · ' + des.name + '</em></span>';
+  b.addEventListener('click', () => { d = i; show(); });
+  $('strip').appendChild(b);
+});
+function fitThumbs() {
+  document.querySelectorAll('.thumb .pv').forEach(pv => {
+    const f = pv.getBoundingClientRect().width / 1280;
+    pv.querySelector('iframe').style.transform = 'scale(' + f + ')';
+  });
+}
+$('prev').addEventListener('click', () => { d = (d + DESIGNS.length - 1) % DESIGNS.length; show(); });
+$('next').addEventListener('click', () => { d = (d + 1) % DESIGNS.length; show(); });
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest && e.target.closest('input, textarea')) return;
+  if (e.key === 'ArrowLeft') $('prev').click();
+  if (e.key === 'ArrowRight') $('next').click();
+});
+window.addEventListener('resize', () => { fit(); fitThumbs(); });
+window.addEventListener('hashchange', () => { readHash(); show(); });
+readHash(); show(); fitThumbs();
+</script>
+</body>
+</html>
