@@ -12,6 +12,98 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-05 — BAUPLAN: Architektur-Überblick und drei Test-Regeln (`b255a14`)
+
+**Auftrag (David):** Erst „beschreib meine ganze codebase so als wäre ich ein
+Kind", dann „beschreib mir den code, sodass ich mit großen worten um mich
+werfen kann obwohl ich keine Ahnung hab" — und schließlich „pack das in die
+BAUPLAN.md".
+
+### Abschnitt 0 · Was hier eigentlich steckt
+
+Der Überblick für jemanden, der das Projekt zum ersten Mal sieht. In einem
+Satz: zero-build, framework-lose Single-Page-Anwendung mit
+Realtime-State-Synchronisation über drei Clients und einem selbstgeschriebenen
+statischen Analyzer.
+
+**Jeder Begriff ist an einer Code-Stelle belegt, die dabeisteht.** Das ist die
+Bedingung, unter der so ein Abschnitt in einen Bauplan gehört: DOM-Diffing →
+`morphMirror`, dreistufige Degradation → `mode: 'firebase'|'sse'|'none'`,
+Proxy-RPC → `gmRemoteBridgeScript`, Optimistic Concurrency → die `transaction`
+auf `tpspin/by`, logische Uhr → `nextRoundId`, Fail-closed Allowlist →
+`BOARD_PUBLIC_SCREENS` und `GM_REMOTE_ALLOWED_FNS`.
+
+**Die zweite Tabelle ist die wichtigere: was hier NICHT steckt.** Keine
+Test-Suite (`check.js` ist ein Linter), keine CI-Prüfung (die Action deployt
+nur und ruft `check.js` nicht auf — nachgesehen in `pages.yml`), kein Server,
+keine Skalierung über den Keller hinaus, keine Typsicherheit zur Laufzeit.
+`HOST_PASSWORD` steht als `'keller2024'` im ausgelieferten JavaScript — ein
+Vorhang, kein Schloss.
+
+Ein Bauplan, der mit Wörtern wirbt, die nicht eingelöst sind, verleitet den
+Nächsten zu falschen Annahmen. Deshalb beides in einem Abschnitt.
+
+### Dabei eine eigene Aussage korrigiert
+
+In der ersten Fassung stand, die PINs seien „SHA-256-gehasht, **ungesalzen**".
+Beim Nachsehen in `hashPlayerPin()`:
+
+```js
+const data = new TextEncoder().encode('keller:' + playerKeyOf(name) + ':' + pin);
+```
+
+Das ist ein fester Präfix plus der Name — kein Zufallswert je Eintrag und kein
+Key-Stretching, aber auch nicht schlicht „ungesalzen". Gegen eine Tabelle über
+alle Nutzer hilft es, gegen gezieltes Durchprobieren einer einzelnen PIN nicht.
+So steht es jetzt da.
+
+**Die grobe Fassung stand schon in der Datei, bevor sie geprüft war** — der
+Fehler lag nicht im Schreiben, sondern in der Reihenfolge. Erst alle
+Behauptungen belegen, dann committen.
+
+### Abschnitt 5.1 · Drei Regeln für den Test selbst
+
+Diese drei standen in **vier HANDOFF-Einträgen in Folge** als „gehört in den
+BAUPLAN" und haben jeweils einen Fehler durchgelassen. Jetzt eingetragen:
+
+1. **Ein Test, der beim kaputten Code grün gewesen wäre, ist kein Beleg.**
+   (`82e9822` — Turnier-Direktstart meldete ohne verbundene Handys „bleibt
+   stehen", was der kaputte Code auch gemeldet hätte.)
+2. **Ein Test muss die Wege nehmen, die der Host nimmt, nicht die, die der Code
+   vorsieht.** (`6074253` — der Lobby-Merker wurde über „Buzzer auf, Buzzer zu"
+   geprüft; die echten Fälle standen nie drin.)
+3. **Globales `querySelector` trifft in dieser App fast immer den falschen
+   Screen.** Alle Screens stehen gleichzeitig im DOM; der erste Treffer ist
+   womöglich der eines anderen Spiels, unsichtbar, mit Bounding-Box 0×0.
+   (`21ca4e7`.)
+
+### Warum Abschnitt 0 und nicht eine neue 1
+
+Die Nummerierung bleibt dadurch stabil. In `HANDOFF.md` stehen Verweise auf
+`BAUPLAN.md` 3.9, 4.3 und 5; eine Umnummerierung hätte sie alle stillschweigend
+falsch gemacht. Interne Verweise innerhalb der Datei gibt es keine — geprüft.
+
+### Geprüft
+
+- Alle Behauptungen aus Abschnitt 0 gegen den Code: `HOST_PASSWORD` im
+  Klartext, `hashPlayerPin` ohne Zufallssalt, `pages.yml` ohne `node`-Aufruf,
+  `new Proxy` in `js/buzzer.js:626`, `.transaction(` an drei Stellen,
+  `onDisconnect()` in `buzzer/index.html`, `EventSource` als SSE-Rückfall.
+- `node check.js` ohne Befund (Markdown berührt ihn nicht, der Lauf gehört
+  trotzdem zum Schritt).
+- Gliederung danach: 0 bis 5, 587 Zeilen.
+
+### Offen
+
+- Abschnitt 0 nennt „rund 16.000 Zeilen" und „13 Dateien in `js/`". Das ist der
+  Stand von heute und veraltet mit der nächsten Show. Beim nächsten größeren
+  Umbau nachzählen statt fortschreiben.
+- Die Testskripte und der Firebase-Stub liegen weiterhin nur im Scratchpad.
+  5.1 verweist auf den Stub, ohne dass er im Repo liegt — das ist die
+  offensichtlichste Lücke in dieser Datei.
+
+---
+
 ## 2026-09-28 — GIF-Screen zwischen Fragen, zweiter Anlauf (`6074253`)
 
 **Symptom (David):** „Man soll den gif screen zwischen fragen NICHT sehen."
