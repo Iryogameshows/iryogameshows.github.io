@@ -12,6 +12,110 @@ Die Pflichten aus `CLAUDE.md` (Repo-Stand prüfen, `node check.js`,
 `HANDOFF.md` mitschreiben, Antwortformat) gelten unverändert. Hier steht, was
 *zusätzlich* gilt, sobald es um eine Show geht.
 
+Wer das Projekt zum ersten Mal sieht, fängt mit Abschnitt 0 an: dort steht in
+einer Seite, wie das Ganze gebaut ist — und was es ausdrücklich **nicht** hat.
+
+---
+
+## 0 · Was hier eigentlich steckt
+
+Der Überblick, bevor es an Einzelheiten geht — und zugleich die Antwort auf
+„was ist das technisch eigentlich?". **Jeder Begriff hier ist am Code belegt**;
+die Stelle steht dabei. Ein Bauplan, der mit Wörtern wirbt, die nicht
+eingelöst sind, verleitet den Nächsten zu falschen Annahmen.
+
+In einem Satz: eine **zero-build, framework-lose Single-Page-Anwendung** mit
+**Realtime-State-Synchronisation** über drei Clients und einem
+**selbstgeschriebenen statischen Analyzer** vor jedem Commit.
+
+Rund 16.000 Zeilen, davon 13 Dateien in `js/`, sieben Shows, drei Bildschirme.
+
+### Die Bauweise
+
+**Zero Build.** Klassische `<script src>`-Tags, kein Bundler, kein Transpiler,
+kein `node_modules`. GitHub Pages liefert die Dateien, wie sie im Repo liegen.
+Der Deploy ist ein `git push` — es gibt nichts dazwischen, was während einer
+laufenden Show scheitern könnte.
+
+**Drei Clients, ein Zustand.** Host-Laptop (`index.html`), Zuschauerfenster
+(`mainscreen/`), Handys (`buzzer/`, `gamepad/`). Sie teilen sich den Zustand
+über die Firebase Realtime Database.
+
+**DOM-Diffing statt Re-Rendering.** `morphMirror()` in `js/feud.js` vergleicht
+zwei Dokumente Knoten für Knoten und ändert nur, was sich unterscheidet — von
+Hand das, was ein Virtual DOM tut. Der Anlass war konkret: ein
+`innerHTML`-Austausch ließ bei jedem Punktestand laufende Videos und
+Animationen auf der Leinwand neu anfangen.
+
+**MutationObserver-getriebene Spiegelung.** Das Zuschauerfenster hat keine
+eigene Logik. Es hängt an einem Beobachter auf dem Haupt-`<body>`, gebündelt
+über `requestAnimationFrame` (`startBoardMirror`, `scheduleBoardMirror`).
+
+**Dreistufige Degradation beim Buzzer.** Firebase → lokaler Server über
+Server-Sent Events → Tastatur. Steht als `mode: 'firebase' | 'sse' | 'none'`
+in `js/buzzer.js` und wird in `js/jeopardy-ui.js` an jeder Stelle abgefragt.
+
+**Proxy-basierter Remote Procedure Call.** Das Handy-Gamepad hat kein echtes
+`window.opener`. Also wird eins vorgetäuscht:
+
+```js
+window.opener = new Proxy({}, { get(t, prop) {
+  return function(...args) { cmdRef.push({ fn: String(prop), args, t: Date.now() }); };
+}});
+```
+
+Jeder `opener.xxx()`-Aufruf im GM-HTML wandert damit über Firebase zum Host.
+Dasselbe Markup läuft dadurch im eingebetteten Panel **und** auf dem Handy,
+ohne eine Zeile Unterschied (`gmRemoteBridgeScript` in `js/buzzer.js`).
+
+**Allowlist-gesicherte Befehlsausführung.** Diese Fernaufrufe landen nicht in
+`window[name]()`, sondern werden gegen `GM_REMOTE_ALLOWED_FNS` geprüft, und
+danach noch einmal gegen `typeof fn === 'function'`. Fail-closed.
+
+**Optimistic UI Updates.** `assignPlayerTeam()` zeigt das Ergebnis sofort an und
+schreibt erst danach nach Firebase, abgesichert in `try/catch`. Ohne
+Verbindung käme die Antwort nie, und der Knopf sähe aus, als hätte er nicht
+reagiert.
+
+**Optimistic Concurrency Control.** Wer beim Trivial-Pursuit-Rad zuerst drückt,
+gewinnt — über eine Firebase-`transaction` auf `tpspin/by`. Zwei gleichzeitige
+Finger ergeben einen Dreh, nicht zwei.
+
+**Monoton steigende logische Uhr.** Rundennummern sind keine Zähler, sondern
+`Math.max(Date.now(), prev + 1)` (`nextRoundId`). Warum nicht hochzählen: siehe
+3.6 — ein Zähler fängt nach einem Reload des Hosts von vorn an, und Handys mit
+derselben Nummer behalten ihre Sperre.
+
+**Fail-closed Allowlist statt Denylist.** Das Zuschauerfenster zeigt nur
+Screens aus `BOARD_PUBLIC_SCREENS`. Ein neuer Editor ist von Haus aus dicht —
+siehe 4.1.
+
+**Gradual Typing über JSDoc.** TypeScript prüft, ohne dass es TypeScript-Dateien
+gibt: `checkJs: true`, `noEmit`, Typen als Kommentare. Alle 13 Dateien melden
+nichts.
+
+**Content-Hash-Cache-Busting.** Der Deploy hängt die Commit-ID an jeden
+Asset-Pfad in `index.html` (`.github/workflows/pages.yml`).
+
+**Presence mit serverseitigem Disconnect-Handling.** `onDisconnect().remove()`
+in `buzzer/index.html`: Firebase räumt den Eintrag auf, wenn ein Handy
+verschwindet, ohne Zutun des Handys.
+
+### Was hier NICHT steckt
+
+Ebenso wichtig, und aus demselben Grund: wer das Gegenteil annimmt, baut auf
+Sand.
+
+| Nicht vorhanden | Stattdessen |
+|---|---|
+| Test-Suite, Unit-Tests | `check.js` ist ein **Linter**, kein Test. Geprüft wird von Hand im Browser. |
+| CI-Prüfung | Die GitHub Action **deployt nur**. Sie führt `check.js` nicht aus. |
+| Server, Backend, Microservices | Eine statische Seite plus Firebase. Kein eigener Server. |
+| Skalierung | Firebase-Gratisstufe, ausgelegt auf einen Keller voller Leute. |
+| Typsicherheit zur Laufzeit | Graduell typisiert. Zur Laufzeit prüft nichts. |
+| Verschlüsselung | PINs sind SHA-256-gehasht über `'keller:' + name + ':' + pin`. Das ist ein fester Präfix plus Name, **kein Zufallswert je Eintrag und kein Key-Stretching** — gegen eine Tabelle über alle Nutzer hilft es, gegen gezieltes Durchprobieren einer einzelnen PIN nicht. Für eine Partyshow in Ordnung, aber keine Sicherheitsarchitektur. |
+| Zugriffsschutz | `HOST_PASSWORD` ist ein Vorhang, kein Schloss: er steht im ausgelieferten JavaScript. |
+
 ---
 
 ## 1 · Die sieben Fragen vor der ersten Zeile
@@ -454,4 +558,33 @@ Die Liste, an der eine Show scheitert:
 
 Was nicht geprüft wurde, wird als ungeprüft benannt. **Firebase läuft in
 keinem lokalen Durchlauf** — alles, was an Lobby, Presence und Handys hängt,
-bleibt bis zum ersten echten Abend eine begründete Vermutung.
+bleibt bis zum ersten echten Abend eine begründete Vermutung. Für die
+Handy-Seite gibt es inzwischen einen Firebase-Ersatz fürs Testen; ohne ihn
+bricht `buzzer/index.html` in der ersten Zeile ab und keine ihrer Funktionen
+ist erreichbar.
+
+### 5.1 Drei Regeln für den Test selbst
+
+Diese drei stehen hier, weil sie in vier aufeinanderfolgenden Arbeitsschritten
+jeweils einen Fehler durchgelassen haben. Sie kosten je einen Gedanken und
+sparen eine Runde mit David.
+
+**Ein Test, der beim kaputten Code grün gewesen wäre, ist kein Beleg.**
+Vor jedem „geprüft" die Gegenfrage: *wäre dieser Lauf rot geworden, wenn der
+Fehler noch drin wäre?* Beim Turnier-Direktstart lautete die Antwort nein —
+ohne verbundene Handys meldete er „bleibt stehen", und genau das hätte der
+kaputte Code auch gemeldet (`82e9822`).
+
+**Ein Test muss die Wege nehmen, die der Host nimmt, nicht die, die der Code
+vorsieht.** Der Lobby-Merker wurde über „Buzzer auf, Buzzer zu" geprüft und für
+gelöst erklärt. Die Fälle, die wirklich auftraten — eine Show, die mit einer
+Schätzfrage anfängt, und ein Handy, das aus der Tasche kommt und neu lädt —
+standen nie im Test (`6074253`).
+
+**Globales `querySelector` ist in dieser App fast immer falsch.** Alle Screens
+stehen gleichzeitig im DOM und werden nur per Klasse sichtbar. Ein
+`document.querySelector('.setup-guests')` trifft den ersten im Markup — also
+womöglich den eines ganz anderen Spiels, unsichtbar, mit einer Bounding-Box von
+0×0. In der Messung sieht das aus wie „ganz links oben" und schickt die
+Fehlersuche in die falsche Richtung (`21ca4e7`). Immer vom Screen aus
+einsteigen: `document.getElementById('pih-setup-screen').querySelector(…)`.
