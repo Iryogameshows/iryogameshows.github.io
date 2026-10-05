@@ -8,80 +8,24 @@
 <style>html,body{margin:0;background:#000}body{overflow:hidden}</style>
 </head>
 <body>
-<div style="width: 1280px; height: 800px; box-sizing: border-box; background: #BFE0D8; color: #163936; font-family: 'Karla', sans-serif; display: flex; flex-direction: column; align-items: center; padding: 40px 64px 40px; gap: 28px; position: relative; overflow: hidden">
-  <div style="position: absolute; left: -200px; right: -200px; bottom: -420px; height: 640px; border-radius: 50%; background: #8CC7BB; box-shadow: 0 -8px 18px rgba(22,57,54,.18)"></div>
-  <div style="position: absolute; left: 300px; right: -400px; bottom: -520px; height: 680px; border-radius: 50%; background: #5FA89B; box-shadow: 0 -8px 18px rgba(22,57,54,.2)"></div>
-  <div style="position: absolute; left: -500px; right: 500px; bottom: -560px; height: 680px; border-radius: 50%; background: #2A8C84; box-shadow: 0 -8px 18px rgba(22,57,54,.22)"></div>
-  <header style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px">
-    <h1 style="margin: 0; font-family: 'Fraunces', serif; font-weight: 900; font-size: 110px; line-height: 1; color: #F06A4E; text-shadow: 0 3px 0 #C2452D, 0 10px 18px rgba(22,57,54,.25)">Iryo</h1>
-    <span style="font-size: 16px; font-weight: 700; letter-spacing: 10px; padding-left: 10px; color: #164E4B">GAMESHOW</span>
-  </header>
-  <main style="position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; width: 100%">
-    
-      <button type="button" style="position: relative; height: 172px; box-sizing: border-box; text-align: left; background: #FBF5E8; border: none; border-radius: 14px; box-shadow: 0 2px 0 rgba(22,57,54,.08), 0 10px 22px rgba(22,57,54,.2); padding: 26px 20px 18px; display: flex; flex-direction: column; gap: 6px; color: #163936; font-family: 'Karla', sans-serif; transform: rotate(-1deg); cursor: pointer">
-        <span style="position: absolute; left: 20px; top: -10px; width: 56px; height: 20px; border-radius: 4px; background: #F06A4E; box-shadow: 0 3px 6px rgba(22,57,54,.2)"></span>
-        <span style="font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; line-height: 1.1">Family Feud</span>
-        <span style="margin-top: auto; font-size: 15px; line-height: 1.35; font-weight: 500; color: #4D6764">Teams raten Umfrageantworten</span>
-      </button>
-    
-      <button type="button" style="position: relative; height: 172px; box-sizing: border-box; text-align: left; background: #FBF5E8; border: none; border-radius: 14px; box-shadow: 0 2px 0 rgba(22,57,54,.08), 0 10px 22px rgba(22,57,54,.2); padding: 26px 20px 18px; display: flex; flex-direction: column; gap: 6px; color: #163936; font-family: 'Karla', sans-serif; transform: rotate(0.6deg); cursor: pointer">
-        <span style="position: absolute; left: 20px; top: -10px; width: 56px; height: 20px; border-radius: 4px; background: #F2C14E; box-shadow: 0 3px 6px rgba(22,57,54,.2)"></span>
-        <span style="font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; line-height: 1.1">Jeopardy</span>
-        <span style="margin-top: auto; font-size: 15px; line-height: 1.35; font-weight: 500; color: #4D6764">Kategorien &amp; Punktefelder</span>
-      </button>
-    
-      <button type="button" style="position: relative; height: 172px; box-sizing: border-box; text-align: left; background: #FBF5E8; border: none; border-radius: 14px; box-shadow: 0 2px 0 rgba(22,57,54,.08), 0 10px 22px rgba(22,57,54,.2); padding: 26px 20px 18px; display: flex; flex-direction: column; gap: 6px; color: #163936; font-family: 'Karla', sans-serif; transform: rotate(-0.4deg); cursor: pointer">
-        <span style="position: absolute; left: 20px; top: -10px; width: 56px; height: 20px; border-radius: 4px; background: #2A8C84; box-shadow: 0 3px 6px rgba(22,57,54,.2)"></span>
-        <span style="font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; line-height: 1.1">Wer wird Millionär</span>
-        <span style="margin-top: auto; font-size: 15px; line-height: 1.35; font-weight: 500; color: #4D6764">15 Fragen, 4 Antworten, Joker</span>
-      </button>
-    
-      <button type="button" style="position: relative; height: 172px; box-sizing: border-box; text-align: left; background: #FBF5E8; border: none; border-radius: 14px; box-shadow: 0 2px 0 rgba(22,57,54,.08), 0 10px 22px rgba(22,57,54,.2); padding: 26px 20px 18px; display: flex; flex-direction: column; gap: 6px; color: #163936; font-family: 'Karla', sans-serif; transform: rotate(1deg); cursor: pointer">
-        <span style="position: absolute; left: 20px; top: -10px; width: 56px; height: 20px; border-radius: 4px; background: #8E7CC3; box-shadow: 0 3px 6px rgba(22,57,54,.2)"></span>
-        <span style="font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; line-height: 1.1">Wer weiß denn sowas</span>
-        <span style="margin-top: auto; font-size: 15px; line-height: 1.35; font-weight: 500; color: #4D6764">12 Kategorien, Masterfrage</span>
-      </button>
-    
-      <button type="button" style="position: relative; height: 172px; box-sizing: border-box; text-align: left; background: #FBF5E8; border: none; border-radius: 14px; box-shadow: 0 2px 0 rgba(22,57,54,.08), 0 10px 22px rgba(22,57,54,.2); padding: 26px 20px 18px; display: flex; flex-direction: column; gap: 6px; color: #163936; font-family: 'Karla', sans-serif; transform: rotate(0.8deg); cursor: pointer">
-        <span style="position: absolute; left: 20px; top: -10px; width: 56px; height: 20px; border-radius: 4px; background: #F06A4E; box-shadow: 0 3px 6px rgba(22,57,54,.2)"></span>
-        <span style="font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; line-height: 1.1">Der Dümmste fliegt</span>
-        <span style="margin-top: auto; font-size: 15px; line-height: 1.35; font-weight: 500; color: #4D6764">Leben, Abstimmung, letzter bleibt</span>
-      </button>
-    
-      <button type="button" style="position: relative; height: 172px; box-sizing: border-box; text-align: left; background: #FBF5E8; border: none; border-radius: 14px; box-shadow: 0 2px 0 rgba(22,57,54,.08), 0 10px 22px rgba(22,57,54,.2); padding: 26px 20px 18px; display: flex; flex-direction: column; gap: 6px; color: #163936; font-family: 'Karla', sans-serif; transform: rotate(-0.8deg); cursor: pointer">
-        <span style="position: absolute; left: 20px; top: -10px; width: 56px; height: 20px; border-radius: 4px; background: #F2C14E; box-shadow: 0 3px 6px rgba(22,57,54,.2)"></span>
-        <span style="font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; line-height: 1.1">Der Preis ist heiß</span>
-        <span style="margin-top: auto; font-size: 15px; line-height: 1.35; font-weight: 500; color: #4D6764">Preise schätzen, näher dran gewinnt</span>
-      </button>
-    
-      <button type="button" style="position: relative; height: 172px; box-sizing: border-box; text-align: left; background: #FBF5E8; border: none; border-radius: 14px; box-shadow: 0 2px 0 rgba(22,57,54,.08), 0 10px 22px rgba(22,57,54,.2); padding: 26px 20px 18px; display: flex; flex-direction: column; gap: 6px; color: #163936; font-family: 'Karla', sans-serif; transform: rotate(0.4deg); cursor: pointer">
-        <span style="position: absolute; left: 20px; top: -10px; width: 56px; height: 20px; border-radius: 4px; background: #2A8C84; box-shadow: 0 3px 6px rgba(22,57,54,.2)"></span>
-        <span style="font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; line-height: 1.1">Trivial Pursuit</span>
-        <span style="margin-top: auto; font-size: 15px; line-height: 1.35; font-weight: 500; color: #4D6764">Sechs Kategorien, sechs Tortenstücke</span>
-      </button>
-    
-      <button type="button" style="position: relative; height: 172px; box-sizing: border-box; text-align: left; background: #FBF5E8; border: none; border-radius: 14px; box-shadow: 0 2px 0 rgba(22,57,54,.08), 0 10px 22px rgba(22,57,54,.2); padding: 26px 20px 18px; display: flex; flex-direction: column; gap: 6px; color: #163936; font-family: 'Karla', sans-serif; transform: rotate(-0.6deg); cursor: pointer">
-        <span style="position: absolute; left: 20px; top: -10px; width: 56px; height: 20px; border-radius: 4px; background: #8E7CC3; box-shadow: 0 3px 6px rgba(22,57,54,.2)"></span>
-        <span style="font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; line-height: 1.1">Turnier</span>
-        <span style="margin-top: auto; font-size: 15px; line-height: 1.35; font-weight: 500; color: #4D6764">Mehrtägig, gleiche Teams, Gewichtung</span>
-      </button>
-    
-  </main>
-  <nav style="position: relative; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: auto">
-    
-      <button type="button" style="height: 44px; padding: 0 20px; border-radius: 999px; border: none; background: #FBF5E8; box-shadow: 0 6px 12px rgba(22,57,54,.25); color: #163936; font-family: 'Karla', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Bestenliste</button>
-    
-      <button type="button" style="height: 44px; padding: 0 20px; border-radius: 999px; border: none; background: #FBF5E8; box-shadow: 0 6px 12px rgba(22,57,54,.25); color: #163936; font-family: 'Karla', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Spieler</button>
-    
-      <button type="button" style="height: 44px; padding: 0 20px; border-radius: 999px; border: none; background: #FBF5E8; box-shadow: 0 6px 12px rgba(22,57,54,.25); color: #163936; font-family: 'Karla', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Mainscreen</button>
-    
-      <button type="button" style="height: 44px; padding: 0 20px; border-radius: 999px; border: none; background: #FBF5E8; box-shadow: 0 6px 12px rgba(22,57,54,.25); color: #163936; font-family: 'Karla', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Notizen</button>
-    
-      <button type="button" style="height: 44px; padding: 0 20px; border-radius: 999px; border: none; background: #FBF5E8; box-shadow: 0 6px 12px rgba(22,57,54,.25); color: #163936; font-family: 'Karla', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Sound an</button>
-    
-      <button type="button" style="height: 44px; padding: 0 20px; border-radius: 999px; border: none; background: #FBF5E8; box-shadow: 0 6px 12px rgba(22,57,54,.25); color: #163936; font-family: 'Karla', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer">Töne probehören</button>
-    
-  </nav>
-</div>
+<div style="width:1280px;height:800px;box-sizing:border-box;overflow:hidden;position:relative;background:#BFE0D8;color:#163936"><div style="position:absolute;left:0;right:0;top:30px;text-align:center"><span style="font-family:'Fraunces',serif;font-weight:900;font-size:80px;line-height:1.02;color:#163936;">Iryo</span> <span style="font-family:'Karla',sans-serif;font-weight:700;font-size:26px;color:#F06A4E;">Gameshow</span></div>
+  <svg style="position:absolute;left:0;top:120px" width="1280" height="80"><path d="M0 10 Q640 70 1280 10" stroke="#163936" stroke-width="3" fill="none"/></svg><div style="position:absolute;left:90px;top:168.0px;width:250px;transform:rotate(-4deg);transform-origin:50% 0">
+      <div style="height:200px;background:#F06A4E;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);padding:24px 20px;box-sizing:border-box;text-align:center;color:#FBF5E8">
+        <div style="font-family:'Karla',sans-serif;font-weight:700;font-size:14px;opacity:.8">01</div><div style="font-family:'Fraunces',serif;font-weight:900;font-size:27px;line-height:1.05;margin-top:4px">Family Feud</div><div style="font-family:'Karla',sans-serif;font-size:13px;margin-top:6px">Teams raten Umfrageantworten</div></div></div><div style="position:absolute;left:370px;top:156.0px;width:250px;transform:rotate(-1deg);transform-origin:50% 0">
+      <div style="height:200px;background:#F2C14E;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);padding:24px 20px;box-sizing:border-box;text-align:center;color:#163936">
+        <div style="font-family:'Karla',sans-serif;font-weight:700;font-size:14px;opacity:.8">02</div><div style="font-family:'Fraunces',serif;font-weight:900;font-size:27px;line-height:1.05;margin-top:4px">Jeopardy</div><div style="font-family:'Karla',sans-serif;font-size:13px;margin-top:6px">Kategorien &amp; Punktefelder</div></div></div><div style="position:absolute;left:650px;top:156.0px;width:250px;transform:rotate(1deg);transform-origin:50% 0">
+      <div style="height:200px;background:#2A8C84;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);padding:24px 20px;box-sizing:border-box;text-align:center;color:#FBF5E8">
+        <div style="font-family:'Karla',sans-serif;font-weight:700;font-size:14px;opacity:.8">03</div><div style="font-family:'Fraunces',serif;font-weight:900;font-size:27px;line-height:1.05;margin-top:4px">Wer wird Millionär</div><div style="font-family:'Karla',sans-serif;font-size:13px;margin-top:6px">15 Fragen, 4 Antworten, Joker</div></div></div><div style="position:absolute;left:930px;top:168.0px;width:250px;transform:rotate(4deg);transform-origin:50% 0">
+      <div style="height:200px;background:#8E7CC3;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);padding:24px 20px;box-sizing:border-box;text-align:center;color:#FBF5E8">
+        <div style="font-family:'Karla',sans-serif;font-weight:700;font-size:14px;opacity:.8">04</div><div style="font-family:'Fraunces',serif;font-weight:900;font-size:27px;line-height:1.05;margin-top:4px">Wer weiß denn sowas</div><div style="font-family:'Karla',sans-serif;font-size:13px;margin-top:6px">12 Kategorien, Masterfrage</div></div></div><svg style="position:absolute;left:0;top:420px" width="1280" height="80"><path d="M0 10 Q640 70 1280 10" stroke="#163936" stroke-width="3" fill="none"/></svg><div style="position:absolute;left:90px;top:468.0px;width:250px;transform:rotate(-4deg);transform-origin:50% 0">
+      <div style="height:200px;background:#F2C14E;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);padding:24px 20px;box-sizing:border-box;text-align:center;color:#163936">
+        <div style="font-family:'Karla',sans-serif;font-weight:700;font-size:14px;opacity:.8">05</div><div style="font-family:'Fraunces',serif;font-weight:900;font-size:27px;line-height:1.05;margin-top:4px">Der Dümmste fliegt</div><div style="font-family:'Karla',sans-serif;font-size:13px;margin-top:6px">Leben, Abstimmung, letzter bleibt</div></div></div><div style="position:absolute;left:370px;top:456.0px;width:250px;transform:rotate(-1deg);transform-origin:50% 0">
+      <div style="height:200px;background:#F06A4E;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);padding:24px 20px;box-sizing:border-box;text-align:center;color:#FBF5E8">
+        <div style="font-family:'Karla',sans-serif;font-weight:700;font-size:14px;opacity:.8">06</div><div style="font-family:'Fraunces',serif;font-weight:900;font-size:27px;line-height:1.05;margin-top:4px">Der Preis ist heiß</div><div style="font-family:'Karla',sans-serif;font-size:13px;margin-top:6px">Preise schätzen, näher dran gewinnt</div></div></div><div style="position:absolute;left:650px;top:456.0px;width:250px;transform:rotate(1deg);transform-origin:50% 0">
+      <div style="height:200px;background:#8E7CC3;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);padding:24px 20px;box-sizing:border-box;text-align:center;color:#FBF5E8">
+        <div style="font-family:'Karla',sans-serif;font-weight:700;font-size:14px;opacity:.8">07</div><div style="font-family:'Fraunces',serif;font-weight:900;font-size:27px;line-height:1.05;margin-top:4px">Trivial Pursuit</div><div style="font-family:'Karla',sans-serif;font-size:13px;margin-top:6px">Sechs Kategorien, sechs Tortenstücke</div></div></div><div style="position:absolute;left:930px;top:468.0px;width:250px;transform:rotate(4deg);transform-origin:50% 0">
+      <div style="height:200px;background:#2A8C84;clip-path:polygon(0 0,100% 0,100% 78%,50% 100%,0 78%);padding:24px 20px;box-sizing:border-box;text-align:center;color:#FBF5E8">
+        <div style="font-family:'Karla',sans-serif;font-weight:700;font-size:14px;opacity:.8">08</div><div style="font-family:'Fraunces',serif;font-weight:900;font-size:27px;line-height:1.05;margin-top:4px">Turnier</div><div style="font-family:'Karla',sans-serif;font-size:13px;margin-top:6px">Mehrtägig, gleiche Teams, Gewichtung</div></div></div>
+  <div style="position:absolute;left:0;right:0;bottom:26px;display:flex;justify-content:center;gap:12px"><div style="background:#FBF5E8;border-radius:8px;box-shadow:0 6px 0 rgba(22,57,54,.18);transform:rotate(-2deg);padding:10px 16px"><span style="font-family:'Karla',sans-serif;font-weight:700;font-size:16px;color:#163936;">Bestenliste</span></div><div style="background:#FBF5E8;border-radius:8px;box-shadow:0 6px 0 rgba(22,57,54,.18);transform:rotate(1deg);padding:10px 16px"><span style="font-family:'Karla',sans-serif;font-weight:700;font-size:16px;color:#163936;">Spieler</span></div><div style="background:#FBF5E8;border-radius:8px;box-shadow:0 6px 0 rgba(22,57,54,.18);transform:rotate(-1deg);padding:10px 16px"><span style="font-family:'Karla',sans-serif;font-weight:700;font-size:16px;color:#163936;">Mainscreen</span></div><div style="background:#FBF5E8;border-radius:8px;box-shadow:0 6px 0 rgba(22,57,54,.18);transform:rotate(2deg);padding:10px 16px"><span style="font-family:'Karla',sans-serif;font-weight:700;font-size:16px;color:#163936;">Notizen</span></div><div style="background:#FBF5E8;border-radius:8px;box-shadow:0 6px 0 rgba(22,57,54,.18);transform:rotate(-1deg);padding:10px 16px"><span style="font-family:'Karla',sans-serif;font-weight:700;font-size:16px;color:#163936;">Sound an</span></div><div style="background:#FBF5E8;border-radius:8px;box-shadow:0 6px 0 rgba(22,57,54,.18);transform:rotate(1deg);padding:10px 16px"><span style="font-family:'Karla',sans-serif;font-weight:700;font-size:16px;color:#163936;">Töne probehören</span></div></div></div>
 </body>
 </html>
