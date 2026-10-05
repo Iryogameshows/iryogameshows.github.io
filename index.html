@@ -13,6 +13,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link rel="stylesheet" href="styles.css">
+<script src="js/theme.js"></script>
 </head>
 <body>
 
@@ -78,7 +79,18 @@
     <button class="menu-pill" onclick="showScreen('host-notes-screen')">📋 Notizen</button>
     <button class="menu-pill" id="sfx-toggle" onclick="this.textContent = SFX.toggle() ? '🔊 Sound an' : '🔇 Sound aus'"></button>
     <button class="menu-pill" id="sfx-preview" onclick="sfxPreview(this)" title="Spielt alle Geräusche nacheinander ab">🎧 Töne probehören</button>
-    <button class="menu-pill" onclick="openDesigns()" title="18 Design-Richtungen zum Durchblättern - oeffnet einen eigenen Tab">🎨 Designs</button>
+    <button class="menu-pill" onclick="openDesigns()" title="Design der ganzen Seite und des Mainscreens einstellen">🎨 Design</button>
+  </div>
+</div>
+
+<!-- DESIGN-AUSWAHL: welche Richtung aus designs/ die Seite traegt -->
+<div id="design-screen" class="screen">
+  <div class="page-title"><em>🎨 Design</em> der Show</div>
+  <p class="design-hint">Gilt für diese Seite und den Mainscreen. Aktiv: <strong id="design-current"></strong></p>
+  <div id="design-list" class="design-list"></div>
+  <div class="edit-bar" style="margin-top:16px;">
+    <button class="btn btn-secondary" onclick="openDesignGallery()">Alle Entwürfe ansehen</button>
+    <button class="btn btn-primary" onclick="showScreen('menu-screen')">Zurück</button>
   </div>
 </div>
 

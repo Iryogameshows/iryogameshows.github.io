@@ -993,6 +993,9 @@ function injectBoardStyles() {
     st.textContent = boardStyleCss();
     return st;
   });
+  /* Die Design-Richtung steht als Variablen am <html> - der Spiegel traegt
+     nur den <body> herueber, also hier eigens setzen (js/theme.js). */
+  applyThemeToDoc(doc, themeKey());
 }
 
 /* Ruft die Seite im Zuschauerfenster selbst auf, sobald sie geladen ist -

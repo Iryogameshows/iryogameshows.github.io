@@ -623,7 +623,7 @@ function renderLogo(line1, line2, size2, icon) {
         <polygon points="50,22 50,84 64,88 64,18" fill="#3a3f6b"/>
         <polygon points="70,24 70,86 84,90 84,20" fill="#3a3f6b"/>
       </g>
-      <text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="32" fill="url(#goldText)" filter="url(#glow)" letter-spacing="2">${line1}</text>
+      <text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="32" class="logo-word" fill="url(#goldText)" filter="url(#glow)" letter-spacing="2">${line1}</text>
     </svg>`;
   } else {
     inner = `<svg viewBox="0 0 300 ${line2 ? vbH : 120}" xmlns="http://www.w3.org/2000/svg">
@@ -638,9 +638,9 @@ function renderLogo(line1, line2, size2, icon) {
       </defs>
       <g transform="translate(127,6) scale(0.575)">${logoIconMarkup(icon)}</g>
       ${line2
-        ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="22" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
-           <text x="150" y="${y2}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
-        : `<text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="38" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
+        ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="22" class="logo-word" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
+           <text x="150" y="${y2}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" class="logo-word" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
+        : `<text x="150" y="98" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="38" class="logo-word" fill="url(#goldText)" filter="url(#glow)" letter-spacing="4">${line1}</text>`
       }
     </svg>`;
   }
@@ -1823,13 +1823,3 @@ function toggleNoteChecked(i){
 }
 
 // ── TURNIER ── Mehrtägige Gameshow: gleiche Teams, gewichtete Spiele, Gesamtwertung.
-
-/* Die Design-Entwuerfe (designs/) liegen bewusst neben dem Spiel und nicht
-   darin: eigenes Dokument, kein Zugriff auf js/, styles.css oder Firebase.
-   Deshalb oeffnet der Knopf einen neuen Tab statt einen Screen zu zeigen -
-   waehrend einer Show soll ein Fehlklick die laufende Seite nicht verlassen. */
-function openDesigns(){
-  const ziel = new URL('designs/', location.href).href;
-  const w = window.open(ziel, 'iryo-designs');
-  if (!w) alert('Der Browser hat den Tab blockiert.\n\nPop-ups für diese Seite erlauben und noch einmal klicken.');
-}

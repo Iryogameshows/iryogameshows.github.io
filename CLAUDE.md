@@ -69,7 +69,8 @@ Statische Seite, **kein Build-Step**. GitHub Pages served die Dateien direkt.
 index.html      Markup: alle Screens + die <script>-Tags am Ende
 styles.css      gesamtes CSS
 js/
-  core.js       Logo-Rendering, showScreen(), Gemeinsames  ← lädt zuerst
+  theme.js      Design-Richtung (18 Variablensätze)  ← lädt im <head>, vor allem anderen
+  core.js       Logo-Rendering, showScreen(), Gemeinsames  ← lädt zuerst im <body>
   feud.js       Family Feud
   jeopardy.js   Jeopardy-Logik
   jeopardy-ui.js Jeopardy-Board/Overlays
