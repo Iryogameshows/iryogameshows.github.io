@@ -12,6 +12,8 @@
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: 'Manrope', system-ui, sans-serif; }
 body { display: flex; flex-direction: column; min-height: 100%; }
 header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+.back { display: inline-flex; align-items: center; height: 48px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 700 14px 'Manrope', sans-serif; text-decoration: none; }
+.back:hover { border-color: var(--accent); }
 .nav-btn { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font-size: 20px; cursor: pointer; }
 .nav-btn:hover { border-color: var(--accent); }
 .current { display: flex; flex-direction: column; min-width: 220px; }
@@ -39,6 +41,7 @@ main { flex: 1; min-height: 340px; display: flex; align-items: center; justify-c
 </head>
 <body>
 <header>
+  <a class="back" href="../" title="Zurück zur Gameshow">&#8592; Show</a>
   <button class="nav-btn" id="prev" type="button" aria-label="Vorherige Richtung">&#9664;</button>
   <div class="current"><small id="num">RICHTUNG</small><strong id="name"></strong></div>
   <button class="nav-btn" id="next" type="button" aria-label="Nächste Richtung">&#9654;</button>

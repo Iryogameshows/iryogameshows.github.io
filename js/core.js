@@ -1823,3 +1823,13 @@ function toggleNoteChecked(i){
 }
 
 // ── TURNIER ── Mehrtägige Gameshow: gleiche Teams, gewichtete Spiele, Gesamtwertung.
+
+/* Die Design-Entwuerfe (designs/) liegen bewusst neben dem Spiel und nicht
+   darin: eigenes Dokument, kein Zugriff auf js/, styles.css oder Firebase.
+   Deshalb oeffnet der Knopf einen neuen Tab statt einen Screen zu zeigen -
+   waehrend einer Show soll ein Fehlklick die laufende Seite nicht verlassen. */
+function openDesigns(){
+  const ziel = new URL('designs/', location.href).href;
+  const w = window.open(ziel, 'iryo-designs');
+  if (!w) alert('Der Browser hat den Tab blockiert.\n\nPop-ups für diese Seite erlauben und noch einmal klicken.');
+}
