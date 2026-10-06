@@ -12,7 +12,7 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
-## 2026-10-06 — Show-Symbole je Design: Regeln in styles.css (UNCOMMITTET, Hash folgt)
+## 2026-10-06 — Show-Symbole je Design: Regeln in styles.css (`5ac4376`)
 
 **Gemacht.** Fortsetzung von `d226865`. David: „Stil je Richtung wie geplant
 umsetzen" - ein Zeichenstil je Richtung, nicht je Show und Richtung.
