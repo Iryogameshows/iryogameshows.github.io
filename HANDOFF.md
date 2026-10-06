@@ -12,6 +12,78 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-06 — UNFERTIG: Show-Symbole je Design neu zeichnen (`d226865`)
+
+**Auftrag (David).** „die Show-Symbole auch pro Design neu zeichnen" - nach
+`86bc0e2` sind die Symbole in allen Richtungen nur umgefärbt.
+
+**Stand.** Abgebrochen auf Davids Wunsch, um an einem anderen Rechner
+weiterzumachen. Gepusht ist nur die Vorbereitung, sichtbar ändert sich
+nichts:
+- `js/core.js`: Klasse `show-icon` an `STAR_SVG`, `DANGER_SVG` (je am
+  `<svg>`), `gameCardIcon` (`<svg>`) und den beiden Symbol-`<g>` in
+  `renderLogo`. Damit erfasst eine CSS-Regel alle fünf Stellen: Show-Logo
+  oben, Menükarten, Intros/Titel (auch Mainscreen), Tutorial, Turnierplan.
+- `index.html`: `<svg id="show-icon-defs">` direkt nach `<body>` - Filter
+  `#ico-pixel` (Mosaik, 5 Einheiten), `#ico-chalk` (Turbulenz + Körnung),
+  Verläufe `#ico-aurora`, `#ico-deco`, Muster `#ico-scan`. Bewusst nicht
+  `display:none` (dann baut der Browser Verläufe/Filter nicht, siehe
+  Kommentar über `withOwnGradId`) und im `<body>`, damit der Spiegel es in
+  den Mainscreen trägt.
+
+**Was fehlt: die Regeln in `styles.css`.** Die Symbole bestehen aus vier
+Sorten Elementen, die sich per Attribut-Selektor greifen lassen:
+`[fill^="url"]` (Goldfläche), `[stroke^="url"]` (Goldlinie),
+`[fill="#0b0e2c"]`/`[stroke="#0b0e2c"]` (Aussparung), `[fill="#3a3f6b"]`
+(gedimmte Jeopardy-Säulen). Geplant: Basisregel
+`:root[data-theme]:not([data-theme="A"]) .show-icon …` mit Variablen
+`--ico-fill`, `--ico-sfill`, `--ico-line`/`--ico-lw` (Kontur mit
+`paint-order:stroke`), `--ico-cut`, `--ico-dim`, `--ico-filter` auf
+`svg.show-icon, g.show-icon` (Spezifität muss
+`.menu-card:hover .menu-card-icon svg` schlagen, also `svg.show-icon` und
+später im CSS). Je Richtung:
+
+| | Technik | Fläche / Linie / Aussparung / gedimmt / Filter |
+|---|---|---|
+| A | Studio-Gold bleibt, Glühbirnen-Schein | Gold unverändert / – / #0A0C26 / #2A2E66 / drop-shadow 0 0 6px rgba(255,201,60,.6) |
+| B | verpixelt | #FFE14D / – / #0B0A12 / #2B2740 / url(#ico-pixel) drop-shadow(3px 3px 0 #8A7400) |
+| C | Sticker | #FFA3D1, Kontur #121212 3.5 / Linien #121212 / #121212 / #FFF / drop-shadow(4px 4px 0 #121212) |
+| D | zweifarbig | #FF5B1F / Linien #F2F2F2 / #0E0E0E / #3A3A3A / – |
+| E | 70er-Doppelschatten | #F6E7CB / Linien #F2B33D / #2B1810 / #8C3A1A / drop-shadow(3px 3px 0 #E8622C) drop-shadow(3px 3px 0 #8C3A1A) |
+| F | Comic | #FFE600, Kontur #111 3.5 / Linien #E8453C / #111 / #FFF / drop-shadow(4px 4px 0 #111) |
+| H | Bauhaus | `:nth-child(3n+1/2/3)` → #D7372B / #1F4FA3 / #F2C230 / #ECEAE4 / #141414 |
+| I | Strichzeichnung | fill none, stroke #C9A54C 2 (auch Aussparungen) / dim rgba(201,165,76,.4) |
+| J | Kreide | fill none, stroke #EDEDE6 3 / url(#ico-chalk) |
+| K | Neon | fill none, stroke #FF4FA3 3, Linien #45F0FF / drop-shadow(0 0 3px #FF4FA3) drop-shadow(0 0 8px #FF4FA3) |
+| L | Druckerschwärze | #1A1712 / #1A1712 / #978C73 / rgba(26,23,18,.35) / – |
+| M | Aurora | url(#ico-aurora) / #070A1A / rgba(183,166,255,.25) / drop-shadow(0 0 6px rgba(183,166,255,.6)) |
+| N | Papierschnitt | #F06A4E / Linien #163936 / #FBF5E8 / #9CCBC0 / drop-shadow(2px 3px 0 rgba(22,57,54,.25)) |
+| O | Phosphor | url(#ico-scan) / Linien #7CFFA0 / #05140B / #1F5A33 / drop-shadow(0 0 4px rgba(124,255,160,.7)) |
+| P | Memphis | `:nth-child(4n…)` #FFD23F #3FD0C9 #FF6FA8 #7B5CFF, Kontur #141414 2.5 / #141414 / #F4F1FF |
+| Q | Riso | #3255A4 / #F2EEE4 / rgba(50,85,164,.3) / drop-shadow(3px 2px 0 rgba(255,72,176,.85)), mix-blend-mode multiply |
+| R | Plattencover | #F2A900 / Linien #F4F1EA / #111 / #3A3A3A / – |
+| S | Art déco | url(#ico-deco), Haarlinie #FBEBC0 .8 / Linien #D9B66B / #0B0A08 / rgba(217,182,107,.25) |
+
+Danach die alten Regeln in `styles.css` entfernen, die nur `#main-logo`
+umfärben (`#main-logo linearGradient stop`, `#main-logo [fill="#0b0e2c"]`,
+`[fill="#3a3f6b"]`, `:root[data-theme-hell] #main-logo linearGradient
+stop`) - die `.logo-word`-Regeln bleiben.
+
+**Offene Entscheidung.** David wurde gefragt, ob dieser Zeichenstil je
+Richtung reicht oder ob er je Show und Richtung ein eigenes Piktogramm
+will (18 × 9 Zeichnungen). Keine Antwort bisher - vor dem Weiterbauen
+klären.
+
+**Geprüft.** `node check.js` = alles in Ordnung. Nicht im Browser angesehen
+(es gibt noch nichts zu sehen). Ungeprüft: ob `#ico-pixel` als CSS-`filter`
+auf einem `<g>` im Show-Logo und im Mainscreen-Dokument wirkt.
+
+**Fallstricke.** Edge headless für Tests: nach jedem CDP-Lauf Prozesse mit
+`scratchpad` in der Kommandozeile beenden (Eintrag `86bc0e2`). Das
+Testskript `cdp.mjs` liegt nur im Scratchpad der alten Sitzung.
+
+---
+
 ## 2026-10-06 — Eigenes Logo je Design-Richtung (`86bc0e2`)
 
 **Gemacht.** David: „Die Logos sind nicht da drin, da is überall das
