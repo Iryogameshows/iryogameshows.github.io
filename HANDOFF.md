@@ -12,6 +12,55 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-06 — Eigenes Logo je Design-Richtung (`86bc0e2`)
+
+**Gemacht.** David: „Die Logos sind nicht da drin, da is überall das
+Standardlogo." Stimmte: `renderIryoHubLogo` (core.js) zeichnete immer das
+Blau-Gold-Canvas-Schild, `theme.js` fasste Logos nicht an.
+- `DESIGN_LOGOS` in `js/theme.js`: je Richtung die Wortmarke aus
+  `designs/s/<K>-Menu.html`, als HTML auf 640 px Breite. `themeLogoHtml`
+  rechnet jede px-Angabe in `cqw` um (Box mit `container-type:inline-size`),
+  dasselbe Markup passt so ins Menü (400 px) und auf den Wartebildschirm
+  (`BOARD_IDLE_WIDTH`, 60vw).
+- `renderIryoHubLogo` nimmt mit Richtung dieses HTML, sonst wie bisher das
+  Schild. `applyTheme` zeichnet Menü- und Wartebildschirm-Logo sofort neu.
+- Design-Screen zeigt das Hub-Logo (vorher „KELLER FEUD" aus dem
+  `else`-Zweig von `showScreen`).
+- Show-Logos oben (`renderLogo`): per CSS `--font-logo`, Symbol und Wort in
+  `--gold-rgb` (helle Richtungen: Wort `--fg`, Symbol `--accent-text`),
+  kein Goldschein. `fitLogoWords` staucht Wörter über 284 Einheiten per
+  `textLength` (Press Start 2P, Fraktur). L nimmt für Show-Logos Playfair
+  Display 900 - Fraktur in Versalien („WER WEISS") war unleserlich.
+- Klassik-Schild: lädt Luckiest Guy per `document.fonts.load` nach, wenn
+  die Seite mit Richtung gestartet wurde (sonst Ersatzschrift im Canvas).
+
+**Warum HTML statt Canvas je Richtung.** Der Mainscreen spiegelt per
+`cloneNode`, ein geklontes Canvas kommt leer an (Kommentar in core.js).
+Verworfen: die Menü-Entwürfe per iframe einbetten - eigenes Dokument, kein
+Spiegel, und das ganze Menü statt nur der Marke.
+
+**Geprüft.** `node check.js` = alles in Ordnung (1013 → 1020
+Klammerpaare); `node check.js --types` = 14 Dateien, keine Meldung.
+Edge headless: Kontaktabzug aller 18 Menü-Logos; F (Umbruch), O
+(ASCII-Grafik zerfiel, Rahmenzeichen in Ersatzschrift - durch VT323-
+Schriftzug ersetzt), P (Zeile auseinander), S (Strahlenkranz zu stark)
+nachgebessert und erneut fotografiert. Show-Logos WWDS für B, L, K, C, S, F
+und Jeopardy für 6 Richtungen (Breiten 117-272, keine über 284). Start mit
+`designTheme=L`, dann Klassik: Schild in Luckiest Guy,
+`fonts.check` = true. Echtes Mainscreen-Fenster: nach `applyTheme('R')`
+steht in `#board-idle` „Iryo GAMESHOW RECORDS".
+
+**Ungeprüft.** Show-Logos für die übrigen 12 Richtungen einzeln; die
+Symbole sind nur umgefärbt, nicht je Richtung neu gezeichnet. Handy-Seiten
+(`buzzer/`, `gamepad/`) tragen keine Richtung.
+
+**Fallstricke.** `msedge --remote-debugging-port` hinterlässt nach
+`ed.kill()` Kindprozesse, die den Port halten; der nächste Lauf hängt sich
+dann an die alte Instanz (in einen Popup-Tab ohne `applyTheme`). Vor jedem
+Lauf Edge-Prozesse mit `scratchpad` in der Kommandozeile beenden.
+
+---
+
 ## 2026-10-06 — Design-Fenster live: Branch nach master, Overlay-Hintergrund (`7b19391`)
 
 **Gemacht.** `claude/game-buzzer-fixes-90cyjz` per Fast-Forward nach
