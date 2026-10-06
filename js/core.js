@@ -482,7 +482,7 @@ function sfxPreview(btn){
 
 // Drei Balken: der oberste voll golden (metallischer Verlauf), die zwei
 // darunter nur mit goldenem Rand - das Family-Feud-Logo.
-const STAR_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+const STAR_SVG = `<svg class="show-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
   <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="#FFF6E0"/><stop offset="9%" stop-color="#F5CD5E"/><stop offset="45%" stop-color="#DDA828"/><stop offset="100%" stop-color="#A97A10"/>
   </linearGradient></defs>
@@ -492,7 +492,7 @@ const STAR_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
 </svg>`;
 
 // Vier perspektivische 3D-Spalten, eine leuchtet golden - das Jeopardy-Logo.
-const DANGER_SVG = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+const DANGER_SVG = `<svg class="show-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
   <defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="#FFE066"/><stop offset="100%" stop-color="#F0B800"/>
   </linearGradient></defs>
@@ -617,7 +617,7 @@ function renderLogo(line1, line2, size2, icon) {
         </linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <g transform="translate(121.8,0) scale(0.6)">
+      <g class="show-icon" transform="translate(121.8,0) scale(0.6)">
         <polygon points="10,18 10,80 24,84 24,14" fill="#3a3f6b"/>
         <polygon points="30,20 30,82 44,86 44,16" fill="url(#goldGrad)"/>
         <polygon points="50,22 50,84 64,88 64,18" fill="#3a3f6b"/>
@@ -636,7 +636,7 @@ function renderLogo(line1, line2, size2, icon) {
         </linearGradient>
         <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
-      <g transform="translate(127,6) scale(0.575)">${logoIconMarkup(icon)}</g>
+      <g class="show-icon" transform="translate(127,6) scale(0.575)">${logoIconMarkup(icon)}</g>
       ${line2
         ? `<text x="150" y="${y1}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="22" class="logo-word" fill="url(#goldText)" filter="url(#glow)" letter-spacing="6">${line1}</text>
            <text x="150" y="${y2}" text-anchor="middle" font-family="'Bebas Neue',sans-serif" font-size="${fs2}" class="logo-word" fill="url(#goldText)" filter="url(#glow)" letter-spacing="3">${line2}</text>`
@@ -679,7 +679,7 @@ function gameCardIcon(key){
   const gid = 'cg_' + key + '_' + (++gameIconSeq);
   const grad = `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF6E0"/><stop offset="9%" stop-color="#F5CD5E"/><stop offset="45%" stop-color="#DDA828"/><stop offset="100%" stop-color="#A97A10"/></linearGradient></defs>`;
   const body = logoIconMarkup(key).split('url(#goldGrad)').join('url(#' + gid + ')');
-  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">${grad}${body}</svg>`;
+  return `<svg class="show-icon" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">${grad}${body}</svg>`;
 }
 function renderMenuIcons(){
   document.querySelectorAll('.menu-card-icon[data-game]').forEach(el => { el.innerHTML = gameCardIcon(el.getAttribute('data-game')); });
