@@ -12,6 +12,51 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-06 — UNFERTIG: Show-Symbole je Design, CSS geschrieben, nicht angesehen (`4abba0a`)
+
+**Aktueller Stand.** Die Regeln aus der Tabelle im Eintrag zu `d226865` stehen
+in `styles.css` (Block hinter `:root[data-theme-hell] #main-logo .logo-word`),
+für alle 17 Richtungen (A–S ohne G). Variablen je Richtung: `--ico-fill`,
+`--ico-line` (Rückfall: Fläche), `--ico-contour` + `--ico-cw` (Kontur um
+Flächen, `paint-order:stroke`), `--ico-cut`, `--ico-dim`, `--ico-filter`. A
+bekommt nur Schein, Aussparung und Dimmung (Gold bleibt). I/J/K zeichnen
+Aussparungen und Säulen als Linie. H und P färben per `:nth-child` mehrfarbig.
+Die alten `#main-logo`-Umfärbungen (Verlaufs-`stop`, `#0b0e2c`, `#3a3f6b`,
+hell-Variante) sind entfernt, die `.logo-word`-Regeln geblieben.
+
+**Stopppunkt.** `node check.js` = „alles in Ordnung" (Klammern 1049). **Im
+Browser nicht angesehen** — auf Davids Wunsch unterbrochen, bevor der
+Dev-Server lief (`.claude/launch.json`, Name „Gameshows", Port 3000). Nicht
+gepusht.
+
+**Kreative Ansätze & Visionen.** Je Richtung ein eigener Zeichenstil statt
+Umfärbung: A Studio-Glühbirnen-Schein · B Mosaik/Pixel · C und F Sticker/Comic
+mit dicker schwarzer Kontur und Versatzschatten · D, R zweifarbig · E 70er-
+Doppelschatten · H Bauhaus-Dreiklang · I Strichzeichnung · J Kreide · K Neon ·
+L Druckerschwärze · M Aurora-Verlauf · N Papierschnitt · O Phosphor mit
+Scanlinien · P Memphis · Q Riso mit `multiply` · S Art déco mit Metallverlauf.
+Weiter offen (David nie beantwortet): reicht der Stil je Richtung, oder je
+Show **und** Richtung ein eigenes Piktogramm (18 × 9 Zeichnungen)?
+
+**Nächste Schritte.**
+1. Dev-Server starten, je Richtung Menü, Show-Logo oben, Intro, Tutorial und
+   Turnierplan ansehen (Screenshot, 17 Richtungen).
+2. Prüfen: wirkt `#ico-pixel` / `#ico-chalk` als CSS-`filter` auf `<g>` im
+   Show-Logo und im Mainscreen-Spiegel? Sonst Filter nur auf `<svg>`.
+3. Prüfen: `:nth-child` in H/P zählt wegen `<defs>` im Symbol schief → ggf.
+   anders lösen; Kontur der Aussparungen in I/J/K (`tp`-Mitte).
+4. Von mir **geraten**, nicht aus dem Plan: Aussparung H (#ECEAE4) und Dimmung
+   H/P (rgba(20,20,20,.25)); Linie in M/Q/L-ähnlichen Richtungen = Fläche.
+5. Bei Hover im Menü ersetzt `--ico-filter` den bisherigen Hover-Schatten —
+   ansehen, ob das stört.
+6. Erst danach push; `node check.js --types` laufen lassen (nur CSS geändert,
+   daher wenig Risiko).
+
+**Fallstricke.** Edge headless: nach jedem CDP-Lauf Prozesse mit `scratchpad`
+in der Kommandozeile beenden (Eintrag `86bc0e2`).
+
+---
+
 ## 2026-10-06 — Abschluss-Übersicht um „Kreative Ansätze & Visionen" erweitert (`8b1c8a2`)
 
 **Gemacht.** David hat die Vorgabe präzisiert. Die Abschluss-Übersicht in
