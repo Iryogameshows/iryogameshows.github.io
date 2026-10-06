@@ -12,7 +12,63 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
-## 2026-10-06 — Themen-Layouts, Runde 3 (`b76eda5`, `6ca0f92`, `bac49f1`, `c901a8f`, läuft)
+## 2026-10-06 — Themen-Layouts, Runde 3 abgeschlossen (`de8c19f`, `9ca0239`, `3a8cbd8`, `c0526ac`, `febdeb7`, `79b91db`)
+
+Fortsetzung des Eintrags darunter (L, D, H, M). Auftrag, Methode und
+Prüfweg stehen dort.
+
+### Gemacht
+
+| Commit | Richtung | neu |
+|---|---|---|
+| `de8c19f` | N Papier | Feud als **Wegweiser in der Hügellandschaft**, Wer weiß als **Briefumschläge** (Briefmarken als Punkte), TP als **Spielpfad** mit Figur, Turnier als **Papierberge** mit Gipfelfahnen, Handy als **Papierstapel** |
+| `9ca0239` | P Memphis | Feud als **Formen-Collage** (verdeckte Formen gemustert), Wer weiß als **Sprechblasen**, TP als **Twister-Matte** mit Drehscheibe, Handy als **Sternknall** |
+| `3a8cbd8` | Q Riso | Feud als **Abreiß-Tickets**, PIH als **Supermarkt-Prospekt**, Wer weiß als **Prüfungsbogen**, TP als **Kartenfächer**, Turnier als **Festival-Plakat** (Größe nach Platz), Handy als **Eintrittskarte** |
+| `c0526ac` | R Jazzplatte | Feud als **Plattenkiste**, PIH als **Cover mit Preisaufklebern**, Wer weiß als **Plattenhüllen**, TP als **Plattenspieler von oben**, Millionär als **Jukebox** |
+| `febdeb7` | S Art déco | Feud als **Hotel-Postfächer** mit Rezeptionsglocken, PIH als **Auktionshaus** mit Bieterkellen, Wer weiß als **Aufzugtüren** |
+| `79b91db` | C, H, S | Nachzügler aus der Gesamtsichtung: C Wer weiß **Stickerbogen**, C Millionär **Glücksscheibe**, H Turnier **Kreisplakat**, S TP **Halbfächer** |
+
+Insgesamt in Runde 3: **40 Screens** (36 aus der ersten Liste + 4
+Nachzügler).
+
+### Warum die Nachzügler
+
+Die erste Liste kam aus Kontaktabzügen nur für D, H, L–S, weil B bis K laut
+Branch-Historie schon eine zweite Runde hatten. Der Schluss-Abzug über
+**alle 18** zeigte trotzdem vier Gerüst-Dubletten in C, H und S. Lehre:
+„laut Historie erledigt“ ist kein Befund, der Abzug über alle ist es.
+
+### Geprüft
+
+- Jeder neue Screen per Edge-Headless in Originalgröße angesehen. Beim
+  Ansehen gefunden und behoben u. a.: Überdruck-Kopie brach anders um als
+  der Text (Q-Turnier, jetzt Grid mit zwei Ebenen in derselben Box);
+  `clip-path` schnitt die Kontur-Schatten mit ab (P-Formen, jetzt Kontur
+  auf eigener Ebene); Wortbruch „BIERKAST-EN“ (R); Karte angeschnitten
+  (Q-TP, R-WWDS, BAUPLAN 4.6); Zeiger auf falscher Kategorie (P-TP).
+- Schluss-Kontaktabzüge aller 18 Richtungen für Feud, Wer weiß, PIH,
+  Millionär, DDF, TP, Turnier, Lobby, Ergebnis, Menü, Handy, Jeopardy
+  angesehen.
+- Die Ähnlichkeits-Kennzahl taugt **nicht** als Beleg: Feud vorher/nachher
+  z. B. D 68→67, M 63→59, P 77→66, Q 35→69 — jede mittig gesetzte
+  Komposition landet bei 60–75. Belastbar sind nur die Abzüge.
+- `node check.js` vor jedem Commit: alles in Ordnung.
+
+### Offen
+
+- **Nach `master`** (live) erst nach Davids Freigabe. Der Branch enthält
+  außer `designs/` auch den Design-Umschalter in der Show (`9a78a8f`:
+  `styles.css` auf Variablen, `js/theme.js` neu) — der greift in die
+  laufende Show ein und sollte vor dem Merge einmal im Browser durchgeklickt
+  werden.
+- Nicht neu gebaut, weil sie schon eigene Ideen haben, aber Kandidaten,
+  falls David weiter schärfen will: Listen-Layouts bei Wer weiß (A, D, J,
+  K, O) und Handy-Knöpfe, die alle mittig sitzen (liegt am Buzzer selbst).
+- Skripte (`kit.js` + je Richtung eine Datei) weiterhin nur im Scratchpad.
+
+---
+
+## 2026-10-06 — Themen-Layouts, Runde 3, Teil 1 (`b76eda5`, `6ca0f92`, `bac49f1`, `c901a8f`)
 
 **Auftrag (David):** „alle sollen ein individuelles Layout haben, auch
 inspiriert am Design (z.b. mit der Zeitung und dpih kann man was schönes
@@ -61,7 +117,7 @@ Für L bis S lief Runde 2 nicht mehr.
 
 ### Offen
 
-- **N, P, Q, R, S** stehen noch aus (20 Screens, Liste oben).
+- ~~**N, P, Q, R, S** stehen noch aus~~ — erledigt, siehe Eintrag darüber.
 - Dann alles nach `master` — erst nach Davids Freigabe; der Branch enthält
   auch den Design-Umschalter in der Show (`9a78a8f`, ändert `styles.css`).
 - Skripte (`kit.js` + je Richtung eins) liegen im Scratchpad dieser Sitzung,
