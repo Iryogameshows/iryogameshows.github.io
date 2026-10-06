@@ -12,7 +12,7 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
-## 2026-10-06 — Voting-Seite für die 18 Design-Richtungen `/voting/` (UNCOMMITTET, Hash folgt)
+## 2026-10-06 — Voting-Seite für die 18 Design-Richtungen `/voting/` (`2982e6d`)
 
 **Auftrag (David).** Eine Seite, die Freunde bekommen: alle Designs
 anschauen, Top 5 geordnet abgeben (Pflicht), bis zu 5 Schlechte geordnet
