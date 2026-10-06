@@ -12,6 +12,50 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-06 — Design-Fenster live: Branch nach master, Overlay-Hintergrund (`7b19391`)
+
+**Gemacht.** `claude/game-buzzer-fixes-90cyjz` per Fast-Forward nach
+`master` gebracht (vorher 42 Commits voraus, 0 zurück; master stand
+unverändert bei `71522b2`). Damit live: der Knopf „🎨 Design" im Hauptmenü
+öffnet den Screen `#design-screen` in der Show selbst (kein eigener Tab mehr,
+Davids Wunsch „auf der Website mit nem Window, nicht eine extra url"),
+`js/theme.js` mit 18 Richtungen, und alle Entwürfe aus Runde 2 und 3 unter
+`designs/`. Dazu `7b19391`: `#host-gate` und `.jeopardy-clue-overlay`
+nehmen `var(--bg-img)`/`var(--bg-size)` statt des fest eingetragenen
+Studio-Blau-Schimmers.
+
+**Warum der Fix.** Beim Durchklicken lag auf L (New York) und Q (Riso) ein
+blauer Fleck oben im Passwort-Overlay; das Jeopardy-Overlay hatte denselben
+festen Verlauf und steht auf der Leinwand. Der `<body>` las die Variable
+schon, die beiden Overlays nicht.
+
+**Geprüft.** `node check.js` = alles in Ordnung (14 js-Dateien, 424
+Handler, 269 IDs, 1013 Klammerpaare). Durchgeklickt per Edge headless über
+das DevTools-Protokoll (Skript im Scratchpad, nicht im Repo; das
+Vorschaufenster der App lud nicht): 18 Richtungen in `DESIGN_THEMES`
+(ABCDEFHIJKLMNOPQRS), Design-Screen mit 19 Karten (Klassik + 18) und 18
+Vorschau-iframes, `--pv-scale` 0.2016; `applyTheme('L')` setzt
+`data-theme=L`, `localStorage.designTheme=L`, Schrift „Old Standard TT";
+nach Neuladen weiter `L`; Mainscreen-Fenster (`openMainscreen`) übernimmt
+`L` und beim Wechsel `Q`; `applyTheme('')` entfernt Attribut, Speicher und
+alle Inline-Variablen. Konsolenfehler: nur `favicon.ico` 404. Das
+Passwort-Overlay wurde im Test per Skript entfernt, nicht per Eingabe.
+
+**Ungeprüft.** Ein echter Spielablauf mit Firebase-Buzzern unter einer
+Richtung; Feud-Start (`startGame` brach im Test mit „Keine Fragen!" ab,
+weil das frische Profil keine Fragen hat). Die übrigen Screens nur über
+die Variablen, nicht einzeln angesehen.
+
+**Offen.** Das Gamemaster-Fenster (`updateGamemasterOverlay` in
+`js/feud.js`, „Zwischensequenz läuft") hat eigene, fest dunkle Farben und
+folgt der Richtung nicht. Nur Host-Sicht, deshalb liegen gelassen. Die
+Generator-Skripte der Entwürfe liegen weiter nur im Scratchpad.
+
+**Fallstricke.** `window.open` aus `Runtime.evaluate` braucht
+`userGesture: true`, sonst blockt Edge das Mainscreen-Fenster.
+
+---
+
 ## 2026-10-06 — Themen-Layouts, Runde 3 abgeschlossen (`de8c19f`, `9ca0239`, `3a8cbd8`, `c0526ac`, `febdeb7`, `79b91db`)
 
 Fortsetzung des Eintrags darunter (L, D, H, M). Auftrag, Methode und
