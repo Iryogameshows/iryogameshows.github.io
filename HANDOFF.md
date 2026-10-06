@@ -12,6 +12,74 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-07 — Entwürfe hochwertiger: acht Richtungen in `designs/s/` (UNCOMMITTET, Hash folgt)
+
+**Auftrag (David).** „1,4,5,8 (deutlich), 11,14, 17 und 18 hochwertiger“.
+Zuordnung nach der Nummerierung der Designs-Seite (annahme, nicht
+rückbestätigt): 1 = A Studio, 4 = D Late Night, 5 = E 70er, 8 = I Salon
+(deutlich); 11 = L New York, 14 = O Terminal, 17 = R Jazzplatte, 18 = S Art
+déco. Auf Nachfrage „Beides“ (Entwürfe und laufende Show) und: vor allem
+hochwertigere Details, manche Sachen sähen „billig“ aus; feinere Details,
+bessere Schrift und Abstände, stimmigere Farben, mehr Bewegung. Nach dem
+Pilot an I: „mach die anderen sieben Richtungen genauso“.
+
+**Gemacht (nur die Entwürfe, 95 Dateien in `designs/s/`).** Je Richtung ein
+Skript in `designs/polish/` (siehe README dort), das exakt erkannte
+Style-Muster der Exportdateien umschreibt - kein Handeditieren von 96 Dateien.
+- **I Salon:** Filz mit Körnung und Vignette, goldener Doppelrand, Papierkarten
+  mit Textur/Innenrahmen/Schichtschatten, Kartenrücken mit Raute, Chips mit
+  Ring und Kante (Stapel wirken dick), Spielautomat im Handy-Bild mit
+  Metall- und Lackverläufen.
+- **D Late Night:** Filmkorn, warmer Lichtkegel, Papierkarten, Orange-Block
+  mit Glut, Skyline mit Kantenlicht und glühenden Fenstern, Balken mit
+  Tiefe, Zeilen mit weichem Lichtverlauf, Orange-Schrift mit Glut.
+- **A Studio:** Glanzkante auf allen Tafeln, Glühbirnen mit hellem Kern,
+  eingelassene Antwortfelder, 3D-Goldflächen, Korn und Vignette, weichere
+  Scheinwerferkegel.
+- **E 70er:** glänzendes Email (Orange/Gelb/Braun mit Glanzkante und hartem
+  Retro-Schatten), Antwortbänder, Korn, Strahlen blenden zum Rand aus,
+  SVG-Fächer im Jeopardy-Bild mit Kante und Schatten.
+- **L New York:** Papierfaser, Falz in der Mitte, Druckerschwärze mit Struktur,
+  Schlagzeilen mit Farbbluten, Rotstempel als Multiply.
+- **O Terminal:** Kunststoffgehäuse mit Korn, stärkere Phosphor-Glut,
+  **Animation:** rollende Scanlines, leichtes Flackern, blinkender Cursor.
+- **R Jazzplatte:** Plattenhüllen aus Karton, Vinyl mit Glanz, Etiketten mit
+  Verlauf, Papierkarten, Raum mit Korn.
+- **S Art déco:** schwarzer Lack mit Korn, Goldleisten mit Tiefe,
+  Eintrittskarten mit Papier, **Animation:** Strahlenkränze drehen sich
+  langsam (240 s). Beide Animationen stehen in einem
+  `<style id="iryo-polish">` im Kopf und gehen bei `prefers-reduced-motion` aus.
+
+**Warum so.** Der Export hat überall nur Inline-Styles; ein gemeinsames
+Stylesheet hätte gegen sie `!important` gebraucht. Das Umschreiben der
+Style-Attribute nach festen Mustern lässt sich pro Richtung prüfen und
+zurücknehmen (`git checkout -- designs/s/<K>-*.html`). Erste Fassung der I-Politur
+hatte den SVG-Filterverweis doppelt kodiert (`%2523`) - Karten wurden schwarz;
+Filz zuerst zu hell, Papier in L zuerst zu grau (Faser zu stark). Beides
+korrigiert. Verworfen: Entwürfe per iframe-Skript statt Umschreiben der Dateien,
+und gemeinsame Regeln für alle Richtungen (jede hat anderes Material).
+
+**Geprüft.** Alle 96 Dateien: Klammern in allen 4792 Style-Attributen
+ausgeglichen, keine `undefined`/`NaN`. Im Browser (Vorschau-Server, Ansicht in
+Haelften wegen des schmalen Fensters) angesehen: Menü, Family Feud, Jeopardy,
+Millionär für A, D, E, I, L, O, R, S; dazu Handy und weitere Screens bei I
+(Automat), D, E. `node check.js` = alles in Ordnung (prüft `designs/` nicht).
+Dateigröße der acht Richtungen von 760 auf 1032 KB (Rauschen als data-URI,
+meist 20-40 KB je Datei).
+
+**Ungeprüft.** Nicht jeder der 96 Screens einzeln (Stichproben), das Verhalten
+auf einem echten Handy, die Auslastung beim Voting mit 18 Vorschauen, in denen
+jetzt O und S animieren, **die laufende Show** (`js/theme.js`, `styles.css`)
+- dort ist nichts geändert, sie kennt weiter nur Farben und Schriften der
+Richtungen. Ob das Wort „billig“ bei David genau diese Stellen meint, ist
+Vermutung.
+
+**Offen.** Das Gleiche für die laufende Show (David wählte „Beides“).
+Entwürfe und Show sind damit auseinander; wer neu exportiert, überschreibt die
+Politur und muss `designs/polish/` erneut laufen lassen.
+
+---
+
 ## 2026-10-06 — Voting-Seite für die 18 Design-Richtungen `/voting/` (`2982e6d`)
 
 **Auftrag (David).** Eine Seite, die Freunde bekommen: alle Designs
