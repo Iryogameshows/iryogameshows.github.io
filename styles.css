@@ -1143,10 +1143,10 @@ body {
 .jeopardy-clue-overlay {
   position: fixed; inset: 0; z-index: 1000;
   background: var(--bg);
-  background-image:
-    radial-gradient(ellipse 120% 80% at 50% 20%, rgba(30,50,140,.5) 0%, transparent 60%),
-    radial-gradient(ellipse 80% 60% at 20% 80%, rgba(100,20,20,.2) 0%, transparent 50%),
-    radial-gradient(ellipse 80% 60% at 80% 80%, rgba(20,40,120,.2) 0%, transparent 50%);
+  /* Aus der Design-Richtung (js/theme.js), wie am <body> - fest eingetragen
+     stand hier das Studio-Blau auch auf hellen Richtungen. */
+  background-image: var(--bg-img);
+  background-size: var(--bg-size);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   gap: 18px; padding: 40px;
@@ -1331,7 +1331,7 @@ body {
 .qr-hint { color: rgba(0,0,0,.4); font-size: .72rem; text-transform: uppercase; letter-spacing: 2px; }
 /* Passwort-Gate (nur Host) */
 #host-gate { position: fixed; inset: 0; z-index: 5000; background: var(--bg);
-  background-image: radial-gradient(ellipse 120% 80% at 50% 20%, rgba(30,50,140,.5) 0%, transparent 60%);
+  background-image: var(--bg-img); background-size: var(--bg-size);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; padding: 24px; text-align: center; }
 #host-gate .hg-title { font-family: var(--font-display); font-size: 2.6rem; color: var(--accent-text); letter-spacing: 5px; }
 #host-gate .hg-sub { color: rgba(var(--fg-rgb),.5); font-size: .9rem; max-width: 380px; line-height: 1.5; }
