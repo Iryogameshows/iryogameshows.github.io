@@ -2554,14 +2554,51 @@ body {
    dunkelblauen Aussparungen im Symbol nehmen den Seitengrund an. */
 :root[data-theme] .logo svg { filter: none; }
 :root[data-theme] #main-logo .logo-word { font-family: var(--font-logo); fill: rgb(var(--gold-rgb)); filter: none; }
-:root[data-theme] #main-logo linearGradient stop { stop-color: rgb(var(--gold-rgb)); }
-:root[data-theme] #main-logo [fill="#0b0e2c"] { fill: var(--bg); }
-:root[data-theme] #main-logo [fill="#3a3f6b"] { fill: rgba(var(--fg-rgb), .3); }
 /* Fraktur in Versalien ist unleserlich ("WER WEISS") - die Show-Logos in L
    deshalb in der Zeitungs-Serife; die Fraktur bleibt dem Kopf "The Iryo Gameshow". */
 :root[data-theme="L"] #main-logo .logo-word { font-family: 'Playfair Display', serif; font-weight: 900; }
-:root[data-theme-hell] #main-logo linearGradient stop { stop-color: var(--accent-text); }
 :root[data-theme-hell] #main-logo .logo-word { fill: var(--fg); filter: none; }
+
+/* Show-Symbole je Richtung (HANDOFF d226865). Alle fuenf Stellen tragen
+   die Klasse .show-icon (core.js); gegriffen werden die vier Sorten Elemente
+   per Attribut: Goldflaeche [fill^="url"], Goldlinie [stroke^="url"],
+   Aussparung #0b0e2c, gedimmte Saeule #3a3f6b. Spezifitaet = die des
+   Menue-Hovers, steht aber spaeter, gewinnt also. */
+:root[data-theme] svg.show-icon, :root[data-theme] g.show-icon { filter: var(--ico-filter, none); }
+:root[data-theme] .show-icon [fill="#0b0e2c"] { fill: var(--ico-cut, var(--bg)); }
+:root[data-theme] .show-icon [stroke="#0b0e2c"] { stroke: var(--ico-cut, var(--bg)); }
+:root[data-theme] .show-icon [fill="#3a3f6b"] { fill: var(--ico-dim, rgba(var(--fg-rgb), .3)); }
+:root[data-theme]:not([data-theme="A"]) .show-icon [fill^="url"] { fill: var(--ico-fill); stroke-linejoin: round; }
+:root[data-theme]:not([data-theme="A"]) .show-icon [fill^="url"]:not([stroke]) { stroke: var(--ico-contour, none); stroke-width: var(--ico-cw, 0); paint-order: stroke; }
+:root[data-theme]:not([data-theme="A"]) .show-icon [stroke^="url"] { stroke: var(--ico-line, var(--ico-fill)); }
+/* Strichzeichnungen: auch Aussparungen und Saeulen nur als Linie */
+:root:is([data-theme="I"], [data-theme="J"], [data-theme="K"]) .show-icon :is([fill="#0b0e2c"], [fill="#3a3f6b"]) { fill: none; stroke: var(--ico-contour); stroke-width: var(--ico-cw); }
+:root:is([data-theme="I"], [data-theme="J"], [data-theme="K"]) .show-icon [fill="#3a3f6b"] { stroke: var(--ico-dim); }
+
+:root[data-theme="A"] { --ico-cut: #0A0C26; --ico-dim: #2A2E66; --ico-filter: drop-shadow(0 0 6px rgba(255,201,60,.6)); }
+:root[data-theme="B"] { --ico-fill: #FFE14D; --ico-cut: #0B0A12; --ico-dim: #2B2740; --ico-filter: url(#ico-pixel) drop-shadow(3px 3px 0 #8A7400); }
+:root[data-theme="C"] { --ico-fill: #FFA3D1; --ico-contour: #121212; --ico-cw: 3.5; --ico-line: #121212; --ico-cut: #121212; --ico-dim: #FFF; --ico-filter: drop-shadow(4px 4px 0 #121212); }
+:root[data-theme="D"] { --ico-fill: #FF5B1F; --ico-line: #F2F2F2; --ico-cut: #0E0E0E; --ico-dim: #3A3A3A; }
+:root[data-theme="E"] { --ico-fill: #F6E7CB; --ico-line: #F2B33D; --ico-cut: #2B1810; --ico-dim: #8C3A1A; --ico-filter: drop-shadow(3px 3px 0 #E8622C) drop-shadow(3px 3px 0 #8C3A1A); }
+:root[data-theme="F"] { --ico-fill: #FFE600; --ico-contour: #111; --ico-cw: 3.5; --ico-line: #E8453C; --ico-cut: #111; --ico-dim: #FFF; --ico-filter: drop-shadow(4px 4px 0 #111); }
+:root[data-theme="H"] { --ico-fill: #D7372B; --ico-line: #141414; --ico-cut: #ECEAE4; --ico-dim: rgba(20,20,20,.25); }
+:root[data-theme="H"] .show-icon [fill^="url"]:nth-child(3n+2) { fill: #1F4FA3; }
+:root[data-theme="H"] .show-icon [fill^="url"]:nth-child(3n+3) { fill: #F2C230; }
+:root[data-theme="I"] { --ico-fill: none; --ico-contour: #C9A54C; --ico-cw: 2; --ico-line: #C9A54C; --ico-dim: rgba(201,165,76,.4); }
+:root[data-theme="J"] { --ico-fill: none; --ico-contour: #EDEDE6; --ico-cw: 3; --ico-line: #EDEDE6; --ico-dim: rgba(237,237,230,.4); --ico-filter: url(#ico-chalk); }
+:root[data-theme="K"] { --ico-fill: none; --ico-contour: #FF4FA3; --ico-cw: 3; --ico-line: #45F0FF; --ico-dim: rgba(255,79,163,.35); --ico-filter: drop-shadow(0 0 3px #FF4FA3) drop-shadow(0 0 8px #FF4FA3); }
+:root[data-theme="L"] { --ico-fill: #1A1712; --ico-line: #1A1712; --ico-cut: #978C73; --ico-dim: rgba(26,23,18,.35); }
+:root[data-theme="M"] { --ico-fill: url(#ico-aurora); --ico-cut: #070A1A; --ico-dim: rgba(183,166,255,.25); --ico-filter: drop-shadow(0 0 6px rgba(183,166,255,.6)); }
+:root[data-theme="N"] { --ico-fill: #F06A4E; --ico-line: #163936; --ico-cut: #FBF5E8; --ico-dim: #9CCBC0; --ico-filter: drop-shadow(2px 3px 0 rgba(22,57,54,.25)); }
+:root[data-theme="O"] { --ico-fill: url(#ico-scan); --ico-line: #7CFFA0; --ico-cut: #05140B; --ico-dim: #1F5A33; --ico-filter: drop-shadow(0 0 4px rgba(124,255,160,.7)); }
+:root[data-theme="P"] { --ico-fill: #FFD23F; --ico-contour: #141414; --ico-cw: 2.5; --ico-line: #141414; --ico-cut: #F4F1FF; --ico-dim: rgba(20,20,20,.25); }
+:root[data-theme="P"] .show-icon [fill^="url"]:nth-child(4n+2) { fill: #3FD0C9; }
+:root[data-theme="P"] .show-icon [fill^="url"]:nth-child(4n+3) { fill: #FF6FA8; }
+:root[data-theme="P"] .show-icon [fill^="url"]:nth-child(4n+4) { fill: #7B5CFF; }
+:root[data-theme="Q"] { --ico-fill: #3255A4; --ico-cut: #F2EEE4; --ico-dim: rgba(50,85,164,.3); --ico-filter: drop-shadow(3px 2px 0 rgba(255,72,176,.85)); }
+:root[data-theme="Q"] svg.show-icon, :root[data-theme="Q"] g.show-icon { mix-blend-mode: multiply; }
+:root[data-theme="R"] { --ico-fill: #F2A900; --ico-line: #F4F1EA; --ico-cut: #111; --ico-dim: #3A3A3A; }
+:root[data-theme="S"] { --ico-fill: url(#ico-deco); --ico-contour: rgba(251,235,192,.8); --ico-cw: .8; --ico-line: #D9B66B; --ico-cut: #0B0A08; --ico-dim: rgba(217,182,107,.25); }
 
 /* Helle Richtungen: Flaechen in Teamfarbe bleiben dunkelrot/-blau/-gruen
    (BAUPLAN 4.4) - Schrift darauf muss also hell bleiben. Die Variablen erben,
