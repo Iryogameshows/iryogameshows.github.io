@@ -12,7 +12,7 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
-## 2026-10-07 — Entwürfe hochwertiger: acht Richtungen in `designs/s/` (UNCOMMITTET, Hash folgt)
+## 2026-10-07 — Entwürfe hochwertiger: acht Richtungen in `designs/s/` (`be7ec34`)
 
 **Auftrag (David).** „1,4,5,8 (deutlich), 11,14, 17 und 18 hochwertiger“.
 Zuordnung nach der Nummerierung der Designs-Seite (annahme, nicht
