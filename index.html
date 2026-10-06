@@ -23,12 +23,24 @@
      der Spiegel sie in den Mainscreen mitnimmt. -->
 <svg id="show-icon-defs" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
   <defs>
-    <filter id="ico-pixel" x="0" y="0" width="1" height="1">
-      <feFlood x="2" y="2" width="1" height="1"/>
-      <feComposite width="5" height="5"/>
+    <!-- Mosaik (B). Zwei Faelle, weil ein Filter am <svg> in CSS-Pixeln rechnet und an der
+         <g> in Symbol-Einheiten: ico-pixel fuer <svg> (4px-Bloecke), ico-pixel-g fuer <g> (6 Einheiten).
+         Die Filterflaeche steht fest auf userSpaceOnUse ab 0/0. Mit der Vorgabe (Rand des Elements)
+         liegt die Teilregion der feFlood bei einer <g> ausserhalb der Flaeche - das Symbol blieb
+         leer; auch primitiveUnits="objectBoundingBox" lieferte in Chrome nichts. -->
+    <filter id="ico-pixel" filterUnits="userSpaceOnUse" x="0" y="0" width="600" height="600">
+      <feFlood x="1.5" y="1.5" width="1" height="1"/>
+      <feComposite width="4" height="4"/>
       <feTile result="raster"/>
       <feComposite in="SourceGraphic" in2="raster" operator="in"/>
-      <feMorphology operator="dilate" radius="2.5"/>
+      <feMorphology operator="dilate" radius="2"/>
+    </filter>
+    <filter id="ico-pixel-g" filterUnits="userSpaceOnUse" x="0" y="0" width="300" height="300">
+      <feFlood x="2.5" y="2.5" width="1" height="1"/>
+      <feComposite width="6" height="6"/>
+      <feTile result="raster"/>
+      <feComposite in="SourceGraphic" in2="raster" operator="in"/>
+      <feMorphology operator="dilate" radius="3"/>
     </filter>
     <filter id="ico-chalk" x="-10%" y="-10%" width="120%" height="120%">
       <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4" result="rausch"/>

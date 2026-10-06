@@ -2550,18 +2550,90 @@ body {
 /* Helle Richtungen: die Spiel-Logos oben sind weiss-gold mit Leuchten
    gezeichnet - auf hellem Grund verschwinden sie. Dort in Schriftfarbe. */
 /* Show-Logos oben (renderLogo in core.js) mit Richtung: deren Logo-Schrift,
-   Symbol und Schrift in der Akzentfarbe statt Gold, ohne Goldschein. Die
-   dunkelblauen Aussparungen im Symbol nehmen den Seitengrund an. */
+   Wort in der Akzentfarbe statt Gold, ohne Goldschein. Das Symbol zeichnet
+   der Block "Show-Symbole je Design-Richtung" weiter unten. */
 :root[data-theme] .logo svg { filter: none; }
 :root[data-theme] #main-logo .logo-word { font-family: var(--font-logo); fill: rgb(var(--gold-rgb)); filter: none; }
-:root[data-theme] #main-logo linearGradient stop { stop-color: rgb(var(--gold-rgb)); }
-:root[data-theme] #main-logo [fill="#0b0e2c"] { fill: var(--bg); }
-:root[data-theme] #main-logo [fill="#3a3f6b"] { fill: rgba(var(--fg-rgb), .3); }
 /* Fraktur in Versalien ist unleserlich ("WER WEISS") - die Show-Logos in L
    deshalb in der Zeitungs-Serife; die Fraktur bleibt dem Kopf "The Iryo Gameshow". */
 :root[data-theme="L"] #main-logo .logo-word { font-family: 'Playfair Display', serif; font-weight: 900; }
-:root[data-theme-hell] #main-logo linearGradient stop { stop-color: var(--accent-text); }
 :root[data-theme-hell] #main-logo .logo-word { fill: var(--fg); filter: none; }
+
+/* ---- Show-Symbole je Design-Richtung ---------------------------------
+   Alle Symbole (core.js: STAR_SVG, DANGER_SVG, gameCardIcon, renderLogo)
+   tragen die Klasse .show-icon und bestehen aus vier Sorten Elementen:
+     [fill^="url"]    Goldflaeche          [stroke^="url"]  Goldlinie
+     [fill="#0b0e2c"] Aussparung           [fill="#3a3f6b"] gedimmte Saeule
+   Jede Richtung setzt nur Variablen, die Regeln darunter gelten fuer alle:
+     --ico-fill      Flaeche              --ico-fstroke/--ico-fsw  deren Kontur
+     --ico-line      Linie                --ico-lw   Linienbreite (nur Umriss-Stile)
+     --ico-cut       Aussparung           --ico-cutline/--ico-cutlw  deren Umriss
+     --ico-dim       gedimmte Flaeche     --ico-dimline  deren Umriss
+     --ico-filter / --ico-blend           Schatten, Pixel, Kreide, Leuchten
+   :where() nimmt der Waechter-Bedingung die Spezifitaet, damit die
+   Richtungs-Regeln (Umriss-Stile, Bauhaus, Memphis) sie schlagen. A (Studio)
+   behaelt das Gold und bekommt nur Aussparung, Dimmung und Schein. */
+:where(:root[data-theme]:not([data-theme="A"])) .show-icon [fill^="url"]:not([stroke]) {
+  fill: var(--ico-fill); stroke: var(--ico-fstroke, none); stroke-width: var(--ico-fsw, 0);
+  paint-order: stroke; stroke-linejoin: round;
+}
+/* Mit eigenem Rand (Karte im Wer-weiss-denn-sowas-Pult): ohne Kontur bleibt
+   die dunkle Fuge zur Flaeche dahinter. */
+:where(:root[data-theme]:not([data-theme="A"])) .show-icon [fill^="url"][stroke] {
+  fill: var(--ico-fill); stroke: var(--ico-fstroke, var(--ico-cut)); stroke-width: var(--ico-fsw, 1.4);
+  paint-order: stroke; stroke-linejoin: round;
+}
+:where(:root[data-theme]:not([data-theme="A"])) .show-icon [stroke^="url"] {
+  stroke: var(--ico-line, var(--ico-fill));
+}
+:where(:root[data-theme]) .show-icon [fill="#0b0e2c"] { fill: var(--ico-cut); }
+:where(:root[data-theme]:not([data-theme="A"])) .show-icon [fill="#0b0e2c"]:not([stroke]) {
+  stroke: var(--ico-cutline, none); stroke-width: var(--ico-cutlw, 1);
+}
+:where(:root[data-theme]) .show-icon [stroke="#0b0e2c"]:not([fill^="url"]) { stroke: var(--ico-cut); }
+:where(:root[data-theme]) .show-icon [fill="#3a3f6b"] { fill: var(--ico-dim); }
+:where(:root[data-theme]:not([data-theme="A"])) .show-icon [fill="#3a3f6b"] {
+  stroke: var(--ico-dimline, var(--ico-fstroke, none)); stroke-width: var(--ico-fsw, 0); stroke-linejoin: round;
+}
+/* Umriss-Stile: Linien so dick wie die Konturen, nicht in den festen 3-5 Einheiten. */
+:root:is([data-theme="I"], [data-theme="J"], [data-theme="K"]) .show-icon [stroke^="url"] { stroke-width: var(--ico-lw); }
+/* Schatten und Co. Die Menuekarte hebt das Symbol beim Hover mit eigenem
+   Goldschein an (.menu-card:hover ...) - die dritte Zeile schlaegt den. */
+:root[data-theme] g.show-icon { filter: var(--ico-filter, none); mix-blend-mode: var(--ico-blend, normal); }
+/* Am <svg> selbst rechnet ein Filter in CSS-Pixeln, an der <g> in Symbol-Einheiten:
+   fuer das Pixel-Mosaik (B) deshalb --ico-filter-root. */
+:root[data-theme] svg.show-icon,
+:root[data-theme] .menu-card:hover .menu-card-icon svg.show-icon {
+  filter: var(--ico-filter-root, var(--ico-filter, none)); mix-blend-mode: var(--ico-blend, normal);
+}
+
+:root[data-theme="A"] { --ico-cut:#0A0C26; --ico-dim:#2A2E66; --ico-filter:drop-shadow(0 0 6px rgba(255,201,60,.6)); }
+:root[data-theme="B"] { --ico-fill:#FFE14D; --ico-cut:#0B0A12; --ico-dim:#2B2740; --ico-filter:url(#ico-pixel-g) drop-shadow(3px 3px 0 #8A7400); --ico-filter-root:url(#ico-pixel) drop-shadow(3px 3px 0 #8A7400); }
+:root[data-theme="C"] { --ico-fill:#FFA3D1; --ico-fstroke:#121212; --ico-fsw:3.5; --ico-line:#121212; --ico-cut:#121212; --ico-dim:#FFF; --ico-filter:drop-shadow(4px 4px 0 #121212); }
+:root[data-theme="D"] { --ico-fill:#FF5B1F; --ico-line:#F2F2F2; --ico-cut:#0E0E0E; --ico-dim:#3A3A3A; }
+:root[data-theme="E"] { --ico-fill:#F6E7CB; --ico-line:#F2B33D; --ico-cut:#2B1810; --ico-dim:#8C3A1A; --ico-filter:drop-shadow(3px 3px 0 #E8622C) drop-shadow(3px 3px 0 #8C3A1A); }
+:root[data-theme="F"] { --ico-fill:#FFE600; --ico-fstroke:#111; --ico-fsw:3.5; --ico-line:#E8453C; --ico-cut:#111; --ico-dim:#FFF; --ico-filter:drop-shadow(4px 4px 0 #111); }
+:root[data-theme="H"] { --ico-fill:#D7372B; --ico-line:#141414; --ico-cut:#ECEAE4; --ico-dim:#141414; }
+:root[data-theme="I"] { --ico-fill:none; --ico-fstroke:#C9A54C; --ico-fsw:2; --ico-line:#C9A54C; --ico-lw:2; --ico-cut:none; --ico-cutline:#C9A54C; --ico-cutlw:1.5; --ico-dim:none; --ico-dimline:rgba(201,165,76,.4); }
+:root[data-theme="J"] { --ico-fill:none; --ico-fstroke:#EDEDE6; --ico-fsw:3; --ico-line:#EDEDE6; --ico-lw:3; --ico-cut:none; --ico-cutline:#EDEDE6; --ico-cutlw:2.5; --ico-dim:none; --ico-dimline:rgba(237,237,230,.35); --ico-filter:url(#ico-chalk); }
+:root[data-theme="K"] { --ico-fill:none; --ico-fstroke:#FF4FA3; --ico-fsw:3; --ico-line:#45F0FF; --ico-lw:3; --ico-cut:none; --ico-cutline:#FF4FA3; --ico-cutlw:2; --ico-dim:none; --ico-dimline:rgba(255,79,163,.3); --ico-filter:drop-shadow(0 0 3px #FF4FA3) drop-shadow(0 0 8px #FF4FA3); }
+:root[data-theme="L"] { --ico-fill:#1A1712; --ico-line:#1A1712; --ico-cut:#978C73; --ico-dim:rgba(26,23,18,.35); }
+:root[data-theme="M"] { --ico-fill:url(#ico-aurora); --ico-line:#B7A6FF; --ico-cut:#070A1A; --ico-dim:rgba(183,166,255,.25); --ico-filter:drop-shadow(0 0 6px rgba(183,166,255,.6)); }
+:root[data-theme="N"] { --ico-fill:#F06A4E; --ico-line:#163936; --ico-cut:#FBF5E8; --ico-dim:#9CCBC0; --ico-filter:drop-shadow(2px 3px 0 rgba(22,57,54,.25)); }
+:root[data-theme="O"] { --ico-fill:url(#ico-scan); --ico-line:#7CFFA0; --ico-cut:#05140B; --ico-dim:#1F5A33; --ico-filter:drop-shadow(0 0 4px rgba(124,255,160,.7)); }
+:root[data-theme="P"] { --ico-fill:#FFD23F; --ico-fstroke:#141414; --ico-fsw:2.5; --ico-line:#141414; --ico-cut:#F4F1FF; --ico-dim:rgba(20,20,20,.3); }
+:root[data-theme="Q"] { --ico-fill:#3255A4; --ico-cut:#F2EEE4; --ico-dim:rgba(50,85,164,.3); --ico-filter:drop-shadow(3px 2px 0 rgba(255,72,176,.85)); --ico-blend:multiply; }
+:root[data-theme="R"] { --ico-fill:#F2A900; --ico-line:#F4F1EA; --ico-cut:#111; --ico-dim:#3A3A3A; }
+:root[data-theme="S"] { --ico-fill:url(#ico-deco); --ico-fstroke:#FBEBC0; --ico-fsw:.8; --ico-line:#D9B66B; --ico-cut:#0B0A08; --ico-dim:rgba(217,182,107,.25); }
+
+/* Bauhaus und Memphis: reihum mehrere Farben statt einer. */
+:root[data-theme="H"] .show-icon [fill^="url"]:nth-child(3n+1) { fill: #D7372B; }
+:root[data-theme="H"] .show-icon [fill^="url"]:nth-child(3n+2) { fill: #1F4FA3; }
+:root[data-theme="H"] .show-icon [fill^="url"]:nth-child(3n)   { fill: #F2C230; }
+:root[data-theme="P"] .show-icon [fill^="url"]:nth-child(4n+1) { fill: #FFD23F; }
+:root[data-theme="P"] .show-icon [fill^="url"]:nth-child(4n+2) { fill: #3FD0C9; }
+:root[data-theme="P"] .show-icon [fill^="url"]:nth-child(4n+3) { fill: #FF6FA8; }
+:root[data-theme="P"] .show-icon [fill^="url"]:nth-child(4n)   { fill: #7B5CFF; }
 
 /* Helle Richtungen: Flaechen in Teamfarbe bleiben dunkelrot/-blau/-gruen
    (BAUPLAN 4.4) - Schrift darauf muss also hell bleiben. Die Variablen erben,

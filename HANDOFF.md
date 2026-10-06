@@ -12,6 +12,72 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-06 — Show-Symbole je Design: Regeln in styles.css (UNCOMMITTET, Hash folgt)
+
+**Gemacht.** Fortsetzung von `d226865`. David: „Stil je Richtung wie geplant
+umsetzen" - ein Zeichenstil je Richtung, nicht je Show und Richtung.
+- `styles.css`: Block „Show-Symbole je Design-Richtung" nach den Show-Logo-
+  Regeln. Jede Richtung (A-S ohne G) setzt nur Variablen `--ico-*` (Fläche,
+  Kontur, Linie, Aussparung, gedimmt, Filter, Blend); die Regeln darunter
+  greifen per Attribut-Selektor auf die vier Elementsorten. Bauhaus (H) und
+  Memphis (P) färben reihum per `:nth-child`.
+- Alte Regeln für `#main-logo` entfernt (Verlauf-Stops, `[fill="#0b0e2c"]`,
+  `[fill="#3a3f6b"]`, die `data-theme-hell`-Stops). Die `.logo-word`-Regeln
+  bleiben.
+- `index.html`: Filter `#ico-pixel` neu gebaut, dazu `#ico-pixel-g`.
+
+**Warum so.**
+- Wächter per `:where(...)`: `:root[data-theme]:not([data-theme="A"])` hätte
+  0,3,0 Spezifität und die Richtungs-Regeln (nth-child, Umriss-Stile)
+  geschlagen. A behält das Gold und bekommt nur Aussparung, Dimmung, Schein.
+- Elemente mit eigenem `stroke` (Karte im WWDS-Pult, Mittelpunkt der Torte)
+  werden getrennt behandelt, sonst verschwindet deren Fuge bzw. die
+  Linienbreite wird überschrieben.
+- Umriss-Stile (I, J, K): Aussparungen und gedimmte Flächen bekommen
+  `fill:none` plus Linie (`--ico-cutline`, `--ico-dimline`); sonst wäre die
+  gedimmte Säule heller als die leuchtende.
+- **Lücken in der Tabelle, von mir gewählt** - bitte prüfen: H Linie #141414,
+  Aussparung #ECEAE4, gedimmt #141414. P gedimmt rgba(20,20,20,.3),
+  Aussparung #F4F1FF. M Linie #B7A6FF statt Verlauf (ein senkrechter Strich
+  hat keine Breite, ein Verlauf nach Bounding-Box wird dort nicht gezeichnet;
+  nicht eigens geprüft, Vorsichtsmaßnahme). Q Linie = Fläche.
+- **Pixel-Mosaik (B), drei Anläufe.** (1) Der vorbereitete Filter mit Fläche
+  = Elementrand und feFlood in festen Einheiten: am `<svg>` ging es, an der
+  `<g>` (Show-Logo oben) blieb das Symbol leer. Vermutung: die Teilregion
+  der feFlood liegt im Koordinatensystem des Elements, die Filterfläche
+  beginnt aber am Rand der `<g>`. (2) `primitiveUnits="objectBoundingBox"`
+  mit Bruchteilen: in Chrome nirgends sichtbar. (3)
+  `filterUnits="userSpaceOnUse"` ab 0/0 mit fester Fläche: geht an `<svg>`
+  (CSS-Pixel, 4-px-Blöcke) und an `<g>` (Symbol-Einheiten, 6 Einheiten) -
+  an einem Testkreis in allen drei Fällen nachgestellt. Deshalb zwei Filter:
+  `--ico-filter-root` für das `<svg>`, `--ico-filter` für die `<g>`.
+- Der Hover der Menükarte setzt `filter` mit Spezifität 0,3,1; die Filter-
+  Regel hat dafür eine eigene Hover-Zeile.
+
+**Geprüft.** `node check.js` und `node check.js --types` = alles in Ordnung
+(1052 Klammernpaare). Im Browser (Vorschau-Server, 18 iframes mit
+`applyThemeToDoc`; je Richtung die Menü-Symbole aller acht Spiele plus
+Show-Logo `pih`): alle 18 Richtungen zeichnen, B, J, K, M, O, Q, S nach dem
+Filter-Umbau einzeln angesehen. Testseiten wieder gelöscht, `designTheme`
+im Browser zurückgesetzt.
+
+**Ungeprüft.** Mainscreen/Zuschauerfenster (Filter-Verweise `url(#ico-...)`
+im gespiegelten Dokument), Hover auf einer Menükarte, Intros/Tutorial/
+Turnierplan mit Richtung, Klassik ohne Richtung (die Regeln gelten nur bei
+`data-theme`; nicht nachfotografiert). Die Passwort-Sperre habe ich für die
+Tests nur als Overlay im iframe entfernt, nichts eingegeben.
+
+**Offen.** Davids Entscheidung „eigenes Piktogramm je Show und Richtung"
+(Eintrag darunter) ist offen; er hat sich für den Zeichenstil je Richtung
+entschieden. Das Mosaik wirkt bei WWDS und Torte unruhig.
+
+**Fallstricke.** Python gibt es auf dieser Maschine nicht; Textumbauten mit
+`node -e`. Mehrzeilige Texte nicht per `node -e` in Bash quoten - dafür das
+Edit-Werkzeug nehmen. Der Vorschau-Screenshot lief mehrfach in ein Timeout,
+ein zweiter Versuch klappte jeweils.
+
+---
+
 ## 2026-10-06 — UNFERTIG: Show-Symbole je Design neu zeichnen (`d226865`)
 
 **Auftrag (David).** „die Show-Symbole auch pro Design neu zeichnen" - nach
