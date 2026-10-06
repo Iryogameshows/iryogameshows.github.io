@@ -12,6 +12,21 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-06 — Abschluss-Übersicht um „Kreative Ansätze & Visionen" erweitert (`8b1c8a2`)
+
+**Gemacht.** David hat die Vorgabe präzisiert. Die Abschluss-Übersicht in
+`CLAUDE.md` hat jetzt vier Punkte: Aktueller Stand · Stopppunkt · Kreative
+Ansätze & Visionen (Design-Ideen, Stile, Layouts, auch verworfene) · Nächste
+Schritte. Ergänzt `746eab9`, das nur drei Punkte hatte.
+
+**Geprüft.** `node check.js`: „alles in Ordnung". Nur Markdown.
+
+**Offen.** Weiterhin nicht gepusht (3 Commits vor origin auf
+`claude/game-buzzer-fixes-90cyjz`). Die übergeordnete `Coding/CLAUDE.md` ist
+unverändert.
+
+---
+
 ## 2026-10-06 — Regel: Abschluss-Übersicht auch in die HANDOFF (`746eab9`)
 
 **Gemacht.** In `CLAUDE.md` (Abschnitt „HANDOFF.md") neuer Unterabschnitt
