@@ -66,10 +66,23 @@ abgelehnt, Namenspflicht, Anzeige in Übersicht und auf dem Bild, Aussehen
 per Screenshot (Handybreite). Keine Konsolenfehler beim Laden. `node check.js` ändert sich nicht (prüft
 `voting/` nicht).
 
-**Ungeprüft.** Echtes Schreiben und Lesen in Firebase (bewusst keine Testdaten
-in die Live-Datenbank geschrieben), `ergebnis.html` mit echten Daten, das
-Aussehen auf dem Handy (Screenshots waren nicht möglich, das Browser-Fenster
-war nicht sichtbar), Ladezeit von 18 Vorschauen auf dem Handy.
+**Firebase-Test (Davids Auftrag „mach nen Testeintrag in Firebase“, nach
+`2982e6d`).** Über die lokale Seite mit dem echten „Stimmen abgeben“-Knopf
+eine Abgabe als „TEST-LOESCHEN“ geschickt (5 Top, 2 Schlechte, keine
+Bookmarks). Ergebnis: Dankesseite kam, Eintrag lag unter
+`votes/test-loeschen` mit `top`, `bad`, `name`, `ts`, `v`; `ergebnis.html`
+las ihn live und rechnete richtig (C · Pop 5 Punkte vorn, dann A, B, D, E mit
+4-1). Danach den einen Eintrag per `remove()` gelöscht, `votes/` war leer
+(`null`), die Ergebnisseite zeigte „Noch keine Abgaben“. Beobachtung:
+Firebase speichert leere Listen nicht, bei einer Abgabe ohne Bookmarks fehlen
+`up` und `down` - `ergebnis.html` fängt das mit `|| []` ab, der Test lief
+genau so. Getestet nur von `localhost`; von der Live-Adresse aus ist es
+dieselbe Datenbank, aber nicht eigens versucht.
+
+**Ungeprüft.** Das Aussehen auf dem Handy-Gerät selbst (nur Screenshot in
+Handybreite im Browser-Fenster), Ladezeit von 18 Vorschauen auf dem Handy,
+das Verhalten bei zwei gleichzeitigen Abgaben, die Live-Adresse nach dem
+Deploy.
 
 **Offen.** Jeder mit dem Link kann Abgaben anderer überschreiben oder
 löschen (offene Datenbankregeln, wie beim Buzzer). Ergebnis-Adresse liegt
