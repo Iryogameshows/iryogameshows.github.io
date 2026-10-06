@@ -12,6 +12,70 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-06 — Themen-Layouts, Runde 3 (`b76eda5`, `6ca0f92`, `bac49f1`, `c901a8f`, läuft)
+
+**Auftrag (David):** „alle sollen ein individuelles Layout haben, auch
+inspiriert am Design (z.b. mit der Zeitung und dpih kann man was schönes
+machen) … bei allen die nicht fertig sind fertig machen."
+
+**Vorab:** Diese Sitzung hat auf dem Branch der vorigen weitergemacht. Deren
+„Runde 2“ (`79e91c6` … `202cddc`, B bis K: „eigenes Grundgerüst“) stand
+noch in keinem HANDOFF-Eintrag — hier nachgetragen: B, C, D (nur Turnier),
+E, F, H (DDF, Handy), I, J, K bekamen dort für einzelne Screens neue Gerüste.
+Für L bis S lief Runde 2 nicht mehr.
+
+### Wie „nicht fertig“ bestimmt wurde
+
+1. **Gemessen:** alle 216 Screens in iframes geladen, je Screen ein Raster
+   (32×18) aus Text- und Flächenpositionen, Kosinus-Ähnlichkeit zur
+   ähnlichsten anderen Richtung. Taugt nur als Hinweis: Jeopardy lag bei
+   allen um 0,77, weil das 6×5-Brett vom Spiel vorgegeben ist — obwohl die
+   Bretter sichtbar verschieden sind.
+2. **Kontaktabzüge angesehen**, je Show alle Richtungen nebeneinander, für
+   D, H, L, M, N, P, Q, R, S größer. Ergebnis, 36 Screens:
+   - Family Feud bei **allen neun** dasselbe Gerüst (Frage oben, zwei
+     Spalten Antworten, Punkte daneben).
+   - Wer weiß: drei A/B/C-Spalten bei H, L, M, N, P, Q, R, S.
+   - Preis ist heiß: Produkt + großer Preis + Liste bei D, L, Q, R, S.
+   - TP: Rad links, Karte rechts bei N, P, Q, R. Turnier: Rangliste bei
+     M, N, Q. Millionär: D und R gleich. Handy: runder Knopf bei M, N, P, Q.
+     Ergebnis: M.
+
+### Gemacht (bisher)
+
+| Commit | Richtung | neu |
+|---|---|---|
+| `b76eda5` | L New York | PIH als **Kleinanzeigen-Seite** (Gebote als Anzeigen, Zuschlag mit Tintenkreis), Feud als **Umfrage-Infografik** (geschwärzte Balken), Wer weiß als **Stimmzettel** |
+| `6ca0f92` | D Late Night | Feud als **Top-8-Countdown** mit Moderatorentisch vor Skyline, PIH als **Applausometer**, Millionär mit Leiste oben und **Moderationskarten** |
+| `bac49f1` | H Bauhaus | Feud als **Mondrian-Raster**, Wer weiß als **Kreis/Quadrat/Dreieck-Komposition** |
+| `c901a8f` | M Aurora | Feud als **Sternbild**, Wer weiß als **Umlaufbahn**, Turnier als **Planetensystem**, Handy als **Glasplatte**, Ergebnis als **Planet mit Mond** |
+
+### Geprüft
+
+- Jeder neue Screen als Edge-Headless-Bildschirmfoto in Originalgröße
+  (1280×720, Handy 390×844) angesehen; gefundene Fehler behoben: Etikett
+  ragte aus dem Bild (M-Feud), Kugel überdeckte Fragekarte (M-WWDS),
+  geschwärzte Balken länger als höher platzierte Antworten (L-Feud),
+  leere untere Hälfte (L-WWDS).
+- `node check.js` vor jedem Commit: alles in Ordnung.
+
+### Offen
+
+- **N, P, Q, R, S** stehen noch aus (20 Screens, Liste oben).
+- Dann alles nach `master` — erst nach Davids Freigabe; der Branch enthält
+  auch den Design-Umschalter in der Show (`9a78a8f`, ändert `styles.css`).
+- Skripte (`kit.js` + je Richtung eins) liegen im Scratchpad dieser Sitzung,
+  nicht im Repo.
+
+### Fallstricke
+
+- Das Vorschaufenster der Desktop-App rendert nicht, solange die App im
+  Hintergrund liegt („page did not finish rendering“). Zuverlässig:
+  `msedge --headless=new --screenshot` mit eigenem `--user-data-dir` — ohne
+  das hängt sich der zweite Aufruf an den ersten und schreibt keine Datei.
+
+---
+
 ## 2026-10-05 — Eigene Layouts je Richtung (`e3df1d8` … `c114944`)
 
 **Auftrag (David):** „gib den Designs auch verschiedene Layouts. die sind
