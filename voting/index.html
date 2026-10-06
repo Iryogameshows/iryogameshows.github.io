@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Design-Voting · Iryo Gameshow</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap">
+<style>
+:root {
+  --bg: #121217; --panel: #1C1C25; --panel2: #252532; --line: #33333F; --fg: #EDEDF2; --muted: #9A9AAE;
+  --gold: #FFD23F; --bad: #FF5C7A; --up: #3DDC84; --down: #FF8A3D;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: 'Manrope', system-ui, sans-serif; }
+body { min-height: 100vh; display: flex; flex-direction: column; }
+button { font-family: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+/* Kopfleiste: die drei Etappen, jederzeit anklickbar */
+.top { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+.brand { font-weight: 800; letter-spacing: 2px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.steps { display: flex; gap: 6px; margin-left: auto; }
+.step { height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-weight: 700; font-size: 13px; cursor: pointer; }
+.step[aria-current="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+main { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 16px 14px 40px; }
+h1 { margin: 0 0 6px; font-size: 26px; font-weight: 800; }
+h2 { margin: 0 0 4px; font-size: 20px; font-weight: 800; }
+.muted { color: var(--muted); }
+.btn { min-height: 44px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-weight: 700; font-size: 15px; cursor: pointer; }
+.btn:hover:not(:disabled) { border-color: var(--fg); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.primary { background: var(--gold); color: #1B1500; border-color: var(--gold); }
+.btn.round { width: 48px; padding: 0; font-size: 18px; }
+
+/* Anleitung */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px 20px; max-width: 640px; margin: 18px auto 0; }
+.card .ico { font-size: 40px; line-height: 1; margin-bottom: 10px; }
+.card ul { margin: 12px 0 0; padding-left: 20px; line-height: 1.55; }
+.card li { margin-bottom: 6px; }
+.dots { display: flex; justify-content: center; gap: 8px; margin: 16px 0 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.dot.on { background: var(--fg); }
+.navrow { display: flex; justify-content: space-between; gap: 10px; max-width: 640px; margin: 14px auto 0; }
+.pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-weight: 800; font-size: 13px; }
+.pill.gold { background: var(--gold); color: #1B1500; } .pill.bad { background: var(--bad); color: #2B0010; }
+.pill.up { background: var(--up); color: #00240F; } .pill.down { background: var(--down); color: #2A1000; }
+
+/* Durchgehen */
+.bhead { display: flex; align-items: center; gap: 10px; }
+.bcur { flex: 1; min-width: 0; text-align: center; }
+.bcur small { display: block; font-size: 12px; font-weight: 700; letter-spacing: 3px; color: var(--muted); }
+.bcur strong { display: block; font-size: 24px; font-weight: 800; line-height: 1.15; }
+.marks { display: flex; gap: 8px; margin: 12px 0; }
+.mark { flex: 1; min-height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); font-weight: 800; font-size: 15px; cursor: pointer; }
+.mark.up[aria-pressed="true"] { background: var(--up); border-color: var(--up); color: #00240F; }
+.mark.down[aria-pressed="true"] { background: var(--down); border-color: var(--down); color: #2A1000; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+.tab { flex: none; height: 36px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-weight: 700; font-size: 13px; cursor: pointer; }
+.tab[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.stagebox { margin-top: 10px; display: flex; justify-content: center; background: #0B0B0F; border-radius: 10px; padding: 10px; }
+.stage { position: relative; overflow: hidden; border-radius: 6px; box-shadow: 0 16px 40px rgba(0,0,0,.55); }
+.stage iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: #000; }
+.stagelinks { display: flex; justify-content: space-between; gap: 10px; margin: 8px 2px 0; font-size: 13px; }
+.stagelinks a { color: var(--muted); }
+.strip { display: grid; grid-auto-flow: column; grid-auto-columns: 148px; gap: 8px; overflow-x: auto; padding: 12px 2px 8px; scrollbar-width: thin; }
+.thumb { position: relative; display: flex; flex-direction: column; gap: 5px; padding: 5px; border-radius: 10px; border: 2px solid transparent; background: transparent; text-align: left; cursor: pointer; }
+.thumb:hover { background: var(--panel); }
+.thumb[aria-current="true"] { border-color: var(--fg); background: var(--panel); }
+.pv { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 4px; background: #000; }
+.pv iframe { position: absolute; left: 0; top: 0; width: 1280px; height: 720px; border: 0; transform-origin: 0 0; pointer-events: none; }
+.thumb span.t { font-size: 12px; } .thumb b { margin-right: 5px; }
+.badges { position: absolute; right: 8px; top: 8px; display: flex; gap: 3px; z-index: 2; }
+.badge { min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px; font-size: 12px; font-weight: 800; line-height: 22px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+.bottombar { display: flex; justify-content: space-between; gap: 10px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+
+/* Abgabe */
+.namebox { display: flex; flex-direction: column; gap: 6px; max-width: 420px; margin: 14px 0 6px; }
+.namebox input { height: 48px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); color: var(--fg); font: 700 17px 'Manrope', sans-serif; padding: 0 14px; }
+.namebox input:focus { outline: none; border-color: var(--gold); }
+.sect { margin-top: 26px; }
+/* Stempel-Uebersicht oben */
+.tray { margin-top: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 8px; }
+.trayrow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tchip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px 0 4px; border-radius: 999px; border: 1px dashed var(--line); color: var(--muted); font-size: 12px; font-weight: 700; }
+.tchip .sn { min-width: 24px; height: 22px; padding: 0 5px; border-radius: 999px; display: grid; place-items: center; background: var(--panel2); font-weight: 800; }
+.tchip .tv { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+.tchip.set { border-style: solid; color: var(--fg); }
+.tchip.top.set .sn { background: var(--gold); color: #1B1500; } .tchip.bad.set .sn { background: var(--bad); color: #2B0010; }
+/* Stempel auf dem Vorschaubild */
+.stampmark { position: absolute; right: 8px; bottom: 8px; width: 54px; height: 54px; border-radius: 50%; display: none; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; font-size: 24px; line-height: 1; transform: rotate(-9deg); z-index: 3; box-shadow: 0 3px 10px rgba(0,0,0,.55); }
+.stampmark small { font-size: 13px; margin-bottom: 1px; }
+.stampmark.on { display: flex; }
+.stampmark.top { background: var(--gold); color: #1B1500; border: 3px double #1B1500; }
+.stampmark.bad { background: var(--bad); color: #2B0010; border: 3px double #2B0010; }
+/* Umschalter Top 5 / Schlechte */
+.modes { display: flex; gap: 8px; }
+.mode { flex: 1; min-height: 52px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel2); font-weight: 800; font-size: 16px; cursor: pointer; line-height: 1.15; }
+.mode small { display: block; font-weight: 600; font-size: 11px; opacity: .8; }
+.mode.top[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: #1B1500; }
+.mode.bad[aria-pressed="true"] { background: var(--bad); border-color: var(--bad); color: #2B0010; }
+.tchip.next { border-style: solid; border-color: var(--fg); color: var(--fg); }
+.nextnote { margin: 10px 2px 0; font-size: 15px; }
+.gcard .nm { cursor: pointer; }
+.tag { font-size: 12px; font-weight: 800; letter-spacing: 1px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.chip { height: 34px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); font-weight: 700; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.gcard { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+.gcard .nm { font-weight: 800; } .gcard .nm b { color: var(--muted); margin-right: 5px; }
+.gcard .acts { display: flex; gap: 6px; }
+.gcard .acts button { flex: 1; min-height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); font-weight: 700; font-size: 13px; cursor: pointer; }
+.gcard .acts button:disabled { opacity: .35; cursor: default; }
+.gcard .pvwrap { position: relative; cursor: pointer; border-radius: 6px; outline-offset: 2px; }
+.gcard.stamped { border-color: var(--fg); }
+.submitbar { position: sticky; bottom: 0; margin-top: 26px; padding: 12px 0 14px; background: linear-gradient(to top, var(--bg) 70%, transparent); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.need { font-size: 14px; color: var(--muted); }
+.err { color: var(--bad); font-weight: 700; }
+.ok { color: var(--up); font-weight: 700; }
+.copybox { width: 100%; min-height: 150px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 13px/1.5 ui-monospace, monospace; padding: 10px; }
+
+/* Hinweis-Dialog und Toast */
+.modal { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.65); display: grid; place-items: center; padding: 16px; }
+.modal .box { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; max-width: 440px; width: 100%; }
+.modal .row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; flex-wrap: wrap; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-weight: 700; font-size: 14px; z-index: 60; max-width: 90vw; }
+
+@media (max-width: 640px) {
+  h1 { font-size: 22px; } .bcur strong { font-size: 19px; }
+  .brand { display: none; } .steps { margin-left: 0; width: 100%; } .step { flex: 1; padding: 0 6px; }
+  .tchip .tv { max-width: 110px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <span class="brand">IRYO GAMESHOW · DESIGN-VOTING</span>
+  <nav class="steps" id="steps" aria-label="Etappen"></nav>
+</header>
+<main id="app"></main>
+<div id="layer"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="data.js"></script>
+<script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBuXYp1w65nR8tqJIKFS_v_9QSD7_0kR20",
+  authDomain: "keller-buzzer.firebaseapp.com",
+  databaseURL: "https://keller-buzzer-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "keller-buzzer",
+  storageBucket: "keller-buzzer.firebasestorage.app",
+  messagingSenderId: "589064661958",
+  appId: "1:589064661958:web:1c1024eab161ad8e53e0c7",
+};
+const STORE_KEY = 'iryo-voting-v1';
+const MAX = 5;
+const D = VOTE_DESIGNS;
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const byKey = (k) => D.find((x) => x.key === k);
+const num = (k) => String(D.findIndex((x) => x.key === k) + 1).padStart(2, '0');
+
+/* ---------- Zustand (bleibt im Browser erhalten, damit nichts verloren geht) ---------- */
+const S = { phase: 'intro', intro: 0, d: 0, screen: 'Leinwand', name: '', top: [], bad: [], mode: 'top', mark: {}, filter: 'alle', sentAs: '' };
+function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* privates Fenster: ohne Speicher weiter */ } }
+function load() {
+  try {
+    const o = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if (!o) return;
+    const ok = (k) => !!byKey(k);
+    S.name = typeof o.name === 'string' ? o.name : '';
+    const dense = (a) => { const r = []; (Array.isArray(a) ? a : []).forEach((k) => { if (k && ok(k) && !r.includes(k)) r.push(k); }); return r.slice(0, MAX); };
+    S.top = dense(o.top);
+    S.bad = dense(o.bad).filter((k) => !S.top.includes(k));
+    S.mode = o.mode === 'bad' ? 'bad' : 'top';
+    S.mark = {};
+    Object.keys(o.mark || {}).forEach((k) => { if (ok(k) && (o.mark[k] === 'up' || o.mark[k] === 'down')) S.mark[k] = o.mark[k]; });
+    S.d = Number.isInteger(o.d) && o.d >= 0 && o.d < D.length ? o.d : 0;
+    S.sentAs = typeof o.sentAs === 'string' ? o.sentAs : '';
+    if (['intro', 'browse', 'vote'].includes(o.phase)) S.phase = o.phase;
+    S.intro = Math.min(2, Math.max(0, o.intro | 0));
+  } catch (e) { /* kaputter Speicher: frisch beginnen */ }
+}
+
+/* ---------- Navigation: frei vor und zurueck, auch mit der Zurueck-Taste des Browsers ---------- */
+function hashOf() {
+  if (S.phase === 'intro') return '#anleitung/' + (S.intro + 1);
+  if (S.phase === 'browse') return '#durchgehen/' + (S.d + 1) + '/' + S.screen;
+  return '#' + (S.phase === 'done' ? 'fertig' : 'abgabe');
+}
+function readHash() {
+  const p = location.hash.slice(1).split('/');
+  if (p[0] === 'anleitung') { S.phase = 'intro'; S.intro = Math.min(2, Math.max(0, (+p[1] || 1) - 1)); }
+  else if (p[0] === 'durchgehen') {
+    S.phase = 'browse';
+    const n = (+p[1] || 1) - 1; if (n >= 0 && n < D.length) S.d = n;
+    if (p[2] && byKey(D[S.d].key).screens.some((x) => x[0] === p[2])) S.screen = p[2];
+  } else if (p[0] === 'abgabe') S.phase = 'vote';
+  else if (p[0] === 'fertig' && S.sentAs) S.phase = 'done';
+}
+function go(phase, extra) {
+  Object.assign(S, extra || {}, { phase });
+  history.pushState(null, '', hashOf());
+  render(); window.scrollTo(0, 0);
+}
+function stepTo(d) { // Richtung wechseln, ohne die Browser-Chronik zuzumuellen
+  S.d = (d + D.length) % D.length;
+  if (!D[S.d].screens.some((x) => x[0] === S.screen)) S.screen = 'Leinwand';
+  history.replaceState(null, '', hashOf());
+  updateBrowse();
+}
+
+/* ---------- Dialog und Hinweis ---------- */
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+}
+function ask(html, yes, no) {
+  return new Promise((res) => {
+    const m = document.createElement('div'); m.className = 'modal';
+    m.innerHTML = '<div class="box" role="dialog" aria-modal="true"><div>' + html + '</div><div class="row"><button class="btn" data-r="0">' + no + '</button><button class="btn primary" data-r="1">' + yes + '</button></div></div>';
+    m.addEventListener('click', (e) => { const r = e.target.closest && e.target.closest('[data-r]'); if (r) { m.remove(); res(r.dataset.r === '1'); } });
+    $('layer').appendChild(m); m.querySelector('[data-r="1"]').focus();
+  });
+}
+
+/* ---------- Bausteine ---------- */
+function thumb(des) {
+  return '<div class="pv" data-pv><iframe loading="lazy" tabindex="-1" title="" src="../designs/s/' + des.key + '-Leinwand.html"></iframe></div>';
+}
+function fitThumbs(root) {
+  (root || document).querySelectorAll('[data-pv]').forEach((pv) => {
+    const w = pv.getBoundingClientRect().width;
+    if (w) pv.querySelector('iframe').style.transform = 'scale(' + (w / 1280) + ')';
+  });
+}
+function badges(k, withStamp) {
+  let h = '';
+  const st = withStamp === false ? null : stampOf(k);
+  if (st) h += '<span class="badge pill ' + (st.kind === 'top' ? 'gold' : 'bad') + '" title="Stempel ' + stampLabel(st.kind, st.n) + '">' + stampLabel(st.kind, st.n) + '</span>';
+  if (S.mark[k] === 'up') h += '<span class="badge pill up" title="Gemerkt: gefällt">👍</span>';
+  if (S.mark[k] === 'down') h += '<span class="badge pill down" title="Gemerkt: gefällt nicht">👎</span>';
+  return h ? '<div class="badges">' + h + '</div>' : '';
+}
+
+/* ---------- Schritt 1: Anleitung in drei Fenstern ---------- */
+const INTRO = [
+  { ico: '👀', t: 'Du schaust dir 18 Designs an', li: [
+    'Das sind <b>18 Richtungen</b>, wie die Gameshow aussehen könnte: Menü, Family Feud, Jeopardy, Millionär und alle anderen Spiele.',
+    'Mit <b>◀ ▶</b> (am Rechner auch die <b>Pfeiltasten</b>) gehst du eine Richtung weiter oder zurück. Du kannst jederzeit vor und zurück, so oft du willst.',
+    'Über die Reiter (Menü, Family Feud, Handy …) siehst du dieselbe Richtung in allen Spielen.' ] },
+  { ico: '🔖', t: 'Bookmarks: Merk dir, was du magst', li: [
+    'Unter jedem Design gibt es zwei Knöpfe: <span class="pill up">👍 Gefällt mir</span> und <span class="pill down">👎 Gefällt mir nicht</span>.',
+    'Das sind nur <b>Merkzettel</b> für dich, noch keine Stimme. Du siehst deine Bookmarks später als Abzeichen in der Übersicht.',
+    'Nochmal drücken nimmt das Bookmark wieder weg. Ändern kannst du es jederzeit.' ] },
+  { ico: '🗳️', t: 'Am Ende gibst du deine Stimmen ab', li: [
+    'Im Reiter „Abgabe“ siehst du alle 18 Richtungen auf einmal. Du vergibst <b>Stempel</b>, indem du Designs anklickst, und zwar <b>der Reihe nach</b>.',
+    '<span class="pill gold">★ Top 5</span> (Pflicht): Das Design, das du zuerst anklickst, bekommt <b>Platz 1</b>, das zweite Platz 2 und so weiter bis Platz 5. Platz 1 gefällt dir am besten, Platz 5 ist noch gut, aber am wenigsten von den fünf.',
+    '<span class="pill bad">✖ Schlechte</span> (optional): Nach den fünf Top-Stempeln springt die Seite von selbst auf Schlechte um. Das erste, das du dann anklickst, ist ✖1 (das Schlechteste), dann ✖2 und so weiter, bis zu 5. Mit den zwei Knöpfen oben kannst du jederzeit umschalten.',
+    'Vertippt? Klick ein gestempeltes Design nochmal an, dann verschwindet sein Stempel und die folgenden rücken auf. Wenn du dich später umentscheidest, gibst du mit demselben Namen nochmal ab.' ] },
+];
+function renderIntro() {
+  const p = INTRO[S.intro], last = S.intro === INTRO.length - 1;
+  $('app').innerHTML =
+    '<div class="card"><div class="muted" style="font-weight:700;font-size:13px;letter-spacing:2px">SO FUNKTIONIERT\'S · ' + (S.intro + 1) + ' VON ' + INTRO.length + '</div>' +
+    '<div class="ico" style="margin-top:10px">' + p.ico + '</div><h1>' + p.t + '</h1><ul>' + p.li.map((x) => '<li>' + x + '</li>').join('') + '</ul></div>' +
+    '<div class="dots">' + INTRO.map((_, i) => '<span class="dot' + (i === S.intro ? ' on' : '') + '"></span>').join('') + '</div>' +
+    '<div class="navrow"><button class="btn" id="iPrev"' + (S.intro === 0 ? ' disabled' : '') + '>← Zurück</button>' +
+    '<button class="btn primary" id="iNext">' + (last ? 'Los geht\'s →' : 'Weiter →') + '</button></div>' +
+    '<div class="navrow" style="justify-content:center"><button class="btn" id="iSkip" style="border:0;background:none;color:var(--muted)">Anleitung überspringen</button></div>';
+  $('iPrev').onclick = () => go('intro', { intro: S.intro - 1 });
+  $('iNext').onclick = () => (last ? go('browse') : go('intro', { intro: S.intro + 1 }));
+  $('iSkip').onclick = () => go('browse');
+}
+
+/* ---------- Schritt 2: durchgehen und merken ----------
+   Das Geruest (mit den 18 Vorschaubildern) wird einmal gebaut, danach aendert
+   updateBrowse nur noch Texte und Markierungen - sonst luden bei jedem Klick auf
+   ◀ ▶ alle Vorschauen neu. */
+function renderBrowse() {
+  $('app').innerHTML =
+    '<div class="bhead"><button class="btn round" id="bPrev" aria-label="Vorherige Richtung">◀</button>' +
+    '<div class="bcur"><small id="bnum"></small><strong id="bname"></strong></div>' +
+    '<button class="btn round" id="bNext" aria-label="Nächste Richtung">▶</button></div>' +
+    '<div class="marks"><button class="mark up" id="mUp">👍 Gefällt mir</button><button class="mark down" id="mDown">👎 Gefällt mir nicht</button></div>' +
+    '<nav class="tabs" id="tabs"></nav>' +
+    '<div class="stagebox" id="box"><div class="stage" id="stage"><iframe id="frame"></iframe></div></div>' +
+    '<div class="stagelinks"><span class="muted">Entwurf zum Anschauen, nicht die laufende Show.</span><a id="big" target="_blank" rel="noopener">Groß in neuem Tab ↗</a></div>' +
+    '<div class="strip" id="strip">' + D.map((x, i) =>
+      '<button class="thumb" data-i="' + i + '"><span class="bslot"></span>' + thumb(x) +
+      '<span class="t"><b>' + num(x.key) + '</b>' + esc(x.key) + ' · ' + esc(x.name) + '</span></button>').join('') + '</div>' +
+    '<div class="bottombar"><span class="muted" id="msum"></span><button class="btn primary" id="toVote">Zur Abgabe →</button></div>';
+  $('bPrev').onclick = () => stepTo(S.d - 1);
+  $('bNext').onclick = () => stepTo(S.d + 1);
+  $('mUp').onclick = () => setMark(D[S.d].key, 'up');
+  $('mDown').onclick = () => setMark(D[S.d].key, 'down');
+  $('toVote').onclick = () => go('vote');
+  $('tabs').onclick = (e) => { const b = e.target.closest('[data-s]'); if (b) { S.screen = b.dataset.s; history.replaceState(null, '', hashOf()); updateBrowse(); } };
+  $('strip').onclick = (e) => { const b = e.target.closest('[data-i]'); if (b) stepTo(+b.dataset.i); };
+  updateBrowse(); fitThumbs($('strip'));
+}
+function updateBrowse() {
+  if (!$('bnum')) return;
+  const des = D[S.d], sc = des.screens.find((x) => x[0] === S.screen) || des.screens[0], m = S.mark[des.key] || '';
+  S.screen = sc[0];
+  $('bnum').textContent = 'RICHTUNG ' + num(des.key) + ' / ' + D.length;
+  $('bname').textContent = des.key + ' · ' + des.name;
+  $('mUp').setAttribute('aria-pressed', String(m === 'up'));
+  $('mDown').setAttribute('aria-pressed', String(m === 'down'));
+  $('tabs').innerHTML = des.screens.map((x) => '<button class="tab" data-s="' + x[0] + '" aria-pressed="' + (x[0] === sc[0]) + '">' + esc(x[1]) + '</button>').join('');
+  const src = '../designs/s/' + des.key + '-' + sc[0] + '.html', fr = $('frame');
+  if (fr.getAttribute('src') !== src) fr.setAttribute('src', src);
+  fr.setAttribute('title', 'Vorschau ' + des.name + ' · ' + sc[1]);
+  $('big').setAttribute('href', '../designs/#' + (S.d + 1) + '/' + sc[0]);
+  $('strip').querySelectorAll('.thumb').forEach((b, i) => {
+    b.setAttribute('aria-current', String(i === S.d));
+    b.querySelector('.bslot').innerHTML = badges(D[i].key);
+  });
+  $('msum').textContent = marksSummary();
+  fitStage();
+  const cur = $('strip').querySelector('[aria-current="true"]'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
+  save();
+}
+function marksSummary() {
+  const v = Object.values(S.mark);
+  return '👍 ' + v.filter((x) => x === 'up').length + ' gemerkt · 👎 ' + v.filter((x) => x === 'down').length + ' gemerkt';
+}
+function setMark(k, v) {
+  if (S.mark[k] === v) delete S.mark[k]; else S.mark[k] = v;
+  updateBrowse();
+}
+function fitStage() {
+  const stage = $('stage'), frame = $('frame'); if (!stage) return;
+  const des = D[S.d], sc = des.screens.find((x) => x[0] === S.screen) || des.screens[0];
+  const boxW = $('box').getBoundingClientRect().width - 20;
+  const maxH = Math.max(240, window.innerHeight * 0.62);
+  const f = Math.min(boxW / sc[2], maxH / sc[3], 1);
+  stage.style.width = Math.round(sc[2] * f) + 'px'; stage.style.height = Math.round(sc[3] * f) + 'px';
+  frame.style.width = sc[2] + 'px'; frame.style.height = sc[3] + 'px'; frame.style.transform = 'scale(' + f + ')';
+}
+
+/* ---------- Schritt 3: Uebersicht mit Stempeln ----------
+   Alle 18 Richtungen liegen auf einmal da. Die Stempel gehen der Reihe nach: das
+   erste angeklickte Design bekommt Platz 1, das zweite Platz 2 usw. Erst ★ 1-5
+   (Top 5, 1 = Favorit), danach springt die Seite auf ✖ 1-5 (Schlecht, optional,
+   1 = am schlechtesten); die zwei Knoepfe oben schalten von Hand um. Ein
+   gestempeltes Design nochmal anklicken nimmt seinen Stempel weg, die folgenden
+   ruecken auf. S.top und S.bad sind dichte Listen in Klickreihenfolge.
+   Das Geruest wird einmal gebaut, danach aendert refreshVote nur Markierungen -
+   die Vorschauen im Raster bleiben stehen. */
+function stampOf(k) {
+  let i = S.top.indexOf(k); if (i >= 0) return { kind: 'top', n: i + 1 };
+  i = S.bad.indexOf(k); if (i >= 0) return { kind: 'bad', n: i + 1 };
+  return null;
+}
+const ordered = (a) => a.filter(Boolean);
+function stampLabel(kind, n) { return (kind === 'top' ? '★' : '✖') + n; }
+function clickDesign(k) {
+  const st = stampOf(k);
+  if (st) { S[st.kind] = S[st.kind].filter((x) => x !== k); S.mode = st.kind; refreshVote(); return; }
+  let kind = S.mode;
+  if (S[kind].length >= MAX) {
+    if (kind === 'top') { kind = 'bad'; S.mode = 'bad'; }
+    else { toast('Alle 5 Schlecht-Stempel sind vergeben. Klick ein gestempeltes Design an, um seinen Stempel abzunehmen.'); return; }
+  }
+  S[kind].push(k);
+  if (kind === 'top' && S.top.length >= MAX) S.mode = 'bad';
+  refreshVote();
+}
+function missing() {
+  const m = [], have = S.top.length;
+  if (!S.name.trim()) m.push('deinen Namen');
+  if (have < MAX) m.push((MAX - have) + ' Top-Stempel (★)');
+  return m;
+}
+function visibleInFilter(k) {
+  const f = S.filter;
+  if (f === 'up') return S.mark[k] === 'up';
+  if (f === 'down') return S.mark[k] === 'down';
+  if (f === 'frei') return !stampOf(k);
+  return true;
+}
+function gridCards() {
+  const list = D.filter((x) => visibleInFilter(x.key));
+  if (!list.length) return '<p class="muted">Hier ist nichts. Mit dem Filter „Alle“ siehst du wieder alles.</p>';
+  return list.map((x) =>
+    '<div class="gcard" data-card="' + x.key + '"><span class="bslot"></span>' +
+    '<div class="pvwrap" data-stamp="' + x.key + '" role="button" tabindex="0" aria-label="' + esc(x.name) + ' stempeln">' + thumb(x) + '<span class="stampmark"></span></div>' +
+    '<div class="nm" data-stamp="' + x.key + '"><b>' + num(x.key) + '</b>' + esc(x.key) + ' · ' + esc(x.name) + '</div>' +
+    '<div class="acts"><button data-open="' + D.indexOf(x) + '">🔍 Ansehen</button></div></div>').join('');
+}
+function trayHtml() {
+  const chip = (kind, i) => {
+    const k = S[kind][i], isNext = S.mode === kind && i === S[kind].length && i < MAX;
+    return '<span class="tchip ' + kind + (k ? ' set' : '') + (isNext ? ' next' : '') + '"><span class="sn">' + stampLabel(kind, i + 1) + '</span><span class="tv">' + (k ? esc(k) + ' · ' + esc(byKey(k).name) : isNext ? 'als Nächstes' : 'frei') + '</span></span>';
+  };
+  const row = (kind) => '<div class="trayrow">' + [0, 1, 2, 3, 4].map((i) => chip(kind, i)).join('') + '</div>';
+  return '<div class="modes"><button class="mode top" data-mode="top" aria-pressed="' + (S.mode === 'top') + '">★ Top 5 · ' + S.top.length + '/' + MAX + '<small>Pflicht</small></button>' +
+    '<button class="mode bad" data-mode="bad" aria-pressed="' + (S.mode === 'bad') + '">✖ Schlechte · ' + S.bad.length + '/' + MAX + '<small>optional</small></button></div>' +
+    row('top') + row('bad');
+}
+function nextNote() {
+  const kind = S.mode, n = S[kind].length;
+  if (n >= MAX) return kind === 'top' ? 'Alle 5 Top-Stempel sind vergeben.' : 'Alle 5 Schlecht-Stempel sind vergeben.';
+  return kind === 'top'
+    ? 'Nächster Stempel: <b>★' + (n + 1) + '</b>. Klick das Design an, das auf Platz ' + (n + 1) + ' soll.'
+    : 'Nächster Stempel: <b>✖' + (n + 1) + '</b>. Klick das Design an, das auf Platz ' + (n + 1) + ' der Schlechten soll' + (n === 0 ? ' (das Schlechteste zuerst).' : '.');
+}
+function renderVote() {
+  const flt = [['alle', 'Alle'], ['up', '👍 Gemerkt'], ['down', '👎 Gemerkt'], ['frei', 'Noch ohne Stempel']];
+  $('app').innerHTML =
+    '<h1>Deine Abgabe</h1><p class="muted" style="margin:0">Klick die Designs der Reihe nach an: das erste ist Platz 1, das zweite Platz 2 und so weiter. Zuerst deine <span class="pill gold">★ Top 5</span> (Pflicht, 1 = Favorit), dann bis zu 5 <span class="pill bad">✖ Schlechte</span> (optional, 1 = am schlechtesten). Zurück zum Durchgehen geht jederzeit über den Reiter oben.</p>' +
+    '<label class="namebox"><span style="font-weight:700">Dein Name</span><input id="nameIn" maxlength="40" autocomplete="off" placeholder="z. B. Alex" value="' + esc(S.name) + '"></label>' +
+    '<div class="tray" id="tray"></div><p class="nextnote" id="nextnote"></p>' +
+    '<div class="chips" id="chips">' + flt.map((c) => '<button class="chip" data-f="' + c[0] + '">' + c[1] + '</button>').join('') + '</div>' +
+    '<div class="grid" id="grid"></div>' +
+    '<div class="submitbar"><button class="btn" id="back">← Zurück zum Durchgehen</button><button class="btn primary" id="send">Stimmen abgeben</button><span class="need" id="need"></span></div>';
+  $('nameIn').oninput = () => { S.name = $('nameIn').value; save(); updateSend(); };
+  $('back').onclick = () => go('browse');
+  $('send').onclick = submit;
+  $('chips').onclick = (e) => { const b = e.target.closest('[data-f]'); if (b) { S.filter = b.dataset.f; buildGrid(); refreshVote(); } };
+  $('tray').onclick = (e) => { const b = e.target.closest('[data-mode]'); if (b) { S.mode = b.dataset.mode; refreshVote(); } };
+  $('grid').onclick = (e) => {
+    const st = e.target.closest('[data-stamp]'), op = e.target.closest('[data-open]');
+    if (op) go('browse', { d: +op.dataset.open }); else if (st) clickDesign(st.dataset.stamp);
+  };
+  $('grid').onkeydown = (e) => { const st = e.target.closest && e.target.closest('.pvwrap'); if (st && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); clickDesign(st.dataset.stamp); } };
+  buildGrid(); refreshVote();
+}
+function buildGrid() { $('grid').innerHTML = gridCards(); fitThumbs($('grid')); }
+function refreshVote() {
+  $('tray').innerHTML = trayHtml();
+  $('nextnote').innerHTML = nextNote();
+  $('chips').querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.f === S.filter)));
+  $('grid').querySelectorAll('[data-card]').forEach((c) => {
+    const k = c.dataset.card, st = stampOf(k), mk = c.querySelector('.stampmark');
+    c.querySelector('.bslot').innerHTML = badges(k, false);
+    mk.className = 'stampmark' + (st ? ' on ' + st.kind : '');
+    mk.innerHTML = st ? '<small>' + (st.kind === 'top' ? '★' : '✖') + '</small>' + st.n : '';
+    c.classList.toggle('stamped', !!st);
+  });
+  updateSend(); save();
+}
+function updateSend() {
+  const miss = missing();
+  $('send').disabled = miss.length > 0;
+  $('need').textContent = miss.length ? 'Es fehlt noch: ' + miss.join(' und ') + '.' : 'Alles da. Du kannst abgeben.';
+}
+
+/* ---------- Abgeben ---------- */
+function keyOf(name) { return name.trim().toLowerCase().replace(/[.#$\/\[\]\s]+/g, '_').slice(0, 40); }
+function payload() {
+  return {
+    name: S.name.trim(), top: ordered(S.top), bad: ordered(S.bad),
+    up: D.filter((x) => S.mark[x.key] === 'up').map((x) => x.key), down: D.filter((x) => S.mark[x.key] === 'down').map((x) => x.key),
+  };
+}
+function plainText() {
+  const p = payload(), nm = (k) => k + ' · ' + byKey(k).name;
+  return 'Design-Voting von ' + p.name + '\n\nTop 5 (1 = Favorit):\n' + p.top.map((k, i) => (i + 1) + '. ' + nm(k)).join('\n') +
+    '\n\nSchlechte (1 = am schlechtesten):\n' + (p.bad.length ? p.bad.map((k, i) => (i + 1) + '. ' + nm(k)).join('\n') : '(keine)');
+}
+function withTimeout(promise, ms) {
+  return new Promise((res, rej) => { const t = setTimeout(() => rej(new Error('timeout')), ms); promise.then((v) => { clearTimeout(t); res(v); }, (e) => { clearTimeout(t); rej(e); }); });
+}
+let busy = false;
+async function submit() {
+  if (busy || missing().length) return;
+  busy = true; const btn = $('send'); btn.disabled = true; btn.textContent = 'Wird gesendet …';
+  const k = keyOf(S.name);
+  try {
+    if (!window.firebase) throw new Error('kein Firebase');
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    const ref = firebase.database().ref('votes/' + k);
+    const snap = await withTimeout(ref.once('value'), 9000);
+    if (snap.exists() && S.sentAs !== k) {
+      const ja = await ask('Von <b>' + esc(S.name.trim()) + '</b> gibt es schon eine Abgabe. Wenn du das bist und etwas ändern willst, ersetze sie. Sonst nimm bitte einen anderen Namen.', 'Ersetzen', 'Anderen Namen wählen');
+      if (!ja) { busy = false; btn.textContent = 'Stimmen abgeben'; updateSend(); $('nameIn').focus(); return; }
+    }
+    await withTimeout(ref.set(Object.assign(payload(), { ts: firebase.database.ServerValue.TIMESTAMP, v: 1 })), 9000);
+    S.sentAs = k; busy = false; go('done');
+  } catch (e) {
+    busy = false; showFallback(e);
+  }
+}
+function showFallback(e) {
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = '<div class="box"><h2>Das Senden hat nicht geklappt</h2><p class="muted" style="margin-top:0">' +
+    (e && e.message === 'timeout' ? 'Der Server hat nicht rechtzeitig geantwortet.' : 'Der Server war nicht erreichbar (oder ein Werbeblocker hat die Verbindung gestoppt).') +
+    ' Deine Auswahl ist nicht verloren. Versuch es gleich nochmal, oder schick sie als Text an Iryo:</p>' +
+    '<textarea class="copybox" id="fb" readonly></textarea><div class="row"><button class="btn" data-r="0">Schließen</button><button class="btn primary" data-r="1">Text kopieren</button></div></div>';
+  m.querySelector('#fb').value = plainText();
+  m.addEventListener('click', async (ev) => {
+    const r = ev.target.closest && ev.target.closest('[data-r]'); if (!r) return;
+    if (r.dataset.r === '0') { m.remove(); renderVote(true); return; }
+    try { await navigator.clipboard.writeText(plainText()); toast('Kopiert'); } catch (err) { m.querySelector('#fb').select(); toast('Markiert, bitte kopieren'); }
+  });
+  $('layer').appendChild(m);
+}
+function renderDone() {
+  const p = payload(), line = (k, i) => '<li><b>' + (i + 1) + '.</b> ' + esc(k) + ' · ' + esc(byKey(k).name) + '</li>';
+  $('app').innerHTML =
+    '<div class="card"><div class="ico">🎉</div><h1>Danke, ' + esc(p.name) + '!</h1><p class="ok" style="margin:0">Deine Stimmen sind angekommen.</p>' +
+    '<h2 style="margin-top:18px"><span class="pill gold">★</span> Deine Top 5</h2><ul style="list-style:none;padding:0">' + p.top.map(line).join('') + '</ul>' +
+    (p.bad.length ? '<h2><span class="pill bad">✖</span> Deine Schlechten</h2><ul style="list-style:none;padding:0">' + p.bad.map(line).join('') + '</ul>' : '') +
+    '<p class="muted">Hast du dich umentschieden? Geh zurück, ändere deine Auswahl und gib mit demselben Namen nochmal ab. Das ersetzt deine alte Abgabe.</p></div>' +
+    '<div class="navrow"><button class="btn" id="chg">← Auswahl ändern</button><button class="btn" id="again">Nochmal durchgehen</button></div>';
+  $('chg').onclick = () => go('vote');
+  $('again').onclick = () => go('browse');
+}
+
+/* ---------- Anzeige ---------- */
+function renderSteps() {
+  const cur = S.phase === 'intro' ? 0 : S.phase === 'browse' ? 1 : 2;
+  $('steps').innerHTML = [['1 · Anleitung', 'intro'], ['2 · Durchgehen', 'browse'], ['3 · Abgabe', 'vote']]
+    .map((s, i) => '<button class="step" data-p="' + s[1] + '" aria-current="' + (i === cur) + '">' + s[0] + '</button>').join('');
+}
+$('steps').addEventListener('click', (e) => { const b = e.target.closest('[data-p]'); if (b) go(b.dataset.p); });
+function render() {
+  renderSteps();
+  if (S.phase === 'intro') renderIntro();
+  else if (S.phase === 'browse') renderBrowse();
+  else if (S.phase === 'done') renderDone();
+  else renderVote();
+  save();
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { const mo = document.querySelector('#layer .modal'); if (mo) { mo.remove(); return; } }
+  if (S.phase !== 'browse' || (e.target.closest && e.target.closest('input, textarea')) || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'ArrowLeft') stepTo(S.d - 1);
+  if (e.key === 'ArrowRight') stepTo(S.d + 1);
+});
+window.addEventListener('resize', () => { fitStage(); fitThumbs(); });
+window.addEventListener('popstate', () => { readHash(); render(); });
+load(); if (location.hash) readHash();
+render();
+</script>
+</body>
+</html>

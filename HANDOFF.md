@@ -12,6 +12,71 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-06 — Voting-Seite für die 18 Design-Richtungen `/voting/` (UNCOMMITTET, Hash folgt)
+
+**Auftrag (David).** Eine Seite, die Freunde bekommen: alle Designs
+anschauen, Top 5 geordnet abgeben (Pflicht), bis zu 5 Schlechte geordnet
+(optional), Bookmarks setzen, am Anfang 2-3 Textfenster zur Bedienung,
+frei vor und zurück, am Ende eine Übersicht zum Abgeben.
+
+**Annahme, nicht abgesprochen:** Abgestimmt wird über die 18 Richtungen aus
+`designs/` (nicht über Spiele oder etwas anderes).
+
+**Gemacht.** Neuer Ordner `voting/`, kein Eingriff in die Show:
+- `voting/index.html`: drei Etappen (Anleitung in 3 Fenstern, Durchgehen,
+  Abgabe), Kopfleiste jederzeit anklickbar, Browser-Zurück-Taste geht auch.
+  Durchgehen: ◀ ▶ und Pfeiltasten, Reiter je Screen, Bookmarks 👍/👎 (nur
+  Merkzettel), Streifen mit allen 18. **Abgabe als Stempel-Übersicht**
+  (David: „die Übersicht, und die clicken an und setzen so kleine stamps
+  1-5", nachdem die erste Fassung mit Listen und ▲▼ verworfen wurde):
+  Raster aller 18 mit Vorschau. **Die Stempel gehen der Reihe nach** (David,
+  zweite Korrektur: „nicht so auswählen, das 1. was sie anclicken is
+  Platz 1, das 2. Platz 2"): erster Klick = ★1, zweiter = ★2 … ★5 (Top 5,
+  Pflicht, 1 = Favorit). Nach dem fünften springt die Seite auf ✖ (Schlecht,
+  optional, ✖1 = am schlechtesten); zwei Knöpfe oben schalten von Hand um.
+  Ein gestempeltes Design nochmal anklicken nimmt den Stempel ab, die
+  folgenden rücken auf (Nummern bleiben lückenlos, deshalb gibt es keine
+  Stempelwahl mehr). Stempel groß auf dem Bild, Übersicht oben, Hinweis
+  „Nächster Stempel: ★n“, Filter. Erste Fassung (Listen mit ▲▼) und zweite
+  (Stempelwahl pro Design) sind verworfen.
+  Annahmen von mir: Umschalten auf ✖ automatisch nach ★5; ein
+  Design von ★ nach ✖ zu verschieben heißt abnehmen und neu anklicken.
+- `voting/ergebnis.html`: Rangliste (Top 5 = 5…1 Punkte, Schlechte = −5…−1),
+  Einzelabgaben, live. Nirgends verlinkt - nur David kennt die Adresse.
+- `voting/data.js`: Kopie der Richtungsliste aus `designs/index.html`.
+  **Beide Listen von Hand synchron halten.**
+- Speicher: Firebase Realtime Database, Pfad `votes/<name>` (dieselbe
+  Datenbank wie der Buzzer, Config aus `buzzer/index.html`). Gleicher Name =
+  gleiche Abgabe, vorher kommt eine Rückfrage, wenn der Name schon vergeben
+  ist. Fortschritt bleibt in `localStorage` (`iryo-voting-v1`).
+- Schlägt das Senden fehl, kommt ein Fenster mit der Auswahl als Text zum
+  Kopieren.
+
+**Warum so.** Firebase, weil das Projekt es schon nutzt und die Regeln offen
+sind - kein neuer Dienst. Gerüst wird nur einmal gebaut und danach nur
+aktualisiert, weil jedes Neuzeichnen die 18 Vorschau-iframes neu geladen
+hätte.
+
+**Geprüft.** Im Browser per Skript durchgespielt (ohne Firebase): Anleitung
+vor/zurück, Durchgehen mit Bookmarks, Reiter, Kopfleiste und Browser-Zurück,
+Fallback-Fenster bei fehlendem Firebase (alles an der ersten Fassung). An der
+Reihenfolge-Fassung: Klicks in Reihenfolge, Abnehmen mit Aufrücken, Wechsel
+auf ✖ nach ★5, Umschalten von Hand, sechster Klick in voller Liste
+abgelehnt, Namenspflicht, Anzeige in Übersicht und auf dem Bild, Aussehen
+per Screenshot (Handybreite). Keine Konsolenfehler beim Laden. `node check.js` ändert sich nicht (prüft
+`voting/` nicht).
+
+**Ungeprüft.** Echtes Schreiben und Lesen in Firebase (bewusst keine Testdaten
+in die Live-Datenbank geschrieben), `ergebnis.html` mit echten Daten, das
+Aussehen auf dem Handy (Screenshots waren nicht möglich, das Browser-Fenster
+war nicht sichtbar), Ladezeit von 18 Vorschauen auf dem Handy.
+
+**Offen.** Jeder mit dem Link kann Abgaben anderer überschreiben oder
+löschen (offene Datenbankregeln, wie beim Buzzer). Ergebnis-Adresse liegt
+unter `/voting/ergebnis.html`, ist aber nicht geheim.
+
+---
+
 ## 2026-10-06 — Show-Symbole je Design: Regeln in styles.css (`5ac4376`)
 
 **Gemacht.** Fortsetzung von `d226865`. David: „Stil je Richtung wie geplant
