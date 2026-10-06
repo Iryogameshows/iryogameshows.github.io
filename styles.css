@@ -2549,6 +2549,18 @@ body {
 
 /* Helle Richtungen: die Spiel-Logos oben sind weiss-gold mit Leuchten
    gezeichnet - auf hellem Grund verschwinden sie. Dort in Schriftfarbe. */
+/* Show-Logos oben (renderLogo in core.js) mit Richtung: deren Logo-Schrift,
+   Symbol und Schrift in der Akzentfarbe statt Gold, ohne Goldschein. Die
+   dunkelblauen Aussparungen im Symbol nehmen den Seitengrund an. */
+:root[data-theme] .logo svg { filter: none; }
+:root[data-theme] #main-logo .logo-word { font-family: var(--font-logo); fill: rgb(var(--gold-rgb)); filter: none; }
+:root[data-theme] #main-logo linearGradient stop { stop-color: rgb(var(--gold-rgb)); }
+:root[data-theme] #main-logo [fill="#0b0e2c"] { fill: var(--bg); }
+:root[data-theme] #main-logo [fill="#3a3f6b"] { fill: rgba(var(--fg-rgb), .3); }
+/* Fraktur in Versalien ist unleserlich ("WER WEISS") - die Show-Logos in L
+   deshalb in der Zeitungs-Serife; die Fraktur bleibt dem Kopf "The Iryo Gameshow". */
+:root[data-theme="L"] #main-logo .logo-word { font-family: 'Playfair Display', serif; font-weight: 900; }
+:root[data-theme-hell] #main-logo linearGradient stop { stop-color: var(--accent-text); }
 :root[data-theme-hell] #main-logo .logo-word { fill: var(--fg); filter: none; }
 
 /* Helle Richtungen: Flaechen in Teamfarbe bleiben dunkelrot/-blau/-gruen

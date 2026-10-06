@@ -645,6 +645,26 @@ function renderLogo(line1, line2, size2, icon) {
     </svg>`;
   }
   setHtml('main-logo', inner);
+  fitLogoWords();
+}
+
+/* Mit Design-Richtung tragen die Show-Logos deren Schrift (styles.css,
+   --font-logo). Breite Schriften wie Press Start 2P oder Fraktur liefen
+   dann ueber die 300er viewBox hinaus - hier auf die Breite gestaucht.
+   Erst nach dem Laden der Schrift stimmt die Messung, daher zweimal. */
+function fitLogoWords() {
+  if (!themeKey()) return;
+  const fit = () => document.querySelectorAll('#main-logo text.logo-word').forEach(t => {
+    const txt = /** @type {SVGTextElement} */ (t);
+    txt.removeAttribute('textLength');
+    txt.removeAttribute('lengthAdjust');
+    if (txt.getComputedTextLength() > 284) {
+      txt.setAttribute('textLength', '284');
+      txt.setAttribute('lengthAdjust', 'spacingAndGlyphs');
+    }
+  });
+  fit();
+  if (document.fonts) document.fonts.ready.then(fit);
 }
 
 // Menü-Karten: das eigene Gold-Logo jedes Spiels statt eines Emojis.
@@ -690,8 +710,26 @@ function renderMenuIcons(){
  *  @param {number} [schaerfe] wie viele echte Pixel je CSS-Pixel gezeichnet
  *    werden. 2 reicht fuer das kleine Logo oben; der Wartebildschirm fuellt
  *    einen Beamer und braucht mehr, sonst franst die Schrift aus. */
+let hubFontRequested = false;
 function renderIryoHubLogo(elId, breite, schaerfe){
   const el = document.getElementById(elId || 'main-logo'); if (!el) return;
+  /* Mit gewaehlter Design-Richtung deren eigene Wortmarke (js/theme.js),
+     sonst das gezeichnete Schild. */
+  const themaLogo = themeLogoHtml(themeKey(), breite || 'min(400px,88vw)');
+  if (themaLogo) { el.innerHTML = themaLogo; return; }
+  /* Das Canvas kennt nur Schriften, die schon geladen sind. Startet die Seite
+     mit einer Design-Richtung, wurde Luckiest Guy nie gebraucht - beim
+     Zurueckschalten auf Klassik stuende das Schild dann in Ersatzschrift.
+     Einmal anfordern und danach neu zeichnen. */
+  if (document.fonts && !hubFontRequested && !document.fonts.check('120px "Luckiest Guy"')) {
+    hubFontRequested = true;
+    /* Beide Stellen neu, nicht nur den Aufrufer: applyTheme zeichnet Menue
+       und Wartebildschirm direkt nacheinander. */
+    document.fonts.load('120px "Luckiest Guy"').then(() => {
+      if (screenActive('menu-screen') || screenActive('design-screen')) renderIryoHubLogo();
+      if (typeof BOARD_IDLE_WIDTH !== 'undefined') renderIryoHubLogo('board-idle', BOARD_IDLE_WIDTH, 4);
+    });
+  }
   const S = schaerfe || 2, W = 900, H = 500;
   const cv = document.createElement('canvas'); cv.width = W*S; cv.height = H*S;
   const ctx = cv.getContext('2d'); ctx.scale(S,S);
@@ -914,7 +952,7 @@ function showScreen(id) {
   // genau wie das alte Popup-Fenster das auch nie automatisch geschlossen hat.
   if (id === 'menu-screen') setClass('gm-embed-overlay', 'visible', false);
   // Logo per context
-  if (id === 'menu-screen') renderIryoHubLogo();
+  if (id === 'menu-screen' || id === 'design-screen') renderIryoHubLogo();
   else if (id === 'tournament-screen') renderLogo('TURNIER', null, null, 'trophy');
   else if (id.startsWith('jeopardy')) renderLogo('JEOPARDY', null, null, 'danger');
   else if (id.startsWith('wwds')) renderLogo('WER WEISS', 'DENN SOWAS', 22, 'wwds');
