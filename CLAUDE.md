@@ -260,9 +260,13 @@ Wird eine komplexe Aufgabe abgebrochen oder wechselt das Thema, schreibe ich
 zum Abschluss eine kurze Übersicht — **immer auch in die `HANDOFF.md`**, nicht
 nur in den Chat. Sie enthält:
 
-- woran zuletzt genau gearbeitet wurde,
-- an welchem Punkt wir stehengeblieben sind,
-- welche nächsten Schritte sinnvoll sind, um die Aufgabe fertigzustellen.
+- **Aktueller Stand:** woran zuletzt genau gearbeitet wurde,
+- **Stopppunkt:** an welchem Punkt wir stehengeblieben sind,
+- **Kreative Ansätze & Visionen:** welche konkreten Vorstellungen, Design-Ideen
+  oder Konzepte bereits im Raum standen (visuelle Stile, Layouts, kreative
+  Richtungen) — auch verworfene und nur angedachte,
+- **Nächste Schritte:** welche konkreten Maßnahmen als Nächstes sinnvoll sind,
+  um das Projekt nahtlos weiterzuführen.
 
 Das gilt auch, wenn nichts committet wurde: ein unfertiger Stand ist genau der
 Fall, in dem eine andere Session (oder ein anderer Rechner) die Information
