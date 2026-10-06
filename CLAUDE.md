@@ -254,6 +254,20 @@ Sie gilt als Teil der Änderung, genau wie der Code und die Prüfung.
 
 Kein Eintrag heißt: der Arbeitsschritt ist nicht fertig.
 
+### Abschluss-Übersicht bei Themenwechsel oder Abbruch
+
+Wird eine komplexe Aufgabe abgebrochen oder wechselt das Thema, schreibe ich
+zum Abschluss eine kurze Übersicht — **immer auch in die `HANDOFF.md`**, nicht
+nur in den Chat. Sie enthält:
+
+- woran zuletzt genau gearbeitet wurde,
+- an welchem Punkt wir stehengeblieben sind,
+- welche nächsten Schritte sinnvoll sind, um die Aufgabe fertigzustellen.
+
+Das gilt auch, wenn nichts committet wurde: ein unfertiger Stand ist genau der
+Fall, in dem eine andere Session (oder ein anderer Rechner) die Information
+braucht.
+
 Warum: eine Sitzung endet, der Kontext wird komprimiert, eine andere Session
 übernimmt — dann ist nur noch die Git-History da. Die sagt, *was* geändert
 wurde, aber nicht, was gemessen, verworfen oder bewusst liegen gelassen wurde.
