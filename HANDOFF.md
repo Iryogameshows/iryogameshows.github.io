@@ -12,6 +12,26 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-06 — Regel: Abschluss-Übersicht auch in die HANDOFF (`746eab9`)
+
+**Gemacht.** In `CLAUDE.md` (Abschnitt „HANDOFF.md") neuer Unterabschnitt
+„Abschluss-Übersicht bei Themenwechsel oder Abbruch": bei Abbruch oder
+Themenwechsel einer komplexen Aufgabe kommt eine kurze Übersicht (zuletzt
+bearbeitet · Stand · nächste Schritte) immer auch in die `HANDOFF.md`, auch
+ohne Commit.
+
+**Warum so.** David wollte die Regel dauerhaft statt nur für ein Gespräch. Die
+Projekt-`CLAUDE.md` gewählt, weil dort die HANDOFF-Regeln stehen. Nicht in die
+übergeordnete `Coding/CLAUDE.md` geschrieben (läge außerhalb dieses Repos);
+sie müsste dort bei Bedarf separat ergänzt werden.
+
+**Geprüft.** `node check.js`: „alles in Ordnung". Nur Markdown geändert.
+
+**Offen.** Nicht gepusht (Branch `claude/game-buzzer-fixes-90cyjz`). Der
+unfertige Eintrag zu den Show-Symbolen darunter ist unverändert.
+
+---
+
 ## 2026-10-06 — UNFERTIG: Show-Symbole je Design neu zeichnen (`d226865`)
 
 **Auftrag (David).** „die Show-Symbole auch pro Design neu zeichnen" - nach
