@@ -12,6 +12,44 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-07 — Merge mit master: Show-Symbole doppelt gebaut, master gilt (`e947db4`)
+
+**Gemacht.** `origin/master` in `claude/game-buzzer-fixes-90cyjz` gemergt.
+Konflikte in `styles.css`, `index.html`, `HANDOFF.md`.
+
+**Fund.** Eine parallele Session hatte dieselbe Aufgabe („Show-Symbole je
+Design") schon auf master erledigt (`5ac4376`, Eintrag `e8ba588`): gleiche
+Idee, aber andere Umsetzung (`--ico-fstroke`/`--ico-fsw`/`--ico-lw`) und mit
+**zwei** Pixel-Filtern (`#ico-pixel` für `<svg>`, `#ico-pixel-g` für `<g>`,
+feste `userSpaceOnUse`-Fläche) statt meiner Notlösung `crispEdges`. Beides
+entstand unabhängig, weil mein Zweig nach `d5850ae` nicht mit master abgeglichen
+war.
+
+**Entscheidung.** In `styles.css` und `index.html` die Fassung von master
+genommen, meine Regeln (`4abba0a`, `d74ae24`) verworfen. Begründung: master
+löst das Filterproblem im Pixel-Filter selbst (der Fehler, den ich in B
+gefunden habe, ist dort als Ursache benannt: Filterregion bei `<g>`), meine
+Lösung hätte B auf die schwächere Optik gesetzt. `js/` war ohnehin gleich. Die
+beiden HANDOFF-Zweige zusammengelegt (master-Einträge oben, meine
+darunter); meine Einträge zu `4abba0a`/`d74ae24` beschreiben Code, der nicht
+mehr existiert, und sind nur noch Verlauf.
+
+**Geprüft.** `node check.js` = „alles in Ordnung" (Klammern 1052).
+`git diff origin/master`: nur `CLAUDE.md` (+18) und `HANDOFF.md` (+118)
+weichen ab, der Code ist identisch mit master. **Nicht im Browser angesehen** —
+die Fassung von master habe ich nicht selbst geprüft.
+
+**Offen.** (1) Sichtprüfung der master-Fassung (vor allem B, `#ico-pixel-g` im
+Show-Logo). (2) Die Frage nach eigenen Piktogrammen je Show und Richtung ist
+weiter offen. (3) Nicht gepusht; ein Push des Zweigs ändert live nichts, erst
+`master`.
+
+**Fallstricke.** Vor Arbeit an einer Aufgabe aus der HANDOFF zuerst
+`git log origin/master` ansehen, nicht nur `git status`: der Zweig stand
+„sauber", master war trotzdem schon fertig.
+
+---
+
 ## 2026-10-07 — Entwürfe hochwertiger: acht Richtungen in `designs/s/` (`be7ec34`)
 
 **Auftrag (David).** „1,4,5,8 (deutlich), 11,14, 17 und 18 hochwertiger“.
