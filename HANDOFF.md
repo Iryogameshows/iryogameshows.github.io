@@ -12,6 +12,215 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-07 — Entwürfe hochwertiger: acht Richtungen in `designs/s/` (`be7ec34`)
+
+**Auftrag (David).** „1,4,5,8 (deutlich), 11,14, 17 und 18 hochwertiger“.
+Zuordnung nach der Nummerierung der Designs-Seite (annahme, nicht
+rückbestätigt): 1 = A Studio, 4 = D Late Night, 5 = E 70er, 8 = I Salon
+(deutlich); 11 = L New York, 14 = O Terminal, 17 = R Jazzplatte, 18 = S Art
+déco. Auf Nachfrage „Beides“ (Entwürfe und laufende Show) und: vor allem
+hochwertigere Details, manche Sachen sähen „billig“ aus; feinere Details,
+bessere Schrift und Abstände, stimmigere Farben, mehr Bewegung. Nach dem
+Pilot an I: „mach die anderen sieben Richtungen genauso“.
+
+**Gemacht (nur die Entwürfe, 95 Dateien in `designs/s/`).** Je Richtung ein
+Skript in `designs/polish/` (siehe README dort), das exakt erkannte
+Style-Muster der Exportdateien umschreibt - kein Handeditieren von 96 Dateien.
+- **I Salon:** Filz mit Körnung und Vignette, goldener Doppelrand, Papierkarten
+  mit Textur/Innenrahmen/Schichtschatten, Kartenrücken mit Raute, Chips mit
+  Ring und Kante (Stapel wirken dick), Spielautomat im Handy-Bild mit
+  Metall- und Lackverläufen.
+- **D Late Night:** Filmkorn, warmer Lichtkegel, Papierkarten, Orange-Block
+  mit Glut, Skyline mit Kantenlicht und glühenden Fenstern, Balken mit
+  Tiefe, Zeilen mit weichem Lichtverlauf, Orange-Schrift mit Glut.
+- **A Studio:** Glanzkante auf allen Tafeln, Glühbirnen mit hellem Kern,
+  eingelassene Antwortfelder, 3D-Goldflächen, Korn und Vignette, weichere
+  Scheinwerferkegel.
+- **E 70er:** glänzendes Email (Orange/Gelb/Braun mit Glanzkante und hartem
+  Retro-Schatten), Antwortbänder, Korn, Strahlen blenden zum Rand aus,
+  SVG-Fächer im Jeopardy-Bild mit Kante und Schatten.
+- **L New York:** Papierfaser, Falz in der Mitte, Druckerschwärze mit Struktur,
+  Schlagzeilen mit Farbbluten, Rotstempel als Multiply.
+- **O Terminal:** Kunststoffgehäuse mit Korn, stärkere Phosphor-Glut,
+  **Animation:** rollende Scanlines, leichtes Flackern, blinkender Cursor.
+- **R Jazzplatte:** Plattenhüllen aus Karton, Vinyl mit Glanz, Etiketten mit
+  Verlauf, Papierkarten, Raum mit Korn.
+- **S Art déco:** schwarzer Lack mit Korn, Goldleisten mit Tiefe,
+  Eintrittskarten mit Papier, **Animation:** Strahlenkränze drehen sich
+  langsam (240 s). Beide Animationen stehen in einem
+  `<style id="iryo-polish">` im Kopf und gehen bei `prefers-reduced-motion` aus.
+
+**Warum so.** Der Export hat überall nur Inline-Styles; ein gemeinsames
+Stylesheet hätte gegen sie `!important` gebraucht. Das Umschreiben der
+Style-Attribute nach festen Mustern lässt sich pro Richtung prüfen und
+zurücknehmen (`git checkout -- designs/s/<K>-*.html`). Erste Fassung der I-Politur
+hatte den SVG-Filterverweis doppelt kodiert (`%2523`) - Karten wurden schwarz;
+Filz zuerst zu hell, Papier in L zuerst zu grau (Faser zu stark). Beides
+korrigiert. Verworfen: Entwürfe per iframe-Skript statt Umschreiben der Dateien,
+und gemeinsame Regeln für alle Richtungen (jede hat anderes Material).
+
+**Geprüft.** Alle 96 Dateien: Klammern in allen 4792 Style-Attributen
+ausgeglichen, keine `undefined`/`NaN`. Im Browser (Vorschau-Server, Ansicht in
+Haelften wegen des schmalen Fensters) angesehen: Menü, Family Feud, Jeopardy,
+Millionär für A, D, E, I, L, O, R, S; dazu Handy und weitere Screens bei I
+(Automat), D, E. `node check.js` = alles in Ordnung (prüft `designs/` nicht).
+Dateigröße der acht Richtungen von 760 auf 1032 KB (Rauschen als data-URI,
+meist 20-40 KB je Datei).
+
+**Ungeprüft.** Nicht jeder der 96 Screens einzeln (Stichproben), das Verhalten
+auf einem echten Handy, die Auslastung beim Voting mit 18 Vorschauen, in denen
+jetzt O und S animieren, **die laufende Show** (`js/theme.js`, `styles.css`)
+- dort ist nichts geändert, sie kennt weiter nur Farben und Schriften der
+Richtungen. Ob das Wort „billig“ bei David genau diese Stellen meint, ist
+Vermutung.
+
+**Offen.** Das Gleiche für die laufende Show (David wählte „Beides“).
+Entwürfe und Show sind damit auseinander; wer neu exportiert, überschreibt die
+Politur und muss `designs/polish/` erneut laufen lassen.
+
+---
+
+## 2026-10-06 — Voting-Seite für die 18 Design-Richtungen `/voting/` (`2982e6d`)
+
+**Auftrag (David).** Eine Seite, die Freunde bekommen: alle Designs
+anschauen, Top 5 geordnet abgeben (Pflicht), bis zu 5 Schlechte geordnet
+(optional), Bookmarks setzen, am Anfang 2-3 Textfenster zur Bedienung,
+frei vor und zurück, am Ende eine Übersicht zum Abgeben.
+
+**Annahme, nicht abgesprochen:** Abgestimmt wird über die 18 Richtungen aus
+`designs/` (nicht über Spiele oder etwas anderes).
+
+**Gemacht.** Neuer Ordner `voting/`, kein Eingriff in die Show:
+- `voting/index.html`: drei Etappen (Anleitung in 3 Fenstern, Durchgehen,
+  Abgabe), Kopfleiste jederzeit anklickbar, Browser-Zurück-Taste geht auch.
+  Durchgehen: ◀ ▶ und Pfeiltasten, Reiter je Screen, Bookmarks 👍/👎 (nur
+  Merkzettel), Streifen mit allen 18. **Abgabe als Stempel-Übersicht**
+  (David: „die Übersicht, und die clicken an und setzen so kleine stamps
+  1-5", nachdem die erste Fassung mit Listen und ▲▼ verworfen wurde):
+  Raster aller 18 mit Vorschau. **Die Stempel gehen der Reihe nach** (David,
+  zweite Korrektur: „nicht so auswählen, das 1. was sie anclicken is
+  Platz 1, das 2. Platz 2"): erster Klick = ★1, zweiter = ★2 … ★5 (Top 5,
+  Pflicht, 1 = Favorit). Nach dem fünften springt die Seite auf ✖ (Schlecht,
+  optional, ✖1 = am schlechtesten); zwei Knöpfe oben schalten von Hand um.
+  Ein gestempeltes Design nochmal anklicken nimmt den Stempel ab, die
+  folgenden rücken auf (Nummern bleiben lückenlos, deshalb gibt es keine
+  Stempelwahl mehr). Stempel groß auf dem Bild, Übersicht oben, Hinweis
+  „Nächster Stempel: ★n“, Filter. Erste Fassung (Listen mit ▲▼) und zweite
+  (Stempelwahl pro Design) sind verworfen.
+  Annahmen von mir: Umschalten auf ✖ automatisch nach ★5; ein
+  Design von ★ nach ✖ zu verschieben heißt abnehmen und neu anklicken.
+- `voting/ergebnis.html`: Rangliste (Top 5 = 5…1 Punkte, Schlechte = −5…−1),
+  Einzelabgaben, live. Nirgends verlinkt - nur David kennt die Adresse.
+- `voting/data.js`: Kopie der Richtungsliste aus `designs/index.html`.
+  **Beide Listen von Hand synchron halten.**
+- Speicher: Firebase Realtime Database, Pfad `votes/<name>` (dieselbe
+  Datenbank wie der Buzzer, Config aus `buzzer/index.html`). Gleicher Name =
+  gleiche Abgabe, vorher kommt eine Rückfrage, wenn der Name schon vergeben
+  ist. Fortschritt bleibt in `localStorage` (`iryo-voting-v1`).
+- Schlägt das Senden fehl, kommt ein Fenster mit der Auswahl als Text zum
+  Kopieren.
+
+**Warum so.** Firebase, weil das Projekt es schon nutzt und die Regeln offen
+sind - kein neuer Dienst. Gerüst wird nur einmal gebaut und danach nur
+aktualisiert, weil jedes Neuzeichnen die 18 Vorschau-iframes neu geladen
+hätte.
+
+**Geprüft.** Im Browser per Skript durchgespielt (ohne Firebase): Anleitung
+vor/zurück, Durchgehen mit Bookmarks, Reiter, Kopfleiste und Browser-Zurück,
+Fallback-Fenster bei fehlendem Firebase (alles an der ersten Fassung). An der
+Reihenfolge-Fassung: Klicks in Reihenfolge, Abnehmen mit Aufrücken, Wechsel
+auf ✖ nach ★5, Umschalten von Hand, sechster Klick in voller Liste
+abgelehnt, Namenspflicht, Anzeige in Übersicht und auf dem Bild, Aussehen
+per Screenshot (Handybreite). Keine Konsolenfehler beim Laden. `node check.js` ändert sich nicht (prüft
+`voting/` nicht).
+
+**Firebase-Test (Davids Auftrag „mach nen Testeintrag in Firebase“, nach
+`2982e6d`).** Über die lokale Seite mit dem echten „Stimmen abgeben“-Knopf
+eine Abgabe als „TEST-LOESCHEN“ geschickt (5 Top, 2 Schlechte, keine
+Bookmarks). Ergebnis: Dankesseite kam, Eintrag lag unter
+`votes/test-loeschen` mit `top`, `bad`, `name`, `ts`, `v`; `ergebnis.html`
+las ihn live und rechnete richtig (C · Pop 5 Punkte vorn, dann A, B, D, E mit
+4-1). Danach den einen Eintrag per `remove()` gelöscht, `votes/` war leer
+(`null`), die Ergebnisseite zeigte „Noch keine Abgaben“. Beobachtung:
+Firebase speichert leere Listen nicht, bei einer Abgabe ohne Bookmarks fehlen
+`up` und `down` - `ergebnis.html` fängt das mit `|| []` ab, der Test lief
+genau so. Getestet nur von `localhost`; von der Live-Adresse aus ist es
+dieselbe Datenbank, aber nicht eigens versucht.
+
+**Ungeprüft.** Das Aussehen auf dem Handy-Gerät selbst (nur Screenshot in
+Handybreite im Browser-Fenster), Ladezeit von 18 Vorschauen auf dem Handy,
+das Verhalten bei zwei gleichzeitigen Abgaben, die Live-Adresse nach dem
+Deploy.
+
+**Offen.** Jeder mit dem Link kann Abgaben anderer überschreiben oder
+löschen (offene Datenbankregeln, wie beim Buzzer). Ergebnis-Adresse liegt
+unter `/voting/ergebnis.html`, ist aber nicht geheim.
+
+---
+
+## 2026-10-06 — Show-Symbole je Design: Regeln in styles.css (`5ac4376`)
+
+**Gemacht.** Fortsetzung von `d226865`. David: „Stil je Richtung wie geplant
+umsetzen" - ein Zeichenstil je Richtung, nicht je Show und Richtung.
+- `styles.css`: Block „Show-Symbole je Design-Richtung" nach den Show-Logo-
+  Regeln. Jede Richtung (A-S ohne G) setzt nur Variablen `--ico-*` (Fläche,
+  Kontur, Linie, Aussparung, gedimmt, Filter, Blend); die Regeln darunter
+  greifen per Attribut-Selektor auf die vier Elementsorten. Bauhaus (H) und
+  Memphis (P) färben reihum per `:nth-child`.
+- Alte Regeln für `#main-logo` entfernt (Verlauf-Stops, `[fill="#0b0e2c"]`,
+  `[fill="#3a3f6b"]`, die `data-theme-hell`-Stops). Die `.logo-word`-Regeln
+  bleiben.
+- `index.html`: Filter `#ico-pixel` neu gebaut, dazu `#ico-pixel-g`.
+
+**Warum so.**
+- Wächter per `:where(...)`: `:root[data-theme]:not([data-theme="A"])` hätte
+  0,3,0 Spezifität und die Richtungs-Regeln (nth-child, Umriss-Stile)
+  geschlagen. A behält das Gold und bekommt nur Aussparung, Dimmung, Schein.
+- Elemente mit eigenem `stroke` (Karte im WWDS-Pult, Mittelpunkt der Torte)
+  werden getrennt behandelt, sonst verschwindet deren Fuge bzw. die
+  Linienbreite wird überschrieben.
+- Umriss-Stile (I, J, K): Aussparungen und gedimmte Flächen bekommen
+  `fill:none` plus Linie (`--ico-cutline`, `--ico-dimline`); sonst wäre die
+  gedimmte Säule heller als die leuchtende.
+- **Lücken in der Tabelle, von mir gewählt** - bitte prüfen: H Linie #141414,
+  Aussparung #ECEAE4, gedimmt #141414. P gedimmt rgba(20,20,20,.3),
+  Aussparung #F4F1FF. M Linie #B7A6FF statt Verlauf (ein senkrechter Strich
+  hat keine Breite, ein Verlauf nach Bounding-Box wird dort nicht gezeichnet;
+  nicht eigens geprüft, Vorsichtsmaßnahme). Q Linie = Fläche.
+- **Pixel-Mosaik (B), drei Anläufe.** (1) Der vorbereitete Filter mit Fläche
+  = Elementrand und feFlood in festen Einheiten: am `<svg>` ging es, an der
+  `<g>` (Show-Logo oben) blieb das Symbol leer. Vermutung: die Teilregion
+  der feFlood liegt im Koordinatensystem des Elements, die Filterfläche
+  beginnt aber am Rand der `<g>`. (2) `primitiveUnits="objectBoundingBox"`
+  mit Bruchteilen: in Chrome nirgends sichtbar. (3)
+  `filterUnits="userSpaceOnUse"` ab 0/0 mit fester Fläche: geht an `<svg>`
+  (CSS-Pixel, 4-px-Blöcke) und an `<g>` (Symbol-Einheiten, 6 Einheiten) -
+  an einem Testkreis in allen drei Fällen nachgestellt. Deshalb zwei Filter:
+  `--ico-filter-root` für das `<svg>`, `--ico-filter` für die `<g>`.
+- Der Hover der Menükarte setzt `filter` mit Spezifität 0,3,1; die Filter-
+  Regel hat dafür eine eigene Hover-Zeile.
+
+**Geprüft.** `node check.js` und `node check.js --types` = alles in Ordnung
+(1052 Klammernpaare). Im Browser (Vorschau-Server, 18 iframes mit
+`applyThemeToDoc`; je Richtung die Menü-Symbole aller acht Spiele plus
+Show-Logo `pih`): alle 18 Richtungen zeichnen, B, J, K, M, O, Q, S nach dem
+Filter-Umbau einzeln angesehen. Testseiten wieder gelöscht, `designTheme`
+im Browser zurückgesetzt.
+
+**Ungeprüft.** Mainscreen/Zuschauerfenster (Filter-Verweise `url(#ico-...)`
+im gespiegelten Dokument), Hover auf einer Menükarte, Intros/Tutorial/
+Turnierplan mit Richtung, Klassik ohne Richtung (die Regeln gelten nur bei
+`data-theme`; nicht nachfotografiert). Die Passwort-Sperre habe ich für die
+Tests nur als Overlay im iframe entfernt, nichts eingegeben.
+
+**Offen.** Davids Entscheidung „eigenes Piktogramm je Show und Richtung"
+(Eintrag darunter) ist offen; er hat sich für den Zeichenstil je Richtung
+entschieden. Das Mosaik wirkt bei WWDS und Torte unruhig.
+
+**Fallstricke.** Python gibt es auf dieser Maschine nicht; Textumbauten mit
+`node -e`. Mehrzeilige Texte nicht per `node -e` in Bash quoten - dafür das
+Edit-Werkzeug nehmen. Der Vorschau-Screenshot lief mehrfach in ein Timeout,
+ein zweiter Versuch klappte jeweils.
 ## 2026-10-07 — Show-Symbole im Browser geprüft, Pixel-Filter raus (`d74ae24`)
 
 **Gemacht.** Dev-Server „Gameshows" (Port 3000), Host-Gate mit dem

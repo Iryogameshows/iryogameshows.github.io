@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Voting-Ergebnis · Iryo Gameshow</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap">
+<style>
+:root { --bg: #121217; --panel: #1C1C25; --line: #33333F; --fg: #EDEDF2; --muted: #9A9AAE; --gold: #FFD23F; --bad: #FF5C7A; --up: #3DDC84; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: 'Manrope', system-ui, sans-serif; }
+main { max-width: 1000px; margin: 0 auto; padding: 20px 14px 50px; }
+h1 { margin: 0 0 4px; font-size: 26px; font-weight: 800; } h2 { margin: 28px 0 8px; font-size: 20px; font-weight: 800; }
+.muted { color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 8px 10px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:nth-child(1), td:nth-child(1), th:nth-child(2), td:nth-child(2) { text-align: left; }
+th { font-size: 12px; letter-spacing: 1px; color: var(--muted); font-weight: 700; }
+td.pos { color: var(--gold); font-weight: 800; } td.g { color: var(--gold); } td.b { color: var(--bad); } td.tot { font-weight: 800; }
+.wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.voters { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.v { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.5; }
+.v b { font-size: 16px; } .v ol { margin: 4px 0 8px; padding-left: 20px; }
+.tag { font-size: 12px; font-weight: 800; letter-spacing: 1px; }
+button { font-family: inherit; }
+.btn { height: 38px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font-weight: 700; cursor: pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Voting-Ergebnis</h1>
+  <p class="muted" id="status">Lädt …</p>
+  <div id="out" hidden>
+    <h2>Rangliste</h2>
+    <p class="muted" style="margin-top:0">Top 5: Platz 1 = 5 Punkte … Platz 5 = 1 Punkt. Schlechte: Platz 1 (am schlechtesten) = −5 … Platz 5 = −1. Gesamt = Summe. Bei Gleichstand zählen die ersten Plätze, dann die Zahl der Top-5-Nennungen.</p>
+    <div class="wrap"><table id="tbl"></table></div>
+    <h2>Abgaben im Einzelnen</h2>
+    <div class="voters" id="voters"></div>
+    <p style="margin-top:24px"><button class="btn" id="copy">Rangliste als Text kopieren</button></p>
+  </div>
+</main>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="data.js"></script>
+<script>
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBuXYp1w65nR8tqJIKFS_v_9QSD7_0kR20",
+  authDomain: "keller-buzzer.firebaseapp.com",
+  databaseURL: "https://keller-buzzer-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "keller-buzzer",
+  storageBucket: "keller-buzzer.firebasestorage.app",
+  messagingSenderId: "589064661958",
+  appId: "1:589064661958:web:1c1024eab161ad8e53e0c7",
+};
+const D = VOTE_DESIGNS;
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const nm = (k) => { const d = D.find((x) => x.key === k); return d ? k + ' · ' + d.name : String(k); };
+let lastText = '';
+
+function compute(votes) {
+  const rows = D.map((d) => ({ key: d.key, name: d.name, pts: 0, minus: 0, firsts: 0, tops: 0, bads: 0 }));
+  const row = (k) => rows.find((r) => r.key === k);
+  votes.forEach((v) => {
+    (v.top || []).forEach((k, i) => { const r = row(k); if (r) { r.pts += 5 - i; r.tops++; if (i === 0) r.firsts++; } });
+    (v.bad || []).forEach((k, i) => { const r = row(k); if (r) { r.minus -= 5 - i; r.bads++; } });
+  });
+  rows.forEach((r) => { r.total = r.pts + r.minus; });
+  rows.sort((a, b) => b.total - a.total || b.firsts - a.firsts || b.tops - a.tops || a.bads - b.bads);
+  return rows;
+}
+function show(votes) {
+  const rows = compute(votes);
+  $('tbl').innerHTML = '<tr><th>#</th><th>RICHTUNG</th><th>TOP-PUNKTE</th><th>MINUS</th><th>GESAMT</th><th>PLATZ 1</th><th>IN TOP 5</th><th>ALS SCHLECHT</th></tr>' +
+    rows.map((r, i) => '<tr><td class="pos">' + (i + 1) + '</td><td>' + esc(r.key + ' · ' + r.name) + '</td><td class="g">' + r.pts + '</td><td class="b">' + r.minus + '</td><td class="tot">' + r.total + '</td><td>' + r.firsts + '</td><td>' + r.tops + '</td><td>' + r.bads + '</td></tr>').join('');
+  const list = (a) => '<ol>' + a.map((k) => '<li>' + esc(nm(k)) + '</li>').join('') + '</ol>';
+  $('voters').innerHTML = votes.map((v) =>
+    '<div class="v"><b>' + esc(v.name || '?') + '</b><div class="tag" style="color:var(--gold)">★ TOP 5</div>' + list(v.top || []) +
+    ((v.bad || []).length ? '<div class="tag" style="color:var(--bad)">✖ SCHLECHT</div>' + list(v.bad) : '') +
+    ((v.up || []).length ? '<div class="muted">👍 gemerkt: ' + esc(v.up.join(', ')) + '</div>' : '') +
+    ((v.down || []).length ? '<div class="muted">👎 gemerkt: ' + esc(v.down.join(', ')) + '</div>' : '') + '</div>').join('');
+  lastText = 'Voting-Ergebnis (' + votes.length + ' Abgaben)\n\n' + rows.map((r, i) => (i + 1) + '. ' + r.key + ' · ' + r.name + '  Gesamt ' + r.total + ' (Top ' + r.pts + ', Minus ' + r.minus + ', Platz 1: ' + r.firsts + 'x)').join('\n');
+  $('out').hidden = false;
+  $('status').textContent = votes.length + (votes.length === 1 ? ' Abgabe' : ' Abgaben') + ' · aktualisiert sich selbst';
+}
+$('copy').onclick = async () => { try { await navigator.clipboard.writeText(lastText); $('copy').textContent = 'Kopiert ✓'; } catch (e) { $('copy').textContent = 'Kopieren nicht möglich'; } };
+
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  firebase.database().ref('votes').on('value', (snap) => {
+    const o = snap.val() || {};
+    const votes = Object.keys(o).map((k) => o[k]).filter((v) => v && Array.isArray(v.top));
+    if (!votes.length) { $('out').hidden = true; $('status').textContent = 'Noch keine Abgaben.'; return; }
+    show(votes);
+  }, (e) => { $('status').textContent = 'Konnte nicht lesen: ' + e.message; });
+} catch (e) { $('status').textContent = 'Firebase nicht erreichbar.'; }
+</script>
+</body>
+</html>
