@@ -2576,7 +2576,8 @@ body {
 :root:is([data-theme="I"], [data-theme="J"], [data-theme="K"]) .show-icon [fill="#3a3f6b"] { stroke: var(--ico-dim); }
 
 :root[data-theme="A"] { --ico-cut: #0A0C26; --ico-dim: #2A2E66; --ico-filter: drop-shadow(0 0 6px rgba(255,201,60,.6)); }
-:root[data-theme="B"] { --ico-fill: #FFE14D; --ico-cut: #0B0A12; --ico-dim: #2B2740; --ico-filter: url(#ico-pixel) drop-shadow(3px 3px 0 #8A7400); }
+:root[data-theme="B"] { --ico-fill: #FFE14D; --ico-cut: #0B0A12; --ico-dim: #2B2740; --ico-filter: drop-shadow(3px 3px 0 #8A7400); }
+:root[data-theme="B"] .show-icon * { shape-rendering: crispEdges; }
 :root[data-theme="C"] { --ico-fill: #FFA3D1; --ico-contour: #121212; --ico-cw: 3.5; --ico-line: #121212; --ico-cut: #121212; --ico-dim: #FFF; --ico-filter: drop-shadow(4px 4px 0 #121212); }
 :root[data-theme="D"] { --ico-fill: #FF5B1F; --ico-line: #F2F2F2; --ico-cut: #0E0E0E; --ico-dim: #3A3A3A; }
 :root[data-theme="E"] { --ico-fill: #F6E7CB; --ico-line: #F2B33D; --ico-cut: #2B1810; --ico-dim: #8C3A1A; --ico-filter: drop-shadow(3px 3px 0 #E8622C) drop-shadow(3px 3px 0 #8C3A1A); }

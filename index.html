@@ -23,13 +23,6 @@
      der Spiegel sie in den Mainscreen mitnimmt. -->
 <svg id="show-icon-defs" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
   <defs>
-    <filter id="ico-pixel" x="0" y="0" width="1" height="1">
-      <feFlood x="2" y="2" width="1" height="1"/>
-      <feComposite width="5" height="5"/>
-      <feTile result="raster"/>
-      <feComposite in="SourceGraphic" in2="raster" operator="in"/>
-      <feMorphology operator="dilate" radius="2.5"/>
-    </filter>
     <filter id="ico-chalk" x="-10%" y="-10%" width="120%" height="120%">
       <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4" result="rausch"/>
       <feDisplacementMap in="SourceGraphic" in2="rausch" scale="3" result="verzogen"/>
