@@ -12,6 +12,47 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-07 — Show-Symbole im Browser geprüft, Pixel-Filter raus (`d74ae24`)
+
+**Gemacht.** Dev-Server „Gameshows" (Port 3000), Host-Gate mit dem
+Passwort aus `js/jeopardy-ui.js` entsperrt (Davids ausdrückliche Bitte, lokal).
+Per `applyTheme(key)` im Menü angesehen: A, B, C, D, E, F, H, I, J, K, M, N,
+O, P, Q, S. Show-Logo oben (`renderLogo`) zusätzlich in B, F, J.
+
+**Fund: `#ico-pixel` ging nicht.** Mit dem Mosaik-Filter (feTile +
+feMorphology) auf den Symbolen verschwanden in B die Menü-Symbole (nur bei
+einem blieb ein Klecks), das Show-Logo-Symbol (Filter auf `<g>`) fehlte ganz,
+und der Screenshot lief mehrfach in den Timeout (Filter schwer, acht Karten +
+Logo). Ohne den Filter am Logo-`<g>` war das Logo-Symbol da, die Karten blieben
+leer → der Filter ist insgesamt unzuverlässig, nicht nur auf `<g>`.
+Verworfen. Stattdessen in B: `shape-rendering: crispEdges` auf allen
+Symbol-Elementen + harter Versatzschatten (#8A7400). `#ico-pixel` aus
+`index.html` entfernt. Danach Menü und Logo in B vollständig sichtbar.
+`#ico-chalk` (J, Turbulenz) lief in Menü und Logo ohne Ausfall.
+
+**Geprüft.** `node check.js` = „alles in Ordnung". Sichtprüfung wie oben, nur
+im Menü und im Logo-Kopf, mit Screenshots bei 0,6 Skalierung. **Nicht
+angesehen:** Richtungen L und R (Menü/Logo), Logos oben in allen außer B/F/J,
+Intros, Tutorial, Turnierplan, Mainscreen-Spiegel, Hover im Menü,
+Logo-Kopf in K/M/O mit Schein.
+
+**Auffällig, nicht vertieft.** In H und N wirken die Menükarten grau-braun
+(kommt aus den Richtungen selbst, nicht aus den Symbol-Regeln — nicht geprüft).
+In P hat nur ein Teil der Symbole mehrere Farben (`:nth-child` greift je nach
+Aufbau unterschiedlich).
+
+**Offen.** (1) Je-Show-Piktogramm statt nur Stil je Richtung: weiter keine
+Antwort. (2) `origin/master` ist 112 Dateien weiter (u. a. `styles.css`,
+`HANDOFF.md`); ein Merge-Test (`git merge-tree`) zeigt Konflikte in genau diesen
+beiden Dateien — vor dem Zusammenführen auflösen. (3) Branch
+`claude/game-buzzer-fixes-90cyjz`, dieser Stand noch nicht gepusht.
+
+**Fallstricke.** Die Screenshots der Browser-Pane laufen bei schweren Filtern
+in einen Timeout — ein einzelner Wiederholungsversuch reicht meist; trat er
+dauerhaft auf, war das ein Hinweis auf den Filter selbst.
+
+---
+
 ## 2026-10-06 — UNFERTIG: Show-Symbole je Design, CSS geschrieben, nicht angesehen (`4abba0a`)
 
 **Aktueller Stand.** Die Regeln aus der Tabelle im Eintrag zu `d226865` stehen
