@@ -12,6 +12,39 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — B: Logo-Symbol im Show-Kopf repariert (`af2d91c`)
+
+**Gemacht.** `--ico-filter` in B ist jetzt nur noch `url(#ico-pixel-g)`
+(`styles.css`); der harte Versatzschatten (#8A7400, 5 Einheiten = rund 3 px
+bei Skalierung 0,575) steckt als `feOffset` + `feFlood` + `feComposite` +
+`feMerge` am Ende des Filters `#ico-pixel-g` in `index.html`.
+`--ico-filter-root` (Karten, `<svg>`) unverändert.
+
+**Ursache (gemessen).** Auf der `<g>` im Logo zeigte `url(#ico-pixel-g)` allein
+das Symbol, die Kette `url(#ico-pixel-g) drop-shadow(3px 3px 0 …)` nicht —
+beides im selben Browser nacheinander per `style.filter` gesetzt. Nicht die
+Filterfläche war also das Problem (anders als in `5ac4376` vermutet),
+sondern die Verkettung mit `drop-shadow()` auf der `<g>`. Verworfen: der
+erste Versuch mit `feDropShadow stdDeviation="0"` im Filter — damit
+verschwand das Symbol wieder (Chrome liefert bei Abweichung 0 leer, vermutet,
+nicht eigens belegt); erst die ausgeschriebene Fassung funktioniert.
+Auch verworfen: meine frühere Notlösung `crispEdges`.
+
+**Geprüft.** `node check.js` = „alles in Ordnung". Im Browser (B, `renderLogo`
+mit `wwm`): Logo-Symbol sichtbar mit Mosaik und Schatten, alle acht Menükarten
+mit Mosaik. Der erste Screenshot nach `applyTheme`+`renderLogo` zeigte die
+Karten noch leer, der zweite vollständig — die Filter brauchen einen Moment.
+
+**Offen.** Ungeprüft: B-Logo in den anderen Shows (`danger`, `ddf` usw. — nur
+`wwm` gesehen), Intros, Tutorial, Turnierplan, Mainscreen-Spiegel, Hover.
+Richtungen A, C, D, E, F, I, J, L, M, N, P, Q, R weiter nicht in der
+master-Fassung gesehen. Piktogramm-Frage offen. Nicht gepusht.
+
+**Fallstricke.** Filterketten (`url() drop-shadow()`) auf einer `<g>` sind in
+Chrome unzuverlässig — Effekte lieber in den Filter selbst legen.
+
+---
+
 ## 2026-10-08 — Sichtprüfung der master-Fassung der Show-Symbole (kein Code geändert)
 
 **Gemacht.** Dev-Server „Gameshows" (Port 3000) auf dem Stand `84f53de`, Host-Gate
