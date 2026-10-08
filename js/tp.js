@@ -128,7 +128,7 @@ function renderTpCatPreview(){
   const html = tpData.categories.map(c => {
     const n = c.questions.length;
     return `<div class="tp-chip${n ? '' : ' leer'}" style="--c:${escAttr(c.color)};">
-      <span class="tp-chip-icon">${c.icon}</span>
+      <span class="tp-chip-icon">${escapeHtml(c.icon)}</span>
       <span class="tp-chip-name">${escAttr(c.name)}</span>
       <span class="tp-chip-count">${n ? n : '!'}</span>
     </div>`;
@@ -265,7 +265,7 @@ function tpBuildWheel(){
     // Beschriftung in die Mitte des eigenen Segments drehen und dort wieder
     // aufrichten, sonst steht die Haelfte der Namen auf dem Kopf.
     const mid = i*seg + seg/2;
-    return `<span class="tp-wlabel" style="transform:rotate(${mid}deg) translateY(-86px) rotate(${-mid}deg);">${c.icon}</span>`;
+    return `<span class="tp-wlabel" style="transform:rotate(${mid}deg) translateY(-86px) rotate(${-mid}deg);">${escapeHtml(c.icon)}</span>`;
   }).join('');
   const rotor = document.getElementById('tp-wheel-rotor');
   if (rotor) rotor.style.background = `conic-gradient(${stops})`;
@@ -581,7 +581,7 @@ function tpWedgeSvg(team, size){
     const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
     const has = !!owned[i];
     return `<path d="M${cx},${cy} L${x0.toFixed(2)},${y0.toFixed(2)} A${r},${r} 0 0,1 ${x1.toFixed(2)},${y1.toFixed(2)} Z"
-      fill="${has ? c.color : 'rgba(255,255,255,.05)'}" stroke="rgba(0,0,0,.45)" stroke-width="1.5"/>`;
+      fill="${has ? escAttr(c.color) : 'rgba(255,255,255,.05)'}" stroke="rgba(0,0,0,.45)" stroke-width="1.5"/>`;
   }).join('');
   return `<svg class="tp-pie" viewBox="0 0 100 100" width="${size}" height="${size}" aria-hidden="true">${parts}
     <circle cx="${cx}" cy="${cy}" r="11" fill="#0b0e2c" stroke="rgba(255,255,255,.25)" stroke-width="1.5"/></svg>`;
@@ -604,7 +604,7 @@ function tpRenderTeams(){
 function tpCatChipHtml(){
   const c = tpData.categories[tpState.cat];
   if (!c) return '';
-  return `<div class="tp-catchip" style="background:${c.color};">${c.icon} ${escAttr(c.name)}</div>`;
+  return `<div class="tp-catchip" style="background:${escAttr(c.color)};">${escapeHtml(c.icon)} ${escAttr(c.name)}</div>`;
 }
 
 function tpRenderStage(){
@@ -676,7 +676,7 @@ function renderTpEditor(){
         <input type="text" value="${escAttr(q.a)}" placeholder="Antwort" style="flex:2;min-width:0;" oninput="tpSetA(${i},${j},this)">
         <button class="btn btn-danger btn-sm" onclick="tpDelQuestion(${i},${j})">✕</button>
       </div>`).join('') || `<div class="pr-empty">Noch keine Frage in dieser Kategorie.</div>`;
-    return `<div class="editor-card" style="border-left:6px solid ${c.color};">
+    return `<div class="editor-card" style="border-left:6px solid ${escAttr(c.color)};">
       <div class="panel-head" onclick="tpToggleCat(${i})" style="cursor:pointer;">
         <span class="tp-cat-edit" onclick="event.stopPropagation()">
           <input type="color" class="tp-cat-color" value="${escAttr(c.color)}" title="Farbe des Tortenstücks"
@@ -761,7 +761,36 @@ function tpBulkAdd(i){
 /* ── Speichern ──────────────────────────────────────────────────────────── */
 
 function tpSave(){ storeSetJson('tpData', tpData); }
-function tpLoad(){ tpData = storeGetJson('tpData', tpData); }
+/* Fragen kommen aus einer Importdatei oder dem localStorage, also von
+   ausserhalb. Zeichen und Farbe landen als Markup bzw. in style-Attributen -
+   eine Kategorie mit icon:'<img onerror=...>' wuerde sonst Skript ausfuehren.
+   Deshalb wird jede Kategorie beim Einlesen auf die erwartete Form gebracht;
+   die Ausgabestellen escapen zusaetzlich.
+   @param {any[]} cats
+   @returns {TpCategory[]} */
+function tpSanitizeCats(cats){
+  return cats.map(raw => {
+    const c = raw && typeof raw === 'object' ? raw : {};
+    const color = typeof c.color === 'string' && /^#[0-9a-f]{3,8}$/i.test(c.color) ? c.color : '#888888';
+    const questions = (Array.isArray(c.questions) ? c.questions : []).map(q => {
+      const o = q && typeof q === 'object' ? q : {};
+      return { q: String(o.q == null ? '' : o.q), a: String(o.a == null ? '' : o.a) };
+    });
+    return {
+      name: String(c.name == null ? '' : c.name),
+      icon: Array.from(String(c.icon == null ? '' : c.icon)).slice(0, 4).join(''),
+      color,
+      questions,
+    };
+  });
+}
+function tpLoad(){
+  const d = storeGetJson('tpData', null);
+  if (d && Array.isArray(d.categories)
+      && d.categories.length >= TP_MIN_CATS && d.categories.length <= TP_MAX_CATS){
+    tpData = { categories: tpSanitizeCats(d.categories) };
+  }
+}
 function tpSaveSettings(){ storeSetJson('tpSettings', tpState.settings); }
 /* Die Regeln stehen im Fragen-Editor, nicht mehr im Setup: es sind
    Eigenschaften der Fragerunde, kein Startparameter, und der Setup-Screen
@@ -794,7 +823,7 @@ function importTp(e){
         || d.categories.length < TP_MIN_CATS || d.categories.length > TP_MAX_CATS){
       throw new Error('Die Datei braucht ' + TP_MIN_CATS + ' bis ' + TP_MAX_CATS + ' Kategorien');
     }
-    tpData = d;
+    tpData = { categories: tpSanitizeCats(d.categories) };
     tpSave();
     renderTpEditor();
   });
@@ -846,7 +875,7 @@ function showTpTutorial(){ runTutorial(tpTutorialSlides()); }
 function tpTutorialSlides(){
   const n = tpCatCount();
   const chips = tpData.categories.map(c =>
-    `<div class="tut-tp-chip" style="--c:${escAttr(c.color)};">${c.icon} ${escapeHtml(c.name)}</div>`).join('');
+    `<div class="tut-tp-chip" style="--c:${escAttr(c.color)};">${escapeHtml(c.icon)} ${escapeHtml(c.name)}</div>`).join('');
   const again = tpState.settings.again;
   const steal = tpState.settings.steal;
   return [
@@ -930,7 +959,7 @@ function updateGamemasterTp(){
     body = `<div class="question">🏆 ${escapeHtml(s.teamNames[s.winner] || 'Sieger')} gewinnt</div>
       <div class="hint-line">Alle ${tpCatCount()} Stücke und die Schlussfrage.</div>`;
   } else if (s.clue && cat){
-    body = `<div class="hint-line">Kategorie: <b style="color:${escAttr(cat.color)};">${cat.icon} ${escapeHtml(cat.name)}</b>${
+    body = `<div class="hint-line">Kategorie: <b style="color:${escAttr(cat.color)};">${escapeHtml(cat.icon)} ${escapeHtml(cat.name)}</b>${
       s.finalTeam >= 0 ? ' · <b style="color:#FFD23F;">Schlussfrage</b>' : ''}</div>
       <div class="question">${escapeHtml(s.clue.q)}</div>
       <div class="hint-line">Antwort: <b style="color:#FFD23F;">${escapeHtml(s.clue.a)}</b>${
