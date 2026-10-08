@@ -12,6 +12,41 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — `js/tp.js`: Kategorien bereinigen, Ausgaben escapen (`b47b3f2`)
+
+**Anlass.** Zwei automatische Sicherheitsmeldungen (security-guidance-Plugin)
+zu `js/tp.js`; David: „ja, tp.js beheben“. Die Fundstellen habe ich vorher im
+Code bestätigt: `c.icon` und `c.color` standen unescaped in Markup und
+Attributen, `importTp` setzte `tpData = d` ungeprüft.
+
+**Gemacht.**
+- Neu `tpSanitizeCats()`: je Kategorie `name`/`icon` als String (Zeichen auf 4
+  Codepunkte gekürzt), `color` nur bei `/^#[0-9a-f]{3,8}$/i`, sonst `#888888`,
+  `questions` immer Liste von `{q,a}` als Strings. Benutzt von `importTp` und
+  `tpLoad` (localStorage). `tpLoad` übernimmt gespeicherte Daten nur noch,
+  wenn die Kategorienzahl in 3-8 liegt, sonst bleibt der Standard.
+- Escapen an den Ausgabestellen: `escapeHtml(c.icon)` in `renderTpCatPreview`,
+  `tpBuildWheel`, `tpCatChipHtml`, `tpTutorialSlides`, `updateGamemasterTp`;
+  `escAttr(c.color)` in `tpWedgeSvg`, `tpCatChipHtml`, `renderTpEditor`.
+
+**Warum so.** Beides, weil Bereinigen allein neuen Code nicht schützt, der
+`tpData` anders füllt, und Escapen allein eine kaputte Farbe nicht abfängt
+(`red;background:url(…)` ist kein HTML, aber CSS-Einschleusung).
+
+**Geprüft.** `node check.js` und `node check.js --types`: alles in Ordnung.
+`tpSanitizeCats` per Node mit feindlicher Eingabe (`<img onerror>` als Zeichen,
+Farbe mit Zusatz-CSS, `null`/Zahl als Kategorie, Fragen als String): Ausgabe
+immer in Normalform.
+
+**Ungeprüft.** Nicht im Browser gespielt: Import einer Datei, Laden alter
+`tpData` aus dem localStorage, Rad/Torte/Editor optisch. Ein Zeichen aus
+mehreren Codepunkten über 4 (lange Emoji-Sequenzen) wird jetzt gekürzt.
+
+**Offen.** Andere Importe (Feud, Jeopardy, WWM, WWDS, DDF, PIH) nicht auf
+dasselbe Muster geprüft. Gepusht ist nichts.
+
+---
+
 ## 2026-10-07 — Entwürfe hochwertiger: acht Richtungen in `designs/s/` (`be7ec34`)
 
 **Auftrag (David).** „1,4,5,8 (deutlich), 11,14, 17 und 18 hochwertiger“.
