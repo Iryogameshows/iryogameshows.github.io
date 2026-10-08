@@ -12,6 +12,76 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Audit Lauf 2: N1 bis N4 (`6c698b5`)
+
+**Anlass.** Zweiter Lauf des `import-auditor` zur Kontrolle (rund 9 Minuten,
+93 Werkzeugaufrufe, ~449 000 Tokens). Ergebnis: alle früheren Funde aus
+`e14c2d4`, `1e74c94`, `b86aebc`, `08cc931` behoben (der Agent las jeden Fix gegen
+den Code), kein Doppel-Escaping gefunden. Neue Funde N1-N6; David: „N1 bis N4
+beheben“. N1-N4 habe ich vor dem Fix im Code nachgesehen, sie stimmten.
+
+**Gemacht.**
+- **N1 (hoch):** `js/core.js`: neu `feudCleanQuestions(list)` (Texte als String,
+  `points` als Zahl, Antworten als Liste, Nicht-Objekte fliegen raus;
+  unbekannte Felder, `media`, `note` bleiben), benutzt in `importQuestions`,
+  `importFinaleQuestions`, `loadFromStorage` (nur wenn die gespeicherte Ware
+  eine Liste ist). `js/feud.js`: `Number(...) || 0` an den Summen
+  (`roundPoints`, Finale-Summe, `finaleState.scores`, Team-Punkte der
+  Auflösung). **Korrektur zu `1e74c94`:** dort stand, `points` laufe über
+  `Number(...)` - das galt nur für die Kachelanzeige, nicht für die Summen
+  (String-Verkettung `0 + "<img…>"` landete unescaped im GM-Panel).
+- **N2:** `js/feud.js`: Teamnamen im Finale-Hinweis „← Team“ escaped
+  (in `b86aebc` übersehen).
+- **N3:** `js/wwds.js`: `t.label` der Master-Tipp-Marken escaped.
+- **N4 (hoch bei Turnier):** `js/wwds.js`: Gewinnername im Ergebnis-Panel
+  `escapeHtml`; `winner-text` wird per `textContent` zurückgelesen, was das
+  Escapen von `setText` aufhob.
+
+**Warum so.** Gleiche zwei Schichten wie bisher (Einlesen formen, Ausgabe
+escapen). N5/N6 (Prototyp-Schlüssel wie `"constructor"` in DDF-Stimmen und
+`designTheme`) bewusst nicht angefasst: David hat nur N1-N4 freigegeben.
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. Im Browser
+(Vorschau-Server): `feudCleanQuestions` mit feindlichen Daten (Zahl als Frage,
+`points` als HTML und `'12'`, `null`-Antwort, `media` als String,
+Nicht-Objekte, `answers` als String) → Punkte `[0, 12]`, Summe ist Zahl, Zusatz-
+feld bleibt; `loadFromStorage` mit `points: '30'` → Zahl 30, kaputte
+Finale-Liste lässt den Standard unverändert. N4: `updateGamemasterResult`
+mit `<img onerror>` als Gewinner und abgefangenem `commitGamemasterHtml` → 0
+`<img>`. N3: `wwdsMasterHtml` mit feindlichem Teamnamen → 0 `<img>`.
+`window.__pwn` blieb unbelegt. Die Konsolenmeldung `ERR_INVALID_URL` ist der
+alte Rest aus dem Konsolenpuffer.
+
+**Ungeprüft.** N2 nur im Code gelesen (Finale-Auflösung nicht gerendert);
+Feud-Finale und GM-Panels mit echtem Spielstand. Dass im Turnierfall
+`updateGamemaster()` nach dem Ergebnis zuverlässig läuft (Vermutung des Agents
+zu N4), nicht untersucht.
+
+**Offen.**
+- N5 `ddf.js` (~361-395): `counts[uid]` trifft Prototyp-Eigenschaften, die
+  Abstimmung hängt (Sabotage, kein XSS). N6 `theme.js` (~513): `designTheme`
+  mit Schlüssel `"constructor"` wirft beim Laden.
+- Schwächen laut Agent: Normalisierer für Jeopardy-, WWM-, WWDS-, DDF- und
+  PIH-Importe (nur Feud ist jetzt abgedeckt); `account` aus `buzzer/buzzes` wird
+  Teil eines DB-Pfads; `buzzAccount.color` ohne `safeColor`; `hostNotesChecked`
+  und `tpSettings` werfen bei `null`.
+- Funktional, keine Sicherheit, Entscheidung offen: `GM_REMOTE_ALLOWED_FNS`
+  kennt `wwmLock`, `wwmReveal`, `wwmNext`, `wwmFifty`, `wwmPhone`, `wwmAudience`,
+  `wwmWalkAway`, `jeopardyStepsReveal` und die `*Undo`-Funktionen nicht - die
+  Knöpfe im GM-Panel tun vom Handy aus nichts (in `buzzer.js` kommen `wwmLock`
+  und `wwmFifty` 0-mal vor; ob Absicht, unbekannt). `safeSrc` lässt Bilder als
+  `data:application/octet-stream` (Dateien ohne MIME-Typ) und relative Pfade
+  nicht durch; Notizen über 5000 Zeichen verwirft die Fernbedienung still.
+- Weiter: `gmremote/html` ungesandboxt (Firebase-Regeln nötig),
+  `HOST_PASSWORD` im Client, PIN im Klartext im localStorage.
+
+**Fallstricke.** `js/core.js` hat CRLF-Zeilenenden: ein Skript-Ersatz mit `\n`
+im Suchtext trifft dort nichts (0 Treffer, nichts geschrieben); einzeilige
+Suchtexte oder das Edit-Werkzeug verwenden. Der Agent hat keine Shell und kann
+`git fetch` nicht; sein Stand ist der Arbeitsbaum.
+
+---
+
 ## 2026-10-09 — Kleinere Audit-Funde (`08cc931`)
 
 **Anlass.** David: „kleinere Funde beheben“ - die Reste aus dem Lauf des
