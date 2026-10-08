@@ -12,6 +12,68 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — Firebase-Daten bereinigen und escapen, Option A des Audits (`e14c2d4`)
+
+**Anlass.** Erster Lauf des Agents `import-auditor` (rund 7,6 Minuten, 103
+Werkzeugaufrufe, ~382 000 Tokens). David: „A, zuerst die Firebase-Funde“
+(vor B = Importe). Die Funde habe ich teils nachgesehen (`srcdoc` ohne
+`sandbox`, `currentTeamLabel` ungeescaped, `ddf.js` ohne `escJsArg`,
+`questions = d`), der Rest stammt aus dem Bericht des Agents.
+
+**Gemacht.**
+- `js/core.js`: `cleanTeamIdx`, `cleanNum`, `safeColor`, `cleanPlayerAccount`;
+  `allPlayers` läuft durch `cleanPlayerAccount`. Team nur `null` oder
+  Ganzzahl 0-7, Statistik als Zahlen, Farbe nur `#hex`. Spielerübersicht
+  escaped zusätzlich (`currentTeamLabel`, Siege, Spiele).
+- `js/buzzer.js`: `cleanPresence` für beide Lobby-Mappings (Jeopardy, Feud);
+  `assignPlayerTeam` lehnt Fremdwerte ab; die Fernbefehle aus
+  `gmremote/commands` nehmen nur noch ≤ 6 einfache Argumente (keine Objekte,
+  Texte bis 5000 Zeichen, wegen `saveHostNotesRemote`).
+- `js/ddf.js`: UIDs im Handler über `escJsArg`. `js/feud.js`: Liste der
+  Gesperrten escaped, Turnier-Spielname und -Titel escaped. `js/wwds.js`:
+  Turniertitel escaped.
+- `js/tournament.js`: `tournamentClean` für Firebase-Wert und
+  `tournamentCache` (Namen als String, Gewicht/Punkte als Zahl, unbekannte
+  Felder bleiben); Ausgaben zusätzlich escaped.
+- `buzzer/index.html`: lokales `safeColor` für Login und Abstimmungsliste.
+
+**Warum so.** Gleiche zwei Schichten wie bei `tp.js`: beim Einlesen
+normalisieren, an der Ausgabe escapen. Verworfen: Argument-Obergrenze 200
+Zeichen (hätte lange Notizen über die Fernsteuerung abgeschnitten).
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. 17 Prüfungen der neuen
+Funktionen mit feindlicher und normaler Eingabe (Node): alle ok, normale
+Daten bleiben unverändert, auch `scores: null` und Spieler ohne Team. Im
+Browser (Vorschau-Server) die Spielerübersicht mit `<img onerror>` als Name
+und Team gerendert: kein `<img>`-Element, `window.__pwn` unbelegt, Team-Tag
+„kein Team“, keine Konsolenfehler. Skript in `buzzer/index.html`
+syntaktisch gültig.
+
+**Ungeprüft.** Der echte Ablauf mit Live-Firebase, Handys, Gamepad und
+laufendem Turnier. Die neue Argumentprüfung der Fernbefehle: ein Befehl mit
+Objekt-Argument wird jetzt stillschweigend ignoriert - unter den erlaubten
+Funktionen kenne ich keinen solchen Fall, aber nicht jeden Aufrufer gelesen.
+
+**Offen.**
+- **`gmremote/html` in `gamepad/index.html`** (Fund „hoch“, nicht behoben):
+  das Firebase-HTML läuft im `iframe` ohne `sandbox`, gleicher Origin, Skript
+  inklusive. `sandbox` ohne `allow-same-origin` bricht das Aktualisieren per
+  `contentDocument` und die Fernsteuerung (die Brücke steckt im selben HTML).
+  Wirksam wären Firebase-Regeln, die `gmremote/*` nur dem Host erlauben - im
+  Repo liegt keine Regeldatei, das wäre in der Firebase-Konsole zu setzen.
+  Alternativ Umbau: Brücke fest in die Seite, Klicks als Befehle.
+- Teamnamen-Senken in `feud.js`/`wwds.js`/`jeopardy*.js` (mittel; bei
+  aktivem Turnier kommen die Namen aus Firebase), `joinUrl`, `introLoad`.
+- Option B: Importe (Feud `questions = d`, Jeopardy-Boards, Medien
+  `src="${m.data}"` in DDF/PIH/WWM/WWDS) - noch nichts behoben.
+- Nebenbefund des Agents, nicht geprüft: `HOST_PASSWORD = 'keller2024'` im
+  Client (`jeopardy-ui.js`), PIN im Klartext in localStorage `buzzAccount`.
+
+**Fallstricke.** Der Agent hat keine Shell und kann kein `git fetch`; den Stand
+prüft man selbst. Seine Zeilennummern sind Momentaufnahmen.
+
+---
+
 ## 2026-10-08 — Skill `/handoff` (`2d30378`)
 
 **Anlass.** David: „jetzt weiter mit ccs“ (Claude-Code-Setup), nächste
