@@ -12,6 +12,48 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — Sichtprüfung Intros, Tutorial, Turnierplan (kein Code geändert)
+
+**Gemacht.** Auf `18d4328` per Konsole in B, J, K, C: Jeopardy-Intro
+(`showJeopardyIntro`), Tutorials (`runTutorial` mit `jeopardyTutorialSlides()`
+und `ddfTutorialSlides()`), Titel-Schild, Turnierplan (`tournament` nur im
+Speicher gesetzt, `renderTournament()`, **kein** `saveTournament()`, nichts nach
+Firebase geschrieben; Seite danach neu geladen).
+
+**Befund.**
+1. **Fehler B, Tutorial `ddf` (und vermutlich `pih`, `tp`):** Das Symbol auf
+   der ersten Folie fehlt. Der Wrapper `.tut-star-anim` dreht sich
+   (`tutStarSpin`, 3 s linear), das `<svg>` darin trägt in B den Filter
+   `url(#ico-pixel) drop-shadow(…)`. Mit `style.filter='none'` auf dem `<svg>`
+   erscheint das Symbol sofort. Gleiches Muster wie beim Logo-`<g>`:
+   Mosaik-Filter plus Kette/Animation → leer. J, K, C zeigen das drehende Symbol
+   korrekt (kein Mosaik-Filter).
+2. **Mangel B, Turnierplan:** Das Family-Feud-Symbol (~24 px) wird im Mosaik
+   (4-px-Blöcke) zu einem gelben Fleck, nicht mehr als drei Balken erkennbar.
+   In C und K sind die Symbole in der Zeile lesbar.
+3. In Ordnung: Jeopardy-Intro in B (Symbol mit Mosaik, 120 px), Jeopardy-
+   Tutorial in B (Symbol sichtbar), Tutorial `ddf` in J, K, C, Turnierplan in
+   C, K.
+
+**Geprüft.** Sicht per Screenshot (0,5–0,6) und berechnete Stile. **Nicht
+belastbar:** das Titel-Schild in B (`game-title-sign`) — ich habe das Overlay von
+Hand zusammengesetzt statt `showClickOverlay` zu nutzen, es blieb bei Deckkraft
+0; deshalb kein Urteil. Nicht angesehen: Intros der anderen Shows (`feud`,
+`ddf`, `pih`, `tp`), Tutorials `pih`/`tp`/`wwds`, Turnierplan in den übrigen
+Richtungen, Mainscreen-Spiegel, Hover im Menü.
+
+**Offen / Vorschlag.** Für B die Filter nur auf kleine/ruhige Fälle: im Tutorial
+(`.tut-star-anim svg`) keinen Mosaik-Filter, im Turnierplan (`.tour-icon-svg
+svg`) kleineren Block (z. B. 2 px) oder gar keinen. Noch nicht umgesetzt,
+wartet auf Davids Entscheidung.
+
+**Fallstricke.** Screenshots direkt nach `applyTheme`/Overlay-Start zeigen oft
+einen Zwischenzustand (Überblendung, Karten noch leer); nach 1–2 s erneut
+aufnehmen. Hilfsfunktionen (`__tut`, `__tour` …) leben nur in der
+Browser-Konsole der Sitzung.
+
+---
+
 ## 2026-10-08 — Sichtprüfung der übrigen Richtungen (kein Code geändert)
 
 **Gemacht.** Auf `ea7805e` per `applyTheme(key)` + `renderLogo(…)` je Richtung
