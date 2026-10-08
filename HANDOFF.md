@@ -12,6 +12,45 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — B: Mosaik raus aus Tutorial, Titel-Schild, Turnierplan (`bde423d`)
+
+**Auftrag (David).** „nummer 1 ist es falsche zugeschnitten, nummer 2 ist das
+nicht wies aussehen soll. fix das gefälligst. Bei ALLEN. ALLE SPIELE" — mit
+einem Screenshot des Jeopardy-Bretts in Richtung L (Logo-Kopf mit den vier
+Säulen). **Auslegung (nicht bestätigt):** „1" und „2" sind die beiden Befunde
+aus dem Eintrag davor (Tutorial-Symbol in B verschwindet; Turnierplan-Symbol in
+B als Fleck). Was am Screenshot selbst falsch sein soll, konnte ich nicht
+erkennen — das Symbol ist dort vollständig und in L-Farben (dunkle Leuchtsäule,
+graue Nebensäulen).
+
+**Gemacht.** `styles.css`: In B für `.tut-star-anim`, `.tut-danger`,
+`.welcome-star`, `.game-title-sign`, `.danger-title-sign`, `.tour-icon-svg`
+(jeweils `svg.show-icon`) nur noch `drop-shadow(3px 3px 0 #8A7400)` +
+`shape-rendering: crispEdges`, kein `#ico-pixel`. Die Klassen werden von allen
+Shows benutzt (Feud, Jeopardy, WWM, WWDS, DDF, PIH, TP), die Regel gilt also
+für alle. Mosaik bleibt auf Menükarte, Intro-Schild und Logo-Kopf.
+
+**Warum so.** Gemessen am 08.10.: Mosaik-Filter (`url(#ico-pixel)`, feste
+Fläche 0/0/600/600 `userSpaceOnUse`) auf einem `<svg>` in einem sich drehenden
+Wrapper → Symbol weg. Vermutung (nicht belegt): Das Drehen schiebt Teile des
+Symbols aus der festen Filterfläche, sie werden abgeschnitten („falsch
+zugeschnitten"). Bei 22 px (Turnierplan) macht der 4-px-Block aus drei Balken
+einen Fleck. Verworfen: Filter am Wrapper statt am `<svg>`, Fläche vergrößern —
+beides hätte die Animation und das 22-px-Problem nicht gelöst.
+
+**Geprüft.** `node check.js` = „alles in Ordnung". Im Browser in B: Tutorial
+`ddf` zeigt das drehende Symbol wieder (berechneter Filter nur noch Schatten);
+Turnierplan zeigt die drei Balken bei Feud/Jeopardy erkennbar. **Nicht
+geprüft:** Titel-Schild in B im echten Ablauf (`showClickOverlay`), Tutorial
+`pih`/`tp`/`wwds`, Intros der anderen Shows, andere Richtungen mit diesen
+Stellen; ob L-Screenshot eine andere Ursache hat.
+
+**Offen.** David soll sagen, was am L-Screenshot (Jeopardy-Logo) „falsch
+zugeschnitten" bzw. „nicht wie es aussehen soll" ist — Vergleichsbild oder
+Wunsch nötig. Nicht gepusht.
+
+---
+
 ## 2026-10-08 — Sichtprüfung Intros, Tutorial, Turnierplan (kein Code geändert)
 
 **Gemacht.** Auf `18d4328` per Konsole in B, J, K, C: Jeopardy-Intro
