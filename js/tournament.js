@@ -10,21 +10,54 @@
 let tournament = null; // { name, teams:[..], games:[{game, weight, date, scores:[..], done}] }
 let tournamentRef = null;
 
+/* Das Turnier liegt in Firebase (offene Regeln) und im localStorage, ist also
+   fremde Eingabe: Namen, Spiel, Datum, Punkte landen als Markup im GM-Panel
+   und auf der Leinwand. Beim Einlesen auf die erwartete Form bringen - Texte
+   als String, Zahlen als Zahl - (Vorbild: tpSanitizeCats); die Ausgaben
+   escapen zusaetzlich. Unbekannte Felder bleiben unveraendert erhalten. */
+/** @param {any} t */
+function tournamentClean(t){
+  if (!t || typeof t !== 'object') return null;
+  const str = (/** @type {any} */ v) => String(v == null ? '' : v);
+  const num = (/** @type {any} */ v) => { const n = Number(v); return isFinite(n) ? n : 0; };
+  const games = (Array.isArray(t.games) ? t.games : [])
+    .filter((/** @type {any} */ g) => g && typeof g === 'object')
+    .map((/** @type {any} */ g) => ({
+      ...g,
+      game: str(g.game), weight: num(g.weight), date: str(g.date),
+      scores: Array.isArray(g.scores) ? g.scores.map(num) : null,
+      done: !!g.done, secret: !!g.secret,
+    }));
+  const files = {};
+  if (t.files && typeof t.files === 'object') {
+    Object.keys(t.files).forEach(k => {
+      const f = t.files[k];
+      if (f && typeof f === 'object') files[k] = { ...f, name: str(f.name), at: num(f.at) };
+    });
+  }
+  return {
+    ...t,
+    name: str(t.name),
+    teams: (Array.isArray(t.teams) ? t.teams : []).map(str),
+    games,
+    files,
+  };
+}
+
 function tournamentConnect(){
   if (tournamentRef || !window.firebase) return;
   try {
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     tournamentRef = firebase.database().ref('tournament');
     tournamentRef.on('value', (snap) => {
-      tournament = snap.val() || null;
-      if (tournament && !Array.isArray(tournament.games)) tournament.games = [];
+      tournament = tournamentClean(snap.val());
       storeSetJson('tournamentCache', tournament);
       if (screenActive('tournament-screen')) renderTournament();
     });
   } catch {}
 }
 function loadTournament(){
-  tournament = storeGetJson('tournamentCache', null);
+  tournament = tournamentClean(storeGetJson('tournamentCache', null));
   tournamentConnect();
 }
 function saveTournament(){
@@ -523,7 +556,7 @@ function renderTournamentBoard(){
       <span class="q-label"><span class="q-num">${i+1}.</span>
         <span style="margin-right:4px;">${verdeckt ? '❓' : tournamentGameIcon(g.game)}</span>
         <strong>${verdeckt ? '???' : escapeHtml(g.game)}</strong>
-        <span class="q-meta" style="color:#FFD23F;">×${g.weight}</span></span>
+        <span class="q-meta" style="color:#FFD23F;">×${Number(g.weight) || 0}</span></span>
       <span style="font-size:.78rem;color:rgba(255,255,255,.6);">${stand}</span>
     </div>`;
   }).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spiele geplant.</div>`;
@@ -570,7 +603,7 @@ function renderTournament(){
     const icon = hidden ? '❓' : tournamentGameIcon(g.game);
     const label = hidden ? '???' : g.game;
     const result = g.done
-      ? tournament.teams.map((t, ti) => `${escapeHtml(t)}: ${g.scores[ti]} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')
+      ? tournament.teams.map((t, ti) => `${escapeHtml(t)}: ${Number(g.scores[ti]) || 0} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')
       : '<span style="color:rgba(255,255,255,.35);">Noch nicht gespielt</span>';
     const canAutoStart = !hidden && !g.done && TOURNAMENT_STARTABLE[g.game];
     // Bei den teamlosen Shows kommt das Ergebnis von Hand. Das gehoert in die
@@ -579,7 +612,7 @@ function renderTournament(){
     const handEintrag = !hidden && !g.done && TOURNAMENT_STARTABLE[g.game] && !TOURNAMENT_AUTO_RESULT.has(g.game);
     return `
       <div class="q-list-item" style="flex-wrap:wrap;gap:6px;">
-        <span class="q-label"><span class="q-num">${i+1}.</span><span style="margin-right:2px;">${icon}</span><strong>${label}</strong>${(!hidden && g.date) ? `<span class="q-meta">${g.date}</span>` : ''}<span class="q-meta" style="color:#FFD23F;">Gewichtung ×${g.weight}</span></span>
+        <span class="q-label"><span class="q-num">${i+1}.</span><span style="margin-right:2px;">${icon}</span><strong>${escapeHtml(label)}</strong>${(!hidden && g.date) ? `<span class="q-meta">${escapeHtml(g.date)}</span>` : ''}<span class="q-meta" style="color:#FFD23F;">Gewichtung ×${Number(g.weight) || 0}</span></span>
         <div class="q-btns">
           ${canAutoStart ? `<button class="btn btn-accent" onclick="tournamentStartAt(${i})">▶ Spiel starten</button>` : ''}
           <button class="btn btn-secondary" onclick="tournamentEnterResult(${i})">${g.done ? 'Ergebnis ändern' : 'Ergebnis eintragen'}</button>

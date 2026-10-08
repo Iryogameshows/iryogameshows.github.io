@@ -316,6 +316,8 @@
   ];
   const AVATARS = ['🦊','🐼','🐸','🐵','🦁','🐯','🐨','🐷','🐰','🐙','🦄','🐲','👽','🤖','🦖','🐝','🦉','🐢','🦈','🌟'];
   const COLORS = ['#E8453C','#F97316','#FFD23F','#22C55E','#3B82F6','#8B5CF6','#EC4899','#14B8A6'];
+  // Farben kommen aus Firebase (offene Regeln, jeder kann schreiben): nur #hex durchlassen.
+  const safeColor = c => (typeof c === 'string' && /^#[0-9a-f]{3,8}$/i.test(c)) ? c : '#888888';
 
   // Ohne Team das neutrale Gold statt Team-Rot - sonst sieht ein teamloser
   // Spieler aus wie Team 1.
@@ -368,7 +370,7 @@
     if (snap.exists()){
       const p = snap.val();
       if (p.pin !== ph){ err.textContent = 'Falsches PIN/Passwort für diesen Namen.'; return; }
-      loginAs({ key, name: p.name || name, avatar: p.avatar || AVATARS[0], color: p.color || COLORS[0] }, pin);
+      loginAs({ key, name: p.name || name, avatar: p.avatar || AVATARS[0], color: safeColor(p.color || COLORS[0]) }, pin);
     } else {
       // Neuer Account → Profil wählen
       signupChoice = { name, pin, avatar: AVATARS[Math.floor(Math.random()*AVATARS.length)], color: COLORS[Math.floor(Math.random()*COLORS.length)] };
@@ -822,7 +824,7 @@
     const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
     list.innerHTML = voteSubmitted ? '' : voteCands.map(c =>
       `<button class="vote-opt" data-k="${esc(c.key)}">
-         <span class="av" style="background:${esc(c.color||'#888')};">${esc(c.avatar||'👤')}</span>
+         <span class="av" style="background:${esc(safeColor(c.color))};">${esc(c.avatar||'👤')}</span>
          <span>${esc(c.name)}</span>
        </button>`).join('');
     list.querySelectorAll('.vote-opt').forEach(b => {

@@ -769,7 +769,7 @@ function updateGamemasterDdf(){
       <div class="panel-row" style="flex-wrap:wrap;gap:5px;">` +
         ddfGuestVoters().map(v => cands.map(c =>
           `<button class="gm-btn ${s.hostVotes[v.uid] === c.uid ? 'gm-gold' : 'gm-gray'} sm"
-             onclick="opener.ddfHostVote('${v.uid}','${c.uid}')">${escapeHtml(v.label)} → ${escapeHtml(c.label)}</button>`).join('')).join('') +
+             onclick="opener.ddfHostVote(${escJsArg(v.uid)},${escJsArg(c.uid)})">${escapeHtml(v.label)} → ${escapeHtml(c.label)}</button>`).join('')).join('') +
       `</div>`;
   }
   if (s.phase === 'result' && s.loser){

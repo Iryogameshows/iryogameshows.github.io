@@ -86,6 +86,9 @@ function assignPlayerTeam(key, teamIdx){
 
      Aufgefallen im Browser-Test, wo das CDN gesperrt ist: der Team-Klick
      blieb ohne Wirkung, "firebase is not defined" in der Konsole. */
+  // Kommt auch ueber gmremote/commands, also von jedem mit Schreibrecht auf
+  // Firebase: nur null oder eine kleine Ganzzahl durchlassen.
+  if (teamIdx !== null && teamIdx !== undefined && cleanTeamIdx(teamIdx) === null) return;
   const wert = (teamIdx === null || teamIdx === undefined) ? null : teamIdx;
   const acc = (allPlayers || []).find(a => a.key === key);
   if (acc) acc.team = wert;
@@ -158,6 +161,20 @@ function playerTeamButtonsHtml(p, teamNames, prefix){
 }
 // Avatar und Farbe stammen aus fremden Accounts und landen hier in einem
 // style-Attribut bzw. im Markup - beides muss escaped werden.
+/* Eine Presence-Zeile aus Firebase in die Form bringen, die die Lobby
+   erwartet. Die Daten sind fremde Eingabe (siehe cleanPlayerAccount in
+   core.js): Team nur als kleine Ganzzahl, Farbe nur als #hex, Texte als String. */
+/** @param {string} id @param {any} p */
+function cleanPresence(id, p){
+  return {
+    id,
+    name: String(p.name),
+    ts: cleanNum(p.ts),
+    team: cleanTeamIdx(p.team),
+    avatar: p.avatar == null ? p.avatar : String(p.avatar),
+    color: safeColor(p.color),
+  };
+}
 function playerAvatarHtml(p){
   return `<span class="pmini-av" style="background:${escAttr(p.color||'#888')};">${escapeHtml(p.avatar||'👤')}</span>`;
 }
@@ -327,7 +344,7 @@ function jeopardyBuzzConnect(){
       const v = snap.val() || {};
       jeopardyBuzzer.presence = Object.entries(v)
         .filter(([id, p]) => p && p.name)
-        .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team), avatar: p.avatar, color: p.color }))
+        .map(([id, p]) => cleanPresence(id, p))
         .sort((a, b) => (a.ts || 0) - (b.ts || 0));
       renderSetupLobby('jeopardy');
       updateGamemaster();
@@ -415,7 +432,7 @@ function feudBuzzConnect(){
     const v = snap.val() || {};
     feudBuzzer.presence = Object.entries(v)
       .filter(([id, p]) => p && p.name)
-      .map(([id, p]) => ({ id, name: p.name, ts: p.ts, team: (p.team === undefined ? null : p.team), avatar: p.avatar, color: p.color }))
+      .map(([id, p]) => cleanPresence(id, p))
       .sort((a, b) => (a.ts||0) - (b.ts||0));
     renderSetupLobby('feud');
     updateGamemaster();
@@ -682,6 +699,13 @@ function startGmRemoteCommandListener() {
     snap.ref.remove().catch(() => {});
     if (!cmd || !cmd.fn || !cmd.t || cmd.t < startedAt - 5000) return;
     if (!GM_REMOTE_ALLOWED_FNS.has(cmd.fn)) return;
+    // Die Argumente stammen aus Firebase. Erlaubt sind nur einfache Werte:
+    // keine Objekte. Texte bis 5000 Zeichen, weil saveHostNotesRemote die
+    // Notizen des Hosts als ein Argument bekommt.
+    if (cmd.args !== undefined && (!Array.isArray(cmd.args) || cmd.args.length > 6
+        || !cmd.args.every(a => a === null || typeof a === 'boolean'
+            || (typeof a === 'number' && isFinite(a))
+            || (typeof a === 'string' && a.length <= 5000)))) return;
     // Der Zugriff ueber den Namen kann alles Moegliche liefern. Erst
     // unknown, dann engt die typeof-Pruefung darunter auf etwas Aufrufbares
     // ein - das ist zugleich die eigentliche Absicherung zur Laufzeit.

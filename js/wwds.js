@@ -737,7 +737,7 @@ function updateGamemasterTournamentBoard(){
   .money{display:flex;justify-content:space-between;gap:10px;font-size:.9rem;margin-bottom:6px;}
   .money strong{color:#FFD23F;}
 </style></head><body>
-  ${gmHeaderHtml('Gamemaster', tournament ? `Turnierstand · ${tournament.name}` : 'Turnierstand')}
+  ${gmHeaderHtml('Gamemaster', tournament ? `Turnierstand · ${escapeHtml(tournament.name)}` : 'Turnierstand')}
   <div class="gm-body">
   <div class="gm-main">
     <div class="round-label">Als Nächstes</div>

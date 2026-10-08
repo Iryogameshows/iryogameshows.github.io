@@ -1158,7 +1158,7 @@ function updateGamemasterTournament() {
     const hidden = g.secret && !g.done;
     const label = hidden ? '??? (geheim)' : g.game;
     return `<div class="panel-row" style="justify-content:space-between;align-items:center;">
-      <span>${i+1}. ${label}${g.done ? ' ✓' : ''}</span>
+      <span>${i+1}. ${escapeHtml(label)}${g.done ? ' ✓' : ''}</span>
       ${hidden ? `<button class="gm-btn gold sm" onclick="opener.tournamentRevealSecret(${i})">🔓 Aufdecken</button>` : ''}
     </div>`;
   }).join('');
@@ -1168,7 +1168,7 @@ function updateGamemasterTournament() {
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>${GM_SHARED_CSS}</style></head><body>
-  ${gmHeaderHtml('Gamemaster', tournament ? `Turnier · ${tournament.name}` : 'Turnier')}
+  ${gmHeaderHtml('Gamemaster', tournament ? `Turnier · ${escapeHtml(tournament.name)}` : 'Turnier')}
   <div class="gm-body">
   <div class="gm-main">
   ${tournament
@@ -1549,7 +1549,7 @@ function updateGamemasterJeopardy() {
           : `<button class="gm-btn purple" onclick="opener.jeopardyPlaySound()">🔊 Sound abspielen</button>`)
       : '';
     const excludedTag = jeopardyBuzzer.excluded.length
-      ? `<div class="excl-tag">🚫 Gesperrt: ${jeopardyBuzzer.excluded.join(', ')}</div>` : '';
+      ? `<div class="excl-tag">🚫 Gesperrt: ${jeopardyBuzzer.excluded.map(escapeHtml).join(', ')}</div>` : '';
     // Schätzfrage/Einzelantwort: statt der Buzzer-Reihenfolge die Eingaben
     const getippt = jeopardyTyped(clue);
     const eingabeTitel = clue.single ? '📝 Antworten' : '📊 Schätzungen';

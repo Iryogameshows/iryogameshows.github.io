@@ -1672,6 +1672,33 @@ function openPlayersScreen(returnTo){
   showScreen('players-screen');
 }
 function closePlayersScreen(){ showScreen(playersReturnScreen); }
+/* Spielerdaten kommen aus Firebase, dessen Regeln offen sind: jeder mit dem
+   Link kann dort schreiben, was er will. Deshalb wird alles, was danach in
+   Markup oder Attributen landet, beim Einlesen auf die erwartete Form gebracht
+   (siehe tpSanitizeCats in tp.js); die Ausgabestellen escapen zusaetzlich. */
+/** @param {any} t @returns {number|null} */
+function cleanTeamIdx(t){ return (typeof t === 'number' && Number.isInteger(t) && t >= 0 && t < 8) ? t : null; }
+/** @param {any} n @returns {number} */
+function cleanNum(n){ return (typeof n === 'number' && isFinite(n)) ? n : 0; }
+/** Nur #rgb bis #rrggbbaa - alles andere (auch "red;background:url(...)") wird grau.
+ *  @param {any} c @returns {string} */
+function safeColor(c){ return (typeof c === 'string' && /^#[0-9a-f]{3,8}$/i.test(c)) ? c : '#888888'; }
+/** @param {string} key @param {any} p */
+function cleanPlayerAccount(key, p){
+  const o = p && typeof p === 'object' ? p : {};
+  const st = o.stats && typeof o.stats === 'object' ? o.stats : {};
+  return {
+    ...o, key,
+    name: String(o.name == null ? '' : o.name),
+    team: cleanTeamIdx(o.team),
+    color: safeColor(o.color),
+    stats: {
+      ...st,
+      buzzes: cleanNum(st.buzzes), wins: cleanNum(st.wins), games: cleanNum(st.games),
+      bestBuzz: (typeof st.bestBuzz === 'number' && isFinite(st.bestBuzz)) ? st.bestBuzz : null,
+    },
+  };
+}
 function ensurePlayersConnected(){
   if (playersRef) return;
   try {
@@ -1679,7 +1706,7 @@ function ensurePlayersConnected(){
     playersRef = firebase.database().ref('buzzer/players');
     playersRef.on('value', snap => {
       const v = snap.val() || {};
-      allPlayers = Object.entries(v).map(([key, p]) => ({ key, ...p, stats: p.stats || { buzzes:0, bestBuzz:null, wins:0, games:0 } }));
+      allPlayers = Object.entries(v).map(([key, p]) => cleanPlayerAccount(key, p));
       if (screenActive('players-screen')) setPlayersTab(playersTab, true);
       refreshOpenRosterLobby();
     });
@@ -1739,14 +1766,14 @@ function renderPlayersList(){
   const teamNames = currentTeamNames();
   el.innerHTML = `<div class="q-list">${sorted.map(p => {
     const teamTag = (p.team !== undefined && p.team !== null)
-      ? `<span class="player-team-tag" style="background:${teamTagColors[p.team]||'#888'}22;color:${teamTagColors[p.team]||'#888'};">${currentTeamLabel(p.team)}</span>`
+      ? `<span class="player-team-tag" style="background:${teamTagColors[p.team]||'#888'}22;color:${teamTagColors[p.team]||'#888'};">${escapeHtml(currentTeamLabel(p.team))}</span>`
       : `<span class="player-team-tag" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.35);">kein Team</span>`;
     const s = p.stats || {};
     const online = !!onlinePlayerKeys[p.key];
     const onlineDot = online ? `<span class="online-dot" title="Online"></span>` : `<span class="online-dot offline" title="Offline"></span>`;
     return `<div class="q-list-item player-row">
       <span class="q-label">${onlineDot}${playerAvatarHtml(p)}<b>${escapeHtml(p.name)}</b>${teamTag}
-        <span class="player-stats">🔔${s.buzzes||0} · 🏆${s.wins||0}/${s.games||0}${s.bestBuzz!=null?' · ⚡'+s.bestBuzz.toFixed(2)+'s':''}</span>
+        <span class="player-stats">🔔${cleanNum(s.buzzes)} · 🏆${cleanNum(s.wins)}/${cleanNum(s.games)}${typeof s.bestBuzz === 'number' ? ' · ⚡'+s.bestBuzz.toFixed(2)+'s':''}</span>
       </span>
       <div class="q-btns">
         <span class="player-team-btns">${playerTeamButtonsHtml(p, teamNames, '')}</span>
@@ -1794,7 +1821,7 @@ function renderPlayersLeaderboard(){
     <div class="page-title" style="font-size:.85rem;margin-bottom:6px;">🏆 Meiste Siege</div>
     <div class="q-list" style="margin-bottom:20px;">${byWins.slice(0,15).map((p,i) => `
       <div class="q-list-item"><span class="q-label"><span class="q-num">${medals[i]||(i+1)+'.'}</span>${playerAvatarHtml(p)}${escapeHtml(p.name)}</span>
-      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#FFD23F;">${p.stats.wins||0} Siege <span style="color:rgba(255,255,255,.3);font-size:.7rem;font-family:'Inter',sans-serif;">/ ${p.stats.games||0} Spiele</span></span></div>`).join('')}</div>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#FFD23F;">${cleanNum(p.stats.wins)} Siege <span style="color:rgba(255,255,255,.3);font-size:.7rem;font-family:'Inter',sans-serif;">/ ${cleanNum(p.stats.games)} Spiele</span></span></div>`).join('')}</div>
     <div class="page-title" style="font-size:.85rem;margin-bottom:6px;">⚡ Schnellste Buzzer</div>
     <div class="q-list">${byBuzz.slice(0,15).map((p,i) => `
       <div class="q-list-item"><span class="q-label"><span class="q-num">${medals[i]||(i+1)+'.'}</span>${playerAvatarHtml(p)}${escapeHtml(p.name)}</span>
