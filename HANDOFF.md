@@ -12,6 +12,61 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — Importe und Medien escapen, Option B des Audits (`1e74c94`)
+
+**Anlass.** David: „Option B weiter“ (nach A, `e14c2d4`). Fund aus dem Lauf des
+`import-auditor`: Importdateien und localStorage (Feud, Jeopardy, DDF/PIH/WWM/
+WWDS-Medien) landeten unescaped in `innerHTML` und `src="..."`.
+
+**Gemacht.**
+- `js/core.js`: neu `safeSrc(v)` - lässt für `src` nur `data:image|video|audio/`,
+  `http(s)://` und `blob:` durch und escaped das Attribut, sonst leer. Benutzt in
+  `mediaSlotsHtml` und `renderMediaOverlay` (damit auch DDF/PIH/WWM/WWDS, die diese
+  Funktionen teilen). `js/pih.js`: PIH-Bühne.
+- `js/jeopardy.js`, `js/jeopardy-ui.js`: alle Bildstellen auf `safeSrc`
+  (`stageImg`, `seriesImgs`, `qImg`, `aImg`, Kategorie- und Schrittbilder).
+  Vorher teils unescaped, teils `escAttr` - jetzt einheitlich.
+- Feud (`js/feud.js`, `js/core.js`): `question` und `answers[].text` über
+  `escapeHtml`, `points` über `Number(...) || 0`; Finale-Antworttexte und
+  Teamnamen im Finale escaped.
+
+**Warum so.** Escapen an der Ausgabe ist die Schicht, die jede Quelle (Import,
+localStorage, Editor) abdeckt. Bewusst **nicht** gebaut: Normalisierer für
+Importdateien (`feudSanitizeQuestions`, `jeopardySanitizeBoards` aus dem Audit)
+- mit escapten Ausgaben sind Importe nicht mehr ausnutzbar; eine kaputte Datei
+würde weiter beim Rendern Fehler werfen. Das ist Robustheit, nicht Sicherheit.
+Beim ersten Anlauf war der Regex in `safeSrc` ohne Backslashes angekommen
+(ungültig); mit Zeichenklassen `[/]` neu geschrieben, vor dem Test bemerkt.
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. Im Browser
+(Vorschau-Server): `safeSrc` gibt für `data:image/…` und `https://…` den Wert,
+für `javascript:`, Attribut-Ausbruch und `null` einen leeren Wert bzw. nur
+escapten Text. `mediaSlotsHtml` mit feindlichem Wert: `<img>` hat nur `src`,
+kein `onerror`. Overlay mit `javascript:`-Bild: `src=""`. Feud-Frageliste mit
+`<img onerror>` als Frage: Text wörtlich, 0 `<img>`, `window.__pwn` unbelegt.
+Eine Konsolenmeldung (`ERR_INVALID_URL`) stammt vom absichtlich kaputten
+Testbild.
+
+**Ungeprüft.** Feud-Spielfeld, Finale und GM-Panel mit echten Daten;
+Jeopardy-Bühne mit Bildern und Serienbildern; PIH-Bühne; DDF/WWM/WWDS-Medien
+im Spiel. Gespeicherte Fragen wurden nicht auf absichtliches HTML durchsucht.
+
+**Verhaltensänderung.** Steht in einer bestehenden Feud-Frage oder -Antwort
+absichtlich HTML (`<br>`, `<i>`), erscheint es jetzt als Text. Im Feud-Code kein
+Hinweis gefunden, dass Formatierung per HTML vorgesehen ist.
+
+**Offen.** Aus dem Audit: `gmremote/html` in `gamepad/index.html`
+(ungesandboxt; Firebase-Regeln nötig), Teamnamen-Senken in `feud.js`/`wwds.js`/
+`jeopardy*.js` (mittel), `joinUrl`, `introLoad`, `new Audio(clue.sound)`,
+`escAttr` als Text-Escape (kosmetisch), Robustheit gegen falsche Typen
+(`voting/ergebnis.html`, `roster.js`). Nebenbefund nicht geprüft:
+`HOST_PASSWORD` im Client (`jeopardy-ui.js`), PIN im Klartext im localStorage.
+
+**Fallstricke.** Regex-Literale mit `/` nicht per `node`-Heredoc schreiben (die
+Backslashes gehen verloren) - das Edit-Werkzeug nehmen oder `[/]` verwenden.
+
+---
+
 ## 2026-10-08 — Firebase-Daten bereinigen und escapen, Option A des Audits (`e14c2d4`)
 
 **Anlass.** Erster Lauf des Agents `import-auditor` (rund 7,6 Minuten, 103
