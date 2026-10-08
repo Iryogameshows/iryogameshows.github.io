@@ -12,6 +12,59 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Kleinere Audit-Funde (`08cc931`)
+
+**Anlass.** David: „kleinere Funde beheben“ - die Reste aus dem Lauf des
+`import-auditor` (Stufe niedrig/Robustheit).
+
+**Gemacht.**
+- `js/jeopardy-ui.js`: Beitritts-URL (`joinUrl`) im QR-Fenster und im Popout
+  über `escapeHtml`; im `<script>` des Popouts `JSON.stringify(url)` mit
+  `.replace(/</g, '\\u003c')`, damit ein `</script>` nicht ausbricht.
+- `js/jeopardy.js`: `new Audio(clue.sound)` nur bei `data:`- oder
+  `blob:`-Quelle (der Editor legt Ton per `readAsDataURL` ab). Zuerst auf
+  `data:audio/` eingeengt, dann auf `data:` geweitet, weil der MIME-Typ einer
+  Datei leer oder `application/octet-stream` sein kann.
+- `js/intro.js`: neu `introClean(d)`; `importIntro` und `introLoad` nutzen sie
+  (vorher normalisierte nur der Import). Gespeichertes ohne `slides` wird
+  ignoriert, der Standard bleibt.
+- `js/tp.js`: Radfarbe über `safeColor`. `js/core.js`: `loadReactionBoard`
+  nimmt nur Zeilen mit Zahl als Zeit, Name und Spiel als String.
+- `buzzer/index.html`: Namenshinweis im Login per `textContent` statt
+  `innerHTML`. `voting/ergebnis.html`: `bad`, `up`, `down` über `arr()`.
+
+**Warum so.** Weiter die zwei Schichten: beim Einlesen formen, an der Ausgabe
+escapen. Bewusst nicht gemacht: `escAttr` als Text-Escape ersetzen
+(funktioniert, nur der falsche Helfer); `roster.js` (`a.name.localeCompare`):
+der Name ist seit `cleanPlayerAccount` (`e14c2d4`) immer ein String.
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. Im Browser
+(Vorschau-Server): `introLoad` mit feindlichen Daten (Zahl als Kopfzeile,
+`seconds: 'x'`, ungültige Bühne, Nicht-Objekte als Stufen) → Strings, 4,6 s,
+Bühne `buehne`; Form ohne `slides` lässt den Stand unverändert.
+Bestenliste mit `t: 'schnell'` und `null` → gefiltert, Rendern ohne Fehler.
+Rad mit `red;background:url(//e)` → grau. Ton-Regex: `data:audio/…` und
+`blob:` durch, `https://…` und `javascript:` nicht. Inline-Skripte von
+`buzzer/index.html` und `voting/ergebnis.html` syntaktisch gültig. Die
+Konsolenmeldung `ERR_INVALID_URL` stammt aus dem Konsolenpuffer des Tabs
+(früherer Test mit kaputtem Bild).
+
+**Ungeprüft.** QR-Fenster und Popout im Spiel; Abspielen eines Jeopardy-Tons
+(auch eines mit ungewöhnlichem MIME-Typ - wird er blockiert, bleibt der
+Sound still); Buzzer-Login mit Firebase; Ergebnisseite mit echten Stimmen.
+
+**Offen.** `gmremote/html` in `gamepad/index.html` (ungesandboxt; Firebase-
+Regeln für `gmremote/*` nötig, in der Firebase-Konsole zu setzen). Nebenbefund
+nicht geprüft: `HOST_PASSWORD` im Client (`jeopardy-ui.js`), PIN im Klartext im
+localStorage `buzzAccount`. Ein zweiter Lauf von `import-auditor` zur Kontrolle,
+ob die Funde weg sind, steht aus.
+
+**Fallstricke.** Beim Auswählen der Inline-Skripte per Regex prüft
+`check.js` HTML-Seiten außerhalb von `index.html` nicht; deren Skripte wurden
+hier von Hand per `new Function` auf Syntax geprüft.
+
+---
+
 ## 2026-10-09 — Teamnamen und Show-Titel escapen (`b86aebc`)
 
 **Anlass.** David: „Teamnamen-Senken beheben“, nächster Punkt aus dem Audit des
