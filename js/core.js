@@ -1572,7 +1572,11 @@ function loadFromStorage(){
 // ── REAKTIONSZEIT-BESTENLISTE ── (übers ganze Event hinweg, geräteseitig gespeichert)
 let reactionBoard = [];
 function loadReactionBoard(){
-  reactionBoard = storeGetJson('reactionBoard', []);
+  const raw = storeGetJson('reactionBoard', []);
+  // Aus dem localStorage: nur Zeilen mit Zahl als Zeit, Texte als String (r.t.toFixed wirft sonst).
+  reactionBoard = (Array.isArray(raw) ? raw : [])
+    .filter(r => r && typeof r === 'object' && typeof r.t === 'number' && isFinite(r.t))
+    .map(r => ({ ...r, name: String(r.name == null ? '' : r.name), game: String(r.game == null ? '' : r.game) }));
 }
 function saveReactionBoard(){
   storeSetJson('reactionBoard', reactionBoard.slice(0, 300));

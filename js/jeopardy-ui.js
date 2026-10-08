@@ -169,7 +169,7 @@ function showJeopardyQR(){
   ov.innerHTML = `<div class="qr-card">
     <div class="qr-title">Scan zum Mitspielen</div>
     <div id="qr-box"></div>
-    <div class="qr-url">${url || '(Seite lokal geöffnet — bitte über ' + SITE_URL + ' öffnen)'}</div>
+    <div class="qr-url">${url ? escapeHtml(url) : '(Seite lokal geöffnet — bitte über ' + SITE_URL + ' öffnen)'}</div>
     <div class="qr-hint">Klicken zum Schließen</div>
   </div>`;
   document.body.appendChild(ov);
@@ -218,11 +218,11 @@ function popOutQR(){
 </style></head><body>
   <h2>Scan zum Mitspielen</h2>
   <div id="qr-box"></div>
-  <div class="url">${url || '(Seite lokal geöffnet)'}</div>
+  <div class="url">${url ? escapeHtml(url) : '(Seite lokal geöffnet)'}</div>
 <script>
   if (window.QRCode) {
     new QRCode(document.getElementById('qr-box'), {
-      text: ${JSON.stringify(url)},
+      text: ${JSON.stringify(url).replace(/</g, '\\u003c')},
       width: 260, height: 260,
       colorDark: '#0b0e2c', colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.M,

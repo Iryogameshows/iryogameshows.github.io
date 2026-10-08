@@ -58,7 +58,25 @@ let introData = {
 };
 
 function introSave(){ storeSetJson('introData', introData); }
-function introLoad(){ introData = storeGetJson('introData', introData); }
+/* Importdatei und localStorage sind beide fremde Eingabe: auf die erwartete
+   Form bringen (Texte als String, Stufe aus der Liste, Anzahl begrenzt).
+   Erwartet ein Objekt mit einer Liste slides.
+   @param {any} d */
+function introClean(d){
+  return {
+    header: String(d.header || ''),
+    seconds: Number(d.seconds) || 4.6,
+    stage: INTRO_STAGES.some(st => st.key === d.stage) ? String(d.stage) : 'buehne',
+    slides: d.slides.slice(0, INTRO_MAX_SLIDES).map((/** @type {any} */ s) => ({
+      lbl: String((s && s.lbl) || ''), big: String((s && s.big) || ''),
+      pink: String((s && s.pink) || ''), sub: String((s && s.sub) || ''),
+    })),
+  };
+}
+function introLoad(){
+  const d = storeGetJson('introData', null);
+  if (d && typeof d === 'object' && Array.isArray(d.slides)) introData = introClean(d);
+}
 
 /** Sekunden je Stufe, in sinnvollen Grenzen.
  *  @returns {number} */
@@ -264,15 +282,7 @@ function exportIntro(){ downloadJSON(introData, 'intro.json'); }
 function importIntro(e){
   readJsonFile(e, d => {
     if (!d || !Array.isArray(d.slides)) throw new Error('Die Datei enthält keine Stufen');
-    introData = {
-      header: String(d.header || ''),
-      seconds: Number(d.seconds) || 4.6,
-      stage: INTRO_STAGES.some(st => st.key === d.stage) ? String(d.stage) : 'buehne',
-      slides: d.slides.slice(0, INTRO_MAX_SLIDES).map(s => ({
-        lbl: String((s && s.lbl) || ''), big: String((s && s.big) || ''),
-        pink: String((s && s.pink) || ''), sub: String((s && s.sub) || ''),
-      })),
-    };
+    introData = introClean(d);
     introSave();
     renderIntroEditor();
   });

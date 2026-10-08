@@ -55,6 +55,7 @@ const FIREBASE_CONFIG = {
 };
 const D = VOTE_DESIGNS;
 const $ = (id) => document.getElementById(id);
+const arr = (x) => (Array.isArray(x) ? x : []);
 const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nm = (k) => { const d = D.find((x) => x.key === k); return d ? k + ' · ' + d.name : String(k); };
 let lastText = '';
@@ -64,7 +65,7 @@ function compute(votes) {
   const row = (k) => rows.find((r) => r.key === k);
   votes.forEach((v) => {
     (v.top || []).forEach((k, i) => { const r = row(k); if (r) { r.pts += 5 - i; r.tops++; if (i === 0) r.firsts++; } });
-    (v.bad || []).forEach((k, i) => { const r = row(k); if (r) { r.minus -= 5 - i; r.bads++; } });
+    arr(v.bad).forEach((k, i) => { const r = row(k); if (r) { r.minus -= 5 - i; r.bads++; } });
   });
   rows.forEach((r) => { r.total = r.pts + r.minus; });
   rows.sort((a, b) => b.total - a.total || b.firsts - a.firsts || b.tops - a.tops || a.bads - b.bads);
@@ -77,9 +78,9 @@ function show(votes) {
   const list = (a) => '<ol>' + a.map((k) => '<li>' + esc(nm(k)) + '</li>').join('') + '</ol>';
   $('voters').innerHTML = votes.map((v) =>
     '<div class="v"><b>' + esc(v.name || '?') + '</b><div class="tag" style="color:var(--gold)">★ TOP 5</div>' + list(v.top || []) +
-    ((v.bad || []).length ? '<div class="tag" style="color:var(--bad)">✖ SCHLECHT</div>' + list(v.bad) : '') +
-    ((v.up || []).length ? '<div class="muted">👍 gemerkt: ' + esc(v.up.join(', ')) + '</div>' : '') +
-    ((v.down || []).length ? '<div class="muted">👎 gemerkt: ' + esc(v.down.join(', ')) + '</div>' : '') + '</div>').join('');
+    (arr(v.bad).length ? '<div class="tag" style="color:var(--bad)">✖ SCHLECHT</div>' + list(arr(v.bad)) : '') +
+    (arr(v.up).length ? '<div class="muted">👍 gemerkt: ' + esc(arr(v.up).join(', ')) + '</div>' : '') +
+    (arr(v.down).length ? '<div class="muted">👎 gemerkt: ' + esc(arr(v.down).join(', ')) + '</div>' : '') + '</div>').join('');
   lastText = 'Voting-Ergebnis (' + votes.length + ' Abgaben)\n\n' + rows.map((r, i) => (i + 1) + '. ' + r.key + ' · ' + r.name + '  Gesamt ' + r.total + ' (Top ' + r.pts + ', Minus ' + r.minus + ', Platz 1: ' + r.firsts + 'x)').join('\n');
   $('out').hidden = false;
   $('status').textContent = votes.length + (votes.length === 1 ? ' Abgabe' : ' Abgaben') + ' · aktualisiert sich selbst';

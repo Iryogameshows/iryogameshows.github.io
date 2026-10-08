@@ -259,7 +259,7 @@ function tpCloseSpin(){
 function tpBuildWheel(){
   const seg = 360 / tpCatCount();
   const stops = tpData.categories
-    .map((c, i) => `${c.color} ${i*seg}deg ${(i+1)*seg}deg`)
+    .map((c, i) => `${safeColor(c.color)} ${i*seg}deg ${(i+1)*seg}deg`)
     .join(',');
   const labels = tpData.categories.map((c, i) => {
     // Beschriftung in die Mitte des eigenen Segments drehen und dort wieder

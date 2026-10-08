@@ -374,7 +374,7 @@
     } else {
       // Neuer Account → Profil wählen
       signupChoice = { name, pin, avatar: AVATARS[Math.floor(Math.random()*AVATARS.length)], color: COLORS[Math.floor(Math.random()*COLORS.length)] };
-      document.getElementById('signup-name-hint').innerHTML = `Name <b style="color:#FFD23F;">${name}</b> ist noch frei — leg deinen Account an.`;
+      { const hint = document.getElementById('signup-name-hint'); hint.innerHTML = 'Name <b style="color:#FFD23F;"></b> ist noch frei — leg deinen Account an.'; hint.querySelector('b').textContent = name; }
       buildGrid('avatar-grid', AVATARS, false, () => signupChoice.avatar, v => signupChoice.avatar = v);
       buildGrid('color-grid', COLORS, true, () => signupChoice.color, v => signupChoice.color = v);
       showScreen('screen-signup');

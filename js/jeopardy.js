@@ -746,7 +746,9 @@ function jeopardyPlaySound(){
   if (!jeopardyState.currentClue) return;
   const { col, row } = jeopardyState.currentClue;
   const clue = jBoard()[col].clues[row];
-  if (!clue.sound) return;
+  // Der Editor legt Ton als Daten-URL ab. Aus einer Importdatei kann aber
+  // jede URL kommen - ein Aufruf nach aussen bei jedem Abspielen.
+  if (!clue.sound || !/^(data:|blob:)/i.test(String(clue.sound))) return;
   jeopardyStopSound(true);
   jeopardyAudio = new Audio(clue.sound);
   jeopardyAudio.onended = () => { hideSoundFx(); jeopardyAudio = null; updateGamemaster(); };
