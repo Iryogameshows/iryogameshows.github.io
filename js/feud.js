@@ -477,8 +477,8 @@ function renderBoard() {
       <div class="tile ${cls}" ${clickable ? `onclick="revealAnswer(${i})"` : ''}>
         <div class="tile-inner">
           <div class="tile-num">${i+1}</div>
-          <div class="tile-center"><span class="tile-answer">${a.text}</span></div>
-          <div class="tile-pts">${a.points}</div>
+          <div class="tile-center"><span class="tile-answer">${escapeHtml(a.text)}</span></div>
+          <div class="tile-pts">${Number(a.points) || 0}</div>
         </div>
       </div>`;
   }).join('');
@@ -781,8 +781,8 @@ function loadRevealQuestion() {
       <div class="tile open">
         <div class="tile-inner">
           <div class="tile-num">${i+1}</div>
-          <div class="tile-center"><span class="tile-answer">${a.text}</span>${indicator}</div>
-          <div class="tile-pts">${a.points}</div>
+          <div class="tile-center"><span class="tile-answer">${escapeHtml(a.text)}</span>${indicator}</div>
+          <div class="tile-pts">${Number(a.points) || 0}</div>
         </div>
       </div>`;
   }).join(''));
@@ -795,8 +795,8 @@ function loadRevealQuestion() {
   }
   const team1Ans = finaleState.teamAnswers[0][qi];
   const team2Ans = finaleState.teamAnswers[1][qi];
-  const team1Text = team1Ans >= 0 ? q.answers[team1Ans].text : 'Nicht auf dem Board';
-  const team2Text = team2Ans >= 0 ? q.answers[team2Ans].text : 'Nicht auf dem Board';
+  const team1Text = escapeHtml(team1Ans >= 0 ? q.answers[team1Ans].text : 'Nicht auf dem Board');
+  const team2Text = escapeHtml(team2Ans >= 0 ? q.answers[team2Ans].text : 'Nicht auf dem Board');
   const team1Pts = team1Ans >= 0 ? q.answers[team1Ans].points : 0;
   const team2Pts = team2Ans >= 0 ? q.answers[team2Ans].points : 0;
   revealDiv.className = 'finale-reveal-cards';
@@ -1275,18 +1275,18 @@ function updateGamemaster() {
   ${gmFeudTab === 'order' ? `
   <div class="order-list">
     ${state.roundQuestions.map((rq,i) => `<div class="order-item ${i===state.currentRound?'current':(i<state.currentRound?'done':'')}">
-      <span class="order-num">${i+1}.</span> <span>${rq.question}</span>
+      <span class="order-num">${i+1}.</span> <span>${escapeHtml(rq.question)}</span>
     </div>`).join('')}
   </div>
   ` : `
   <div class="active-team-label">${state.allOut ? '⚠ Alle Teams out' : 'Am Zug: ' + state.teamNames[state.currentTeam]}</div>
   <div class="strikes-section">${strikesHtml}</div>
-  <div class="question" onclick="opener.revealQuestion()" style="cursor:pointer;">${q.question}</div>
+  <div class="question" onclick="opener.revealQuestion()" style="cursor:pointer;">${escapeHtml(q.question)}</div>
   ${qNoteHtml(q.note)}
   <div class="answer-list">
   ${q.answers.map((a,i) => `<div class="answer ${state.revealed[i]?'shown':'hidden'}" ${!state.revealed[i] ? `onclick="opener.revealAnswer(${i})"` : ''}>
-    <span><span class="num">${i+1}.</span> <span class="text">${a.text}</span></span>
-    <span class="pts">${a.points}</span>
+    <span><span class="num">${i+1}.</span> <span class="text">${escapeHtml(a.text)}</span></span>
+    <span class="pts">${Number(a.points) || 0}</span>
   </div>`).join('')}
   </div>
   ${mediaControlButtonsHtml(q.media, 'feudToggleMedia')}
@@ -1321,13 +1321,13 @@ function updateGamemasterFinale() {
     const taken = otherAnswer === i;
     if (taken) return `
       <div class="answer" style="background:rgba(100,100,100,.1);border:1px solid rgba(100,100,100,.2);opacity:.4;cursor:default;">
-        <span><span class="num">${i+1}.</span> <span class="text">${a.text}</span> <span style="font-size:.7rem;color:rgba(255,255,255,.3);margin-left:6px;">(vergeben)</span></span>
-        <span class="pts" style="color:rgba(255,215,0,.3);">${a.points}</span>
+        <span><span class="num">${i+1}.</span> <span class="text">${escapeHtml(a.text)}</span> <span style="font-size:.7rem;color:rgba(255,255,255,.3);margin-left:6px;">(vergeben)</span></span>
+        <span class="pts" style="color:rgba(255,215,0,.3);">${Number(a.points) || 0}</span>
       </div>`;
     return `
       <div class="answer hidden" style="cursor:pointer" onclick="opener.finalePickAnswer(${i})">
-        <span><span class="num">${i+1}.</span> <span class="text">${a.text}</span></span>
-        <span class="pts">${a.points}</span>
+        <span><span class="num">${i+1}.</span> <span class="text">${escapeHtml(a.text)}</span></span>
+        <span class="pts">${Number(a.points) || 0}</span>
       </div>`;
   }).join('');
 
@@ -1341,7 +1341,7 @@ function updateGamemasterFinale() {
   <div class="gm-main">
   <div class="active-team-label">Am Zug: ${state.teamNames[ti]}</div>
   <div style="font-size:.85rem;">${scoresHtml}</div>
-  <div class="question">${q.question}</div>
+  <div class="question">${escapeHtml(q.question)}</div>
   <div class="answer-list">${answersHtml}</div>
   </div>
   <div class="gm-side">${gmNotesPanelHtml()}</div>
@@ -1359,8 +1359,8 @@ function updateGamemasterFinaleReveal() {
   const qi = finaleState.revealQ;
   const team1Ans = finaleState.teamAnswers[0][qi];
   const team2Ans = finaleState.teamAnswers[1][qi];
-  const team1Text = team1Ans >= 0 ? q.answers[team1Ans].text : 'Nicht auf dem Board';
-  const team2Text = team2Ans >= 0 ? q.answers[team2Ans].text : 'Nicht auf dem Board';
+  const team1Text = escapeHtml(team1Ans >= 0 ? q.answers[team1Ans].text : 'Nicht auf dem Board');
+  const team2Text = escapeHtml(team2Ans >= 0 ? q.answers[team2Ans].text : 'Nicht auf dem Board');
   const team1Pts = team1Ans >= 0 ? q.answers[team1Ans].points : 0;
   const team2Pts = team2Ans >= 0 ? q.answers[team2Ans].points : 0;
 
@@ -1380,13 +1380,13 @@ function updateGamemasterFinaleReveal() {
   <div class="gm-body">
   <div class="gm-main">
   <div style="font-size:.85rem;">${scoresHtml}</div>
-  <div class="question">${q.question}</div>
+  <div class="question">${escapeHtml(q.question)}</div>
   <div class="team-result" style="background:rgba(${team1Ans>=0?'34,197,94':'232,69,60'},.1);border:1px solid rgba(${team1Ans>=0?'34,197,94':'232,69,60'},.3);">
-    <span>${state.teamNames[finaleState.teams[0]]}: <strong>${team1Text}</strong></span>
+    <span>${escapeHtml(state.teamNames[finaleState.teams[0]])}: <strong>${team1Text}</strong></span>
     <span style="color:#FFD23F;font-weight:700;">${team1Pts} Pkt</span>
   </div>
   <div class="team-result" style="background:rgba(${team2Ans>=0?'34,197,94':'232,69,60'},.1);border:1px solid rgba(${team2Ans>=0?'34,197,94':'232,69,60'},.3);">
-    <span>${state.teamNames[finaleState.teams[1]]}: <strong>${team2Text}</strong></span>
+    <span>${escapeHtml(state.teamNames[finaleState.teams[1]])}: <strong>${team2Text}</strong></span>
     <span style="color:#FFD23F;font-weight:700;">${team2Pts} Pkt</span>
   </div>
   </div>

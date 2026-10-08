@@ -477,7 +477,7 @@ function jimgThumb(clue, field, b, col, row, label) {
   if (!clue[field]) return '';
   const name = clue[field + 'Name'] || label;
   return `<span style="display:inline-flex;align-items:center;gap:5px;">
-    <img class="jimg-thumb" src="${clue[field]}" data-preview-name="${escAttr(name)}" alt="">
+    <img class="jimg-thumb" src="${safeSrc(clue[field])}" data-preview-name="${escAttr(name)}" alt="">
     <button onclick="jeopardyClearImg(${b},${col},${row},'${field}')" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${escAttr(name)} entfernen">✕</button>
   </span>`;
 }
@@ -647,7 +647,7 @@ function jeopardyClueEditorHtml(b, col, row){
           const has = clue.seriesImgs && clue.seriesImgs[idx];
           if (!has) return `<label style="${uploadLbl}" title="Bild ${idx+1}">＋ ${idx+1}<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditSeriesImg(${b},${col},${row},${idx},this)"></label>`;
           const nm = (clue.seriesNames && clue.seriesNames[idx]) || ('Bild ' + (idx+1));
-          return `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="font-size:.62rem;color:#22C55E;font-weight:700;">${idx+1}</span><img class="jimg-thumb" src="${clue.seriesImgs[idx]}" data-preview-name="${escAttr(nm)}" alt=""><button onclick="jeopardyClearSeriesImg(${b},${col},${row},${idx})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${escAttr(nm)} entfernen">✕</button></span>`;
+          return `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="font-size:.62rem;color:#22C55E;font-weight:700;">${idx+1}</span><img class="jimg-thumb" src="${safeSrc(clue.seriesImgs[idx])}" data-preview-name="${escAttr(nm)}" alt=""><button onclick="jeopardyClearSeriesImg(${b},${col},${row},${idx})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${escAttr(nm)} entfernen">✕</button></span>`;
         }).join('')}
       `:''}
     </div>
@@ -661,7 +661,7 @@ function jeopardyClueEditorHtml(b, col, row){
           <span style="font-size:.7rem;font-weight:800;color:#FFD23F;width:14px;text-align:right;">${idx+1}</span>
           <input type="text" placeholder="Zeile ${idx+1} (oder leer lassen)" value="${esc((clue.stepTexts||[])[idx]||'')}" oninput="jeopardyEditStepText(${b},${col},${row},${idx},this.value)" style="${inp}font-size:.82rem;">
           ${img
-            ? `<img class="jimg-thumb" src="${esc(img)}" data-preview-name="${esc(nm)}" alt=""><button onclick="jeopardyClearStepImg(${b},${col},${row},${idx})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${esc(nm)} entfernen">✕</button>`
+            ? `<img class="jimg-thumb" src="${safeSrc(img)}" data-preview-name="${esc(nm)}" alt=""><button onclick="jeopardyClearStepImg(${b},${col},${row},${idx})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${esc(nm)} entfernen">✕</button>`
             : `<label style="${uploadLbl}white-space:nowrap;" title="Bild für Schritt ${idx+1}">🖼<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditStepImg(${b},${col},${row},${idx},this)"></label>`}
         </div>`;
       }).join('')}
@@ -687,7 +687,7 @@ function renderJeopardyEditor() {
         <input type="text" value="${esc(cat.name)}" placeholder="Kategorie ${col+1}" onchange="jeopardyData.boards[${b}].categories[${col}].name=this.value;renderJeopardyEditor()" style="width:100%;box-sizing:border-box;padding:7px 6px;border-radius:7px;border:1px solid rgba(255,210,63,.3);background:rgba(0,0,0,.3);color:#FFD23F;font-family:inherit;font-size:.74rem;font-weight:700;text-align:center;outline:none;">
         ${cat.img
           ? `<span style="display:inline-flex;align-items:center;justify-content:center;gap:4px;">
-              <img class="jimg-thumb" src="${esc(cat.img)}" data-preview-name="${esc(cat.imgName || 'Kategorie-Bild')}" alt="">
+              <img class="jimg-thumb" src="${safeSrc(cat.img)}" data-preview-name="${esc(cat.imgName || 'Kategorie-Bild')}" alt="">
               <button onclick="jeopardyClearCatImg(${b},${col})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="Bild entfernen, wieder Name anzeigen">✕</button>
             </span>`
           : `<label style="display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:3px 6px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);cursor:pointer;color:rgba(255,255,255,.6);font-size:.6rem;font-weight:700;" title="Bild statt Name im Kategorie-Kopf zeigen - der Name bleibt für dich als Beschriftung">🖼 Bild<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditCatImg(${b},${col},this)"></label>`}

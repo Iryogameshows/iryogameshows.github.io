@@ -1104,6 +1104,13 @@ function setMediaSlot(arr, slot, input, afterFn) {
   };
   r.readAsDataURL(f);
 }
+/* Quelle fuer src="..." aus Importdateien und localStorage. escAttr verhindert den
+   Ausbruch aus dem Attribut; hier kommt dazu, dass nur Daten-URLs (so legt der
+   Editor Bilder und Videos ab), http(s) und blob: durchgehen - kein javascript:. */
+function safeSrc(v) {
+  const s = String(v == null ? '' : v);
+  return /^(data:(image|video|audio)[/]|https?:[/][/]|blob:)/i.test(s) ? escAttr(s) : '';
+}
 function escAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
 // Wert als JS-Argument in ein onclick="..." schreiben. escAttr allein reicht
@@ -1179,7 +1186,7 @@ function mediaSlotsHtml(arr, buildOnClick, count) {
   for (let i = 0; i < (count || 3); i++) {
     const m = arr[i];
     html += m
-      ? `<div class="media-slot filled" data-preview-name="${escAttr(m.name || (m.type === 'video' ? 'Video' : 'Bild'))}">${m.type === 'video' ? `<video src="${m.data}" muted></video>` : `<img src="${m.data}">`}<button type="button" class="media-slot-remove" onclick="${buildOnClick(i, 'null')}">✕</button></div>`
+      ? `<div class="media-slot filled" data-preview-name="${escAttr(m.name || (m.type === 'video' ? 'Video' : 'Bild'))}">${m.type === 'video' ? `<video src="${safeSrc(m.data)}" muted></video>` : `<img src="${safeSrc(m.data)}">`}<button type="button" class="media-slot-remove" onclick="${buildOnClick(i, 'null')}">✕</button></div>`
       : `<label class="media-slot empty">+<input type="file" accept="image/*,video/*" style="display:none;" onchange="${buildOnClick(i, 'this')}"></label>`;
   }
   html += '</div>';
@@ -1197,7 +1204,7 @@ function renderMediaOverlay(media) {
   }
   const m = media[activeMediaSlot];
   if (!el) { el = document.createElement('div'); el.id = 'media-overlay'; document.body.appendChild(el); }
-  el.innerHTML = m.type === 'video' ? `<video src="${m.data}" autoplay controls></video>` : `<img src="${m.data}">`;
+  el.innerHTML = m.type === 'video' ? `<video src="${safeSrc(m.data)}" autoplay controls></video>` : `<img src="${safeSrc(m.data)}">`;
 }
 // Klick auf denselben Slot blendet wieder aus, ein anderer Slot wechselt direkt um.
 function toggleMediaSlot(media, slot) {
@@ -1417,7 +1424,7 @@ function qNoteHtml(note) {
 function renderQuestionList() {
   setHtml('question-list', questions.map((q,i) => `
     <div class="q-list-item">
-      <span class="q-label"><span class="q-num">${i+1}.</span>${q.question}<span class="q-meta">${q.answers.length} Antworten</span></span>
+      <span class="q-label"><span class="q-num">${i+1}.</span>${escapeHtml(q.question)}<span class="q-meta">${q.answers.length} Antworten</span></span>
       <div class="q-btns">
         <button class="btn btn-secondary" onclick="editQuestion(${i})">Edit</button>
         <button class="btn btn-danger" onclick="deleteQuestion(${i})">Del</button>
@@ -1425,7 +1432,7 @@ function renderQuestionList() {
     </div>`).join(''));
   setHtml('finale-question-list', finaleQuestions.map((q,i) => `
     <div class="q-list-item">
-      <span class="q-label"><span class="q-num">${i+1}.</span>${q.question}<span class="q-meta">${q.answers.length} Antworten</span></span>
+      <span class="q-label"><span class="q-num">${i+1}.</span>${escapeHtml(q.question)}<span class="q-meta">${q.answers.length} Antworten</span></span>
       <div class="q-btns">
         <button class="btn btn-secondary" onclick="editQuestion(${i},true)">Edit</button>
         <button class="btn btn-danger" onclick="deleteQuestion(${i},true)">Del</button>

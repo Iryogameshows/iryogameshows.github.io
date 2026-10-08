@@ -66,7 +66,7 @@ const JEOPARDY_BOARDS = 2;
  *  @param {JeopardyCategory} cat
  *  @param {string} imgClass */
 function jeopardyCatHeadHtml(cat, imgClass) {
-  if (cat.img) return `<img class="${imgClass}" src="${escAttr(cat.img)}" alt="${escAttr(cat.name)}">`;
+  if (cat.img) return `<img class="${imgClass}" src="${safeSrc(cat.img)}" alt="${escAttr(cat.name)}">`;
   return escapeHtml(cat.name);
 }
 
@@ -588,7 +588,7 @@ function jeopardyStageHtml(clue){
     tiles += `<div class="jeopardy-stage-tile ${gone?'gone':''}"></div>`;
   }
   return `<div class="jeopardy-stage">
-    <img src="${clue.stageImg}" alt="">
+    <img src="${safeSrc(clue.stageImg)}" alt="">
     <div class="jeopardy-stage-cover" style="grid-template-columns:repeat(${cols},1fr);grid-template-rows:repeat(${rows},1fr);">${tiles}</div>
   </div>`;
 }
@@ -631,7 +631,7 @@ function jeopardyStepsHtml(clue){
   return `<div class="jeopardy-steps" style="--jstep-n:${items.length};--jstep-imgs:${imgs};">${items.map((it, i) => `
     <div class="jeopardy-step ${i < shown ? 'shown' : ''}">
       ${it.text ? `<div class="jeopardy-step-text">${escapeHtml(it.text)}</div>` : ''}
-      ${it.img ? `<img class="jeopardy-step-img" src="${escAttr(it.img)}" alt="">` : ''}
+      ${it.img ? `<img class="jeopardy-step-img" src="${safeSrc(it.img)}" alt="">` : ''}
     </div>`).join('')}</div>`;
 }
 function jeopardySeriesCount(clue){ return Math.max(2, Math.min(5, clue.seriesCount || 5)); }
@@ -643,7 +643,7 @@ function jeopardySeriesHtml(clue){
   const shown = jeopardyState.seriesRevealed;
   const cells = imgs.map((src, i) => `
     <div class="jeopardy-series-cell ${i < shown ? 'shown' : ''}">
-      <img src="${src}" alt="">
+      <img src="${safeSrc(src)}" alt="">
       <div class="jeopardy-series-cover">${i+1}</div>
     </div>`).join('');
   return `<div class="jeopardy-series" style="grid-template-columns:repeat(${imgs.length},1fr);">${cells}</div>`;
@@ -664,8 +664,8 @@ function renderJeopardyClueOverlay() {
   const series = clue.series && jeopardySeriesImgs(clue).length > 0;
   const steps = clue.steps && jeopardyStepItems(clue).length > 0;
 
-  const qImgHtml = clue.qImg ? `<img class="jeopardy-clue-img" src="${clue.qImg}" alt="">` : '';
-  const aImgHtml = clue.aImg ? `<img class="jeopardy-answer-img ${jeopardyState.answerShown?'visible':''}" src="${clue.aImg}" alt="">` : '';
+  const qImgHtml = clue.qImg ? `<img class="jeopardy-clue-img" src="${safeSrc(clue.qImg)}" alt="">` : '';
+  const aImgHtml = clue.aImg ? `<img class="jeopardy-answer-img ${jeopardyState.answerShown?'visible':''}" src="${safeSrc(clue.aImg)}" alt="">` : '';
 
   const revealed = jeopardyState.questionRevealed;
   const questionArea = revealed

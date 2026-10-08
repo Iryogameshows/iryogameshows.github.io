@@ -295,7 +295,7 @@ function pihRenderStage(){
   const media = (it.media || []).filter(Boolean);
   const first = media[0];
   stage.innerHTML = first
-    ? (first.type === 'video' ? `<video src="${first.data}" autoplay muted loop></video>` : `<img src="${first.data}">`)
+    ? (first.type === 'video' ? `<video src="${safeSrc(first.data)}" autoplay muted loop></video>` : `<img src="${safeSrc(first.data)}">`)
     : '';
   bar.innerHTML = media.slice(1).map((m,i) =>
     `<button class="btn btn-secondary" style="padding:5px 11px;font-size:.75rem;"
