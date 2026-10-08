@@ -12,6 +12,39 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — Regel: Commit und Push automatisch (`9fe1c11`)
+
+**Anlass.** David: „push und commit in zukunft automatisch außer bei großen
+changes, schreib das in die md“. Bis dahin habe ich vor jedem Commit und Push
+gefragt.
+
+**Gemacht.** Neuer Abschnitt „Commit und Push — automatisch, außer bei großen
+Änderungen“ in `CLAUDE.md`, vor dem HANDOFF-Abschnitt. Ablauf: Repo-Stand
+prüfen, `check.js`, Code-Commit, HANDOFF-Commit, Push, danach Deploy-Action
+prüfen und Ausgang melden. Weiter fragen bei: neue Show/Seite oder Umbau der
+Struktur, Löschen, `.github/workflows/`, Firebase, Passwort-Sperre,
+`.claude/`, `CLAUDE.md` selbst, Verlauf umschreiben, Diff über etwa 10 Dateien
+oder mehrere hundert Zeilen, `check.js`-Fehler.
+
+**Warum so.** Die Grenze für „groß“ hat David nicht genannt - **sie ist meine
+Festlegung** und steht so im Abschnitt. Die Regel hebt Repo-Stand-Prüfung,
+`check.js`, HANDOFF-Eintrag und das Benennen von Ungeprüftem nicht auf. Gilt
+nur für `master` in diesem Repo, nicht für andere Projekte unter
+`Documents\Coding`. Dieser Commit selbst fiel unter „groß“ (`CLAUDE.md`), darum
+wurde vorher gefragt. Verworfen: Auto-Push auch bei Verlauf-Umschreiben.
+
+**Geprüft.** `node check.js`: in Ordnung. Dass die Regel im Alltag trägt, ist
+nicht erprobt - der erste Fall ist der nächste Arbeitsschritt.
+
+**Ungeprüft.** Ob die Schwelle „etwa 10 Dateien“ praktikabel ist; ob andere
+Sessions und Accounts die Regel lesen und befolgen.
+
+**Offen.** David kann die Grenze für „groß“ anpassen. Skills `/handoff`,
+`/neue-show` nicht gebaut; `settings.local.json` enthält Freigaben für fremde
+Projekte; erster Lauf des Agents `import-auditor` steht aus.
+
+---
+
 ## 2026-10-08 — Agent `import-auditor` (`54b0a38`)
 
 **Anlass.** Empfehlung aus der Automations-Analyse, David: „weiter“. Der
