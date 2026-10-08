@@ -12,6 +12,49 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — Commit-Sperre mit `check.js` (`b4b69d0`)
+
+**Anlass.** Empfehlung aus der Automations-Analyse, David: „Commit-Sperre mit
+check.js bauen“. Die CLAUDE.md verlangt `node check.js` vor jedem Commit;
+durchgesetzt wurde das bisher nur durch Disziplin.
+
+**Gemacht.** `.claude/hooks/commit-gate.js` und ein `PreToolUse`-Hook auf
+`Bash` in `.claude/settings.json` (Timeout 120 s). Das Skript liest den Befehl
+aus der Hook-Eingabe; steht darin `git commit` (auch `git -C pfad commit`,
+`git add -A && git commit`), läuft `node check.js` im Projektordner. Bei
+Fehler Exit 2: Commit blockiert, Claude bekommt die letzten 25 Zeilen der
+Ausgabe. Alles andere geht durch, auch kaputte Hook-Eingabe.
+
+**Warum so.** Skript statt `if: "Bash(git commit *)"` im Hook: ob die
+Bedingung bei zusammengesetzten Befehlen (`a && git commit`) greift, wusste ich
+nicht, die Regex im Skript ist prüfbar. Nur `check.js` ohne `--types`
+(Sekunden); `--types` bleibt Handarbeit nach größeren Änderungen.
+Verworfen: Sperre auch für `git push`.
+
+**Geprüft.** An einer Kopie des Repos (`git archive`) mit absichtlich
+kaputter `js/tp.js`: sauber + Commit durchgelassen; kaputt + `git commit`,
+`git add -A && git commit`, `git -C /x commit` gesperrt (Exit 2, Meldung nennt
+den Syntaxfehler); kaputt + `git status`, `git log --grep=commit`, kein JSON
+durchgelassen. Hook feuert in der Session (temporärer Marker bei
+`git commit --dry-run`, wieder entfernt). Befehl aus der fertigen
+`settings.json` ausgeführt: Exit 0. Der Commit `b4b69d0` ging durch; dass die Sperre dabei lief, nicht eigens
+beobachtet (kein Marker), nur geschlossen aus dem Marker-Test.
+
+**Ungeprüft.** Sperre im Fehlerfall am echten Repo (nicht kaputtgemacht);
+andere Rechner und Accounts; Commits aus anderen Werkzeugen als Bash
+(PowerShell-Tool, GitHub Desktop) - dort greift der Hook nicht.
+
+**Offen.** Skills `/handoff`, `/neue-show`, Agent `import-auditor` aus der
+Analyse nicht gebaut; `settings.local.json` enthält Freigaben für fremde
+Projekte.
+
+**Fallstricke.** Beim Entfernen des Test-Markers ging das Leerzeichen nach
+`node` verloren (`node"${…`): der Edit schneidet Leerzeichen am Ende des
+Suchtexts ab. Nach jedem Revert den Befehl wirklich ausführen. Git meldet
+beim Einchecken LF→CRLF, das ist harmlos.
+
+---
+
 ## 2026-10-08 — SessionStart-Hook für den Repo-Stand (`9e14531`)
 
 **Anlass.** Empfehlung aus der Automations-Analyse, David: „SessionStart-Hook
