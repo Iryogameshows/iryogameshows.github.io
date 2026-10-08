@@ -12,6 +12,54 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Teamnamen und Show-Titel escapen (`b86aebc`)
+
+**Anlass.** David: „Teamnamen-Senken beheben“, nächster Punkt aus dem Audit des
+`import-auditor` (Stufe „mittel“; bei aktivem Turnier kommen die Teamnamen aus
+Firebase, sonst aus dem Setup-Feld).
+
+**Gemacht.** `escapeHtml` an allen Stellen, an denen ein Teamname oder Titel
+als Markup landet:
+- `js/feud.js`: Scoreboard, Endstand, Strike-Karten, „→ Team beginnt“,
+  Punkteübersicht, Ausscheiden, Finale (Begrüßung, Punkte, Aufdecken,
+  „Am Zug“), `feudTitle()` im Willkommens-Intro und im Tutorial,
+  Geburtstagsname (an der Definition `name` im Intro und in der Überschrift).
+- `js/jeopardy.js` (Punkteleiste), `js/jeopardy-ui.js` (Endstand).
+- `js/wwds.js`: Zeilen für Einsatz, Antworten, Endstand, Wertung, „wählt eine
+  Kategorie“, „Am Zug“, Master-Tipp.
+- `js/tp.js`: „Am Zug“ im GM-Panel.
+
+**Warum so.** Escapen an der Ausgabe, wie bei den Funden davor. Das Einlesen
+bleibt unverändert: Teamnamen sind Text aus Feldern, die der Host selbst tippt.
+Die Intro-Variable `name` wird an der Definition escaped, weil sie nur in
+Markup vorkommt (Zeilen 165-173).
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. Im Browser
+(Vorschau-Server) Feud-Scoreboard und Jeopardy-Punkte mit `<img onerror>` als
+Teamname: Text wörtlich, 0 `<img>`, `window.__pwn` unbelegt. Restsuche nach
+unescapten `${name}`, `${n}`, `teamNames[...]` in den fünf Dateien: nur Zahlen
+(Schritt- und Stückzahl) übrig. Die Konsolenmeldung `ERR_INVALID_URL` im
+Browser stammt vom absichtlich kaputten Testbild der vorigen Änderung (kein
+leeres oder ungültiges `src` auf der frischen Seite, alle Dateien 200).
+
+**Ungeprüft.** WWDS-Ansichten (Wetten, Antworten, Endstand), das Feud-Finale,
+das Trivial-Pursuit-GM-Panel und das Geburtstags-Intro mit echtem Spielstand;
+Teamnamen, die über andere Variablen als `name`, `n` und `teamNames[...]`
+ausgegeben werden, wurden nicht gesucht.
+
+**Offen.** Aus dem Audit weiter: `gmremote/html` in `gamepad/index.html`
+(ungesandboxt; Firebase-Regeln nötig), `joinUrl`, `introLoad`,
+`new Audio(clue.sound)`, Robustheit gegen falsche Typen
+(`voting/ergebnis.html`, `roster.js`), `escAttr` als Text-Escape (kosmetisch).
+Nebenbefund nicht geprüft: `HOST_PASSWORD` im Client, PIN im Klartext im
+localStorage.
+
+**Fallstricke.** Zeilengenaue Ersetzungen per Skript sind sicher, solange alle
+Treffer vorher gezählt werden: der erste Anlauf brach bei einer falschen
+Erwartungszahl ab, ohne etwas zu schreiben.
+
+---
+
 ## 2026-10-08 — Importe und Medien escapen, Option B des Audits (`1e74c94`)
 
 **Anlass.** David: „Option B weiter“ (nach A, `e14c2d4`). Fund aus dem Lauf des
