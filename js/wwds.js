@@ -216,7 +216,7 @@ function wwdsOptsHtml(q, sel, revealed, onClickFn, tags){
     else if (revealed && i === sel && i !== q.correct) cls = 'bad';
     else if (!revealed && sel === i) cls = 'sel';
     const tagHtml = (tags && tags[i] && tags[i].length)
-      ? `<span class="wo-tags">${tags[i].map(t => `<span class="wwds-tag" style="background:${t.color}">${t.label}</span>`).join('')}</span>` : '';
+      ? `<span class="wo-tags">${tags[i].map(t => `<span class="wwds-tag" style="background:${t.color}">${escapeHtml(t.label)}</span>`).join('')}</span>` : '';
     const click = onClickFn ? ` onclick="${onClickFn(i)}"` : '';
     return `<div class="wwds-opt ${cls}"${click}>
       <span class="wo-let">${WWDS_LETTERS[i]}</span><span>${escapeHtml(a)}</span>${tagHtml}
@@ -685,7 +685,7 @@ function updateGamemasterResult(){
   ${gmHeaderHtml('Gamemaster', 'Spiel beendet')}
   <div class="gm-body">
   <div class="gm-main">
-    <div class="win">🏆 ${winner}</div>
+    <div class="win">🏆 ${escapeHtml(winner)}</div>
     <div class="panel"><div class="sc">${scores}</div></div>
   </div>
   <div class="gm-side">${gmNotesPanelHtml()}</div>

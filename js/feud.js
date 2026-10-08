@@ -489,7 +489,7 @@ function revealAnswer(i) {
   saveSnapshot();
   const q = state.roundQuestions[state.currentRound];
   state.revealed[i] = true;
-  state.roundPoints += q.answers[i].points;
+  state.roundPoints += Number(q.answers[i].points) || 0;
   SFX.point();
   updateRoundPts(); renderBoard(); showFlash(); updateGamemaster();
   if (state.revealed.every(Boolean)) {
@@ -672,7 +672,7 @@ function finaleRevealedScore(idx) {
   let sum = 0;
   for (let qi = 0; qi <= finaleState.revealQ && qi < finaleState.questions.length; qi++) {
     const a = finaleState.teamAnswers[idx][qi];
-    if (a >= 0 && finaleState.questions[qi].answers[a]) sum += finaleState.questions[qi].answers[a].points;
+    if (a >= 0 && finaleState.questions[qi].answers[a]) sum += Number(finaleState.questions[qi].answers[a].points) || 0;
   }
   return sum;
 }
@@ -721,7 +721,7 @@ function loadFinaleQuestion() {
 function finalePickAnswer(i) {
   const q = finaleState.questions[finaleState.currentQ];
   finaleState.teamAnswers[finaleState.currentTeamIdx][finaleState.currentQ] = i;
-  finaleState.scores[finaleState.currentTeamIdx] += q.answers[i].points;
+  finaleState.scores[finaleState.currentTeamIdx] += Number(q.answers[i].points) || 0;
   // Die Punktekarte existiert waehrend des Antwortens nicht (siehe
   // renderFinaleScores) - der Stand wird erst in der Aufloesung gezeigt.
   const ptsEl = document.getElementById(`finale-pts-${finaleState.currentTeamIdx}`);
@@ -773,8 +773,8 @@ function loadRevealQuestion() {
     let indicator = '';
     if (team1Picked || team2Picked) {
       const names = [];
-      if (team1Picked) names.push(state.teamNames[finaleState.teams[0]]);
-      if (team2Picked) names.push(state.teamNames[finaleState.teams[1]]);
+      if (team1Picked) names.push(escapeHtml(state.teamNames[finaleState.teams[0]]));
+      if (team2Picked) names.push(escapeHtml(state.teamNames[finaleState.teams[1]]));
       indicator = `<span style="font-size:.65rem;color:#FFD23F;font-weight:700;margin-left:8px;">← ${names.join(', ')}</span>`;
     }
     return `
@@ -797,8 +797,8 @@ function loadRevealQuestion() {
   const team2Ans = finaleState.teamAnswers[1][qi];
   const team1Text = escapeHtml(team1Ans >= 0 ? q.answers[team1Ans].text : 'Nicht auf dem Board');
   const team2Text = escapeHtml(team2Ans >= 0 ? q.answers[team2Ans].text : 'Nicht auf dem Board');
-  const team1Pts = team1Ans >= 0 ? q.answers[team1Ans].points : 0;
-  const team2Pts = team2Ans >= 0 ? q.answers[team2Ans].points : 0;
+  const team1Pts = team1Ans >= 0 ? (Number(q.answers[team1Ans].points) || 0) : 0;
+  const team2Pts = team2Ans >= 0 ? (Number(q.answers[team2Ans].points) || 0) : 0;
   revealDiv.className = 'finale-reveal-cards';
   revealDiv.innerHTML = `
     <div class="finale-reveal-team">
@@ -1361,8 +1361,8 @@ function updateGamemasterFinaleReveal() {
   const team2Ans = finaleState.teamAnswers[1][qi];
   const team1Text = escapeHtml(team1Ans >= 0 ? q.answers[team1Ans].text : 'Nicht auf dem Board');
   const team2Text = escapeHtml(team2Ans >= 0 ? q.answers[team2Ans].text : 'Nicht auf dem Board');
-  const team1Pts = team1Ans >= 0 ? q.answers[team1Ans].points : 0;
-  const team2Pts = team2Ans >= 0 ? q.answers[team2Ans].points : 0;
+  const team1Pts = team1Ans >= 0 ? (Number(q.answers[team1Ans].points) || 0) : 0;
+  const team2Pts = team2Ans >= 0 ? (Number(q.answers[team2Ans].points) || 0) : 0;
 
   const scoresHtml = finaleState.teams.map((t, idx) => `
     <span style="color:#FFD23F;font-weight:700;">

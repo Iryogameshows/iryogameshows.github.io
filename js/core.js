@@ -1554,15 +1554,32 @@ function importJSON(e, callback) {
     renderQuestionList();
   });
 }
-function importQuestions(e) { importJSON(e, d => { questions = d; }); }
-function importFinaleQuestions(e) { importJSON(e, d => { finaleQuestions = d; }); }
+/* Fragen aus Importdatei und localStorage sind fremde Eingabe: Texte als String,
+   Punkte als Zahl (sonst wird aus roundPoints += points eine String-Verkettung,
+   die unescaped im GM-Panel landet), Antworten als Liste. Unbekannte Felder und
+   die Medien bleiben erhalten; die Medien sichert safeSrc an der Ausgabe.
+   @param {any[]} list */
+function feudCleanQuestions(list) {
+  return list.filter(q => q && typeof q === 'object').map(q => {
+    const out = { ...q,
+      question: String(q.question == null ? '' : q.question),
+      answers: (Array.isArray(q.answers) ? q.answers : []).filter((/** @type {any} */ a) => a && typeof a === 'object')
+        .map((/** @type {any} */ a) => ({ ...a, text: String(a.text == null ? '' : a.text), points: Number(a.points) || 0 })) };
+    if (q.media !== undefined) out.media = Array.isArray(q.media) ? q.media : [];
+    if (q.note !== undefined && q.note !== null) out.note = String(q.note);
+    return out;
+  });
+}
+function importQuestions(e) { importJSON(e, d => { questions = feudCleanQuestions(d); }); }
+function importFinaleQuestions(e) { importJSON(e, d => { finaleQuestions = feudCleanQuestions(d); }); }
 function saveToStorage(){
   storeSetJson('familyFeudQuestions', questions);
   storeSetJson('familyFeudFinaleQuestions', finaleQuestions);
 }
 function loadFromStorage(){
-  questions = storeGetJson('familyFeudQuestions', questions);
-  finaleQuestions = storeGetJson('familyFeudFinaleQuestions', finaleQuestions);
+  const q1 = storeGetJson('familyFeudQuestions', null), q2 = storeGetJson('familyFeudFinaleQuestions', null);
+  if (Array.isArray(q1)) questions = feudCleanQuestions(q1);
+  if (Array.isArray(q2)) finaleQuestions = feudCleanQuestions(q2);
   const showVal = storeGet('feudShowName');
   if (showVal !== null) fieldSet('feud-show-name', showVal);
   const bdayVal = storeGet('bdayName');
