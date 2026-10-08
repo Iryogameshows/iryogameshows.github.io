@@ -180,7 +180,7 @@ function wwdsRenderTeams(){
       lock = wwdsState.tieGuesses[i] === null ? '' : (wwdsState.tieRevealed ? String(wwdsState.tieGuesses[i]) : '✓');
     const per = wwdsQPerTeam();
     return `<div class="wwds-team ${WWDS_COLORS[i]} ${isTurn?'on':''}">
-      <div class="wt-name">${n}</div>
+      <div class="wt-name">${escapeHtml(n)}</div>
       <div class="wt-money">${wwdsMoney(wwdsState.scores[i])}</div>
       <div class="wt-meta">Joker ${wwdsState.audienceUsed[i]?'verbraucht':'frei'} · ${per} Fragen</div>
       ${lock ? `<div class="wt-lock">${lock}</div>` : ''}
@@ -190,7 +190,7 @@ function wwdsRenderTeams(){
 
 function wwdsGridHtml(){
   return `<div class="wwds-sub" style="margin-bottom:12px;">
-      <strong style="color:#FFD23F;">${wwdsState.teamNames[wwdsState.currentTeam]}</strong> wählt eine Kategorie
+      <strong style="color:#FFD23F;">${escapeHtml(wwdsState.teamNames[wwdsState.currentTeam])}</strong> wählt eine Kategorie
     </div>
     <div class="wwds-grid">` +
     wwdsData.categories.map((c,i) => `
@@ -238,7 +238,7 @@ function wwdsBetHtml(){
       Richtig = Einsatz kommt dazu · Falsch = Einsatz geht ab.</div>` +
     wwdsState.teamNames.map((n,i) => `
       <div class="wwds-bet-row">
-        <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${n}</span>
+        <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${escapeHtml(n)}</span>
         <span style="color:rgba(255,255,255,.4);font-size:.8rem;">Guthaben ${wwdsMoney(wwdsState.scores[i])}</span>
         <span style="min-width:110px;padding:9px 12px;border-radius:8px;background:rgba(0,0,0,.35);
               border:1.5px solid rgba(255,255,255,.12);text-align:center;
@@ -270,7 +270,7 @@ function wwdsTieHtml(){
     <div class="wwds-q" style="margin-bottom:14px;">${escapeHtml(t.q)}</div>` +
     wwdsState.teamNames.map((n,i) => wwdsState.scores[i] === Math.max(...wwdsState.scores) ? `
       <div class="wwds-bet-row">
-        <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${n}</span>
+        <span style="min-width:120px;text-align:right;font-weight:700;color:${WWDS_HEX[i]};">${escapeHtml(n)}</span>
         <span class="wwds-guess ${wwdsState.tieGuessesShown ? 'shown' : ''}">${
           wwdsState.tieGuesses[i] === null ? '—'
             : (wwdsState.tieGuessesShown ? wwdsState.tieGuesses[i] : '000')}</span>
@@ -498,7 +498,7 @@ function wwdsFinish(forceDraw){
   const max = Math.max(...wwdsState.scores);
   const winners = wwdsState.teamNames.filter((_, i) => wwdsState.scores[i] === max);
   setHtml('final-scores', wwdsState.teamNames.map((n,i) =>
-    `${n}: <strong>${wwdsMoney(wwdsState.scores[i])}</strong>`).join('<br>'));
+    `${escapeHtml(n)}: <strong>${wwdsMoney(wwdsState.scores[i])}</strong>`).join('<br>'));
   setText('winner-text', (forceDraw || winners.length > 1) ? 'Unentschieden!' : `${winners[0]} gewinnt!`);
   showEl('tour-record-btn', false);
   const recorded = tournamentAutoRecordIfActive(wwdsState.teamNames, wwdsState.scores);
@@ -564,7 +564,7 @@ function updateGamemasterWwds(){
         </div>`).join('') + `</div>`;
   } else if (q){
     const teamTag = (i) => s.teamNames.map((n,t) =>
-      (isMaster && s.masterPick[t] === i) ? `<span style="color:${WWDS_HEX[t]};font-size:.7rem;font-weight:700;"> ●${n}</span>` : '').join('');
+      (isMaster && s.masterPick[t] === i) ? `<span style="color:${WWDS_HEX[t]};font-size:.7rem;font-weight:700;"> ●${escapeHtml(n)}</span>` : '').join('');
     body = `<div class="question">${escapeHtml(q.q)}</div>
       ${qNoteHtml(q.note)}
       <div class="answer-list">` + q.answers.map((a,i) => {
@@ -583,7 +583,7 @@ function updateGamemasterWwds(){
     if (isMaster && !s.masterRevealed){
       body += `<div class="hint-line">Antwort je Team festlegen:</div>` +
         s.teamNames.map((n,t) => `<div class="panel-row" style="align-items:center;gap:6px;">
-          <span style="min-width:90px;color:${WWDS_HEX[t]};font-weight:700;font-size:.75rem;">${n}</span>` +
+          <span style="min-width:90px;color:${WWDS_HEX[t]};font-weight:700;font-size:.75rem;">${escapeHtml(n)}</span>` +
           [0,1,2].map(i => `<button class="gm-btn ${s.masterPick[t]===i?'gold':'gray'} sm"
              onclick="opener.wwdsMasterSet(${t},${i})">${WWDS_LETTERS[i]}</button>`).join('') +
         `</div>`).join('');
@@ -599,7 +599,7 @@ function updateGamemasterWwds(){
       s.teamNames.map((n,i) => `
         <div class="panel" style="margin-bottom:8px;">
           <div class="panel-head">
-            <span style="color:${WWDS_HEX[i]}">${n}</span>
+            <span style="color:${WWDS_HEX[i]}">${escapeHtml(n)}</span>
             <span class="badge">${wwdsMoney(s.bets[i])} von ${wwdsMoney(s.scores[i])}</span>
           </div>
           <div class="panel-row" style="flex-wrap:wrap;gap:5px;">
@@ -620,7 +620,7 @@ function updateGamemasterWwds(){
       <div class="hint-line">Schätzungen hier eintragen — der Hauptbildschirm zeigt sie mit an.</div>` +
       tied.map(i => `
         <div class="panel-row" style="align-items:center;gap:8px;margin-bottom:6px;">
-          <span style="min-width:100px;color:${WWDS_HEX[i]};font-weight:700;font-size:.8rem;">${s.teamNames[i]}</span>
+          <span style="min-width:100px;color:${WWDS_HEX[i]};font-weight:700;font-size:.8rem;">${escapeHtml(s.teamNames[i])}</span>
           <input type="number" inputmode="decimal" placeholder="Schätzung"
             value="${s.tieGuesses[i] === null ? '' : s.tieGuesses[i]}"
             onchange="opener.wwdsSetGuess(${i}, this.value)"
@@ -629,7 +629,7 @@ function updateGamemasterWwds(){
   }
 
   const scoreRows = s.teamNames.map((n,i) =>
-    `<div class="money"><span style="color:${WWDS_HEX[i]}">${n}</span><strong>${wwdsMoney(s.scores[i])}</strong></div>`).join('');
+    `<div class="money"><span style="color:${WWDS_HEX[i]}">${escapeHtml(n)}</span><strong>${wwdsMoney(s.scores[i])}</strong></div>`).join('');
 
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
@@ -650,7 +650,7 @@ function updateGamemasterWwds(){
     <div class="panel-head"><span>💰 Stand</span></div>
     ${scoreRows}
     <div class="tm">${(s.phase==='question'||s.phase==='master') ? (s.timeUp?'Zeit abgelaufen':'Timer: '+s.timer+' s') : ''}</div>
-    ${(s.phase==='pick'||s.phase==='question') ? `<div class="tm">Am Zug: <b style="color:${WWDS_HEX[s.currentTeam]}">${s.teamNames[s.currentTeam]}</b></div>` : ''}
+    ${(s.phase==='pick'||s.phase==='question') ? `<div class="tm">Am Zug: <b style="color:${WWDS_HEX[s.currentTeam]}">${escapeHtml(s.teamNames[s.currentTeam])}</b></div>` : ''}
   </div>
   ${gmNotesPanelHtml()}
   </div>

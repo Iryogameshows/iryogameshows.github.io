@@ -998,7 +998,7 @@ function updateGamemasterTp(){
 </style></head><body>
   ${gmHeaderHtml('Gamemaster', `Trivial Pursuit · ${
     s.phase === 'done' ? 'Gewonnen' : s.finalTeam >= 0 ? 'Schlussfrage'
-    : s.phase === 'steal' ? 'Nachfassen' : 'Am Zug: ' + (s.teamNames[s.turn] || '')}`)}
+    : s.phase === 'steal' ? 'Nachfassen' : 'Am Zug: ' + escapeHtml(s.teamNames[s.turn] || '')}`)}
   <div class="gm-body">
   <div class="gm-main">${body}</div>
   <div class="gm-side">

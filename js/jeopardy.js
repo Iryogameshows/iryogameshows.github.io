@@ -295,7 +295,7 @@ function showJeopardyTitle() {
 function renderJeopardyScores() {
   setHtml('jeopardy-scores', jeopardyState.teamNames.map((name, i) => `
     <div class="jeopardy-team ${TEAM_COLORS[i]}">
-      <div class="jt-name">${name}</div>
+      <div class="jt-name">${escapeHtml(name)}</div>
       <div class="jt-score" id="jscore-${i}">${jeopardyState.scores[i]}</div>
     </div>
   `).join(''));

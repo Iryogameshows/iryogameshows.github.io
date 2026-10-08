@@ -50,7 +50,7 @@ function buildScoreboard() {
   const sb = document.getElementById('scoreboard');
   sb.innerHTML = state.teamNames.map((name, i) => `
     <div class="team-panel ${TEAM_COLORS[i]}" id="team${i}-display">
-      <div class="t-name" id="team${i}-label">${name}</div>
+      <div class="t-name" id="team${i}-label">${escapeHtml(name)}</div>
       <div class="t-score" id="team${i}-score">0</div>
       <div class="team-strikes" id="team${i}-strikes">
         <span class="strike-pip">✕</span>
@@ -90,7 +90,7 @@ function showWelcomeIntro() {
   showClickOverlay('welcome-overlay overlay-enter', `
     <div class="welcome-star">${starSvg()}</div>
     <div class="welcome-line1">Willkommen zu</div>
-    <div class="welcome-line2">${feudTitle()}</div>
+    <div class="welcome-line2">${escapeHtml(feudTitle())}</div>
   `, 1800, showTutorialThenGame);
 }
 
@@ -138,7 +138,7 @@ function saveBdayName() {
 }
 
 function showBirthdayIntro(onDone) {
-  const name = getBdayName().toUpperCase();
+  const name = escapeHtml(getBdayName().toUpperCase());
   const blob = (fill) => `<svg width="70" height="70" viewBox="0 0 70 70"><ellipse cx="35" cy="38" rx="27" ry="29" fill="${fill}" stroke="#111" stroke-width="4"/><circle cx="26" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="45" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="27" cy="35" r="3.5" fill="#111"/><circle cx="46" cy="35" r="3.5" fill="#111"/><path d="M27 49 q8 8 17 0" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/></svg>`;
   const cake = `
     <div class="cake">
@@ -160,7 +160,7 @@ function showBirthdayIntro(onDone) {
       <div class="cone coneR"></div>
       <div class="cord"><div class="bulb"></div></div>
       <div class="frame"></div>
-      <div class="header"><span class="star">★</span>Die Große ${getBdayName()}-Geburtstagsshow<span class="star">★</span></div>
+      <div class="header"><span class="star">★</span>Die Große ${escapeHtml(getBdayName())}-Geburtstagsshow<span class="star">★</span></div>
       <div class="screen s1"><p class="big">HERZLICH</p><p class="big pink">WILLKOMMEN!</p></div>
       <div class="screen s2"><p class="lbl">Heute steigt</p><p class="big">${name}S</p><p class="big pink sm">GEBURTSTAGSSHOW</p></div>
       <div class="screen s3">${cake}<p class="lbl">Der Grund für das ganze Theater</p><p class="big xl pink">${name}</p></div>
@@ -304,7 +304,7 @@ const TUT_STAR = `<svg viewBox="0 0 100 100" width="100" xmlns="http://www.w3.or
 function feudTutorialSlides() {
   return [
     `<div class="tut-star-anim" style="margin-bottom:10px;">${TUT_STAR}</div>
-     <div class="tut-big tut-gold">${feudTitle()}</div>`,
+     <div class="tut-big tut-gold">${escapeHtml(feudTitle())}</div>`,
     `<div class="tut-icon">⚔️</div>
      <div class="tut-big tut-white" style="font-size:3rem;">Teams treten<br>gegeneinander an</div>
      <div class="tut-sub">2 oder 3 Teams spielen um Punkte.<br>Pro Runde gibt es eine Frage mit versteckten Antworten.</div>`,
@@ -608,7 +608,7 @@ function showResults() {
   const maxScore = Math.max(...state.scores);
   const winners = state.teamNames.filter((_, i) => state.scores[i] === maxScore);
   setHtml('final-scores', state.teamNames.map((name, i) =>
-    `${name}: <strong>${state.scores[i]}</strong> Punkte`
+    `${escapeHtml(name)}: <strong>${state.scores[i]}</strong> Punkte`
   ).join('<br>'));
   setText('winner-text', winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`);
   const recordedToTournament = tournamentAutoRecordIfActive(state.teamNames, state.scores);
@@ -622,7 +622,7 @@ function showResults() {
 function showEliminationScreen(eliminatedIdx) {
   showClickOverlay('elim-overlay overlay-enter', `
     <div class="elim-text">Ausgeschieden</div>
-    <div class="elim-team">${state.teamNames[eliminatedIdx]}</div>
+    <div class="elim-team">${escapeHtml(state.teamNames[eliminatedIdx])}</div>
     <div class="elim-sub">Die besten zwei Teams spielen das Finale</div>
   `, 2500, showFinaleMatchup);
 }
@@ -640,9 +640,9 @@ function showFinaleIntroScreen(onDone) {
 function showFinaleMatchup() {
   showClickOverlay('finale-click-overlay', `
     <div class="welcome-star">${starSvg()}</div>
-    <div class="welcome-line2" style="font-size:3.5rem;">${state.teamNames[finaleState.teams[0]]}</div>
+    <div class="welcome-line2" style="font-size:3.5rem;">${escapeHtml(state.teamNames[finaleState.teams[0]])}</div>
     <div class="welcome-line1" style="animation-delay:1s;">vs</div>
-    <div class="welcome-line2" style="font-size:3.5rem;animation-delay:1.2s;">${state.teamNames[finaleState.teams[1]]}</div>
+    <div class="welcome-line2" style="font-size:3.5rem;animation-delay:1.2s;">${escapeHtml(state.teamNames[finaleState.teams[1]])}</div>
   `, 2500, () => {
     if (finaleState.questions.length === 0) { showResults(); return; }
     startFinale();
@@ -690,7 +690,7 @@ function renderFinaleScores() {
   el.style.display = '';
   el.innerHTML = finaleState.teams.map((ti, idx) => `
     <div class="finale-score-card active">
-      <div class="finale-score-name">${state.teamNames[ti]}</div>
+      <div class="finale-score-name">${escapeHtml(state.teamNames[ti])}</div>
       <div class="finale-score-pts" id="finale-pts-${idx}">${finaleRevealedScore(idx)}</div>
     </div>
   `).join('');
@@ -802,12 +802,12 @@ function loadRevealQuestion() {
   revealDiv.className = 'finale-reveal-cards';
   revealDiv.innerHTML = `
     <div class="finale-reveal-team">
-      <div class="finale-reveal-name">${state.teamNames[finaleState.teams[0]]}</div>
+      <div class="finale-reveal-name">${escapeHtml(state.teamNames[finaleState.teams[0]])}</div>
       <div class="finale-reveal-answer" style="color:${team1Ans >= 0 ? '#22C55E' : '#E8453C'}">${team1Text}</div>
       <div class="finale-reveal-pts">${team1Pts}</div>
     </div>
     <div class="finale-reveal-team">
-      <div class="finale-reveal-name">${state.teamNames[finaleState.teams[1]]}</div>
+      <div class="finale-reveal-name">${escapeHtml(state.teamNames[finaleState.teams[1]])}</div>
       <div class="finale-reveal-answer" style="color:${team2Ans >= 0 ? '#22C55E' : '#E8453C'}">${team2Text}</div>
       <div class="finale-reveal-pts">${team2Pts}</div>
     </div>
@@ -835,7 +835,7 @@ function showFinaleSwitch() {
   showClickOverlay('welcome-overlay overlay-enter', `
     <div class="welcome-star">${starSvg()}</div>
     <div class="welcome-line1">Jetzt spielt</div>
-    <div class="welcome-line2">${state.teamNames[finaleState.teams[1]]}</div>
+    <div class="welcome-line2">${escapeHtml(state.teamNames[finaleState.teams[1]])}</div>
   `, 1500, () => {
     showScreen('finale-screen');
     loadFinaleQuestion();
@@ -1214,7 +1214,7 @@ function updateGamemaster() {
   const strikesHtml = state.teamNames.map((name, i) => {
     const dots = [0,1,2].map(j => `<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:.7rem;font-weight:900;transition:all .25s ease;${j < state.teamStrikes[i] ? 'background:radial-gradient(circle, rgba(232,69,60,.35), rgba(198,40,40,.45));border:2px solid #E8453C;color:#FF6B6B;box-shadow:0 0 10px rgba(232,69,60,.25);' : 'background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);color:rgba(255,255,255,.1);'}">✕</span>`).join('');
     return `<div style="display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:10px;${state.currentTeam===i?'background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);':'border:1px solid rgba(255,255,255,.06);'}">
-      <span style="font-size:.6rem;font-weight:700;letter-spacing:2px;color:${state.currentTeam===i?'#FFD23F':'rgba(255,255,255,.3)'};text-transform:uppercase;">${name}</span>
+      <span style="font-size:.6rem;font-weight:700;letter-spacing:2px;color:${state.currentTeam===i?'#FFD23F':'rgba(255,255,255,.3)'};text-transform:uppercase;">${escapeHtml(name)}</span>
       <div style="display:flex;gap:6px;">${dots}</div>
     </div>`;
   }).join('');
@@ -1248,7 +1248,7 @@ function updateGamemaster() {
         ? feudBuzzer.results.map((r,idx) => `<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${escapeHtml(r.name)}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')
         : `<div class="hint-line">🔔 Buzzer ${feudBuzzer.armed?'scharf — warte auf Buzz…':'aus'}</div>`}
       <div class="panel-row" style="margin-top:8px;">
-        ${state.teamNames.map((name,i) => `<button class="gm-btn gray sm" onclick="opener.feudSetStartTeam(${i})">→ ${name} beginnt</button>`).join('')}
+        ${state.teamNames.map((name,i) => `<button class="gm-btn gray sm" onclick="opener.feudSetStartTeam(${i})">→ ${escapeHtml(name)} beginnt</button>`).join('')}
       </div>
       </div>
     </details>`;
@@ -1279,7 +1279,7 @@ function updateGamemaster() {
     </div>`).join('')}
   </div>
   ` : `
-  <div class="active-team-label">${state.allOut ? '⚠ Alle Teams out' : 'Am Zug: ' + state.teamNames[state.currentTeam]}</div>
+  <div class="active-team-label">${state.allOut ? '⚠ Alle Teams out' : 'Am Zug: ' + escapeHtml(state.teamNames[state.currentTeam])}</div>
   <div class="strikes-section">${strikesHtml}</div>
   <div class="question" onclick="opener.revealQuestion()" style="cursor:pointer;">${escapeHtml(q.question)}</div>
   ${qNoteHtml(q.note)}
@@ -1311,7 +1311,7 @@ function updateGamemasterFinale() {
 
   const scoresHtml = finaleState.teams.map((t, idx) => `
     <span style="color:${idx===finaleState.currentTeamIdx?'#FFD23F':'rgba(255,255,255,.4)'};font-weight:700;">
-      ${state.teamNames[t]}: ${finaleState.scores[idx]}
+      ${escapeHtml(state.teamNames[t])}: ${finaleState.scores[idx]}
     </span>`).join(' · ');
 
   const otherIdx = finaleState.currentTeamIdx === 0 ? 1 : 0;
@@ -1339,7 +1339,7 @@ function updateGamemasterFinale() {
   ${gmHeaderHtml('Gamemaster', `Finale · Frage ${finaleState.currentQ+1} / ${finaleState.questions.length}`)}
   <div class="gm-body">
   <div class="gm-main">
-  <div class="active-team-label">Am Zug: ${state.teamNames[ti]}</div>
+  <div class="active-team-label">Am Zug: ${escapeHtml(state.teamNames[ti])}</div>
   <div style="font-size:.85rem;">${scoresHtml}</div>
   <div class="question">${escapeHtml(q.question)}</div>
   <div class="answer-list">${answersHtml}</div>
@@ -1366,7 +1366,7 @@ function updateGamemasterFinaleReveal() {
 
   const scoresHtml = finaleState.teams.map((t, idx) => `
     <span style="color:#FFD23F;font-weight:700;">
-      ${state.teamNames[t]}: ${finaleState.scores[idx]}
+      ${escapeHtml(state.teamNames[t])}: ${finaleState.scores[idx]}
     </span>`).join(' · ');
 
   const gmHtml = `<!DOCTYPE html>
@@ -1403,7 +1403,7 @@ function updateGamemasterJeopardy() {
   const teamColors = [['#E8453C','#C62828'],['#3B82F6','#1D4ED8'],['#22C55E','#16a34a']];
   const scoresHtml = jeopardyState.teamNames.map((name, i) => `
     <div class="score-card" style="border-left:4px solid ${teamColors[i][0]};">
-      <div class="score-name">${name}</div>
+      <div class="score-name">${escapeHtml(name)}</div>
       <div class="score-val">${jeopardyState.scores[i]}</div>
     </div>`).join('');
 

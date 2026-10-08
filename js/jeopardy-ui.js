@@ -415,7 +415,7 @@ function showJeopardyResults() {
   const maxScore = Math.max(...jeopardyState.scores);
   const winners = jeopardyState.teamNames.filter((_, i) => jeopardyState.scores[i] === maxScore);
   setHtml('final-scores', jeopardyState.teamNames.map((name, i) =>
-    `${name}: <strong>${jeopardyState.scores[i]}</strong> Punkte`).join('<br>'));
+    `${escapeHtml(name)}: <strong>${jeopardyState.scores[i]}</strong> Punkte`).join('<br>'));
   setText('winner-text', winners.length > 1 ? 'Unentschieden!' : `${winners[0]} gewinnt!`);
   jeopardyState.active = false;
   closeJeopardyClue();
