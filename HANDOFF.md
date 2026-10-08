@@ -12,6 +12,42 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — SessionStart-Hook für den Repo-Stand (`9e14531`)
+
+**Anlass.** Empfehlung aus der Automations-Analyse, David: „SessionStart-Hook
+bauen“. Die CLAUDE.md verlangt als erstes `git fetch` + Status; der Vorfall vom
+2026-09-16 entstand, weil das ausblieb.
+
+**Gemacht.** Neu `.claude/settings.json` (eingecheckt, gilt für alle Sessions
+und Accounts) mit einem `SessionStart`-Hook: `cd "$CLAUDE_PROJECT_DIR"`,
+Kopfzeile, dann `git fetch origin`, `git status -sb`,
+`git log --oneline -3 origin/master`. Timeout 30 s, `|| true`, damit ein Fetch
+ohne Netz den Start nicht blockiert. Die Ausgabe landet im Kontext.
+
+**Warum so.** Der Hook holt nur den Stand, er merged nicht: ein automatischer
+`merge --ff-only` könnte bei geändertem Arbeitsbaum fremde Arbeit berühren.
+Bei `behind` steht der Merge-Befehl in der Kopfzeile, ausgeführt wird er von
+Hand. Verworfen: Hook in `settings.local.json` (nicht eingecheckt, andere
+Sessions und Accounts hätten ihn nicht).
+
+**Geprüft.** JSON gültig (per Node; `jq` ist auf dieser Maschine nicht
+installiert). Befehl aus der Datei in Bash ausgeführt: Exit 0, Ausgabe
+`## master...origin/master` plus drei Commits. `node check.js`: in Ordnung.
+
+**Ungeprüft.** Dass Claude Code den Hook beim echten Sessionstart auslöst -
+das zeigt sich erst im nächsten Start. Bleibt die Ausgabe dort aus, hat der
+Settings-Watcher die Datei nicht geladen, dann Session neu starten. Verhalten
+auf anderen Rechnern (Pfad `$CLAUDE_PROJECT_DIR`, Git Bash vorausgesetzt).
+
+**Offen.** Weitere Empfehlungen aus der Analyse nicht gebaut: Commit-Sperre mit
+`node check.js`, Skill `/handoff`, Skill `/neue-show`, Agent `import-auditor`;
+`settings.local.json` enthält Freigaben für fremde Projekte.
+
+**Fallstricke.** Git meldet beim Einchecken „LF will be replaced by CRLF“ - die
+Datei wird mit Windows-Zeilenenden abgelegt, JSON bleibt gültig.
+
+---
+
 ## 2026-10-08 — `js/tp.js`: Kategorien bereinigen, Ausgaben escapen (`b47b3f2`)
 
 **Anlass.** Zwei automatische Sicherheitsmeldungen (security-guidance-Plugin)
