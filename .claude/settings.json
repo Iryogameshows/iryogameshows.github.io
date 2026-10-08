@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PROJECT_DIR:-.}\" && echo 'Repo-Stand (SessionStart, frisch von origin; bei behind: git merge --ff-only origin/master):' && { git fetch origin 2>&1; git status -sb 2>&1; git log --oneline -3 origin/master 2>&1; } || true",
+            "timeout": 30,
+            "statusMessage": "Repo-Stand pruefen..."
+          }
+        ]
+      }
+    ]
+  }
+}
