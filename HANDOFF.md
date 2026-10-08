@@ -12,6 +12,43 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — Sichtprüfung der master-Fassung der Show-Symbole (kein Code geändert)
+
+**Gemacht.** Dev-Server „Gameshows" (Port 3000) auf dem Stand `84f53de`, Host-Gate
+war aus der Vorsitzung noch entsperrt. Per `applyTheme(key)` + `renderLogo(…)`
+Menü und Show-Logo oben angesehen: B (Menü + Logo `wwm`), K (`danger`),
+O (`pih`), S (`tp`), H (`ddf`).
+
+**Befund.** (1) **Fehler in B:** Das Symbol im Show-Logo oben fehlt. Berechnet
+ist `filter: url("#ico-pixel-g") drop-shadow(…)` auf der `<g>`
+(`getBoundingClientRect` 41 × 52 px bei x 484, y 39 — Fläche da, nichts
+gezeichnet). Mit `style.filter='none'` auf der `<g>` erscheint das Symbol. Die
+Aussage aus `5ac4376`, der Pixel-Filter sei „repariert", stimmt für die
+`<g>` im Logo also **nicht**. Das Mosaik auf den acht Menükarten (`<svg>`,
+`#ico-pixel`) funktioniert. (2) K, O, S, H: Menü und Logo-Symbol sichtbar, wie
+gedacht (K Neon-Linien, O grüner Schein, S Gold, H dreifarbig).
+(3) In B sind einige Kartensymbole durch das Mosaik grob (Der Dümmste fliegt,
+Preis ist heiß) — Geschmack, kein Fehler.
+
+**Geprüft.** Nur Sicht per Screenshot (0,5–1,0 Skalierung) und berechnete
+Stile; kein `node check.js` nötig, da nichts geändert. **Nicht angesehen:** A, C,
+D, E, F, I, J, L, M, N, P, Q, R mit master-Fassung (vorher mit meiner
+verworfenen Fassung gesehen, das zählt nicht), Intros, Tutorial, Turnierplan,
+Mainscreen-Spiegel, Hover im Menü.
+
+**Offen.** B-Logo-Symbol reparieren: Ursache unbekannt (Vermutung:
+`#ico-pixel-g` mit festem `userSpaceOnUse`-Bereich 0/0/300/300 trifft die
+Position der `<g>` nicht, sie liegt im Logo bei ~127/6 mit Skalierung 0,575).
+Falls nicht rasch lösbar: für `g.show-icon` in B nur Schatten + `crispEdges`
+(meine verworfene Notlösung, die in B funktionierte). Dazu die ungeprüften
+Richtungen oben und die Frage nach Piktogrammen je Show und Richtung.
+
+**Fallstricke.** `preview_start` meldet „Server started", der Port 3000
+antwortet aber erst nach einigen Sekunden (`npx http-server`); `navigate`
+davor scheitert. Mit `curl http://localhost:3000/` warten.
+
+---
+
 ## 2026-10-07 — Merge mit master: Show-Symbole doppelt gebaut, master gilt (`e947db4`)
 
 **Gemacht.** `origin/master` in `claude/game-buzzer-fixes-90cyjz` gemergt.
