@@ -12,6 +12,36 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — Sichtprüfung der übrigen Richtungen (kein Code geändert)
+
+**Gemacht.** Auf `ea7805e` per `applyTheme(key)` + `renderLogo(…)` je Richtung
+Menü (8 Karten) und Show-Logo oben angesehen, Screenshot bei Skalierung 0,5
+nach 0,9 s Wartezeit: A (feud), C (danger), D (wwds), E (trophy), F (feud),
+I (wwm), J (danger), L (pih), M (tp), N (wwds), P (ddf), Q (wwm), R (trophy).
+Zusätzlich B mit `danger` und `ddf` (Logo-Reparatur `af2d91c`).
+
+**Ergebnis.** In allen 15 Ansichten sind Symbole auf den acht Karten und im
+Logo-Kopf sichtbar und im Stil der Richtung: A Gold mit Schein, C/F Sticker mit
+Kontur, D/R zweifarbig, E Doppelschatten, I/J Linie (J mit Kreide-Körnung),
+L Druckerschwärze, M Aurora, N Papierschnitt, P mehrfarbig, Q Riso. B-Logo mit
+Mosaik und Schatten auch bei `danger` und `ddf`. Keine fehlenden Symbole, keine
+leeren Karten.
+
+**Geprüft.** Nur Sicht, keine Messung. Bei 0,5 Skalierung sind Feinheiten
+(Kontur-Breite, Körnung, ob der Schatten bei Q wirklich Rosa zeigt) nicht
+sicher beurteilbar — nur „da und passend".
+
+**Offen.** Weiter nicht angesehen: Intros, Tutorial, Turnierplan,
+Mainscreen-Spiegel (Zuschauerfenster), Hover im Menü, die Logos oben von
+B mit `feud`/`tp`/`pih`/`trophy`. Frage nach Piktogrammen je Show und Richtung
+weiter offen.
+
+**Fallstricke.** Die Screenshots der Browser-Pane hinken einen Schritt
+hinterher, wenn gleich nach `applyTheme` aufgenommen wird; in der Batch-Zeile
+vor dem Screenshot `await new Promise(r=>setTimeout(r,900))` einbauen.
+
+---
+
 ## 2026-10-08 — B: Logo-Symbol im Show-Kopf repariert (`af2d91c`)
 
 **Gemacht.** `--ico-filter` in B ist jetzt nur noch `url(#ico-pixel-g)`
