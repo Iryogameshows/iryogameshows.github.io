@@ -12,6 +12,46 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — Agent `import-auditor` (`54b0a38`)
+
+**Anlass.** Empfehlung aus der Automations-Analyse, David: „weiter“. Der
+`tp.js`-Fund (`b47b3f2`) zeigte ein Muster, das bei den anderen Importen
+offen ist.
+
+**Gemacht.** `.claude/agents/import-auditor.md`, nur lesend (Read, Grep, Glob),
+Modell `sonnet`. Prüft Quellen von außen (alle Aufrufer von `readJsonFile` und
+`storeGetJson`, Firebase-Daten von Handys, Editorfelder, Nebenseiten) gegen
+Senken (`setHtml`/`innerHTML`, Template-Strings in Attributen, zur Laufzeit
+gebaute Inline-Handler, CSS-Werte, `href`/`src`). Maßstab ist der `tp.js`-Fix:
+Bereinigen beim Einlesen plus Escapen an der Ausgabe; fehlt eine Schicht,
+meldet er eine Schwäche. Ausgabe: Tabelle mit Datei:Zeile, Quelle, Feld,
+Senke, Schwere, Vorschlag; dazu „in Ordnung“ und „Nicht geprüft“.
+
+**Warum so.** Keine Zeilennummern im Agent - sie veralten, er sucht per Grep
+neu. Nur lesend, damit ein Lauf nichts ändert; Korrekturen macht man danach
+gezielt. Verworfen: Agent mit Schreibrechten, der gleich fixt.
+
+**Geprüft.** Die im Agent genannten Hilfsfunktionen (`escapeHtml`, `escAttr`,
+`escJsArg`, `setHtml`, `storeGetJson`) und Dateien (`buzzer/`, `gamepad/`,
+`mainscreen/`, `voting/`, `designs/`) existieren im Repo. `readJsonFile` hat
+laut Grep Aufrufer in `core.js`, `ddf.js`, `intro.js`, `jeopardy-ui.js`,
+`pih.js`, `tp.js`, `wwds.js`, `wwm.js`.
+
+**Ungeprüft.** Der Agent ist **nie gelaufen**: nicht gestartet (teuer), und er
+steht vermutlich erst in einer neuen Session als Typ `import-auditor` bereit.
+Wie brauchbar seine Funde sind, zeigt erst der erste Lauf. Vermutung, nicht
+nachgesehen: ob das Frontmatter-Format (`name`, `description`, `tools`,
+`model`) genau so erkannt wird.
+
+**Offen.** Erster Lauf über die offenen Importe (Feud, Jeopardy, WWM, WWDS,
+DDF, PIH, Intro); Funde danach einzeln beheben. Skills `/handoff`,
+`/neue-show` nicht gebaut; `settings.local.json` enthält Freigaben für fremde
+Projekte.
+
+**Fallstricke.** Git meldet beim Einchecken LF→CRLF, harmlos.
+
+---
+
 ## 2026-10-08 — Commit-Sperre mit `check.js` (`b4b69d0`)
 
 **Anlass.** Empfehlung aus der Automations-Analyse, David: „Commit-Sperre mit
