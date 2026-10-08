@@ -12,6 +12,40 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-08 — Skill `/handoff` (`2d30378`)
+
+**Anlass.** David: „jetzt weiter mit ccs“ (Claude-Code-Setup), nächste
+Empfehlung aus der Automations-Analyse.
+
+**Gemacht.** `.claude/skills/handoff/SKILL.md`, nur auf Aufruf
+(`disable-model-invocation: true`), Argument optional (Hash oder Thema).
+Ablauf: Repo-Stand prüfen, letzten Code-Commit bestimmen, `git show --stat`
+und Session-Verlauf lesen, Eintrag oben in `HANDOFF.md` anlegen (Anlass,
+Gemacht, Warum so, Geprüft, Ungeprüft, Offen, Fallstricke), als eigenen Commit
+`HANDOFF: Eintrag zu <hash> (<Thema>)` schicken, Push nach der Regel
+„Commit und Push automatisch“, am Ende „Steht in der HANDOFF.md“.
+
+**Warum so.** Der Aufbau folgt den letzten Einträgen dieser Datei; die
+CLAUDE.md nennt nur fünf Abschnitte, „Anlass“ und „Ungeprüft“ sind hier
+Praxis und kommen dazu. Nur auf Aufruf, weil der Skill committet.
+
+**Geprüft.** Frontmatter lesbar (per Node). Eintragsstruktur gegen die
+vorhandenen Einträge abgeglichen. `node check.js`: in Ordnung. Nebenbefund: der
+Agent `import-auditor` (`54b0a38`) wurde nach dem Commit von der Session als
+Agent-Typ erkannt - sein Frontmatter-Format stimmt also.
+
+**Ungeprüft.** Der Skill ist **nie aufgerufen** worden (er würde einen echten
+Eintrag schreiben); ob diese Session ihn erkennt, offen, `.claude/skills/`
+gab es beim Sessionstart nicht. Dieser Eintrag wurde von Hand nach dem
+Muster des Skills geschrieben.
+
+**Offen.** `/neue-show` (erst `BAUPLAN.md` lesen), `settings.local.json`
+aufräumen (Freigaben für fremde Projekte), erster Lauf von `import-auditor`.
+
+**Fallstricke.** Git meldet beim Einchecken LF→CRLF, harmlos.
+
+---
+
 ## 2026-10-08 — Regel: Commit und Push automatisch (`9fe1c11`)
 
 **Anlass.** David: „push und commit in zukunft automatisch außer bei großen
