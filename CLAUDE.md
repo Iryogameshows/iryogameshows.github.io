@@ -234,6 +234,44 @@ still, weil ein Inline-Style jede Regel schlägt.
 Push auf `master` → GitHub Action (`.github/workflows/pages.yml`) → live auf
 https://iryogameshows.github.io/
 
+## Commit und Push — automatisch, außer bei großen Änderungen
+
+Seit 2026-10-08 (Anweisung von David): **Commit und Push passieren ohne
+Rückfrage**, sobald ein Arbeitsschritt fertig ist. Vorher fragen nur bei
+großen Änderungen.
+
+**Ablauf, jedes Mal:**
+
+1. `git fetch origin && git status -sb`; bei `behind` erst
+   `git merge --ff-only origin/master`.
+2. `node check.js` muss durchlaufen (die Commit-Sperre in
+   `.claude/hooks/commit-gate.js` erzwingt das für Commits über das Bash-Werkzeug).
+3. Code committen, HANDOFF-Eintrag mit Hash als eigenen kleinen Commit
+   hinterher (siehe unten), dann `git push origin master`.
+4. Nach dem Push den Lauf der Deploy-Action prüfen (`gh run list`) und den
+   Ausgang melden. Schlägt sie fehl, ist der Arbeitsschritt nicht fertig.
+
+**Groß — hier weiter erst fragen:**
+
+- neue Show, neue Seite oder größerer Umbau der Struktur (Dateien verschieben,
+  aufteilen, zusammenlegen)
+- Dateien oder Daten löschen
+- Änderungen an `.github/workflows/`, Firebase-Regeln oder -Daten,
+  Passwort-Sperre
+- Änderungen an `.claude/` (Hooks, Rechte, Agents), `CLAUDE.md` selbst
+- alles, was Verlauf umschreibt: `--force`, `reset --hard`, `rebase`,
+  Branches löschen
+- Diff über etwa 10 Dateien oder mehrere hundert Zeilen
+- `check.js` meldet Fehler, oder die Änderung ist ungeprüft in einem Bereich,
+  der während einer Show benutzt wird
+
+Die Grenze für „groß“ ist eine Festlegung der Session, nicht Davids Wortlaut:
+bei Zweifel fragen, bei Bedarf hier anpassen.
+
+Die Regel hebt **nicht** auf: den Repo-Stand vorher prüfen, `check.js`, den
+HANDOFF-Eintrag und das Melden von Ungeprüftem. Sie gilt für `master` in diesem
+Repo, nicht für andere Projekte unter `Documents\Coding`.
+
 ## HANDOFF.md — bei JEDER Änderung, ohne Ausnahme
 
 `HANDOFF.md` im Wurzelverzeichnis wird **mitgeschrieben, nicht nachgepflegt**.
