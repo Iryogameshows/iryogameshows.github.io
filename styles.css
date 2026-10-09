@@ -873,8 +873,9 @@ body {
   color: var(--accent-text); text-shadow: 0 0 30px rgba(var(--gold-rgb),.3); letter-spacing: 3px;
 }
 .result-card {
-  background: rgba(var(--fg-rgb),.04); border: 1px solid rgba(var(--fg-rgb),.08);
-  border-radius: 14px; padding: 30px 44px; backdrop-filter: blur(8px);
+  background: var(--brd-tex, none), var(--brd-surface, rgba(var(--fg-rgb),.04)); border: 1px solid rgba(var(--fg-rgb),.08);
+  box-shadow: var(--brd-frame, none); color: var(--brd-fg, inherit);
+  border-radius: var(--brd-radius, 14px); padding: 30px 44px; backdrop-filter: blur(8px);
 }
 .result-scores { line-height: 2.2; font-size: 1rem; color: rgba(var(--fg-rgb),.5); }
 .result-scores strong { color: var(--accent-text); font-size: 1.5rem; font-family: var(--font-display); }
@@ -916,8 +917,9 @@ body {
   display: flex; gap: 20px; justify-content: center;
 }
 .finale-score-card {
-  text-align: center; padding: 12px 24px; border-radius: 12px;
-  background: rgba(var(--fg-rgb),.04); border: 1px solid rgba(var(--fg-rgb),.08);
+  text-align: center; padding: 12px 24px; border-radius: var(--tile-radius, 12px);
+  background: var(--tile-tex, none), var(--tile, rgba(var(--fg-rgb),.04)); border: 1px solid rgba(var(--fg-rgb),.08);
+  box-shadow: var(--tile-edge, none); color: var(--tile-fg, inherit);
   transition: border-color .3s, background .3s;
 }
 .finale-score-card.active { border-color: rgba(var(--gold-rgb),.3); background: rgba(var(--gold-rgb),.05); }
@@ -964,9 +966,11 @@ body {
 }
 .finale-reveal-team {
   flex: 1; max-width: 300px; text-align: center;
-  padding: 16px; border-radius: 12px;
-  background: rgba(var(--fg-rgb),.04);
+  padding: 16px; border-radius: var(--tile-radius, 12px);
+  background: var(--tile-tex, none), var(--tile, rgba(var(--fg-rgb),.04));
   border: 1px solid rgba(var(--fg-rgb),.08);
+  box-shadow: var(--tile-edge, none); color: var(--tile-fg, inherit);
+  animation: var(--tile-reveal, none);
 }
 .finale-reveal-name {
   font-size: .65rem; font-weight: 700; text-transform: uppercase;
@@ -1050,7 +1054,7 @@ body {
 @media (max-width: 600px) {
   .logo svg { width: 200px; }
   .team-panel .t-score { font-size: 2.2rem; }
-  .board { padding: 14px; border-radius: 14px; }
+  .board { padding: 14px; border-radius: var(--brd-radius, 14px); }
   .q-text { font-size: .95rem; }
   .tile { min-height: 44px; }
   .tile.open .tile-answer { font-size: .8rem; }
@@ -2624,6 +2628,7 @@ body {
   text-align:center;font-size:1.15rem;font-weight:700;line-height:1.5;
   padding:16px 18px;border-radius:12px;background:rgba(0,0,0,.28);
   border:1px solid rgba(var(--fg-rgb),.07);width:100%;
+  font-family:var(--tile-font, inherit);
 }
 .wwds-cat-chip{display:inline-block;padding:4px 14px;border-radius:6px;background:rgba(var(--gold-rgb),.12);
   border:1px solid rgba(var(--gold-rgb),.28);font-size:.7rem;font-weight:700;color:var(--accent-text);
@@ -2745,24 +2750,27 @@ body {
 
 .ddf-players { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 18px; }
 .ddf-player {
-  background: rgba(var(--fg-rgb),.05); border: 2px solid rgba(var(--fg-rgb),.14);
-  border-radius: 14px; padding: 10px 16px; min-width: 130px; text-align: center;
+  background: var(--tile-tex, none), var(--tile, rgba(var(--fg-rgb),.05)); border: 2px solid rgba(var(--fg-rgb),.14);
+  box-shadow: var(--tile-edge, none); color: var(--tile-fg, inherit);
+  border-radius: var(--tile-radius, 14px); padding: 10px 16px; min-width: 130px; text-align: center;
   transition: opacity .25s, border-color .25s, transform .25s;
 }
 .ddf-player.out { opacity: .32; border-color: rgba(var(--fg-rgb),.08); transform: scale(.94); }
 .ddf-player.out .ddf-player-name { text-decoration: line-through; }
 .ddf-player.picked { border-color: #e23b3b; box-shadow: 0 0 18px rgba(226,59,59,.4); }
-.ddf-player-name { font-weight: 700; margin-bottom: 6px; }
+.ddf-player-name { font-weight: 700; margin-bottom: 6px; font-family: var(--tile-font, inherit); }
 
 /* Die Frage ist der Mittelpunkt des Screens - alles andere ordnet sich unter. */
 .ddf-question {
   flex: 1; display: flex; align-items: center; justify-content: center;
   text-align: center; font-size: clamp(1.6rem, 4.2vw, 3.4rem); font-weight: 800;
   line-height: 1.2; padding: 20px; max-width: 1100px; margin: 0 auto;
+  font-family: var(--tile-font, inherit);
 }
 .ddf-answer {
   text-align: center; font-size: clamp(1.2rem, 2.6vw, 2rem); font-weight: 700;
   color: #4ade80; padding: 10px 20px 20px;
+  animation: var(--tile-reveal, none);
 }
 .ddf-note { text-align: center; font-size: .85rem; color: #9a9a9a; padding-bottom: 12px; }
 .ddf-vote-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 10px 0 18px; }
@@ -2798,7 +2806,8 @@ body {
    eine Rangliste statt wie eine Werkzeugleiste. */
 .pih-score {
   display: flex; align-items: center; gap: 9px;
-  background: rgba(var(--fg-rgb),.04); border: 1px solid rgba(var(--fg-rgb),.1);
+  background: var(--tile-tex, none), var(--tile, rgba(var(--fg-rgb),.04)); border: 1px solid rgba(var(--fg-rgb),.1);
+  box-shadow: var(--tile-edge, none); color: var(--tile-fg, inherit);
   border-radius: 99px; padding: 7px 15px 7px 11px;
   transition: border-color .2s var(--ease-out), box-shadow .2s var(--ease-out),
               background .2s var(--ease-out), transform .2s var(--ease-out);
@@ -2826,7 +2835,7 @@ body {
   border-color: var(--gold); box-shadow: 0 0 18px rgba(var(--gold-rgb),.38);
   transform: translateY(-2px);
 }
-.pih-item { text-align: center; font-size: 1.9rem; font-weight: 800; padding: 6px 12px 12px; }
+.pih-item { text-align: center; font-size: 1.9rem; font-weight: 800; padding: 6px 12px 12px; font-family: var(--tile-font, inherit); }
 /* Das Artikelbild teilt sich die Höhe mit der Gebotsliste - deshalb eine feste
    Obergrenze statt max-height:100%, sonst drückt ein hohes Bild alles darunter
    aus dem Bild. */
@@ -2841,10 +2850,15 @@ body {
 .pih-bid-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 6px 0 18px; }
 .pih-bid-row {
   width: 100%; max-width: 460px; margin: 0 auto; display: flex; align-items: center;
-  gap: 10px; padding: 7px 12px; border-radius: 8px;
-  background: rgba(var(--fg-rgb),.03); border: 1px solid rgba(var(--fg-rgb),.08);
+  gap: 10px; padding: 7px 12px; border-radius: var(--tile-radius, 8px);
+  background: var(--tile-tex, none), var(--tile, rgba(var(--fg-rgb),.03)); border: 1px solid rgba(var(--fg-rgb),.08);
+  box-shadow: var(--tile-edge, none); color: var(--tile-fg, inherit); font-family: var(--tile-font, inherit);
 }
-.pih-bid-row.win { border-color: var(--gold); background: rgba(var(--gold-rgb),.1); }
+.pih-bid-row.win {
+  border-color: var(--gold); background: var(--tile-open, rgba(var(--gold-rgb),.1));
+  box-shadow: var(--tile-open-edge, none); color: var(--tile-open-fg, inherit);
+  animation: var(--tile-reveal, none);
+}
 /* Überboten: der Wert zählt nicht mehr, das muss auf einen Blick lesbar sein. */
 .pih-bid-row.bust { opacity: .45; }
 .pih-bid-row.bust .pih-bid-val { text-decoration: line-through; }
@@ -3035,8 +3049,9 @@ body {
 .tp-top{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;}
 .tp-team{
   display:flex;flex-direction:column;align-items:center;gap:6px;
-  padding:12px 20px;border-radius:16px;
-  background:rgba(var(--fg-rgb),.04);border:2px solid rgba(var(--fg-rgb),.08);
+  padding:12px 20px;border-radius:var(--tile-radius, 16px);
+  background:var(--tile-tex, none),var(--tile, rgba(var(--fg-rgb),.04));border:2px solid rgba(var(--fg-rgb),.08);
+  box-shadow:var(--tile-edge, none);color:var(--tile-fg, inherit);
   transition:border-color var(--t-med) var(--ease-out),background var(--t-med) var(--ease-out),transform var(--t-med) var(--ease-out);
 }
 /* Wer am Zug ist, muss man aus der letzten Reihe sehen - Rand allein reicht
@@ -3048,7 +3063,7 @@ body {
 .tp-team.red.turn{border-color:var(--red);box-shadow:0 0 28px rgba(var(--red-rgb),.25);}
 .tp-team.blue.turn{border-color:var(--blue);box-shadow:0 0 28px rgba(var(--blue-rgb),.25);}
 .tp-team.green.turn{border-color:var(--green);box-shadow:0 0 28px rgba(var(--green-rgb),.25);}
-.tp-team-name{font-weight:900;font-size:1rem;letter-spacing:.5px;}
+.tp-team-name{font-weight:900;font-size:1rem;letter-spacing:.5px;font-family:var(--tile-font, inherit);}
 .tp-team-sub{font-size:.72rem;color:rgba(var(--fg-rgb),.45);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 .tp-pie{display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45));}
 
@@ -3087,20 +3102,21 @@ body {
 
 .tp-side{flex:1;min-width:300px;display:flex;flex-direction:column;gap:14px;}
 .tp-stage{
-  min-height:150px;padding:20px 22px;border-radius:16px;
-  background:rgba(var(--fg-rgb),.04);border:1px solid rgba(var(--fg-rgb),.08);
+  min-height:150px;padding:20px 22px;border-radius:var(--brd-radius, 16px);
+  background:var(--brd-tex, none),var(--brd-surface, rgba(var(--fg-rgb),.04));border:1px solid rgba(var(--fg-rgb),.08);
+  box-shadow:var(--brd-frame, none);color:var(--brd-fg, inherit);
   display:flex;flex-direction:column;gap:12px;justify-content:center;
 }
 .tp-catchip{
   align-self:flex-start;padding:6px 16px;border-radius:99px;
   font-weight:900;font-size:.8rem;letter-spacing:1px;color:var(--ink);
 }
-.tp-question{font-size:1.5rem;font-weight:800;line-height:1.35;}
+.tp-question{font-size:1.5rem;font-weight:800;line-height:1.35;font-family:var(--tile-font, inherit);}
 .tp-answer{
-  font-size:1.2rem;font-weight:900;color:var(--green);
-  padding:10px 14px;border-radius:12px;background:rgba(var(--green-rgb),.1);
-  border:1px solid rgba(var(--green-rgb),.3);
-  animation:tpAnswerIn .3s var(--ease-pop);
+  font-size:1.2rem;font-weight:900;color:var(--tile-right-fg, var(--green));
+  padding:10px 14px;border-radius:var(--tile-radius, 12px);background:var(--tile-right, rgba(var(--green-rgb),.1));
+  border:1px solid rgba(var(--green-rgb),.3);font-family:var(--tile-font, inherit);
+  animation:var(--tile-reveal, tpAnswerIn .3s var(--ease-pop));
 }
 @keyframes tpAnswerIn{from{opacity:0;transform:translateY(8px);}}
 /* Verdeckt heisst wirklich verdeckt: der Text steht nicht im Markup, sondern
@@ -4033,7 +4049,7 @@ body {
   --tile: repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, rgba(255,255,255,.07) 0 1px, transparent 1px 8px), radial-gradient(ellipse at 50% 40%, #A82339 0%, #8E1B2C 55%, #5F0F1D 100%);
   --tile-hover: repeating-linear-gradient(45deg, rgba(255,255,255,.1) 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, rgba(255,255,255,.1) 0 1px, transparent 1px 8px), radial-gradient(ellipse at 50% 40%, #BC2A42 0%, #9E2033 55%, #6A1222 100%);
   --tile-edge: inset 0 0 0 4px #F1E9D2, inset 0 0 0 5px rgba(0,0,0,.35), 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35);
-  --tile-fg: #2A1A12;
+  --tile-fg: #F4EEDF;
   --tile-head: transparent;
   --tile-head-fg: #C9A54C;
   --tile-used: transparent;
@@ -4074,6 +4090,7 @@ body {
 :root[data-theme="I"] .wwm-opt { background: linear-gradient(180deg, #FBF6E9, #F1E9D2); color: #2A1A12; box-shadow: 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35); font-size: 1.4rem; }
 :root[data-theme="I"] .wwm-opt.correct { background: linear-gradient(180deg, #E9CF8F, #C9A54C); }
 :root[data-theme="I"] .wwm-opt.selected { box-shadow: 0 0 0 3px #C9A54C, 0 0 24px rgba(201,165,76,.55); }
+:root[data-theme="I"] .wwds-opt .wo-let { color: #C9A54C; }
 :root[data-theme="I"] .wwm-opt .wwm-letter { color: #8E1B2C; font-family: 'Cormorant Garamond', serif; font-weight: 700; }
 /* Die Karte wird umgedreht: erst hochkant weg, dann mit der Vorderseite. */
 @keyframes thIKarte {
@@ -4738,6 +4755,33 @@ body {
   0%   { clip-path: inset(0 50% 0 50%); filter: brightness(1.6); }
   100% { clip-path: inset(0 0 0 0); filter: none; }
 }
+
+/* Art deco: die Messingplatte ist hell, die Richtung dunkel. Was auf der
+   Platte steht (Unterzeilen in rgba(--fg-rgb), Punkte in --accent-text),
+   braucht dort dunkle Tinte. Und wer am Zug ist oder fuehrt, behaelt die
+   Platte - die halbtransparente Goldflaeche dieser Zustaende laege sonst
+   dunkel unter dunkler Schrift. */
+:root[data-theme="S"] :is(.ddf-player, .pih-score, .pih-bid-row, .tp-team, .finale-score-card, .finale-reveal-team, .wwds-cat) {
+  --fg-rgb: 27,21,10; --accent-text: #5A3F12;
+}
+:root[data-theme="S"] :is(.tp-team.turn, .pih-score.lead, .finale-score-card.active) {
+  background: var(--tile); box-shadow: var(--tile-edge), 0 0 22px rgba(217,182,107,.45);
+}
+
+/* Arcade: Press Start ist breit - die DDF-Frage in clamp(..3.4rem) liefe
+   ueber vier Zeilen. */
+:root[data-theme="B"] :is(.ddf-question, .pih-item) { font-size: clamp(1rem, 2.2vw, 1.7rem); line-height: 1.55; }
+:root[data-theme="B"] :is(.tp-question, .wwds-q) { font-size: .95rem; line-height: 1.6; }
+
+/* Helle Richtungen: Unterzeilen in 45 % Schrift lagen auf hellen Flaechen
+   unter Kontrast 3 (gemessen 2,3 bis 2,9). Die gruene Loesung bei DDF
+   (#4ade80) ist auf Creme kaum zu lesen. */
+:root[data-theme="S"] .tp-team-sub { color: rgba(var(--fg-rgb),.75); }
+:root[data-theme-hell] .tp-team-sub { color: rgba(var(--fg-rgb),.7); }
+:root[data-theme-hell] .tp-hint { color: rgba(var(--fg-rgb),.75); }
+:root[data-theme-hell] .ddf-answer { color: #15803D; }
+/* Die WWDS-Frage lag als rgba(0,0,0,.28) grau auf dem hellen Brett. */
+:root[data-theme-hell] .wwds-q { background: rgba(255,255,255,.72); border-color: rgba(var(--fg-rgb),.18); }
 
 /* Helle Richtungen: die WWM-Leiter lag als rgba(0,0,0,.25) grau auf Creme.
    Dort eine Panel-Flaeche mit Linie, wie die anderen Kaesten. */
