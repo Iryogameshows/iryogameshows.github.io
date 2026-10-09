@@ -12,6 +12,65 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — React Bits als Bundle, caveman wartet auf Freigabe (`3e31486`)
+
+**Anlass.** David: „ne ich will auch react bits und caveman“ (Antwort auf
+meine Entscheidung, beide nicht einzubauen).
+
+**Gemacht.**
+
+- `tools/reactbits/`: `add.js` holt Komponenten aus dem Registry
+  (`https://reactbits.dev/r/<Name>-JS-CSS.json`), `build.js` bündelt mit esbuild
+  zu `vendor/reactbits.js` (+ `.css`), enthält React 19. API in der Seite:
+  `ReactBits.mount(name, el, props)`, `unmount(el)`, `list()`. Als Beleg
+  `ShinyText`. `demo.html` daneben.
+- `CLAUDE.md`: Abschnitt React Bits, Tabelle erweitert, caveman-Eintrag
+  umgeschrieben. `.gitignore`: `tools/reactbits/node_modules/`.
+
+**Warum so.**
+
+- Gewählt: **vorab bauen, Ergebnis einchecken.** Die Seite bleibt ohne
+  Build-Step, nur Entwicklern nötig: `npm install` in `tools/reactbits`.
+  Verworfen: React per CDN + Babel im Browser (langsam, braucht Netz);
+  Vue Bits/Svelte Bits (anderes Framework, ändert nichts).
+- Nur Variante JS-CSS, da kein Tailwind im Projekt.
+- caveman: gedacht als Plugin über `.claude/settings.json`
+  (`extraKnownMarketplaces` + `enabledPlugins: {"caveman@caveman": true}`),
+  das kommt per Git auf alle Geräte. **Dieser Edit wurde vom Berechtigungs-
+  system als Selbstmodifikation abgelehnt und nicht umgangen.** Er steht aus,
+  bis David ihn freigibt oder selbst einträgt.
+
+**Geprüft.**
+
+- `node check.js`: „alles in Ordnung“.
+- Bundle im Browser (localhost:3000): `ReactBits` geladen, `ShinyText` rendert
+  `<span class="shiny-text">Iryo Gameshows</span>`, Screenshot zeigt den Text.
+- Ein Fehler beim Test gefunden und behoben: `React is not defined`, weil die
+  React-Bits-Dateien kein `import React` haben. Fix: `jsx: 'automatic'` in
+  `build.js`. Danach keine neuen Konsolenfehler (die Konsole zeigte den alten
+  Fehler noch an, der Stacktrace war identisch mit dem Stand vor dem Fix).
+- Größe `vendor/reactbits.js`: 228 017 B.
+
+**Ungeprüft.** Die Glanz-Animation: im verdeckten Browser-Pane liefen 0
+`requestAnimationFrame`-Frames, dadurch war keine Animation messbar. Weitere
+Komponenten als ShinyText. Einbindung in `index.html` (nicht gemacht). `add.js`
+mit einer Komponente mit npm-Abhängigkeiten (z. B. `gsap`, `ogl`) nicht
+ausprobiert. caveman als Plugin: nichts davon getestet.
+
+**Offen.** (1) Freigabe für den caveman-Eintrag in `.claude/settings.json`.
+(2) Branch `claude/tooling-setup` nach `master`? (3) Alter Branch
+`claude/game-buzzer-fixes-90cyjz` ungeklärt. (4) Die global installierten
+caveman-Skills in `~/.claude/skills` würden mit dem Plugin doppelt vorliegen;
+nach Aktivierung des Plugins prüfen, ob sie weg können.
+
+**Fallstricke.** Die Navigation des Browser-Panes zu `localhost:3000/<pfad>`
+schlug zweimal fehl (zweiter Versuch landete auf `https://` und einer
+Fehlerseite); `location.href` per JavaScript im selben Tab ging. Die Vorschau
+(`preview_start`) öffnet bei neuen HTML-Dateien einen Tab als `data:`-Vorschau,
+dort laden relative Skripte nicht.
+
+---
+
 ## 2026-10-09 — Werkzeuge für alle Geräte: Skills, GSAP, Lenis (`8d987e7`)
 
 **Gemacht.** David schickte sechs Links (caveman, React Bits, Lenis, GSAP,
