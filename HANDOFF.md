@@ -12,6 +12,67 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Design-Upgrade, Scheibe 1: Material-Tokens (`b1b1c4a`)
+
+**Auftrag (David).** „upgrade alle Designs … so professionell wie die
+Intros, we going big“, GSAP nicht zwingend. Freigegeben: in Scheiben
+committen und pushen, Richtungen alphabetisch.
+
+**Befund vorher** (Show bei 1280×800 gegen `designs/s/` verglichen, K, S, F):
+Die Richtungen erreichen Menü, Hintergrund, Schriften, Logo und Symbole.
+Die Spielbretter blieben überall Studio-Blau: Feud-Felder blau mit grüner
+Aufdeckung, Jeopardy-Felder blau, WWM- und WWDS-Antworten blau. Ursache:
+13 feste Studio-Farben plus Gradienten in `styles.css`. `--blue` ist
+Team Blau (BAUPLAN 4.4) und kann deshalb nicht umgefärbt werden.
+
+**Gemacht.**
+- Alle Brett-Stellen lesen `var(--token, <alter Studio-Wert>)`. Das
+  betrifft Feud (`.board`, `.tile*`), Jeopardy (`.jeopardy-board`,
+  `-cat`, `-cell`, `-stage`, `-series`), WWM (`.wwm-q`, `.wwm-opt`,
+  `.wwm-rung.current`), WWDS (`.wwds-cat`, `.wwds-opt`) und die
+  Anleitungs-Demos (`.tut-*`). Die Token-Liste steht kommentiert im
+  `:root` unter „Spielbrett-Material“.
+- Die Tokens sind bewusst **nicht** gesetzt. Ohne gewählte Richtung
+  gilt also der alte Wert, mit Richtung reicht ein Satz für alle Bretter.
+- Fehler behoben: In hellen Richtungen ist `--accent-text` dunkel
+  (F #B42318, H #D7372B, L #1A1712). Damit war der Punktestand des aktiven
+  Teams auf der roten Fläche unsichtbar. Auf Teamflächen gilt dort jetzt
+  `#FFE9A0`.
+
+**Warum so.** Die Rückfall-Werte stehen an der Stelle selbst, nicht als
+`:root`-Default. So bleibt jede Stelle exakt wie vorher, auch dort, wo
+sich die Studio-Gradienten leicht unterscheiden (3-Stopp gegen 2-Stopp).
+Verworfen:
+- je Richtung eigene Selektoren pro Element: 18 × rund 25 Regeln.
+- Studio-Varianten zu einem Token vereinheitlichen: kleine sichtbare
+  Änderung ohne Design, gegen die Zusage „ohne Design ändert sich nichts“.
+
+**Geprüft.**
+- `node check.js` meldet „alles in Ordnung“.
+- Computed Styles von 159 Elementen (Feud mit aufgedeckten Feldern,
+  Jeopardy-Brett, WWM-Frage) vor und nach dem Umbau ohne Richtung
+  verglichen, mit `Math.random=()=>0`, weil das aktive Team sonst
+  zufällig ist. Ergebnis: 0 Unterschiede, abgesehen von der leeren
+  Ebene `none,` vor dem Gradienten, die nichts zeichnet.
+- Comic-Feud im Screenshot: „0“ des aktiven Teams ist lesbar.
+- **Ungeprüft:** WWDS und die Anleitungs-Demos per Messung (gleiches
+  Muster, nicht gemessen), Zuschauerfenster.
+
+**Offen.**
+- Scheibe 2 und folgende: die Materialsätze je Richtung, alphabetisch
+  A–S, je Richtung ein Signatur-Moment beim Aufdecken (reines CSS,
+  BAUPLAN 4.8).
+- Bei F sind Frage und Punkte auf dem Brett noch schlecht lesbar (dunkle
+  Akzentschrift auf Blau und Grün). Das erledigt der F-Satz.
+
+**Fallstricke.**
+- `styles.css` hat CRLF, ein Skript mit `split('\n')`-Mustern findet
+  nichts.
+- Ein mit dem Write-Werkzeug geschriebenes Skript enthält in Template-
+  Strings ebenfalls `\r`.
+- Das Testen braucht `#host-gate` ausgeblendet und `window.open=()=>null`,
+  sonst öffnen GM- und Board-Fenster.
+
 ## 2026-10-09 — Regie, Tresor, Outrun als Film-Intros (`86ae5ab`)
 
 **Gemacht.** Die Arbeit an drei weiteren Film-Intros lag ungespeichert
