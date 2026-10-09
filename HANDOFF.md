@@ -28,6 +28,12 @@ beim ersten hatte das Berechtigungssystem ihn abgelehnt.
 **Geprüft.** `settings.json` parst als JSON; `node check.js`: „alles in
 Ordnung“.
 
+**Deploy.** Push `e0b2e5c..1da8be6` auf `master`. Lauf „Deploy static site to
+GitHub Pages“ für `1da8be6abfba…`: `conclusion: success` (abgefragt über die
+GitHub-API, `gh` ist auf diesem Gerät nicht installiert). Die live
+ausgelieferte Seite selbst wurde nicht geöffnet; `vendor/` und die neuen
+Dateien sind in keiner HTML-Datei eingebunden, sichtbar ändert sich dort nichts.
+
 **Ungeprüft.** Ob das Plugin in einer neuen Session tatsächlich geladen wird
 und der Autostart greift (Schema `extraKnownMarketplaces`/`enabledPlugins` nach
 Dokumentation des Plugin-Systems, nicht an einer laufenden Session getestet).
