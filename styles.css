@@ -2532,8 +2532,8 @@ body {
 .wwm-opt .wwm-letter{color:var(--tile-num, var(--accent-text));font-family:var(--font-display);font-size:1.4rem;min-width:22px;}
 .wwm-opt.selected{background:var(--tile-pick, linear-gradient(180deg,#F59E0B,#C2410C));color:var(--tile-pick-fg, var(--tile-fg, var(--fg)));}
 .wwm-opt.selected .wwm-letter{color:var(--tile-pick-fg, var(--fg));}
-.wwm-opt.correct{background:var(--tile-open, linear-gradient(180deg,#16A34A,#0F4024));color:var(--tile-open-fg, var(--tile-fg, var(--fg)));animation:wwmPulse .5s ease;}
-.wwm-opt.correct .wwm-letter{color:var(--tile-open-fg, var(--tile-num, var(--accent-text)));}
+.wwm-opt.correct{background:var(--tile-right, var(--tile-open, linear-gradient(180deg,#16A34A,#0F4024)));color:var(--tile-right-fg, var(--tile-open-fg, var(--tile-fg, var(--fg))));animation:wwmPulse .5s ease;}
+.wwm-opt.correct .wwm-letter{color:var(--tile-right-fg, var(--tile-open-fg, var(--tile-num, var(--accent-text))));}
 .wwm-opt.wrong{background:linear-gradient(180deg,var(--red),#7F1D1D);}
 .wwm-opt.removed{opacity:.25;pointer-events:none;}
 .wwm-opt.removed .wwm-text{visibility:hidden;}
@@ -2639,8 +2639,8 @@ body {
 .wwds-opt .wo-let{color:var(--tile-num, var(--accent-text));font-family:var(--font-display);font-size:1.5rem;min-width:24px;}
 .wwds-opt.sel{background:var(--tile-pick, linear-gradient(180deg,#F59E0B,#C2410C));color:var(--tile-pick-fg, var(--tile-fg, inherit));}
 .wwds-opt.sel .wo-let{color:var(--tile-pick-fg, var(--fg));}
-.wwds-opt.right{background:var(--tile-open, linear-gradient(180deg,#16A34A,#0F4024));color:var(--tile-open-fg, var(--tile-fg, inherit));animation:wwdsPulse .5s ease;}
-.wwds-opt.right .wo-let{color:var(--tile-open-fg, var(--tile-num, var(--accent-text)));}
+.wwds-opt.right{background:var(--tile-right, var(--tile-open, linear-gradient(180deg,#16A34A,#0F4024)));color:var(--tile-right-fg, var(--tile-open-fg, var(--tile-fg, inherit)));animation:wwdsPulse .5s ease;}
+.wwds-opt.right .wo-let{color:var(--tile-right-fg, var(--tile-open-fg, var(--tile-num, var(--accent-text))));}
 .wwds-opt.bad{background:linear-gradient(180deg,var(--red),#7F1D1D);}
 @keyframes wwdsPulse{0%{transform:scale(1);}50%{transform:scale(1.02);}100%{transform:scale(1);}}
 .wwds-opt .wo-tags{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;}
@@ -3625,3 +3625,259 @@ body {
 :root[data-theme-hell] .wwds-team.red   { background: linear-gradient(180deg, #991B1B, #7F1D1D); }
 :root[data-theme-hell] .wwds-team.blue  { background: linear-gradient(180deg, #1E40AF, #1E3A8A); }
 :root[data-theme-hell] .wwds-team.green { background: linear-gradient(180deg, #166534, #14532D); }
+
+/* ══ Material je Design-Richtung ═══════════════════════════════════════════
+   Die Spielbretter je Richtung, abgeleitet aus designs/s/<K>-Leinwand.html,
+   -Jeopardy.html und -WWM.html. Grundlage sind die Tokens aus dem :root-Block
+   "Spielbrett-Material"; was sich nicht als Token sagen laesst (Raster,
+   gestrichelte Kanten, Glanz), steht als eigene Regel darunter.
+
+   Jede Richtung hat EINEN Signatur-Moment: das Aufdecken eines Feud-Feldes
+   (--tile-reveal). Alles reines CSS - das Zuschauerfenster spiegelt nur den
+   DOM und fuehrt nichts aus (BAUPLAN 4.8). Mit reduzierter Bewegung faellt
+   der Moment weg, siehe ganz unten.
+
+   Rot fuer "falsch" und die Teamfarben bleiben in jeder Richtung gleich
+   (BAUPLAN 4.4). */
+
+/* ── A · Studio: Navy-Platten mit Goldring, Goldbalken, Gluehbirnenrahmen ── */
+:root[data-theme="A"] {
+  --brd-surface: linear-gradient(180deg, rgba(255,255,255,.075) 0%, rgba(255,255,255,0) 44%), linear-gradient(180deg, #121540 0%, #0A0C26 100%);
+  --brd-frame: inset 0 0 0 1px rgba(255,201,60,.35), 0 0 40px rgba(255,201,60,.25);
+  --brd-well: #070818;
+  --brd-inner: transparent;
+  --tile: linear-gradient(180deg, rgba(255,255,255,.075) 0%, rgba(255,255,255,0) 44%), linear-gradient(180deg, #1A1E52 0%, #10133A 100%);
+  --tile-hover: linear-gradient(180deg, rgba(255,255,255,.11) 0%, rgba(255,255,255,0) 44%), linear-gradient(180deg, #232870 0%, #151948 100%);
+  --tile-edge: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,201,60,.3), 0 1px 0 rgba(0,0,0,.7), 0 8px 16px rgba(0,0,0,.38);
+  --tile-head: #15173B;
+  --tile-used: linear-gradient(180deg, #0B0D26, #12153A);
+  --tile-num: #FFC93C;
+  --tile-num-glow: 0 3px 0 #8A5E00;
+  --tile-dim-fg: #FFC93C;
+  --tile-open: linear-gradient(180deg, #FFE48A 0%, #FFC93C 48%, #E9A90A 100%);
+  --tile-open-edge: inset 0 2px 0 rgba(255,255,255,.55), inset 0 -2px 0 rgba(110,74,0,.35), 0 6px 14px rgba(0,0,0,.4);
+  --tile-open-fg: #1A1200;
+  --tile-open-dim: rgba(26,18,0,.55);
+  --tile-pts-bg: rgba(110,74,0,.18);
+  --tile-pts-rule: rgba(110,74,0,.35);
+  --tile-pick: linear-gradient(180deg, #FFE48A 0%, #FFC93C 48%, #E9A90A 100%);
+  --tile-pick-fg: #1A1200;
+  --tile-right: linear-gradient(180deg, #5BE38C 0%, #22C55E 50%, #15803D 100%);
+  --tile-right-fg: #04210F;
+  --tile-radius: 10px;
+  --tile-font: 'Bebas Neue', sans-serif;
+  --tile-reveal: thAKlapp .7s cubic-bezier(.2,.9,.3,1.15);
+}
+/* Rahmen aus Gluehbirnen wie im Entwurf: ein Rand aus Punkten, der langsam
+   funkelt. Die Birnen sind ein radial-gradient im Rand (border-box), die
+   Flaeche sitzt in der padding-box. */
+:root[data-theme="A"] .board {
+  border: 12px solid transparent;
+  background:
+    var(--brd-surface) padding-box,
+    radial-gradient(circle, #FFF3C4 0, #FFD45A 2.6px, rgba(255,201,60,.35) 4px, rgba(255,201,60,0) 6.5px) 0 0 / 20px 20px border-box,
+    #2A2108 border-box;
+  animation: thABirnen 2.4s steps(1, end) infinite;
+}
+:root[data-theme="A"] .tile.open .tile-answer { font-size: 1.35rem; letter-spacing: 1.5px; font-weight: 400; }
+:root[data-theme="A"] .tile.open .tile-pts { color: #1A1200; text-shadow: none; font-size: 1.7rem; }
+:root[data-theme="A"] .tile-num { font-size: 1.5rem; }
+:root[data-theme="A"] .jeopardy-cat { border-bottom: 4px solid #FFC93C; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 1.15rem; letter-spacing: 1px; }
+:root[data-theme="A"] .jeopardy-cell { font-size: 2.3rem; }
+:root[data-theme="A"] .wwm-opt { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 1.5rem; letter-spacing: 1px; }
+/* Glanz ueber den frisch aufgedeckten Goldbalken - einmal, dann Ruhe. */
+:root[data-theme="A"] .tile.open .tile-inner::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.75) 48%, transparent 66%);
+  transform: translateX(-120%); animation: thAGlanz .9s .45s ease-out forwards;
+}
+@keyframes thAKlapp {
+  0%   { transform: perspective(700px) rotateX(-95deg); filter: brightness(2.2); }
+  55%  { transform: perspective(700px) rotateX(12deg); filter: brightness(1.4); }
+  80%  { transform: perspective(700px) rotateX(-4deg); }
+  100% { transform: perspective(700px) rotateX(0); filter: none; }
+}
+@keyframes thAGlanz { to { transform: translateX(120%); } }
+/* Die Birnen springen um eine halbe Teilung: so wirkt es, als gingen sie
+   abwechselnd an und aus. */
+@keyframes thABirnen { 50% { background-position: 0 0, 10px 10px, 0 0; } }
+
+/* ── B · Arcade: Pixelkanten, Gelb auf Fast-Schwarz, Press Start ── */
+:root[data-theme="B"] {
+  --brd-surface: #14121F;
+  --brd-frame: 0 0 0 4px #FFFFFF, 0 0 0 8px #0B0A12, 0 0 0 12px #2B2740;
+  --brd-well: #0B0A12;
+  --brd-inner: transparent;
+  --brd-radius: 0;
+  --tile: #0B0A12;
+  --tile-hover: #1C1930;
+  --tile-edge: inset 0 0 0 3px #2B2740;
+  --tile-head: #45F0FF;
+  --tile-head-fg: #0B0A12;
+  --tile-used: transparent;
+  --tile-num: #FFE14D;
+  --tile-num-glow: 3px 3px 0 #8A7400;
+  --tile-dim-fg: #6F6A8F;
+  --tile-bar: repeating-linear-gradient(90deg, #45F0FF 0 6px, transparent 6px 14px);
+  --tile-rule: #2B2740;
+  --tile-open: #FFE14D;
+  --tile-open-edge: none;
+  --tile-open-fg: #0B0A12;
+  --tile-open-dim: #0B0A12;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: #0B0A12;
+  --tile-pick: #45F0FF;
+  --tile-pick-fg: #0B0A12;
+  --tile-right: #3CFF7A;
+  --tile-right-fg: #0B0A12;
+  --tile-radius: 0;
+  --tile-font: 'Press Start 2P', monospace;
+  --tile-reveal: thBBlink .45s steps(1, end);
+}
+:root[data-theme="B"] .tile:not(.open) .tile-center::after { height: 6px; border-radius: 0; opacity: .5; }
+:root[data-theme="B"] .tile.open .tile-answer { font-size: .78rem; letter-spacing: 0; line-height: 1.5; }
+:root[data-theme="B"] .tile.open .tile-pts { color: #0B0A12; text-shadow: none; font-size: .95rem; font-family: 'Press Start 2P', monospace; }
+:root[data-theme="B"] .tile-num { font-family: 'Press Start 2P', monospace; font-size: .75rem; }
+:root[data-theme="B"] .jeopardy-board { gap: 6px; padding: 6px; }
+:root[data-theme="B"] .jeopardy-cat { font-family: 'Space Grotesk', sans-serif; font-size: .8rem; letter-spacing: 0; }
+:root[data-theme="B"] .jeopardy-cell { font-family: 'Press Start 2P', monospace; font-size: 1.15rem; }
+:root[data-theme="B"] .jeopardy-cell:hover:not(.used) { transform: none; box-shadow: inset 0 0 0 3px #FFE14D; }
+:root[data-theme="B"] .jeopardy-cell.used { box-shadow: inset 0 0 0 3px #2B2740; }
+:root[data-theme="B"] .wwm-q { font-family: 'Press Start 2P', monospace; font-size: .85rem; line-height: 1.7; border: 4px solid #fff; }
+:root[data-theme="B"] .wwm-opt { font-size: .72rem; line-height: 1.5; }
+/* Arcade-Treffer: das Feld blinkt hart auf, wie eine Punkteanzeige. */
+@keyframes thBBlink {
+  0%   { opacity: 0; }
+  18%  { opacity: 1; filter: invert(1); }
+  36%  { opacity: 0; }
+  54%  { opacity: 1; filter: none; }
+  72%  { opacity: .2; }
+  100% { opacity: 1; }
+}
+
+/* ── C · Pop: Aufkleber - schwarze Kontur, harter Versatzschatten, schief ── */
+:root[data-theme="C"] {
+  --brd-surface: #FFFFFF;
+  --brd-frame: 0 0 0 5px #121212, 10px 10px 0 5px #121212;
+  --brd-well: transparent;
+  --brd-inner: transparent;
+  --brd-radius: 22px;
+  --tile: #EDE7DA;
+  --tile-hover: #F6F1E6;
+  --tile-edge: none;
+  --tile-fg: #121212;
+  --tile-head: #FFA3D1;
+  --tile-head-fg: #121212;
+  --tile-used: transparent;
+  --tile-num: #121212;
+  --tile-num-glow: none;
+  --tile-dim-fg: #121212;
+  --tile-bar: transparent;
+  --tile-rule: transparent;
+  --tile-open: #FFA3D1;
+  --tile-open-edge: 0 0 0 3px #121212, 5px 5px 0 3px #121212;
+  --tile-open-fg: #121212;
+  --tile-open-dim: #121212;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: #121212;
+  --tile-pick: #FFD23F;
+  --tile-pick-fg: #121212;
+  --tile-right: #7EE3A1;
+  --tile-right-fg: #121212;
+  --tile-radius: 12px;
+  --tile-font: 'Archivo Black', sans-serif;
+  --tile-reveal: thCKlatsch .5s cubic-bezier(.3,1.6,.5,1);
+}
+/* Verdeckte Felder: gestrichelte Luecke wie im Entwurf, keine Flaeche. */
+:root[data-theme="C"] .tile:not(.open) .tile-inner { outline: 3px dashed #121212; outline-offset: -3px; opacity: .8; }
+:root[data-theme="C"] .tile.open,
+:root[data-theme="C"] .tile.open .tile-inner { overflow: visible; }
+:root[data-theme="C"] .answers .tile:nth-child(4n+1).open .tile-inner { rotate: -.7deg; }
+:root[data-theme="C"] .answers .tile:nth-child(4n+2).open .tile-inner { background: #8FC8FF; rotate: .6deg; }
+:root[data-theme="C"] .answers .tile:nth-child(4n+3).open .tile-inner { background: #7EE3A1; rotate: -.5deg; }
+:root[data-theme="C"] .answers .tile:nth-child(4n).open .tile-inner   { background: #FF8A65; rotate: .8deg; }
+:root[data-theme="C"] .tile-num { flex: 0 0 34px; width: 34px; height: 34px; margin: auto 6px auto 8px; border-radius: 50%; border: 0; background: #121212; color: #fff; font-size: 1.05rem; }
+:root[data-theme="C"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-size: 1.1rem; font-weight: 400; }
+:root[data-theme="C"] .tile.open .tile-pts { color: #121212; text-shadow: none; font-family: 'Archivo Black', sans-serif; }
+:root[data-theme="C"] .answers { gap: 12px; }
+:root[data-theme="C"] .answers.split { row-gap: 12px; column-gap: 18px; }
+:root[data-theme="C"] .jeopardy-board { gap: 10px; padding: 14px; }
+:root[data-theme="C"] .jeopardy-cat { border: 3px solid #121212; box-shadow: 4px 4px 0 #121212; font-family: 'Archivo Black', sans-serif; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: .85rem; }
+:root[data-theme="C"] .jeopardy-cat:nth-child(6n+2) { background: #8FC8FF; }
+:root[data-theme="C"] .jeopardy-cat:nth-child(6n+3) { background: #7EE3A1; }
+:root[data-theme="C"] .jeopardy-cat:nth-child(6n+4) { background: #C8B6FF; }
+:root[data-theme="C"] .jeopardy-cat:nth-child(6n+5) { background: #FFD23F; }
+:root[data-theme="C"] .jeopardy-cat:nth-child(6n)   { background: #FF8A65; }
+:root[data-theme="C"] .jeopardy-cell { background: #fff; border: 4px solid #121212; box-shadow: 5px 5px 0 #121212; border-radius: 999px; font-family: 'Archivo Black', sans-serif; font-size: 1.5rem; }
+:root[data-theme="C"] .jeopardy-cell:hover:not(.used) { background: #FFD23F; box-shadow: 7px 7px 0 #121212; }
+:root[data-theme="C"] .jeopardy-cell.used { background: transparent; border-style: dashed; box-shadow: none; opacity: .45; }
+:root[data-theme="C"] .wwm-q { border: 4px solid #121212; }
+:root[data-theme="C"] .wwm-opt { border: 3px solid #121212; box-shadow: 4px 4px 0 #121212; font-weight: 400; }
+:root[data-theme="C"] .wwm-opt .wwm-letter { font-family: 'Archivo Black', sans-serif; }
+@keyframes thCKlatsch {
+  0%   { transform: scale(1.35) rotate(-7deg); opacity: 0; }
+  60%  { transform: scale(.94) rotate(1.5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+/* ── D · Late Night: Haarlinien statt Platten, grosse Ziffern, Orange ── */
+:root[data-theme="D"] {
+  --brd-surface: transparent;
+  --brd-frame: none;
+  --brd-well: transparent;
+  --brd-inner: transparent;
+  --brd-radius: 0;
+  --tile: transparent;
+  --tile-hover: rgba(255,91,31,.06);
+  --tile-edge: inset 0 -1px 0 #2A2A2A;
+  --tile-head: transparent;
+  --tile-head-fg: #F2F2F2;
+  --tile-used: transparent;
+  --tile-num: #F2F2F2;
+  --tile-num-glow: none;
+  --tile-dim-fg: #3A3A3A;
+  --tile-bar: transparent;
+  --tile-rule: transparent;
+  --tile-open: transparent;
+  --tile-open-edge: inset 0 -1px 0 #3A3A3A;
+  --tile-open-fg: #F2F2F2;
+  --tile-open-dim: #FF5B1F;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: transparent;
+  --tile-pick: #FF5B1F;
+  --tile-pick-fg: #0E0E0E;
+  --tile-right: #F2F2F2;
+  --tile-right-fg: #0E0E0E;
+  --tile-radius: 0;
+  --tile-font: 'Big Shoulders Display', sans-serif;
+  --tile-reveal: thDWisch .55s cubic-bezier(.7,0,.2,1);
+}
+:root[data-theme="D"] .board { padding: 8px 0; }
+:root[data-theme="D"] .tile { min-height: 56px; }
+:root[data-theme="D"] .tile-num { width: 56px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 2.4rem; }
+:root[data-theme="D"] .tile.open .tile-answer { font-weight: 800; font-size: 1.6rem; letter-spacing: .5px; }
+:root[data-theme="D"] .tile.open .tile-pts { color: #F2F2F2; text-shadow: none; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.6rem; }
+/* Die Nummer 1 ist das Ereignis: orange wie im Entwurf. */
+:root[data-theme="D"] .answers .tile:first-child.open :is(.tile-answer, .tile-pts) { color: #FF5B1F; }
+:root[data-theme="D"] .jeopardy-board { gap: 0; padding: 0; }
+:root[data-theme="D"] .jeopardy-cat { border-bottom: 1px solid #3A3A3A; font-family: 'Big Shoulders Display', sans-serif; font-size: 1.05rem; font-weight: 800; letter-spacing: .5px; }
+:root[data-theme="D"] .jeopardy-cell { border-bottom: 1px solid #2A2A2A; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 2rem; }
+:root[data-theme="D"] .jeopardy-cell:hover:not(.used) { transform: none; color: #FF5B1F; }
+:root[data-theme="D"] .wwm-q { text-align: left; justify-content: flex-start; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 2.2rem; line-height: 1.05; text-transform: uppercase; padding: 8px 0; }
+:root[data-theme="D"] .wwm-opt { background: #EDE6D6; color: #141414; box-shadow: none; border-radius: 2px; min-height: 92px; align-items: flex-end; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.3rem; text-transform: uppercase; }
+:root[data-theme="D"] .wwm-opt .wwm-letter { color: #141414; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 1.7rem; }
+:root[data-theme="D"] .wwm-opt.selected { background: #FF5B1F; }
+:root[data-theme="D"] .wwm-opt.correct { background: #F2F2F2; box-shadow: inset 0 0 0 4px #FF5B1F; }
+/* Late Night deckt auf wie eine Bauchbinde: von links aufgezogen. */
+@keyframes thDWisch {
+  0%   { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+/* Reduzierte Bewegung: Signatur-Momente und Dauerlaeufer aus. Steht am Ende
+   des Blocks, damit es jede Richtung oben drueber schlaegt. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme] { --tile-reveal: none; }
+  :root[data-theme] .board,
+  :root[data-theme] .tile.open .tile-inner::after { animation: none; }
+}
