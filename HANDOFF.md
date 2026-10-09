@@ -12,6 +12,34 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — caveman-Eintrag und Merge nach master (`a1c67cf`)
+
+**Gemacht.** David gab beides frei („mach den caveman Eintrag und merge nach
+master“). `.claude/settings.json`: `extraKnownMarketplaces.caveman` (GitHub
+`JuliusBrussee/caveman`) und `enabledPlugins["caveman@caveman"] = true`.
+`CLAUDE.md`: caveman-Absatz auf Ist-Stand gebracht. Danach `claude/tooling-setup`
+per Fast-Forward nach `master` (vorher: `origin/master` unverändert auf
+`e0b2e5c`, Branch 4 Commits voraus, 0 dahinter).
+
+**Warum so.** Settings im Projekt statt `~/.claude`: kommt per Git auf alle
+Geräte. Der zweite Versuch am Edit ging durch, nachdem David freigegeben hatte;
+beim ersten hatte das Berechtigungssystem ihn abgelehnt.
+
+**Geprüft.** `settings.json` parst als JSON; `node check.js`: „alles in
+Ordnung“.
+
+**Ungeprüft.** Ob das Plugin in einer neuen Session tatsächlich geladen wird
+und der Autostart greift (Schema `extraKnownMarketplaces`/`enabledPlugins` nach
+Dokumentation des Plugin-Systems, nicht an einer laufenden Session getestet).
+Wie sich caveman mit dem Backslash-Antwortformat verträgt. Ob die doppelt
+vorhandenen globalen caveman-Skills stören.
+
+**Offen.** Alter Branch `claude/game-buzzer-fixes-90cyjz` (17 Commits voraus,
+22 hinter master zum Zeitpunkt der Prüfung) ungeklärt. Auf jedem weiteren Gerät
+beim ersten Start die Vertrauensfrage für den Marketplace bestätigen.
+
+---
+
 ## 2026-10-09 — React Bits als Bundle, caveman wartet auf Freigabe (`3e31486`)
 
 **Anlass.** David: „ne ich will auch react bits und caveman“ (Antwort auf
