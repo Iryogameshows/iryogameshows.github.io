@@ -1375,7 +1375,7 @@ body {
 @keyframes kgFadeOut{from{opacity:1}to{opacity:0}}
 
 /* ── Gemeinsam für alle drei Bühnen ── */
-#kg, #kgb, #kgn{position:relative;width:100%;height:100%;overflow:hidden;font-family:var(--font-logo);isolation:isolate;}
+#kg, #kgb, #kgn{position:relative;width:100%;height:100%;overflow:hidden;isolation:isolate;}
 #kg-overlay .screen{position:absolute;left:0;right:0;top:40px;bottom:30px;max-width:none;width:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px;z-index:5;opacity:0;}
 #kg-overlay .header{position:absolute;top:22px;left:0;right:0;z-index:7;text-align:center;font-size:max(14px,min(2.8vh,1.8vw));}
 #kg-overlay .lbl{font-family:var(--font-body);font-weight:700;letter-spacing:3px;font-size:max(14px,min(2.8vh,1.8vw));text-transform:uppercase;margin:0 0 12px;}
@@ -1427,7 +1427,7 @@ body {
 #kg-overlay .plus{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px;}
 #kg-overlay .pill{font-family:var(--font-body);font-weight:800;font-size:max(16px,min(3.6vh,2.2vw));color:#141420;background:#FFC93C;border-radius:22px;padding:9px 22px;letter-spacing:1px;}
 #kg-overlay .plus b{font-size:max(24px,min(5.5vh,3.4vw));color:#FF5DA2;}
-#kg-overlay .big.euro{font-size:min(16vh,9.4vw);color:#7FE5B0;-webkit-text-stroke:4px #0b3a24;text-shadow:0 4px 0 #2f9e6a,0 8px 0 #1c6b47,0 12px 18px rgba(0,0,0,.6);margin:4px 0;}
+#kg-overlay .big.euro{font-size:min(16vh,9.4vw);margin:4px 0;}
 
 /* Torte mit flackernden Kerzen */
 #kg-overlay .cake{position:relative;width:190px;height:150px;margin-bottom:26px;flex:none;}
@@ -1468,8 +1468,6 @@ body {
 #kg .header, #kgb .header{color:#FFC93C;letter-spacing:2px;-webkit-text-stroke:1px #2a1600;text-shadow:0 2px 0 #9c6a08;}
 #kg .header .star, #kgb .header .star{color:#FF5DA2;font-size:.8em;vertical-align:.1em;margin:0 8px;}
 #kg .lbl{color:#FF7FB8;}
-#kg .big, #kgb .big{color:#FFC93C;-webkit-text-stroke:3px #2a1600;text-shadow:0 3px 0 #c98a10,0 6px 0 #9c6a08,0 9px 14px rgba(0,0,0,.6);}
-#kg .big.pink, #kgb .big.pink{color:#FF5DA2;text-shadow:0 3px 0 #b2306b,0 6px 12px rgba(0,0,0,.5);-webkit-text-stroke:3px #33091f;}
 #kg .sub{color:#FFF3D6;}
 #kg .spark, #kgb .spark{position:absolute;width:10px;height:10px;z-index:4;background:#FFE27A;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:kgTw 1.8s ease-in-out infinite;}
 @keyframes kgTw{0%,100%{opacity:.12;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(90deg)}}
@@ -1553,8 +1551,6 @@ body {
    damit nicht alle Buchstaben im selben Takt zucken. */
 #kgn.play .big .ch{animation-name:knIgnite;animation-duration:.9s;}
 #kgn.play .big .w .ch:nth-child(even){animation-name:knIgnite2;}
-@keyframes knIgnite{0%{opacity:.07}8%{opacity:1}12%{opacity:.15}20%{opacity:.9}24%{opacity:.2}38%{opacity:1}100%{opacity:1}}
-@keyframes knIgnite2{0%,14%{opacity:.07}18%{opacity:1}26%{opacity:.25}44%{opacity:1}100%{opacity:1}}
 @keyframes knGrid{from{background-position:0 0,0 0;}to{background-position:0 44px,0 0;}}
 @keyframes knTwinkle{0%,100%{opacity:.55}50%{opacity:.95}}
 /* Die Kellerbühne schiebt die Stufen von unten hoch, hier fahren sie
@@ -1569,6 +1565,154 @@ body {
   58%{opacity:1;transform:scale(.98);filter:blur(0);}
   100%{opacity:1;transform:scale(1);filter:blur(0);}}
 
+/* ── Profi-Schicht: Licht, Material, Kamera ──────────────────────────────
+   Was eine Fernseh-Intro von einer Folie unterscheidet, ist selten EIN
+   Effekt, sondern Schichten: Material in der Schrift, Licht im Raum, ein
+   Ereignis beim Stufenwechsel und ein Bildfilter über allem. Von hinten nach
+   vorn:
+
+     Wand (zieht langsam auf) · Strahlenkranz · Dunst · Goldstaub hinten
+     · Vignette · Stufe mit Lichtschlag, Flare, Konfetti, Metallschrift
+     · Goldstaub vorn (groß, unscharf) · Lämpchenrahmen · Filmkorn
+
+   Alles bewegt nur transform und opacity, bis auf den Glanz in der Schrift
+   (background-position, einmal je Stufe). Das zählt doppelt, weil Haupt-
+   und Zuschauerfenster dieselbe Bühne gleichzeitig zeichnen.
+
+   Eigene Schriften statt --font-logo: die Intros erbten bisher die Schrift
+   des gewählten Themes, bei "Press Start 2P" also eine Pixelschrift. Keine
+   Fernseh-Intro sieht so aus. Bungee ist Leuchtreklamen-Schrift (fett,
+   gerade Kanten, trägt Metall und Tiefe), Tilt Neon ist nach Neonröhren
+   gezeichnet. Beide lädt index.html und injectBoardStyles() fürs
+   Zuschauerfenster. */
+
+#kg, #kgb{font-family:'Bungee',var(--font-logo);}
+#kgn{font-family:'Tilt Neon',var(--font-logo);}
+
+/* Metall statt Farbe. Der Verlauf hat eine harte Kante knapp unter der
+   Mitte - die Horizontlinie, an der Chrom und Gold den Raum spiegeln. Die
+   erste Ebene ist der Glanzstreifen, er steht außerhalb und läuft einmal
+   durch (kgShine). text-shadow muss weg: bei durchsichtiger Füllung läge
+   der Schatten ÜBER dem Verlauf. Die Tiefe kommt deshalb als gestapelte
+   drop-shadows an der ganzen Zeile - jeder verschiebt das schon Gezeichnete
+   weiter, so entsteht eine Extrusion statt vier einzelner Schatten. */
+#kg .big .ch, #kgb .big .ch{
+  color:transparent;-webkit-text-fill-color:transparent;text-shadow:none;
+  background-image:
+    linear-gradient(105deg,transparent 42%,rgba(255,255,255,.95) 50%,transparent 58%),
+    linear-gradient(180deg,#fffbe6 0%,#ffe680 22%,#f7c42f 44%,#9a5b07 50%,#e9a91f 58%,#ffd85a 80%,#fff0b0 100%);
+  background-size:300% 100%,100% 100%;background-position:100% 0,0 0;background-repeat:no-repeat;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-stroke:.02em #4a2800;padding:0 .015em;}
+#kg .big.pink .ch, #kgb .big.pink .ch{
+  background-image:
+    linear-gradient(105deg,transparent 42%,rgba(255,255,255,.95) 50%,transparent 58%),
+    linear-gradient(180deg,#fff0f7 0%,#ff9cc9 24%,#ff4f9a 46%,#8e1449 50%,#e23c86 60%,#ff8cc0 82%,#ffe0ef 100%);
+  -webkit-text-stroke-color:#3d0820;}
+#kg .big.euro .ch, #kgb .big.euro .ch{
+  background-image:
+    linear-gradient(105deg,transparent 42%,rgba(255,255,255,.95) 50%,transparent 58%),
+    linear-gradient(180deg,#f0fff7 0%,#a6f5cf 24%,#3fd394 46%,#0d5c3a 50%,#2fbf80 60%,#8ef0c0 82%,#e6fff3 100%);
+  -webkit-text-stroke-color:#06301e;}
+#kg .big, #kgb .big{
+  filter:drop-shadow(0 .025em 0 #8a5600) drop-shadow(0 .025em 0 #6b4100) drop-shadow(0 .025em 0 #4a2c00)
+         drop-shadow(0 .03em 0 #2b1900) drop-shadow(0 .14em .14em rgba(0,0,0,.55)) drop-shadow(0 0 .35em rgba(255,186,60,.35));}
+#kg .big.pink, #kgb .big.pink{
+  filter:drop-shadow(0 .025em 0 #8e1449) drop-shadow(0 .025em 0 #6d0f38) drop-shadow(0 .025em 0 #4d0a27)
+         drop-shadow(0 .03em 0 #2e0517) drop-shadow(0 .14em .14em rgba(0,0,0,.55)) drop-shadow(0 0 .35em rgba(255,79,154,.35));}
+#kg .big.euro, #kgb .big.euro{
+  filter:drop-shadow(0 .025em 0 #137a4c) drop-shadow(0 .025em 0 #0d5c3a) drop-shadow(0 .025em 0 #08402a)
+         drop-shadow(0 .03em 0 #042619) drop-shadow(0 .14em .14em rgba(0,0,0,.55)) drop-shadow(0 0 .4em rgba(63,211,148,.4));}
+
+/* Erst geht der Buchstabe an, dann läuft einmal Glanz über die Zeile. Auf
+   der letzten Stufe kommt der Glanz alle vier Sekunden wieder, solange sie
+   stehen bleibt - ein stehendes Bild, das trotzdem lebt. */
+#kg.play .big .ch, #kgb.play .big .ch{
+  animation:kgBulbOn .62s ease-out calc(var(--d) + .25s + var(--i) * var(--st)) both,
+            kgShine .8s ease-in-out calc(var(--d) + 1.5s + var(--i) * .035s) both;}
+#kg.play .cs.hold .big .ch, #kgb.play .cs.hold .big .ch{
+  animation:kgBulbOn .62s ease-out calc(var(--d) + .25s + var(--i) * var(--st)) both,
+            kgShineLoop 4s ease-in-out calc(var(--d) + 1.5s + var(--i) * .035s) infinite;}
+@keyframes kgShine{from{background-position:100% 0,0 0}to{background-position:0% 0,0 0}}
+@keyframes kgShineLoop{0%{background-position:100% 0,0 0}20%,100%{background-position:0% 0,0 0}}
+
+/* Die kleine Zeile als Bauchbinde: zwei Linien wachsen von ihr nach außen. */
+#kg-overlay .lbl{display:flex;align-items:center;justify-content:center;gap:.9em;}
+#kg-overlay .lbl::before, #kg-overlay .lbl::after{content:"";flex:none;width:min(8vw,90px);height:2px;background:linear-gradient(90deg,transparent,currentColor);transform:scaleX(0);transform-origin:right center;}
+#kg-overlay .lbl::after{background:linear-gradient(270deg,transparent,currentColor);transform-origin:left center;}
+#kg-overlay .play .lbl::before, #kg-overlay .play .lbl::after{animation:kgRule .8s cubic-bezier(.2,.8,.2,1) calc(var(--d) + .2s) both;}
+@keyframes kgRule{to{transform:scaleX(1)}}
+#kg .header, #kgb .header{letter-spacing:3px;-webkit-text-stroke:0;text-shadow:0 2px 0 #6b4100,0 0 14px rgba(255,186,60,.45);}
+
+/* Strahlenkranz hinter der Schrift - das Zeichen der großen Samstagabend-
+   Shows. Kaum sichtbar (9 %), dreht in 80 Sekunden einmal herum, läuft
+   nach außen in einer Maske aus. 160vmax, damit er auch gedreht keine
+   Ecke zeigt. */
+#kg .rays, #kgb .rays{position:absolute;left:50%;top:52%;width:160vmax;height:160vmax;margin:-80vmax 0 0 -80vmax;z-index:1;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg,rgba(255,206,110,.09) 0deg 5deg,transparent 5deg 14deg);
+  -webkit-mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.6) 14%,transparent 42%);mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.6) 14%,transparent 42%);
+  animation:kgRays 80s linear infinite;}
+#kgb .rays{background:repeating-conic-gradient(from 0deg,rgba(255,170,140,.10) 0deg 5deg,transparent 5deg 14deg);}
+@keyframes kgRays{to{transform:rotate(360deg)}}
+
+/* Dunst: zwei weiche Lichtwolken, die langsam wandern. Ohne Dunst sehen
+   Scheinwerfer aus wie Dreiecke; mit Dunst wie Licht in einem Raum. */
+#kg .haze, #kgb .haze{position:absolute;inset:-20%;z-index:1;pointer-events:none;
+  background:radial-gradient(40% 35% at 30% 60%,rgba(255,170,60,.16),transparent 70%),radial-gradient(35% 30% at 72% 40%,rgba(255,80,160,.12),transparent 70%);
+  animation:kgHaze 18s ease-in-out infinite alternate;}
+@keyframes kgHaze{from{transform:translate(-3%,2%) scale(1)}to{transform:translate(3%,-2%) scale(1.08)}}
+
+/* Kamera: die Wand zieht über die ganze Intro ganz langsam auf. Man sieht
+   es nicht bewusst, aber das Bild steht nie ganz still. */
+#kg.play .wall, #kgb.play .wall{animation:kgPush 40s ease-out both;}
+@keyframes kgPush{from{transform:scale(1.08)}to{transform:scale(1)}}
+
+/* Vignette und Filmkorn: der Unterschied zwischen "Webseite" und "Bild". */
+#kg-overlay .vig{position:absolute;inset:0;z-index:4;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 50% 50%,transparent 50%,rgba(0,0,0,.7) 100%);}
+#kg-overlay .grain{position:absolute;inset:-50%;z-index:9;pointer-events:none;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:kgGrain .5s steps(4) infinite;}
+@keyframes kgGrain{0%{transform:translate(0,0)}25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-1%)}100%{transform:translate(1%,3%)}}
+
+/* Anamorphe Flare beim Stufenwechsel: ein Lichtstrich quer durchs Bild,
+   wie ihn Kinoobjektive aus Scheinwerfern ziehen. Das Ereignis, das jede
+   neue Stufe ankündigt. */
+#kg-overlay .cs .flare{position:absolute;left:-10%;right:-10%;top:50%;height:3px;margin-top:-1.5px;z-index:-1;pointer-events:none;opacity:0;transform:scaleX(0);
+  background:linear-gradient(90deg,transparent,rgba(255,236,200,0) 10%,rgba(255,244,220,.95) 50%,rgba(255,236,200,0) 90%,transparent);
+  box-shadow:0 0 18px 4px rgba(255,200,120,.55);}
+#kg-overlay .play .cs .flare{animation:kgFlare 1.1s cubic-bezier(.2,.7,.2,1) calc(var(--d) + .15s) both;}
+#kgn .cs .flare{background:linear-gradient(90deg,transparent,rgba(125,249,255,.95) 50%,transparent);box-shadow:0 0 18px 4px rgba(125,249,255,.6);}
+@keyframes kgFlare{0%{opacity:0;transform:scaleX(.05)}15%{opacity:1}100%{opacity:0;transform:scaleX(1.2)}}
+
+/* Goldstaub (playIntro streut ihn): kleine Körner hinten, wenige große,
+   weiche vorn - die unscharfen vorn geben dem Bild Tiefe wie eine Kamera
+   mit offener Blende. Weichheit über den Verlauf, nicht über filter:blur,
+   das wäre bei 30 bewegten Teilchen zu teuer. */
+#kg-overlay .dust{position:absolute;bottom:-4%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(255,244,214,.95),rgba(255,200,90,.45) 40%,transparent 70%);
+  animation:kgDust linear infinite;}
+#kg-overlay .dust.vorn{z-index:8;background:radial-gradient(circle,rgba(255,236,190,.35),rgba(255,200,90,.12) 45%,transparent 70%);}
+#kgb .dust{background:radial-gradient(circle,rgba(255,236,236,.95),rgba(255,150,170,.45) 40%,transparent 70%);}
+@keyframes kgDust{from{transform:translate3d(0,0,0)}to{transform:translate3d(var(--dx),-110vh,0)}}
+
+/* Konfetti-Explosion hinter der Schrift: auf der Geburtstagsbühne bei jeder
+   Stufe, sonst beim Geldbetrag und auf der letzten Stufe. Erst schnell nach
+   außen, dann fallen - die zweite Kurve beschleunigt, das liest sich als
+   Schwerkraft. */
+#kg-overlay .cf{position:absolute;left:50%;top:50%;width:10px;height:16px;margin:-8px 0 0 -5px;background:var(--c);border-radius:2px;opacity:0;pointer-events:none;z-index:-1;}
+#kg-overlay .play .cf{animation:kgBurst 2.6s calc(var(--d) + .3s) both;}
+@keyframes kgBurst{
+  0%{opacity:1;transform:translate(0,0) rotate(0) scale(.4);animation-timing-function:cubic-bezier(.1,.8,.3,1);}
+  45%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r)) scale(1);animation-timing-function:cubic-bezier(.5,0,.9,.6);}
+  100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 38vh)) rotate(calc(var(--r) * 3)) scale(1);}}
+
+/* Neon: beim Zünden zieht die Röhre kurz Farbsäume (rot/cyan versetzt),
+   wie ein Bildschirm, der das Signal noch nicht hat. */
+@keyframes knIgnite{0%{opacity:.07}8%{opacity:1;text-shadow:-4px 0 rgba(255,0,90,.85),4px 0 rgba(0,240,255,.85)}12%{opacity:.15}20%{opacity:.9;text-shadow:-2px 0 rgba(255,0,90,.6),2px 0 rgba(0,240,255,.6)}24%{opacity:.2}38%{opacity:1}100%{opacity:1}}
+@keyframes knIgnite2{0%,14%{opacity:.07}18%{opacity:1;text-shadow:-4px 0 rgba(255,0,90,.85),4px 0 rgba(0,240,255,.85)}26%{opacity:.25}44%{opacity:1}100%{opacity:1}}
+#kgn .big{letter-spacing:.04em;}
+#kgn .header{font-family:'Tilt Neon',var(--font-logo);}
+
 /* Ruhige Fassung für "Bewegung reduzieren": Stufen blenden nur weich ein und
    aus, Buchstaben stehen sofort, kein Flackern, kein Lichtschlag.
 
@@ -1581,6 +1725,9 @@ body {
   #kg-overlay .cs{animation-name:kgFade !important;animation-duration:var(--dur) !important;}
   #kg-overlay .cs.hold{animation-name:kgFadeHold !important;animation-duration:1s !important;}
   #kg-overlay .play .big .ch, #kg-overlay .cs::before{animation:none !important;}
+  #kg-overlay .rays, #kg-overlay .haze, #kg-overlay .grain, #kg .wall, #kgb .wall{animation:none !important;}
+  #kg-overlay .dust, #kg-overlay .cf, #kg-overlay .flare{display:none !important;}
+  #kg-overlay .lbl::before, #kg-overlay .lbl::after{animation:none !important;transform:none;}
   #kg-overlay .cs::before{opacity:.5;}
 }
 

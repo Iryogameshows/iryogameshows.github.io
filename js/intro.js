@@ -221,8 +221,9 @@ function introLetters(text, zaehler){
  *  @param {number} start   Sekunden ab Beginn
  *  @param {number} laenge  Sekunden
  *  @param {boolean} letzte bleibt stehen, bis der Host klickt
+ *  @param {string[]} konfetti  Farben der Konfetti-Explosion, leer = keine
  *  @returns {string} */
-function introSlideHtml(s, start, laenge, letzte){
+function introSlideHtml(s, start, laenge, letzte, konfetti){
   const zaehler = { n: 0 };
   const zeichen = Array.from((s.big + s.pink).replace(/\s+/g, '')).length;
   // Lange Zeilen leuchten schneller durch, damit die letzte Birne nicht erst
@@ -231,12 +232,50 @@ function introSlideHtml(s, start, laenge, letzte){
   const klein = (/** @type {string} */ t) => Array.from(t).length > 11 ? ' sm' : '';
   const style = `--d:${start.toFixed(2)}s;--dur:${laenge.toFixed(2)}s;--st:${abstand.toFixed(3)}s;`;
   return `<div class="screen cs${letzte ? ' hold' : ''}" style="${style}">
+      <i class="flare"></i>${introConfettiHtml(konfetti)}
       ${introDecoHtml(s.deco)}
       ${s.lbl  ? `<p class="lbl">${escapeHtml(s.lbl)}</p>` : ''}
       ${s.big  ? `<p class="big${s.deco === 'geld' ? ' euro' : klein(s.big)}">${introLetters(s.big, zaehler)}</p>` : ''}
       ${s.pink ? `<p class="big pink${klein(s.pink)}">${introLetters(s.pink, zaehler)}</p>` : ''}
       ${s.sub  ? `<p class="sub">${escapeHtml(s.sub)}</p>` : ''}
     </div>`;
+}
+
+/** 22 Konfettistücke, die von der Mitte aus nach außen fliegen. Richtung
+ *  und Weite werden hier gewürfelt und als --x/--y/--r mitgegeben, die
+ *  Bewegung selbst macht CSS (kgBurst).
+ *  @param {string[]} farben
+ *  @returns {string} */
+function introConfettiHtml(farben){
+  if (!farben.length) return '';
+  let out = '';
+  for (let k = 0; k < 22; k++){
+    const winkel = (k / 22) * Math.PI * 2 + Math.random() * 0.4;
+    const weite = 22 + Math.random() * 26;           // in vmin
+    const x = Math.cos(winkel) * weite * 1.5;        // breiter als hoch
+    const y = Math.sin(winkel) * weite - 10;         // leicht nach oben
+    const r = Math.round(Math.random() * 540 - 270);
+    out += `<i class="cf" style="--x:${x.toFixed(1)}vmin;--y:${y.toFixed(1)}vmin;--r:${r}deg;--c:${farben[k % farben.length]}"></i>`;
+  }
+  return out;
+}
+
+/* Goldstaub: 26 kleine Körner hinter der Schrift, 5 große, weiche davor.
+   Negative Verzögerung, damit beim Start schon Staub im Bild ist, statt
+   dass alles gemeinsam von unten hochsteigt.
+   @param {HTMLElement} stage */
+function introDust(stage){
+  for (let k = 0; k < 31; k++){
+    const vorn = k >= 26;
+    const d = document.createElement('i');
+    d.className = vorn ? 'dust vorn' : 'dust';
+    const groesse = vorn ? 18 + Math.random() * 22 : 2 + Math.random() * 4;
+    const dauer = vorn ? 10 + Math.random() * 8 : 16 + Math.random() * 18;
+    d.style.cssText = `left:${(Math.random() * 100).toFixed(1)}%;width:${groesse.toFixed(1)}px;height:${groesse.toFixed(1)}px;`
+      + `opacity:${(vorn ? 1 : 0.4 + Math.random() * 0.5).toFixed(2)};z-index:${vorn ? 8 : 3};`
+      + `--dx:${Math.round(Math.random() * 120 - 60)}px;animation-duration:${dauer.toFixed(1)}s;animation-delay:-${(Math.random() * dauer).toFixed(1)}s;`;
+    stage.appendChild(d);
+  }
 }
 
 /** Baut die Bühne und spielt sie ab.
@@ -250,14 +289,21 @@ function playIntro(daten, onDone){
     if (onDone) onDone();
     return;
   }
+  const stage = INTRO_STAGES.find(st => st.key === introStageKey(daten.stage)) || INTRO_STAGES[0];
+  // Konfetti je Bühne in ihren eigenen Farben. Auf der Geburtstagsbühne bei
+  // jeder Stufe, sonst nur beim Geldbetrag und auf der letzten Stufe - zu
+  // oft, und es ist kein Ereignis mehr.
+  const farben = stage.key === 'geburtstag' ? ['#FF5DA2','#FFC93C','#7FE5B0','#8FB8FF','#FF8A5C','#C9A0FF']
+               : stage.key === 'neon'       ? ['#FF2E88','#7DF9FF','#FFFFFF','#C9A0FF']
+               :                              ['#FFD24D','#FFF0B0','#FF5DA2','#F7C42F'];
   // Die letzte Stufe blendet nicht wieder aus - sie bleibt stehen, bis der
   // Host klickt. Sonst steht die Bühne am Ende leer da.
   const html = slides.map((s, i) => {
     const letzte = i === slides.length - 1;
-    return introSlideHtml(s, 0.3 + i * dur, letzte ? 2 : dur, letzte);
+    const knall = stage.key === 'geburtstag' || letzte || s.deco === 'geld';
+    return introSlideHtml(s, 0.3 + i * dur, letzte ? 2 : dur, letzte, knall ? farben : []);
   }).join('');
 
-  const stage = INTRO_STAGES.find(st => st.key === introStageKey(daten.stage)) || INTRO_STAGES[0];
   const kopf = escapeHtml(daten.header || '');
   // Die Neon-Bühne hat bewusst KEIN .frame: der Lämpchenrahmen gehört zur
   // Keller- und Geburtstagsbühne. Fehlt das Element, überspringt runKgIntro
@@ -270,17 +316,23 @@ function playIntro(daten, onDone){
         <div class="horizon"></div>
         <div class="grid"></div>
         <div class="scan"></div>
+        <div class="vig"></div>
+        <div class="grain"></div>
         ${kopf ? `<div class="header">${kopf}</div>` : ''}
         ${html}
         <div class="kg-hint">Klicken um fortzufahren</div>
       </div>`
     : `<div id="${stage.id}">
         <div class="wall"></div>
+        <div class="rays"></div>
+        <div class="haze"></div>
         <div class="floor"></div>
         <div class="cone coneL"></div>
         <div class="cone coneR"></div>
         <div class="cord"><div class="bulb"></div></div>
+        <div class="vig"></div>
         <div class="frame"></div>
+        <div class="grain"></div>
         ${kopf ? `<div class="header"><span class="star">★</span>${kopf}<span class="star">★</span></div>` : ''}
         ${html}
         <div class="kg-hint">Klicken um fortzufahren</div>
@@ -288,7 +340,9 @@ function playIntro(daten, onDone){
   const overlay = document.createElement('div');
   overlay.id = 'kg-overlay';
   overlay.innerHTML = buehne;
-  if (stage.key === 'geburtstag') introBalloons(/** @type {HTMLElement} */ (overlay.firstElementChild));
+  const buehnenEl = /** @type {HTMLElement} */ (overlay.firstElementChild);
+  if (stage.key === 'geburtstag') introBalloons(buehnenEl);
+  if (stage.key !== 'neon') introDust(buehnenEl);
   runKgIntro(overlay, onDone);
 }
 
