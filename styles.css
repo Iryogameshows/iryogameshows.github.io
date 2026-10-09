@@ -1731,6 +1731,344 @@ body {
   #kg-overlay .cs::before{opacity:.5;}
 }
 
+/* ── FILM-INTROS: ARCADE (#kga) UND PRIMETIME (#kgp) ─────────────────────
+   Feste Abläufe statt Stufen, gebaut in js/intro.js (playFilmIntro). Alles
+   steht beim Start im Dokument; jede Einstellung sitzt in einem .ifw mit
+   --a (an) und --b (aus). Was darin passiert, hat absolute Verzögerungen ab
+   dem Einfügen - so laufen Haupt- und Zuschauerfenster im Gleichtakt, ohne
+   dass irgendwo JavaScript die Zeit führt (BAUPLAN 4.8).
+
+   An- und Ausschalten sind zwei 1-ms-Animationen auf derselben Eigenschaft:
+   ifAn füllt rückwärts (vorher unsichtbar) und vorwärts (danach sichtbar),
+   ifAus füllt nur vorwärts und steht in der Liste hinten - ab --b gewinnt
+   sie. visibility statt nur opacity, damit eine ausgeblendete Einstellung
+   auch nichts mehr zeichnet. */
+
+#kg-overlay.film{background:#000;}
+/* Kein Einblenden des Overlays: Arcade fängt mit dem Aufflackern der
+   Röhre an, Primetime mit Schwarz - ein Überblenden würde beides
+   verschmieren. Beim Beenden (.leaving) gilt kgFadeOut wie überall. */
+#kg-overlay.film:not(.leaving){animation:none;}
+#kg-overlay .ifw{position:absolute;inset:0;opacity:0;visibility:hidden;pointer-events:none;
+  animation:ifAn 1ms linear var(--a) both,ifAus 1ms linear var(--b,99999s) forwards;}
+@keyframes ifAn{from{opacity:0;visibility:hidden}to{opacity:1;visibility:visible}}
+@keyframes ifAus{from{opacity:1;visibility:visible}to{opacity:0;visibility:hidden}}
+
+/* ── Arcade ──
+   Zeiten wie im Labor (tools/intros/arcade/): Röhre .1, INSERT COIN .9,
+   Münze 2.2, Titel 3.0, Spielerwahl 6.0, VS 7.2, READY 8.8, GO 9.8,
+   Titelbild 10.6. Bewegungen in steps(), damit es ruckelt wie auf einem
+   alten Automaten. */
+#kga{position:relative;width:100%;height:100%;overflow:hidden;background:#000;font-family:'Press Start 2P',monospace;font-weight:400;}
+#kga .ka-kasten{position:absolute;inset:2.5vh;border-radius:4vh;overflow:hidden;background:#05060d;
+  box-shadow:inset 0 0 12vh rgba(0,0,0,.9),0 0 0 1vh #111,0 0 0 1.4vh #222;}
+#kga .ka-wackel{position:absolute;inset:0;animation:kaWackelA .4s steps(6) 7.2s,kaWackelB .5s steps(8) 9.8s;}
+@keyframes kaWackelA{from{transform:translateX(12px)}to{transform:none}}
+@keyframes kaWackelB{from{transform:translate(-16px,8px)}to{transform:none}}
+#kga .ka-bild{position:absolute;inset:0;color:#fff;line-height:1.3;
+  text-shadow:-2px 0 rgba(255,0,80,.7),2px 0 rgba(0,240,255,.7);
+  animation:kaFlimmer .12s steps(1) infinite,kaHell .8s ease-out .4s backwards;}
+@keyframes kaFlimmer{0%{opacity:1}50%{opacity:.93}}
+@keyframes kaHell{from{filter:brightness(3)}to{filter:brightness(1)}}
+#kga .ka-sterne{position:absolute;left:0;right:0;top:-100%;height:200%;animation:kaSterne 40s linear infinite;}
+#kga .ka-sterne i{position:absolute;width:.6vh;height:.6vh;background:#fff;}
+@keyframes kaSterne{from{transform:translateY(0)}to{transform:translateY(50%)}}
+#kga .ka-zeile{position:absolute;left:0;right:0;text-align:center;padding:0 4vw;}
+#kga .ka-coin{top:46%;font-size:min(3vw,5vh);color:#ffe14d;animation:kaBlink .46s steps(1) .9s infinite;}
+#kga .ka-credit{bottom:8%;font-size:min(1.6vw,2.6vh);}
+@keyframes kaBlink{0%{opacity:1}50%{opacity:0}}
+#kga .ka-titel{position:absolute;left:0;right:0;top:20%;text-align:center;white-space:nowrap;}
+#kga .ka-titel .k{font-size:min(1.8vw,3vh);color:#ffd24d;margin-bottom:3vh;}
+#kga .ka-titel .g{font-size:min(8.5vw,14vh,calc(84vw / var(--n,1)));line-height:1.15;}
+#kga .ka-titel .g2{font-size:min(6vw,10vh,calc(84vw / var(--n,1)));}
+/* Regenbogen: jeder Buchstabe eine Farbe weiter als sein Vorgänger, alle
+   0,13 s rückt die ganze Reihe eins weiter. */
+#kga .ka-titel .ch{display:inline-block;animation:kaRegen .91s steps(1) calc(3s - var(--i) * .13s) infinite;}
+#kga .ka-t1 .ch{animation:kaRegen .91s steps(1) calc(3s - var(--i) * .13s) infinite,kaHuepf .24s steps(2) calc(3.9s + var(--i) * .05s);}
+@keyframes kaRegen{0%{color:#ff3b3b}14.28%{color:#ff9f1c}28.57%{color:#ffe14d}42.86%{color:#39ff88}57.14%{color:#2fd2ff}71.43%{color:#7a7bff}85.71%{color:#ff4fd8}}
+@keyframes kaHuepf{0%,100%{transform:none}50%{transform:translateY(-1.3vh)}}
+#kga .ka-t1{animation:kaZoom .7s steps(10) 3s both;}
+@keyframes kaZoom{from{transform:scale(6);filter:blur(4px)}to{transform:none;filter:none}}
+#kga .ka-t2{animation:kaFall .6s steps(9) 10.6s both;}
+@keyframes kaFall{from{transform:translateY(-60vh)}to{transform:none}}
+#kga .ka-wahl{top:12%;font-size:min(2.4vw,4vh);color:#ffe14d;}
+#kga .ka-sp{position:absolute;top:30%;width:34%;text-align:center;}
+#kga .ka-sp0{left:6%;color:#ff4b4b;animation:kaLinks .4s steps(6) 6s both;}
+#kga .ka-sp1{right:6%;color:#4f8bff;animation:kaRechts .4s steps(6) 6.3s both;}
+@keyframes kaLinks{from{transform:translateX(-40vw)}to{transform:none}}
+@keyframes kaRechts{from{transform:translateX(40vw)}to{transform:none}}
+/* Die Pixel ragen vom 1x1-Element nach rechts unten - daher unten viel
+   Innenabstand und die Figur um die halbe Breite nach links. */
+#kga .ka-rahmen{display:inline-block;padding:2.5vh 8vh 16.5vh;border:.5vh solid currentColor;margin-bottom:2vh;animation:kaRahmen .22s steps(1) 6.8s 4;}
+@keyframes kaRahmen{0%{opacity:.2}50%{opacity:1}}
+#kga .ka-figur{width:.9vh;height:.9vh;transform:translateX(-6.5vh) scale(1.6);transform-origin:0 0;}
+#kga .ka-p{font-size:min(1.4vw,2.4vh);margin-bottom:1.6vh;}
+#kga .ka-name{font-size:min(2vw,3.4vh,calc(30vw / var(--n,8)));white-space:nowrap;}
+#kga .ka-vs{position:absolute;left:50%;top:42%;font-size:min(10vw,16vh);color:#ffd24d;transform:translate(-50%,-50%);animation:kaVs .25s steps(4) 7.2s both;}
+@keyframes kaVs{from{transform:translate(-50%,-50%) scale(4)}to{transform:translate(-50%,-50%)}}
+#kga .ka-gross{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:min(9vw,15vh);}
+#kga .ka-ready{color:#ffe14d;animation:kaReady .3s steps(5) 8.8s both;}
+#kga .ka-go{color:#39ff88;animation:kaGo .25s steps(4) 9.8s both;}
+@keyframes kaReady{from{transform:scale(.3)}to{transform:none}}
+@keyframes kaGo{from{transform:scale(3)}to{transform:none}}
+#kga .ka-hi{top:6%;font-size:min(1.5vw,2.5vh);}
+#kga .ka-hi b{color:#ffe14d;font-weight:400;}
+#kga .ka-copy{bottom:7%;font-size:min(1.1vw,1.9vh);color:#8a8fa8;line-height:1.7;}
+#kga .ka-start{bottom:16%;font-size:min(2.2vw,3.6vh);animation:kaBlink .72s steps(1) 11.6s infinite;}
+#kga .ka-weiss{position:absolute;inset:0;background:#fff;opacity:0;z-index:4;animation:kaWeissA .3s steps(3) 7.2s,kaWeissB .4s steps(4) 9.8s;}
+@keyframes kaWeissA{from{opacity:.9}to{opacity:0}}
+@keyframes kaWeissB{from{opacity:1}to{opacity:0}}
+#kga .ka-raster{position:absolute;inset:0;pointer-events:none;z-index:5;background:repeating-linear-gradient(180deg,rgba(0,0,0,.35) 0 2px,transparent 2px 4px);}
+#kga .ka-woelbung{position:absolute;inset:0;pointer-events:none;z-index:6;background:radial-gradient(ellipse 85% 80% at 50% 50%,transparent 60%,rgba(0,0,0,.6) 100%);}
+/* Röhre an: ein heller Strich, der erst in die Breite, dann in die Höhe
+   aufreißt und verlischt. */
+#kga .ka-an{position:absolute;inset:0;background:#fff;z-index:7;opacity:0;animation:kaAn .68s linear .1s both;}
+@keyframes kaAn{
+  0%{transform:scale(0,.004);opacity:1;animation-timing-function:ease-out}
+  22%{transform:scale(1,.004);opacity:1;animation-timing-function:ease-in}
+  49%{transform:none;opacity:1}
+  100%{transform:none;opacity:0}}
+
+/* ── Primetime ──
+   Palette: Bühnenschwarz mit Violett (#07030f), Chrom-Gold (#fff3c4 bis
+   #5e3a05), Laser-Magenta #ff2bd6, Cyan #29e7ff, dazu die Teamfarben.
+   Schrift: Unbounded (breit, Fernseh-Logo), Inter für Kleines.
+   Die Zeiten kommen als --t/--a/--b aus INTRO_PT in js/intro.js. */
+#kgp{position:relative;width:100%;height:100%;overflow:hidden;background:#07030f;color:#fff;font-family:Unbounded,'Bungee',sans-serif;}
+#kgp i{font-style:normal;}
+#kgp .pt-cam{position:absolute;inset:0;
+  animation:ptWackelK .4s linear var(--s0),ptWackelK .4s linear var(--s1),ptWackelK .4s linear var(--s2),
+            ptWackelK .4s linear var(--te),ptWackelG .55s linear var(--vs),ptWackelG .7s linear var(--h),ptWackelK .45s linear var(--l);}
+@keyframes ptWackelK{0%{transform:translate(.8vh,-.6vh) rotate(.25deg)}25%{transform:translate(-.7vh,.5vh) rotate(-.2deg)}50%{transform:translate(.4vh,.3vh)}75%{transform:translate(-.2vh,-.2vh)}100%{transform:none}}
+@keyframes ptWackelG{0%{transform:translate(2vh,-1.6vh) rotate(.8deg) scale(1.04)}15%{transform:translate(-1.8vh,1.4vh) rotate(-.6deg) scale(1.03)}35%{transform:translate(1.2vh,.9vh) rotate(.3deg)}55%{transform:translate(-.8vh,-.6vh)}75%{transform:translate(.4vh,.3vh)}100%{transform:none}}
+
+/* Gemeinsam: Chromschrift. .ex ist die Tiefe (Schattenstapel in em, damit
+   sie mit der Schriftgröße wächst), .fc liegt deckungsgleich darüber und
+   trägt den Chrom-Verlauf plus einen Glanzstreifen, der per
+   background-position durchläuft. */
+#kgp .pt-chrom{font-weight:900;line-height:1;white-space:nowrap;letter-spacing:.02em;}
+#kgp .pl{position:relative;display:inline-block;}
+#kgp .pl b{font-weight:900;}
+#kgp .pl .ex{color:#4a2d04;
+  text-shadow:0 .012em 0 #8a5a0a,0 .024em 0 #7a4e08,0 .036em 0 #6b4407,0 .048em 0 #5c3a05,0 .06em 0 #4e3104,
+              0 .072em 0 #412803,0 .084em 0 #352003,0 .096em 0 #2a1902,0 .14em .12em rgba(0,0,0,.65),0 0 .35em rgba(255,190,80,.28);}
+#kgp .pl .fc{position:absolute;left:0;top:0;color:transparent;-webkit-background-clip:text;background-clip:text;
+  background-image:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.95) 50%,transparent 62%),
+                   linear-gradient(180deg,#fffbe8 0%,#ffe08a 26%,#d9961f 46%,#6b4207 50%,#b8771a 58%,#ffd36a 78%,#fff3c4 100%);
+  background-size:320% 100%,100% 100%;background-position:130% 0,0 0;background-repeat:no-repeat;}
+#kgp .pt-luft{display:inline-block;width:.32em;}
+
+/* Licht- und Schnittebenen über allem */
+#kgp .pt-wisch{position:absolute;top:-10%;bottom:-10%;left:0;width:170vw;z-index:12;pointer-events:none;transform:translateX(-210vw);
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.15) 30%,rgba(255,255,255,.95) 50%,rgba(255,255,255,.15) 70%,transparent 100%),
+             repeating-linear-gradient(0deg,rgba(255,43,214,.25) 0 .5vh,transparent .5vh 2.4vh);
+  animation:ptWisch .34s cubic-bezier(.7,0,.3,1) var(--t) both;}
+@keyframes ptWisch{from{transform:translateX(-210vw) skewX(-12deg)}to{transform:translateX(135vw) skewX(-12deg)}}
+#kgp .pt-balken{position:absolute;inset:0;z-index:15;pointer-events:none;}
+#kgp .pt-balken i{position:absolute;left:0;right:0;height:11vh;background:#000;}
+#kgp .pt-balken i:first-child{top:0;transform:translateY(-100%);animation:ptBalkenO .8s cubic-bezier(.6,0,.2,1) var(--t) backwards;}
+#kgp .pt-balken i:last-child{bottom:0;transform:translateY(100%);animation:ptBalkenU .8s cubic-bezier(.6,0,.2,1) var(--t) backwards;}
+@keyframes ptBalkenO{from{transform:none}to{transform:translateY(-100%)}}
+@keyframes ptBalkenU{from{transform:none}to{transform:translateY(100%)}}
+#kgp .pt-licht{position:absolute;inset:0;z-index:20;background:#fff;opacity:0;pointer-events:none;
+  animation:ptBlitzK .14s linear var(--m0),ptBlitzK .14s linear var(--m1),ptBlitzK .14s linear var(--m2),ptBlitzK .2s linear var(--te),ptBlitzG 1.1s ease-out var(--hit);}
+@keyframes ptBlitzK{from{opacity:.85}to{opacity:0}}
+@keyframes ptBlitzG{from{opacity:1}to{opacity:0}}
+#kgp .vig{z-index:14;background:radial-gradient(ellipse 80% 75% at 50% 50%,transparent 45%,rgba(0,0,0,.75) 100%);}
+#kgp .grain{z-index:16;opacity:.09;}
+#kgp .kg-hint{z-index:17;color:rgba(255,243,196,.45);}
+
+/* 1 · Kaltstart: ein Spot schlägt an, Staub tanzt darin. */
+#kgp .pt-schub{position:absolute;inset:0;animation:ptSchub 1.9s linear both;}
+@keyframes ptSchub{from{transform:scale(1)}to{transform:scale(1.12)}}
+#kgp .pt-spot{position:absolute;left:50%;top:-6%;width:72vw;height:112%;margin-left:-36vw;opacity:0;
+  background:linear-gradient(180deg,rgba(255,244,214,.8),rgba(255,236,190,.22) 60%,rgba(255,236,190,.04));
+  clip-path:polygon(47% 0,53% 0,82% 100%,18% 100%);animation:ptSpot .55s linear var(--t) both;}
+@keyframes ptSpot{0%{opacity:0}8%{opacity:1}14%{opacity:.15}22%{opacity:.9}30%{opacity:.4}40%,100%{opacity:1}}
+#kgp .pt-pfuetze{position:absolute;left:50%;bottom:-8vh;width:80vw;height:30vh;margin-left:-40vw;border-radius:50%;opacity:0;
+  background:radial-gradient(ellipse,rgba(255,240,205,.55),rgba(255,240,205,0) 70%);animation:ptSpot .55s linear var(--t) both;}
+#kgp .pt-staub i{position:absolute;width:.5vh;height:.5vh;border-radius:50%;background:#fff6dc;box-shadow:0 0 .8vh #ffe6a8;animation:ptStaub 5s ease-in-out infinite alternate;}
+@keyframes ptStaub{from{transform:translate(0,0)}to{transform:translate(var(--dx),var(--dy))}}
+#kgp .pt-vorab{position:absolute;left:0;right:0;top:46%;text-align:center;font-weight:500;font-size:min(4.2vh,3vw);color:#fff4d6;letter-spacing:.45em;padding-left:.45em;
+  text-shadow:0 0 2vh rgba(255,220,150,.6);animation:ptVorab 1.2s cubic-bezier(.2,.7,.2,1) var(--t) both;}
+@keyframes ptVorab{from{opacity:0;letter-spacing:1.4em;filter:blur(1vh)}35%{opacity:1}to{opacity:1;letter-spacing:.45em;filter:blur(0)}}
+
+/* 2 · LED-Wand mit Welle, Moving Heads, drei Schläge */
+#kgp .pt-s1{background:#05020b;perspective:110vh;}
+#kgp .pt-ledrig{position:absolute;inset:-8% -6%;animation:ptDolly 1.9s linear var(--t) both;}
+@keyframes ptDolly{from{transform:rotateY(-9deg) scale(1.08)}to{transform:rotateY(9deg) scale(1)}}
+#kgp .pt-led{position:absolute;inset:0;display:grid;grid-template-columns:repeat(20,1fr);grid-template-rows:repeat(11,1fr);gap:.7vh;transform:rotateX(12deg);animation:ptLedPuls .55s ease-out var(--t) infinite;}
+#kgp .pt-led i{border-radius:.5vh;background:var(--c);opacity:.07;animation:ptLed 1.1s ease-out calc(var(--t) + var(--k) * .035s) infinite both;}
+@keyframes ptLed{0%{opacity:.07}10%{opacity:.95}45%{opacity:.25}100%{opacity:.07}}
+@keyframes ptLedPuls{from{opacity:1}to{opacity:.6}}
+#kgp .pt-heads{position:absolute;inset:0;pointer-events:none;}
+#kgp .pt-heads i{position:absolute;width:18vw;height:130vh;margin-left:-9vw;mix-blend-mode:screen;opacity:.55;
+  clip-path:polygon(46% 100%,54% 100%,100% 0,0 0);animation:ptSchwenk 2.4s ease-in-out infinite alternate;}
+#kgp .pt-heads.unten i{bottom:-6%;transform-origin:50% 100%;background:linear-gradient(0deg,var(--c),transparent 88%);}
+#kgp .pt-heads.oben i{top:-6%;transform-origin:50% 0;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);background:linear-gradient(180deg,var(--c),transparent 85%);opacity:.32;}
+@keyframes ptSchwenk{from{transform:rotate(var(--r1))}to{transform:rotate(var(--r2))}}
+#kgp .pt-schlag{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
+  animation:ptSchlag .55s cubic-bezier(.12,.9,.25,1) var(--t) both;}
+#kgp .pt-schlag span{font-weight:900;white-space:nowrap;font-size:min(15vh,calc(92vw / var(--n) / .92));letter-spacing:-.01em;color:#fff;
+  text-shadow:-.04em 0 rgba(255,43,214,.85),.04em 0 rgba(41,231,255,.85),0 0 .4em rgba(255,255,255,.35);}
+@keyframes ptSchlag{0%{transform:scale(2.1) skewX(-14deg);opacity:0}16%{transform:scale(1) skewX(0);opacity:1}100%{transform:scale(.93);opacity:1}}
+
+/* 3 · Makro: drei Beauty-Shots ganz nah am Chrom-Logo, mit Bokeh dahinter
+   und einem anamorphotischen Lichtstreifen. Jeder Shot ist ein Schwenk. */
+#kgp .pt-s2{background:radial-gradient(ellipse at 50% 60%,#1a0b24,#05020a 70%);}
+#kgp .pt-bokeh i{position:absolute;border-radius:50%;margin:-10vh 0 0 -10vh;animation:ptBokeh 2s ease-in-out infinite alternate;}
+@keyframes ptBokeh{from{transform:translateX(0)}to{transform:translateX(var(--dx))}}
+#kgp .pt-makro{position:absolute;left:50%;top:50%;width:0;height:0;}
+#kgp .pt-makro .pt-chrom{position:absolute;left:0;top:0;transform:translate(-50%,-50%);}
+#kgp .pt-makro .fc{animation:ptGlanzMakro .6s ease-in-out calc(var(--t) + var(--i) * .03s) both;}
+@keyframes ptGlanzMakro{from{background-position:130% 0,0 0}to{background-position:-30% 0,0 0}}
+#kgp .pt-makro.m1{font-size:62vh;animation:ptM1 .62s linear var(--t) both;}
+#kgp .pt-makro.m2{font-size:48vh;animation:ptM2 .62s linear var(--t) both;}
+#kgp .pt-makro.m3{font-size:56vh;animation:ptM3 .62s linear var(--t) both;}
+@keyframes ptM1{from{transform:translateX(38vw) rotate(-8deg)}to{transform:translateX(-10vw) rotate(-6deg)}}
+@keyframes ptM2{from{transform:perspective(90vh) rotateY(-48deg) translate(-30vw,6vh) scale(1.2)}to{transform:perspective(90vh) rotateY(-34deg) translate(6vw,2vh) scale(1.35)}}
+@keyframes ptM3{from{transform:translate(-26vw,22vh) rotate(7deg)}to{transform:translate(18vw,-6vh) rotate(4deg)}}
+#kgp .pt-streifen{position:absolute;left:-10vw;right:-10vw;height:.45vh;opacity:0;mix-blend-mode:screen;
+  background:linear-gradient(90deg,transparent,rgba(120,220,255,.25) 25%,rgba(200,240,255,1) 50%,rgba(120,220,255,.25) 75%,transparent);
+  box-shadow:0 0 2.5vh rgba(110,210,255,.9);animation:ptStreifen .6s ease-out var(--t) both;}
+@keyframes ptStreifen{0%{opacity:0;transform:scaleX(.2)}20%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.3)}}
+
+/* 4 · Teams: diagonal geteilt, beide Hälften schlagen von den Seiten ein,
+   in der Naht zuckt ein Blitz, VS knallt in die Mitte. */
+#kgp .pt-team{position:absolute;inset:0;overflow:hidden;}
+#kgp .pt-team.rot{clip-path:polygon(0 0,57.5% 0,43.5% 100%,0 100%);background:linear-gradient(125deg,#ff4a3d,#a3101f 60%,#4a0410);animation:ptVonL .42s cubic-bezier(.15,.95,.25,1) var(--t) both;}
+#kgp .pt-team.blau{clip-path:polygon(56.5% 0,100% 0,100% 100%,42.5% 100%);background:linear-gradient(235deg,#43a0ff,#123ea8 60%,#06154a);animation:ptVonR .42s cubic-bezier(.15,.95,.25,1) var(--t) both;}
+#kgp .pt-team::before{content:'';position:absolute;inset:-20%;background:repeating-linear-gradient(115deg,rgba(255,255,255,.08) 0 1.2vh,transparent 1.2vh 4vh);animation:ptStreifenLauf 1.6s linear var(--t) both;}
+@keyframes ptStreifenLauf{from{transform:translateX(-6vw)}to{transform:translateX(6vw)}}
+@keyframes ptVonL{from{transform:translateX(-75%)}to{transform:none}}
+@keyframes ptVonR{from{transform:translateX(75%)}to{transform:none}}
+/* Die Namen stehen diagonal versetzt - rot oben links, blau unten rechts -,
+   damit das VS in der Mitte keinen verdeckt. */
+#kgp .pt-tinnen{position:absolute;width:44%;transform:translateY(-50%);animation:ptTDrift 1.7s ease-out var(--t) both;}
+#kgp .rot .pt-tinnen{left:3%;top:30%;text-align:left;}
+#kgp .blau .pt-tinnen{right:3%;top:70%;text-align:right;}
+@keyframes ptTDrift{from{transform:translateY(-50%) scale(1.12)}to{transform:translateY(-50%) scale(1)}}
+#kgp .pt-tinnen b{display:block;font-weight:900;white-space:nowrap;line-height:1;font-size:min(11vh,calc(42vw / var(--n) / .92));color:#fff;
+  text-shadow:0 .05em 0 rgba(0,0,0,.35),0 .1em .2em rgba(0,0,0,.45);}
+#kgp .pt-blitz{position:absolute;inset:0;width:100%;height:100%;opacity:0;filter:drop-shadow(0 0 .6vh #fff) drop-shadow(0 0 2vh #b9e9ff);
+  animation:ptBlitz .7s steps(1) var(--t) both,ptKnistern .26s steps(1) calc(var(--t) + .7s) infinite;}
+@keyframes ptBlitz{0%{opacity:0}4%{opacity:1}18%{opacity:.15}28%{opacity:1}52%{opacity:.35}66%,100%{opacity:.9}}
+@keyframes ptKnistern{0%{opacity:.9}40%{opacity:.4}70%{opacity:1}}
+#kgp .pt-vs{position:absolute;left:50%;top:50%;font-size:26vh;transform-origin:0 0;animation:ptVs .5s cubic-bezier(.2,1.5,.4,1) var(--t) both;}
+#kgp .pt-vs .pt-chrom{transform:translate(-50%,-50%) rotate(-7deg);}
+@keyframes ptVs{from{transform:scale(4.5) rotate(-24deg);opacity:0}to{transform:none;opacity:1}}
+
+/* 5 · Tunnel: Flug durch Lichtringe, Warp-Streifen, in der Mitte wird es
+   weiß - das Weiß ist der Übergang zum Logo. */
+#kgp .pt-iris{position:absolute;inset:0;background:#030108;animation:ptIris .35s ease-in var(--t) both;}
+@keyframes ptIris{from{clip-path:circle(0% at 50% 50%)}to{clip-path:circle(80% at 50% 50%)}}
+#kgp .pt-tunnel{position:absolute;inset:0;perspective:500px;overflow:hidden;}
+#kgp .pt-rohr{position:absolute;left:50%;top:50%;transform-style:preserve-3d;animation:ptFlug 1.1s cubic-bezier(.5,0,.9,.6) var(--t) both;}
+@keyframes ptFlug{from{transform:translateZ(0) rotate(0)}to{transform:translateZ(7200px) rotate(100deg)}}
+#kgp .pt-rohr i{position:absolute;width:76vmin;height:76vmin;margin:-38vmin 0 0 -38vmin;border:1.1vmin solid var(--c);
+  box-shadow:0 0 3vmin var(--c),inset 0 0 3vmin var(--c);transform:translateZ(calc(var(--k) * -440px)) rotate(var(--rot));}
+#kgp .pt-warp i{position:absolute;left:50%;top:50%;width:34vmax;height:.35vh;transform-origin:0 50%;opacity:0;
+  background:linear-gradient(90deg,transparent,#fff);animation:ptWarp .42s linear infinite backwards;}
+@keyframes ptWarp{from{transform:rotate(var(--r)) translateX(3vmax) scaleX(.1);opacity:0}30%{opacity:1}to{transform:rotate(var(--r)) translateX(75vmax) scaleX(1.2);opacity:0}}
+#kgp .pt-kern{position:absolute;left:50%;top:50%;width:20vmin;height:20vmin;margin:-10vmin 0 0 -10vmin;border-radius:50%;
+  background:radial-gradient(circle,#fff 0,#fff 32%,rgba(255,255,255,0) 70%);animation:ptKern 1.1s cubic-bezier(.75,0,1,.4) var(--t) both;}
+@keyframes ptKern{from{transform:scale(.25);opacity:.5}to{transform:scale(16);opacity:1}}
+
+/* 6 · Logo: Strahlen, Lichter von oben, Spiegelboden. Die Buchstaben
+   fliegen einzeln aus dem Raum an ihren Platz (--x/--y/--z/--rx/--ry aus
+   dem Markup), landen mit einem Stoß, dann dreht das ganze Logo langsam
+   im Licht und der Glanz läuft in Abständen darüber. */
+#kgp .pt-s5{background:radial-gradient(ellipse 70% 60% at 50% 42%,#2a0f3d 0%,#10051c 55%,#050208 100%);}
+#kgp .pt-strahlen{position:absolute;left:50%;top:42%;width:250vmax;height:250vmax;margin:-125vmax 0 0 -125vmax;
+  background:repeating-conic-gradient(from 0deg,rgba(255,214,110,.15) 0deg 4deg,transparent 4deg 13deg);
+  -webkit-mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 14%,transparent 40%);mask-image:radial-gradient(circle,#000 0,rgba(0,0,0,.5) 14%,transparent 40%);
+  animation:ptDreh 70s linear infinite,ptStrahlAn 1.2s cubic-bezier(.2,.8,.2,1) var(--hit) backwards;}
+@keyframes ptDreh{to{transform:rotate(360deg)}}
+@keyframes ptStrahlAn{from{opacity:0;scale:.2}to{opacity:1;scale:1}}
+#kgp .pt-boden{position:absolute;left:-10%;right:-10%;bottom:0;height:34%;
+  background:linear-gradient(180deg,rgba(255,215,120,.0),rgba(255,215,120,.06) 30%,rgba(0,0,0,.6)),
+             repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 7vw);
+  transform:perspective(60vh) rotateX(58deg);transform-origin:50% 100%;}
+#kgp .pt-logo{position:absolute;left:0;right:0;top:15%;display:flex;justify-content:center;perspective:1400px;z-index:3;}
+#kgp .pt-orbit{transform-style:preserve-3d;animation:ptOrbit 12s ease-in-out var(--t) infinite backwards;}
+@keyframes ptOrbit{0%,100%{transform:none}25%{transform:rotateY(-11deg) rotateX(4deg)}75%{transform:rotateY(11deg) rotateX(-3deg)}}
+#kgp .pt-landung{display:flex;flex-direction:column;align-items:center;transform-style:preserve-3d;animation:ptLandung .55s cubic-bezier(.2,1.7,.4,1) var(--t) backwards;}
+@keyframes ptLandung{from{transform:scale(1.08)}to{transform:none}}
+#kgp .pt-logo .pt-chrom{transform-style:preserve-3d;}
+#kgp .pt-logo .l1{font-size:min(17vh,calc(88vw / var(--n) / .98));}
+#kgp .pt-logo .l2{font-size:min(12vh,calc(88vw / var(--n) / .98));margin-top:.06em;}
+#kgp .pt-logo .pl{animation:ptFlieg .8s cubic-bezier(.12,.8,.25,1) calc(var(--hit) + var(--i) * .03s) both;}
+@keyframes ptFlieg{from{transform:translate3d(var(--x),var(--y),var(--z)) rotateX(var(--rx)) rotateY(var(--ry));opacity:0}25%{opacity:1}to{transform:none;opacity:1}}
+/* Glanz: einmal nach der Landung, danach alle 4,5 s. Die zweite Animation
+   hat keine Füllung nach hinten - sonst überschriebe sie die erste schon
+   vor ihrem Start. */
+#kgp .pt-logo .fc{animation:ptGlanz1 .9s ease-in-out calc(var(--hit) + .95s + var(--i) * .04s) both,ptGlanz2 4.5s ease-in-out calc(var(--hit) + 3.6s + var(--i) * .04s) infinite;}
+@keyframes ptGlanz1{from{background-position:130% 0,0 0}to{background-position:-30% 0,0 0}}
+@keyframes ptGlanz2{0%{background-position:130% 0,0 0}22%,100%{background-position:-30% 0,0 0}}
+#kgp .pt-klein{font-weight:500;font-size:min(4.4vh,3.2vw);letter-spacing:.35em;padding-left:.35em;margin-bottom:1.4vh;color:#ffe8a8;
+  text-shadow:0 0 1.6vh rgba(255,200,90,.55);animation:ptKlein .9s cubic-bezier(.2,.8,.2,1) calc(var(--hit) + .55s) both;}
+@keyframes ptKlein{from{opacity:0;transform:translateY(-3vh);letter-spacing:1.1em}to{opacity:1;transform:none;letter-spacing:.35em}}
+#kgp .pt-zeile{margin-top:3vh;font-family:var(--font-body,Inter),sans-serif;font-weight:700;font-size:min(3vh,2.1vw);letter-spacing:.14em;color:#f1e6ff;white-space:nowrap;
+  display:flex;align-items:center;gap:1.6vw;animation:ptZeile .9s cubic-bezier(.2,.8,.2,1) var(--t) both;}
+#kgp .pt-zeile::before,#kgp .pt-zeile::after{content:'';width:6vw;height:2px;background:linear-gradient(90deg,transparent,#ffd76a);}
+#kgp .pt-zeile::after{transform:scaleX(-1);}
+@keyframes ptZeile{from{clip-path:inset(0 50% 0 50%);opacity:0}to{clip-path:inset(0 0 0 0);opacity:1}}
+#kgp .pt-preis{margin-top:3.4vh;display:flex;align-items:center;gap:1.4vw;padding:1.3vh 2.6vw;border-radius:99px;
+  background:linear-gradient(180deg,rgba(40,16,58,.85),rgba(14,5,24,.85));box-shadow:0 0 0 .3vh #ffd76a,0 0 0 .7vh rgba(255,215,106,.25),0 1.5vh 4vh rgba(0,0,0,.6),0 0 5vh rgba(255,200,90,.3);
+  animation:ptMuenze 1s cubic-bezier(.2,1.25,.3,1) var(--t) both;}
+#kgp .pt-preis small{font-family:var(--font-body,Inter),sans-serif;font-weight:700;font-size:min(2.4vh,1.7vw);letter-spacing:.12em;color:#e9dcff;}
+#kgp .pt-preis span{font-weight:900;font-size:min(5.4vh,3.8vw);color:transparent;-webkit-background-clip:text;background-clip:text;
+  background-image:linear-gradient(180deg,#fffbe8,#ffd36a 45%,#b8771a 55%,#fff3c4);}
+@keyframes ptMuenze{from{transform:rotateY(-540deg) scale(.3);opacity:0}30%{opacity:1}to{transform:none;opacity:1}}
+/* Spiegelboden: dasselbe Logo kopfüber, nach unten ausgeblendet. */
+#kgp .pt-spiegel{position:absolute;left:50%;top:100%;transform:translateX(-50%) scaleY(-1);opacity:.32;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;margin-top:2vh;
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,transparent 55%);mask-image:linear-gradient(0deg,#000 0%,transparent 55%);}
+#kgp .pt-landung{position:relative;}
+
+#kgp .pt-ring{position:absolute;left:50%;top:42%;width:30vmin;height:30vmin;margin:-15vmin 0 0 -15vmin;border-radius:50%;
+  border:2vmin solid #fff3c4;box-shadow:0 0 4vmin #ffd76a,inset 0 0 3vmin #ffd76a;opacity:0;z-index:4;
+  animation:ptRing 1.15s cubic-bezier(.1,.8,.3,1) var(--t) both;}
+@keyframes ptRing{from{transform:scale(.1);opacity:1}to{transform:scale(6.5);opacity:0}}
+#kgp .pt-s3 .pt-ring{top:50%;border-color:#e6f6ff;box-shadow:0 0 4vmin #8fd8ff,inset 0 0 3vmin #8fd8ff;}
+
+/* Funken: außen die Seitwärtsbewegung (bremst ab), innen die Höhe (steigt,
+   fällt) - zusammen ein Bogen mit Schwerkraft. */
+#kgp .pt-funken,#kgp .pt-pyro,#kgp .pt-konfetti,#kgp .pt-glitzer{position:absolute;inset:0;pointer-events:none;z-index:5;}
+#kgp .pt-fk{position:absolute;left:50%;top:42%;animation:ptFkX var(--u) cubic-bezier(.05,.75,.3,1) var(--d) both;}
+#kgp .pt-fk b{display:block;width:.55vh;height:.55vh;border-radius:50%;background:#fff;box-shadow:0 0 1.2vh .3vh var(--c);
+  animation:ptFkY var(--u) cubic-bezier(.25,.6,.6,1) var(--d) both;}
+@keyframes ptFkX{from{transform:translateX(0)}to{transform:translateX(var(--x))}}
+@keyframes ptFkY{0%{transform:translateY(0);opacity:1}40%{transform:translateY(var(--y));opacity:1}100%{transform:translateY(calc(var(--y) + var(--g)));opacity:0}}
+#kgp .pt-pyro i{position:absolute;bottom:0;width:.5vh;height:.5vh;border-radius:50%;background:#fff6d0;box-shadow:0 0 1vh .2vh #ffc64a;
+  animation:ptPyro var(--u) cubic-bezier(.15,.7,.4,1) var(--d) infinite both;}
+@keyframes ptPyro{0%{transform:translate(0,0);opacity:0}6%{opacity:1}100%{transform:translate(var(--x),var(--y));opacity:0}}
+#kgp .pt-konfetti i{position:absolute;top:-4vh;width:1vh;height:1.6vh;background:var(--c);scale:var(--s);
+  animation:ptKonfetti var(--u) linear var(--d) infinite both;}
+@keyframes ptKonfetti{from{transform:translate(0,0) rotate3d(1,.4,.2,0deg)}to{transform:translate(var(--x),112vh) rotate3d(1,.4,.2,1260deg)}}
+/* Glitzer: Vierstrahlsterne, die kurz auf dem Logo aufblitzen. */
+#kgp .pt-glitzer i{position:absolute;width:5vh;height:5vh;margin:-2.5vh 0 0 -2.5vh;opacity:0;scale:var(--s);
+  background:radial-gradient(circle,#fff 0,rgba(255,255,255,.9) 6%,transparent 22%),
+             linear-gradient(90deg,transparent 46%,#fff 50%,transparent 54%),linear-gradient(0deg,transparent 46%,#fff 50%,transparent 54%);
+  -webkit-mask-image:radial-gradient(circle,#000 0,transparent 70%);mask-image:radial-gradient(circle,#000 0,transparent 70%);
+  animation:ptGlitzer 4.4s ease-in-out var(--d) infinite both;}
+@keyframes ptGlitzer{0%{opacity:0;transform:scale(.2) rotate(0)}6%{opacity:1;transform:scale(1) rotate(45deg)}14%,100%{opacity:0;transform:scale(.2) rotate(90deg)}}
+#kgp .pt-flare{position:absolute;left:-10%;right:-10%;top:42%;height:.6vh;margin-top:-.3vh;z-index:6;opacity:0;mix-blend-mode:screen;
+  background:linear-gradient(90deg,transparent,rgba(120,220,255,.3) 20%,rgba(220,245,255,1) 50%,rgba(120,220,255,.3) 80%,transparent);
+  box-shadow:0 0 3vh rgba(130,215,255,.9);animation:ptFlare 1.3s ease-out var(--t) both,ptFlareLoop 6s ease-in-out calc(var(--t) + 5s) infinite;}
+@keyframes ptFlare{0%{opacity:0;transform:scaleX(.1)}8%{opacity:1;transform:scaleX(1.1)}100%{opacity:0;transform:scaleX(1.5)}}
+@keyframes ptFlareLoop{0%,100%{opacity:0;transform:translateY(-14vh) scaleX(.6)}12%{opacity:.7;transform:translateY(-4vh) scaleX(1)}26%{opacity:0;transform:translateY(8vh) scaleX(1.2)}}
+
+/* Wer weniger Bewegung eingestellt hat, bekommt bei beiden Film-Intros
+   gleich das Schlussbild: alle Animationen aus, nur die Einstellungen mit
+   .fin stehen. Die Grundstile oben sind so gesetzt, dass ohne Animation das
+   Endbild herauskommt. */
+@media (prefers-reduced-motion: reduce){
+  #kg-overlay.film *{animation:none !important;}
+  #kg-overlay.film .ifw.fin{opacity:1;visibility:visible;}
+  #kgp .pt-funken,#kgp .pt-pyro,#kgp .pt-konfetti,#kgp .pt-glitzer,#kgp .pt-flare,#kgp .pt-ring{display:none;}
+}
+
 /* ── WER WIRD MILLIONÄR ── */
 #wwm-screen{gap:16px;max-width:1000px;}
 .wwm-wrap{display:flex;gap:18px;width:100%;align-items:stretch;}

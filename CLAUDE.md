@@ -180,7 +180,9 @@ js/
   theme.js      Design-Richtung (18 Variablensätze)  ← lädt im <head>, vor allem anderen
   core.js       Logo-Rendering, showScreen(), Gemeinsames  ← lädt zuerst im <body>
   intro.js      Alle Intros: playIntro(), drei Bühnen, Vorlagen (Keller, Tag 2,
-                Geburtstag), Intro-Editor, Intro-Auswahl je Show (INTRO_SLOTS)
+                Geburtstag), Film-Intros Arcade und Primetime (playFilmIntro,
+                reines CSS, Ton per WebAudio), Intro-Editor, Intro-Auswahl
+                je Show (INTRO_SLOTS)
   feud.js       Family Feud
   jeopardy.js   Jeopardy-Logik
   jeopardy-ui.js Jeopardy-Board/Overlays

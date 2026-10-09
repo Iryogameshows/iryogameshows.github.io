@@ -823,7 +823,7 @@ function injectBoardStyles() {
   setzen('board-fonts', () => {
     const l = doc.createElement('link');
     l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&family=Bungee&family=Tilt+Neon&display=swap';
+    l.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&family=Bungee&family=Tilt+Neon&family=Press+Start+2P&family=Unbounded:wght@500;900&display=swap';
     return l;
   });
   /* Bewusst die URL aus dem eigenen Dokument statt eines festen Pfades: seit
