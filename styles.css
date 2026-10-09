@@ -4069,7 +4069,7 @@ body {
 :root[data-theme="I"] .jeopardy-cat { font-family: 'Jost', sans-serif; font-weight: 500; font-size: .75rem; letter-spacing: 3px; }
 :root[data-theme="I"] .jeopardy-cell { background: linear-gradient(180deg, #FBF6E9, #F1E9D2); box-shadow: 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35); font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 2rem; }
 :root[data-theme="I"] .jeopardy-cell:hover:not(.used) { background: #FFFFFF; transform: translateY(-3px) rotate(-1deg); }
-:root[data-theme="I"] .jeopardy-cell.used { box-shadow: inset 0 0 0 1px rgba(201,165,76,.3); }
+:root[data-theme="I"] .jeopardy-cell.used { background: transparent; box-shadow: inset 0 0 0 1px rgba(201,165,76,.3); }
 :root[data-theme="I"] .wwm-q { color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.9rem; line-height: 1.2; }
 :root[data-theme="I"] .wwm-opt { background: linear-gradient(180deg, #FBF6E9, #F1E9D2); color: #2A1A12; box-shadow: 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35); font-size: 1.4rem; }
 :root[data-theme="I"] .wwm-opt.selected { box-shadow: 0 0 0 3px #C9A54C, 0 0 24px rgba(201,165,76,.55); }
@@ -4137,7 +4137,7 @@ body {
 :root[data-theme="J"] .jeopardy-cell:nth-child(5n)   { background: #A8E0B5; }
 :root[data-theme="J"] .jeopardy-cell::before { content: ''; position: absolute; top: -8px; left: 50%; width: 46px; height: 14px; margin-left: -23px; background: rgba(237,237,230,.45); rotate: 3deg; }
 :root[data-theme="J"] .jeopardy-cell:hover:not(.used) { transform: scale(1.06); }
-:root[data-theme="J"] .jeopardy-cell.used { background: transparent; box-shadow: none; }
+:root[data-theme="J"] .jeopardy-cell.used { background: transparent; box-shadow: none; color: transparent; }
 :root[data-theme="J"] .jeopardy-cell.used::before { display: none; }
 :root[data-theme="J"] .wwm-q { color: #EDEDE6; font-family: 'Permanent Marker', cursive; font-weight: 400; font-size: 1.6rem; line-height: 1.3; }
 /* WWM-Antworten als Kreidekaesten - die ungleichen Radien machen die
@@ -4150,6 +4150,269 @@ body {
 @keyframes thJKreide {
   0%   { clip-path: inset(0 100% 0 0); }
   100% { clip-path: inset(0 0 0 0); }
+}
+
+/* ── K · Neon-Bar: Roehren auf dunklem Grund, aufgedeckt flackert es an ── */
+:root[data-theme="K"] {
+  --brd-surface: rgba(23,13,16,.85);
+  --brd-frame: 0 0 0 3px #FF4FA3, 0 0 14px #FF4FA3, 0 0 36px rgba(255,79,163,.45), inset 0 0 22px rgba(255,79,163,.3);
+  --brd-well: transparent;
+  --brd-inner: transparent;
+  --brd-radius: 26px;
+  --tile: transparent;
+  --tile-hover: rgba(69,240,255,.05);
+  --tile-edge: inset 0 0 0 2px rgba(255,243,224,.1);
+  --tile-fg: #FFF8F0;
+  --tile-head: transparent;
+  --tile-head-fg: #FFF8F0;
+  --tile-used: transparent;
+  --tile-num: #FFF8F0;
+  --tile-num-glow: 0 0 6px #FF4FA3, 0 0 16px #FF4FA3;
+  --tile-dim-fg: rgba(255,243,224,.2);
+  --tile-bar: transparent;
+  --tile-rule: transparent;
+  --tile-open: rgba(69,240,255,.06);
+  --tile-open-edge: 0 0 0 2px #45F0FF, 0 0 12px #45F0FF, inset 0 0 14px rgba(69,240,255,.35);
+  --tile-open-fg: #FFF8F0;
+  --tile-open-dim: #45F0FF;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: rgba(69,240,255,.4);
+  --tile-pick: rgba(255,159,69,.08);
+  --tile-pick-fg: #FFF8F0;
+  --tile-right: rgba(124,255,107,.08);
+  --tile-right-fg: #FFF8F0;
+  --tile-radius: 14px;
+  --tile-font: 'Sora', sans-serif;
+  --tile-reveal: thKFlacker .9s linear;
+}
+:root[data-theme="K"] .board { padding: 24px; }
+:root[data-theme="K"] .answers { gap: 10px; }
+:root[data-theme="K"] .answers.split { row-gap: 10px; column-gap: 14px; }
+:root[data-theme="K"] .q-text { color: #FFF8F0; font-weight: 700; font-size: 1.25rem; text-shadow: 0 0 6px rgba(255,79,163,.9), 0 0 18px rgba(255,79,163,.6); }
+:root[data-theme="K"] .tile.open .tile-answer { text-shadow: 0 0 6px rgba(69,240,255,.8); letter-spacing: 1.5px; }
+:root[data-theme="K"] .tile.open .tile-pts { color: #FFE14D; text-shadow: 0 0 6px #FFB52E, 0 0 14px rgba(255,181,46,.7); }
+:root[data-theme="K"] .jeopardy-board { gap: 10px; padding: 16px; border-radius: 26px; }
+:root[data-theme="K"] .jeopardy-cat { font-family: 'Yellowtail', cursive; font-weight: 400; font-size: 1.5rem; letter-spacing: 0; text-transform: none; text-shadow: 0 0 6px #FF4FA3, 0 0 16px #FF4FA3; }
+/* Jede Spalte ihre eigene Roehrenfarbe, reihum wie im Entwurf. */
+:root[data-theme="K"] .jeopardy-cell { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.9rem; box-shadow: inset 0 0 0 2px rgba(255,243,224,.08); }
+:root[data-theme="K"] .jeopardy-cell:nth-child(4n+1) { text-shadow: 0 0 6px #45F0FF, 0 0 16px #45F0FF; }
+:root[data-theme="K"] .jeopardy-cell:nth-child(4n+2) { text-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
+:root[data-theme="K"] .jeopardy-cell:nth-child(4n+3) { text-shadow: 0 0 6px #7CFF6B, 0 0 16px #7CFF6B; }
+:root[data-theme="K"] .jeopardy-cell:hover:not(.used) { box-shadow: 0 0 0 2px #45F0FF, 0 0 14px #45F0FF; transform: none; }
+/* Verbraucht: die Roehre ist aus, die Zahl bleibt als dunkles Glas stehen. */
+:root[data-theme="K"] .jeopardy-cell.used { color: rgba(255,243,224,.1); text-shadow: none; }
+:root[data-theme="K"] .wwm-q { color: #FFF8F0; font-weight: 700; text-shadow: 0 0 6px rgba(69,240,255,.8), 0 0 16px rgba(69,240,255,.5); }
+:root[data-theme="K"] .wwm-opt { border-radius: 999px; box-shadow: 0 0 0 2px #45F0FF, 0 0 12px rgba(69,240,255,.7), inset 0 0 12px rgba(69,240,255,.25); }
+:root[data-theme="K"] .wwm-opt .wwm-letter { font-family: 'Yellowtail', cursive; color: #FF4FA3; text-shadow: 0 0 8px #FF4FA3; }
+:root[data-theme="K"] .wwm-opt.selected { box-shadow: 0 0 0 2px #FF9F45, 0 0 14px #FF9F45, inset 0 0 14px rgba(255,159,69,.35); }
+:root[data-theme="K"] .wwm-opt.correct { box-shadow: 0 0 0 2px #7CFF6B, 0 0 16px #7CFF6B, inset 0 0 16px rgba(124,255,107,.35); }
+/* Eine Neonroehre zuendet: zweimal Aussetzer, dann steht sie. */
+@keyframes thKFlacker {
+  0%, 8%   { opacity: 0; }
+  10%, 18% { opacity: 1; }
+  20%, 30% { opacity: .15; }
+  32%, 44% { opacity: 1; }
+  46%, 50% { opacity: .4; }
+  52%, 100% { opacity: 1; }
+}
+
+/* ── L · New York: Zeitungssatz, Kreuzwortraetsel, geschwaerzte Zeilen ── */
+:root[data-theme="L"] {
+  --brd-surface: #EDE6D3;
+  --brd-frame: 0 0 0 1px #1A1712, 0 0 0 5px #EDE6D3, 0 0 0 7px #1A1712, 0 14px 30px rgba(20,14,6,.35);
+  --brd-well: #1A1712;
+  --brd-inner: transparent;
+  --brd-radius: 0;
+  --brd-fg: #1A1712;
+  --tile: transparent;
+  --tile-hover: rgba(26,23,18,.05);
+  --tile-edge: inset 0 -1px 0 rgba(26,23,18,.35);
+  --tile-fg: #1A1712;
+  --tile-head: #EDE6D3;
+  --tile-head-fg: #1A1712;
+  --tile-used: #1A1712;
+  --tile-num: #1A1712;
+  --tile-num-glow: none;
+  --tile-dim-fg: #1A1712;
+  --tile-bar: #1A1712;
+  --tile-rule: transparent;
+  --tile-open: repeating-linear-gradient(-45deg, rgba(26,23,18,.12) 0 2px, transparent 2px 7px);
+  --tile-open-edge: inset 0 -2px 0 #1A1712;
+  --tile-open-fg: #1A1712;
+  --tile-open-dim: #1A1712;
+  --tile-pts-bg: #EDE6D3;
+  --tile-pts-rule: #1A1712;
+  --tile-pick: #1A1712;
+  --tile-pick-fg: #EDE6D3;
+  --tile-right: repeating-linear-gradient(-45deg, rgba(26,23,18,.18) 0 2px, transparent 2px 7px), #EDE6D3;
+  --tile-right-fg: #1A1712;
+  --tile-radius: 0;
+  --tile-font: 'Playfair Display', serif;
+  --tile-reveal: thLDruck .6s ease-out;
+}
+:root[data-theme="L"] .q-text { color: #1A1712; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.7rem; line-height: 1.1; justify-content: flex-start; text-align: left; border-bottom: 1px solid #1A1712; border-radius: 0; margin-bottom: 8px; }
+:root[data-theme="L"] .q-text.hidden-q { justify-content: center; }
+:root[data-theme="L"] .tile-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.15rem; }
+/* Verdeckt: eine geschwaerzte Zeile, wie zensiert. */
+:root[data-theme="L"] .tile:not(.open) .tile-center { justify-content: flex-start; padding-left: 14px; }
+:root[data-theme="L"] .tile:not(.open) .tile-center::after { height: 12px; border-radius: 0; width: 46%; }
+:root[data-theme="L"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 1.3rem; }
+:root[data-theme="L"] .tile.open .tile-pts { color: #1A1712; text-shadow: none; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.6rem; }
+/* Jeopardy als Kreuzwortraetsel: 1px-Gitter, verbrauchte Felder schwarz. */
+:root[data-theme="L"] .jeopardy-board { gap: 1px; padding: 1px; }
+:root[data-theme="L"] .jeopardy-cat { font-family: 'Old Standard TT', serif; font-weight: 700; font-size: .75rem; letter-spacing: 1.5px; }
+:root[data-theme="L"] .jeopardy-cell { background: #FBF8F0; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.8rem; letter-spacing: 0; }
+:root[data-theme="L"] .jeopardy-cell.used { background: #1A1712; }
+:root[data-theme="L"] .jeopardy-cell:hover:not(.used) { background: #FFFFFF; transform: none; box-shadow: inset 0 0 0 2px #1A1712; }
+:root[data-theme="L"] .wwm-q { color: #1A1712; text-align: left; justify-content: flex-start; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 2rem; line-height: 1.1; }
+/* WWM als Stimmzettel: der Buchstabe sitzt in einem Kaestchen. */
+:root[data-theme="L"] .wwm-opt { background: transparent; box-shadow: inset 0 -1px 0 #1A1712; font-size: 1.4rem; font-weight: 700; }
+:root[data-theme="L"] .wwm-opt .wwm-letter { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; min-width: 30px; border: 2px solid #1A1712; color: #1A1712; font-family: 'Playfair Display', serif; font-size: 1rem; }
+:root[data-theme="L"] .wwm-opt.selected .wwm-letter { background: #1A1712; color: #EDE6D3; }
+:root[data-theme="L"] .wwm-opt.selected { background: transparent; color: #1A1712; }
+:root[data-theme="L"] .wwm-opt.correct { box-shadow: inset 0 -4px 0 #1A1712; }
+/* Wie frisch gedruckt: unscharf und dunkel, dann setzt die Farbe. */
+@keyframes thLDruck {
+  0%   { opacity: 0; filter: blur(5px) contrast(2); transform: scale(1.04); }
+  60%  { opacity: 1; filter: blur(.5px); }
+  100% { opacity: 1; filter: none; transform: scale(1); }
+}
+
+/* ── M · Aurora: Glas auf Nachthimmel, Waben, Aufbluehen ── */
+:root[data-theme="M"] {
+  --brd-surface: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  --brd-frame: inset 0 0 0 1px rgba(255,255,255,.14), 0 30px 80px rgba(0,0,0,.45), 0 0 60px rgba(183,166,255,.12);
+  --brd-well: transparent;
+  --brd-inner: transparent;
+  --brd-radius: 28px;
+  --tile: rgba(255,255,255,.05);
+  --tile-hover: rgba(255,255,255,.09);
+  --tile-edge: inset 0 0 0 1px rgba(255,255,255,.13);
+  --tile-fg: #F5F7FF;
+  --tile-head: transparent;
+  --tile-head-fg: #BFC5E6;
+  --tile-used: rgba(255,255,255,.03);
+  --tile-num: #F5F7FF;
+  --tile-num-glow: 0 0 18px rgba(183,166,255,.6);
+  --tile-dim-fg: rgba(245,247,255,.35);
+  --tile-bar: rgba(255,255,255,.07);
+  --tile-rule: transparent;
+  --tile-open: linear-gradient(90deg, rgba(255,159,203,.32), rgba(183,166,255,.32) 50%, rgba(143,182,255,.32));
+  --tile-open-edge: inset 0 0 0 1px rgba(255,255,255,.35), 0 0 30px rgba(183,166,255,.35);
+  --tile-open-fg: #FFFFFF;
+  --tile-open-dim: rgba(255,255,255,.7);
+  --tile-pts-bg: rgba(255,255,255,.14);
+  --tile-pts-rule: transparent;
+  --tile-pick: linear-gradient(160deg, rgba(183,166,255,.45), rgba(143,182,255,.25));
+  --tile-pick-fg: #FFFFFF;
+  --tile-right: linear-gradient(160deg, rgba(91,227,161,.45), rgba(143,182,255,.2));
+  --tile-right-fg: #FFFFFF;
+  --tile-radius: 999px;
+  --tile-font: 'Plus Jakarta Sans', sans-serif;
+  --tile-reveal: thMBluehen .8s cubic-bezier(.2,.8,.2,1);
+}
+:root[data-theme="M"] .board { backdrop-filter: blur(14px); padding: 24px; }
+:root[data-theme="M"] .answers { gap: 10px; }
+:root[data-theme="M"] .answers.split { row-gap: 10px; column-gap: 14px; }
+:root[data-theme="M"] .q-text { font-weight: 800; font-size: 1.4rem; background: linear-gradient(90deg, #FF9FCB, #B7A6FF, #8FB6FF); -webkit-background-clip: text; background-clip: text; color: transparent; }
+:root[data-theme="M"] .q-text.hidden-q { background: rgba(255,255,255,.04); -webkit-background-clip: border-box; background-clip: border-box; }
+:root[data-theme="M"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 1.1rem; }
+:root[data-theme="M"] .tile.open .tile-pts { color: #FFFFFF; text-shadow: none; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.1rem; margin: 7px; border-radius: 999px; min-width: 52px; }
+/* Jeopardy als Waben wie im Entwurf. */
+:root[data-theme="M"] .jeopardy-board { gap: 8px; padding: 18px; border-radius: 28px; backdrop-filter: blur(14px); background: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02)); }
+:root[data-theme="M"] .jeopardy-cat { font-weight: 700; font-size: .7rem; letter-spacing: 1px; text-transform: none; }
+:root[data-theme="M"] .jeopardy-cell {
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); border-radius: 0; box-shadow: none;
+  background: linear-gradient(160deg, #6A58A8 0%, #3B3373 55%, #262150 100%);
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.6rem;
+}
+:root[data-theme="M"] .jeopardy-cell:hover:not(.used) { background: linear-gradient(160deg, #8A76D0 0%, #4D4294 55%, #2E2862 100%); }
+:root[data-theme="M"] .jeopardy-cell.used { background: rgba(255,255,255,.04); }
+:root[data-theme="M"] .wwm-q { backdrop-filter: blur(14px); font-weight: 800; font-size: 1.6rem; }
+:root[data-theme="M"] .wwm-opt { border-radius: 18px; min-height: 74px; align-items: flex-end; font-weight: 700; font-size: 1.15rem; }
+:root[data-theme="M"] .wwm-opt .wwm-letter { font-size: .9rem; color: rgba(245,247,255,.55); }
+/* Wie Polarlicht: das Feld bluet aus dem Unscharfen auf. */
+@keyframes thMBluehen {
+  0%   { opacity: 0; filter: blur(14px) saturate(2); transform: scale(.94); }
+  60%  { opacity: 1; filter: blur(2px) saturate(1.5); }
+  100% { opacity: 1; filter: none; transform: scale(1); }
+}
+
+/* ── N · Papier: Schilder auf Mint, Umschlaege, das Schild schwingt ── */
+:root[data-theme="N"] {
+  --brd-surface: transparent;
+  --brd-frame: none;
+  --brd-well: transparent;
+  --brd-inner: transparent;
+  --brd-radius: 0;
+  --tile: #F5EEDD;
+  --tile-hover: #FBF5E8;
+  --tile-edge: 0 2px 0 rgba(22,57,54,.12), 0 8px 18px rgba(22,57,54,.16);
+  --tile-fg: #163936;
+  --tile-head: transparent;
+  --tile-head-fg: #163936;
+  --tile-used: transparent;
+  --tile-num: #163936;
+  --tile-num-glow: none;
+  --tile-dim-fg: #FFFFFF;
+  --tile-bar: rgba(22,57,54,.08);
+  --tile-rule: transparent;
+  --tile-open: #FBF5E8;
+  --tile-open-edge: 0 2px 0 rgba(22,57,54,.15), 0 12px 24px rgba(22,57,54,.22);
+  --tile-open-fg: #163936;
+  --tile-open-dim: #FFFFFF;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: rgba(22,57,54,.15);
+  --tile-pick: #F2C14E;
+  --tile-pick-fg: #163936;
+  --tile-right: #2E8C7E;
+  --tile-right-fg: #FFFFFF;
+  --tile-radius: 6px;
+  --tile-font: 'Fraunces', serif;
+  --tile-reveal: thNSchwing 1s cubic-bezier(.3,1.4,.4,1);
+}
+:root[data-theme="N"] .board { padding: 10px 4px; }
+:root[data-theme="N"] .answers { gap: 12px; }
+:root[data-theme="N"] .answers.split { row-gap: 12px; column-gap: 22px; }
+/* Die Frage steht auf einer Papierwolke wie im Entwurf. */
+:root[data-theme="N"] .q-text { background: #FBF5E8; border-radius: 40px; box-shadow: 0 10px 24px rgba(22,57,54,.15); color: #163936; font-family: 'Fraunces', serif; font-weight: 900; font-size: 1.5rem; line-height: 1.15; margin-bottom: 12px; }
+:root[data-theme="N"] .q-text.hidden-q { border: 0; }
+:root[data-theme="N"] .tile { overflow: visible; }
+:root[data-theme="N"] .tile-inner { overflow: visible; }
+:root[data-theme="N"] .tile:nth-child(odd) .tile-inner { rotate: -.8deg; }
+:root[data-theme="N"] .tile:nth-child(even) .tile-inner { rotate: .7deg; }
+:root[data-theme="N"] .tile-num { flex: 0 0 30px; width: 30px; height: 30px; margin: auto 8px auto 10px; border-radius: 50%; border: 0; background: #F06A4E; font-family: 'Karla', sans-serif; font-weight: 700; font-size: .95rem; }
+:root[data-theme="N"] .tile:not(.open) .tile-num { background: rgba(22,57,54,.18); }
+:root[data-theme="N"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 900; font-size: 1.3rem; }
+:root[data-theme="N"] .tile.open .tile-pts { color: #F06A4E; text-shadow: none; font-family: 'Fraunces', serif; font-weight: 900; font-size: 1.7rem; }
+/* Jeopardy als Briefumschlaege: zwei schraege Baender ergeben die Klappe,
+   Farbe je Spalte reihum. */
+:root[data-theme="N"] .jeopardy-board { gap: 12px; padding: 6px; }
+:root[data-theme="N"] .jeopardy-cat { background: #FBF5E8; box-shadow: 0 4px 10px rgba(22,57,54,.12); font-family: 'Fraunces', serif; font-weight: 900; font-size: .85rem; letter-spacing: 0; text-transform: none; }
+:root[data-theme="N"] .jeopardy-cell {
+  --flap: #F06A4E;
+  background: linear-gradient(162deg, var(--flap) 0 30%, transparent 30.5%), linear-gradient(198deg, var(--flap) 0 30%, transparent 30.5%), #FBF5E8;
+  box-shadow: 0 2px 0 rgba(22,57,54,.12), 0 8px 16px rgba(22,57,54,.16);
+  align-items: flex-end; padding-bottom: 8px;
+  font-family: 'Fraunces', serif; font-weight: 900; font-size: 1.6rem; letter-spacing: 0;
+}
+:root[data-theme="N"] .jeopardy-cell:nth-child(4n+2) { --flap: #2E8C7E; }
+:root[data-theme="N"] .jeopardy-cell:nth-child(4n+3) { --flap: #F2C14E; }
+:root[data-theme="N"] .jeopardy-cell:nth-child(4n)   { --flap: #9C8CE0; }
+:root[data-theme="N"] .jeopardy-cell:hover:not(.used) { transform: translateY(-3px) rotate(-1deg); }
+:root[data-theme="N"] .jeopardy-cell.used { background: transparent; box-shadow: inset 0 0 0 2px rgba(22,57,54,.15); }
+:root[data-theme="N"] .wwm-q { background: #FBF5E8; color: #163936; box-shadow: 0 10px 24px rgba(22,57,54,.15); text-align: left; justify-content: flex-start; font-family: 'Fraunces', serif; font-weight: 900; font-size: 1.8rem; line-height: 1.15; }
+:root[data-theme="N"] .wwm-opt { background: #FBF5E8; box-shadow: 0 2px 0 rgba(22,57,54,.12), 0 8px 18px rgba(22,57,54,.16); font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.3rem; }
+:root[data-theme="N"] .wwm-opt .wwm-letter { color: #163936; font-family: 'Fraunces', serif; font-weight: 900; }
+:root[data-theme="N"] .wwm-opt.selected { background: #F2C14E; }
+:root[data-theme="N"] .wwm-opt.correct { background: #2E8C7E; }
+:root[data-theme="N"] .wwm-opt.correct .wwm-letter { color: #FFFFFF; }
+/* Das Schild wird aufgehaengt und pendelt aus. */
+@keyframes thNSchwing {
+  0%   { transform: rotate(-9deg) translateY(-14px); opacity: 0; transform-origin: 50% 0; }
+  35%  { transform: rotate(5deg); opacity: 1; transform-origin: 50% 0; }
+  65%  { transform: rotate(-2deg); transform-origin: 50% 0; }
+  100% { transform: rotate(0); transform-origin: 50% 0; }
 }
 
 /* Helle Richtungen: die WWM-Leiter lag als rgba(0,0,0,.25) grau auf Creme.
