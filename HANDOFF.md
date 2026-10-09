@@ -12,6 +12,37 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — CLAUDE.md: Struktur-Liste nachgezogen (`8b89c56`)
+
+**Gemacht.** In der Struktur-Liste der `CLAUDE.md` fehlten `js/intro.js`
+(eigenes Intro mit Editor und zwei Bühnen, `INTRO_SLOTS` je Show) und
+`js/tp.js` (Trivial Pursuit). Beide eingetragen, in der Ladereihenfolge von
+`index.html` (`intro.js` direkt nach `core.js`, `tp.js` als letztes Spiel;
+`tournament.js`/`buzzer.js`/`roster.js` stehen in der Liste weiter gesammelt
+unten, wie vorher). Im Abschnitt Typprüfung „Alle elf Dateien" → „Alle 14".
+Anlass: David fragte nach den Bibliotheken, dabei fiel beim `grep` über
+`js/*.js` auf, dass dort 14 Dateien liegen. Auf Davids „ja trag sie nach“.
+
+**Warum so.** Nur die Liste und die Zahl, kein Umbau der Datei. Die „11
+`js/`-Module“ im Abschnitt „Warum das hier so scharf formuliert ist“ bleiben,
+das beschreibt den Stand vom 2026-09-16.
+
+**Geprüft.** `node check.js --types`: 14 js-Dateien typgeprüft, keine
+Meldung; 424 Handler-Aufrufe gegen 821 globale Namen; 273 feste IDs; „alles in
+Ordnung“. Damit stimmt die Aussage „Alle 14 … melden nichts“.
+
+**Offen.** `BAUPLAN.md` Zeile 31 nennt „13 Dateien in `js/`“ — veraltet
+(14), nicht angefasst. „Sieben Shows“ dort stimmt (Feud, Jeopardy, WWM, WWDS,
+DDF, PIH, TP). Nebenbefund dieser
+Session: `vendor/` (GSAP 3.15.0, ScrollTrigger, Lenis 1.3.26, React Bits mit
+nur ShinyText) ist weiterhin nirgends eingebunden (`grep` in `js/` und
+`index.html`: 0 Treffer). In `~/.claude/skills` 16 caveman-Ordner gezählt,
+der Eintrag `8d987e7` unten nennt 17 — nicht geklärt.
+
+**Fallstricke.** Keine.
+
+---
+
 ## 2026-10-09 — Abschluss-Übersicht Show-Symbole je Design (Session-Ende, kein Code)
 
 David beendet die Session und fängt neu an. Stand geprüft:
