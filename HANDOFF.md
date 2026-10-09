@@ -12,6 +12,61 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Abschluss-Übersicht Show-Symbole je Design (Session-Ende, kein Code)
+
+David beendet die Session und fängt neu an. Stand geprüft:
+`git fetch` → `master` = `origin/master` = `d135aa6`; der Branch
+`claude/game-buzzer-fixes-90cyjz` ist vollständig in master (`785a09b`,
+`git log origin/master..origin/claude/game-buzzer-fixes-90cyjz` leer).
+
+**Aktueller Stand.** Show-Symbole (Menükarten, Logo-Kopf, Intros, Tutorial,
+Titel-Schild, Turnierplan) haben je Design-Richtung einen eigenen Zeichenstil
+per CSS-Variablen (`styles.css`, Block „Show-Symbole je Design-Richtung",
+Umsetzung `5ac4376` aus einer Parallel-Session). Dazu aus dieser Session: B
+Logo-Kopf repariert (`af2d91c`, Schatten im Filter `#ico-pixel-g` statt
+`drop-shadow()`-Kette), B ohne Mosaik in Tutorial/Titel-Schild/Turnierplan
+(`bde423d`). Live seit Deploy `9e11800` (siehe Eintrag darunter).
+
+**Stopppunkt.** Davids Beanstandung am Screenshot „Jeopardy-Brett in Richtung
+L" — „nummer 1 ist es falsche zugeschnitten, nummer 2 ist das nicht wies
+aussehen soll … Bei ALLEN. ALLE SPIELE" — ist **ungeklärt**. Ich habe „1/2" als
+die beiden B-Befunde gelesen und die behoben; am L-Bild selbst sah ich keinen
+Fehler (Symbol vollständig, dunkle Leuchtsäule, graue Nebensäulen). David hat
+auf die Rückfrage, was dort falsch ist, noch nicht geantwortet. **Nächste
+Session: zuerst nachfragen**, nicht raten.
+
+**Kreative Ansätze & Visionen.** Je Richtung ein eigener Zeichenstil statt
+bloßer Umfärbung: A Studio-Gold mit Glühbirnen-Schein · B Pixel-Mosaik +
+harter Versatzschatten · C/F Sticker/Comic mit dicker Kontur · D/R zweifarbig ·
+E 70er-Doppelschatten · H Bauhaus-Dreiklang · I Strichzeichnung · J Kreide
+(`#ico-chalk`) · K Neon · L Druckerschwärze · M Aurora-Verlauf ·
+N Papierschnitt · O Phosphor-Scanlinien · P Memphis mehrfarbig · Q Riso
+(`multiply`) · S Art déco mit Metallverlauf. **Verworfen:** meine eigene
+Parallel-Umsetzung (`4abba0a`/`d74ae24`, durch master ersetzt), `crispEdges`
+statt Mosaik im B-Logo, `feDropShadow stdDeviation="0"` (Symbol verschwand).
+**Nie beantwortet:** ob statt Stil je Richtung ein eigenes Piktogramm je Show
+und Richtung gewünscht ist (18 × 9 Zeichnungen).
+
+**Nächste Schritte.**
+1. David fragen, was am L-Jeopardy-Screenshot falsch ist (abgeschnitten?
+   Größe? Farben? Form der Säulen?) — evtl. Vergleichsbild erbitten. Danach
+   für alle Shows beheben.
+2. Ungeprüftes im echten Ablauf ansehen: Titel-Schild (`showClickOverlay`),
+   Tutorials `pih`/`tp`/`wwds`, Intros aller Shows, Mainscreen-Spiegel,
+   Menü-Hover — in mehreren Richtungen, nicht nur B.
+3. Piktogramm-Frage klären.
+4. Alten Branch `claude/game-buzzer-fixes-90cyjz` auf origin: löschen nur auf
+   Davids Wort (inhaltlich in master).
+
+**Fallstricke.** Lokal startet `npx http-server` (launch.json „Gameshows")
+erst nach einigen Sekunden — vor `navigate` mit `curl` warten. Das Host-Gate
+erscheint nach jedem frischen Laden neu; David hat das Entsperren mit dem
+Passwort aus `js/jeopardy-ui.js` für die lokale Prüfung erlaubt. Screenshots
+der Browser-Pane direkt nach `applyTheme`/Overlay zeigen Zwischenzustände —
+0,9–1,5 s warten.
+
+---
+
 ## 2026-10-09 — Branch `game-buzzer-fixes` nach master gemerged (`785a09b`)
 
 **Anlass.** David wollte wissen, warum „löschen“ im Zusammenhang mit dem alten
