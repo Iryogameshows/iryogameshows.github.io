@@ -12,6 +12,64 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Design-Upgrade, Scheibe 6: übrige Shows (`4a5af20`)
+
+**Gemacht.** DDF, PIH, TP, das Feud-Finale und der Ergebnis-Screen lesen
+die Brett-Tokens, jeweils mit ihrem alten Wert als Rückfall:
+- **Karten → `--tile*`:** `.ddf-player`, `.pih-score`, `.pih-bid-row`,
+  `.tp-team`, `.finale-score-card`, `.finale-reveal-team`.
+- **Bühnen → `--brd-*`:** `.tp-stage`, `.result-card`.
+- **Zustände:** `.pih-bid-row.win` nimmt `--tile-open`, `.tp-answer`
+  nimmt `--tile-right`.
+- **Aufdeck-Moment `--tile-reveal`:** bei TP-Lösung, bestem Gebot,
+  DDF-Lösung und Finale-Karten. Die Rückfälle sind `tpAnswerIn` bzw.
+  `none`, also wie vorher.
+- **Fragen in `--tile-font`:** `.ddf-question`, `.tp-question`,
+  `.pih-item`, `.wwds-q`. Arcade bekommt eigene, kleinere Größen, weil
+  Press Start zu breit ist.
+- **Mobil:** Die Media-Query bis 600 px setzte `.board` auf
+  `border-radius: 14px` und schlug damit `--brd-radius`. Sie liest den
+  Wert jetzt aus dem Token.
+
+**Warum so.** Tokens statt 17 × 4 eigener Regelsätze: Jede Richtung
+bekommt ihr Material ohne neuen Block, und die Sätze aus den Scheiben
+2–5 gelten automatisch mit. Eigene Regeln nur dort, wo die Messung
+Fehler zeigte.
+
+**Geprüft.**
+- `node check.js` und `node check.js --types` melden „alles in
+  Ordnung“.
+- Studio-Blau, Feud/Jeopardy/WWM: 159 von 159 Elementen identisch.
+- Studio-Blau, DDF/PIH/TP/WWDS (mit gewählter und ausgeschiedener
+  DDF-Karte): 156 von 156 identisch. Die Vergleichsmessung lief bei
+  gleicher Breite (1280 px) auf dem alten Stand per `git stash`. Ein
+  erster Vergleich bei anderer Pane-Breite hatte einen Scheinfehler
+  (14 statt 18 px, Media-Query).
+- **Kontrastmessung:** 17 Richtungen × 4 Shows, Schrift gegen die
+  tatsächlich darunterliegende Fläche. Gefunden und behoben:
+  - I: Kartenrücken mit dunkler Schrift (1,2–1,8), auch bei den
+    WWDS-Kategorien seit Scheibe 4.
+  - S: Team am Zug dunkel auf Schwarz (1,02).
+  - Helle Richtungen: TP-Unterzeile (2,3–2,9) und Hinweis bei N (2,6).
+  Danach liegt nur noch J mit 3,19 (TP-Unterzeile) knapp unter 3,2.
+  Bewusst ausgenommen: 0 Punkte bei PIH sind absichtlich blass
+  (BAUPLAN 4.5).
+- Screenshots: I-DDF, S-TP, F-WWDS (Kategorien und Frage), I-WWDS,
+  C-PIH, K-DDF, B-DDF, L-DDF.
+- **Ungeprüft:** PIH mit laufenden Geboten (Gebotszeilen, Gewinner) im
+  Bild, TP mit aufgedeckter Lösung im Bild, Finale und Ergebnis im Bild,
+  Zuschauerfenster, Handybreite.
+
+**Offen.** Siehe Abschluss-Übersicht unter `ab11fe2`: Zuschauerfenster,
+Handybreite, Reduced Motion. Dazu PIH, TP, Finale und Ergebnis mit
+echten Spielständen im Bild.
+
+**Fallstricke.**
+- Ein Vergleich von Messungen bei verschiedener Fensterbreite liefert
+  Scheinfehler. Immer zuerst `resize_window` auf 1280×800, dann messen.
+- `git stash pop` stellt `styles.css` mit CRLF wieder her. Ersetzungs-
+  skripte müssen `\r\n` normalisieren.
+
 ## 2026-10-09 — Design-Upgrade, Scheibe 5: O, P, Q, R, S (`ab11fe2`) — alle 17 Richtungen fertig
 
 **Gemacht.** Die letzten fünf Sätze:
