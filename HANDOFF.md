@@ -12,6 +12,47 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Design-Upgrade, Scheibe 3: F, H, I, J (`b5eea83`)
+
+**Gemacht.** Im Block „Material je Design-Richtung“ (`styles.css`)
+stehen vor der Reduced-Motion-Regel diese Sätze:
+- **F Comic:** weißes Rasterpapier, Panels mit 4px schwarzer Kontur und
+  Rasterpunkten (`--tile-tex`). Die Frage steht im gelben
+  Erzähl-Panel, die Punkte im Sternblitz (`clip-path`). Jeopardy gelb,
+  verbrauchte Felder grau mit ✕ (`::after`). Aufdecken: POW.
+- **H Bauhaus:** Linien an den Feldern (`0 0 0 1.5px`) statt
+  schwarzer Fläche. Antwort 1 gelb, die weiteren weiß mit Farbbalken
+  reihum. Jeopardy-Felder in Rot, Gelb, Blau und Weiß, WWM-Buchstaben
+  als Kreis, Quadrat, Dreieck und Halbkreis. Aufdecken: Kreis von
+  links (`clip-path: circle`).
+- **I Salon:** Filztisch mit Gold- und Holzrand, verdeckt Kartenrücken
+  in Bordeaux, aufgedeckt eine Cremekarte mit Cormorant in Rot.
+  Jeopardy- und WWM-Felder als Karten. Aufdecken: Karte dreht sich
+  (`rotateY` von −180°).
+- **J Kreide:** Tafel im Holzrahmen mit Kreidestaub (`--brd-tex`).
+  Verdeckt nur eine gestrichelte Linie, Punkte mit Kreide eingekreist.
+  Jeopardy als Haftzettel mit Klebestreifen, WWM als Kreidekästen
+  (ungleiche Radien). Aufdecken: `clip-path` in 14 Stufen.
+- In allen hellen Richtungen liegt die WWM-Leiter jetzt auf `--panel`
+  mit Linie, vorher grau `rgba(0,0,0,.25)` auf Creme.
+
+**Warum so.** Bei F und H zuerst die Fläche schwarz wie die Stege im
+Entwurf. Die leeren Plätze der rechten Spalte (5 Antworten, Raster mit
+4 Zeilen) wurden dadurch zu einem schweren schwarzen Block. Deshalb
+helle Fläche und Linien an den Feldern. Bei J wurde die Mindmap aus
+dem Entwurf verworfen: Sie braucht eine andere Anordnung als die
+Tafel und damit Umbau in `js/feud.js`, also mehr als Material.
+
+**Geprüft.**
+- `node check.js` meldet „alles in Ordnung“.
+- Studio-Blau gemessen: 159 von 159 identisch.
+- Screenshots von Feud, Jeopardy und WWM je für F, H, I und J bei
+  1280×800. Konsole: 0 Fehler.
+- **Ungeprüft:** Zuschauerfenster, WWDS, DDF, PIH, TP, Handybreite,
+  Aufdeck-Animationen in Bewegung (nur Endzustand fotografiert).
+
+**Offen.** Scheibe 4: K, L, M, N.
+
 ## 2026-10-09 — Design-Upgrade, Scheibe 2: A–D (`87487b3`)
 
 **Gemacht.** Am Ende von `styles.css` steht ein neuer Block „Material je
