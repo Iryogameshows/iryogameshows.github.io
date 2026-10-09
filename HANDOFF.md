@@ -12,6 +12,37 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — CLAUDE.md: Intro-Labor eingetragen, gsap-demo gelöscht (`47385fd`)
+
+**Gemacht.** Auf Davids „lösch gsap-demo und trag es in die CLAUDE.md ein“.
+- `tools/gsap-demo/` gelöscht. Es war nie committet, nur lokal, und ist
+  durch das Intro-Labor überholt.
+- `CLAUDE.md`, Struktur-Liste:
+  - `mainscreen/`, `tools/intros/` und `tools/reactbits/` ergänzt
+  - `intro.js` auf den Stand nach `ad0b630` gebracht: eine Engine, drei
+    Bühnen, Vorlagen
+- Neuer Abschnitt „Intro-Labor“: was es ist, `lab.js`, warum die Intros
+  nicht ins Zuschauerfenster kommen, `lab.zeige()`, die Dramaturgie.
+- `vendor/`-Abschnitt: „Neue Animationen vorzugsweise mit GSAP“
+  widersprach BAUPLAN 4.8. Jetzt gilt: Die Leinwand wird mit CSS animiert,
+  GSAP nur für den Host und das Labor.
+
+**Warum so.** Beide Stellen waren seit `ad0b630` als offen vermerkt. Die
+GSAP-Regel hätte die nächste Session in genau den Fehler geschickt, den
+BAUPLAN 4.8 beschreibt. `mainscreen/` stand nicht in der Liste, obwohl alle
+Animationsregeln an ihm hängen.
+
+**Geprüft.** `node check.js`: „alles in Ordnung“. `ls tools` zeigt nur noch
+`intros` und `reactbits`. Der Diff der `CLAUDE.md` hat 36 Zeilen mehr und
+4 weniger.
+
+**Offen.** Favoriten unter den 18 Intros stehen aus (siehe Eintrag
+darunter).
+
+**Fallstricke.** Keine.
+
+---
+
 ## 2026-10-09 — Intro-Labor: 18 Intro-Prototypen (`f58ac59`)
 
 **Gemacht.** Unter `tools/intros/` liegen 18 eigenständige Intro-Seiten.
