@@ -12,6 +12,65 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — Echtes Popout in Opera geprüft · Tests haben in Live-Firebase geschrieben (kein Code-Commit)
+
+**Gemacht.**
+- Das echte Zuschauerfenster getestet. Opera GX lief dafür mit eigenem
+  Testprofil im Scratchpad und Fernsteuer-Port
+  (`--remote-debugging-port=9333 --user-data-dir=…`), gesteuert per
+  `playwright-core` über `connectOverCDP`. Davids eigenes Opera-Profil
+  blieb unberührt.
+- Das Popout öffnete sich über einen echten Klick auf „🖥 Mainscreen“. In
+  der Seite war Firebase dabei stummgeschaltet (siehe unten).
+- Die Testinstanz danach per CDP `Browser.close` beendet.
+
+**Geprüft (Popout).** Für A, M, K und I:
+- Der Designwechsel kommt an.
+- Das Aufdecken kommt an, auch wenn das Popout vorn liegt und das
+  Hauptfenster dahinter (2 auf 3 offene Felder).
+- Bildrate im Popout: 61 fps.
+- Der Birnenrahmen (A) läuft im Popout selbstständig weiter: 1800 auf
+  3317 ms `currentTime` in 1,5 s.
+- Screenshots von M (Glas mit `backdrop-filter`) und K (Neon) wie im
+  Hauptfenster.
+- **Ungeprüft:** zweiter Bildschirm bzw. Beamer und echte
+  Hardware-Leistung des Show-Rechners. Das Hauptfenster war in Opera nie
+  `hidden`, die Drosselung bei verstecktem Hauptfenster ist also nicht
+  geprüft.
+
+**Fallstrick (Test).** Ein abgebrochener erster Lauf ließ ein zweites
+Hauptfenster offen. Beide spiegelten ins selbe Popout „Board“, das alte
+mit Design A und ohne aufgedeckte Felder. Das sah aus wie ein Fehler der
+App, war aber keiner. Vor jedem Lauf alle `localhost:3000`-Seiten
+schließen.
+
+**Wichtig – Live-Firebase.** Die Spielstarts schreiben auch lokal in die
+echte Datenbank (`buzzer`):
+- `startGameActual()` → `feudBuzzConnect()` setzt `live`, `armed`,
+  `armStart`, `buzzes` und `excluded`.
+- `lockBuzzerJoins()` setzt `joinLocked:true` und `lockedNames`.
+- `revealQuestion()` → `feudBuzzArm()` setzt einen Zeitstempel.
+- Dazu die Kanäle `ddfvote`, `estimate`, `tpspin`, `round` und
+  `teamNames`.
+
+Meine Design-Tests im Pane haben das am 09./10.10. dutzendfach ausgelöst.
+Lesend nachgesehen: `buzzer/joinLocked` stand live auf `true`, `round`
+auf einem Zeitstempel aus meinen Tests. Die Sperre löst sich beim ersten
+Setup-Screen nach einem Neuladen des Hosts
+(`ensureLobbyConnected`/`ensureRosterConnected` setzen
+`joinLocked:false`). Bis dahin kann sich kein neues Handy anmelden.
+**Nicht zurückgesetzt**, weil Firebase-Daten nur nach Rückfrage geändert
+werden. Entscheidung bei David.
+
+`BAUPLAN.md` 5 sagt „Firebase läuft in keinem lokalen Durchlauf“. Das
+stimmt nicht: Lokal lädt die App Firebase vom CDN und verbindet sich mit
+der Live-DB. Korrektur vorgeschlagen, noch nicht gemacht.
+
+**Offen.**
+- Live-`buzzer/joinLocked` zurücksetzen? (David)
+- BAUPLAN 5 korrigieren und eine Regel „Tests schalten
+  `firebase.database` stumm“ aufnehmen? (David)
+
 ## 2026-10-10 — Design-Upgrade: Restprüfung durchgezogen (`546b1b9`)
 
 **Auftrag (David).** „teste den rest einmal durch“. Gemeint sind die
