@@ -28,7 +28,7 @@ In einem Satz: eine **zero-build, framework-lose Single-Page-Anwendung** mit
 **Realtime-State-Synchronisation** über drei Clients und einem
 **selbstgeschriebenen statischen Analyzer** vor jedem Commit.
 
-Rund 16.000 Zeilen, davon 13 Dateien in `js/`, sieben Shows, drei Bildschirme.
+Rund 17.000 Zeilen, davon 14 Dateien in `js/`, sieben Shows, drei Bildschirme.
 
 ### Die Bauweise
 
