@@ -174,6 +174,7 @@ styles.css      gesamtes CSS
 js/
   theme.js      Design-Richtung (18 Variablensätze)  ← lädt im <head>, vor allem anderen
   core.js       Logo-Rendering, showScreen(), Gemeinsames  ← lädt zuerst im <body>
+  intro.js      Eigenes Intro (Editor, zwei Bühnen) + Intro-Auswahl je Show (INTRO_SLOTS)
   feud.js       Family Feud
   jeopardy.js   Jeopardy-Logik
   jeopardy-ui.js Jeopardy-Board/Overlays
@@ -181,6 +182,7 @@ js/
   wwds.js       Wer weiß denn sowas
   ddf.js        Der Dümmste fliegt
   pih.js        Der Preis ist heiß
+  tp.js         Trivial Pursuit (Glücksrad statt Brett, Tortenstücke, Finalfrage)
   tournament.js Turnier-Modus
   buzzer.js     Firebase-Buzzer, GM-Remote
   roster.js     Teilnehmer-Auswahl (DDF, Preis ist heiß)
@@ -265,7 +267,7 @@ Wichtig: das ist **kein Build-Step**. TypeScript liest nur (`noEmit` in
 werden weiter direkt ausgeliefert. Es gibt nichts zu kompilieren, `git push`
 bleibt der ganze Deploy.
 
-**Alle elf Dateien in `js/` sind geprüft und melden nichts.** Das ist der
+**Alle 14 Dateien in `js/` sind geprüft und melden nichts.** Das ist der
 Zustand, in dem die Prüfung etwas wert ist: eine neue Meldung gehört dann zur
 Änderung, die gerade gemacht wurde, und niemand muss sie aus einem Rauschen
 von Altlasten heraussuchen.
