@@ -42,6 +42,11 @@ Design B auf dem gemergten Stand: Menükarten behalten den Mosaik-Filter
 (136 px) sichtbar, Feud-Symbol bei 22 px als drei Balken erkennbar, Jeopardy-
 Symbol im Titel-Schild sichtbar.
 
+**Deploy.** Push `19c7f38..9e11800` auf `master`. Lauf „Deploy static site to
+GitHub Pages“ für `9e118008b498…`: `conclusion: success` (GitHub-API, `gh` ist
+auf diesem Gerät nicht installiert). Die live ausgelieferte Seite selbst wurde
+nicht geöffnet; Design B dort nicht angesehen.
+
 **Ungeprüft.** Dieselben Stellen im echten Ablauf (`showClickOverlay`,
 Tutorials `pih`/`tp`/`wwds`, Intros der anderen Shows) — ich habe die Symbole
 in einem Probe-Element mit den Klassen gerendert, nicht in den echten
