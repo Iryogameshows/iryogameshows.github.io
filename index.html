@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Iryo's Gameshows</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&family=Bungee&family=Tilt+Neon&family=Press+Start+2P&family=Unbounded:wght@500;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&family=Bungee&family=Tilt+Neon&family=Press+Start+2P&family=Unbounded:wght@500;900&family=Mr+Dafoe&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -17,13 +17,13 @@
 </head>
 <body>
 
-<!-- Schriften der Film-Intros (Arcade, Primetime) vorwärmen. Google Fonts
+<!-- Schriften der Film-Intros vorwärmen. Google Fonts
      lädt eine Schriftdatei erst, wenn Text in ihr gesetzt wird - sonst käme
      sie erst mitten im Intro an und der Titel spränge von der Ersatzschrift
      um. Steht im <body>, damit der Spiegel es ins Zuschauerfenster mitnimmt
      und die Schriften dort ebenso früh lädt. Nicht display:none, sonst lädt
      der Browser nichts. -->
-<div id="font-warm" aria-hidden="true" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none"><span style="font-family:'Press Start 2P'">A</span><span style="font-family:Unbounded;font-weight:900">A</span><span style="font-family:Unbounded;font-weight:500">A</span></div>
+<div id="font-warm" aria-hidden="true" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none"><span style="font-family:'Press Start 2P'">A</span><span style="font-family:Unbounded;font-weight:900">A</span><span style="font-family:Unbounded;font-weight:500">A</span><span style="font-family:'Mr Dafoe'">A</span></div>
 
 <!-- Zeichenmittel fuer die Show-Symbole je Design-Richtung (styles.css,
      ".show-icon"). Nicht display:none - Verlaeufe und Filter in einem
@@ -201,6 +201,9 @@
         <option value="custom">Eigenes Intro</option>
         <option value="arcade">Arcade (Automatenspiel)</option>
         <option value="primetime">Primetime (große Show)</option>
+        <option value="regie">Regie (Live-Schaltung)</option>
+        <option value="tresor">Tresor (Einbruch)</option>
+        <option value="outrun">Outrun (80er-Nachtfahrt)</option>
       </select>
       <button class="btn btn-secondary btn-sm" id="intro-edit-btn" style="display:none;"
               onclick="openIntroEditor()">✏ Intro bearbeiten</button>

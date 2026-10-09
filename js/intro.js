@@ -457,7 +457,7 @@ function showBirthdayIntro(onDone){ playIntro(INTRO_PRESETS.bday.daten(), onDone
 function showCustomIntro(onDone){ playIntro(introData, onDone); }
 
 /* Vorschau aus dem Editor heraus - ohne Spielstart, ohne Firebase. Bei
-   Arcade und Primetime das gewählte Film-Intro, sonst das eigene. */
+   einem Film-Intro das gewählte, sonst das eigene. */
 function previewCustomIntro(){
   const film = introFilmKey();
   if (film) playFilmIntro(film);
@@ -471,11 +471,12 @@ function introFilmKey(){
   return INTRO_FILME[v] ? v : '';
 }
 
-/* ── Film-Intros: Arcade und Primetime ─────────────────────────────────────
-   Zwei Intros, die keine Stufen abspielen, sondern einen festen Ablauf wie
-   ein Vorspann: Arcade (die Show als Automatenspiel) und Primetime (der
-   Opener einer Samstagabendshow). Entstanden im Intro-Labor (tools/intros/),
-   dort mit GSAP, Canvas und WebAudio gebaut. Hier ist das Bild reines CSS,
+/* ── Film-Intros: Arcade, Primetime, Regie, Tresor, Outrun ─────────────────
+   Intros, die keine Stufen abspielen, sondern einen festen Ablauf wie ein
+   Vorspann: Arcade (die Show als Automatenspiel, aus dem Intro-Labor
+   tools/intros/ übernommen), Primetime (Opener einer Samstagabendshow),
+   Regie (Live-Schaltung aus dem Senderstudio), Tresor (Einbruch in den
+   Goldtresor) und Outrun (80er-Nachtfahrt). Hier ist das Bild reines CSS,
    aus demselben Grund wie bei den Bühnen oben (BAUPLAN 4.8): das
    Zuschauerfenster spiegelt nur den DOM.
 
@@ -504,7 +505,7 @@ const INTRO_TEXTE_STANDARD = {
 };
 /* Reihenfolge und Beschriftung der Felder im Editor. */
 const INTRO_TEXT_FELDER = [
-  { key:'vorab',      name:'Erste Zeile im Dunkeln (nur Primetime)', ph:'z.B. Heute Abend' },
+  { key:'vorab',      name:'Erste Zeile (alle außer Arcade)',        ph:'z.B. Heute Abend' },
   { key:'titelKlein', name:'Kleine Zeile über dem Titel',            ph:'z.B. Die Große' },
   { key:'titel1',     name:'Titel, erste Zeile',                     ph:'z.B. Keller' },
   { key:'titel2',     name:'Titel, zweite Zeile',                    ph:'z.B. Gameshow' },
@@ -701,6 +702,17 @@ const INTRO_TON = {
     lp.frequency.setValueAtTime(1400, t); lp.frequency.exponentialRampToValueAtTime(260, t + dauer);
     this.osz('sawtooth', f, t, dauer + .05, lp);
     this.osz('square', f / 2, t, dauer + .05, this.gain(.4, lp));
+  },
+  /** Kurzer Klick: Schalter, Ratsche, Relais.
+   *  @param {number} t @param {number} v @param {number} f */
+  klick(t, v, f){
+    this.rauschen(t, .03, this.filter('bandpass', f, 1.5, this.huelle(t, .0005, v, 0, .018)));
+  },
+  /** Ton, der in der Höhe gleitet: Laser, Tom, Knarzen.
+   *  @param {number} t @param {number} von @param {number} bis @param {number} dauer @param {number} v @param {OscillatorType} [typ] */
+  gleit(t, von, bis, dauer, v, typ){
+    const o = this.osz(typ || 'sine', von, t, dauer + .05, this.huelle(t, .004, v, dauer * .4, dauer * .6));
+    o.frequency.exponentialRampToValueAtTime(bis, t + dauer);
   },
   /** Trommelwirbel, immer dichter und lauter.
    *  @param {number} t @param {number} dauer @param {number} v */
@@ -904,6 +916,78 @@ function introPtSchlaege(zeile){
   return zeile.split(/[·•|\/]/).map(s => s.trim()).filter(Boolean).slice(0, 3);
 }
 
+/* ── Bausteine, die mehrere Film-Intros teilen ─────────────────────────────
+   Funken, Pyro, Konfetti, Glitzer und der Logo-Aufbau zum Schluss. Die
+   Stile dazu hängen an #kg-overlay.film, nicht an einer einzelnen Bühne.
+   Wo die Funken herkommen, sagt --oy am Behälter (Höhe in %). */
+
+/** Funken, die von einem Punkt nach allen Seiten fliegen und fallen.
+ *  @param {number} n @param {number} t Start in Sekunden @param {string[]} farben
+ *  @returns {string} */
+function introFunken(n, t, farben){
+  const R = introZufall, F = introF;
+  return Array.from({ length: n }, () => {
+    const w = R(0, Math.PI * 2), weit = R(.35, 1);
+    return `<i class="pt-fk" style="--x:${F(Math.cos(w) * weit * 62)}vw;--y:${F(Math.sin(w) * weit * 46 - 12)}vh;--g:${F(R(18, 40))}vh;--d:${F(t + R(0, .1))}s;--u:${F(R(1.1, 2.1))}s;--c:${farben[Math.floor(R(0, farben.length))]}"><b></b></i>`;
+  }).join('');
+}
+/** Zwei Funkenfontänen am unteren Rand, laufen endlos.
+ *  @param {number} t @param {number[]} spalten  waagerecht in %
+ *  @returns {string} */
+function introPyro(t, spalten){
+  const R = introZufall, F = introF;
+  return spalten.map(links => Array.from({ length: 26 }, () => {
+    const u = R(.9, 1.4);
+    return `<i style="left:${links}%;--x:${F(R(-7, 7))}vw;--y:${F(R(-78, -45))}vh;--u:${F(u)}s;--d:${F(t + R(0, u))}s"></i>`;
+  }).join('')).join('');
+}
+/** @param {number} n @param {number} t @param {string[]} farben
+ *  @returns {string} */
+function introKonfetti(n, t, farben){
+  const R = introZufall, F = introF;
+  return Array.from({ length: n }, () => {
+    const u = R(3.2, 6);
+    return `<i style="left:${F(R(0, 100))}%;--x:${F(R(-10, 10))}vw;--c:${farben[Math.floor(R(0, farben.length))]};--u:${F(u)}s;--d:${F(t + R(0, u))}s;--s:${F(R(.7, 1.3))}"></i>`;
+  }).join('');
+}
+/** Vierstrahlsterne, die nacheinander auf dem Logo aufblitzen.
+ *  @param {number} n @param {number} t
+ *  @returns {string} */
+function introGlitzer(n, t){
+  const R = introZufall, F = introF;
+  return Array.from({ length: n }, (_, k) =>
+    `<i style="left:${F(R(18, 82))}%;top:${F(R(24, 58))}%;--d:${F(t + k * .55 + R(0, .4))}s;--s:${F(R(.6, 1.3))}"></i>`).join('');
+}
+
+/** Der Logo-Moment: kleine Zeile, Titel aus einzeln anfliegenden
+ *  Chrom-Buchstaben, Schlagzeile, Preis, auf Wunsch eine Spiegelung. Der
+ *  Anflug beginnt bei --hit der Bühne, die übrigen Zeiten kommen hier mit.
+ *  Das Material (Gold, Silber, 80er-Chrom) wählt eine Klasse mat-… an der
+ *  Bühne.
+ *  @param {IntroTexte} tx
+ *  @param {{ landung: number, zeile: number, preis: number }} z
+ *  @param {{ spiegel?: boolean, preisWort?: string }} [o]
+ *  @returns {string} */
+function introFilmLogo(tx, z, o){
+  const opt = o || {};
+  const s = (/** @type {number} */ t) => `${t}s`;
+  const t1 = tx.titel1 || tx.titel2 || 'Show';
+  const t2 = tx.titel1 ? tx.titel2 : '';
+  const logo = introPtChrom(t1, 'l1', introPtFlug(Array.from(t1).length))
+    + (t2 ? introPtChrom(t2, 'l2', introPtFlug(Array.from(t2).length)) : '');
+  return `<div class="pt-logo">
+      <div class="pt-orbit" style="--t:${s(z.preis)}">
+        <div class="pt-landung" style="--t:${s(z.landung)}">
+          ${tx.titelKlein ? `<div class="pt-klein">${escapeHtml(tx.titelKlein)}</div>` : ''}
+          ${logo}
+          ${tx.titelZeile ? `<div class="pt-zeile" style="--t:${s(z.zeile)}">${escapeHtml(tx.titelZeile)}</div>` : ''}
+          ${tx.preis ? `<div class="pt-preis" style="--t:${s(z.preis)}"><small>${escapeHtml(opt.preisWort || 'Es geht um')}</small><span>${escapeHtml(tx.preis)}</span></div>` : ''}
+          ${opt.spiegel ? `<div class="pt-spiegel" aria-hidden="true">${logo}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
 /** @param {IntroTexte} tx
  *  @returns {string} */
 function introPrimetimeHtml(tx){
@@ -911,7 +995,6 @@ function introPrimetimeHtml(tx){
   const s = (/** @type {number} */ t) => `${t}s`;
   const t1 = tx.titel1 || tx.titel2 || 'Show';
   const t2 = tx.titel1 ? tx.titel2 : '';
-  const flug1 = introPtFlug(Array.from(t1).length), flug2 = introPtFlug(Array.from(t2).length);
 
   // Kaltstart: Staub im Spot
   const staub = Array.from({ length: 26 }, () =>
@@ -958,28 +1041,7 @@ function introPrimetimeHtml(tx){
   const warp = Array.from({ length: 48 }, () =>
     `<i style="--r:${F(R(0, 360))}deg;animation-delay:${F(P.tunnel + R(0, .45))}s"></i>`).join('');
 
-  // Logo-Moment: Funken, Pyro, Konfetti, Glitzer
-  const funken = Array.from({ length: 90 }, () => {
-    const w = R(0, Math.PI * 2), weit = R(.35, 1);
-    const c = ['#fff3c4', '#ffd76a', '#ff2bd6', '#29e7ff', '#ffffff'][Math.floor(R(0, 5))];
-    return `<i class="pt-fk" style="--x:${F(Math.cos(w) * weit * 62)}vw;--y:${F(Math.sin(w) * weit * 46 - 12)}vh;--g:${F(R(18, 40))}vh;--d:${F(P.hit + R(0, .1))}s;--u:${F(R(1.1, 2.1))}s;--c:${c}"><b></b></i>`;
-  }).join('');
-  const pyro = [9, 91].map(links => Array.from({ length: 26 }, () => {
-    const u = R(.9, 1.4);
-    return `<i style="left:${links}%;--x:${F(R(-7, 7))}vw;--y:${F(R(-78, -45))}vh;--u:${F(u)}s;--d:${F(P.hit + .15 + R(0, u))}s"></i>`;
-  }).join('')).join('');
-  const konfetti = Array.from({ length: 70 }, () => {
-    const u = R(3.2, 6);
-    const c = ['#ffd76a', '#fff3c4', '#ff2bd6', '#29e7ff', '#ffffff', '#ff8a3d'][Math.floor(R(0, 6))];
-    return `<i style="left:${F(R(0, 100))}%;--x:${F(R(-10, 10))}vw;--c:${c};--u:${F(u)}s;--d:${F(P.hit + .3 + R(0, u))}s;--s:${F(R(.7, 1.3))}"></i>`;
-  }).join('');
-  const glitzer = Array.from({ length: 8 }, (_, k) =>
-    `<i style="left:${F(R(18, 82))}%;top:${F(R(28, 62))}%;--d:${F(P.preis + k * .55 + R(0, .4))}s;--s:${F(R(.6, 1.3))}"></i>`).join('');
-
-  const kopf = tx.titelKlein ? `<div class="pt-klein">${escapeHtml(tx.titelKlein)}</div>` : '';
-  const logo = `${introPtChrom(t1, 'l1', flug1)}${t2 ? introPtChrom(t2, 'l2', flug2) : ''}`;
-
-  return `<div id="kgp" style="--hit:${s(P.hit)}">
+  return `<div id="kgp" style="--hit:${s(P.hit)};--oy:42%">
     <div class="pt-cam" style="--h:${s(P.hit)};--l:${s(P.landung)};--vs:${s(P.vs)};--te:${s(P.teams)};--s0:${s(P.schlag[0])};--s1:${s(P.schlag[1])};--s2:${s(P.schlag[2])}">
 
       <div class="ifw pt-s0" style="--a:0s;--b:${s(P.led)}">
@@ -1025,21 +1087,11 @@ function introPrimetimeHtml(tx){
         <div class="pt-heads oben">${strahler(true, 8)}</div>
         <div class="pt-boden"></div>
         <i class="pt-ring" style="--t:${s(P.hit)}"></i><i class="pt-ring" style="--t:${s(P.hit + .12)}"></i><i class="pt-ring" style="--t:${s(P.landung)}"></i>
-        <div class="pt-logo">
-          <div class="pt-orbit" style="--t:${s(P.preis)}">
-            <div class="pt-landung" style="--t:${s(P.landung)}">
-              ${kopf}
-              ${logo}
-              ${tx.titelZeile ? `<div class="pt-zeile" style="--t:${s(P.zeile)}">${escapeHtml(tx.titelZeile)}</div>` : ''}
-              ${tx.preis ? `<div class="pt-preis" style="--t:${s(P.preis)}"><small>Es geht um</small><span>${escapeHtml(tx.preis)}</span></div>` : ''}
-              <div class="pt-spiegel" aria-hidden="true">${logo}</div>
-            </div>
-          </div>
-        </div>
-        <div class="pt-funken">${funken}</div>
-        <div class="pt-pyro">${pyro}</div>
-        <div class="pt-konfetti">${konfetti}</div>
-        <div class="pt-glitzer">${glitzer}</div>
+        ${introFilmLogo(tx, P, { spiegel: true })}
+        <div class="pt-funken">${introFunken(90, P.hit, ['#fff3c4', '#ffd76a', '#ff2bd6', '#29e7ff', '#ffffff'])}</div>
+        <div class="pt-pyro">${introPyro(P.hit + .15, [9, 91])}</div>
+        <div class="pt-konfetti">${introKonfetti(70, P.hit + .3, ['#ffd76a', '#fff3c4', '#ff2bd6', '#29e7ff', '#ffffff', '#ff8a3d'])}</div>
+        <div class="pt-glitzer">${introGlitzer(8, P.preis)}</div>
         <i class="pt-flare" style="--t:${s(P.hit)}"></i>
       </div>
     </div>
@@ -1095,11 +1147,462 @@ function introPrimetimeTon(t0, A){
   if (introTexte.preis){ A.ping(t0 + P.preis, n(88), .08, 1.5); A.ping(t0 + P.preis + .1, n(95), .06, 1.5); }
 }
 
-/* Die beiden Film-Intros. html baut das Bild aus den Texten, ton plant den
-   Ton ein. Der Schlüssel ist der Wert in der Intro-Auswahl (#intro-variant). */
+/* ── Regie ────────────────────────────────────────────────────────────────
+   Live-Schaltung aus dem Senderstudio, Takt 0,5 s (120 bpm):
+
+     0,00  Regie       Monitorwand im Dunkeln, die Bildschirme gehen einzeln
+                       an: Farbbalken, zwei Kameras mit den Teams, Rauschen,
+                       Wellenform, Pegel, laufender Timecode, Vorschau
+     1,70  Startband   Film-Countdown 5-4-3-2-1 mit kreisendem Zeiger
+     4,20  ON AIR      das Schild glüht auf, die Wand zeigt alle neun
+                       Bildschirme als ein Bild: das Logo
+     6,00  Kameras     geteiltes Bild, Kamera 1 gegen Kamera 2
+     7,40  Bruch       zurück zur Wand, die Bildschirme fliegen auf die
+                       Kamera zu
+     8,40  Sendung     Silber-Logo, LIVE-Plakette, Senderlogo, Bauchbinde mit
+                       den Teams, Laufband - bleibt stehen, bis geklickt.
+
+   Der Timecode zählt mit CSS-Zählern (@property --rg-s/--rg-f in
+   styles.css), nicht mit JavaScript - sonst stünde er im Zuschauerfenster. */
+const INTRO_RG = {
+  takt: .5, monitore: .15, leader: 1.7, zahlen: [1.7, 2.2, 2.7, 3.2, 3.7],
+  onair: 4.2, teams: 6.0, wand2: 7.4, bruch: 7.9, hit: 8.4,
+  live: 9.0, landung: 9.3, zeile: 9.4, binde: 9.8, preis: 10.1, ticker: 10.2, hinweis: 11.5,
+};
+
+/** Die Monitorwand. 'feeds': neun verschiedene Bilder. 'logo': alle neun
+ *  zeigen zusammen ein Bild - jede Kachel trägt das ganze Wandbild und
+ *  verschiebt es um ihre eigene Lage, overflow:hidden schneidet zu.
+ *  @param {IntroTexte} tx
+ *  @param {'feeds'|'logo'} modus
+ *  @param {boolean} bruch  Kacheln fliegen bei INTRO_RG.bruch davon
+ *  @returns {string} */
+function introRegieWand(tx, modus, bruch){
+  const P = INTRO_RG, R = introZufall, F = introF;
+  const t1 = (tx.titel1 || tx.titel2 || 'Show').toUpperCase();
+  const t2 = tx.titel1 ? (tx.titel2 || '').toUpperCase() : '';
+  const name = (/** @type {number} */ i) => escapeHtml(((i ? tx.team2 : tx.team1) || `Team ${i + 1}`).toUpperCase());
+  const feeds = [
+    '<div class="rg-farbbalken"></div>',
+    `<div class="rg-cam rot"><span class="rg-rec">REC</span><em>CAM 1</em><b>${name(0)}</b></div>`,
+    '<div class="rg-rauschen"></div><span class="rg-ns">KEIN SIGNAL</span>',
+    `<div class="rg-welle">${Array.from({ length: 14 }, (_, k) => `<i style="animation-delay:-${F(R(0, .6))}s;animation-duration:${F(R(.35, .7))}s;--h:${F(R(30, 95))}%"></i>`).join('')}</div>`,
+    `<div class="rg-pgm"><span>STANDBY</span><em>PGM</em></div>`,
+    `<div class="rg-pegel"><i style="animation-duration:.42s"></i><i style="animation-duration:.37s"></i></div>`,
+    '<div class="rg-tc"></div>',
+    `<div class="rg-cam blau"><span class="rg-rec">REC</span><em>CAM 2</em><b>${name(1)}</b></div>`,
+    `<div class="rg-pvw"><span>${escapeHtml(tx.vorab || '')}</span><em>PVW</em></div>`,
+  ];
+  const gesamt = `<div class="rg-gesamtbild"><div class="rg-gstrahl"></div>
+      <div class="rg-glogo">${introPtChrom(t1, 'g1')}${t2 ? introPtChrom(t2, 'g2') : ''}</div>
+      <span class="rg-glive">LIVE</span></div>`;
+  const kacheln = feeds.map((feed, i) => {
+    const sp = i % 3, ze = Math.floor(i / 3);
+    const inhalt = modus === 'feeds' ? feed
+      : `<div class="rg-ganz" style="--sp:${sp};--ze:${ze}">${gesamt}</div>`;
+    // Flugbahn beim Bruch: weg von der Mitte, auf die Kamera zu
+    const flug = bruch ? `--fx:${F((sp - 1) * R(30, 55))}vw;--fy:${F((ze - 1) * R(25, 45))}vh;--fz:${Math.round(R(500, 900))}px;--frx:${Math.round(R(-70, 70))}deg;--fry:${Math.round(R(-80, 80))}deg;--fd:${F(P.bruch + Math.hypot(sp - 1, ze - 1) * .07 + R(0, .05))}s;` : '';
+    return `<div class="rg-mon${bruch ? ' flieg' : ''}" style="--i:${i};${flug}"><div class="rg-bild">${inhalt}</div></div>`;
+  }).join('');
+  return `<div class="rg-wand ${modus}">${kacheln}</div>`;
+}
+
+/** Ein Raum um die Wand: Pult, Schild ON AIR. Das Schild geht bei
+ *  INTRO_RG.onair an und bleibt an - in der ersten Einstellung ist es
+ *  deshalb noch dunkel, in den späteren schon hell.
+ *  @returns {string} */
+function introRegieRaum(){
+  return `<div class="rg-raum"></div><div class="rg-onair" style="--t:${INTRO_RG.onair}s">ON AIR</div><div class="rg-pult"></div>`;
+}
+
+/** @param {IntroTexte} tx
+ *  @returns {string} */
+function introRegieHtml(tx){
+  const P = INTRO_RG;
+  const s = (/** @type {number} */ t) => `${t}s`;
+  const name = (/** @type {number} */ i) => escapeHtml((i ? tx.team2 : tx.team1) || `Team ${i + 1}`);
+  const zahlen = P.zahlen.map((t, k) => `<div class="ifw" style="--a:${s(t)};--b:${s(k < 4 ? P.zahlen[k + 1] : P.onair)}"><b class="rg-lzahl" style="--t:${s(t)}">${5 - k}</b></div>`).join('');
+  const kuerzel = Array.from((tx.titel1 || tx.titel2 || 'TV').replace(/\s+/g, '')).slice(0, 2).join('').toUpperCase();
+  const lauf = [tx.titelZeile, `${name(0)} gegen ${name(1)}`, tx.preis ? `Es geht um ${tx.preis}` : '', tx.vorab].filter(Boolean)
+    .map(t => `<span>${escapeHtml(t)}</span><i>+++</i>`).join('');
+  return `<div id="kgr" class="mat-silber" style="--hit:${s(P.hit)};--oy:44%;--onair:${s(P.onair)}">
+    <div class="pt-cam" style="--h:${s(P.hit)};--l:${s(P.landung)};--vs:${s(P.onair)};--te:${s(P.teams)};--s0:${s(P.bruch)};--s1:${s(P.zahlen[0])};--s2:${s(P.zahlen[4])}">
+
+      <div class="ifw" style="--a:0s;--b:${s(P.leader)}">
+        ${introRegieRaum()}
+        <div class="rg-rig a">${introRegieWand(tx, 'feeds', false)}</div>
+      </div>
+
+      <div class="ifw rg-leader" style="--a:${s(P.leader)};--b:${s(P.onair)}">
+        <div class="rg-lkreis"></div><div class="rg-lzeiger" style="--t:${s(P.leader)}"></div><div class="rg-lkreuz"></div>
+        ${zahlen}
+        <div class="rg-kratzer"></div>
+      </div>
+
+      <div class="ifw" style="--a:${s(P.onair)};--b:${s(P.teams)}">
+        ${introRegieRaum()}
+        <div class="rg-rig b" style="--t:${s(P.onair)}">${introRegieWand(tx, 'logo', false)}</div>
+      </div>
+
+      <div class="ifw rg-split" style="--a:${s(P.teams)};--b:${s(P.wand2)}">
+        <div class="rg-feed rot" style="--t:${s(P.teams)}"><div class="rg-sucher"></div><span class="rg-rec">REC</span><em>CAM 1</em><b style="--n:${Math.max(6, name(0).length)}">${name(0).toUpperCase()}</b></div>
+        <div class="rg-feed blau" style="--t:${s(P.teams + .12)}"><div class="rg-sucher"></div><span class="rg-rec">REC</span><em>CAM 2</em><b style="--n:${Math.max(6, name(1).length)}">${name(1).toUpperCase()}</b></div>
+        <div class="rg-vsbinde" style="--t:${s(P.teams + .5)}"><span>${name(0)}</span><b>VS</b><span>${name(1)}</span></div>
+      </div>
+
+      <div class="ifw" style="--a:${s(P.wand2)};--b:${s(P.hit)}">
+        ${introRegieRaum()}
+        <div class="rg-rig c" style="--t:${s(P.wand2)}">${introRegieWand(tx, 'logo', true)}</div>
+        <div class="rg-gluehen" style="--t:${s(P.bruch)}"></div>
+      </div>
+
+      <div class="ifw fin rg-studio" style="--a:${s(P.hit)}">
+        <div class="rg-studiolicht"></div>
+        <div class="rg-boden"></div>
+        <i class="pt-ring" style="--t:${s(P.hit)}"></i><i class="pt-ring" style="--t:${s(P.landung)}"></i>
+        ${introFilmLogo(tx, P)}
+        <div class="pt-funken">${introFunken(70, P.hit, ['#ffffff', '#cfe8ff', '#29e7ff', '#ffd400'])}</div>
+        <div class="pt-konfetti">${introKonfetti(46, P.hit + .3, ['#ffffff', '#cfe8ff', '#3b82f6', '#ffd400', '#e8453c'])}</div>
+        <div class="pt-glitzer">${introGlitzer(6, P.preis)}</div>
+        <div class="rg-live" style="--t:${s(P.live)}"><i></i>LIVE</div>
+        <div class="rg-bug" style="--t:${s(P.live + .2)}">${escapeHtml(kuerzel)}<small>TV</small></div>
+        <div class="rg-binde" style="--t:${s(P.binde)}"><b>${name(0)}</b><span>gegen</span><b>${name(1)}</b></div>
+        <div class="rg-ticker" style="--t:${s(P.ticker)}"><em>LIVE</em><div class="rg-band"><div class="rg-lauf">${lauf}${lauf}</div></div></div>
+        <i class="pt-flare" style="--t:${s(P.hit)}"></i>
+      </div>
+    </div>
+
+    <i class="pt-wisch" style="--t:${s(P.teams - .16)}"></i>
+    <i class="pt-wisch" style="--t:${s(P.wand2 - .16)}"></i>
+    <div class="rg-blitz" style="--z:${s(P.leader)};--o:${s(P.onair)};--h:${s(P.hit)}"></div>
+    <div class="vig"></div>
+    <div class="grain"></div>
+    <div class="ifw fin" style="--a:${s(P.hinweis)}"><div class="kg-hint">Klicken um fortzufahren</div></div>
+  </div>`;
+}
+
+/** @param {number} t0 @param {IntroTon} A */
+function introRegieTon(t0, A){
+  const P = INTRO_RG, n = introNote;
+  // Raumton, die Monitore springen an
+  A.flaeche(t0, [n(38), n(45)], P.onair, .03, 320, .8);
+  for (let k = 0; k < 9; k++){
+    const t = t0 + P.monitore + k * .1;
+    A.wisch(t, .1, .1, 7000, 1500); A.klick(t, .18, 5000);
+  }
+  // Startband: Piepton auf jeder Zahl, der Zeiger tickt
+  P.zahlen.forEach((t, k) => { A.piep(t0 + t, 1000, .14, .08, 'sine'); A.klick(t0 + t + .25, .1, 2500); if (k === 4) A.anstieg(t0 + t, P.onair - t, .4); });
+  // ON AIR: Pauke und Nachrichten-Fanfare in d-Moll, dann der Groove
+  A.aufprall(t0 + P.onair, 1); A.becken(t0 + P.onair, .3);
+  const fanfare = [[0, .22], [.375, .22], [.75, .22], [1.0, 1.2]];
+  fanfare.forEach(([d, l], i) => {
+    A.stoss(t0 + P.onair + d, (i === 3 ? [50, 57, 62, 65, 69] : [50, 57, 62]).map(n), .12, l);
+    A.aufprall(t0 + P.onair + d, .35);
+  });
+  for (let k = 0; k < 13; k++){
+    const t = t0 + P.onair + 1.5 + k * P.takt * .5;
+    if (t > t0 + P.wand2) break;
+    A.hat(t, k % 2 ? .07 : .11);
+    if (k % 2 === 0) A.kick(t, .7);
+    if (k % 4 === 2) A.snare(t, .35);
+    if (k % 2 === 0) A.bass(t, n(38), .22, .18);
+  }
+  // Kameras
+  A.wisch(t0 + P.teams - .16, .3, .35, 500, 6000);
+  A.stoss(t0 + P.teams, [n(50), n(57), n(62)], .1, .5);
+  A.stoss(t0 + P.teams + .5, [n(48), n(55), n(60)], .1, .6);
+  A.wisch(t0 + P.wand2 - .16, .3, .35, 500, 6000);
+  // Bruch: Anlauf, Wirbel, Klirren
+  A.anstieg(t0 + P.wand2, P.hit - P.wand2, .45);
+  A.wirbel(t0 + P.bruch, P.hit - P.bruch, .4);
+  A.becken(t0 + P.bruch, .25); A.wisch(t0 + P.bruch, .5, .25, 9000, 2500);
+  // Sendung
+  A.aufprall(t0 + P.hit, 1.2); A.becken(t0 + P.hit, .45);
+  A.stoss(t0 + P.hit, [n(50), n(57), n(62), n(66), n(69)], .15, 2.4);
+  A.flaeche(t0 + P.hit + .05, [n(50), n(57), n(62), n(66)], 9, .05, 1500, .6);
+  [74, 78, 81, 86, 90, 93].forEach((m, i) => A.ping(t0 + P.hit + .15 + i * .08, n(m), .05, 1.2));
+  A.kick(t0 + P.landung, 1);
+  A.piep(t0 + P.live, 1400, .06, .05, 'sine'); A.piep(t0 + P.live + .1, 1400, .06, .05, 'sine');
+  A.wisch(t0 + P.binde - .05, .25, .2, 1500, 6000);
+}
+
+/* ── Tresor ───────────────────────────────────────────────────────────────
+   Ein Einbruch in den Tresor, Takt 0,625 s (96 bpm):
+
+     0,00  Dunkel      eine Taschenlampe tastet die Stahlwand ab, findet das
+                       Schild und die runde Tresortür
+     2,00  Laser       rotes Notlicht, Lasergitter vor der Tür; zwei
+                       Zugangskarten mit den Teamnamen, dann gehen die Laser
+                       einzeln aus
+     4,50  Schloss     das Zahlenrad ganz nah, drei Drehungen, drei Lämpchen
+     6,50  Tür         Riegel fahren ein, Dampf, das Rad dreht, die Tür
+                       schwingt auf, Goldlicht flutet heraus
+     8,40  Flug        durch die Tür ins Licht
+     9,00  Kammer      Goldbarren in Regalen, Münzregen, das Logo in Gold,
+                       der Preis als Barren - bleibt stehen, bis geklickt.
+
+   Die Taschenlampe ist ein Verlauf mit den registrierten Eigenschaften
+   --tr-x/--tr-y (@property in styles.css): nur so lässt sich die Lage eines
+   Verlaufs mit CSS animieren. */
+const INTRO_TR = {
+  takt: .625, lampe: .1, laser: 2.0, karte1: 2.5, karte2: 3.2, frei: 3.9,
+  rad: 4.5, raste: [5.0, 5.6, 6.2], tuer: 6.5, riegel: 6.6, drehen: 6.9, auf: 7.5, flug: 8.4,
+  hit: 9.0, landung: 9.9, zeile: 10.0, preis: 10.7, hinweis: 12,
+};
+
+/** @param {IntroTexte} tx
+ *  @returns {string} */
+function introTresorHtml(tx){
+  const P = INTRO_TR, R = introZufall, F = introF;
+  const s = (/** @type {number} */ t) => `${t}s`;
+  const name = (/** @type {number} */ i) => escapeHtml(((i ? tx.team2 : tx.team1) || `Team ${i + 1}`).toUpperCase());
+  const riegel = Array.from({ length: 12 }, (_, k) => `<i style="--w:${k * 30}deg;--d:${F(P.riegel + k * .04)}s"></i>`).join('');
+  const nieten = Array.from({ length: 24 }, (_, k) => `<i style="--w:${k * 15}deg"></i>`).join('');
+  const laser = Array.from({ length: 7 }, (_, k) => {
+    const w = [-24, 18, -9, 31, -36, 8, 22][k];
+    return `<i style="top:${18 + k * 10}%;--w:${w}deg;--w2:${w + R(-6, 6)}deg;--d:${F(P.frei + k * .07)}s;animation-duration:1.4s,${F(R(1.6, 2.6))}s,.08s"></i>`;
+  }).join('');
+  const dampf = Array.from({ length: 10 }, (_, k) => `<i style="--w:${F(k * 36 + R(-10, 10))}deg;--d:${F(P.riegel + R(0, .35))}s;--s:${F(R(.7, 1.4))}"></i>`).join('');
+  const zahlen = Array.from({ length: 10 }, (_, k) => `<span style="--w:${k * 36}deg">${k * 10}</span>`).join('');
+  const barren = (/** @type {number} */ anzahl) => Array.from({ length: anzahl }, () => '<i></i>').join('');
+  const muenzen = Array.from({ length: 34 }, () => {
+    const u = R(2.2, 3.6);
+    return `<i style="left:${F(R(2, 98))}%;--u:${F(u)}s;--d:${F(P.hit + .2 + R(0, u))}s;--s:${F(R(.6, 1.2))};--dreh:${F(R(.35, .8))}s"></i>`;
+  }).join('');
+  const karte = (/** @type {number} */ i, /** @type {number} */ t) => `<div class="tr-karte ${i ? 'blau' : 'rot'}" style="--t:${s(t)}"><small>ZUGANG</small><b>${name(i)}</b><i></i></div>`;
+
+  return `<div id="kgt" style="--hit:${s(P.hit)};--oy:40%">
+    <div class="pt-cam" style="--h:${s(P.hit)};--l:${s(P.landung)};--vs:${s(P.auf)};--te:${s(P.riegel)};--s0:${s(P.raste[0])};--s1:${s(P.raste[1])};--s2:${s(P.raste[2])}">
+
+      <div class="ifw2 tr-basis" style="--a:0s;--b:${s(P.rad)};--a2:${s(P.tuer)};--b2:${s(P.hit)}">
+        <div class="tr-flug" style="--t:${s(P.flug)}">
+          <div class="tr-wand"></div>
+          <div class="tr-schild">${escapeHtml(tx.vorab || 'Tresor')}<small>${escapeHtml(tx.titel1 || '')} ${escapeHtml(tx.titel2 || '')}</small></div>
+          <div class="tr-tuer">
+            <div class="tr-loch"><div class="tr-gold" style="--t:${s(P.auf)}"></div></div>
+            <div class="tr-rahmen"><div class="tr-nieten">${nieten}</div></div>
+            <div class="tr-blatt" style="--t:${s(P.auf)}">
+              <div class="tr-riegel">${riegel}</div>
+              <div class="tr-platte"><div class="tr-ringe"></div><div class="tr-scheibe"></div>
+                <div class="tr-rad" style="--t:${s(P.drehen)}"><i></i><i></i><i></i><b></b></div></div>
+            </div>
+            <div class="tr-scharnier"></div>
+            <div class="tr-goldstrahl" style="--t:${s(P.auf)}"></div>
+            <div class="tr-dampf">${dampf}</div>
+          </div>
+          <div class="tr-notlicht" style="--a:${s(P.laser)};--b:${s(P.rad)}"></div>
+          <div class="tr-lampe"></div>
+        </div>
+      </div>
+
+      <div class="ifw tr-sicherung" style="--a:${s(P.laser)};--b:${s(P.rad)}">
+        <div class="tr-laser">${laser}</div>
+        <div class="tr-leser">
+          <div class="tr-schlitz"></div>
+          <div class="tr-led" style="--t:${s(P.karte2 + .45)}"></div>
+          <div class="tr-anzeige">
+            <div class="ifw" style="--a:0s;--b:${s(P.karte1 + .45)}"><span>KARTE EINLESEN</span></div>
+            <div class="ifw" style="--a:${s(P.karte1 + .45)};--b:${s(P.frei)}"><span class="ok">${name(0)} ✓</span></div>
+            <div class="ifw" style="--a:${s(P.karte2 + .45)};--b:${s(P.frei)}"><span class="ok zwei">${name(1)} ✓</span></div>
+            <div class="ifw" style="--a:${s(P.frei)}"><span class="ok gross">FREIGEGEBEN</span></div>
+          </div>
+          <div class="tr-schacht">${karte(0, P.karte1)}${karte(1, P.karte2)}</div>
+        </div>
+      </div>
+
+      <div class="ifw tr-schloss" style="--a:${s(P.rad)};--b:${s(P.tuer)}">
+        <div class="tr-skala" style="--t:${s(P.rad)}"><div class="tr-striche"></div>${zahlen}<div class="tr-knauf"></div></div>
+        <div class="tr-marke"></div>
+        <div class="tr-lampen">${P.raste.map(t => `<i style="--t:${s(t)}"></i>`).join('')}</div>
+        <div class="tr-glanz" style="--t:${s(P.rad)}"></div>
+      </div>
+
+      <div class="ifw fin tr-kammer" style="--a:${s(P.hit)}">
+        <div class="tr-kammerlicht"></div>
+        <div class="tr-regal l">${barren(24)}</div>
+        <div class="tr-regal r">${barren(24)}</div>
+        <div class="tr-boden"></div>
+        <i class="pt-ring" style="--t:${s(P.hit)}"></i><i class="pt-ring" style="--t:${s(P.landung)}"></i>
+        ${introFilmLogo(tx, P, { spiegel: true, preisWort: 'Im Tresor' })}
+        <div class="pt-funken">${introFunken(80, P.hit, ['#fff3c4', '#ffd76a', '#ffb52e', '#ffffff'])}</div>
+        <div class="tr-muenzen">${muenzen}</div>
+        <div class="pt-glitzer">${introGlitzer(8, P.preis)}</div>
+        <i class="pt-flare" style="--t:${s(P.hit)}"></i>
+      </div>
+    </div>
+
+    <div class="tr-blitz" style="--h:${s(P.hit)};--r:${s(P.rad)};--tu:${s(P.tuer)}"></div>
+    <div class="vig"></div>
+    <div class="grain"></div>
+    <div class="ifw fin" style="--a:${s(P.hinweis)}"><div class="kg-hint">Klicken um fortzufahren</div></div>
+  </div>`;
+}
+
+/** @param {number} t0 @param {IntroTon} A */
+function introTresorTon(t0, A){
+  const P = INTRO_TR, n = introNote, R = introZufall;
+  A.flaeche(t0, [n(31), n(38), n(43)], P.auf, .04, 260, 1.5);
+  A.klick(t0 + P.lampe, .45, 2400);
+  // Herzschlag, ab dem Laser schneller
+  for (let t = .6; t < P.tuer; ){
+    A.kick(t0 + t, .55); A.kick(t0 + t + .17, .35);
+    t += t < P.laser ? 1.25 : P.takt;
+  }
+  // Laser: Einschalt-Zischen, Brummen
+  A.gleit(t0 + P.laser, 1800, 300, .35, .06, 'sawtooth');
+  A.flaeche(t0 + P.laser, [n(45)], P.frei - P.laser + .4, .025, 900, .05);
+  // Karten: Piep-Piep, dann der Freigabe-Akkord
+  [P.karte1, P.karte2].forEach(t => { A.wisch(t0 + t, .4, .15, 3000, 800); A.piep(t0 + t + .45, 1568, .08, .06, 'sine'); A.piep(t0 + t + .55, 2093, .12, .06, 'sine'); });
+  [n(76), n(80), n(83), n(88)].forEach((f, i) => A.ping(t0 + P.frei + i * .06, f, .06, 1));
+  for (let k = 0; k < 7; k++) A.gleit(t0 + P.frei + k * .07, 900, 120, .1, .03, 'square');
+  // Zahlenschloss: Ratschen beim Drehen, Klacken beim Einrasten
+  [[P.rad, P.raste[0]], [P.raste[0] + .05, P.raste[1]], [P.raste[1] + .05, P.raste[2]]].forEach(([von, bis]) => {
+    for (let t = von; t < bis - .05; t += .035) A.klick(t0 + t, .1, 3800);
+  });
+  P.raste.forEach(t => { A.aufprall(t0 + t, .3); A.kick(t0 + t, .6); A.ping(t0 + t + .05, n(84), .04, .5); });
+  // Tür: Riegel, Dampf, Rad, Knarzen, Licht
+  for (let k = 0; k < 12; k++) A.kick(t0 + P.riegel + k * .04, .35);
+  A.wisch(t0 + P.riegel, 1.1, .3, 4000, 600);
+  for (let t = P.drehen; t < P.auf; t += .05) A.klick(t0 + t, .12, 2600);
+  A.gleit(t0 + P.auf, 75, 48, 1.1, .12, 'sawtooth');
+  A.flaeche(t0 + P.auf, [n(60), n(64), n(67), n(72), n(76)], 7, .05, 2600, .9);
+  A.anstieg(t0 + P.auf + .3, P.hit - P.auf - .3, .45);
+  // Kammer: Einschlag, Gold-Akkord, Münzen
+  A.aufprall(t0 + P.hit, 1.3); A.becken(t0 + P.hit, .4);
+  A.stoss(t0 + P.hit, [n(48), n(55), n(60), n(64), n(67)], .15, 2.4);
+  A.kick(t0 + P.landung, 1); A.aufprall(t0 + P.landung, .4);
+  for (let k = 0; k < 18; k++) A.ping(t0 + P.hit + .3 + R(0, 3.5), n(Math.round(R(86, 100))), .025, .35);
+}
+
+/* ── Outrun ───────────────────────────────────────────────────────────────
+   Nachtfahrt in den Achtzigern, Takt 0,6 s (100 bpm):
+
+     0,00  Horizont    eine Laserlinie zieht den Horizont, die Sonne geht auf
+     1,60  Fahrt       Neon-Gitter rast heran, Palmen ziehen vorbei, Berge;
+                       "Heute Abend" als Leuchtschrift, die Schlagzeile in
+                       drei Neonröhren
+     4,60  Teams       zwei Neonschilder, VS mit Blitz
+     6,40  Turbo       das Gitter rast, Lichtstreifen, die Sonne wird weiß
+     7,60  Logo        80er-Chrom, darüber die Zeile in pinker Schreibschrift,
+                       VHS-Störung beim Aufschlag - bleibt stehen, bis
+                       geklickt. */
+const INTRO_OR = {
+  takt: .6, linie: .2, sonne: .8, fahrt: 1.6, vorab: 2.0, schlag: [2.6, 3.2, 3.8],
+  teams: 4.6, team2: 5.0, vs: 5.4, turbo: 6.4, hit: 7.6, schrift: 8.3, landung: 8.5, zeile: 9.0, preis: 9.6, hinweis: 11,
+};
+/* Palme als Schattenriss: Stamm und fünf Wedel. */
+const INTRO_PALME = '<svg viewBox="0 0 100 200" aria-hidden="true"><path d="M48 200C50 150 44 110 52 60h4c-6 50 0 90-2 140z"/><path d="M52 58C35 40 15 45 2 62c16-10 32-10 50-2z"/><path d="M52 58c18-20 36-16 47 2-15-10-29-10-47 1z"/><path d="M52 57C44 30 30 18 14 16c16 10 26 22 37 43z"/><path d="M53 57c9-27 23-37 39-35-16 8-28 18-38 37z"/><path d="M52 57c0-22 4-37 10-51-4 18-6 34-8 52z"/></svg>';
+
+/** @param {IntroTexte} tx
+ *  @returns {string} */
+function introOutrunHtml(tx){
+  const P = INTRO_OR, R = introZufall, F = introF;
+  const s = (/** @type {number} */ t) => `${t}s`;
+  const name = (/** @type {number} */ i) => escapeHtml(((i ? tx.team2 : tx.team1) || `Team ${i + 1}`).toUpperCase());
+  const sterne = Array.from({ length: 50 }, () => `<i style="left:${F(R(0, 100))}%;top:${F(R(0, 52))}%;--s:${F(R(.4, 1.2))};animation-delay:-${F(R(0, 3))}s"></i>`).join('');
+  const palmen = [-1, 1].map(seite => Array.from({ length: 5 }, (_, k) =>
+    `<div class="or-palme" style="--x:${F(seite * R(36, 52))}vw;--d:${F(P.fahrt + k * .62 + R(0, .2))}s;--f:${seite}">${INTRO_PALME}</div>`).join('')).join('');
+  const teile = introPtSchlaege(tx.titelZeile);
+  const schlaege = teile.map((wort, k) => `<div class="ifw" style="--a:${s(P.schlag[k])};--b:${s(k === teile.length - 1 ? P.teams : P.schlag[k + 1])}">
+      <div class="or-neon or-schlag" style="--t:${s(P.schlag[k])};--c:${['#ff2bd6', '#2de2ff', '#ffe14d'][k]};--n:${Math.max(6, Array.from(wort).length)}">${escapeHtml(wort.toUpperCase())}</div></div>`).join('');
+  const streifen = Array.from({ length: 44 }, () => {
+    const w = R(0, 1) < .5 ? R(-22, 22) : R(158, 202);
+    return `<i style="--r:${F(w)}deg;animation-delay:${F(P.turbo + R(0, .4))}s"></i>`;
+  }).join('');
+  const vhs = Array.from({ length: 7 }, () => `<i style="top:${F(R(0, 95))}%;height:${F(R(1, 7))}%;--x:${F(R(-6, 6))}vw"></i>`).join('');
+
+  return `<div id="kgo" class="mat-80er" style="--hit:${s(P.hit)};--oy:36%">
+    <div class="pt-cam" style="--h:${s(P.hit)};--l:${s(P.landung)};--vs:${s(P.vs)};--te:${s(P.teams)};--s0:${s(P.schlag[0])};--s1:${s(P.schlag[1])};--s2:${s(P.schlag[2])}">
+      <div class="or-welt">
+        <div class="or-himmel"></div>
+        <div class="or-sterne">${sterne}</div>
+        <div class="or-sonne" style="--t:${s(P.sonne)}"></div>
+        <div class="or-berge hinten"></div><div class="or-berge"></div>
+        <div class="or-boden" style="--t:${s(P.fahrt)}"><div class="or-gitter"></div><div class="ifw" style="--a:${s(P.turbo)};--b:${s(P.hit)}"><div class="or-gitter schnell"></div></div></div>
+        <div class="or-horizont" style="--t:${s(P.linie)}"></div>
+        <div class="or-palmen">${palmen}</div>
+      </div>
+
+      <div class="ifw" style="--a:${s(P.vorab)};--b:${s(P.teams)}">
+        ${tx.vorab ? `<div class="or-vorab" style="--t:${s(P.vorab)}">${escapeHtml(tx.vorab)}</div>` : ''}
+        ${schlaege}
+      </div>
+
+      <div class="ifw or-teams" style="--a:${s(P.teams)};--b:${s(P.turbo)}">
+        <div class="or-schildchen l" style="--t:${s(P.teams)};--c:#ff2bd6"><b style="--n:${Math.max(6, name(0).length)}">${name(0)}</b></div>
+        <div class="or-schildchen r" style="--t:${s(P.team2)};--c:#2de2ff"><b style="--n:${Math.max(6, name(1).length)}">${name(1)}</b></div>
+        <svg class="or-blitz" style="--t:${s(P.vs)}" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points="50,0 46,18 53,30 45,48 54,62 47,80 52,100" fill="none" stroke="#fff" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>
+        <div class="or-neon or-vs" style="--t:${s(P.vs)};--c:#ffe14d">VS</div>
+      </div>
+
+      <div class="ifw or-turbo" style="--a:${s(P.turbo)};--b:${s(P.hit)}">
+        <div class="or-streifen">${streifen}</div>
+        <div class="or-weiss" style="--t:${s(P.turbo)}"></div>
+      </div>
+
+      <div class="ifw fin or-final" style="--a:${s(P.hit)}">
+        <i class="pt-ring" style="--t:${s(P.hit)}"></i>
+        ${introFilmLogo(tx, P, { preisWort: 'Highscore' })}
+        ${tx.titelKlein ? `<div class="or-schrift" style="--t:${s(P.schrift)}">${escapeHtml(tx.titelKlein)}</div>` : ''}
+        <div class="pt-funken">${introFunken(70, P.hit, ['#ff2bd6', '#2de2ff', '#ffe14d', '#ffffff'])}</div>
+        <div class="pt-glitzer">${introGlitzer(6, P.preis)}</div>
+        <i class="pt-flare" style="--t:${s(P.hit)}"></i>
+      </div>
+    </div>
+
+    <div class="or-vhs" style="--t:${s(P.hit)}">${vhs}</div>
+    <div class="or-spur"></div>
+    <div class="or-licht" style="--h:${s(P.hit)};--vs:${s(P.vs)}"></div>
+    <div class="vig"></div>
+    <div class="grain"></div>
+    <div class="ifw fin" style="--a:${s(P.hinweis)}"><div class="kg-hint">Klicken um fortzufahren</div></div>
+  </div>`;
+}
+
+/** @param {number} t0 @param {IntroTon} A */
+function introOutrunTon(t0, A){
+  const P = INTRO_OR, n = introNote;
+  // Laserlinie, Fläche in a-Moll, die Sonne steigt
+  A.gleit(t0 + P.linie, 220, 1760, .6, .05, 'sawtooth');
+  A.flaeche(t0 + P.linie, [n(57), n(60), n(64)], P.hit - P.linie, .04, 1800, 1.2);
+  A.anstieg(t0 + P.sonne, P.fahrt - P.sonne, .3);
+  // Synthwave ab der Fahrt: Bass in Sechzehnteln a-F-C-G, Kick, Snare mit Hallfahne
+  const grund = [45, 41, 48, 43];
+  const muster = [0, 12, 7, 12];
+  for (let k = 0; ; k++){
+    const t = P.fahrt + k * P.takt / 4;
+    if (t >= P.hit - .05) break;
+    const takt = Math.floor(k / 16) % 4;
+    A.bass(t0 + t, n(grund[takt] - 12 + muster[k % 4]), .13, .17);
+    if (k % 4 === 0) A.kick(t0 + t, .8);
+    if (k % 4 === 2) A.hat(t0 + t, .1);
+    if (k % 8 === 4){ A.snare(t0 + t, .45); A.wisch(t0 + t, .45, .18, 5000, 1800); }
+  }
+  // Neon flackert an: Klick und kurzer Zisch
+  [P.vorab, ...P.schlag, P.teams, P.team2].forEach(t => { A.klick(t0 + t, .2, 4200); A.gleit(t0 + t, 2600, 700, .12, .03, 'square'); });
+  A.stoss(t0 + P.teams, [n(57), n(64), n(69)], .09, .5);
+  A.stoss(t0 + P.team2, [n(53), n(60), n(65)], .09, .5);
+  A.aufprall(t0 + P.vs, .9); A.becken(t0 + P.vs, .3); A.wisch(t0 + P.vs, .3, .3, 9000, 300);
+  // Turbo: Anlauf und Tom-Lauf in den Aufschlag
+  A.anstieg(t0 + P.turbo, P.hit - P.turbo, .5);
+  [0, .15, .3, .45].forEach((d, i) => A.gleit(t0 + P.hit - .6 + d, 200 - i * 30, 70, .2, .4, 'sine'));
+  // Aufschlag
+  A.aufprall(t0 + P.hit, 1.2); A.becken(t0 + P.hit, .45);
+  A.stoss(t0 + P.hit, [n(45), n(52), n(57), n(60), n(64), n(71)], .14, 2.6);
+  A.flaeche(t0 + P.hit + .05, [n(57), n(60), n(64), n(71)], 9, .05, 2200, .5);
+  A.gleit(t0 + P.hit, 3000, 200, .5, .05, 'sawtooth');
+  [81, 84, 88, 93, 96].forEach((m, i) => A.ping(t0 + P.schrift + i * .1, n(m), .05, 1.2));
+  A.kick(t0 + P.landung, .9);
+}
+
+/* Die Film-Intros. html baut das Bild aus den Texten, ton plant den Ton
+   ein. Der Schlüssel ist der Wert in der Intro-Auswahl (#intro-variant). */
 const INTRO_FILME = {
   arcade:    { name:'Arcade',    html: introArcadeHtml,    ton: introArcadeTon },
   primetime: { name:'Primetime', html: introPrimetimeHtml, ton: introPrimetimeTon },
+  regie:     { name:'Regie',     html: introRegieHtml,     ton: introRegieTon },
+  tresor:    { name:'Tresor',    html: introTresorHtml,    ton: introTresorTon },
+  outrun:    { name:'Outrun',    html: introOutrunHtml,    ton: introOutrunTon },
 };
 
 /** Spielt ein Film-Intro. Der Rahmen (Klick zum Beenden, Ausblenden,
@@ -1142,9 +1645,9 @@ function closeIntroEditor(){
 
 function renderIntroEditor(){
   // Ein Editor-Screen für beide Fälle: Stufen beim eigenen Intro, Texte bei
-  // Arcade und Primetime. "+ Stufe" ergibt bei den Film-Intros keinen Sinn.
+  // den Film-Intros. "+ Stufe" ergibt dort keinen Sinn.
   const film = introFilmKey();
-  setHtml('intro-edit-title', film ? '<em>Texte</em> für Arcade und Primetime' : '<em>Eigenes Intro</em> bearbeiten');
+  setHtml('intro-edit-title', film ? '<em>Texte</em> für die Film-Intros' : '<em>Eigenes Intro</em> bearbeiten');
   showEl('intro-add-btn', !film);
   if (film) return renderIntroTexteEditor();
   const slides = introData.slides || (introData.slides = []);
@@ -1207,7 +1710,7 @@ function renderIntroEditor(){
 }
 
 /* Die Texte der Film-Intros: ein Feld je Eintrag, dazu der Weg zurück zum
-   Standard. Gilt für beide - wer Arcade und Primetime an zwei Abenden
+   Standard. Gilt für alle - wer zwei Film-Intros an zwei Abenden
    zeigt, tippt den Titel nur einmal. */
 function renderIntroTexteEditor(){
   setHtml('intro-editor-grid', `
@@ -1219,7 +1722,7 @@ function renderIntroTexteEditor(){
           <input type="text" maxlength="80" value="${escAttr(introTexte[f.key])}" placeholder="${escAttr(f.ph)}"
                  oninput="introSetText('${f.key}',this)"></label>`).join('')}
       </div>
-      <div class="hint-line">Gilt für Arcade und Primetime. Primetime zeigt die Schlagzeile in bis zu drei Schlägen – Teile mit · trennen. Kurze Titel wirken am stärksten; lange werden kleiner gesetzt.</div>
+      <div class="hint-line">Gilt für alle Film-Intros (Arcade, Primetime, Regie, Tresor, Outrun). Primetime und Outrun zeigen die Schlagzeile in bis zu drei Schlägen – Teile mit · trennen. Kurze Titel wirken am stärksten; lange werden kleiner gesetzt.</div>
     </div>`);
 }
 /* Beim Tippen nicht neu zeichnen, sonst springt der Cursor (wie introSetField). */
