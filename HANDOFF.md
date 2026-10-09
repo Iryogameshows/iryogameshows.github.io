@@ -60,6 +60,8 @@ Fehler zeigte.
   Bild, TP mit aufgedeckter Lösung im Bild, Finale und Ergebnis im Bild,
   Zuschauerfenster, Handybreite.
 
+**Nachtrag (`f8e368d`).** PIH mit drei Geboten bei A und C und TP mit aufgedeckter Lösung bei D und N im Bild geprüft. Im Gewinner-Gebot stand die Abweichung in 45 % heller Schrift auf der Gewinnerfläche. Mit gewählter Richtung steht sie jetzt in der Feldschrift mit 70 %.
+
 **Offen.** Siehe Abschluss-Übersicht unter `ab11fe2`: Zuschauerfenster,
 Handybreite, Reduced Motion. Dazu PIH, TP, Finale und Ergebnis mit
 echten Spielständen im Bild.
