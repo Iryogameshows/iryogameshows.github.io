@@ -12,6 +12,90 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Arcade und Primetime als Show-Intros (`d090a50`)
+
+**Gemacht.** David: „bau arcade in die show ein … zum Auswählen wie die
+anderen auch“ und „mach noch eins, wo du wirklich maximal flexxt“.
+- Intro-Auswahl (`#intro-variant`) um `arcade` und `primetime` ergänzt;
+  `runIntroThen` ruft dafür `playFilmIntro(key)` in `js/intro.js`.
+- Arcade: das Labor-Intro (`tools/intros/arcade/`) von GSAP auf reines
+  CSS übersetzt, gleiche Zeiten (Röhre .1, INSERT COIN .9, Titel 3.0,
+  Spielerwahl 6.0, VS 7.2, READY 8.8, GO 9.8, Titelbild 10.6).
+- Primetime (neu): Samstagabend-Opener, Zeitplan in `INTRO_PT`, Takt
+  0,55 s. Kaltstart mit Spot → LED-Wand (20×11 Felder, Welle) mit der
+  Schlagzeile in bis zu 3 Schlägen (Teile mit · getrennt) → 3 Makro-
+  Beauty-Shots am Chrom-Logo → Team-Split mit Blitz und VS → Lichttunnel
+  (16 Ringe in CSS-3D) → Logo: Buchstaben fliegen einzeln aus dem Raum an,
+  3 Druckwellen, 90 Funken, 52 Pyro-Teilchen, 70 Konfetti, Glitzer,
+  Flare, Spiegelboden, Preis-Plakette; danach Orbit im Kreis, bis geklickt.
+- Texte (`introTexte`, localStorage `introTexte`) gelten für beide; der
+  Intro-Editor zeigt bei Arcade/Primetime 8 Textfelder statt der Stufen
+  (`renderIntroTexteEditor`), „+ Stufe“ ist dann aus. Export schreibt
+  `intro-texte.json`, Import erkennt beide Formen an der Struktur.
+- Ton: `INTRO_TON` (gekürzter Lab.Ton) mit eigenem AudioContext, nur
+  wenn `SFX.enabled`; beim Wegklicken weich aus.
+- Schriften Press Start 2P und Unbounded in `index.html` und
+  `injectBoardStyles`; `#font-warm` im Body setzt sie unsichtbar, damit
+  Google Fonts die Dateien vor dem Intro lädt – auch im Zuschauerfenster,
+  weil der Body gespiegelt wird.
+- CLAUDE.md: Zeile zu `intro.js` ergänzt (von David freigegeben).
+
+**Warum so.** Das Zuschauerfenster führt keinen Code aus (BAUPLAN 4.8),
+deshalb keine GSAP-Zeitleiste. Stattdessen steht alles beim Start im
+DOM, jede Einstellung in einem `.ifw` mit `--a`/`--b`: zwei
+1-ms-Animationen `ifAn` (Füllung both) und `ifAus` (nur forwards, steht
+hinten in der Liste und gewinnt ab `--b`). `visibility` mit, damit
+ausgeblendete Einstellungen nicht zeichnen. Mehrere Wackler auf einem
+Element gehen als Liste derselben Keyframes mit verschiedenen
+Verzögerungen ohne Füllung. Chromschrift ist pro Buchstabe zweimal
+gesetzt (`.ex` Tiefe per text-shadow-Stapel in em, `.fc` Verlauf per
+background-clip:text), weil bei transparenter Textfarbe der Schatten über
+der Füllung läge. Glanz: zweite Animation ohne Rückwärtsfüllung, sonst
+überschreibt sie die erste vor ihrem Start. Verworfen: das Labor-Intro
+im Zuschauerfenster selbst abspielen lassen (bräuchte Code im
+Mainscreen, Gleichlauf unsicher); eigene Datei `js/intro-film.js` (wäre
+ein Struktur-Umbau mit neuem Script-Tag gewesen).
+
+**Geprüft.**
+- `node check.js` und `node check.js --types`: „alles in Ordnung“. Die
+  Typprüfung meldete zuerst 2× TS2502 bei `@param {typeof INTRO_TON}`,
+  gelöst mit `@typedef {typeof INTRO_TON} IntroTon`.
+- Im Browser (localhost, 480×270) alle Einstellungen per Zeitsprung
+  angesehen: alle Animationen nach dem Start einsammeln, pausieren,
+  `currentTime` setzen. Gefunden und behoben: VS verdeckte die
+  Teamnamen (jetzt diagonal versetzt), Spiegelung klebte am Preis, die
+  schräge Wischblende ragte am linken Rand ins Bild (Weg auf −210/+135vw).
+- Zuschauerfenster simuliert: `mainscreen/` im iframe, `boardWin` darauf,
+  `boardPageReady()`. Dort 821 Animationen wie im Hauptfenster, `ptSchub`
+  in beiden bei 1900 ms, 4 Schriftdateien geladen, nach Klick ist das
+  Overlay in beiden weg.
+- Lange Texte („Partykellergameshow“, „Die unglaublichen Kellerkinder“)
+  bleiben in 480 px Breite im Bild. Editor: Titel wechselt, 8 Felder,
+  „+ Stufe“ aus; beim eigenen Intro wieder an. Keller-Intro läuft weiter.
+- Ton: 216 (Primetime) bzw. 126 (Arcade) Klangquellen ohne Fehler
+  eingeplant.
+
+**Offen / ungeprüft.**
+- Ton nicht angehört.
+- Echtes Popup-Fenster am Beamer und Leistung des Show-Rechners: Primetime
+  hat 821 Animationen, viele davon mit box-shadow und mix-blend-mode. Ruckelt
+  es, zuerst Funken/Konfetti-Anzahl und die Moving Heads (mix-blend-mode)
+  reduzieren.
+- `prefers-reduced-motion` (zeigt nur das Schlussbild) nicht ausprobiert.
+- Kein Tempo-Regler; die Zeiten stehen fest in `INTRO_PT` bzw. im Block
+  `#kga` in `styles.css`.
+- Primetime ist nicht im Intro-Labor; ansehen geht über die Show
+  (Editor → „▶ Vorschau“).
+
+**Fallstricke.**
+- `document.getAnimations()` liefert beendete Animationen ohne Füllung
+  nicht mehr. Zum Spulen die Liste direkt nach dem Start einsammeln.
+- Im ausgeblendeten Browser-Pane zeigt ein Screenshot oft den Stand vor
+  dem letzten Sprung, gelegentlich mit Bildresten: nach dem Sprung 1 s
+  warten, im Zweifel ein zweites Mal aufnehmen.
+- `index.html` hat CRLF; ein Einfügen mit `\n` ergab gemischte
+  Zeilenenden (`git ls-files --eol` zeigte `w/mixed`).
+
 ## 2026-10-09 — Intro-Labor: Texte bearbeitbar, Jackpot, Boxring, Gürtel, F1-Wagen (`9e17780`)
 
 **Gemacht.** Davids Rückmeldung nach dem Ansehen am anderen PC:
