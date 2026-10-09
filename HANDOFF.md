@@ -12,6 +12,72 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — Design-Upgrade: Restprüfung durchgezogen (`546b1b9`)
+
+**Auftrag (David).** „teste den rest einmal durch“. Gemeint sind die
+offenen Punkte aus den Einträgen zu `ab11fe2` und `4a5af20`.
+
+**Geprüft und Ergebnis.**
+1. **Zuschauerfenster.**
+   - Das Pane öffnet `window.open` im selben Tab ohne `opener`, ein
+     echtes Popout geht hier also nicht. Stattdessen `mainscreen/` als
+     iframe an `<html>` gehängt (außerhalb von `<body>`, damit es nicht
+     mitgespiegelt wird), `boardWin = iframe.contentWindow`,
+     `boardPageReady()`.
+   - Der Spiegel läuft. `data-theme` kommt im Zuschauerfenster an,
+     `styles.css` dort enthält die Material-Regeln, die Animationen
+     (`thABirnen`, `thAKlapp`, `thAGlanz`, `thIKarte`) laufen dort
+     selbstständig.
+   - Fünf Stichproben (K-WWM, N-TP, F-DDF, M-Jeopardy, I-Feud), mit
+     getrenntem Spiegeln und Messen: 50 Elemente, 0 Abweichungen zum
+     Hauptfenster.
+   - **Ungeprüft:** echtes Popout auf zweitem Bildschirm, Flüssigkeit
+     von `backdrop-filter` (M) auf dem Beamer-Rechner.
+2. **Handybreite 400 px.** Die Spielbretter passen schon im Studio-Blau
+   nicht: Feud-Antworten +44 px abgeschnitten, Jeopardy-Raster +131 px,
+   `body { overflow-x: hidden }` schneidet ab. Mehrere Richtungen
+   verschärfen das (D Feud +158 px, Jeopardy +263 px; K, F und R
+   Jeopardy über +200 px). **Nicht behoben**, weil die Brett-Screens für
+   den Beamer gebaut sind und BAUPLAN 5 die 400-px-Regel für die
+   Host-Oberfläche meint. Frage an David offen.
+3. **Finale und Ergebnis.** Mit Testfragen nur im Speicher
+   (`finaleState.questions`, nicht gespeichert), Auflösung mit Treffer
+   und Fehlgriff. `showResults()` wurde bewusst **nicht** aufgerufen,
+   weil es Kontoergebnisse nach Firebase schreibt. Den Ergebnis-Screen
+   habe ich stattdessen mit `final-scores` und `winner-text` von Hand
+   gefüllt. Gefunden und behoben:
+   - Treffer und Fehlgriff waren Inline-Farben im JS (`js/feud.js`), auf
+     Creme und Messing 1,1–2,0. Jetzt Klassen `.hit`/`.miss`.
+   - Teamnamen bei 40 % lagen bei 2,1–2,6.
+   - L: Karten direkt auf mittelbraunem Grund (1,5), jetzt Papierkarten.
+   - N: Punkte 2,8, Ergebniszeilen 2,6.
+   - Q: Pink 3,1.
+   Danach 612 Messungen, keine unter 3,2.
+4. **Reduzierte Bewegung.** Die Emulation steht im Pane nicht zur
+   Verfügung. Deshalb den Inhalt der Media-Query testweise als `<style>`
+   ohne Bedingung eingefügt: Bei A, D, I und S laufen dann weder
+   Aufdeck-Moment, Birnenrahmen noch Glanz. Gegenprobe ohne die Regel:
+   `thAKlapp` und `thABirnen` laufen.
+- Studio-Blau: 159 von 159 und 156 von 156 identisch, auch nach der
+  Umstellung in `js/feud.js` (Treffer-Farbe gemessen: weiterhin
+  `rgb(34,197,94)`).
+- `node check.js` und `--types` melden „alles in Ordnung“.
+
+**Fallstricke.**
+- Liest man das Zuschauerfenster im selben Durchlauf aus, in dem
+  `morphMirror` gerade eingefügt hat, kommen leere Werte zurück. Erst im
+  nächsten Aufruf messen.
+- `.q-text` hat eine `transition` auf `background`. Im ausgeblendeten
+  Pane steht sie am Anfang, die Messung meldet dann transparent (P).
+- `getAnimations().finish()` auf alles anzuwenden schickt auch
+  Ausblend-Animationen ans Ende, der Screen wird schwarz.
+- Das Pane malt zeitweise nicht. Screenshots sind dann veraltet,
+  Messungen per JS stimmen weiter.
+
+**Offen.**
+- Handybreite der Spielbretter: Entscheidung durch David.
+- Echtes Popout auf dem Beamer-Rechner einmal ansehen.
+
 ## 2026-10-09 — Design-Upgrade, Scheibe 6: übrige Shows (`4a5af20`)
 
 **Gemacht.** DDF, PIH, TP, das Feud-Finale und der Ergebnis-Screen lesen
