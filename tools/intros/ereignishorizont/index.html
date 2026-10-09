@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ereignishorizont</title>
+<!-- Prototyp eines komplett neuen Intros, NICHT Teil der Show.
+
+     Idee: Schwärze, ein Lichtpunkt, Sprung durchs Sternenfeld, Ankunft an
+     einem Schwarzen Loch mit goldener Akkretionsscheibe - Kinobalken, Schlag,
+     und aus dem Licht schält sich der Titel. Danach treiben die Infos als
+     Untertitel durch den Raum.
+
+     Technik: ein einziger WebGL-Fragment-Shader rechnet das Bild. Für jedes
+     Pixel wird ein Lichtstrahl schrittweise ums Zentrum gekrümmt; wo er die
+     Scheibenebene kreuzt, sammelt er Licht, wo er hineinfällt, bleibt es
+     schwarz. Daraus entstehen Einsteinring und die über und unter dem Loch
+     sichtbare Rückseite der Scheibe von selbst. GSAP steuert die Zeitleiste
+     (Shader-Werte und Schrift), der Ton kommt aus WebAudio - ohne eine
+     einzige Datei.
+
+     Für die Show gilt BAUPLAN 4.8: das Zuschauerfenster spiegelt nur den
+     DOM, ein Canvas kommt dort nicht an. Soll das hier auf die Leinwand,
+     muss das Zuschauerfenster es selbst abspielen. -->
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&family=Inter:wght@300;500&display=swap" rel="stylesheet">
+<style>
+  :root{color-scheme:dark;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;}
+  body{font-family:Inter,system-ui,sans-serif;color:#fff;cursor:default;}
+  #gl{position:fixed;inset:0;width:100%;height:100%;display:block;}
+
+  /* Kinobalken 2,39:1 - bei 16:9 je 12,8 % oben und unten. */
+  .balken{position:fixed;left:0;right:0;height:12.8vh;background:#000;z-index:6;transform:scaleY(0);}
+  .balken.oben{top:0;transform-origin:top;}
+  .balken.unten{bottom:0;transform-origin:bottom;}
+
+  .vig{position:fixed;inset:0;z-index:4;pointer-events:none;background:radial-gradient(ellipse 80% 75% at 50% 50%,transparent 55%,rgba(0,0,0,.55) 100%);}
+  .korn{position:fixed;inset:-50%;z-index:7;pointer-events:none;opacity:.09;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:korn .45s steps(3) infinite;}
+  @keyframes korn{0%{transform:translate(0,0)}33%{transform:translate(-2%,3%)}66%{transform:translate(3%,-1%)}100%{transform:translate(-1%,-2%)}}
+
+  /* Titel: breit gesperrt, Gewicht und Sperrung laufen beim Auftauchen
+     zusammen (Unbounded ist eine variable Schrift, 200 bis 900). */
+  .ebene{position:fixed;inset:0;z-index:5;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+  /* Weicher Schatten hinter der Schrift: die Scheibe ist hinter dem Titel am
+     hellsten, ohne ihn verschwinden die kleinen Zeilen darin. Er gehört zur
+     Ebene, blendet also mit ihr ein und aus. */
+  .ebene::before, .karte::before{content:'';position:absolute;left:50%;top:50%;width:min(110vw,1500px);height:min(46vh,420px);transform:translate(-50%,-50%);z-index:-1;
+    background:radial-gradient(closest-side,rgba(0,0,0,.62),rgba(0,0,0,.38) 55%,transparent);pointer-events:none;}
+  .t-klein{font:300 clamp(13px,1.45vw,26px) 'Unbounded',sans-serif;--ls:.85;letter-spacing:calc(var(--ls) * 1em);padding-left:calc(var(--ls) * 1em);text-transform:uppercase;color:#f6e7cb;margin-bottom:2.6vh;opacity:0;}
+  .t-gross{font-family:'Unbounded',sans-serif;font-weight:200;font-size:min(5.4vw,10.5vh);--ls:.2;letter-spacing:calc(var(--ls) * 1em);padding-left:calc(var(--ls) * 1em);line-height:1;white-space:nowrap;text-transform:uppercase;
+    filter:drop-shadow(0 0 .35em rgba(255,186,110,.5)) drop-shadow(0 0 1.2em rgba(255,140,60,.25));}
+  .t-gross .ch, .k-text .ch{display:inline-block;color:transparent;-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;
+    background-image:linear-gradient(180deg,#fffdf6 0%,#fff0cf 38%,#ffcf86 62%,#e19a46 100%);}
+  .t-zeile{font:300 clamp(12px,1.05vw,18px) Inter,sans-serif;letter-spacing:.6em;padding-left:.6em;text-transform:uppercase;color:rgba(255,236,210,.7);margin-top:4.5vh;opacity:0;}
+
+  .karte{position:fixed;left:0;right:0;top:50%;z-index:5;pointer-events:none;text-align:center;transform:translateY(-50%);opacity:0;}
+  .k-ueber{font:300 clamp(12px,1.25vw,22px) Inter,sans-serif;--ls:.6;letter-spacing:calc(var(--ls) * 1em);padding-left:calc(var(--ls) * 1em);text-transform:uppercase;color:rgba(255,236,210,.78);}
+  .k-text{font-family:'Unbounded',sans-serif;font-weight:300;font-size:min(5.6vw,10.5vh);letter-spacing:.08em;padding-left:.08em;margin-top:2.4vh;white-space:nowrap;
+    filter:drop-shadow(0 0 .4em rgba(255,186,110,.4));}
+
+  .hinweis{position:fixed;left:0;right:0;bottom:16vh;z-index:6;text-align:center;font:500 13px Inter,sans-serif;letter-spacing:.5em;padding-left:.5em;text-transform:uppercase;color:rgba(255,236,210,.55);opacity:0;}
+
+  #start{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#000;cursor:pointer;}
+  #start b{font:300 clamp(18px,2vw,30px) 'Unbounded',sans-serif;letter-spacing:.5em;padding-left:.5em;color:#f6e7cb;}
+  #start span{font:400 13px Inter,sans-serif;letter-spacing:.3em;color:rgba(255,255,255,.45);text-transform:uppercase;}
+  #start:focus-visible{outline:2px solid #ffcf86;outline-offset:-8px;}
+
+  #leiste{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:30;display:flex;gap:10px;align-items:center;
+    background:rgba(8,8,14,.82);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 14px;font:500 14px Inter,sans-serif;transition:opacity .4s;}
+  #leiste.weg{opacity:0;pointer-events:none;}
+  #leiste a{min-height:36px;display:inline-flex;align-items:center;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;text-decoration:none;}
+  #leiste button{min-height:36px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;font:inherit;cursor:pointer;}
+  #leiste button:focus-visible, #leiste input:focus-visible{outline:2px solid #ffcf86;outline-offset:2px;}
+  #leiste input[type=range]{width:min(36vw,420px);}
+  #fehler{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;font:500 16px Inter,sans-serif;color:#fff;background:#000;text-align:center;padding:24px;}
+
+  @media (prefers-reduced-motion: reduce){ .korn{animation:none;} }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div class="vig"></div>
+
+<div class="ebene" id="titel">
+  <div class="t-klein" id="t-klein"></div>
+  <div class="t-gross" id="t-gross"></div>
+  <div class="t-zeile" id="t-zeile"></div>
+</div>
+<div id="karten"></div>
+<div class="hinweis" id="hinweis">Klicken, um zu beginnen</div>
+
+<i class="balken oben"></i><i class="balken unten"></i>
+<div class="korn"></div>
+
+<div id="start" tabindex="0" role="button"><b>EREIGNISHORIZONT</b><span>Klicken zum Starten · mit Ton</span></div>
+<div id="leiste" class="weg">
+  <a href="../">◱ Übersicht</a>
+  <button id="b-neu">↻ Von vorn</button>
+  <button id="b-pause">⏸ Pause</button>
+  <button id="b-ton">🔊 Ton an</button>
+  <input id="b-zeit" type="range" min="0" max="1000" value="0" aria-label="Zeitleiste">
+  <span id="b-t">0,0 s</span>
+</div>
+<div id="fehler">Dieser Browser kann kein WebGL - das Intro braucht eine Grafikkarte mit WebGL.</div>
+
+<script src="../../../vendor/gsap.min.js"></script>
+<script>
+/* ═══ INHALT ═══════════════════════════════════════════════════════════════
+   Texte wie im Keller-Intro. Alles andere ergibt sich daraus. */
+const SHOW = {
+  vorab: 'Heute Abend',
+  titelKlein: 'Die Große',
+  titel: 'Keller Gameshow',
+  titelZeile: 'Zwei Teams · Zwei Abende · Ein Sieger',
+  karten: [
+    { ueber: 'Es treten an',        text: 'Zwei Teams' },
+    { ueber: 'Gespielt wird an',    text: 'Zwei Abenden' },
+    { ueber: 'Heute Abend',         text: 'Gameshow Nr. 1' },
+    { ueber: 'Für das Siegerteam',  text: '30 €', zahl: 30 },
+  ],
+};
+
+/* ═══ SHADER ═══════════════════════════════════════════════════════════════ */
+const VERT = `attribute vec2 a; void main(){ gl_Position = vec4(a, 0., 1.); }`;
+const FRAG = `
+precision highp float;
+uniform vec2 uRes;
+uniform float uTime, uWarp, uHole, uFlash, uDist, uTilt, uYaw, uSpin, uPoint, uStars, uNeb, uExpo, uFlare, uBoost;
+
+float hash12(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * .1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float hash13(vec3 p){ p = fract(p * .1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+float noise3(vec3 p){
+  vec3 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+  return mix(mix(mix(hash13(i), hash13(i + vec3(1,0,0)), f.x), mix(hash13(i + vec3(0,1,0)), hash13(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(hash13(i + vec3(0,0,1)), hash13(i + vec3(1,0,1)), f.x), mix(hash13(i + vec3(0,1,1)), hash13(i + vec3(1,1,1)), f.x), f.y), f.z);
+}
+float fbm3(vec3 p){ float s = 0., a = .5; for (int i = 0; i < 4; i++){ s += a * noise3(p); p = p * 2.03 + vec3(1.7, 9.2, 3.1); a *= .5; } return s; }
+
+/* Sterne auf der Himmelskugel: drei Schichten Zellen, in wenigen davon ein
+   Stern mit eigener Farbe und leichtem Funkeln. */
+vec3 sterne(vec3 d){
+  vec3 c = vec3(0.);
+  for (int l = 0; l < 3; l++){
+    float fl = float(l);
+    vec3 p = d * (70. + fl * 85.);
+    vec3 id = floor(p), f = fract(p) - .5;
+    float h = hash13(id + fl * 17.3);
+    if (h > .962){
+      vec3 off = (vec3(hash13(id + 1.1), hash13(id + 2.3), hash13(id + 3.7)) - .5) * .55;
+      float h2 = hash13(id * 1.9 + 5.);
+      float b = smoothstep(.16, 0., length(f - off)) * (.35 + 1.4 * h2 * h2);
+      b *= .75 + .25 * sin(uTime * (2. + h2 * 3.) + h * 50.);
+      c += mix(vec3(1., .82, .6), vec3(.68, .8, 1.), h2) * b * (1. - fl * .28);
+    }
+  }
+  return c;
+}
+/* Ein schwaches Band aus Staub und Gas quer über den Himmel. */
+vec3 nebel(vec3 d){
+  float n = fbm3(d * 2.4 + vec3(0., 0., uTime * .01));
+  float n2 = fbm3(d * 5.5 + 4.);
+  float band = exp(-pow((d.y - .28 * d.x + .1) * 2.3, 2.));
+  vec3 c = mix(vec3(.10, .04, .17), vec3(.62, .26, .09), smoothstep(.38, .78, n));
+  return c * band * smoothstep(.28, .8, n2) * .6 * uNeb;
+}
+
+/* Sprung: Sterne als Striche, die aus der Mitte nach außen schießen. */
+vec3 tunnel(vec2 uv){
+  float r = length(uv), a = atan(uv.y, uv.x);
+  vec3 c = vec3(0.);
+  for (int l = 0; l < 3; l++){
+    float fl = float(l);
+    float seg = 160. + fl * 120.;
+    float ai = floor(a / 6.2831853 * seg);
+    float h = hash12(vec2(ai, fl * 7.1));
+    if (h < .45) continue;
+    float rr = fract(h * 13.7 + uTime * (.35 + uWarp * 1.6) * (.5 + h)) * 1.9;
+    float len = .015 + uWarp * uWarp * .9 * rr;
+    float af = abs(fract(a / 6.2831853 * seg) - .5);
+    float ang = smoothstep(.10 + .1 * rr, 0., af);
+    float rad = smoothstep(rr - len, rr, r) * step(r, rr);
+    c += ang * rad * mix(vec3(.7, .82, 1.), vec3(1., .85, .65), h) * (.4 + rr) * 1.6;
+  }
+  return c * smoothstep(0., .08, r);
+}
+
+vec3 aces(vec3 x){ return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0., 1.); }
+
+/* Das Loch. Ein Strahl pro Pixel, 100 Schritte. Die Krümmung ist eine
+   Näherung (Beschleunigung ~ 1/r²), keine echte Relativitätstheorie - aber
+   sie erzeugt Einsteinring, Photonenring und die hochgebogene Rückseite der
+   Scheibe ganz von selbst. uHole skaliert die Masse: bei 0 fliegt der Strahl
+   gerade, und dieselbe Funktion zeichnet nur den Sternhimmel. */
+vec3 szene(vec2 uv){
+  vec3 ro = vec3(0., uDist * sin(uTilt), -uDist * cos(uTilt));
+  float cy = cos(uYaw), sy = sin(uYaw);
+  ro.xz = mat2(cy, -sy, sy, cy) * ro.xz;
+  vec3 fw = normalize(-ro), rt = normalize(cross(vec3(0., 1., 0.), fw)), up = cross(fw, rt);
+  vec3 v = normalize(fw * 1.55 + uv.x * rt + uv.y * up);
+  vec3 p = ro, col = vec3(0.);
+  float trans = 1., glow = 0.;
+  float rs = max(uHole, .0001);
+  bool rein = false;
+  for (int i = 0; i < 100; i++){
+    float r = length(p);
+    float dt = clamp(r * .075, .025, 1.4);
+    v = normalize(v - p * (1.5 * uHole) / (r * r * r) * dt);
+    vec3 pn = p + v * dt;
+    if (p.y * pn.y < 0.){
+      vec3 q = mix(p, pn, p.y / (p.y - pn.y));
+      float rq = length(q.xz);
+      if (rq > 2.3 && rq < 10.){
+        float ang = atan(q.z, q.x) + uSpin / pow(rq, 1.5);
+        /* Schlieren: hohe Frequenz quer zur Bahn, niedrige entlang - so
+           entstehen lange Fäden, wie Gas, das gestreckt wird. Dazu grobe
+           Klumpen und nur noch ein Hauch Ringstruktur. */
+        float n = fbm3(vec3(rq * 3.4, cos(ang) * 1.25, sin(ang) * 1.25));
+        float klumpen = noise3(vec3(rq * 1.1, cos(ang) * 3.2, sin(ang) * 3.2));
+        float ringe = .82 + .18 * sin(rq * 6. + n * 9.);
+        float dichte = smoothstep(2.3, 3.1, rq) * smoothstep(10., 5.2, rq) * pow(n, 1.6) * 2.1 * (.55 + .7 * klumpen) * ringe;
+        float heiss = smoothstep(10., 2.3, rq);
+        vec3 dc = mix(vec3(.95, .28, .05), vec3(1., .72, .32), heiss);
+        dc = mix(dc, vec3(1., .96, .88), heiss * heiss * heiss);
+        vec3 vel = normalize(vec3(-q.z, 0., q.x));
+        float dop = pow(max(1. + .75 * dot(vel, -v), .15), 2.4);
+        col += trans * dc * dichte * dop * 2.4 * uHole * (1. + uBoost);
+        trans *= 1. - clamp(dichte * 1.1, 0., 1.) * .8 * uHole;
+      }
+    }
+    float rxz = length(p.xz);
+    glow += exp(-abs(p.y) * 2.6) * smoothstep(10.5, 3., rxz) * smoothstep(1.8, 3., rxz) * dt * .03;
+    if (uHole > .01 && r < rs){ rein = true; break; }
+    p = pn;
+    if (r > 70.) break;
+  }
+  if (!rein) col += trans * (sterne(v) * uStars + nebel(v));
+  col += glow * vec3(1., .58, .24) * uHole * (1. + uBoost);
+  return col;
+}
+
+void main(){
+  vec2 uv = (gl_FragCoord.xy - .5 * uRes) / uRes.y;
+  vec3 col = szene(uv);
+  col = mix(col, col * .25 + tunnel(uv), uWarp);
+  float r2 = dot(uv, uv);
+  col += vec3(1., .9, .72) * uPoint * (.0016 / (r2 + .0016) + .25 * exp(-r2 * 30.));
+  /* Anamorphe Flare: waagerechter Lichtstrich durch die Mitte. */
+  col += vec3(1., .66, .36) * exp(-abs(uv.y) * 90.) * exp(-abs(uv.x) * 1.4) * .5 * uFlare;
+  col += vec3(1., .93, .82) * uFlash;
+  col = aces(col * uExpo);
+  col *= 1. - .3 * r2;
+  col = pow(col, vec3(1. / 2.2));
+  col += (hash12(gl_FragCoord.xy + fract(uTime) * 100.) - .5) / 255.;
+  gl_FragColor = vec4(col, 1.);
+}`;
+
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+if (!gl){ document.getElementById('fehler').style.display = 'flex'; throw new Error('kein WebGL'); }
+function shader(typ, src){
+  const s = gl.createShader(typ); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) || 'Shaderfehler');
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, shader(gl.VERTEX_SHADER, VERT));
+gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, FRAG));
+gl.linkProgram(prog);
+if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog) || 'Linkfehler');
+gl.useProgram(prog);
+const buf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+const aLoc = gl.getAttribLocation(prog, 'a');
+gl.enableVertexAttribArray(aLoc);
+gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
+
+/* Alles, was die Zeitleiste bewegt. */
+const U = { time:0, warp:0, hole:0, flash:0, dist:34, tilt:.12, yaw:-.15, spin:0, point:0, stars:0, neb:0, expo:1, flare:0, boost:0, shake:0 };
+const LOC = {};
+['uRes','uTime','uWarp','uHole','uFlash','uDist','uTilt','uYaw','uSpin','uPoint','uStars','uNeb','uExpo','uFlare','uBoost']
+  .forEach(n => { LOC[n] = gl.getUniformLocation(prog, n); });
+
+/* Auflösung: der Shader ist teuer (100 Schritte je Pixel). Gerechnet wird in
+   75 % der Fenstergröße und hochskaliert - im Kino unsichtbar, weil das Bild
+   ohnehin weich ist. Läuft es zu langsam, geht es selbst auf 55 % herunter. */
+let guete = .75;
+function groesse(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.max(2, Math.floor(innerWidth * dpr * guete));
+  canvas.height = Math.max(2, Math.floor(innerHeight * dpr * guete));
+  gl.viewport(0, 0, canvas.width, canvas.height);
+}
+addEventListener('resize', groesse);
+groesse();
+
+let zuletzt = performance.now(), frames = 0, frameSumme = 0;
+function zeichnen(jetzt){
+  const dt = Math.min(.05, (jetzt - zuletzt) / 1000);
+  zuletzt = jetzt;
+  U.time += dt;
+  U.spin += dt * .55;
+  if (frames < 90){ frames++; frameSumme += dt; if (frames === 90 && frameSumme / 90 > .024 && guete > .55){ guete = .55; groesse(); } }
+  gl.uniform2f(LOC.uRes, canvas.width, canvas.height);
+  gl.uniform1f(LOC.uTime, U.time);
+  ['Warp','Hole','Flash','Dist','Tilt','Yaw','Spin','Point','Stars','Neb','Expo','Flare','Boost']
+    .forEach(n => gl.uniform1f(LOC['u' + n], U[n.toLowerCase()]));
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  const s = U.shake;
+  canvas.style.transform = s > .001 ? `translate(${(Math.random() - .5) * 14 * s}px,${(Math.random() - .5) * 10 * s}px) scale(${1 + .02 * s})` : '';
+  requestAnimationFrame(zeichnen);
+}
+requestAnimationFrame(zeichnen);
+
+/* ═══ TON ══════════════════════════════════════════════════════════════════
+   Alles synthetisch: Brummen, Anstieg, Aufprall, ein Orgel-Akkord aus
+   Obertönen (a-Moll), ein heller Schimmer beim Titel. Die Zeitpunkte sind
+   dieselben wie in der Zeitleiste unten. */
+const T = { sprung: 3.2, aufprall: 8.0, titel: 9.4, karten: 17.4, karteTakt: 3.3 };
+T.schluss = T.karten + SHOW.karten.length * T.karteTakt + .4;
+
+const Ton = {
+  ctx: null, out: null, nodes: [], an: true, rausch: null,
+  start(){
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.stop();
+    const c = this.ctx;
+    c.resume();
+    if (!this.rausch){
+      this.rausch = c.createBuffer(1, c.sampleRate * 2, c.sampleRate);
+      const d = this.rausch.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const comp = c.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.ratio.value = 4;
+    comp.connect(c.destination);
+    this.out = c.createGain();
+    this.out.gain.value = this.an ? .85 : 0;
+    this.out.connect(comp);
+    const t0 = c.currentTime + .05;
+    this.brummen(t0);
+    this.anstieg(t0 + T.sprung, T.aufprall - T.sprung);
+    this.aufprall(t0 + T.aufprall, 1);
+    this.orgel(t0 + T.aufprall + .3);
+    this.schimmer(t0 + T.titel);
+    SHOW.karten.forEach((_, i) => this.puls(t0 + T.karten + i * T.karteTakt));
+    this.aufprall(t0 + T.schluss, .55);
+  },
+  stop(){
+    this.nodes.forEach(n => { try { n.stop(); } catch {} });
+    this.nodes = [];
+    if (this.out){ try { this.out.disconnect(); } catch {} this.out = null; }
+  },
+  laut(an){ this.an = an; if (this.out) this.out.gain.setTargetAtTime(an ? .85 : 0, this.ctx.currentTime, .05); },
+  osz(typ, f, t, ende, ziel){
+    const o = this.ctx.createOscillator(); o.type = typ; o.frequency.setValueAtTime(f, t);
+    o.connect(ziel); o.start(t); o.stop(ende); this.nodes.push(o); return o;
+  },
+  huelle(t, a, wert, halten, r){
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(wert, t + a);
+    g.gain.setValueAtTime(wert, t + a + halten);
+    g.gain.exponentialRampToValueAtTime(.0001, t + a + halten + r);
+    return g;
+  },
+  rauschen(t, ende, ziel){
+    const s = this.ctx.createBufferSource(); s.buffer = this.rausch; s.loop = true;
+    s.connect(ziel); s.start(t); s.stop(ende); this.nodes.push(s); return s;
+  },
+  brummen(t){
+    const c = this.ctx, lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 210;
+    const g = this.huelle(t, 3, .16, 40, 4); lp.connect(g); g.connect(this.out);
+    this.osz('sawtooth', 55, t, t + 48, lp); this.osz('sawtooth', 55.35, t, t + 48, lp); this.osz('sine', 27.5, t, t + 48, g);
+  },
+  anstieg(t, dauer){
+    const c = this.ctx, bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 5;
+    bp.frequency.setValueAtTime(250, t); bp.frequency.exponentialRampToValueAtTime(5200, t + dauer);
+    const g = c.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.55, t + dauer - .05); g.gain.setValueAtTime(0, t + dauer);
+    bp.connect(g); g.connect(this.out); this.rauschen(t, t + dauer + .1, bp);
+    const g2 = c.createGain(); g2.gain.setValueAtTime(0, t); g2.gain.linearRampToValueAtTime(.07, t + dauer - .05); g2.gain.setValueAtTime(0, t + dauer);
+    g2.connect(this.out);
+    const o = this.osz('sine', 110, t, t + dauer + .1, g2); o.frequency.exponentialRampToValueAtTime(880, t + dauer);
+  },
+  aufprall(t, stark){
+    const c = this.ctx;
+    const g = c.createGain(); g.gain.setValueAtTime(stark, t); g.gain.exponentialRampToValueAtTime(.0001, t + 3.2); g.connect(this.out);
+    const o = this.osz('sine', 95, t, t + 3.4, g); o.frequency.exponentialRampToValueAtTime(28, t + 1.5);
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(1600, t); lp.frequency.exponentialRampToValueAtTime(140, t + 1.4);
+    const g2 = c.createGain(); g2.gain.setValueAtTime(.7 * stark, t); g2.gain.exponentialRampToValueAtTime(.0001, t + 1.8);
+    lp.connect(g2); g2.connect(this.out); this.rauschen(t, t + 2, lp);
+  },
+  orgel(t){
+    const c = this.ctx, lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
+    const g = c.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + 6);
+    g.gain.setValueAtTime(1, T.schluss - T.aufprall + t - 1); g.gain.linearRampToValueAtTime(1.5, T.schluss - T.aufprall + t + 2);
+    lp.connect(g); g.connect(this.out);
+    [110, 164.81, 220, 261.63, 329.63, 440].forEach((f, i) => {
+      const n = c.createGain(); n.gain.value = .034 - i * .003; n.connect(lp);
+      [[1, 1], [2, .45], [3, .24], [4, .14], [6, .06]].forEach(([h, a]) => {
+        const hg = c.createGain(); hg.gain.value = a; hg.connect(n);
+        this.osz('sine', f * h * (1 + (i % 2 ? .0008 : -.0008)), t, t + 45, hg);
+      });
+    });
+  },
+  schimmer(t){
+    [1760, 2637, 3520].forEach((f, i) => {
+      const g = this.huelle(t + i * .4, 2, .012, 2, 5); g.connect(this.out);
+      this.osz('sine', f, t + i * .4, t + i * .4 + 10, g);
+    });
+  },
+  puls(t){
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(.5, t); g.gain.exponentialRampToValueAtTime(.0001, t + .9); g.connect(this.out);
+    const o = this.osz('sine', 72, t, t + 1, g); o.frequency.exponentialRampToValueAtTime(38, t + .6);
+  },
+};
+
+/* ═══ SCHRIFT ══════════════════════════════════════════════════════════════ */
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const zeichen = t => Array.from(t).map(c => c === ' ' ? ' ' : `<span class="ch">${esc(c)}</span>`).join('');
+document.getElementById('t-klein').textContent = SHOW.titelKlein;
+document.getElementById('t-gross').innerHTML = zeichen(SHOW.titel);
+document.getElementById('t-zeile').textContent = SHOW.titelZeile;
+document.getElementById('karten').innerHTML =
+  `<div class="karte" id="vorab"><div class="k-ueber">${esc(SHOW.vorab)}</div></div>` +
+  SHOW.karten.map((k, i) => {
+    const m = k.zahl != null ? String(k.text).match(/^(\d+)(.*)$/) : null;
+    const text = m ? `<span class="ch zahl">${m[1]}</span>${zeichen(m[2])}` : zeichen(k.text);
+    return `<div class="karte" id="karte${i}"><div class="k-ueber">${esc(k.ueber)}</div><div class="k-text">${text}</div></div>`;
+  }).join('');
+
+/* ═══ ZEITLEISTE ═══════════════════════════════════════════════════════════ */
+const R = gsap.utils.random;
+let master;
+function bauen(){
+  if (master) master.kill();
+  Object.assign(U, { warp:0, hole:0, flash:0, dist:34, tilt:.12, yaw:-.15, point:0, stars:0, neb:0, expo:1, flare:0, boost:0, shake:0 });
+  const titel = document.getElementById('titel');
+  const gross = document.getElementById('t-gross');
+  const ch = gross.querySelectorAll('.ch');
+  gsap.set([titel, '#t-klein', '#t-zeile', '.karte', '#hinweis'], { clearProps: 'all' });
+  gsap.set(ch, { clearProps: 'all' });
+  gsap.set('.balken', { scaleY: 0 });
+  gsap.set(gross, { '--ls': .2, fontWeight: 200, opacity: 1 });
+  gsap.set(ch, { opacity: 0 });
+
+  const tl = gsap.timeline({ paused: true, onUpdate: zeitAnzeigen });
+
+  /* 1 · Schwärze, ein Lichtpunkt, Sterne kommen. */
+  tl.to(U, { point: 1, duration: 2.8, ease: 'power2.in' }, .3)
+    .to(U, { stars: .7, neb: .6, duration: 3.5, ease: 'sine.inOut' }, .5)
+    .fromTo('#vorab', { opacity: 0, filter: 'blur(10px)', y: 0 }, { opacity: 1, filter: 'blur(0px)', duration: 1.6, ease: 'power2.out' }, 1)
+    .fromTo('#vorab .k-ueber', { '--ls': 1.4 }, { '--ls': .6, duration: 2.6, ease: 'power3.out' }, 1)
+    .to('#vorab', { opacity: 0, filter: 'blur(8px)', duration: .6, ease: 'power2.in' }, T.sprung - .3);
+
+  /* 2 · Sprung. */
+  tl.to(U, { warp: 1, duration: T.aufprall - T.sprung, ease: 'expo.in' }, T.sprung)
+    .to(U, { point: 0, duration: .5 }, T.sprung + .2)
+    .to(U, { shake: 1, duration: T.aufprall - T.sprung, ease: 'expo.in' }, T.sprung)
+    .to(U, { dist: 26, duration: T.aufprall - T.sprung, ease: 'none' }, T.sprung);
+
+  /* 3 · Aufprall: weiß, Loch da, Kinobalken. */
+  tl.set(U, { warp: 0, flash: 1, hole: .2, dist: 46 }, T.aufprall)
+    .to(U, { shake: 0, duration: 1.2, ease: 'power3.out' }, T.aufprall)
+    .to(U, { flash: 0, duration: 2.6, ease: 'expo.out' }, T.aufprall)
+    .to(U, { hole: 1, duration: 2.2, ease: 'expo.out' }, T.aufprall)
+    .to(U, { flare: 1, duration: .25 }, T.aufprall)
+    .to(U, { flare: .35, duration: 3, ease: 'power2.out' }, T.aufprall + .25)
+    .to(U, { dist: 19, duration: 22, ease: 'sine.inOut' }, T.aufprall)
+    .to(U, { yaw: .2, tilt: .085, duration: 24, ease: 'sine.inOut' }, T.aufprall)
+    .to('.balken', { scaleY: 1, duration: 1.6, ease: 'expo.inOut' }, T.aufprall + .2);
+
+  /* 4 · Titel schält sich aus dem Licht. */
+  tl.fromTo('#t-klein', { opacity: 0, '--ls': 1.6, filter: 'blur(8px)' },
+                        { opacity: 1, '--ls': .85, filter: 'blur(0px)', duration: 2.4, ease: 'power3.out' }, T.titel)
+    .fromTo(ch, { opacity: 0, filter: 'blur(26px)', scale: 1.5, y: () => R(-30, 30) },
+                { opacity: 1, filter: 'blur(0px)', scale: 1, y: 0, duration: 2.2, ease: 'power3.out', stagger: { each: .07, from: 'center' } }, T.titel + .5)
+    .fromTo(gross, { '--ls': .9 }, { '--ls': .2, duration: 4.2, ease: 'power3.out' }, T.titel + .5)
+    .fromTo(gross, { fontWeight: 200 }, { fontWeight: 640, duration: 3.6, ease: 'power2.inOut' }, T.titel + 1.2)
+    .to(U, { boost: .5, duration: 1.2, yoyo: true, repeat: 1, ease: 'sine.inOut' }, T.titel + 1.6)
+    .fromTo('#t-zeile', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 1.4, ease: 'power2.out' }, T.titel + 3.2)
+    .fromTo(titel, { scale: 1 }, { scale: 1.05, duration: T.karten - T.titel, ease: 'none' }, T.titel)
+    .to(titel, { opacity: 0, scale: 1.18, filter: 'blur(14px)', duration: 1.2, ease: 'power2.in' }, T.karten - 1.3);
+
+  /* 5 · Untertitel treiben durch den Raum. */
+  SHOW.karten.forEach((k, i) => {
+    const t = T.karten + i * T.karteTakt;
+    const el = '#karte' + i;
+    const kch = document.querySelectorAll(el + ' .ch');
+    tl.fromTo(el, { opacity: 0, scale: .94 }, { opacity: 1, scale: 1.04, duration: T.karteTakt, ease: 'none' }, t)
+      .fromTo(el + ' .k-ueber', { opacity: 0, '--ls': 1.3 }, { opacity: 1, '--ls': .6, duration: 1.4, ease: 'power3.out' }, t)
+      .fromTo(kch, { opacity: 0, filter: 'blur(14px)', y: 18 }, { opacity: 1, filter: 'blur(0px)', y: 0, duration: 1, ease: 'power3.out', stagger: .045 }, t + .15)
+      .to(U, { boost: .35, duration: .25, yoyo: true, repeat: 1 }, t)
+      .to(el, { opacity: 0, filter: 'blur(10px)', duration: .6, ease: 'power2.in' }, t + T.karteTakt - .6);
+    if (k.zahl != null){
+      const zahl = document.querySelector(el + ' .zahl'), z = { v: 0 };
+      tl.fromTo(z, { v: 0 }, { v: k.zahl, duration: 1.6, ease: 'power3.out', snap: { v: 1 }, onUpdate: () => { zahl.textContent = String(z.v); } }, t + .2);
+    }
+  });
+
+  /* 6 · Schluss: Scheibe flammt auf, Titel kommt zurück und bleibt. */
+  tl.set(U, { flash: .55 }, T.schluss)
+    .to(U, { flash: 0, duration: 2.4, ease: 'expo.out' }, T.schluss)
+    .to(U, { boost: .7, flare: .9, duration: .4 }, T.schluss)
+    .to(U, { boost: .25, flare: .4, duration: 4, ease: 'power2.out' }, T.schluss + .4)
+    .to(U, { dist: 15, duration: 8, ease: 'power2.out' }, T.schluss)
+    .fromTo(titel, { opacity: 0, scale: .9, filter: 'blur(14px)' }, { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 2.2, ease: 'power3.out', immediateRender: false }, T.schluss + .2)
+    .fromTo('#hinweis', { opacity: 0 }, { opacity: 1, duration: 1.2 }, T.schluss + 2.4)
+    .to('#hinweis', { opacity: .35, duration: 1.4, yoyo: true, repeat: 3, ease: 'sine.inOut' }, T.schluss + 3.6);
+
+  master = tl;
+}
+
+/* ═══ BEDIENUNG ════════════════════════════════════════════════════════════ */
+const zeit = document.getElementById('b-zeit'), zeitTxt = document.getElementById('b-t');
+const bPause = document.getElementById('b-pause'), bTon = document.getElementById('b-ton'), leiste = document.getElementById('leiste');
+function zeitAnzeigen(){
+  zeit.value = String(Math.round(master.progress() * 1000));
+  zeitTxt.textContent = master.time().toFixed(1).replace('.', ',') + ' s';
+}
+function abspielen(){
+  bauen();
+  master.play(0);
+  Ton.start();
+  bPause.textContent = '⏸ Pause';
+}
+document.getElementById('start').addEventListener('click', () => {
+  document.getElementById('start').remove();
+  document.fonts.ready.then(abspielen);
+});
+document.getElementById('start').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); });
+document.getElementById('b-neu').onclick = abspielen;
+bPause.onclick = () => {
+  if (!master) return;
+  const p = !master.paused();
+  master.paused(p);
+  if (Ton.ctx) (p ? Ton.ctx.suspend() : Ton.ctx.resume());
+  bPause.textContent = p ? '▶ Weiter' : '⏸ Pause';
+};
+bTon.onclick = () => { Ton.laut(!Ton.an); bTon.textContent = Ton.an ? '🔊 Ton an' : '🔇 Ton aus'; };
+/* Spulen und Ton passen nicht zusammen - beim Spulen schweigt der Ton, bis
+   "Von vorn" ihn wieder synchron startet. */
+zeit.oninput = () => {
+  if (!master) return;
+  master.pause(); bPause.textContent = '▶ Weiter';
+  Ton.laut(false); bTon.textContent = '🔇 Ton aus';
+  master.progress(Number(zeit.value) / 1000, false);
+};
+let leisteTimer = 0;
+addEventListener('mousemove', () => {
+  leiste.classList.remove('weg');
+  clearTimeout(leisteTimer);
+  leisteTimer = setTimeout(() => leiste.classList.add('weg'), 2200);
+});
+/* Für Prüfungen von außen. */
+window.ereignis = { get master(){ return master; }, U, bauen, get guete(){ return guete; } };
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Senderlogo</title>
+<!-- Intro "Senderlogo": der Logo-Sting einer großen Abendshow. Lichtstreifen
+     schießen zur Mitte, aus der Tiefe dreht sich ein massives goldenes Logo
+     heran, schlägt auf, ein Glanz läuft darüber, die Linse flackert - und
+     das Logo bleibt im Raum stehen und dreht sich ganz leicht.
+
+     Die Tiefe ist echt 3D (CSS preserve-3d): 18 Kopien des Schriftzugs
+     liegen hintereinander, jede ein Stück dunkler - von der Seite gesehen
+     ergibt das einen massiven Körper, keine flache Schrift. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@500;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#ffcf5a;--lab-grund:#030817;--lab-text:#dfe9ff;}
+  html,body{margin:0;height:100%;background:#030817;overflow:hidden;}
+  #studio{position:fixed;inset:0;overflow:hidden;background:radial-gradient(ellipse 70% 60% at 50% 45%,#0d2152,#030817 70%);}
+  .kugel{position:absolute;border-radius:50%;filter:blur(40px);opacity:.55;}
+  .boden{position:absolute;left:0;right:0;bottom:0;height:30vh;background:linear-gradient(transparent,rgba(40,90,200,.12));}
+  .boden::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(120,170,255,.08) 0 1px,transparent 1px 8vw);transform:perspective(40vh) rotateX(60deg);transform-origin:bottom;}
+  .streif{position:absolute;left:50%;top:50%;height:2px;width:60vw;transform-origin:0 50%;background:linear-gradient(90deg,transparent,rgba(170,210,255,.9),transparent);opacity:0;}
+  .buehne3d{position:absolute;left:50%;top:46%;width:0;height:0;perspective:1400px;}
+  .dreh{position:absolute;left:0;top:0;transform-style:preserve-3d;}
+  .schicht{position:absolute;left:0;top:0;transform:translate(-50%,-50%);text-align:center;white-space:nowrap;font-family:'Archivo Black',sans-serif;text-transform:uppercase;line-height:.92;}
+  .schicht .k{display:block;font:800 min(2.6vw,4.4vh) Inter,sans-serif;letter-spacing:.55em;padding-left:.55em;margin-bottom:1.4vh;}
+  .schicht .g{display:block;font-size:min(12vw,21vh);letter-spacing:.01em;}
+  .schicht .g2{font-size:min(8.6vw,15vh);}
+  .front{color:transparent;
+    background:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.95) 50%,transparent 62%) 130% 0/260% 100% no-repeat,
+      linear-gradient(180deg,#fffbe6 0%,#ffe48a 26%,#f2b532 48%,#9b5c08 51%,#e7a524 60%,#ffd968 82%,#fff3c4 100%);
+    -webkit-background-clip:text;background-clip:text;}
+  .front .k{color:#fff;-webkit-text-fill-color:#fff;}
+  /* Spiegelung auf dem Boden: unter der Unterkante des Logos (~66 %), an
+     der eigenen Mitte umgeklappt - so liegt sie direkt darunter. */
+  .spiegel{position:absolute;left:50%;top:66%;transform:translate(-50%,0) scaleY(-1);transform-origin:50% 50%;opacity:0;
+    -webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.9),transparent 55%);mask-image:linear-gradient(to top,rgba(0,0,0,.9),transparent 55%);}
+  #blitz{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,#fff,rgba(255,255,255,.4) 30%,transparent 70%);opacity:0;}
+  .flare{position:absolute;left:0;right:0;top:46%;height:.5vh;margin-top:-.25vh;background:linear-gradient(90deg,transparent,rgba(160,200,255,.9),#fff,rgba(160,200,255,.9),transparent);
+    box-shadow:0 0 3vh 1vh rgba(120,170,255,.5);opacity:0;}
+  .flare-punkt{position:absolute;width:14vh;height:14vh;margin:-7vh;border-radius:50%;background:radial-gradient(circle,#fff,rgba(160,200,255,.4) 30%,transparent 70%);opacity:0;}
+  .los{position:absolute;bottom:9vh;left:0;right:0;text-align:center;font:500 13px Inter,sans-serif;letter-spacing:.5em;color:#dfe9ff;opacity:0;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div id="studio"></div>
+<div class="lab-korn" style="z-index:9;opacity:.05"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc } = Lab;
+const R = gsap.utils.random;
+const SCHICHTEN = 18;
+const T = { streifen: .2, flug: 1.5, aufschlag: 3.3, glanz: 3.7 };
+
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const inhalt = `<span class="k">${esc(SHOW.titelKlein)}</span><span class="g">${esc(ta)}</span><span class="g g2">${esc(tb)}</span>`;
+  /* Hinterste Schicht zuerst; Farbe von Bernstein nach Fast-Schwarz */
+  const schichten = Array.from({ length: SCHICHTEN }, (_, i) => {
+    const tiefe = SCHICHTEN - i, hell = 60 - tiefe * 2.6;
+    return `<div class="schicht" style="transform:translate(-50%,-50%) translateZ(${-tiefe * .45}vh);color:hsl(38 85% ${Math.max(8, hell)}%)">${inhalt}</div>`;
+  }).join('');
+  document.getElementById('studio').innerHTML = `
+    ${['#2a5bff', '#7a2bff', '#00b3ff', '#ff3ea5'].map((c, i) => `<i class="kugel" style="background:${c};width:${R(30, 50)}vh;height:${R(30, 50)}vh;left:${[5, 65, 30, 75][i]}%;top:${[10, 5, 60, 55][i]}%"></i>`).join('')}
+    <div class="boden"></div>
+    ${Array.from({ length: 28 }, (_, i) => `<i class="streif" style="transform:rotate(${i * 360 / 28 + R(-4, 4)}deg)"></i>`).join('')}
+    <div class="schicht front spiegel" id="spiegel">${inhalt}</div>
+    <div class="buehne3d"><div class="dreh" id="dreh">${schichten}<div class="schicht front" style="transform:translate(-50%,-50%) translateZ(.2vh)" id="front">${inhalt}</div></div></div>
+    <div class="flare"></div><i class="flare-punkt"></i>
+    <div id="blitz"></div>
+    <div class="los">Klicken, um zu beginnen</div>`;
+}
+
+function bauen(tl){
+  tl.fromTo('.kugel', { opacity: 0 }, { opacity: .55, duration: 2 }, 0)
+    .to('.kugel', { x: () => R(-80, 80), y: () => R(-50, 50), duration: 12, ease: 'sine.inOut' }, 0);
+  /* Lichtstreifen schießen von außen zur Mitte */
+  document.querySelectorAll('.streif').forEach((s, i) => {
+    const t = T.streifen + R(0, 1.1);
+    tl.fromTo(s, { opacity: 0, scaleX: 1, x: 0 }, { opacity: .9, duration: .1 }, t)
+      .fromTo(s, { scaleX: 1.6 }, { scaleX: 0, duration: .55, ease: 'power3.in', immediateRender: false }, t)
+      .to(s, { opacity: 0, duration: .1 }, t + .5);
+  });
+  /* Das Logo dreht sich aus der Tiefe heran */
+  tl.fromTo('#dreh', { rotationY: -110, rotationX: 25, rotationZ: -8, scale: .05, opacity: 0 },
+      { rotationY: 0, rotationX: 0, rotationZ: 0, scale: 1, opacity: 1, duration: T.aufschlag - T.flug, ease: 'power3.in' }, T.flug)
+    .fromTo('#spiegel', { opacity: 0 }, { opacity: .22, duration: .6, immediateRender: false }, T.aufschlag)
+    .fromTo('#blitz', { opacity: 1 }, { opacity: 0, duration: 1, ease: 'power2.out', immediateRender: false }, T.aufschlag)
+    .fromTo('#dreh', { y: -14 }, { y: 0, duration: .6, ease: 'elastic.out(1, .3)', immediateRender: false }, T.aufschlag)
+    .fromTo('#front, #spiegel', { backgroundPosition: '130% 0%, 0% 0%' }, { backgroundPosition: '-30% 0%, 0% 0%', duration: 1.3, ease: 'power2.inOut', immediateRender: false }, T.glanz)
+    .fromTo('.flare', { opacity: 0, scaleX: .2 }, { opacity: 1, scaleX: 1, duration: .25, immediateRender: false }, T.glanz + .45)
+    .to('.flare', { opacity: 0, duration: 1.2 }, T.glanz + .7)
+    .set('.flare-punkt', { left: innerWidth * .3, top: innerHeight * .46 }, T.glanz)
+    .fromTo('.flare-punkt', { opacity: 0 }, { opacity: 1, left: innerWidth * .7, duration: 1.3, ease: 'power2.inOut', immediateRender: false }, T.glanz)
+    .to('.flare-punkt', { opacity: 0, duration: .4 }, T.glanz + 1.1)
+  /* Danach schwebt es und dreht sich kaum merklich */
+    .to('#dreh', { rotationY: 9, rotationX: -4, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: 2 }, T.glanz + 1.4)
+    .fromTo('.los', { opacity: 0 }, { opacity: .8, duration: .8, yoyo: true, repeat: 5, ease: 'sine.inOut' }, T.glanz + 2.2);
+  Lab.explosion(tl, document.getElementById('studio'), T.aufschlag, { n: 60, farben: ['#ffe48a', '#ffffff', '#9cc4ff'], y: 46, weite: .65, rund: true, groesse: [2, 6], glanz: true, dauer: [1.5, 3], fall: .1 });
+}
+
+function ton(t0, A){
+  A.flaeche(t0, [55, 82.41], 6, .05, 300, 1);
+  for (let k = 0; k < 10; k++) A.rauschen_wisch(t0 + T.streifen + k * .11, .55, .07, 3000, 600);
+  A.rauschen_wisch(t0 + T.flug, T.aufschlag - T.flug, .4, 150, 4000);
+  A.anstieg(t0 + T.flug + .3, T.aufschlag - T.flug - .3, .3);
+  A.aufprall(t0 + T.aufschlag, 1.1);
+  A.stoss(t0 + T.aufschlag, [146.83, 220, 293.66, 369.99, 440], .16, 2.6);
+  [1174.66, 1479.98, 1760, 2349.32].forEach((f, i) => A.ping(t0 + T.glanz + .2 + i * .12, f, .05, 2.4));
+  A.flaeche(t0 + T.aufschlag, [146.83, 220, 293.66, 369.99], 9, .04, 1400, .3);
+}
+Lab.starte({ name: 'Senderlogo', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

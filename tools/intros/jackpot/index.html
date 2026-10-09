@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jackpot</title>
+<!-- Intro "Jackpot": ein Spielautomat mit vierzehn Walzen. Hebel runter,
+     die obere Reihe dreht und bleibt Walze für Walze auf K-E-L-L-E-R stehen,
+     dann die untere auf G-A-M-E-S-H-O-W. JACKPOT: Lichter jagen, Glocken,
+     Münzen fliegen aus der Schale. Der Titel IST der Gewinn.
+
+     Jede Walze ist ein Streifen aus 22 Zeichen in einem Fenster; das
+     letzte Zeichen ist der Zielbuchstabe. Gedreht wird mit back.out - die
+     Walze schießt ein Stück über und rastet zurück, wie eine echte. -->
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Bungee+Shade&family=Inter:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#ffd24d;--lab-grund:#12051f;--lab-text:#ffe9b0;}
+  html,body{margin:0;height:100%;background:#12051f;overflow:hidden;}
+  #casino{position:fixed;inset:0;overflow:hidden;
+    background:radial-gradient(circle at 15% 20%,rgba(255,60,170,.25),transparent 30%),radial-gradient(circle at 85% 25%,rgba(80,140,255,.22),transparent 32%),
+      radial-gradient(circle at 50% 110%,rgba(255,190,60,.25),transparent 45%),#12051f;}
+  .bokeh{position:absolute;border-radius:50%;filter:blur(2px);opacity:.35;}
+  #automat{position:absolute;left:50%;top:52%;width:min(84vw,150vh);transform:translate(-50%,-50%);}
+  .kopf{position:relative;margin:0 auto -1vh;width:72%;padding:1.6vh 0 2.2vh;border-radius:3vh 3vh 0 0;text-align:center;
+    background:linear-gradient(#d4202f,#8c0f1a);box-shadow:inset 0 0 0 .7vh #ffd24d,inset 0 0 0 1.2vh #8a5a00,0 0 6vh rgba(255,60,80,.4);}
+  .kopf b{font:400 min(7vw,9vh) 'Bungee Shade',sans-serif;color:#ffd24d;letter-spacing:.06em;}
+  .kopf .bulbs, .rahmen .bulbs{position:absolute;inset:.35vh;pointer-events:none;}
+  .bulb{position:absolute;width:1.3vh;height:1.3vh;margin:-.65vh;border-radius:50%;background:#5a3a10;}
+  .rahmen{position:relative;padding:3vh 3vh 4vh;border-radius:3vh;
+    background:linear-gradient(180deg,#f2f2f6,#9aa0ad 18%,#e8e8ee 32%,#7c8290 55%,#d8dae2 78%,#8a8f9c);box-shadow:0 3vh 6vh rgba(0,0,0,.6),inset 0 0 0 .5vh rgba(255,255,255,.6);}
+  .reihe{display:flex;justify-content:center;gap:1vh;margin:1.4vh 0;}
+  .fenster{position:relative;overflow:hidden;background:linear-gradient(#cfcfcf,#fff 30%,#fff 70%,#cfcfcf);border-radius:1vh;box-shadow:inset 0 .8vh 1.2vh rgba(0,0,0,.45),inset 0 -.8vh 1.2vh rgba(0,0,0,.45);}
+  .r1 .fenster{width:min(10.5vw,17vh);height:min(13vw,21vh);}
+  .r2 .fenster{width:min(7.6vw,12.4vh);height:min(9.4vw,15vh);}
+  .streifen{position:absolute;left:0;right:0;top:0;}
+  .streifen span{display:flex;align-items:center;justify-content:center;font:400 1em/1 Bungee,sans-serif;color:#1c1030;}
+  .r1 .streifen span{height:min(13vw,21vh);font-size:min(9vw,15vh);}
+  .r2 .streifen span{height:min(9.4vw,15vh);font-size:min(6.4vw,10.4vh);}
+  .streifen span.sym{color:#d4202f;} .streifen span.blau{color:#2b6fe0;}
+  .gewinn{position:absolute;inset:0;border-radius:1vh;box-shadow:inset 0 0 0 .5vh #ffd24d,0 0 3vh #ffd24d;opacity:0;}
+  .schale{margin:1.8vh auto 0;width:40%;height:3.2vh;border-radius:0 0 2vh 2vh;background:linear-gradient(#3a3a44,#111);box-shadow:inset 0 .6vh 1vh rgba(0,0,0,.8);}
+  #hebel{position:absolute;right:-5.2vh;top:34%;width:2vh;height:28vh;transform-origin:50% 100%;}
+  #hebel i{position:absolute;left:0;top:0;width:2vh;height:100%;border-radius:1vh;background:linear-gradient(90deg,#9aa0ad,#f2f2f6,#7c8290);}
+  #hebel b{position:absolute;left:-2vh;top:-3vh;width:6vh;height:6vh;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7a85,#d4202f 50%,#6a0812);}
+  #jackpot{position:absolute;left:50%;top:14%;transform:translate(-50%,-50%);font:400 min(12vw,20vh) 'Bungee Shade',sans-serif;color:#ffd24d;opacity:0;white-space:nowrap;
+    text-shadow:0 0 4vh rgba(255,210,77,.7);z-index:5;}
+  .los{position:absolute;bottom:3vh;left:0;right:0;text-align:center;font:800 13px Inter,sans-serif;letter-spacing:.45em;color:#ffe9b0;opacity:0;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div id="casino"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc } = Lab;
+const R = gsap.utils.random;
+const N = 22;
+const SYMBOLE = ['★', '7', '€', '♦', '♥', 'K', 'A', 'G', 'S', 'X', 'O', 'W', 'E', 'L', 'M', 'H', 'R'];
+const T = { licht: .3, hebel: 1.1, r1: 1.5, r2: 4.9, jackpot: 7.6 };
+
+function walze(ziel){
+  const zeichen = Array.from({ length: N - 1 }, () => SYMBOLE[(Math.random() * SYMBOLE.length) | 0]);
+  zeichen.push(ziel);
+  return `<div class="fenster"><div class="streifen">${zeichen.map((z, i) => `<span class="${i < N - 1 && '★7€♦♥'.includes(z) ? (i % 2 ? 'sym' : 'blau') : ''}">${esc(z)}</span>`).join('')}</div><i class="gewinn"></i></div>`;
+}
+function birnen(n, breit, hoch){
+  /* Birnen ringsum am Rand, Position in Prozent */
+  const pos = [];
+  for (let k = 0; k < n; k++){
+    const u = k / n * 2 * (breit + hoch);
+    let x, y;
+    if (u < breit){ x = u / breit * 100; y = 0; }
+    else if (u < breit + hoch){ x = 100; y = (u - breit) / hoch * 100; }
+    else if (u < 2 * breit + hoch){ x = 100 - (u - breit - hoch) / breit * 100; y = 100; }
+    else { x = 0; y = 100 - (u - 2 * breit - hoch) / hoch * 100; }
+    pos.push(`<i class="bulb" style="left:${x}%;top:${y}%"></i>`);
+  }
+  return pos.join('');
+}
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0].toUpperCase(), SHOW.titel.split(' ').slice(1).join(' ').toUpperCase()];
+  document.getElementById('casino').innerHTML = `
+    ${Array.from({ length: 18 }, (_, i) => `<i class="bokeh" style="left:${R(0, 100)}%;top:${R(0, 100)}%;width:${R(4, 14)}vh;height:${R(4, 14)}vh;background:${['#ff3ea5', '#ffd24d', '#4fa3ff'][i % 3]}"></i>`).join('')}
+    <div id="jackpot">JACKPOT!</div>
+    <div id="automat">
+      <div class="kopf"><b>${esc(SHOW.titelKlein.toUpperCase())}</b><div class="bulbs">${birnen(26, 3, 1)}</div></div>
+      <div class="rahmen">
+        <div class="bulbs">${birnen(44, 4, 2)}</div>
+        <div class="reihe r1">${Array.from(ta).map(walze).join('')}</div>
+        <div class="reihe r2">${Array.from(tb).map(walze).join('')}</div>
+        <div class="schale"></div>
+        <div id="hebel"><i></i><b></b></div>
+      </div>
+    </div>
+    <div class="los">Klicken, um zu beginnen</div>`;
+}
+
+function bauen(tl){
+  const casino = document.getElementById('casino');
+  const bulbs = gsap.utils.toArray('.bulb');
+  tl.to('.bokeh', { x: () => R(-60, 60), y: () => R(-40, 40), duration: 12, ease: 'sine.inOut' }, 0)
+    .fromTo('#automat', { scale: .9, opacity: 0 }, { scale: 1, opacity: 1, duration: .8, ease: 'power3.out' }, 0)
+    .to(bulbs, { background: '#ffe9a0', boxShadow: '0 0 1.4vh .4vh rgba(255,210,90,.8)', duration: .05, stagger: .015 }, T.licht);
+  /* Hebel */
+  tl.to('#hebel', { rotation: 38, duration: .35, ease: 'power2.in' }, T.hebel)
+    .to('#hebel', { rotation: 0, duration: .5, ease: 'back.out(3)' }, T.hebel + .35);
+  /* Walzen: Höhe eines Zeichens messen, auf das letzte drehen */
+  const drehen = (sel, start, grund, abstand) => {
+    document.querySelectorAll(sel + ' .fenster').forEach((f, i) => {
+      const s = f.querySelector('.streifen'), h = f.querySelector('span').getBoundingClientRect().height;
+      const dauer = grund + i * abstand;
+      tl.fromTo(s, { y: 0 }, { y: -(N - 1) * h, duration: dauer, ease: 'back.out(.6)' }, start)
+        .set(s, { filter: 'blur(5px)' }, start)
+        .to(s, { filter: 'blur(0px)', duration: .3 }, start + dauer - .45)
+        .fromTo(f.querySelector('.gewinn'), { opacity: 0 }, { opacity: 1, duration: .15, immediateRender: false }, start + dauer - .1);
+    });
+  };
+  drehen('.r1', T.r1, 1.4, .35);
+  drehen('.r2', T.r2, 1.0, .22);
+  /* JACKPOT */
+  tl.fromTo('#jackpot', { opacity: 0, scale: .2, rotation: -12 }, { opacity: 1, scale: 1, rotation: -4, duration: .6, ease: 'back.out(2.5)', immediateRender: false }, T.jackpot)
+    .to('#jackpot', { scale: 1.08, duration: .3, yoyo: true, repeat: 5, ease: 'sine.inOut' }, T.jackpot + .6)
+    .to('#jackpot', { opacity: 0, y: '-6vh', duration: .6 }, T.jackpot + 3.2)
+    .fromTo('#automat', { x: -10 }, { x: 0, duration: .5, ease: 'elastic.out(1, .25)', immediateRender: false }, T.jackpot)
+    .fromTo('.gewinn', { opacity: 1 }, { opacity: .25, duration: .18, yoyo: true, repeat: 11, immediateRender: false }, T.jackpot);
+  /* Lauflicht: Birnen blinken versetzt */
+  for (let k = 0; k < 16; k++){
+    tl.set(bulbs.filter((_, i) => i % 3 === k % 3), { opacity: 1 }, T.jackpot + k * .14)
+      .set(bulbs.filter((_, i) => i % 3 !== k % 3), { opacity: .25 }, T.jackpot + k * .14);
+  }
+  tl.set(bulbs, { opacity: 1 }, T.jackpot + 2.4);
+  Lab.explosion(tl, casino, T.jackpot + .1, { n: 70, farben: ['#ffd24d', '#f7b52f', '#fff0a0'], x: 50, y: 80, weite: .65, rund: true, groesse: [16, 30], dauer: [1.6, 2.6], fall: .55, z: 6 });
+  Lab.explosion(tl, casino, T.jackpot + .5, { n: 40, farben: ['#ff3ea5', '#4fa3ff', '#ffd24d', '#fff'], x: 50, y: 30, weite: .55, dauer: [2, 3] });
+  tl.fromTo('#automat', { scale: 1 }, { scale: 1.035, duration: 1.8, yoyo: true, repeat: 2, ease: 'sine.inOut', immediateRender: false }, T.jackpot + 3)
+    .fromTo('.los', { opacity: 0 }, { opacity: .85, duration: .7, yoyo: true, repeat: 5, ease: 'sine.inOut' }, T.jackpot + 3.4);
+}
+
+function ton(t0, A){
+  for (let k = 0; k < 26; k++) A.klick(t0 + T.licht + k * .02, .06, 3000);
+  A.kick(t0 + T.hebel + .35, .6); A.klick(t0 + T.hebel + .35, .5, 600);
+  /* Ratschen der Walzen */
+  const ratsche = (start, ende, n) => { for (let t = start; t < ende; t += .045) A.klick(t0 + t, .08 * Math.min(1, n), R(1500, 2400)); };
+  ratsche(T.r1, T.r1 + 1.4 + 5 * .35, 1); ratsche(T.r2, T.r2 + 1 + 7 * .22, .8);
+  const stopp = (start, grund, abstand, n, basis) => {
+    for (let i = 0; i < n; i++){ const t = t0 + start + grund + i * abstand - .1; A.kick(t, .45); A.ping(t, basis * Math.pow(2, i / 12 * 2), .09, .6); }
+  };
+  stopp(T.r1, 1.4, .35, 6, 523.25); stopp(T.r2, 1.0, .22, 8, 783.99);
+  /* Jackpot: Glocken, Münzen, Fanfare */
+  A.tusch(t0 + T.jackpot, [261.63, 329.63, 392, 523.25], 1);
+  for (let k = 0; k < 30; k++) A.ping(t0 + T.jackpot + k * .07, [1046.5, 1318.5, 1568, 2093][k % 4], .05, .5);
+  for (let k = 0; k < 40; k++) A.ping(t0 + T.jackpot + .2 + R(0, 2.2), R(2500, 4200), .03, .25);
+  A.jubel(t0 + T.jackpot + .3, .25, 5);
+  A.stoss(t0 + T.jackpot + 1.2, [392, 493.88, 587.33, 783.99], .1, 1.8);
+}
+Lab.starte({ name: 'Jackpot', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

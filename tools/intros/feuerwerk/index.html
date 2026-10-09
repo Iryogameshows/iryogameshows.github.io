@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feuerwerk</title>
+<!-- Intro "Feuerwerk": Nachthimmel über einer Häuserzeile. Einzelne
+     Raketen, dann eine Salve - und zum Finale steigen drei Raketen auf,
+     deren Funken nicht zerstieben, sondern sich in der Luft zum Titel
+     ordnen. Er glimmt, funkelt und bleibt stehen.
+
+     Zwei Canvas: hinten Himmel, Sterne, Häuser (nur bei Größenänderung neu),
+     vorn das Feuerwerk mit Nachleuchten (jedes Bild wird das alte nur
+     teilweise gelöscht). Die Schrift-Funken haben ein Ziel aus dem
+     abgetasteten Titel und fliegen mit nachlassender Geschwindigkeit dorthin.
+     Dieses Intro ist eine Simulation und deshalb nicht rückwärts spulbar. -->
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#ffd24d;--lab-grund:#060816;--lab-text:#f2ecff;}
+  html,body{margin:0;height:100%;background:#060816;overflow:hidden;}
+  canvas{position:fixed;inset:0;width:100%;height:100%;}
+  .klein{position:fixed;left:0;right:0;top:15vh;text-align:center;font:700 clamp(14px,1.8vw,28px) Inter,sans-serif;letter-spacing:.6em;padding-left:.6em;color:#fff3d6;text-transform:uppercase;opacity:0;
+    text-shadow:0 0 2vh rgba(255,210,120,.8);}
+  .los{position:fixed;left:0;right:0;bottom:6vh;text-align:center;font:500 13px Inter,sans-serif;letter-spacing:.5em;color:#f2ecff;opacity:0;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<canvas id="himmel"></canvas><canvas id="feuer"></canvas>
+<div class="klein" id="klein"></div>
+<div class="los" id="los">Klicken, um zu beginnen</div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW } = Lab;
+const R = gsap.utils.random;
+const himmel = document.getElementById('himmel'), feuer = document.getElementById('feuer');
+const hc = himmel.getContext('2d'), fc = feuer.getContext('2d');
+let W = 0, H = 0, dpr = 1, sterne = [], haeuser = [];
+/* Vor groesse() deklariert: groesse() setzt zielPunkte zurück. */
+let schein = 0, scheinFarbe = [255, 220, 150], zielPunkte = null;
+const FARBEN = [[255, 210, 77], [255, 80, 120], [90, 170, 255], [120, 255, 170], [255, 255, 255], [200, 120, 255], [255, 150, 60]];
+
+function groesse(){
+  dpr = Math.min(1.5, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+  [himmel, feuer].forEach(c => { c.width = W * dpr; c.height = H * dpr; });
+  hc.setTransform(dpr, 0, 0, dpr, 0, 0); fc.setTransform(dpr, 0, 0, dpr, 0, 0);
+  sterne = Array.from({ length: 160 }, () => ({ x: R(0, W), y: R(0, H * .75), r: R(.4, 1.4), p: R(0, 6.28) }));
+  haeuser = []; let x = -20;
+  while (x < W + 20){ const b = R(60, 150), h = R(H * .08, H * .2); haeuser.push({ x, b, h, dach: Math.random() < .6, fenster: Array.from({ length: 6 }, () => Math.random() < .4) }); x += b + R(-6, 10); }
+  zielPunkte = null;
+}
+addEventListener('resize', groesse); groesse();
+
+function himmelMalen(t){
+  const g = hc.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#04050f'); g.addColorStop(.6, '#11143a'); g.addColorStop(1, '#2a1a40');
+  hc.fillStyle = g; hc.fillRect(0, 0, W, H);
+  sterne.forEach(s => { hc.globalAlpha = .4 + .6 * Math.abs(Math.sin(t * .8 + s.p)); hc.fillStyle = '#fff'; hc.beginPath(); hc.arc(s.x, s.y, s.r, 0, 6.29); hc.fill(); });
+  hc.globalAlpha = 1;
+  haeuser.forEach(h => {
+    const y = H - h.h;
+    hc.fillStyle = '#05060d';
+    hc.beginPath();
+    if (h.dach){ hc.moveTo(h.x, y); hc.lineTo(h.x + h.b / 2, y - h.b * .35); hc.lineTo(h.x + h.b, y); } else hc.rect(h.x, y, h.b, 1);
+    hc.rect(h.x, y, h.b, h.h); hc.fill();
+    h.fenster.forEach((an, k) => { if (!an) return; hc.fillStyle = 'rgba(255,200,110,.55)'; hc.fillRect(h.x + 12 + (k % 3) * (h.b - 24) / 3, y + 14 + Math.floor(k / 3) * 26, 9, 12); });
+  });
+  /* Schein des Feuerwerks auf dem Himmel */
+  if (schein > .01){ hc.fillStyle = `rgba(${scheinFarbe.join(',')},${schein * .18})`; hc.fillRect(0, 0, W, H); }
+}
+
+/* ── Feuerwerk ── */
+const teile = [], raketen = [];
+function rakete(x, hoehe, farbe, art){
+  raketen.push({ x, y: H, vy: -Math.sqrt(2 * 520 * (H - hoehe)), vx: R(-20, 20), ziel: hoehe, farbe, art: art || 'kugel' });
+}
+function zerplatzen(r){
+  schein = 1; scheinFarbe = r.farbe;
+  if (r.art === 'schrift'){ schriftFunken(r); return; }
+  const n = 140, ring = Math.random() < .3;
+  for (let k = 0; k < n; k++){
+    const w = (k / n) * 6.283 + R(0, .05), v = ring ? 260 : R(60, 320);
+    teile.push({ x: r.x, y: r.y, vx: Math.cos(w) * v, vy: Math.sin(w) * v, leben: 1, ab: R(.45, .8), farbe: Math.random() < .15 ? [255, 255, 255] : r.farbe, gr: R(1.2, 2.4), funkeln: Math.random() < .4 });
+  }
+}
+function zielBerechnen(){
+  const c = document.createElement('canvas'), w = 1400, h = 600; c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  const [ta, tb] = [SHOW.titel.split(' ')[0].toUpperCase(), SHOW.titel.split(' ').slice(1).join(' ').toUpperCase()];
+  [[ta, 200, 190], [tb, 140, 420]].forEach(([t, s, y]) => { x.font = `${s}px "Bowlby One"`; const k = Math.min(1, 1300 / x.measureText(t).width); x.font = `${s * k}px "Bowlby One"`; x.fillText(t, w / 2, y); });
+  const d = x.getImageData(0, 0, w, h).data, p = [];
+  for (let y = 0; y < h; y += 7) for (let xx = 0; xx < w; xx += 7) if (d[(y * w + xx) * 4 + 3] > 128) p.push([xx / w, y / h]);
+  const breite = Math.min(W * .86, H * 1.7), hoch = breite * h / w;
+  zielPunkte = p.map(([a, b]) => [W / 2 + (a - .5) * breite, H * .48 + (b - .5) * hoch]);
+}
+function schriftFunken(r){
+  if (!zielPunkte) zielBerechnen();
+  /* Jede der drei Raketen übernimmt ein Drittel der Punkte, sortiert nach x */
+  const anteil = zielPunkte.filter((_, i) => i % 3 === r.drittel);
+  anteil.forEach(([tx, ty]) => {
+    teile.push({ x: r.x, y: r.y, sx: r.x, sy: r.y, tx, ty, t: 0, dauer: R(1.1, 1.6), leben: 1, ab: 0, farbe: [255, R(190, 235) | 0, R(90, 150) | 0], gr: R(1.6, 2.6), schrift: true, funkeln: true });
+  });
+}
+let schriftFallen = false;
+let zuletzt = performance.now(), zeit = 0;
+function zeichnen(j){
+  /* Nie rückwärts: springt die Uhr (Tab im Hintergrund, Test), bleibt dt bei 0 */
+  const dt = Math.max(0, Math.min(.05, (j - zuletzt) / 1000)); zuletzt = Math.max(zuletzt, j); zeit += dt;
+  schein = Math.max(0, schein - dt * 1.6);
+  himmelMalen(zeit);
+  fc.globalCompositeOperation = 'destination-out';
+  fc.fillStyle = 'rgba(0,0,0,.28)'; fc.fillRect(0, 0, W, H);
+  fc.globalCompositeOperation = 'lighter';
+  for (let k = raketen.length - 1; k >= 0; k--){
+    const r = raketen[k];
+    r.vy += 520 * dt; r.x += r.vx * dt; r.y += r.vy * dt;
+    fc.fillStyle = 'rgba(255,220,170,.9)'; fc.beginPath(); fc.arc(r.x, r.y, 2.2, 0, 6.29); fc.fill();
+    teile.push({ x: r.x, y: r.y, vx: R(-15, 15), vy: R(20, 60), leben: .6, ab: 1.6, farbe: [255, 190, 120], gr: 1.2 });
+    if (r.vy >= -30 || r.y <= r.ziel){ raketen.splice(k, 1); zerplatzen(r); }
+  }
+  for (let k = teile.length - 1; k >= 0; k--){
+    const p = teile[k];
+    if (p.schrift && !schriftFallen){
+      p.t += dt;
+      const q = Math.min(1, p.t / p.dauer), e = 1 - Math.pow(1 - q, 3);
+      p.x = p.sx + (p.tx - p.sx) * e + Math.sin(zeit * 3 + p.tx) * (1 - e) * 30;
+      p.y = p.sy + (p.ty - p.sy) * e;
+    } else {
+      if (p.schrift && schriftFallen && p.vx == null){ p.vx = R(-20, 20); p.vy = R(-20, 10); p.ab = R(.25, .5); }
+      p.vx *= Math.pow(.35, dt); p.vy = p.vy * Math.pow(.35, dt) + 140 * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.leben -= p.ab * dt;
+    }
+    if (p.leben <= 0){ teile.splice(k, 1); continue; }
+    let a = Math.min(1, p.leben * 1.4);
+    if (p.funkeln) a *= .55 + .45 * Math.sin(zeit * 30 + k);
+    fc.fillStyle = `rgba(${p.farbe[0]},${p.farbe[1]},${p.farbe[2]},${a})`;
+    fc.beginPath(); fc.arc(p.x, p.y, p.gr, 0, 6.29); fc.fill();
+  }
+  requestAnimationFrame(zeichnen);
+}
+requestAnimationFrame(zeichnen);
+
+const T = { schrift: 8.0, fertig: 10.6 };
+function aufbauen(){
+  teile.length = 0; raketen.length = 0; schriftFallen = false;
+  fc.clearRect(0, 0, W, H);
+  document.getElementById('klein').textContent = SHOW.titelKlein;
+}
+function bauen(tl){
+  [1, 1.9, 2.6, 3.3, 4.0, 4.4, 5.0].forEach((t, i) => tl.call(() => rakete(R(W * .15, W * .85), R(H * .15, H * .4), FARBEN[i % FARBEN.length]), null, t));
+  for (let k = 0; k < 7; k++) tl.call(() => rakete(W * (.1 + k * .13), R(H * .12, H * .35), FARBEN[(k + 2) % FARBEN.length]), null, 5.8 + k * .16);
+  [0, 1, 2].forEach(d => tl.call(() => { rakete(W * (.3 + d * .2), H * .3, [255, 220, 140], 'schrift'); raketen[raketen.length - 1].drittel = d; }, null, T.schrift + d * .12));
+  tl.fromTo('#klein', { opacity: 0, letterSpacing: '1.4em' }, { opacity: 1, letterSpacing: '.6em', duration: 1.6, ease: 'power3.out', immediateRender: false }, T.fertig)
+    .call(() => { [.15, .85].forEach((x, i) => rakete(W * x, H * .25, FARBEN[i + 1])); }, null, T.fertig + 1.6)
+    .call(() => { [.25, .75].forEach((x, i) => rakete(W * x, H * .2, FARBEN[i + 3])); }, null, T.fertig + 3.2)
+    .fromTo('#los', { opacity: 0 }, { opacity: .8, duration: .8, yoyo: true, repeat: 5, ease: 'sine.inOut', immediateRender: false }, T.fertig + 1.4)
+    .to({}, { duration: 1 }, T.fertig + 7);
+}
+function ton(t0, A){
+  const knall = (t, v) => {
+    A.aufprall(t0 + t, .35 * v); A.kick(t0 + t, .6 * v);
+    for (let k = 0; k < 24; k++) A.klick(t0 + t + .3 + R(0, 1.1), .1 * v, R(2500, 6000));
+  };
+  [1, 1.9, 2.6, 3.3, 4.0, 4.4, 5.0].forEach(t => { A.pfiff(t0 + t, .9, .04); knall(t + 1, 1); });
+  for (let k = 0; k < 7; k++){ A.pfiff(t0 + 5.8 + k * .16, .8, .025); knall(5.8 + k * .16 + .95, .6); }
+  A.pfiff(t0 + T.schrift, 1.1, .06);
+  A.aufprall(t0 + T.schrift + 1.15, 1.1);
+  A.stoss(t0 + T.schrift + 1.15, [261.63, 329.63, 392, 523.25], .12, 2.4);
+  A.flaeche(t0 + T.schrift + 1.15, [130.81, 196, 261.63, 329.63], 9, .04, 1400, .5);
+  for (let k = 0; k < 40; k++) A.ping(t0 + T.schrift + 1.4 + R(0, 2.5), R(2000, 4200), .025, .4);
+  A.jubel(t0 + T.schrift + 1.3, .2, 5);
+  [T.fertig + 1.6, T.fertig + 3.2].forEach(t => { A.pfiff(t0 + t, .9, .03); knall(t + 1, .7); });
+}
+Lab.starte({ name: 'Feuerwerk', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arcade</title>
+<!-- Intro "Arcade": die Show als Automatenspiel. Die Röhre geht an,
+     INSERT COIN blinkt, eine Münze fällt, der Titel zoomt in Regenbogen-
+     Pixeln herein, Spielerwahl: P1 Team Rot gegen P2 Team Blau, VS-Blitz,
+     READY? - GO! - und der Titelbildschirm mit PRESS START.
+
+     Röhre: abgerundeter Rahmen, Zeilenraster, leichtes Flimmern und ein
+     Rot/Cyan-Versatz an der Schrift. Die Figuren sind Pixelgrafik aus
+     box-shadow, erzeugt aus einer 10x10-Zeichenkarte. Ton: Rechteckwellen. -->
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#39ff88;--lab-grund:#000;--lab-text:#39ff88;}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;}
+  #kasten{position:fixed;inset:2.5vh;border-radius:4vh;overflow:hidden;background:#05060d;box-shadow:inset 0 0 12vh rgba(0,0,0,.9),0 0 0 1vh #111,0 0 0 1.4vh #222;}
+  #bild{position:absolute;inset:0;font-family:'Press Start 2P',monospace;color:#fff;text-shadow:-2px 0 rgba(255,0,80,.7),2px 0 rgba(0,240,255,.7);transform-origin:50% 50%;}
+  .raster{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(0,0,0,.35) 0 2px,transparent 2px 4px);z-index:5;}
+  .woelbung{position:absolute;inset:0;pointer-events:none;z-index:6;background:radial-gradient(ellipse 85% 80% at 50% 50%,transparent 60%,rgba(0,0,0,.6) 100%);}
+  .zeile{position:absolute;left:0;right:0;text-align:center;opacity:0;}
+  .sterne i{position:absolute;width:.6vh;height:.6vh;background:#fff;}
+  .titel{position:absolute;left:0;right:0;top:20%;text-align:center;opacity:0;}
+  .titel .k{font-size:min(1.8vw,3vh);color:#ffd24d;margin-bottom:3vh;}
+  .titel .g{font-size:min(8.5vw,14vh);line-height:1.15;}
+  .titel .g2{font-size:min(6vw,10vh);}
+  .titel .ch{display:inline-block;}
+  .spieler{position:absolute;top:30%;width:34%;text-align:center;opacity:0;}
+  .spieler .sprite{width:.9vh;height:.9vh;margin:0 auto 4vh;transform:scale(1.6);transform-origin:0 0;}
+  /* Die Pixel ragen vom 1x1-Element nach rechts unten - daher unten viel
+     Innenabstand und das Element um die halbe Figurbreite nach links. */
+  .spieler .rahmen{display:inline-block;padding:2.5vh 8vh 16.5vh;border:.5vh solid currentColor;margin-bottom:2vh;}
+  .spieler .sprite{margin:0 !important;transform:translateX(-6.5vh) scale(1.6) !important;}
+  .vs{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-size:min(10vw,16vh);color:#ffd24d;opacity:0;}
+  .gross{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:min(9vw,15vh);opacity:0;}
+  #weiss{position:absolute;inset:0;background:#fff;opacity:0;z-index:4;}
+  #an{position:absolute;left:0;right:0;top:50%;height:100%;margin-top:-50vh;background:#fff;transform:scaleY(0);z-index:7;}
+</style>
+</head>
+<body>
+<div id="kasten"><div id="bild"></div><div class="raster"></div><div class="woelbung"></div><div id="an"></div></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc } = Lab;
+const R = gsap.utils.random;
+const T = { an: .1, coin: .9, muenze: 2.2, titel: 3.0, wahl: 6.0, vs: 7.2, ready: 8.8, go: 9.8, schluss: 10.6 };
+const REGENBOGEN = ['#ff3b3b', '#ff9f1c', '#ffe14d', '#39ff88', '#2fd2ff', '#7a7bff', '#ff4fd8'];
+const KARTE = ['..XXXXXX..', '.XXXXXXXX.', 'XXWWXXWWXX', 'XXWBXXWBXX', 'XXXXXXXXXX', 'XXXXXXXXXX', 'XXBXXXXBXX', 'XXXBBBBXXX', '.XXXXXXXX.', '..XXXXXX..'];
+
+/* Pixelgrafik: ein 1x1-Element, jeder Pixel ein box-shadow */
+function sprite(farbe){
+  const px = .9, s = [];
+  KARTE.forEach((zeile, y) => Array.from(zeile).forEach((c, x) => {
+    if (c === '.') return;
+    s.push(`${x * px}vh ${y * px}vh 0 0 ${c === 'X' ? farbe : c === 'W' ? '#fff' : '#000'}`);
+  }));
+  return `<div class="sprite" style="box-shadow:${s.join(',')};margin-left:${-4.5 * px * 1.6}vh"></div>`;
+}
+const pixelText = t => Array.from(t).map(c => c === ' ' ? '&nbsp;' : `<span class="ch">${esc(c)}</span>`).join('');
+
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0].toUpperCase(), SHOW.titel.split(' ').slice(1).join(' ').toUpperCase()];
+  document.getElementById('bild').innerHTML = `
+    <div class="sterne">${Array.from({ length: 60 }, () => `<i style="left:${R(0, 100)}%;top:${R(0, 100)}%;opacity:${R(.3, 1)}"></i>`).join('')}</div>
+    <div class="zeile" id="coin" style="top:46%;font-size:min(3vw,5vh);color:#ffe14d">INSERT COIN</div>
+    <div class="zeile" id="credit" style="bottom:8%;font-size:min(1.6vw,2.6vh)">CREDIT 01</div>
+    <div class="titel" id="titel"><div class="k">${esc(SHOW.titelKlein.toUpperCase())}</div><div class="g">${pixelText(ta)}</div><div class="g g2">${pixelText(tb)}</div></div>
+    <div class="zeile" id="wahl" style="top:12%;font-size:min(2.4vw,4vh);color:#ffe14d">SELECT PLAYER</div>
+    ${[0, 1].map(i => `<div class="spieler" id="sp${i}" style="${i ? 'right:6%' : 'left:6%'};color:${i ? '#4f8bff' : '#ff4b4b'}">
+      <div class="rahmen">${sprite(i ? '#3B82F6' : '#E8453C')}</div>
+      <div style="font-size:min(1.4vw,2.4vh);margin-bottom:1.6vh">P${i + 1}</div>
+      <div style="font-size:min(2vw,3.4vh)">${esc(SHOW.teams[i].toUpperCase())}</div></div>`).join('')}
+    <div class="vs" id="vs">VS</div>
+    <div class="gross" id="ready" style="color:#ffe14d">READY?</div>
+    <div class="gross" id="go" style="color:#39ff88">GO!!</div>
+    <div class="zeile" id="hiscore" style="top:6%;font-size:min(1.5vw,2.5vh)">HI-SCORE&nbsp;&nbsp;<span style="color:#ffe14d">${String(SHOW.karten[3].zahl).padStart(6, '0')} €</span></div>
+    <div class="zeile" id="start" style="bottom:16%;font-size:min(2.2vw,3.6vh);color:#fff">PRESS START</div>
+    <div class="zeile" id="copy" style="bottom:7%;font-size:min(1.1vw,1.9vh);color:#8a8fa8">© 2026 KELLER GAMES · ${esc(SHOW.titelZeile.toUpperCase())}</div>
+    <div id="weiss"></div>`;
+}
+
+function bauen(tl){
+  /* Röhre an: ein heller Strich, der aufreißt */
+  tl.fromTo('#an', { scaleY: .004, scaleX: 0 }, { scaleX: 1, duration: .15, ease: 'power2.out' }, T.an)
+    .to('#an', { scaleY: 1, duration: .18, ease: 'power2.in' }, T.an + .15)
+    .to('#an', { opacity: 0, duration: .35 }, T.an + .33)
+    .fromTo('#bild', { filter: 'brightness(3)' }, { filter: 'brightness(1)', duration: .8, immediateRender: false }, T.an + .3);
+  tl.to('#bild', { opacity: .93, duration: .06, yoyo: true, repeat: 120, ease: 'steps(1)' }, 0);
+  tl.to('.sterne i', { y: '+=' + innerHeight * .25, duration: 16, ease: 'none' }, 0);
+  /* INSERT COIN blinkt, Münze, CREDIT */
+  tl.fromTo('#coin', { opacity: 0 }, { opacity: 1, duration: .01, yoyo: true, repeat: 5, repeatDelay: .22 }, T.coin)
+    .set('#coin', { opacity: 0 }, T.titel)
+    .fromTo('#credit', { opacity: 0 }, { opacity: 1, duration: .01 }, T.muenze)
+    .set('#credit', { opacity: 0 }, T.wahl);
+  /* Titel zoomt herein, Buchstaben laufen im Regenbogen */
+  const ch = document.querySelectorAll('#titel .ch');
+  tl.fromTo('#titel', { opacity: 1, scale: 6, filter: 'blur(4px)' }, { scale: 1, filter: 'blur(0px)', duration: .7, ease: 'steps(10)' }, T.titel);
+  for (let s = 0; s < 22; s++){
+    tl.set(ch, { color: (i) => REGENBOGEN[(i + s) % REGENBOGEN.length] }, T.titel + s * .13);
+  }
+  tl.fromTo(ch, { y: 0 }, { y: -12, duration: .12, yoyo: true, repeat: 1, stagger: .05, ease: 'steps(2)' }, T.titel + .9)
+    .set('#titel', { opacity: 0 }, T.wahl);
+  /* Spielerwahl */
+  tl.set('#wahl', { opacity: 1 }, T.wahl)
+    .fromTo('#sp0', { opacity: 1, x: '-40vw' }, { x: 0, duration: .4, ease: 'steps(6)' }, T.wahl)
+    .fromTo('#sp1', { opacity: 1, x: '40vw' }, { x: 0, duration: .4, ease: 'steps(6)' }, T.wahl + .3)
+    .fromTo('#sp0 .rahmen, #sp1 .rahmen', { opacity: 1 }, { opacity: .2, duration: .01, yoyo: true, repeat: 7, repeatDelay: .1, immediateRender: false }, T.wahl + .8)
+    .fromTo('#vs', { opacity: 1, scale: 4 }, { scale: 1, duration: .25, ease: 'steps(4)', immediateRender: false }, T.vs)
+    .fromTo('#weiss', { opacity: .9 }, { opacity: 0, duration: .3, ease: 'steps(3)', immediateRender: false }, T.vs)
+    .fromTo('#bild', { x: 12 }, { x: 0, duration: .4, ease: 'steps(6)', immediateRender: false }, T.vs)
+    .set(['#wahl', '#sp0', '#sp1', '#vs'], { opacity: 0 }, T.ready);
+  /* READY? GO!! */
+  tl.fromTo('#ready', { opacity: 1, scale: .3 }, { scale: 1, duration: .3, ease: 'steps(5)', immediateRender: false }, T.ready)
+    .set('#ready', { opacity: 0 }, T.go)
+    .fromTo('#go', { opacity: 1, scale: 3 }, { scale: 1, duration: .25, ease: 'steps(4)', immediateRender: false }, T.go)
+    .fromTo('#weiss', { opacity: 1 }, { opacity: 0, duration: .4, ease: 'steps(4)', immediateRender: false }, T.go)
+    .fromTo('#bild', { x: -16, y: 8 }, { x: 0, y: 0, duration: .5, ease: 'steps(8)', immediateRender: false }, T.go)
+    .set('#go', { opacity: 0 }, T.schluss);
+  /* Titelbildschirm */
+  tl.set('#titel', { opacity: 1, scale: 1 }, T.schluss)
+    .fromTo('#titel', { y: '-60vh' }, { y: 0, duration: .6, ease: 'steps(9)', immediateRender: false }, T.schluss)
+    .set(['#hiscore', '#copy'], { opacity: 1 }, T.schluss + .6);
+  for (let s = 0; s < 40; s++) tl.set(ch, { color: (i) => REGENBOGEN[(i + s) % REGENBOGEN.length] }, T.schluss + .6 + s * .15);
+  tl.fromTo('#start', { opacity: 0 }, { opacity: 1, duration: .01, yoyo: true, repeat: 15, repeatDelay: .35 }, T.schluss + 1);
+}
+
+function ton(t0, A){
+  const n = m => 440 * Math.pow(2, (m - 69) / 12);
+  A.rauschen_wisch(t0 + T.an, .4, .2, 4000, 300);
+  for (let k = 0; k < 3; k++) A.piep(t0 + T.coin + k * .46, 1046.5, .1, .04);
+  /* Münze: zwei schnelle hohe Töne */
+  A.piep(t0 + T.muenze, n(83), .07, .07); A.piep(t0 + T.muenze + .07, n(88), .35, .07);
+  /* Titelmelodie: kurze Fanfare in C */
+  const mel = [[72, .13], [76, .13], [79, .13], [84, .26], [79, .13], [84, .52], [86, .13], [88, .13], [91, .26], [88, .13], [91, .52]];
+  let t = T.titel + .2;
+  mel.forEach(([m, d]) => { A.piep(t0 + t, n(m), d * .9, .06); A.piep(t0 + t, n(m - 24), d * .9, .05, 'triangle'); t += d; });
+  for (let k = 0; k < 8; k++) A.kick(t0 + T.titel + .2 + k * .26, .35);
+  /* Auswahl-Piepser */
+  [0, .3, .8, 1, 1.2, 1.4].forEach((d, i) => A.piep(t0 + T.wahl + d, n(76 + i * 2), .06, .05));
+  A.aufprall(t0 + T.vs, .6); A.rauschen_wisch(t0 + T.vs, .5, .3, 5000, 400);
+  A.piep(t0 + T.ready, n(69), .5, .07); A.piep(t0 + T.ready + .5, n(69), .3, .05);
+  [72, 76, 79, 84].forEach((m, i) => A.piep(t0 + T.go + i * .06, n(m), .5, .06));
+  A.kick(t0 + T.go, 1); A.rauschen_wisch(t0 + T.go, .3, .25, 6000, 600);
+  /* Titelbildschirm: kleine Schleife */
+  const loop = [72, 79, 76, 79, 74, 79, 77, 79];
+  for (let k = 0; k < 32; k++){
+    const tt = t0 + T.schluss + .6 + k * .18;
+    A.piep(tt, n(loop[k % 8]), .14, .045);
+    if (k % 2 === 0) A.piep(tt, n(48 + [0, 0, 5, 7][Math.floor(k / 8) % 4]), .16, .05, 'triangle');
+    if (k % 4 === 0) A.kick(tt, .3);
+  }
+}
+Lab.starte({ name: 'Arcade', untertitel: 'Klicken zum Starten · Ton an', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

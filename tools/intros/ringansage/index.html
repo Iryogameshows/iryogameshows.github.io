@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ringansage</title>
+<!-- Intro "Ringansage": die Show als großer Kampfabend. Arena im Dunst,
+     Blitzlichter im Publikum, der Ansager-Text: "In der roten Ecke …" -
+     TEAM ROT knallt herein, die linke Seite glüht rot; dasselbe in Blau.
+     Licht aus, Trommelwirbel, "Macht euch bereit für …" - und der Titel
+     steigt als Meistergürtel aus dem Ring auf, mit Funken und Konfetti.
+
+     Der Gürtel ist CSS: Lederriemen, große goldene Platte mit Innenring,
+     zwei Steine in den Team-Farben. -->
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#ffd24d;--lab-grund:#050508;--lab-text:#f2f2f2;}
+  html,body{margin:0;height:100%;background:#050508;overflow:hidden;}
+  #arena{position:fixed;inset:0;overflow:hidden;background:radial-gradient(ellipse 80% 60% at 50% 30%,#161624,#050508 70%);}
+  .dunst{position:absolute;inset:-20%;background:radial-gradient(40% 30% at 30% 40%,rgba(200,210,255,.08),transparent 70%),radial-gradient(35% 30% at 70% 55%,rgba(200,210,255,.07),transparent 70%);}
+  .publikum{position:absolute;left:0;right:0;bottom:30vh;height:22vh;background:linear-gradient(transparent,#0a0a10 40%);}
+  .blitzlicht{position:absolute;width:.8vh;height:.8vh;border-radius:50%;background:#fff;box-shadow:0 0 1.6vh .6vh rgba(255,255,255,.8);opacity:0;}
+  .ring{position:absolute;left:8vw;right:8vw;bottom:0;height:34vh;background:linear-gradient(#26314a,#151a28);clip-path:polygon(12% 0,88% 0,100% 100%,0 100%);}
+  .seil{position:absolute;left:4vw;right:4vw;height:.7vh;border-radius:1vh;}
+  .kegel{position:absolute;top:-10vh;width:60vh;height:120vh;clip-path:polygon(45% 0,55% 0,100% 100%,0 100%);mix-blend-mode:screen;opacity:0;}
+  .flut{position:absolute;top:0;bottom:0;width:60vw;opacity:0;mix-blend-mode:screen;}
+  .ansage{position:absolute;left:0;right:0;top:40%;transform:translateY(-50%);text-align:center;font:500 clamp(18px,2.8vw,46px) Oswald,sans-serif;letter-spacing:.3em;padding-left:.3em;color:#e9e9f2;text-transform:uppercase;opacity:0;}
+  .name{position:absolute;left:0;right:0;top:44%;transform:translateY(-50%);text-align:center;font:700 min(19vw,34vh)/1 Oswald,sans-serif;text-transform:uppercase;opacity:0;letter-spacing:.02em;}
+  #guertel{position:absolute;left:50%;top:44%;width:min(86vw,150vh);height:min(36vw,62vh);transform:translate(-50%,-50%);opacity:0;}
+  .riemen{position:absolute;left:0;right:0;top:50%;height:34%;transform:translateY(-50%);border-radius:2vh;
+    background:repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 .3vh,transparent .3vh 1.4vh),linear-gradient(#1b1b22,#33333f 50%,#141418);box-shadow:inset 0 .6vh 0 rgba(255,255,255,.08),0 2vh 4vh rgba(0,0,0,.7);}
+  .riemen::before,.riemen::after{content:"";position:absolute;top:18%;bottom:18%;width:15%;border-radius:1.4vh;background:linear-gradient(180deg,#fff2b0,#e3ac2c 45%,#8f5f08 55%,#f0c44c);}
+  .riemen::before{left:4%;} .riemen::after{right:4%;}
+  .platte{position:absolute;left:50%;top:50%;width:52%;height:100%;transform:translate(-50%,-50%);border-radius:48%/44%;
+    background:radial-gradient(ellipse at 40% 30%,#fff7cf,#f2c64a 35%,#b07a10 70%,#6e4a05);box-shadow:0 2vh 5vh rgba(0,0,0,.7),inset 0 0 0 1.2vh #8f5f08,inset 0 0 0 1.8vh #f5d36a;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+  .platte .k{font:700 min(1.6vw,2.8vh) Inter,sans-serif;letter-spacing:.45em;padding-left:.45em;color:#5a3a02;text-transform:uppercase;margin-bottom:1vh;}
+  .platte .g{font:700 min(6.6vw,11.5vh)/.95 Oswald,sans-serif;text-transform:uppercase;color:#3d2600;text-shadow:0 .3vh 0 rgba(255,240,180,.7);}
+  .stein{position:absolute;top:50%;width:6%;aspect-ratio:1;border-radius:50%;transform:translateY(-50%);box-shadow:0 0 0 .5vh #f5d36a,0 0 3vh currentColor;}
+  .glanz{position:absolute;inset:0;border-radius:48%/44%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%) 140% 0/260% 100% no-repeat;mix-blend-mode:screen;}
+  #schwarz{position:absolute;inset:0;background:#000;opacity:0;}
+  .los{position:absolute;bottom:5vh;left:0;right:0;text-align:center;font:700 13px Inter,sans-serif;letter-spacing:.45em;color:#e9e9f2;opacity:0;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div id="arena"></div>
+<div class="lab-korn" style="z-index:9;opacity:.07"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc, zeichen } = Lab;
+const R = gsap.utils.random;
+const T = { damen: .9, rot: 2.8, rotName: 3.7, blau: 5.8, blauName: 6.7, aus: 8.7, bereit: 9.4, guertel: 11.4 };
+
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  document.getElementById('arena').innerHTML = `
+    <div class="dunst"></div>
+    <div class="publikum">${Array.from({ length: 36 }, () => `<i class="blitzlicht" style="left:${R(2, 98)}%;top:${R(10, 80)}%"></i>`).join('')}</div>
+    <div class="ring">
+      <i class="seil" style="top:6%;background:#d9343f"></i><i class="seil" style="top:16%;background:#f2f2f2"></i><i class="seil" style="top:26%;background:#2f6fe0"></i>
+    </div>
+    <div class="kegel" style="left:-5vw;background:linear-gradient(rgba(255,255,255,.3),transparent);transform:rotate(-24deg);transform-origin:50% 0"></div>
+    <div class="kegel" style="right:-5vw;background:linear-gradient(rgba(255,255,255,.3),transparent);transform:rotate(24deg);transform-origin:50% 0"></div>
+    <div class="flut" id="flut0" style="left:0;background:radial-gradient(ellipse at 0 50%,rgba(232,69,60,.75),transparent 70%)"></div>
+    <div class="flut" id="flut1" style="right:0;background:radial-gradient(ellipse at 100% 50%,rgba(59,130,246,.75),transparent 70%)"></div>
+    <div class="ansage" id="a-damen">${zeichen('Meine Damen und Herren')}</div>
+    <div class="ansage" id="a-rot">In der roten Ecke …</div>
+    <div class="name" id="n-rot" style="color:#ff4b40;text-shadow:0 0 6vh rgba(232,69,60,.7)">${esc(SHOW.teams[0])}</div>
+    <div class="ansage" id="a-blau">In der blauen Ecke …</div>
+    <div class="name" id="n-blau" style="color:#4f8bff;text-shadow:0 0 6vh rgba(59,130,246,.7)">${esc(SHOW.teams[1])}</div>
+    <div id="schwarz"></div>
+    <div class="ansage" id="a-bereit" style="color:#ffd24d">Macht euch bereit für …</div>
+    <div id="guertel">
+      <div class="riemen"></div>
+      <div class="platte"><div class="k">${esc(SHOW.titelKlein)}</div><div class="g">${esc(ta)}</div><div class="g">${esc(tb)}</div><i class="glanz"></i></div>
+      <i class="stein" style="left:20%;background:radial-gradient(circle at 35% 30%,#ffb0a8,#E8453C 50%,#7a1510);color:#E8453C"></i>
+      <i class="stein" style="right:20%;background:radial-gradient(circle at 35% 30%,#b8d2ff,#3B82F6 50%,#123a8a);color:#3B82F6"></i>
+    </div>
+    <div class="los">Klicken, um zu beginnen</div>`;
+}
+
+function bauen(tl){
+  const arena = document.getElementById('arena');
+  tl.to('.dunst', { x: 60, y: -30, duration: 18, ease: 'sine.inOut' }, 0);
+  /* Blitzlichter im Publikum, die ganze Zeit */
+  document.querySelectorAll('.blitzlicht').forEach(b => {
+    for (let k = 0; k < 6; k++) tl.fromTo(b, { opacity: 1 }, { opacity: 0, duration: .15, immediateRender: false }, R(0, 18));
+  });
+  tl.to('.kegel', { opacity: .6, duration: 1 }, .2);
+  /* Meine Damen und Herren */
+  tl.set('#a-damen', { opacity: 1 }, T.damen)
+    .fromTo('#a-damen .ch', { opacity: 0 }, { opacity: 1, duration: .05, stagger: .06 }, T.damen)
+    .to('#a-damen', { opacity: 0, duration: .4 }, T.rot - .4);
+  /* Zwei Ecken */
+  [['rot', 0, -1], ['blau', 1, 1]].forEach(([n, i, seite]) => {
+    const a = T[n], b = T[n + 'Name'];
+    tl.fromTo('#a-' + n, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: .5, immediateRender: false }, a)
+      .to('#a-' + n, { opacity: 0, duration: .25 }, b - .1)
+      .fromTo('#n-' + n, { opacity: 0, scale: 2.6, x: seite * 200 }, { opacity: 1, scale: 1, x: 0, duration: .35, ease: 'power4.in', immediateRender: false }, b - .3)
+      .fromTo(arena, { x: seite * 22 }, { x: 0, duration: .7, ease: 'elastic.out(1, .25)', immediateRender: false }, b + .05)
+      .fromTo('#flut' + i, { opacity: 0 }, { opacity: 1, duration: .25, immediateRender: false }, b)
+      .to('#flut' + i, { opacity: .35, duration: 1.4 }, b + .4)
+      .to('#n-' + n, { scale: 1.06, duration: 1.4, ease: 'none' }, b + .1)
+      .to('#n-' + n, { opacity: 0, duration: .3 }, b + 1.8);
+  });
+  /* Licht aus, "Macht euch bereit" */
+  tl.to('#schwarz', { opacity: .92, duration: .25 }, T.aus)
+    .to(['.flut', '.kegel'], { opacity: 0, duration: .25 }, T.aus)
+    .fromTo('#a-bereit', { opacity: 0, letterSpacing: '1em' }, { opacity: 1, letterSpacing: '.3em', duration: 1.4, ease: 'power3.out', immediateRender: false }, T.bereit)
+    .to('#a-bereit', { opacity: 0, duration: .3 }, T.guertel - .4);
+  /* Der Gürtel steigt auf */
+  tl.to('#schwarz', { opacity: 0, duration: .5 }, T.guertel)
+    .to('.kegel', { opacity: .8, duration: .3 }, T.guertel)
+    .to('#flut0, #flut1', { opacity: .45, duration: .3 }, T.guertel)
+    .fromTo('#guertel', { opacity: 0, y: '40vh', scale: .6, rotationX: 50 }, { opacity: 1, y: 0, scale: 1, rotationX: 0, duration: 1, ease: 'expo.out', immediateRender: false }, T.guertel)
+    .fromTo('#guertel .glanz', { backgroundPosition: '140% 0%' }, { backgroundPosition: '-40% 0%', duration: 1.4, ease: 'power2.inOut', immediateRender: false }, T.guertel + 1)
+    .to('#guertel', { y: -10, duration: 1.6, yoyo: true, repeat: 3, ease: 'sine.inOut' }, T.guertel + 1.2)
+    .fromTo('.los', { opacity: 0 }, { opacity: .8, duration: .8, yoyo: true, repeat: 5, ease: 'sine.inOut' }, T.guertel + 2);
+  Lab.explosion(tl, arena, T.guertel + .2, { n: 80, farben: ['#ffd24d', '#fff', '#ff9f3d'], y: 70, weite: .7, rund: true, groesse: [3, 7], glanz: true, dauer: [1.2, 2.2], fall: .3 });
+  Lab.explosion(tl, arena, T.guertel + .3, { n: 60, farben: ['#E8453C', '#3B82F6', '#ffd24d', '#fff'], y: 25, weite: .6, dauer: [2.2, 3.4], fall: .6 });
+}
+
+function ton(t0, A){
+  const mg = A.huelle(t0, 1, .1, T.guertel - 1, 1); A.rauschen(t0, T.guertel + 1, A.filter('bandpass', 650, .6, mg));
+  A.flaeche(t0 + T.damen, [55, 82.41], T.aus - T.damen, .05, 260, .8);
+  [['rot', [110, 164.81]], ['blau', [123.47, 185]]].forEach(([n, f]) => {
+    A.aufprall(t0 + T[n + 'Name'], 1); A.stoss(t0 + T[n + 'Name'], f, .14, 1.2); A.jubel(t0 + T[n + 'Name'] + .1, .26, 2.4);
+    A.ping(t0 + T[n], 220, .05, .8);
+  });
+  A.aufprall(t0 + T.aus, .5);
+  A.wirbel(t0 + T.bereit, T.guertel - T.bereit, .38);
+  A.tusch(t0 + T.guertel, [196, 246.94, 293.66, 392, 493.88], 1.1);
+  A.jubel(t0 + T.guertel + .1, .38, 6);
+  A.stoss(t0 + T.guertel + 1, [261.63, 329.63, 392, 523.25], .12, 2.2);
+}
+Lab.starte({ name: 'Ringansage', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>70er-Show</title>
+<!-- Intro "70er-Show": Samstagabend 1976. Eine Irisblende öffnet sich auf
+     Regenbogenbögen und einen drehenden Strahlenkranz, die Buchstaben
+     hüpfen einzeln herein, das Logo wackelt im Takt, das APPLAUS-Schild
+     blinkt, Bläser und Studio-Applaus.
+
+     Das Logo bekommt die typischen mehrfachen Umrisse über gestapelte
+     text-shadows. Farben: Orange, Senf, Braun, Creme, Rot, Petrol. -->
+<link href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Inter:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#E8B830;--lab-grund:#3a1d0e;--lab-text:#F6E7C8;}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;}
+  #studio{position:fixed;inset:0;overflow:hidden;background:#3a1d0e;clip-path:circle(0% at 50% 50%);}
+  .boegen{position:absolute;left:50%;bottom:-75vmax;width:150vmax;height:150vmax;margin-left:-75vmax;border-radius:50%;
+    background:repeating-radial-gradient(circle,#D9472B 0 6vmax,#F28C28 6vmax 12vmax,#E8B830 12vmax 18vmax,#2A9D8F 18vmax 24vmax,#6B3A1E 24vmax 30vmax);}
+  .kranz{position:absolute;left:50%;top:44%;width:180vmax;height:180vmax;margin:-90vmax;opacity:.28;
+    background:repeating-conic-gradient(from 0deg,#F6E7C8 0 7deg,transparent 7deg 18deg);
+    -webkit-mask-image:radial-gradient(circle,#000 10%,transparent 45%);mask-image:radial-gradient(circle,#000 10%,transparent 45%);}
+  #logo{position:absolute;left:0;right:0;top:44%;transform:translateY(-50%);text-align:center;font-family:Shrikhand,cursive;}
+  #logo .k{display:inline-block;font:800 min(2.2vw,3.8vh) Inter,sans-serif;letter-spacing:.4em;padding:.6vh 2vh .6vh 2.4vh;background:#6B3A1E;color:#F6E7C8;border-radius:3vh;margin-bottom:1.6vh;}
+  #logo .zeile{display:block;font-size:min(14vw,24vh);line-height:.98;color:#F6E7C8;
+    text-shadow:.5vh .5vh 0 #F28C28,1vh 1vh 0 #D9472B,1.5vh 1.5vh 0 #6B3A1E,2vh 2vh 0 rgba(0,0,0,.35);}
+  #logo .z2{font-size:min(10vw,17vh);}
+  #logo .ch{display:inline-block;}
+  .stern{position:absolute;width:5vh;height:5vh;background:#F6E7C8;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:0;}
+  #applaus{position:absolute;left:50%;top:4vh;transform:translateX(-50%);padding:1.2vh 3vh;background:#5a0f0a;border:.6vh solid #2a0703;border-radius:1vh;
+    font:800 min(2.6vw,4.6vh) Inter,sans-serif;letter-spacing:.35em;padding-left:3.35vh;color:#6e2a1c;box-shadow:0 1vh 2vh rgba(0,0,0,.4);}
+  .los{position:absolute;bottom:4vh;left:0;right:0;text-align:center;font:800 13px Inter,sans-serif;letter-spacing:.4em;color:#F6E7C8;opacity:0;text-transform:uppercase;text-shadow:0 2px 0 #6B3A1E;}
+</style>
+</head>
+<body>
+<div id="studio"></div>
+<div class="lab-korn" style="z-index:9;opacity:.12"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc, zeichen } = Lab;
+const R = gsap.utils.random;
+const BEAT = 60 / 112;
+const T = { iris: .2, k: 1.3, z1: 1.6, z2: 2.7, knall: 3.9 };
+
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  document.getElementById('studio').innerHTML = `
+    <div class="kranz"></div><div class="boegen"></div>
+    ${Array.from({ length: 10 }, () => `<i class="stern" style="left:${R(6, 94)}%;top:${R(14, 70)}%"></i>`).join('')}
+    <div id="applaus">APPLAUS</div>
+    <div id="logo"><span class="k">${esc(SHOW.titelKlein)}</span><span class="zeile z1">${zeichen(ta)}</span><span class="zeile z2">${zeichen(tb)}!</span></div>
+    <div class="los">Klicken, um zu beginnen</div>`;
+  gsap.set('#studio', { clipPath: 'circle(0% at 50% 50%)' });
+}
+
+function bauen(tl){
+  /* Irisblende */
+  tl.to('#studio', { clipPath: 'circle(75% at 50% 50%)', duration: 1.1, ease: 'power2.inOut' }, T.iris)
+    .to('.kranz', { rotation: 90, duration: 20, ease: 'none' }, 0)
+    .fromTo('.boegen', { scale: .6 }, { scale: 1, duration: 1.6, ease: 'back.out(1.4)' }, T.iris);
+  /* Buchstaben hüpfen herein */
+  tl.fromTo('#logo .k', { scale: 0, rotation: -12 }, { scale: 1, rotation: -3, duration: .5, ease: 'back.out(3)' }, T.k);
+  [['.z1', T.z1], ['.z2', T.z2]].forEach(([z, t]) => {
+    tl.fromTo('#logo ' + z + ' .ch', { y: () => -innerHeight, rotation: () => R(-40, 40) }, { y: 0, rotation: 0, duration: .7, ease: 'bounce.out', stagger: .09 }, t);
+  });
+  /* Knall: Sterne, Schild, dann wackelt alles im Takt */
+  document.querySelectorAll('.stern').forEach((s, i) => {
+    tl.fromTo(s, { opacity: 0, scale: 0 }, { opacity: 1, scale: R(.7, 1.4), rotation: 180, duration: .35, yoyo: true, repeat: 7, repeatDelay: R(.2, .8), ease: 'sine.inOut' }, T.knall + i * .12);
+  });
+  for (let b = 0; b < 16; b++){
+    const t = T.knall + b * BEAT;
+    tl.set('#applaus', { color: b % 2 ? '#6e2a1c' : '#ffe9a0', textShadow: b % 2 ? 'none' : '0 0 1.6vh #ffcf5a' }, t)
+      .fromTo('#logo .ch', { y: 0 }, { y: (i) => (i % 2 ? -1 : 1) * innerHeight * .012, duration: BEAT / 2, yoyo: true, repeat: 1, ease: 'sine.inOut', immediateRender: false }, t)
+      .fromTo('.boegen', { scale: 1.02 }, { scale: 1, duration: BEAT * .8, ease: 'power2.out', immediateRender: false }, t);
+  }
+  tl.fromTo('#logo', { scale: 1.12 }, { scale: 1, duration: .6, ease: 'elastic.out(1, .4)', immediateRender: false }, T.knall)
+    .fromTo('.los', { opacity: 0 }, { opacity: 1, duration: .5, yoyo: true, repeat: 9, ease: 'steps(1)', immediateRender: false }, T.knall + 1.6);
+  Lab.explosion(tl, document.getElementById('studio'), T.knall, { n: 60, farben: ['#F6E7C8', '#E8B830', '#F28C28', '#D9472B', '#2A9D8F'], y: 44, weite: .7, rund: true, groesse: [8, 16], dauer: [1.6, 2.6] });
+}
+
+function ton(t0, A){
+  A.rauschen_wisch(t0 + T.iris, 1.1, .2, 400, 3000);
+  /* Buchstaben: aufsteigende Töne */
+  const tonl = [392, 440, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880, 987.77, 1046.5, 1174.66, 1318.5, 1396.9, 1568];
+  for (let i = 0; i < 6; i++) A.ping(t0 + T.z1 + i * .09 + .35, tonl[i], .07, .4);
+  for (let i = 0; i < 9; i++) A.ping(t0 + T.z2 + i * .09 + .35, tonl[i + 6], .06, .4);
+  /* Fanfare der Bläser */
+  const f = [[0, [261.63, 329.63, 392]], [BEAT * .5, [293.66, 349.23, 440]], [BEAT, [329.63, 392, 493.88]], [BEAT * 1.5, [349.23, 440, 523.25, 698.46]]];
+  f.forEach(([d, fr], i) => A.stoss(t0 + T.knall + d, fr, i === 3 ? .14 : .1, i === 3 ? 2 : .45));
+  A.aufprall(t0 + T.knall, .6); A.becken(t0 + T.knall, .35);
+  A.jubel(t0 + T.knall + .1, .3, 7);
+  /* Groove: Kick, Snare, Hi-Hat im Shuffle, Orgelakkord */
+  for (let b = 0; b < 18; b++){
+    const t = t0 + T.knall + BEAT * 2 + b * BEAT;
+    A.kick(t, .7); if (b % 2) A.snare(t, .4);
+    A.hat(t + BEAT * .66, .1); A.hat(t, .07);
+    A.bass(t, [65.41, 65.41, 87.31, 98][Math.floor(b / 2) % 4], BEAT * .7, .22);
+  }
+  A.flaeche(t0 + T.knall + BEAT * 2, [261.63, 329.63, 392, 466.16], BEAT * 18, .035, 2400, .3);
+}
+Lab.starte({ name: '70er-Show', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

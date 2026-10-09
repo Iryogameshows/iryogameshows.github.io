@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agentenakte</title>
+<!-- Intro-Prototyp "Agentenakte": die Gameshow als Geheimeinsatz. Ein
+     Terminal baut eine Verbindung auf, der Grundriss des Kellers zeichnet
+     sich, rote Laser tasten den Raum ab, ein Fadenkreuz rastet auf der Bühne
+     ein. Zwei Akten - Team Rot, Team Blau - werden entschwärzt, ein
+     Countdown läuft ab, Alarm, Schnitt auf Schwarz, und der Titel kommt mit
+     einem dumpfen Schlag und einem Stempel: FREIGEGEBEN.
+
+     Alles DOM und SVG: der Grundriss zeichnet sich über stroke-dashoffset,
+     die Störungen sind clip-path-Streifen, die GSAP würfelt. Spalten:
+     links Protokoll, Mitte Grundriss, rechts Messwerte. -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Big+Shoulders+Stencil+Display:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--hud:#9fd8ff;--linie:#3fb0ff;--alarm:#ff3b3b;--gelb:#ffb020;--lab-akzent:#ff3b3b;--lab-grund:#04070c;--lab-text:#9fd8ff;}
+  html,body{margin:0;height:100%;background:#04070c;overflow:hidden;}
+  body{font-family:'IBM Plex Mono',monospace;color:var(--hud);}
+  #hud{position:fixed;inset:0;}
+  .raster{position:absolute;inset:0;background-image:linear-gradient(rgba(63,176,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(63,176,255,.06) 1px,transparent 1px);background-size:3.2vh 3.2vh;}
+  .ecke{position:absolute;width:5vh;height:5vh;border:2px solid var(--hud);opacity:.7;}
+  .ecke.lo{left:2vw;top:3vh;border-right:0;border-bottom:0;} .ecke.ro{right:2vw;top:3vh;border-left:0;border-bottom:0;}
+  .ecke.lu{left:2vw;bottom:3vh;border-right:0;border-top:0;} .ecke.ru{right:2vw;bottom:3vh;border-left:0;border-top:0;}
+  #log{position:absolute;left:4vw;top:9vh;width:24vw;font-size:clamp(12px,1vw,16px);line-height:1.75;}
+  #log .z{white-space:pre;}
+  #log .ok{color:#6dffa8;} #log .warn{color:var(--gelb);}
+  .cursor{display:inline-block;width:.6em;height:1.1em;background:var(--hud);vertical-align:-.15em;margin-left:2px;}
+  #plan{position:absolute;left:30vw;top:12vh;width:42vw;height:62vh;overflow:visible;}
+  #plan svg{width:100%;height:100%;overflow:visible;}
+  #plan .w{fill:none;stroke:var(--linie);stroke-width:2;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 3px rgba(63,176,255,.6));}
+  #plan .d{fill:none;stroke:var(--linie);stroke-width:1;opacity:.55;stroke-dasharray:4 4;vector-effect:non-scaling-stroke;}
+  #plan text{fill:var(--hud);font:600 3.3px 'IBM Plex Mono',monospace;letter-spacing:.12em;}
+  #plan .mass{font-size:2.2px;opacity:.6;}
+  #scan{position:absolute;top:0;bottom:0;width:3px;background:var(--hud);box-shadow:0 0 18px 6px rgba(159,216,255,.45);opacity:0;}
+  #rechts{position:absolute;right:4vw;top:9vh;width:20vw;font-size:clamp(11px,.9vw,15px);line-height:1.6;}
+  #rechts .wert{color:#fff;font-weight:600;}
+  #rechts .balken{height:6px;background:rgba(63,176,255,.2);margin:6px 0 14px;}
+  #rechts .balken i{display:block;height:100%;background:var(--hud);transform-origin:left;}
+  #uhr{position:absolute;right:4vw;bottom:9vh;font:600 clamp(28px,4.4vw,72px) 'IBM Plex Mono',monospace;color:#fff;letter-spacing:.04em;}
+  #uhr small{display:block;font-size:.2em;letter-spacing:.3em;color:var(--hud);}
+  .laser{position:absolute;left:-10vw;right:-10vw;height:2px;background:var(--alarm);box-shadow:0 0 10px 2px rgba(255,59,59,.8),0 0 30px 8px rgba(255,59,59,.3);opacity:0;}
+  #ziel{position:absolute;width:16vh;height:16vh;margin:-8vh;opacity:0;}
+  #ziel svg{width:100%;height:100%;overflow:visible;}
+  #ziel circle, #ziel line{stroke:var(--alarm);stroke-width:2;fill:none;}
+  #ziel-text{position:absolute;left:100%;top:0;white-space:nowrap;color:var(--alarm);font-weight:600;font-size:13px;letter-spacing:.2em;padding-left:10px;}
+  .akte{position:absolute;top:22vh;width:26vw;padding:2.2vh 1.6vw;background:rgba(6,12,20,.94);border:1px solid rgba(159,216,255,.35);opacity:0;}
+  .akte h3{margin:0 0 1.6vh;font:900 clamp(26px,3vw,48px) 'Big Shoulders Stencil Display',sans-serif;letter-spacing:.06em;}
+  .akte .zeile{display:flex;justify-content:space-between;gap:1vw;padding:1vh 0;border-top:1px dashed rgba(159,216,255,.25);font-size:clamp(13px,1.2vw,19px);}
+  .akte .val{position:relative;color:#fff;font-weight:600;}
+  .akte .val .schwarz{position:absolute;inset:-2px -4px;background:#000;transform-origin:right;}
+  .akte .foto{height:12vh;margin-bottom:1.6vh;border:1px solid rgba(159,216,255,.25);display:flex;align-items:center;justify-content:center;
+    background:repeating-linear-gradient(45deg,rgba(159,216,255,.06) 0 6px,transparent 6px 12px);}
+  #briefing{position:absolute;left:0;right:0;top:30vh;text-align:center;font:600 clamp(18px,2.4vw,40px) 'IBM Plex Mono',monospace;color:#fff;line-height:1.9;}
+  #briefing .z{opacity:0;} #briefing b{color:var(--gelb);font-weight:600;}
+  #alarm{position:fixed;inset:0;background:var(--alarm);mix-blend-mode:screen;opacity:0;pointer-events:none;}
+  #titel{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;background:#04070c;}
+  #titel .op{font:600 clamp(13px,1.3vw,20px) 'IBM Plex Mono',monospace;letter-spacing:.6em;padding-left:.6em;color:var(--hud);}
+  #titel .gross{font:900 min(13vw,25vh)/.85 'Big Shoulders Stencil Display',sans-serif;color:#fff;letter-spacing:.02em;text-transform:uppercase;text-align:center;margin:2vh 0;}
+  #titel .klein{font:400 clamp(12px,1.05vw,17px) 'IBM Plex Mono',monospace;letter-spacing:.3em;color:var(--hud);}
+  #stempel{position:absolute;left:71%;top:27%;padding:.6vh 1.6vw;border:.6vh solid var(--alarm);color:var(--alarm);font:900 min(6vw,11vh) 'Big Shoulders Stencil Display',sans-serif;letter-spacing:.12em;
+    opacity:0;mix-blend-mode:screen;transform:translate(-50%,-50%) rotate(-12deg);
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='120'%3E%3Cfilter id='f'%3E%3CfeTurbulence baseFrequency='.08' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 1.7'/%3E%3C/filter%3E%3Crect width='300' height='120' filter='url(%23f)'/%3E%3C/svg%3E");
+    -webkit-mask-size:cover;}
+  #los{position:absolute;bottom:10vh;font-size:13px;letter-spacing:.3em;color:var(--hud);opacity:0;}
+  .scanlinien{position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);}
+  .vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 75% at 50% 50%,transparent 55%,rgba(0,0,0,.7) 100%);}
+  .ch{display:inline;}
+</style>
+</head>
+<body>
+<div id="hud"></div>
+<div id="alarm"></div>
+<div id="titel"></div>
+<div class="scanlinien"></div><div class="vig"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc, zeichen } = Lab;
+const R = gsap.utils.random;
+const T = { log: .6, plan: 3, scan: 7.4, laser: 8.6, zoom: 11, akten: 12.2, brief: 17.2, alarm: 21.2, schnitt: 22.6, stempel: 24.2 };
+let tippZeiten = [];
+
+const LOG = [
+  ['> Verbindung wird aufgebaut', ''],
+  ['> Entschlüssele Akte 0-17 …', ''],
+  ['> Zugriff gewährt', 'ok'],
+  ['> Lade Grundriss: Keller', ''],
+  ['> Bewegung im Sektor B', 'warn'],
+];
+
+function grundriss(){
+  /* Ein erfundener Keller: Treppe, Bar, Lager, Bühne, Publikum. Einheiten
+     sind Prozent der Fläche - das SVG zieht sich mit. */
+  const raum = (x, y, w, h, name, mx, my) => `<path class="w" d="M${x} ${y}h${w}v${h}h${-w}z"/><text x="${x + 2}" y="${y + 5}">${name}</text>
+    <text class="mass" x="${x + w - 2}" y="${y + h - 2}" text-anchor="end">${(w * .12).toFixed(1)} × ${(h * .12).toFixed(1)} m</text>`;
+  return `<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+    ${raum(2, 2, 30, 34, 'TREPPE')}${raum(34, 2, 64, 20, 'BAR')}${raum(2, 38, 22, 60, 'LAGER')}
+    ${raum(26, 24, 72, 74, '')}
+    <path class="w" id="buehne-rahmen" d="M46 30h44v26h-44z"/><text x="48" y="35">BÜHNE</text>
+    <text x="28" y="94">PUBLIKUM</text>
+    <path class="d" d="M26 60h72M52 60v38M74 60v38"/>
+    <path class="w" d="M8 12l6 0l0 6l6 0l0 6l6 0"/>
+  </svg>`;
+}
+
+function aufbauen(){
+  tippZeiten = [];
+  document.getElementById('hud').innerHTML = `
+    <div class="raster"></div>
+    <i class="ecke lo"></i><i class="ecke ro"></i><i class="ecke lu"></i><i class="ecke ru"></i>
+    <div id="log">${LOG.map(([t, k], i) => `<div class="z ${k}" id="log${i}">${zeichen(t)}</div>`).join('')}<span class="cursor" id="cur"></span></div>
+    <div id="plan">${grundriss()}<i id="scan"></i></div>
+    <div id="rechts">
+      <div>OPERATION</div><div class="wert">KELLER</div><div class="balken"><i></i></div>
+      <div>SIGNAL</div><div class="wert" id="sig">0 %</div><div class="balken"><i></i></div>
+      <div>ZIELE</div><div class="wert" id="ziele">–</div><div class="balken"><i></i></div>
+      <div>STATUS</div><div class="wert" id="status">SUCHE</div>
+    </div>
+    <div id="uhr"><small>Einsatzbeginn in</small><span id="uhr-z">00:05.00</span></div>
+    ${[0, 1, 2, 3, 4, 5].map(i => `<i class="laser" id="la${i}"></i>`).join('')}
+    <div id="ziel"><svg viewBox="-50 -50 100 100"><circle r="40"/><circle r="22" stroke-dasharray="6 6"/><line x1="-50" y1="0" x2="-28" y2="0"/><line x1="28" y1="0" x2="50" y2="0"/><line x1="0" y1="-50" x2="0" y2="-28"/><line x1="0" y1="28" x2="0" y2="50"/></svg><span id="ziel-text">ZIEL ERFASST</span></div>
+    ${[0, 1].map(i => `<div class="akte" id="akte${i}" style="${i ? 'right:6vw' : 'left:6vw'};border-top:4px solid ${i ? '#3B82F6' : '#E8453C'}">
+      <div class="foto">${['● ● ●', '● ● ●'][i]}</div>
+      <h3 style="color:${i ? '#7aa7ff' : '#ff6a5a'}">${esc(SHOW.teams[i])}</h3>
+      ${[['Codename', i ? 'BLAU' : 'ROT'], ['Mitglieder', 'Unbekannt'], ['Gefahr', 'Hoch'], ['Status', 'Bereit']].map(([k, v]) =>
+        `<div class="zeile"><span>${k}</span><span class="val">${v}<i class="schwarz"></i></span></div>`).join('')}
+    </div>`).join('')}
+    <div id="briefing">
+      <div class="z">Einsatz: <b>${esc(SHOW.karten[1].text)}</b></div>
+      <div class="z">${esc(SHOW.karten[2].ueber)}: <b>${esc(SHOW.karten[2].text)}</b></div>
+      <div class="z">Beute: <b><span id="beute">0</span> €</b></div>
+    </div>`;
+  document.getElementById('titel').innerHTML = `
+    <div class="op">Operation</div>
+    <div class="gross" id="tgross">${esc(SHOW.titel).replace(' ', '<br>')}</div>
+    <div class="klein">${esc(SHOW.titelKlein)} · ${esc(SHOW.titelZeile)}</div>
+    <div id="stempel">Freigegeben</div>
+    <div id="los">KLICKEN, UM ZU BEGINNEN_</div>`;
+  gsap.set('#titel', { opacity: 0 });
+  gsap.set('#alarm', { opacity: 0 });
+}
+
+function tippen(tl, sel, t, proZeichen){
+  const ch = document.querySelectorAll(sel + ' .ch');
+  gsap.set(ch, { opacity: 0 });
+  tl.to(ch, { opacity: 1, duration: .01, stagger: proZeichen }, t);
+  ch.forEach((_, i) => tippZeiten.push(t + i * proZeichen));
+  return t + ch.length * proZeichen;
+}
+
+function bauen(tl){
+  const hud = '#hud';
+  gsap.set(['#plan', '#rechts', '#uhr', '.ecke', '.raster'], { opacity: 0 });
+  tl.to('#cur', { opacity: 0, duration: .01, repeat: 60, yoyo: true, repeatDelay: .45 }, 0);
+  let t = T.log;
+  LOG.forEach((_, i) => { t = tippen(tl, '#log' + i, t, .035) + .35; });
+
+  tl.to('.raster', { opacity: 1, duration: 1.5 }, 1.5)
+    .fromTo('.ecke', { scale: 1.6, opacity: 0 }, { scale: 1, opacity: .7, duration: .6, ease: 'expo.out', stagger: .08 }, 2)
+    .to('#rechts', { opacity: 1, duration: .5 }, 2.4)
+    .fromTo('#rechts .balken i', { scaleX: 0 }, { scaleX: (i) => [.35, .8, .6][i], duration: 2.5, ease: 'power2.out', stagger: .3 }, 2.6)
+    .to('#plan', { opacity: 1, duration: .3 }, T.plan);
+
+  /* Grundriss zeichnet sich: jede Linie bekommt ihre Länge als dasharray. */
+  /* non-scaling-stroke misst Striche in Bildschirmpixeln, getTotalLength in
+     SVG-Einheiten - deshalb mit dem Maßstab des Quadrats malnehmen. */
+  const linien = [...document.querySelectorAll('#plan .w')];
+  const pr = document.getElementById('plan').getBoundingClientRect(), mass = Math.min(pr.width, pr.height) / 100;
+  linien.forEach(l => { const n = l.getTotalLength() * mass + 4; gsap.set(l, { strokeDasharray: n, strokeDashoffset: n }); });
+  tl.to(linien, { strokeDashoffset: 0, duration: 1.4, ease: 'power2.inOut', stagger: .3 }, T.plan)
+    .fromTo('#plan text', { opacity: 0 }, { opacity: 1, duration: .2, stagger: .12 }, T.plan + 1.5);
+  const sig = { v: 0 };
+  tl.to(sig, { v: 87, duration: 5, ease: 'power1.out', onUpdate: () => { document.getElementById('sig').textContent = Math.round(sig.v) + ' %'; } }, T.plan);
+
+  /* Scan von links nach rechts */
+  tl.fromTo('#scan', { left: '0%', opacity: 1 }, { left: '100%', duration: 1.1, ease: 'power1.inOut' }, T.scan)
+    .to('#scan', { opacity: 0, duration: .2 }, T.scan + 1.1);
+
+  /* Laser tasten den Raum ab */
+  document.querySelectorAll('.laser').forEach((l, i) => {
+    tl.fromTo(l, { top: '-5%', rotation: R(-14, 14), opacity: .95 }, { top: '108%', rotation: R(-8, 8), duration: R(1.2, 1.8), ease: 'power1.inOut' }, T.laser + i * .22)
+      .set(l, { opacity: 0 }, T.laser + i * .22 + 1.9);
+  });
+  /* Fadenkreuz rastet auf der Bühne ein */
+  /* Das SVG ist quadratisch in den Kasten eingepasst (meet) - die Bühne
+     liegt bei 68 % / 43 % des Quadrats, nicht des Kastens. */
+  const plan = document.getElementById('plan').getBoundingClientRect();
+  const kante = Math.min(plan.width, plan.height);
+  const zx = plan.left + (plan.width - kante) / 2 + kante * .68, zy = plan.top + (plan.height - kante) / 2 + kante * .43;
+  tl.set('#ziel', { left: zx, top: zy }, T.laser)
+    .fromTo('#ziel', { opacity: 0, scale: 3, rotation: -90 }, { opacity: 1, scale: 1, rotation: 0, duration: .9, ease: 'expo.out' }, T.laser + 1.1)
+    .fromTo('#ziel', { opacity: 1 }, { opacity: .4, duration: .08, repeat: 5, yoyo: true, immediateRender: false }, T.laser + 2)
+    .set('#ziele', { textContent: '1 · BÜHNE' }, T.laser + 2)
+    .set('#status', { textContent: 'ZIEL ERFASST', color: '#ff3b3b' }, T.laser + 2)
+    .to('#buehne-rahmen', { stroke: '#ff3b3b', duration: .2 }, T.laser + 2);
+
+  /* Ranfahren auf die Bühne, dann dimmen für die Akten */
+  tl.to('#plan', { scale: 2.1, xPercent: -20, yPercent: 6, transformOrigin: '68% 43%', duration: 1.1, ease: 'expo.inOut' }, T.zoom)
+    .to('#ziel', { scale: 2.1, opacity: 0, duration: 1.1, ease: 'expo.inOut' }, T.zoom)
+    .to(['#plan', '#log', '#rechts'], { opacity: .18, duration: .6 }, T.akten - .2);
+
+  /* Akten: hereinschieben, Schwärzungen reißen nacheinander weg */
+  [0, 1].forEach(i => {
+    tl.fromTo('#akte' + i, { opacity: 0, x: i ? 120 : -120 }, { opacity: 1, x: 0, duration: .7, ease: 'expo.out' }, T.akten + i * .3)
+      .to(`#akte${i} .schwarz`, { scaleX: 0, duration: .25, ease: 'power3.in', stagger: .45 }, T.akten + 1 + i * .2)
+      .to('#akte' + i, { opacity: 0, x: i ? 80 : -80, duration: .5, ease: 'power2.in' }, T.brief - .6);
+  });
+  tl.set('#ziele', { textContent: '2 · TEAMS' }, T.akten + 1);
+
+  /* Briefing, Countdown */
+  tl.to(['#plan', '#log', '#rechts'], { opacity: .1, duration: .3 }, T.brief);
+  document.querySelectorAll('#briefing .z').forEach((z, i) => {
+    tl.fromTo(z, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: .4, ease: 'power2.out' }, T.brief + .2 + i * 1.1);
+  });
+  const beute = { v: 0 };
+  tl.to(beute, { v: SHOW.karten[3].zahl, duration: 1, ease: 'steps(30)', onUpdate: () => { document.getElementById('beute').textContent = String(Math.round(beute.v)); } }, T.brief + 2.5);
+  tl.to('#uhr', { opacity: 1, duration: .3 }, T.brief);
+  const uhr = { v: 5 };
+  tl.fromTo(uhr, { v: 5 }, { v: 0, duration: T.schnitt - .2 - T.brief, ease: 'none', onUpdate: () => {
+    const s = Math.max(0, uhr.v);
+    document.getElementById('uhr-z').textContent = '00:0' + Math.floor(s) + '.' + String(Math.floor((s % 1) * 100)).padStart(2, '0');
+  } }, T.brief);
+
+  /* Alarm: rotes Pulsieren, Störstreifen über allem */
+  tl.fromTo('#alarm', { opacity: 0 }, { opacity: .35, duration: .18, repeat: 7, yoyo: true, ease: 'power1.inOut' }, T.alarm);
+  for (let k = 0; k < 14; k++){
+    const t0 = T.alarm + k * .095;
+    const a = R(0, 90), b = Math.min(100, a + R(3, 12));
+    tl.set(hud, { clipPath: `polygon(0 0,100% 0,100% ${a}%,0 ${a}%,0 ${b}%,100% ${b}%,100% 100%,0 100%)`, x: R(-30, 30) }, t0);
+  }
+  tl.set(hud, { clipPath: 'none', x: 0 }, T.alarm + 1.4)
+    .set(hud, { opacity: 0 }, T.schnitt - .15);
+
+  /* Schnitt auf Schwarz, dann der Titel mit Farbversatz, der sich legt */
+  tl.set('#titel', { opacity: 1 }, T.schnitt)
+    .fromTo('#tgross', { textShadow: '-18px 0 rgba(255,0,60,.9), 18px 0 rgba(0,220,255,.9)', scale: 1.08, opacity: 0 },
+      { textShadow: '0px 0 rgba(255,0,60,0), 0px 0 rgba(0,220,255,0)', scale: 1, opacity: 1, duration: 1.6, ease: 'expo.out' }, T.schnitt)
+    .fromTo('#titel .op, #titel .klein', { opacity: 0 }, { opacity: 1, duration: .8, stagger: .4 }, T.schnitt + .5);
+  for (let k = 0; k < 6; k++) tl.set('#tgross', { x: R(-12, 12), skewX: R(-8, 8) }, T.schnitt + .05 + k * .06);
+  tl.set('#tgross', { x: 0, skewX: 0 }, T.schnitt + .45)
+    .fromTo('#stempel', { opacity: 0, scale: 3.2 }, { opacity: .95, scale: 1, duration: .22, ease: 'power4.in' }, T.stempel)
+    .fromTo('#titel', { x: 0 }, { x: 10, duration: .05, repeat: 5, yoyo: true, immediateRender: false }, T.stempel + .22)
+    .fromTo('#los', { opacity: 0 }, { opacity: 1, duration: .01, repeat: 9, yoyo: true, repeatDelay: .5 }, T.stempel + 1.2)
+    .to({}, { duration: 4 }, T.stempel + 1);
+}
+
+function ton(t0, A){
+  /* Herzschlag bis zum Schnitt */
+  for (let s = 0; s < T.schnitt; s += (s > T.alarm ? .45 : 1)){
+    [0, .22].forEach((d, i) => {
+      const g = A.huelle(t0 + s + d, .005, i ? .22 : .35, 0, .25);
+      const o = A.osz('sine', 58, t0 + s + d, .3, g); o.frequency.exponentialRampToValueAtTime(38, t0 + s + d + .2);
+    });
+  }
+  tippZeiten.forEach(t => A.klick(t0 + t, .12, R(2500, 4200)));
+  /* Surren beim Zeichnen des Grundrisses */
+  const sg = A.huelle(t0 + T.plan, .5, .06, 3.2, .8);
+  A.rauschen(t0 + T.plan, 5, A.filter('lowpass', 500, 4, sg));
+  A.rauschen_wisch(t0 + T.scan, 1.1, .25, 600, 5000); A.ping(t0 + T.scan + 1.1, 1318.5, .08, 1.8);
+  /* Laser: kurze, abfallende Sirrtöne */
+  for (let i = 0; i < 6; i++){
+    const t = t0 + T.laser + i * .22, g = A.huelle(t, .005, .05, .05, .3);
+    const o = A.osz('sawtooth', 2200, t, .45, A.filter('lowpass', 3000, 0, g)); o.frequency.exponentialRampToValueAtTime(500, t + .4);
+  }
+  [0, .14, .28].forEach(d => A.ping(t0 + T.laser + 1.6 + d, 1760, .06, .15));
+  A.ping(t0 + T.laser + 2, 880, .1, 1.2);
+  A.rauschen_wisch(t0 + T.zoom, 1.1, .3, 200, 2500);
+  [0, 1].forEach(i => { A.rauschen_wisch(t0 + T.akten + i * .3, .6, .2, 400, 3000); for (let k = 0; k < 4; k++) A.klick(t0 + T.akten + 1 + i * .2 + k * .45, .3, 1800); });
+  /* Countdown: jede Sekunde ein Ticken */
+  for (let s = 0; s <= 5; s++) A.klick(t0 + T.brief + s * ((T.schnitt - .2 - T.brief) / 5), .4, 5200);
+  for (let k = 0; k < 8; k++){ const g = A.huelle(t0 + T.alarm + k * .18, .01, .04, .1, .05); A.osz('square', k % 2 ? 660 : 880, t0 + T.alarm + k * .18, .2, g); }
+  /* Der Schlag zum Titel: tiefer Sägezahn-Akkord, Filter öffnet langsam */
+  const t = t0 + T.schnitt, g = A.huelle(t, .04, .22, 1.6, 2.4);
+  const lp = A.filter('lowpass', 180, 3, g);
+  lp.frequency.setValueAtTime(180, t); lp.frequency.exponentialRampToValueAtTime(1400, t + .6); lp.frequency.exponentialRampToValueAtTime(300, t + 3.5);
+  [55, 82.41, 110, 130.81].forEach(f => [-.005, .005].forEach(dt => A.osz('sawtooth', f * (1 + dt), t, 4.2, lp)));
+  A.aufprall(t, 1);
+  A.kick(t0 + T.stempel + .22, 1); A.snare(t0 + T.stempel + .22, .6); A.klatschen(t0 + T.stempel + .22, .25);
+}
+
+Lab.starte({ name: 'Agentenakte', untertitel: 'Klicken zum Starten · Ton an', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

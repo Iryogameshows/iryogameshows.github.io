@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Partikelsturm</title>
+<!-- Intro-Prototyp "Partikelsturm": 36.000 Lichtteilchen im Nichts. Erst
+     eine drehende Galaxie, dann reißt ein Sog sie auseinander und sie setzen
+     sich Wort für Wort zusammen - DIE GROSSE, KELLER, GAMESHOW, zwei Teams
+     als rote und blaue Wolke, 30 €, zum Schluss der ganze Titel.
+
+     Alle sieben Formen werden einmal vorab berechnet (Schrift auf ein
+     unsichtbares Canvas, Pixel abtasten) und als Attribute in die
+     Grafikkarte gelegt. Der Shader mischt zwischen zwei Formen; jedes
+     Teilchen bekommt eine eigene Verzögerung und eine Wirbelbahn. Darum ist
+     die ganze Zeitleiste auch rückwärts spulbar - es gibt keinen Zustand,
+     nur uStage. -->
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;800&family=Inter:wght@300;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#9fd8ff;--lab-grund:#020204;--lab-text:#eaf3ff;}
+  html,body{margin:0;height:100%;background:#020204;overflow:hidden;}
+  #gl{position:fixed;inset:0;width:100%;height:100%;display:block;}
+  .vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 50% 50%,transparent 45%,rgba(0,0,0,.75) 100%);}
+  .unter{position:fixed;left:0;right:0;text-align:center;pointer-events:none;font:300 clamp(13px,1.3vw,22px) Inter,sans-serif;letter-spacing:.55em;padding-left:.55em;
+    text-transform:uppercase;color:rgba(234,243,255,.75);opacity:0;}
+  .oben{top:17vh;} .tief{bottom:17vh;}
+  .team-schild{position:fixed;top:76vh;width:30vw;text-align:center;font:500 clamp(13px,1.2vw,20px) Syne,sans-serif;letter-spacing:.35em;text-transform:uppercase;opacity:0;}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div class="vig"></div>
+<div id="texte"></div>
+<div class="lab-korn" style="opacity:.05"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc } = Lab;
+const N = 36000;
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl', { antialias: false, alpha: false, premultipliedAlpha: false });
+
+const VERT = `
+attribute vec4 aP01, aP23, aP45, aP6R;
+uniform float uStage, uTime, uAspect, uScale, uSize, uChaos, uBright, uTeam;
+varying vec3 vCol; varying float vA;
+vec2 form(float k){
+  if (k < .5) {
+    /* Galaxie dreht sich langsam */
+    float a = uTime * .12; mat2 r = mat2(cos(a), -sin(a), sin(a), cos(a));
+    vec2 p = aP01.xy; p.y /= .42; p = r * p; p.y *= .42; return p;
+  }
+  if (k < 1.5) return aP01.zw;
+  if (k < 2.5) return aP23.xy;
+  if (k < 3.5) return aP23.zw;
+  if (k < 4.5) return aP45.xy;
+  if (k < 5.5) return aP45.zw;
+  return aP6R.xy;
+}
+void main(){
+  float r1 = aP6R.z, r2 = aP6R.w;
+  float k = floor(uStage), f = uStage - k;
+  /* Eigene Verzögerung je Teilchen: die Form löst sich nicht auf einmal,
+     sie zerfließt. */
+  float l = clamp(f * 1.7 - r1 * .7, 0., 1.);
+  l = l * l * (3. - 2. * l);
+  vec2 von = form(k), nach = form(min(k + 1., 6.));
+  vec2 p = mix(von, nach, l);
+  float flug = sin(l * 3.14159);
+  /* Wirbel auf dem Weg: jedes Teilchen auf eigener Bahn, nach außen gedrückt */
+  vec2 mitte = mix(von, nach, .5);
+  vec2 wirbel = vec2(sin(r2 * 23. + uTime * .9 + p.y * 3.1), cos(r1 * 19. + uTime * .8 + p.x * 2.7));
+  p += (wirbel * (.25 + r2 * .55) + normalize(mitte + vec2(.0001)) * .35) * flug * uChaos;
+  /* Ruhiges Flirren, wenn eine Form steht */
+  p += vec2(sin(uTime * 2.1 + r1 * 60.), cos(uTime * 1.7 + r2 * 60.)) * .0035;
+  gl_Position = vec4(p.x * uScale / uAspect, p.y * uScale, 0., 1.);
+  gl_PointSize = uSize * (.65 + r2 * .9) * (1. + flug * 1.6);
+  vec3 c = mix(vec3(1., .9, .76), vec3(.62, .82, 1.), step(.72, r2));
+  c = mix(c, vec3(1., .78, .45), step(.93, r1));
+  /* Zwei Teams: links rot, rechts blau (Form 4 legt gerade Nummern links) */
+  float team = uTeam * (1. - clamp(abs(uStage - 4.) * 1.2, 0., 1.));
+  vec3 tc = aP45.x < 0. ? vec3(1., .3, .25) : vec3(.3, .55, 1.);
+  c = mix(c, tc, team);
+  vCol = c * (1. + flug * .8);
+  vA = (.55 + .45 * r2) * uBright;
+}`;
+const FRAG = `
+precision mediump float;
+varying vec3 vCol; varying float vA;
+void main(){
+  vec2 d = gl_PointCoord - .5;
+  float a = smoothstep(.5, 0., length(d));
+  gl_FragColor = vec4(vCol, pow(a, 1.4) * vA);
+}`;
+
+function shader(t, s){ const x = gl.createShader(t); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(x)); return x; }
+const prog = gl.createProgram();
+gl.attachShader(prog, shader(gl.VERTEX_SHADER, VERT)); gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, FRAG));
+gl.linkProgram(prog); if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+const LOC = {};
+['uStage','uTime','uAspect','uScale','uSize','uChaos','uBright','uTeam'].forEach(n => LOC[n] = gl.getUniformLocation(prog, n));
+
+/* ── Formen berechnen ── */
+const BW = 1600, BH = 900;
+function textPunkte(zeilen){
+  const c = document.createElement('canvas'); c.width = BW; c.height = BH;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  /* Jede Zeile höchstens 1440 px breit, sonst schneidet das Canvas sie ab. */
+  zeilen.forEach(z => {
+    const t = z.t.toUpperCase();
+    x.font = `${z.w || 800} ${z.s}px Syne`;
+    const s = Math.min(z.s, z.s * 1440 / x.measureText(t).width);
+    x.font = `${z.w || 800} ${s}px Syne`;
+    x.fillText(t, BW / 2, z.y);
+  });
+  const d = x.getImageData(0, 0, BW, BH).data, pts = [];
+  for (let y = 0; y < BH; y += 2) for (let xx = 0; xx < BW; xx += 2) if (d[(y * BW + xx) * 4 + 3] > 140) pts.push([(xx - BW / 2) / (BH / 2), -(y - BH / 2) / (BH / 2)]);
+  return pts;
+}
+function auswahl(pts, out, off){
+  for (let i = 0; i < N; i++){
+    const p = pts[(Math.random() * pts.length) | 0];
+    out[i * 4 + off] = p[0] + (Math.random() - .5) * .004;
+    out[i * 4 + off + 1] = p[1] + (Math.random() - .5) * .004;
+  }
+}
+let gebaut = false;
+function formenBauen(){
+  if (gebaut) return;
+  gebaut = true;
+  const P01 = new Float32Array(N * 4), P23 = new Float32Array(N * 4), P45 = new Float32Array(N * 4), P6R = new Float32Array(N * 4);
+  /* 0 · Galaxie mit drei Armen */
+  for (let i = 0; i < N; i++){
+    const arm = i % 3, r = Math.pow(Math.random(), .7) * 1.55;
+    const a = arm * 2.094 + r * 2.6 + (Math.random() - .5) * (.55 / (r + .3));
+    const s = (Math.random() - .5) * .12 * (1.6 - r);
+    P01[i * 4] = Math.cos(a) * r + s; P01[i * 4 + 1] = (Math.sin(a) * r + s) * .42;
+  }
+  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  auswahl(textPunkte([{ t: SHOW.titelKlein, s: 210, y: 450 }]), P01, 2);
+  auswahl(textPunkte([{ t: ta, s: 330, y: 450 }]), P23, 0);
+  auswahl(textPunkte([{ t: tb, s: 250, y: 450 }]), P23, 2);
+  /* 4 · zwei Teams: zwei dichte Scheiben, gerade Nummern links */
+  for (let i = 0; i < N; i++){
+    const links = i % 2 === 0, r = Math.sqrt(Math.random()) * .48, a = Math.random() * 6.283;
+    P45[i * 4] = (links ? -.78 : .78) + Math.cos(a) * r; P45[i * 4 + 1] = Math.sin(a) * r;
+  }
+  auswahl(textPunkte([{ t: SHOW.karten[3].text, s: 420, y: 470 }]), P45, 2);
+  auswahl(textPunkte([{ t: SHOW.titelKlein, s: 80, w: 500, y: 250 }, { t: ta, s: 230, y: 420 }, { t: tb, s: 175, y: 625 }]), P6R, 0);
+  for (let i = 0; i < N; i++){ P6R[i * 4 + 2] = Math.random(); P6R[i * 4 + 3] = Math.random(); }
+  [['aP01', P01], ['aP23', P23], ['aP45', P45], ['aP6R', P6R]].forEach(([name, data]) => {
+    const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0);
+  });
+}
+
+const U = {};
+function grundwerte(){ Object.assign(U, { stage: 0, chaos: 1, bright: 0, team: 0, scale: .86 }); }
+grundwerte();
+let dpr = 1;
+function groesse(){
+  dpr = Math.min(2, devicePixelRatio || 1);
+  canvas.width = Math.round(innerWidth * dpr); canvas.height = Math.round(innerHeight * dpr);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+}
+addEventListener('resize', groesse); groesse();
+gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+let zeit = 0, zuletzt = performance.now();
+function zeichnen(j){
+  const dt = Math.min(.05, (j - zuletzt) / 1000); zuletzt = j; zeit += dt;
+  gl.clearColor(.008, .008, .016, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+  if (gebaut){
+    const asp = canvas.width / canvas.height;
+    /* Schmale Fenster: so weit verkleinern, dass das breiteste Wort passt */
+    const fit = Math.min(1, asp / 1.9);
+    gl.uniform1f(LOC.uStage, U.stage); gl.uniform1f(LOC.uTime, zeit); gl.uniform1f(LOC.uAspect, asp);
+    gl.uniform1f(LOC.uScale, U.scale * fit); gl.uniform1f(LOC.uSize, 3.4 * dpr * Math.max(.75, innerHeight / 900));
+    gl.uniform1f(LOC.uChaos, U.chaos); gl.uniform1f(LOC.uBright, U.bright); gl.uniform1f(LOC.uTeam, U.team);
+    gl.drawArrays(gl.POINTS, 0, N);
+  }
+  requestAnimationFrame(zeichnen);
+}
+requestAnimationFrame(zeichnen);
+
+/* ── Zeitleiste ── */
+const ANKUNFT = [0, 5.2, 8.9, 12.6, 16.3, 20.0, 23.9];   // wann Form k steht
+const WEG = 2.3;                                        // Flugzeit zwischen zwei Formen
+
+function aufbauen(){
+  grundwerte();
+  formenBauen();
+  document.getElementById('texte').innerHTML = `
+    <div class="unter oben" id="u1">${esc(SHOW.vorab)}</div>
+    <div class="unter oben" id="u4">${esc(SHOW.karten[0].ueber)}</div>
+    <div class="team-schild" style="left:calc(50vw - 38vw);color:#ff6a5a" id="tr">${esc(SHOW.teams[0])}</div>
+    <div class="team-schild" style="right:calc(50vw - 38vw);color:#7aa7ff" id="tbl">${esc(SHOW.teams[1])}</div>
+    <div class="unter oben" id="u5">${esc(SHOW.karten[3].ueber)}</div>
+    <div class="unter tief" id="u6">${esc(SHOW.titelZeile)}</div>
+    <div class="unter tief" id="u7" style="bottom:10vh;font-size:12px;letter-spacing:.4em">Klicken, um zu beginnen</div>`;
+}
+function bauen(tl){
+  tl.to(U, { bright: 1, duration: 2.5, ease: 'power2.out' }, 0)
+    .fromTo(U, { scale: .7 }, { scale: .86, duration: ANKUNFT[1], ease: 'sine.inOut' }, 0);
+  for (let k = 1; k <= 6; k++){
+    tl.fromTo(U, { stage: k - 1 }, { stage: k, duration: WEG, ease: 'power1.inOut', immediateRender: false }, ANKUNFT[k] - WEG);
+  }
+  const unter = (id, a, e) => {
+    tl.fromTo(id, { opacity: 0 }, { opacity: 1, duration: .9, ease: 'power2.out', immediateRender: false }, a);
+    if (e) tl.to(id, { opacity: 0, duration: .5 }, e);
+  };
+  unter('#u1', ANKUNFT[1] - .2, ANKUNFT[2] - WEG);
+  unter('#u4', ANKUNFT[4] - .2, ANKUNFT[5] - WEG);
+  unter('#tr', ANKUNFT[4], ANKUNFT[5] - WEG);
+  unter('#tbl', ANKUNFT[4] + .15, ANKUNFT[5] - WEG);
+  unter('#u5', ANKUNFT[5] - .2, ANKUNFT[6] - WEG);
+  unter('#u6', ANKUNFT[6] + .3);
+  tl.to(U, { team: 1, duration: 1.2 }, ANKUNFT[4] - 1.2)
+    .to(U, { team: 0, duration: .8 }, ANKUNFT[5] - WEG + .4)
+    .fromTo(U, { scale: .86 }, { scale: .95, duration: 6, ease: 'sine.out', immediateRender: false }, ANKUNFT[6])
+    .fromTo('#u7', { opacity: 0 }, { opacity: .6, duration: 1, repeat: 5, yoyo: true, ease: 'sine.inOut' }, ANKUNFT[6] + 2)
+    .to({}, { duration: 4 }, ANKUNFT[6] + 2);
+}
+function ton(t0, A){
+  /* Fläche in a-Moll mit None, sehr weich gefiltert */
+  A.flaeche(t0, [110, 164.81, 196, 246.94], 34, .045, 650, 4);
+  A.flaeche(t0 + ANKUNFT[6] - 1, [220, 329.63, 392, 493.88], 12, .03, 1600, 2);
+  const arp = [[880, 1046.5, 1318.5], [987.77, 1174.66, 1567.98], [880, 1318.5, 1760], [783.99, 987.77, 1318.5], [880, 1046.5, 1318.5], [880, 1318.5, 1760, 2093]];
+  for (let k = 1; k <= 6; k++){
+    A.rauschen_wisch(t0 + ANKUNFT[k] - WEG, WEG, .3, 200, 3600);
+    arp[k - 1].forEach((f, i) => A.ping(t0 + ANKUNFT[k] - .15 + i * .09, f, .05, 2.2));
+    A.kick(t0 + ANKUNFT[k] - .15, .35);
+  }
+  A.aufprall(t0 + ANKUNFT[6] - .1, .7);
+}
+Lab.starte({ name: 'Partikelsturm', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

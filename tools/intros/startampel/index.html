@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Startampel</title>
+<!-- Intro "Startampel": Startaufstellung wie in der Formel 1. Zwei Wagen
+     stehen bereit, rot und blau, die Motoren laufen. Fünf rote Lichter gehen
+     im Sekundentakt an - Pause - alle aus: Start! Die Wagen schießen davon,
+     und über die Strecke weht die Zielflagge mit dem Titel.
+
+     Die Flagge ist ein Schachbrett aus zwölf senkrechten Streifen, die jeder
+     für sich auf und ab schwingen - zusammen sieht das aus wie Stoff im
+     Wind. -->
+<link href="https://fonts.googleapis.com/css2?family=Racing+Sans+One&family=Inter:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#ff3b3b;--lab-grund:#0b0d14;--lab-text:#f2f2f2;}
+  html,body{margin:0;height:100%;background:#0b0d14;overflow:hidden;}
+  #strecke{position:fixed;inset:0;overflow:hidden;background:linear-gradient(#0b1020 0,#1b2440 45%,#2a2f3c 46%,#15171d 100%);}
+  .flutlicht{position:absolute;top:8vh;width:14vh;height:5vh;border-radius:1vh;background:#fffbe8;box-shadow:0 0 6vh 3vh rgba(255,250,220,.45);}
+  .asphalt{position:absolute;left:0;right:0;top:46%;bottom:0;overflow:hidden;}
+  .linien{position:absolute;left:50%;top:0;width:300vw;height:100%;margin-left:-150vw;transform:perspective(30vh) rotateX(58deg);transform-origin:50% 0;
+    background:linear-gradient(90deg,transparent 30%,#e8e8e8 30% 30.5%,transparent 30.5% 69.5%,#e8e8e8 69.5% 70%,transparent 70%);}
+  .mitte{position:absolute;left:50%;top:0;bottom:0;width:.25%;margin-left:-.125%;background:repeating-linear-gradient(180deg,#f2f2f2 0 7vh,transparent 7vh 16vh);}
+  .startlinie{position:absolute;left:10%;right:10%;top:62%;height:2vh;background:repeating-linear-gradient(90deg,#fff 0 2vh,#111 2vh 4vh);}
+  .wagen{position:absolute;bottom:10vh;width:26vh;height:16vh;}
+  .wagen .koerper{position:absolute;left:10%;right:10%;bottom:3vh;height:7vh;border-radius:2vh 2vh .8vh .8vh;}
+  .wagen .cockpit{position:absolute;left:36%;right:36%;bottom:9vh;height:4.6vh;border-radius:2vh 2vh 0 0;background:#111;}
+  .wagen .fluegel{position:absolute;left:0;right:0;bottom:10vh;height:1.6vh;border-radius:.4vh;}
+  .wagen .rad{position:absolute;bottom:0;width:6vh;height:7vh;border-radius:1.2vh;background:#0c0c0c;box-shadow:inset 0 0 0 .5vh #222;}
+  .wagen .licht{position:absolute;left:44%;right:44%;bottom:5vh;height:1.2vh;border-radius:.4vh;background:#ff2a2a;box-shadow:0 0 2vh #ff2a2a;}
+  .rauch{position:absolute;bottom:2vh;width:14vh;height:10vh;border-radius:50%;background:radial-gradient(closest-side,rgba(220,220,230,.7),transparent);opacity:0;}
+  #ampel{position:absolute;left:50%;top:16vh;transform:translateX(-50%);display:flex;gap:1.6vh;padding:1.6vh 2vh;background:#111;border-radius:1.2vh;box-shadow:0 1vh 3vh rgba(0,0,0,.7);}
+  #ampel::before{content:"";position:absolute;left:-40vw;right:-40vw;top:45%;height:1.4vh;background:#1c1c1c;z-index:-1;}
+  .topf{display:flex;flex-direction:column;gap:1vh;padding:1vh;background:#050505;border-radius:.8vh;}
+  .topf i{width:5.6vh;height:5.6vh;border-radius:50%;background:#2a0a0a;box-shadow:inset 0 0 0 .4vh #160404;}
+  .speed{position:absolute;inset:0;opacity:0;background:repeating-linear-gradient(90deg,transparent 0 6vw,rgba(255,255,255,.12) 6vw 6.3vw);}
+  #flagge{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;opacity:0;}
+  #flagge i{flex:1;background:repeating-conic-gradient(#111 0 25%,#f2f2f2 0 50%) 0 0/8vh 8vh;}
+  #flagge i:nth-child(odd){background-position:0 4vh;}
+  #banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) skewX(-8deg);padding:3vh 6vh 3.6vh;background:#111;box-shadow:1.4vh 1.4vh 0 #E8453C,-1.4vh -1.4vh 0 #3B82F6;text-align:center;opacity:0;}
+  #banner .k{font:800 min(1.8vw,3vh) Inter,sans-serif;letter-spacing:.5em;color:#bbb;text-transform:uppercase;}
+  #banner .g{font:400 min(10vw,17vh)/.95 'Racing Sans One',sans-serif;color:#fff;font-style:italic;}
+  #banner .zeit{margin-top:1.4vh;font:800 min(1.6vw,2.7vh) Inter,sans-serif;letter-spacing:.3em;color:#ffd24d;text-transform:uppercase;}
+  .los{position:absolute;bottom:4vh;left:0;right:0;text-align:center;font:800 13px Inter,sans-serif;letter-spacing:.45em;color:#111;opacity:0;text-transform:uppercase;}
+  .los span{background:#ffd24d;padding:.8vh 1.4vh;}
+</style>
+</head>
+<body>
+<div id="strecke"></div>
+<div class="lab-korn" style="z-index:9;opacity:.06"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc } = Lab;
+const R = gsap.utils.random;
+const T = { licht: 1.0, aus: 6.4, flagge: 7.6 };
+
+function wagen(farbe, seite){
+  return `<div class="wagen" id="w${seite}" style="${seite ? 'right:24vw' : 'left:24vw'}">
+    <i class="rauch" style="left:-4vh"></i><i class="rauch" style="right:-4vh"></i>
+    <div class="fluegel" style="background:${farbe}"></div><div class="cockpit"></div>
+    <div class="koerper" style="background:linear-gradient(${farbe},#111 140%)"></div><i class="licht"></i>
+    <i class="rad" style="left:0"></i><i class="rad" style="right:0"></i></div>`;
+}
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  document.getElementById('strecke').innerHTML = `
+    <i class="flutlicht" style="left:8vw"></i><i class="flutlicht" style="right:8vw"></i>
+    <div class="asphalt"><div class="linien"><i class="mitte"></i></div><div class="startlinie"></div></div>
+    <div class="speed"></div>
+    ${wagen('#E8453C', 0)}${wagen('#3B82F6', 1)}
+    <div id="ampel">${'<div class="topf"><i></i><i></i></div>'.repeat(5)}</div>
+    <div id="flagge">${'<i></i>'.repeat(12)}</div>
+    <div id="banner"><div class="k">${esc(SHOW.titelKlein)}</div><div class="g">${esc(ta)}<br>${esc(tb)}</div><div class="zeit">Start 20:00 · Rot vs. Blau</div></div>
+    <div class="los"><span>Klicken, um zu beginnen</span></div>`;
+}
+
+function bauen(tl){
+  tl.fromTo('#strecke', { opacity: 0 }, { opacity: 1, duration: .8 }, 0);
+  /* Motoren im Leerlauf: die Wagen zittern */
+  tl.to('.wagen', { y: -2, duration: .05, yoyo: true, repeat: 120, ease: 'none' }, .2);
+  /* Fünf Lichter, eins pro Sekunde */
+  document.querySelectorAll('.topf').forEach((t, i) => {
+    tl.to(t.querySelectorAll('i'), { background: '#ff2020', boxShadow: '0 0 3vh 1vh rgba(255,40,40,.7),inset 0 0 0 .4vh #ff6a6a', duration: .05 }, T.licht + i);
+  });
+  /* Alle aus - Start */
+  tl.to('.topf i', { background: '#2a0a0a', boxShadow: 'inset 0 0 0 .4vh #160404', duration: .03 }, T.aus)
+    .fromTo('.rauch', { opacity: .9, scale: .3 }, { opacity: 0, scale: 3, x: (i) => (i % 2 ? 1 : -1) * 80, duration: 1.4, ease: 'power2.out', immediateRender: false }, T.aus)
+    .to('#w0', { y: '-30vh', x: '10vw', scale: .12, duration: 1.1, ease: 'power3.in' }, T.aus + .05)
+    .to('#w1', { y: '-30vh', x: '-10vw', scale: .12, duration: 1.15, ease: 'power3.in' }, T.aus + .02)
+    .to('.wagen', { opacity: 0, duration: .2 }, T.aus + 1.05)
+    .fromTo('.mitte', { backgroundPosition: '0 0' }, { backgroundPosition: '0 180vh', duration: 1.6, ease: 'power2.in', immediateRender: false }, T.aus)
+    .fromTo('.speed', { opacity: 0 }, { opacity: 1, duration: .4, immediateRender: false }, T.aus + .3)
+    .fromTo('#strecke', { x: 8 }, { x: 0, duration: .6, ease: 'elastic.out(1, .25)', immediateRender: false }, T.aus + .05);
+  /* Zielflagge weht ins Bild, der Titel kommt darauf */
+  tl.fromTo('#flagge', { opacity: 1, xPercent: 100 }, { xPercent: 0, duration: .7, ease: 'power3.out', immediateRender: false }, T.flagge);
+  document.querySelectorAll('#flagge i').forEach((s, i) => {
+    tl.fromTo(s, { y: -12 }, { y: 12, duration: .55, yoyo: true, repeat: 14, ease: 'sine.inOut', immediateRender: false }, T.flagge + i * .06);
+  });
+  tl.fromTo('#banner', { opacity: 1, scale: 2.4, rotation: -6 }, { scale: 1, rotation: 0, duration: .45, ease: 'power4.in', immediateRender: false }, T.flagge + .8)
+    .fromTo('#strecke', { y: -10 }, { y: 0, duration: .6, ease: 'elastic.out(1, .3)', immediateRender: false }, T.flagge + 1.25)
+    .to('#banner', { scale: 1.03, duration: 1.1, yoyo: true, repeat: 5, ease: 'sine.inOut' }, T.flagge + 1.5)
+    .fromTo('.los', { opacity: 0 }, { opacity: 1, duration: .5, yoyo: true, repeat: 9, ease: 'steps(1)', immediateRender: false }, T.flagge + 2);
+  Lab.explosion(tl, document.getElementById('strecke'), T.flagge + 1.25, { n: 60, farben: ['#E8453C', '#3B82F6', '#ffd24d', '#fff'], weite: .7, dauer: [1.8, 2.8] });
+}
+
+function ton(t0, A){
+  /* Leerlauf beider Motoren, mit zwei Gasstößen */
+  A.motor(t0 + .1, T.aus, 48, 52, .08);
+  A.motor(t0 + .1, T.aus, 51, 55, .07);
+  [2.4, 4.2].forEach(t => A.motor(t0 + t, .9, 60, 160, .08));
+  for (let i = 0; i < 5; i++) A.piep(t0 + T.licht + i, 659.25, .35, .09, 'sine');
+  /* Start: zwei Motoren drehen hoch, Reifen quietschen */
+  A.motor(t0 + T.aus, 2.2, 70, 520, .16);
+  A.motor(t0 + T.aus + .03, 2.2, 74, 560, .14);
+  const qg = A.huelle(t0 + T.aus, .02, .1, .5, .4); A.rauschen(t0 + T.aus, 1, A.filter('bandpass', 2800, 6, qg));
+  A.rauschen_wisch(t0 + T.aus + .3, 1.4, .35, 300, 5000);
+  A.tusch(t0 + T.flagge + 1.25, [261.63, 329.63, 392, 523.25], 1);
+  A.jubel(t0 + T.flagge + 1.3, .3, 5);
+  for (let k = 0; k < 10; k++){ const t = t0 + T.flagge + 1.8 + k * .5; A.kick(t, .6); A.hat(t + .25, .1); if (k % 2) A.snare(t, .35); }
+}
+Lab.starte({ name: 'Startampel', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

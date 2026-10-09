@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vorhang auf</title>
+<!-- Intro "Vorhang auf": der klassischste aller Show-Anfänge. Saallicht
+     geht aus, ein Verfolger sucht über den roten Samtvorhang, Trommelwirbel,
+     Becken - der Vorhang rafft sich zur Seite, dahinter steht das Logo im
+     Spot, die Rampenlichter gehen an, Applaus.
+
+     Der Samt ist nur CSS: Falten als wiederholter Farbverlauf, darüber ein
+     senkrechter Schatten; beim Öffnen wird jede Hälfte zur Seite gestaucht,
+     dabei rücken die Falten von selbst zusammen. -->
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#e6b23a;--lab-grund:#0a0204;--lab-text:#f6e2b8;}
+  html,body{margin:0;height:100%;background:#050102;overflow:hidden;}
+  #theater{position:fixed;inset:0;overflow:hidden;}
+  .rueckwand{position:absolute;inset:0;background:radial-gradient(ellipse 60% 55% at 50% 45%,#2a0a10,#0a0204 70%);}
+  .boden{position:absolute;left:-20%;right:-20%;bottom:0;height:24vh;background:linear-gradient(#2b1408,#120803);transform:perspective(60vh) rotateX(42deg);transform-origin:bottom;}
+  .kegel{position:absolute;left:50%;top:-10vh;width:70vh;height:110vh;margin-left:-35vh;background:linear-gradient(rgba(255,240,200,.32),rgba(255,240,200,.04));
+    clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);opacity:0;mix-blend-mode:screen;}
+  .lichtfleck{position:absolute;left:50%;bottom:4vh;width:80vh;height:16vh;margin-left:-40vh;border-radius:50%;background:radial-gradient(closest-side,rgba(255,236,190,.55),transparent);opacity:0;}
+  #logo{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-bottom:6vh;}
+  #logo .klein{font:700 clamp(14px,1.7vw,26px) Inter,sans-serif;letter-spacing:.5em;padding-left:.5em;color:#f6e2b8;text-transform:uppercase;margin-bottom:2vh;}
+  #logo .gross{font:400 min(13vw,22vh)/.95 'Abril Fatface',serif;color:transparent;
+    background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.9) 50%,transparent 60%) 120% 0/250% 100% no-repeat,linear-gradient(180deg,#fff6d6 0%,#f3cf6e 40%,#b98326 55%,#f0c95c 75%,#fff1c4 100%);
+    -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 .04em 0 #6b4a10) drop-shadow(0 .1em .2em rgba(0,0,0,.6)) drop-shadow(0 0 .3em rgba(255,200,90,.35));}
+  .stern{position:absolute;width:3vh;height:3vh;background:#fff6d6;clip-path:polygon(50% 0,58% 42%,100% 50%,58% 58%,50% 100%,42% 58%,0 50%,42% 42%);opacity:0;}
+  .rampe{position:absolute;left:6vw;right:6vw;bottom:2vh;display:flex;justify-content:space-between;}
+  .rampe i{width:2.4vh;height:1.2vh;border-radius:50% 50% 0 0;background:#3a2a10;}
+  .vorhang{position:absolute;top:0;bottom:0;width:51vw;
+    background:linear-gradient(90deg,rgba(0,0,0,.35),transparent 30%,transparent 70%,rgba(0,0,0,.35)),
+      repeating-linear-gradient(90deg,#4a0710 0,#7d111c 1.6vw,#b3202f 3vw,#d33a46 3.5vw,#a01b29 4.4vw,#6a0d17 5.6vw,#4a0710 6.4vw);}
+  .vorhang::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.45),transparent 25%,transparent 75%,rgba(0,0,0,.5));}
+  .vorhang::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.6vh;background:repeating-linear-gradient(90deg,#d9a937 0 .5vw,#8a6416 .5vw .8vw);}
+  .vorhang.l{left:0;transform-origin:left center;} .vorhang.r{right:0;transform-origin:right center;}
+  .volant{position:absolute;left:0;right:0;top:0;height:15vh;z-index:3;
+    background:radial-gradient(ellipse 50% 100% at 50% 0,#b3202f 0 60%,#d9a937 61% 65%,transparent 66%) 0 0/16vw 15vh repeat-x,linear-gradient(#5a0a12,#8e1420 8vh,transparent 8.2vh);
+    filter:drop-shadow(0 1vh 1vh rgba(0,0,0,.6));}
+  #verfolger{position:absolute;width:44vh;height:44vh;margin:-22vh;border-radius:50%;background:radial-gradient(closest-side,rgba(255,246,220,.55),rgba(255,246,220,.15) 60%,transparent);mix-blend-mode:screen;opacity:0;z-index:4;}
+  #saal{position:absolute;inset:0;background:#000;z-index:5;pointer-events:none;}
+  .los{position:absolute;bottom:9vh;left:0;right:0;text-align:center;font:700 13px Inter,sans-serif;letter-spacing:.5em;color:#f6e2b8;opacity:0;text-transform:uppercase;z-index:2;}
+</style>
+</head>
+<body>
+<div id="theater"></div>
+<div class="lab-korn" style="z-index:9;opacity:.06"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc } = Lab;
+const R = gsap.utils.random;
+const T = { saal: .3, spot: 1.2, wirbel: 2.6, auf: 5.0 };
+
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  document.getElementById('theater').innerHTML = `
+    <div class="rueckwand"></div><div class="boden"></div>
+    <div class="kegel"></div><div class="lichtfleck"></div>
+    <div id="logo"><div class="klein">${esc(SHOW.titelKlein)}</div><div class="gross">${esc(ta)}</div><div class="gross">${esc(tb)}</div></div>
+    ${Array.from({ length: 12 }, () => `<i class="stern" style="left:${R(18, 82)}%;top:${R(18, 70)}%"></i>`).join('')}
+    <div class="rampe">${'<i></i>'.repeat(16)}</div>
+    <div class="los">Klicken, um zu beginnen</div>
+    <div class="vorhang l"></div><div class="vorhang r"></div>
+    <div class="volant"></div>
+    <div id="verfolger"></div>
+    <div id="saal"></div>`;
+}
+
+function bauen(tl){
+  /* Saallicht aus: das Schwarz geht auf ein gedämpftes Rot zurück */
+  tl.fromTo('#saal', { opacity: .15 }, { opacity: .55, duration: 1.2, ease: 'power2.in' }, T.saal);
+  /* Verfolger sucht über den Vorhang und bleibt in der Mitte stehen */
+  const W = innerWidth, H = innerHeight;
+  tl.set('#verfolger', { left: W * .2, top: H * .6 }, 0)
+    .to('#verfolger', { opacity: 1, duration: .4 }, T.spot)
+    .to('#verfolger', { keyframes: [{ left: W * .72, top: H * .4, duration: .9 }, { left: W * .35, top: H * .55, duration: .8 }, { left: W * .5, top: H * .48, duration: .7 }], ease: 'sine.inOut' }, T.spot)
+    .to('#verfolger', { scale: 1.4, duration: 1.6, ease: 'sine.in' }, T.wirbel + .6);
+  /* Vorhang auf */
+  tl.to('#saal', { opacity: 0, duration: 1.4 }, T.auf)
+    .to('.vorhang.l', { scaleX: .16, skewY: 2, duration: 2.4, ease: 'power3.inOut' }, T.auf)
+    .to('.vorhang.r', { scaleX: .16, skewY: -2, duration: 2.4, ease: 'power3.inOut' }, T.auf)
+    .to('#verfolger', { opacity: 0, scale: 3, duration: 1, ease: 'power2.out' }, T.auf + .3)
+    .to('.kegel', { opacity: 1, duration: 1.2 }, T.auf + .4)
+    .to('.lichtfleck', { opacity: 1, duration: 1.2 }, T.auf + .6)
+    .fromTo('#logo .gross', { scale: .82, opacity: .2 }, { scale: 1, opacity: 1, duration: 2.6, ease: 'power2.out', stagger: .15 }, T.auf + .2)
+    .fromTo('#logo .klein', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 1.2 }, T.auf + 1.4)
+    .fromTo('#logo .gross', { backgroundPosition: '120% 0%, 0% 0%' }, { backgroundPosition: '-20% 0%, 0% 0%', duration: 1.4, ease: 'power2.inOut', stagger: .2 }, T.auf + 2.4)
+    .to('.rampe i', { background: '#ffe3a0', boxShadow: '0 0 2vh 1vh rgba(255,220,150,.5)', duration: .08, stagger: { each: .07, from: 'center' } }, T.auf + 1.2);
+  document.querySelectorAll('.stern').forEach((s, i) => {
+    tl.fromTo(s, { opacity: 0, scale: 0, rotation: 0 }, { opacity: 1, scale: R(.6, 1.3), rotation: 90, duration: .5, yoyo: true, repeat: 3, repeatDelay: R(.3, 1.2), ease: 'sine.inOut' }, T.auf + 2 + i * .25);
+  });
+  tl.fromTo('.los', { opacity: 0 }, { opacity: .8, duration: .8, yoyo: true, repeat: 5, ease: 'sine.inOut' }, T.auf + 4)
+    .to({}, { duration: 2 }, T.auf + 9);
+}
+
+function ton(t0, A){
+  const mg = A.huelle(t0, .5, .1, T.saal + 1.2, 1); A.rauschen(t0, 3.5, A.filter('bandpass', 700, .6, mg));
+  A.wirbel(t0 + T.wirbel, T.auf - T.wirbel, .38);
+  /* Fanfare: C-E-G, dann der volle Akkord */
+  A.tusch(t0 + T.auf, [261.63, 329.63, 392, 523.25], 1);
+  [[392, .55], [523.25, .8], [659.25, 1.05]].forEach(([f, d]) => A.stoss(t0 + T.auf + d, [f, f * 1.5], .1, .5));
+  A.stoss(t0 + T.auf + 1.35, [261.63, 329.63, 392, 523.25, 783.99], .14, 2.4);
+  A.jubel(t0 + T.auf + .4, .3, 6);
+  A.flaeche(t0 + T.auf + 1.5, [130.81, 196, 261.63, 329.63], 9, .04, 1500, 2);
+  for (let k = 0; k < 6; k++) A.ping(t0 + T.auf + 2 + k * .4, [1568, 2093, 1760, 2349, 1976, 2637][k], .04, 1.6);
+}
+Lab.starte({ name: 'Vorhang auf', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

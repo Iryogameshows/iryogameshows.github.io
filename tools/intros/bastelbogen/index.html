@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bastelbogen</title>
+<!-- Intro-Prototyp "Bastelbogen": Stop-Motion aus Papier, von oben auf den
+     Basteltisch gefilmt. Auf Kraftpapier landen nacheinander ausgeschnittene
+     Buchstaben, ein Papierbanner, zwei Stabfiguren für die Teams, Klebezettel,
+     eine Goldmünze - am Ende eine fertige Collage mit Papierkonfetti.
+
+     Der Trick für Stop-Motion: GSAP läuft mit 12 Bildern pro Sekunde
+     (gsap.ticker.fps), und jedes Papierstück zittert bei jedem Bild ein
+     wenig - wie Teile, die von Hand neu hingelegt werden. Das Zittern sitzt
+     in den CSS-Eigenschaften translate/rotate, getrennt von GSAPs transform.
+     Gekritzeltes "kocht" über einen SVG-Filter, dessen Zufallswert jedes
+     Bild wechselt. -->
+<link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#2b2118;--lab-grund:#c9a77c;--lab-text:#2b2118;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#c9a77c;}
+  #tisch{position:fixed;inset:0;overflow:hidden;
+    background:
+      radial-gradient(ellipse 80% 70% at 50% 45%,transparent 50%,rgba(60,35,10,.35) 100%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .22 0 0 0 0 .08 0 0 0 .38 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23p)'/%3E%3C/svg%3E"),
+      #c9a77c;}
+  .stueck{position:absolute;translate:var(--jx,0) var(--jy,0);rotate:var(--jr,0deg);}
+  .schatten{filter:drop-shadow(.35vh .5vh 0 rgba(50,28,8,.32));}
+  .hand{font-family:Caveat,cursive;font-weight:700;color:#2b2118;white-space:nowrap;filter:url(#koch);}
+  .klebe{position:absolute;width:9vh;height:3vh;background:rgba(250,240,205,.72);
+    clip-path:polygon(0 8%,6% 0,12% 10%,20% 0,100% 4%,95% 30%,100% 55%,94% 80%,100% 100%,10% 96%,4% 100%,0 70%,5% 45%);}
+  .bst{display:flex;align-items:center;justify-content:center;font-family:'Titan One',sans-serif;line-height:1;}
+  .banner{background:#fbf7ee;padding:1vh 4vh;clip-path:polygon(0 12%,3% 0,8% 9%,14% 2%,22% 10%,31% 0,40% 8%,52% 1%,63% 9%,74% 0,85% 8%,93% 1%,100% 10%,98% 50%,100% 90%,92% 100%,82% 92%,70% 100%,58% 91%,46% 100%,34% 92%,22% 100%,10% 93%,0 100%,2% 55%);}
+  .zettel{width:22vh;height:20vh;padding:2.2vh;box-sizing:border-box;background:#ffe466;font:700 4.4vh/1.05 Caveat,cursive;color:#2b2118;}
+  .zettel.rosa{background:#ff9ec4;} .zettel.gruen{background:#a6e3a1;}
+  .muenze{width:24vh;height:24vh;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0 0,#ffd23f 35%,#e0a312 75%,#b37a06 100%);
+    box-shadow:inset 0 0 0 1.2vh rgba(255,255,255,.35),inset 0 0 0 1.6vh rgba(150,95,0,.35);font:4.6vh 'Titan One',sans-serif;color:#7a4b00;}
+  .blase{background:#fff;padding:1.2vh 2.2vh;border-radius:3vh;font:700 4vh Caveat,cursive;color:#2b2118;}
+  .blase::after{content:"";position:absolute;bottom:-2vh;left:40%;border:1.2vh solid transparent;border-top:2vh solid #fff;}
+  .stab{position:absolute;left:50%;top:80%;width:2.2vh;height:28vh;margin-left:-1.1vh;background:linear-gradient(90deg,#e7c793,#d9b47a);border-radius:1vh;z-index:-1;}
+  svg.kritzel{position:absolute;overflow:visible;filter:url(#koch);}
+  svg.kritzel path{fill:none;stroke:#2b2118;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;}
+  .punkt{position:absolute;width:1.6vh;height:1.6vh;border-radius:50%;}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="koch"><feTurbulence id="kochT" type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="1"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter>
+</svg>
+<div id="tisch"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc } = Lab;
+const R = gsap.utils.random;
+const T = { hand: .4, banner: 2.5, keller: 3.6, show: 6.3, figuren: 9.0, zettel: 11.4, muenze: 15.2, kritzel: 17.0, konfetti: 19.4, los: 21.2 };
+const PAPIER = ['#E8453C', '#3B82F6', '#F5C842', '#49B37A', '#F28AB3', '#FF8A3D', '#8C6FE0'];
+
+/* Stop-Motion: alles in GSAP läuft mit 12 Bildern pro Sekunde. */
+gsap.ticker.fps(12);
+
+/* Ein Papierschnipsel mit unregelmäßigem Rand: acht leicht verschobene Ecken. */
+function schnitt(){
+  const j = () => R(0, 7).toFixed(1);
+  return `polygon(${j()}% ${j()}%, 50% ${R(0, 4).toFixed(1)}%, ${100 - j()}% ${j()}%, ${100 - R(0, 4).toFixed(1)}% 50%, ${100 - j()}% ${100 - j()}%, 50% ${100 - R(0, 4).toFixed(1)}%, ${j()}% ${100 - j()}%, ${R(0, 4).toFixed(1)}% 50%)`;
+}
+const blob = (fill, b) => `<svg width="100%" height="100%" viewBox="0 0 70 70"><ellipse cx="35" cy="38" rx="29" ry="31" fill="#fff"/><ellipse cx="35" cy="38" rx="25" ry="27" fill="${fill}"/><circle cx="26" cy="34" r="7.5" fill="#fff"/><circle cx="45" cy="34" r="7.5" fill="#fff"/><circle cx="${26 + b}" cy="35" r="3.3" fill="#2b2118"/><circle cx="${45 + b}" cy="35" r="3.3" fill="#2b2118"/><path d="M27 48 q8 8 17 0" fill="none" stroke="#2b2118" stroke-width="3.2" stroke-linecap="round"/></svg>`;
+
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const buchstaben = (wort, zeile) => Array.from(wort.toUpperCase()).map((c, i, a) => {
+    const breite = zeile ? 8.6 : 12.5, x = (i - (a.length - 1) / 2) * breite * 1.04;
+    return `<div class="stueck schatten bst ${zeile ? 'b2' : 'b1'}" style="left:calc(50vw + ${x.toFixed(2)}vh - ${breite / 2}vh);top:${zeile ? 47 : 26}vh;width:${breite}vh;height:${breite * 1.15}vh;
+      background:${PAPIER[(i + zeile * 3) % PAPIER.length]};clip-path:${schnitt()};font-size:${breite * .82}vh;color:${(i + zeile) % 3 === 2 ? '#2b2118' : '#fff'};--rot:${R(-9, 9).toFixed(1)}deg">${esc(c)}</div>`;
+  }).join('');
+  document.getElementById('tisch').innerHTML = `
+    <div class="stueck hand" id="heute" style="left:5vw;top:6vh;font-size:7vh;--rot:-4deg">${esc(SHOW.vorab)} …</div>
+    <i class="klebe stueck" id="k1" style="left:3.5vw;top:4vh;rotate:-24deg"></i>
+    <div class="stueck schatten banner" id="banner" style="left:50%;top:12vh;margin-left:-19vh;width:30vh;--rot:-3deg">
+      <div class="hand" style="font-size:6.4vh;text-align:center;filter:none">${esc(SHOW.titelKlein)}</div></div>
+    <i class="klebe stueck" id="k2" style="left:calc(50% - 22vh);top:11vh;rotate:-50deg"></i>
+    <i class="klebe stueck" id="k3" style="left:calc(50% + 12vh);top:12vh;rotate:40deg"></i>
+    ${buchstaben(ta, 0)}${buchstaben(tb, 1)}
+    ${[0, 1].map(i => `<div class="stueck figur" id="fig${i}" style="${i ? 'right:9vw' : 'left:9vw'};top:56vh;width:22vh;height:22vh">
+      <i class="stab"></i><div class="schatten" style="width:100%;height:100%">${blob(i ? '#3B82F6' : '#E8453C', i ? -1.2 : 1.2)}</div>
+      <div class="blase stueck schatten" id="blase${i}" style="${i ? 'right:6vh' : 'left:6vh'};top:-9vh">${esc(SHOW.teams[i])}!</div></div>`).join('')}
+    <div class="stueck schatten zettel" id="z0" style="right:4vw;top:6vh;--rot:5deg">${esc(SHOW.karten[1].text)}</div>
+    <div class="stueck schatten zettel rosa" id="z1" style="right:9vw;top:28vh;--rot:-6deg;width:20vh;height:17vh">${esc(SHOW.karten[2].text)}</div>
+    <i class="klebe stueck" id="k4" style="right:calc(4vw + 7vh);top:4.5vh;rotate:-6deg"></i>
+    <div class="stueck schatten muenze bst" id="muenze" style="left:calc(50% - 12vh);top:70vh">${esc(SHOW.karten[3].text)}</div>
+    <div class="stueck hand" id="sieger" style="left:6vw;top:86vh;font-size:5vh;--rot:-3deg">${esc(SHOW.karten[3].ueber)}!</div>
+    <svg class="kritzel" id="kreis" style="left:calc(50% - 17vh);top:66vh;width:34vh;height:32vh" viewBox="0 0 100 100"><path d="M52 6 C 82 4, 98 30, 94 56 C 90 84, 60 98, 36 92 C 10 86, 0 58, 6 34 C 12 12, 34 2, 60 8 C 72 11, 80 16, 86 22"/></svg>
+    <svg class="kritzel" id="pfeil" style="left:31vw;top:74vh;width:11vw;height:12vh" viewBox="0 0 100 60"><path d="M4 50 C 30 54, 60 44, 92 16 M92 16 L 74 18 M92 16 L 88 34"/></svg>
+    <div class="stueck hand" id="los" style="right:5vw;bottom:5vh;font-size:5.4vh;--rot:2deg">Klicken, um zu beginnen →</div>`;
+  document.querySelectorAll('#tisch .stueck').forEach(el => { el.style.rotate = el.style.getPropertyValue('--rot') || el.style.rotate; });
+}
+
+/* Jedes Bild: Papier zittert ein wenig, Gekritzel kocht. */
+let zitternAn = false;
+function zittern(){
+  document.querySelectorAll('#tisch .stueck').forEach(el => {
+    el.style.setProperty('--jx', R(-.12, .12).toFixed(2) + 'vh');
+    el.style.setProperty('--jy', R(-.12, .12).toFixed(2) + 'vh');
+  });
+  const t = document.getElementById('kochT');
+  if (t) t.setAttribute('seed', String((Math.random() * 3 | 0) + 1));
+}
+if (!zitternAn){ gsap.ticker.add(zittern); zitternAn = true; }
+
+function bauen(tl){
+  const zeigen = (sel, t, von, dauer, ease) => tl.fromTo(sel, Object.assign({ opacity: 0 }, von), { opacity: 1, x: 0, y: 0, scale: 1, rotation: 0, duration: dauer || .5, ease: ease || 'back.out(2)' }, t);
+  gsap.set('#tisch .stueck, #tisch .kritzel', { opacity: 0 });
+
+  tl.fromTo('#k1', { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: .25, ease: 'power4.in' }, T.hand - .2)
+    .set('#heute', { opacity: 1 }, T.hand)
+    .fromTo('#heute', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 1.8, ease: 'none' }, T.hand);
+
+  zeigen('#banner', T.banner, { x: -window.innerWidth * .7, rotation: -20 }, .8, 'power3.out');
+  zeigen('#k2', T.banner + .8, { scale: 1.6 }, .2, 'power4.in');
+  zeigen('#k3', T.banner + 1, { scale: 1.6 }, .2, 'power4.in');
+
+  /* KELLER: Buchstaben fallen von oben und federn beim Aufsetzen */
+  document.querySelectorAll('.b1').forEach((b, i) => {
+    const t = T.keller + i * .38;
+    tl.fromTo(b, { opacity: 1, y: -window.innerHeight * .6, rotation: R(-60, 60) }, { y: 0, rotation: 0, duration: .42, ease: 'power2.in' }, t)
+      .fromTo(b, { scaleY: .78, scaleX: 1.15 }, { scaleY: 1, scaleX: 1, duration: .35, ease: 'back.out(3)', immediateRender: false }, t + .42);
+  });
+  /* GAMESHOW: rutscht von rechts herein, einer nach dem anderen */
+  document.querySelectorAll('.b2').forEach((b, i) => {
+    zeigen(b, T.show + i * .28, { x: window.innerWidth * .6, rotation: 30 }, .45, 'back.out(1.6)');
+  });
+
+  /* Stabfiguren: tauchen von unten auf und wackeln */
+  [0, 1].forEach(i => {
+    zeigen('#fig' + i, T.figuren + i * .5, { y: window.innerHeight * .5 }, .7, 'back.out(1.8)');
+    tl.fromTo('#fig' + i + ' > .schatten', { rotation: -7 }, { rotation: 7, duration: .5, repeat: 9, yoyo: true, ease: 'sine.inOut', transformOrigin: '50% 100%' }, T.figuren + i * .5 + .7);
+    zeigen('#blase' + i, T.figuren + 1 + i * .5, { scale: 0, rotation: i ? 25 : -25 }, .4, 'back.out(3)');
+  });
+
+  zeigen('#z0', T.zettel, { scale: 1.5, rotation: 20, y: -40 }, .35, 'power4.in');
+  zeigen('#k4', T.zettel + .35, { scale: 1.6 }, .2, 'power4.in');
+  zeigen('#z1', T.zettel + 1.4, { scale: 1.5, rotation: -25, y: -40 }, .35, 'power4.in');
+
+  /* Münze rollt von links herein */
+  tl.fromTo('#muenze', { opacity: 1, x: -window.innerWidth * .6, rotation: -720 }, { x: 0, rotation: 0, duration: 1.2, ease: 'power2.out' }, T.muenze)
+    .fromTo('#muenze', { scale: 1 }, { scale: 1.12, duration: .2, yoyo: true, repeat: 1 }, T.muenze + 1.2);
+  tl.set('#sieger', { opacity: 1 }, T.kritzel + 1)
+    .fromTo('#sieger', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 1.2, ease: 'none' }, T.kritzel + 1);
+
+  /* Kreis und Pfeil werden gekritzelt */
+  ['#kreis', '#pfeil'].forEach((id, i) => {
+    const p = document.querySelector(id + ' path'), n = p.getTotalLength();
+    gsap.set(p, { strokeDasharray: n, strokeDashoffset: n });
+    tl.set(id, { opacity: 1 }, T.kritzel + i * 1.1)
+      .to(p, { strokeDashoffset: 0, duration: 1, ease: 'power1.inOut' }, T.kritzel + i * 1.1);
+  });
+
+  /* Papierkonfetti aus dem Locher, alles hüpft einmal */
+  tl.call(konfetti, null, T.konfetti)
+    .to('#tisch .stueck', { y: -12, duration: .15, yoyo: true, repeat: 1, ease: 'power2.out', stagger: { each: .01, from: 'random' } }, T.konfetti);
+  tl.set('#los', { opacity: 1 }, T.los)
+    .fromTo('#los', { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 1.6, ease: 'none' }, T.los)
+    .to({}, { duration: 4 }, T.los + 1);
+}
+
+function konfetti(){
+  const tisch = document.getElementById('tisch');
+  tisch.querySelectorAll('.punkt').forEach(p => p.remove());
+  for (let k = 0; k < 90; k++){
+    const p = document.createElement('i');
+    p.className = 'punkt';
+    p.style.background = PAPIER[k % PAPIER.length];
+    p.style.left = '50%'; p.style.top = '45%';
+    tisch.appendChild(p);
+    gsap.fromTo(p, { x: 0, y: 0, scale: R(.6, 1.4) },
+      { x: R(-.48, .48) * innerWidth, y: R(-.4, .5) * innerHeight, rotation: R(-200, 200), duration: R(.9, 1.6), ease: 'power3.out' });
+  }
+}
+
+function ton(t0, A){
+  /* Ukulele: C - G - Am - F, alle zwei Sekunden ein Schlag nach unten */
+  const akk = [[261.63, 329.63, 392, 523.25], [196, 293.66, 392, 493.88], [220, 261.63, 329.63, 440], [174.61, 261.63, 349.23, 440]];
+  for (let t = T.banner, k = 0; t < T.los + 4; t += 1, k++){
+    const a = akk[Math.floor(k / 2) % 4];
+    a.forEach((f, i) => A.saite(t0 + t + i * .025, f, .1, 1.2));
+    A.saite(t0 + t + .5, a[0] * 2, .06, .5);
+  }
+  const rascheln = t => { const g = A.huelle(t0 + t, .005, .16, .02, .12); A.rauschen(t0 + t, .2, A.filter('bandpass', 2600, .9, g)); };
+  const klebe = t => { const g = A.huelle(t0 + t, .002, .2, .04, .08); A.rauschen(t0 + t, .2, A.filter('highpass', 2000, 0, g)); };
+  for (let i = 0; i < 18; i++) A.klick(t0 + T.hand + i * .1, .05, 1800);
+  klebe(T.hand - .05); rascheln(T.banner + .6); klebe(T.banner + 1); klebe(T.banner + 1.2);
+  /* Xylophon auf jedem Buchstaben, die Tonleiter hinauf */
+  const leiter = [523.25, 587.33, 659.25, 698.46, 783.99, 880, 987.77, 1046.5];
+  for (let i = 0; i < 6; i++){ A.ping(t0 + T.keller + i * .38 + .42, leiter[i], .12, .7); rascheln(T.keller + i * .38 + .42); }
+  for (let i = 0; i < 8; i++){ A.ping(t0 + T.show + i * .28 + .3, leiter[7 - i] / 2 * 2, .08, .5); rascheln(T.show + i * .28 + .2); }
+  [0, .5].forEach(d => { rascheln(T.figuren + d + .4); A.ping(t0 + T.figuren + d + .5, 392 + d * 200, .1, .6); });
+  [0, 1.4].forEach(d => { rascheln(T.zettel + d + .3); klebe(T.zettel + d + .5); });
+  for (let k = 0; k < 6; k++) A.klick(t0 + T.muenze + k * .2, .1, 1200 - k * 100);
+  A.ping(t0 + T.muenze + 1.2, 1568, .12, 1.4); A.ping(t0 + T.muenze + 1.3, 2093, .1, 1.4);
+  /* Stift kratzt beim Kritzeln */
+  [0, 1.1].forEach(d => { const g = A.huelle(t0 + T.kritzel + d, .05, .06, .85, .1); A.rauschen(t0 + T.kritzel + d, 1.1, A.filter('bandpass', 4200, 3, g)); });
+  /* Tröte und Klatschen */
+  const tt = t0 + T.konfetti, g = A.huelle(tt, .03, .12, .7, .3);
+  const o = A.osz('sawtooth', 330, tt, 1.1, A.filter('lowpass', 1800, 2, g));
+  o.frequency.linearRampToValueAtTime(495, tt + .25); o.frequency.setValueAtTime(495, tt + .9); o.frequency.linearRampToValueAtTime(470, tt + 1);
+  for (let k = 0; k < 10; k++) A.klatschen(tt + .2 + k * R(.12, .22), .2);
+  A.kick(tt, .5);
+}
+
+Lab.starte({ name: 'Bastelbogen', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

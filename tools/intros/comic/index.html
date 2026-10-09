@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comic</title>
+<!-- Intro "Comic": vier Panels knallen auf die Seite - "Heute Abend …"
+     mit WUMMS!, Team Rot mit ZACK!, Team Blau mit BÄMM!, beide Figuren
+     Stirn an Stirn. Dann fliegt die Seite auseinander, Speedlines, und das
+     Titelbild steht da wie ein Heft-Cover: Strahlenkranz, Riesenlettern mit
+     harter 3D-Kante, Preis-Sticker oben links.
+
+     Rasterpunkte (halftone) sind ein radial-gradient-Muster, die Knallwörter
+     sitzen in gezackten Sternen aus clip-path. -->
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#ffe14d;--lab-grund:#fffdf5;--lab-text:#111;}
+  html,body{margin:0;height:100%;background:#fffdf5;overflow:hidden;}
+  #seite{position:fixed;inset:0;overflow:hidden;background:#fffdf5;font-family:Bangers,sans-serif;}
+  .raster{background-image:radial-gradient(circle,rgba(0,0,0,.22) 28%,transparent 32%);background-size:1.1vh 1.1vh;}
+  .panel{position:absolute;border:.8vh solid #111;overflow:hidden;opacity:0;box-shadow:1vh 1vh 0 #111;}
+  .panel .flaeche{position:absolute;inset:0;}
+  .kasten{position:absolute;left:1.2vh;top:1.2vh;padding:.8vh 1.4vh;background:#ffe14d;border:.4vh solid #111;font-size:min(2.6vw,4.6vh);letter-spacing:.04em;color:#111;}
+  .knall{position:absolute;display:flex;align-items:center;justify-content:center;font-size:min(5vw,9vh);color:#ffe14d;-webkit-text-stroke:.3vh #111;text-shadow:.5vh .5vh 0 #111;
+    clip-path:polygon(50% 0,61% 22%,85% 8%,78% 33%,100% 40%,80% 55%,95% 80%,68% 72%,58% 100%,45% 76%,20% 95%,24% 68%,0 60%,20% 45%,4% 20%,32% 25%);}
+  .figur{position:absolute;bottom:-2vh;width:38%;}
+  .speed{position:absolute;inset:-50%;background:repeating-conic-gradient(from 0deg,rgba(0,0,0,.85) 0 1.2deg,transparent 1.2deg 7deg);
+    -webkit-mask-image:radial-gradient(circle,transparent 0 16%,#000 34%);mask-image:radial-gradient(circle,transparent 0 16%,#000 34%);opacity:0;}
+  .blase{position:absolute;padding:1vh 2vh;background:#fff;border:.4vh solid #111;border-radius:50%;font-size:min(3.4vw,6vh);color:#111;}
+  #splash{position:absolute;inset:0;opacity:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  #splash .stern{position:absolute;left:50%;top:52%;width:150vmax;height:150vmax;margin:-75vmax;
+    background:repeating-conic-gradient(from 0deg,#ffcf1f 0 9deg,#ffe666 9deg 18deg);}
+  #splash .band{position:relative;padding:1vh 5vh;background:#E8453C;border:.5vh solid #111;color:#fff;font-size:min(3.6vw,6.2vh);letter-spacing:.12em;transform:rotate(-3deg);box-shadow:.8vh .8vh 0 #111;}
+  #splash .titel{position:relative;font-size:min(17vw,29vh);line-height:.88;text-align:center;color:#ffe14d;-webkit-text-stroke:.5vh #111;letter-spacing:.02em;
+    text-shadow:.3vh .3vh 0 #111,.6vh .6vh 0 #111,.9vh .9vh 0 #111,1.2vh 1.2vh 0 #111,1.5vh 1.5vh 0 #111,1.8vh 1.8vh 0 #111;}
+  #splash .titel .z2{display:block;color:#fff;font-size:.72em;}
+  #splash .preis{position:absolute;left:4vw;top:6vh;width:16vh;height:16vh;border-radius:50%;background:#3B82F6;border:.5vh solid #111;color:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:5.4vh;line-height:.9;transform:rotate(-12deg);box-shadow:.6vh .6vh 0 #111;}
+  #splash .preis small{font:800 1.6vh Inter,sans-serif;letter-spacing:.1em;}
+  #splash .heft{position:absolute;right:4vw;top:6vh;font:800 1.9vh Inter,sans-serif;letter-spacing:.2em;color:#111;text-align:right;}
+  #weiss{position:absolute;inset:0;background:#fff;opacity:0;}
+  .los{position:absolute;bottom:4vh;left:0;right:0;text-align:center;font:800 13px Inter,sans-serif;letter-spacing:.4em;color:#111;opacity:0;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div id="seite"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc } = Lab;
+const T = { p1: .3, p2: 1.6, p3: 2.8, p4: 4.0, riss: 5.5, splash: 6.0 };
+const blob = (fill, b, spiegel) => `<svg viewBox="0 0 70 70" style="width:100%;${spiegel ? 'transform:scaleX(-1)' : ''}"><ellipse cx="35" cy="38" rx="27" ry="29" fill="${fill}" stroke="#111" stroke-width="4"/><circle cx="26" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="45" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="${26 + b}" cy="35" r="3.5" fill="#111"/><circle cx="${45 + b}" cy="35" r="3.5" fill="#111"/><path d="M24 22 L33 27 M46 22 L37 27" stroke="#111" stroke-width="3.5" stroke-linecap="round"/><path d="M27 50 q8 -5 17 0" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/></svg>`;
+
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  document.getElementById('seite').innerHTML = `
+    <div class="panel" id="p1" style="left:3vw;top:4vh;width:44vw;height:44vh;--r:-2deg">
+      <div class="flaeche raster" style="background-color:#7fd3ff"></div>
+      <div class="kasten">${esc(SHOW.vorab)} …</div>
+      <div class="knall" style="right:3vh;bottom:4vh;width:28vh;height:22vh;background:#E8453C">WUMMS!</div></div>
+    <div class="panel" id="p2" style="left:50vw;top:3vh;width:22vw;height:46vh;--r:2deg">
+      <div class="flaeche raster" style="background-color:#ff8a7a"></div><div class="speed" style="opacity:.25"></div>
+      <div class="figur" style="left:12%;width:76%">${blob('#E8453C', 1.5)}</div>
+      <div class="blase" style="left:6%;top:6%">${esc(SHOW.teams[0])}!</div></div>
+    <div class="panel" id="p3" style="left:74vw;top:5vh;width:23vw;height:44vh;--r:-1.5deg">
+      <div class="flaeche raster" style="background-color:#8fb5ff"></div><div class="speed" style="opacity:.25"></div>
+      <div class="figur" style="left:12%;width:76%">${blob('#3B82F6', -1.5)}</div>
+      <div class="blase" style="right:6%;top:6%">${esc(SHOW.teams[1])}!</div></div>
+    <div class="panel" id="p4" style="left:5vw;top:52vh;width:90vw;height:43vh;--r:1deg">
+      <div class="flaeche raster" style="background-color:#ffe14d"></div>
+      <div class="figur" style="left:12%;width:24%;bottom:-6vh">${blob('#E8453C', 1.5)}</div>
+      <div class="figur" style="right:12%;width:24%;bottom:-6vh">${blob('#3B82F6', -1.5)}</div>
+      <div class="knall" style="left:50%;top:50%;width:30vh;height:26vh;margin:-13vh -15vh;background:#fff;color:#E8453C">VS</div></div>
+    <div class="knall" id="k2" style="left:57vw;top:36vh;width:22vh;height:18vh;background:#ffe14d;opacity:0;color:#E8453C">ZACK!</div>
+    <div class="knall" id="k3" style="left:80vw;top:36vh;width:22vh;height:18vh;background:#ffe14d;opacity:0;color:#3B82F6">BÄMM!</div>
+    <div class="speed" id="speed"></div>
+    <div id="splash">
+      <div class="stern"></div>
+      <div class="band">${esc(SHOW.titelKlein)}</div>
+      <div class="titel">${esc(ta)}<span class="z2">${esc(tb)}</span></div>
+      <div class="preis">${esc(SHOW.karten[3].text)}<small>Preis</small></div>
+      <div class="heft">Ausgabe #1<br>${esc(SHOW.titelZeile)}</div>
+      <div class="los">Klicken, um zu beginnen</div>
+    </div>
+    <div id="weiss"></div>`;
+  document.querySelectorAll('.panel').forEach(p => p.style.rotate = p.style.getPropertyValue('--r'));
+}
+
+function bauen(tl){
+  /* Panels knallen einzeln herein */
+  [['#p1', T.p1, -1], ['#p2', T.p2, 1], ['#p3', T.p3, 1], ['#p4', T.p4, -1]].forEach(([id, t, s]) => {
+    tl.fromTo(id, { opacity: 1, scale: 1.4, rotation: s * 8, x: s * 60 }, { scale: 1, rotation: 0, x: 0, duration: .32, ease: 'power4.in' }, t)
+      .fromTo('#seite', { x: s * 14 }, { x: 0, duration: .5, ease: 'elastic.out(1, .3)', immediateRender: false }, t + .32)
+      .fromTo(id + ' .knall', { scale: 0, rotation: -30 }, { scale: 1, rotation: 0, duration: .35, ease: 'back.out(3)' }, t + .4)
+      .fromTo(id + ' .blase', { scale: 0 }, { scale: 1, duration: .3, ease: 'back.out(3)' }, t + .5)
+      .fromTo(id + ' .figur', { y: '30%' }, { y: '0%', duration: .4, ease: 'back.out(2)' }, t + .3);
+  });
+  tl.fromTo('#k2', { opacity: 1, scale: 0, rotation: 20 }, { scale: 1, rotation: -6, duration: .3, ease: 'back.out(3)', immediateRender: false }, T.p2 + .55)
+    .fromTo('#k3', { opacity: 1, scale: 0, rotation: -20 }, { scale: 1, rotation: 6, duration: .3, ease: 'back.out(3)', immediateRender: false }, T.p3 + .55)
+    .to('#p4 .figur:nth-child(2)', { x: '18%', duration: .4, ease: 'power3.in' }, T.p4 + .7)
+    .to('#p4 .figur:nth-child(3)', { x: '-18%', duration: .4, ease: 'power3.in' }, T.p4 + .7);
+  /* Die Seite fliegt auseinander */
+  tl.to('.panel, #k2, #k3', { x: (i) => [-1, 1, 1, 0, 1, 1][i] * innerWidth * .8, y: (i) => [-1, -1, -1, 1, -1, -1][i] * innerHeight * .7, rotation: (i) => [-40, 30, 50, -10, 40, 60][i], duration: .5, ease: 'power3.in' }, T.riss)
+    .fromTo('#speed', { opacity: 0, scale: 1.6 }, { opacity: 1, scale: 1, duration: .4, ease: 'power2.out', immediateRender: false }, T.riss + .1)
+    .fromTo('#weiss', { opacity: 0 }, { opacity: 1, duration: .15, immediateRender: false }, T.splash - .15)
+    .set('#splash', { opacity: 1 }, T.splash)
+    .set('#speed', { opacity: 0 }, T.splash)
+    .to('#weiss', { opacity: 0, duration: .5 }, T.splash)
+    .to('#splash .stern', { rotation: 30, duration: 10, ease: 'none' }, T.splash)
+    .fromTo('#splash .titel', { scale: 2.6, opacity: 0 }, { scale: 1, opacity: 1, duration: .45, ease: 'power4.in', immediateRender: false }, T.splash)
+    .fromTo('#splash', { x: 18, y: -10 }, { x: 0, y: 0, duration: .7, ease: 'elastic.out(1, .25)', immediateRender: false }, T.splash + .45)
+    .fromTo('#splash .band', { scaleX: 0 }, { scaleX: 1, duration: .45, ease: 'back.out(2)', immediateRender: false }, T.splash + .6)
+    .fromTo('#splash .preis', { scale: 0, rotation: -180 }, { scale: 1, rotation: -12, duration: .5, ease: 'back.out(2)', immediateRender: false }, T.splash + 1)
+    .fromTo('#splash .heft', { opacity: 0, x: 30 }, { opacity: 1, x: 0, duration: .5, immediateRender: false }, T.splash + 1.2)
+    .to('#splash .titel', { scale: 1.04, duration: .9, yoyo: true, repeat: 5, ease: 'sine.inOut' }, T.splash + 1.4)
+    .fromTo('.los', { opacity: 0 }, { opacity: 1, duration: .5, yoyo: true, repeat: 7, ease: 'steps(1)', immediateRender: false }, T.splash + 2);
+  Lab.explosion(tl, document.getElementById('splash'), T.splash + .45, { n: 50, farben: ['#E8453C', '#3B82F6', '#111', '#fff'], weite: .7, groesse: [10, 18], dauer: [1.6, 2.6] });
+}
+
+function ton(t0, A){
+  const schlag = (t, f) => { A.rauschen_wisch(t0 + t - .25, .3, .25, 500, 4000); A.kick(t0 + t + .32, 1); A.snare(t0 + t + .32, .6); A.stoss(t0 + t + .4, f, .1, .5); };
+  schlag(T.p1, [196, 293.66]); schlag(T.p2, [220, 329.63]); schlag(T.p3, [246.94, 369.99]); schlag(T.p4, [261.63, 392]);
+  A.aufprall(t0 + T.p4 + 1.1, .7);
+  A.rauschen_wisch(t0 + T.riss, .6, .45, 300, 7000);
+  A.tusch(t0 + T.splash + .45, [261.63, 329.63, 392, 523.25], 1);
+  [[523.25, .5], [659.25, .7], [783.99, .9], [1046.5, 1.1]].forEach(([f, d]) => A.stoss(t0 + T.splash + d, [f], .07, .3));
+  for (let k = 0; k < 12; k++){ A.kick(t0 + T.splash + 1.6 + k * .45, .55); if (k % 2) A.klatschen(t0 + T.splash + 1.6 + k * .45, .25); A.hat(t0 + T.splash + 1.825 + k * .45, .1); }
+}
+Lab.starte({ name: 'Comic', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schlagzeile</title>
+<!-- Intro-Prototyp "Schlagzeile": ein Plakat in Bewegung. Keine Tiefe, kein
+     Licht, kein Effekt - nur Typografie, Farbflächen und Schnitt. Jeder Beat
+     (120 BPM) ist ein harter Schnitt; die Wörter füllen den Bildschirm und
+     laufen über den Rand hinaus. Farben sind die Team-Farben der Show
+     (BAUPLAN 4.4): Rot #E8453C, Blau #3B82F6, dazu Schwarz und Weiß.
+
+     Die Schrift ist Archivo mit variabler Breite (62 bis 125 %): Wörter
+     werden im Takt gestaucht und gedehnt. Kurz und hart - nach rund 20
+     Sekunden steht das Schlussplakat. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--rot:#E8453C;--blau:#3B82F6;--lab-akzent:#E8453C;--lab-grund:#000;--lab-text:#fff;}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;}
+  body{font-family:Archivo,sans-serif;}
+  #buehne{position:fixed;inset:0;overflow:hidden;}
+  .sz{position:absolute;inset:0;visibility:hidden;overflow:hidden;}
+  .wort{position:absolute;font-family:Archivo,sans-serif;font-weight:900;line-height:.8;text-transform:uppercase;white-space:nowrap;letter-spacing:-.02em;
+    font-variation-settings:"wdth" var(--w,100);}
+  .rot{background:var(--rot);} .blau{background:var(--blau);} .weiss{background:#fff;} .schwarz{background:#000;}
+  .tw{color:#fff;} .ts{color:#000;} .tr{color:var(--rot);} .tb{color:var(--blau);}
+  .meta{position:absolute;font:700 clamp(11px,1vw,16px) Inter,sans-serif;letter-spacing:.12em;text-transform:uppercase;}
+  .ch{display:inline-block;}
+  .rec{position:absolute;left:50%;top:50%;width:2.2vh;height:2.2vh;margin:-1.1vh;border-radius:50%;background:var(--rot);}
+  .haelfte{position:absolute;left:0;right:0;height:50%;overflow:hidden;}
+  .zelle{position:absolute;width:50%;height:50%;overflow:hidden;}
+  .zelle .wort{left:4vw;bottom:3vh;font-size:min(17vw,30vh);}
+  .vs{position:absolute;left:50%;top:50%;width:26vh;height:26vh;margin:-13vh;border-radius:50%;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;
+    font:900 13vh Archivo,sans-serif;font-variation-settings:"wdth" 70;}
+  .marke{position:absolute;width:3vh;height:3vh;}
+  .marke::before,.marke::after{content:"";position:absolute;background:currentColor;}
+  .marke::before{left:50%;top:0;bottom:0;width:1px;} .marke::after{top:50%;left:0;right:0;height:1px;}
+  #plakat .stapel{position:absolute;left:5vw;top:8vh;bottom:8vh;display:flex;flex-direction:column;justify-content:space-between;}
+  #plakat .stapel .wort{position:relative;font-size:min(11.5vw,18vh);}
+  #plakat .seite{position:absolute;right:5vw;top:8vh;bottom:8vh;width:20vw;display:flex;flex-direction:column;justify-content:space-between;color:#fff;}
+  #plakat .seite p{margin:0;font:500 clamp(13px,1.15vw,19px)/1.45 Inter,sans-serif;}
+  #plakat .quadrate{display:flex;gap:1vw;}
+  #plakat .quadrate i{width:4vw;height:4vw;}
+  #plakat .los{font:700 clamp(11px,.95vw,15px) Inter,sans-serif;letter-spacing:.2em;text-transform:uppercase;}
+</style>
+</head>
+<body>
+<div id="buehne"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, zeichen, esc } = Lab;
+const BEAT = .5, START = .4;
+const bt = b => START + b * BEAT;
+const SCHLUSS = 28;
+
+/* Die Wörter. Alles in Großbuchstaben über CSS; hier steht, was gezeigt wird. */
+const [titelA, titelB] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+const KNALL = ['Ein', 'Sieger', 'Nur', 'Einer', 'Geht', 'Ganz', 'Nach', 'Oben'];
+
+function aufbauen(){
+  const b = document.getElementById('buehne');
+  b.innerHTML = `
+    <div class="sz schwarz" id="s0">
+      <div class="meta tw" style="left:4vw;top:4vh">Keller TV</div>
+      <div class="meta tw" style="right:4vw;top:4vh" id="uhr">20:00:00</div>
+      <div class="meta tw" style="left:4vw;bottom:4vh" id="vorab">${zeichen(SHOW.vorab)}</div>
+      <div class="meta tr" style="right:4vw;bottom:4vh">● Live</div>
+      <i class="rec"></i>
+    </div>
+    <div class="sz rot" id="s1"><div class="wort tw" style="left:-1vw;bottom:-6vh;font-size:78vh;--w:62">${esc(SHOW.titelKlein.split(' ')[0])}</div></div>
+    <div class="sz weiss" id="s2"><div class="wort ts" id="gross" style="left:50%;top:50%;font-size:44vh;transform:translate(-50%,-50%)">${esc(SHOW.titelKlein.split(' ').slice(1).join(' '))}</div></div>
+    <div class="sz blau" id="s3"><div class="wort tw" style="left:50%;top:50%;font-size:min(30vw,52vh);transform:translate(-50%,-50%);--w:80">${zeichen(titelA)}</div></div>
+    <div class="sz schwarz" id="s4">
+      <div class="haelfte rot" style="top:0"><div class="wort tw" id="lauf1" style="left:0;bottom:-3vh;font-size:52vh;--w:125">${esc((titelB.slice(0, 4) + ' ').repeat(6))}</div></div>
+      <div class="haelfte blau" style="bottom:0"><div class="wort tw" id="lauf2" style="left:0;top:-1vh;font-size:52vh;--w:125">${esc((titelB.slice(4) + ' ').repeat(6))}</div></div>
+    </div>
+    <div class="sz schwarz" id="s5">
+      ${['Zwei', 'Teams', 'Zwei', 'Abende'].map((w, i) => `<div class="zelle ${['schwarz', 'rot', 'weiss', 'blau'][i]}" style="left:${i % 2 * 50}%;top:${i > 1 ? 50 : 0}%">
+        <div class="wort ${i === 2 ? 'ts' : 'tw'}" style="--w:${i % 2 ? 70 : 110}">${esc(w)}</div></div>`).join('')}
+    </div>
+    <div class="sz schwarz" id="s6">
+      <div class="haelfte rot" id="vs-l" style="top:0;bottom:0;height:auto;width:50%;right:auto"><div class="wort tw" style="right:16vh;top:50%;font-size:34vh;transform:translateY(-50%);--w:70">Rot</div></div>
+      <div class="haelfte blau" id="vs-r" style="top:0;bottom:0;height:auto;width:50%;left:auto"><div class="wort tw" style="left:16vh;top:50%;font-size:34vh;transform:translateY(-50%);--w:70">Blau</div></div>
+      <div class="vs" id="vs">VS</div>
+    </div>
+    <div class="sz weiss" id="s7">
+      <div class="meta ts" style="left:4vw;top:4vh">${esc(SHOW.karten[3].ueber)}</div>
+      <div class="wort ts" style="left:50%;top:50%;font-size:70vh;transform:translate(-50%,-48%);--w:75"><span id="zaehler">00</span><span class="tr">€</span></div>
+    </div>
+    ${KNALL.map((w, i) => `<div class="sz ${['rot', 'schwarz', 'blau', 'weiss'][i % 4]}" id="k${i}">
+      <div class="wort ${i % 4 === 3 ? 'ts' : 'tw'}" style="left:50%;top:50%;font-size:${w.length > 4 ? 40 : 62}vh;transform:translate(-50%,-50%);--w:${i % 2 ? 62 : 125}">${esc(w)}</div></div>`).join('')}
+    <div class="sz schwarz" id="plakat">
+      <i class="marke tw" style="left:1.5vw;top:2vh"></i><i class="marke tw" style="right:1.5vw;top:2vh"></i>
+      <i class="marke tw" style="left:1.5vw;bottom:2vh"></i><i class="marke tw" style="right:1.5vw;bottom:2vh"></i>
+      <div class="stapel">
+        ${[SHOW.titelKlein.split(' ')[0], SHOW.titelKlein.split(' ').slice(1).join(' '), titelA, titelB].map((w, i) =>
+          `<div class="wort ${i === 2 ? 'tr' : 'tw'}" style="--w:100">${esc(w)}</div>`).join('')}
+      </div>
+      <div class="seite">
+        <p class="meta tw" style="position:static">Folge 01 · Heute</p>
+        <div>
+          <p>${esc(SHOW.titelZeile)}.</p>
+          <p style="margin-top:1em;opacity:.6">${SHOW.karten.map(k => esc(k.ueber + ': ' + k.text)).join('<br>')}</p>
+        </div>
+        <div class="quadrate"><i class="rot"></i><i class="blau"></i><i class="weiss"></i></div>
+        <p class="los" id="los">Klicken, um zu beginnen</p>
+      </div>
+    </div>`;
+}
+
+/* Eine Szene von Beat a bis vor Beat e zeigen - harter Schnitt. */
+function szene(tl, id, a, e){
+  tl.set('#' + id, { visibility: 'visible' }, bt(a));
+  if (e != null) tl.set('#' + id, { visibility: 'hidden' }, bt(e));
+}
+
+function bauen(tl){
+  /* 0 · Schwarz, Live-Punkt im Takt, "Heute Abend" tippt sich. */
+  szene(tl, 's0', -.8, 4);
+  for (let b = 0; b < 4; b++){
+    tl.fromTo('.rec', { scale: 1.6, opacity: 1 }, { scale: 1, opacity: .35, duration: BEAT * .9, ease: 'power2.out', immediateRender: false }, bt(b));
+    tl.set('#uhr', { textContent: '20:00:0' + (b + 1) }, bt(b));
+  }
+  tl.fromTo('#vorab .ch', { opacity: 0 }, { opacity: 1, duration: .01, stagger: BEAT * 3 / SHOW.vorab.length }, bt(0));
+
+  /* 1-3 · DIE · GROSSE · KELLER */
+  szene(tl, 's1', 4, 5);
+  tl.fromTo('#s1 .wort', { yPercent: 18 }, { yPercent: 0, duration: BEAT, ease: 'expo.out' }, bt(4));
+  szene(tl, 's2', 5, 6);
+  tl.fromTo('#gross', { '--w': 62 }, { '--w': 125, duration: BEAT, ease: 'expo.out' }, bt(5));
+  szene(tl, 's3', 6, 8);
+  tl.fromTo('#s3 .ch', { yPercent: -120 }, { yPercent: 0, duration: BEAT * .7, ease: 'expo.out', stagger: BEAT / 6 }, bt(6))
+    .to('#s3 .wort', { '--w': 125, duration: BEAT, ease: 'expo.inOut' }, bt(7));
+
+  /* 4 · GAME / SHOW gegenläufig, auf Beat 10 tauschen die Farben. */
+  szene(tl, 's4', 8, 12);
+  tl.fromTo('#lauf1', { xPercent: -30 }, { xPercent: -5, duration: BEAT * 4, ease: 'none' }, bt(8))
+    .fromTo('#lauf2', { xPercent: -5 }, { xPercent: -30, duration: BEAT * 4, ease: 'none' }, bt(8))
+    .set('#s4 .haelfte:first-child', { backgroundColor: '#3B82F6' }, bt(10))
+    .set('#s4 .haelfte:last-child', { backgroundColor: '#E8453C' }, bt(10));
+
+  /* 5 · Raster: jeder Beat eine Zelle. */
+  szene(tl, 's5', 12, 16);
+  document.querySelectorAll('#s5 .zelle').forEach((z, i) => {
+    tl.fromTo(z, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: BEAT * .45, ease: 'expo.out' }, bt(12 + i))
+      .fromTo(z.querySelector('.wort'), { yPercent: 40 }, { yPercent: 0, duration: BEAT * .6, ease: 'expo.out' }, bt(12 + i));
+  });
+
+  /* 6 · Rot gegen Blau, prallen in der Mitte aufeinander. */
+  szene(tl, 's6', 16, 20);
+  tl.fromTo('#vs-l', { xPercent: -100 }, { xPercent: 0, duration: BEAT * .5, ease: 'expo.in' }, bt(16) - BEAT * .5)
+    .fromTo('#vs-r', { xPercent: 100 }, { xPercent: 0, duration: BEAT * .5, ease: 'expo.in' }, bt(16) - BEAT * .5)
+    .fromTo('#s6', { x: -18 }, { x: 0, duration: .4, ease: 'elastic.out(1, .3)' }, bt(16))
+    .fromTo('#vs', { scale: 0, rotation: -40 }, { scale: 1, rotation: 0, duration: BEAT, ease: 'back.out(3)' }, bt(17))
+    .to('#s6 .wort', { '--w': 125, duration: BEAT * 2, ease: 'power2.inOut' }, bt(18));
+
+  /* 7 · 30 € zählt in Viertelbeats hoch. */
+  szene(tl, 's7', 20, 24);
+  const ziel = SHOW.karten[3].zahl, z = { v: 0 }, zEl = document.getElementById('zaehler');
+  tl.fromTo(z, { v: 0 }, { v: ziel, duration: BEAT * 3, ease: 'steps(12)', onUpdate: () => { zEl.textContent = String(Math.round(z.v)).padStart(2, '0'); } }, bt(20))
+    .fromTo('#s7 .wort', { '--w': 62 }, { '--w': 100, duration: BEAT * 3, ease: 'power2.out' }, bt(20))
+    .fromTo('#s7 .wort', { scale: 1 }, { scale: 1.06, duration: BEAT * .25, yoyo: true, repeat: 1 }, bt(23));
+
+  /* 8 · Halbe Beats, jedes Wort ein Schnitt. */
+  KNALL.forEach((_, i) => {
+    tl.set('#k' + i, { visibility: 'visible' }, bt(24 + i / 2)).set('#k' + i, { visibility: 'hidden' }, bt(24 + (i + 1) / 2));
+    tl.fromTo('#k' + i + ' .wort', { scale: 1.25 }, { scale: 1, duration: BEAT / 2, ease: 'expo.out' }, bt(24 + i / 2));
+  });
+
+  /* 9 · Schlussplakat: die vier Zeilen dehnen sich nacheinander auf. */
+  szene(tl, 'plakat', SCHLUSS);
+  tl.fromTo('#plakat .stapel .wort', { '--w': 62, xPercent: -6, opacity: 0 }, { '--w': 100, xPercent: 0, opacity: 1, duration: BEAT * 1.6, ease: 'expo.out', stagger: BEAT / 2 }, bt(SCHLUSS))
+    .fromTo('#plakat .seite > *', { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: BEAT, ease: 'power3.out', stagger: BEAT / 4 }, bt(SCHLUSS + 2))
+    .fromTo('#plakat .quadrate i', { scale: 0 }, { scale: 1, duration: BEAT / 2, ease: 'back.out(3)', stagger: BEAT / 2 }, bt(SCHLUSS + 3))
+    .to('#los', { opacity: .25, duration: BEAT, repeat: 7, yoyo: true, ease: 'steps(1)' }, bt(SCHLUSS + 5));
+}
+
+function ton(t0, A){
+  const tb = b => t0 + bt(b);
+  const bass = [41.2, 41.2, 49.0, 55.0, 41.2, 41.2, 61.74, 55.0];
+  for (let b = 0; b < SCHLUSS + 12; b++){
+    const t = tb(b);
+    const nach = b >= SCHLUSS;
+    A.kick(t, nach ? .6 : (b < 4 ? .7 : 1));
+    if (b >= 4) { A.hat(t + BEAT / 2, nach ? .08 : .14); A.hat(t + BEAT / 4, .05); A.hat(t + BEAT * .75, .05); }
+    if (b >= 8 && b % 2 === 1 && b < 24) A.snare(t, .5);
+    if (b >= 4 && b < 24) A.bass(t, bass[b % 8] * 2, BEAT * .8, .26);
+    if (nach && b % 2 === 1) A.klatschen(t, .18);
+  }
+  /* Der Wirbel vor dem Plakat: Sechzehntel-Snares, die lauter werden */
+  for (let k = 0; k < 16; k++) A.snare(tb(24) + k * BEAT / 4, .15 + k * .025);
+  A.anstieg(tb(24), BEAT * 4, .45);
+  A.becken(tb(SCHLUSS), .5); A.aufprall(tb(SCHLUSS), .7);
+  A.stoss(tb(SCHLUSS), [164.81, 207.65, 246.94, 329.63], .1, 1.4);
+  [4, 5, 6, 16, 20].forEach(b => A.stoss(tb(b), [82.41, 123.47, 164.81], .07, .35));
+  A.aufprall(tb(16), .5);
+}
+
+Lab.starte({ name: 'Schlagzeile', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

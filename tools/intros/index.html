@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intro-Labor</title>
+<!-- Übersicht der Intro-Prototypen. Jede Kachel zeigt den Namen in der
+     Schrift und den Farben ihres Intros - als Vorgeschmack, ohne Vorschaubild. -->
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;600&family=Anton&family=Archivo:wdth,wght@62..125,900&family=Syne:wght@800&family=Big+Shoulders+Stencil+Display:wght@900&family=Titan+One&family=Bowlby+One&family=Abril+Fatface&family=Bungee+Shade&family=Archivo+Black&family=Press+Start+2P&family=Oswald:wght@500;700&family=Bangers&family=Cinzel:wght@400&family=Shrikhand&family=Racing+Sans+One&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{color-scheme:dark;--grund:#0b0b0f;--flaeche:#131318;--linie:rgba(255,255,255,.1);--text:#f2f2f4;--leise:rgba(242,242,244,.62);}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--grund);color:var(--text);font:400 16px/1.5 Inter,system-ui,sans-serif;}
+  main{max-width:1180px;margin:0 auto;padding:56px 16px 80px;}
+  h1{margin:0 0 8px;font:600 clamp(28px,4vw,44px)/1.1 Inter,sans-serif;letter-spacing:-.01em;}
+  .vorspann{margin:0 0 40px;max-width:62ch;color:var(--leise);}
+  .raster{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+  a.kachel{display:flex;flex-direction:column;border:1px solid var(--linie);border-radius:14px;overflow:hidden;color:inherit;text-decoration:none;background:var(--flaeche);
+    transition:transform .2s ease,border-color .2s ease;}
+  a.kachel:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.28);}
+  a.kachel:focus-visible{outline:2px solid #ffcf86;outline-offset:3px;}
+  .bild{height:190px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+  .bild b{position:relative;font-weight:400;text-align:center;line-height:.95;}
+  .info{padding:16px 18px 18px;}
+  .info h2{margin:0 0 4px;font:700 18px Inter,sans-serif;}
+  .info p{margin:0 0 12px;color:var(--leise);font-size:14.5px;}
+  h2.abschnitt{margin:48px 0 6px;font:700 20px Inter,sans-serif;}
+  .hinweis{margin:0 0 18px;color:var(--leise);font-size:15px;}
+  .info .technik{font-size:13px;color:rgba(242,242,244,.45);}
+  @media (prefers-reduced-motion: reduce){ a.kachel{transition:none;} a.kachel:hover{transform:none;} }
+</style>
+</head>
+<body>
+<main>
+  <h1>Intro-Labor</h1>
+  <p class="vorspann">Achtzehn Intros für die Keller Gameshow, jedes mit eigener Idee, eigenem Look und eigenem Ton. Alle zeigen dieselben Texte, damit man sie vergleichen kann. Zum Ansehen eins öffnen und klicken – der Ton startet mit dem Klick. Bewegt man die Maus, erscheint unten eine Leiste zum Anhalten und Spulen.</p>
+  <h2 class="abschnitt">Zweite Runde · zwölf Intros mit Logo-Moment</h2>
+  <p class="hinweis">Jedes folgt derselben Dramaturgie: Anlauf, das Logo als Höhepunkt mit Schlag, dann die stehende Titelkarte mit „Klicken, um zu beginnen“.</p>
+  <div class="raster">
+    <a class="kachel" href="countdown/"><div class="bild" style="background:radial-gradient(circle,#3a2a05,#000 65%)"><b style="font:400 110px 'Bowlby One',sans-serif;color:#ffd24d">3·2·1</b></div>
+      <div class="info"><h2>Countdown</h2><p>Zehn Zahlen fliegen durch die Kamera, bei Null Blitz, Druckwelle, Logo, Funken.</p><div class="technik">DOM · Tick, Anstieg, Tusch · 16 s</div></div></a>
+    <a class="kachel" href="vorhang/"><div class="bild" style="background:repeating-linear-gradient(90deg,#4a0710 0,#b3202f 18px,#6a0d17 36px)"><b style="font:400 46px 'Abril Fatface',serif;color:#f3cf6e;text-shadow:0 3px 8px #000">Vorhang auf</b></div>
+      <div class="info"><h2>Vorhang auf</h2><p>Verfolger sucht über den Samt, Trommelwirbel, der Vorhang rafft sich, Logo im Spot, Rampenlichter.</p><div class="technik">DOM · Wirbel, Fanfare, Applaus · 16 s</div></div></a>
+    <a class="kachel" href="jackpot/"><div class="bild" style="background:#12051f"><b style="font:400 56px 'Bungee Shade',sans-serif;color:#ffd24d">JACKPOT</b></div>
+      <div class="info"><h2>Jackpot</h2><p>Hebel runter, 14 Walzen rasten auf KELLER und GAMESHOW ein, Lichter jagen, Münzregen.</p><div class="technik">DOM · Ratschen, Glocken · 16 s</div></div></a>
+    <a class="kachel" href="senderlogo/"><div class="bild" style="background:radial-gradient(ellipse,#0d2152,#030817 70%)"><b style="font:400 54px 'Archivo Black',sans-serif;color:#f2b532;text-shadow:0 2px 0 #9b5c08,0 4px 0 #6b3f05,0 6px 0 #3a2400">SENDER</b></div>
+      <div class="info"><h2>Senderlogo</h2><p>Lichtstreifen, ein massives 3D-Logo dreht sich aus der Tiefe heran, Glanz, Flare, Spiegelung.</p><div class="technik">CSS 3D mit 18 Schichten · Sting · 14 s</div></div></a>
+    <a class="kachel" href="arcade/"><div class="bild" style="background:#05060d"><b style="font:400 30px 'Press Start 2P',monospace;color:#39ff88;line-height:1.5">INSERT<br>COIN</b></div>
+      <div class="info"><h2>Arcade</h2><p>Röhre an, Münze, Regenbogen-Titel, Spielerwahl Rot gegen Blau, READY? GO!, PRESS START.</p><div class="technik">Pixelgrafik aus box-shadow · Chiptune · 17 s</div></div></a>
+    <a class="kachel" href="ringansage/"><div class="bild" style="background:linear-gradient(90deg,#4a0f0c,#0a0a10 45%,#0a0a10 55%,#0f1d4a)"><b style="font:700 50px Oswald,sans-serif;color:#fff;letter-spacing:.04em">RINGANSAGE</b></div>
+      <div class="info"><h2>Ringansage</h2><p>„In der roten Ecke …“, „In der blauen Ecke …“, Licht aus, Wirbel – der Titel steigt als Meistergürtel auf.</p><div class="technik">DOM · Jubel, Wirbel, Tusch · 19 s</div></div></a>
+    <a class="kachel" href="feuerwerk/"><div class="bild" style="background:linear-gradient(#04050f,#2a1a40)"><b style="font:400 48px 'Bowlby One',sans-serif;color:transparent;background:radial-gradient(circle,#ffd27a 0 1.4px,transparent 2px) 0 0/6px 6px;-webkit-background-clip:text;background-clip:text">FEUERWERK</b></div>
+      <div class="info"><h2>Feuerwerk</h2><p>Raketen über der Häuserzeile, eine Salve, und das Finale schreibt den Titel in Funken an den Himmel.</p><div class="technik">Canvas-Simulation · Pfiffe, Knall, Knistern · 19 s</div></div></a>
+    <a class="kachel" href="fallblatt/"><div class="bild" style="background:#0c0d10"><b style="font:500 46px Oswald,sans-serif;color:#ffd24d;letter-spacing:.3em">GLEIS 1</b></div>
+      <div class="info"><h2>Fallblatt</h2><p>Bahnhofsgong, die Anzeigetafel rattert, bis DIE GROSSE / KELLER / GAMESHOW dasteht.</p><div class="technik">DOM · Gong, Klappern · 13 s</div></div></a>
+    <a class="kachel" href="comic/"><div class="bild" style="background:repeating-conic-gradient(#ffcf1f 0 9deg,#ffe666 9deg 18deg)"><b style="font:400 64px Bangers,sans-serif;color:#ffe14d;-webkit-text-stroke:2px #111;text-shadow:3px 3px 0 #111,6px 6px 0 #111">WUMMS!</b></div>
+      <div class="info"><h2>Comic</h2><p>Vier Panels mit WUMMS, ZACK, BÄMM und VS, dann fliegt die Seite auseinander – das Cover.</p><div class="technik">DOM, Rasterpunkte · Schläge, Fanfare · 16 s</div></div></a>
+    <a class="kachel" href="trailer/"><div class="bild" style="background:#000"><b style="font:400 30px Cinzel,serif;color:#ece6d6;letter-spacing:.14em">In einer Welt …</b></div>
+      <div class="info"><h2>Trailer</h2><p>Kinotrailer, viel zu ernst: Texttafeln, Braams, schnelle Montage, Stille, Titel.</p><div class="technik">DOM · Braam, Montage · 21 s</div></div></a>
+    <a class="kachel" href="siebziger/"><div class="bild" style="background:repeating-radial-gradient(circle at 50% 120%,#D9472B 0 14px,#F28C28 14px 28px,#E8B830 28px 42px,#2A9D8F 42px 56px,#6B3A1E 56px 70px)"><b style="font:400 52px Shrikhand,cursive;color:#F6E7C8;text-shadow:3px 3px 0 #F28C28,6px 6px 0 #D9472B,9px 9px 0 #6B3A1E">Groovy!</b></div>
+      <div class="info"><h2>70er-Show</h2><p>Irisblende, Regenbogenbögen, hüpfende Buchstaben, APPLAUS-Schild, Bläser und Groove.</p><div class="technik">DOM · Fanfare, Shuffle · 20 s</div></div></a>
+    <a class="kachel" href="startampel/"><div class="bild" style="background:repeating-conic-gradient(#111 0 25%,#f2f2f2 0 50%) 0 0/36px 36px"><b style="font:400 50px 'Racing Sans One',sans-serif;color:#fff;background:#111;padding:6px 18px;font-style:italic">START</b></div>
+      <div class="info"><h2>Startampel</h2><p>Fünf rote Lichter, alle aus, Rot und Blau rasen los, Zielflagge mit dem Titel.</p><div class="technik">DOM · Motoren, Piepen, Jubel · 17 s</div></div></a>
+  </div>
+  <h2 class="abschnitt">Erste Runde · sechs Stimmungen</h2>
+  <div class="raster">
+    <a class="kachel" href="ereignishorizont/">
+      <div class="bild" style="background:radial-gradient(circle at 50% 55%,#000 0 18%,#ffcf86 20%,#d9772e 27%,transparent 40%),#050308">
+        <b style="font:300 22px Unbounded,sans-serif;letter-spacing:.5em;padding-left:.5em;color:#fff0cf">EREIGNIS&shy;HORIZONT</b></div>
+      <div class="info"><h2>Ereignishorizont</h2><p>Lichtpunkt, Sprung durchs Sternenfeld, Ankunft an einem Schwarzen Loch, Titel aus dem Licht. Kino.</p>
+        <div class="technik">WebGL-Shader mit Lichtkrümmung · Orgel und Aufprall · 40 s</div></div></a>
+    <a class="kachel" href="lichtshow/">
+      <div class="bild" style="background:linear-gradient(180deg,#05050a,#141420)">
+        <i style="position:absolute;top:0;left:22%;width:80px;height:260px;background:linear-gradient(#ffc45a88,transparent);transform:rotate(18deg);transform-origin:top"></i>
+        <i style="position:absolute;top:0;right:22%;width:80px;height:260px;background:linear-gradient(#ff3ea588,transparent);transform:rotate(-18deg);transform-origin:top"></i>
+        <b style="font:400 64px Anton,sans-serif;color:#ffd27a">LICHTSHOW</b></div>
+      <div class="info"><h2>Lichtshow</h2><p>Samstagabend-Gala aus Sicht des Publikums: Moving Heads im Dunst, LED-Wand-Countdown, Pyro, Konfetti.</p>
+        <div class="technik">Canvas, additives Licht · Beat mit 120 BPM, Jubel · 32 s</div></div></a>
+    <a class="kachel" href="schlagzeile/">
+      <div class="bild" style="background:linear-gradient(90deg,#E8453C 50%,#3B82F6 50%)">
+        <b style="font:900 76px Archivo,sans-serif;font-variation-settings:'wdth' 62;color:#fff;text-transform:uppercase">Schlag&shy;zeile</b></div>
+      <div class="info"><h2>Schlagzeile</h2><p>Ein Plakat in Bewegung: riesige Typografie, Team-Farben, harte Schnitte auf jeden Beat.</p>
+        <div class="technik">DOM, variable Schriftbreite · Drumloop · 21 s</div></div></a>
+    <a class="kachel" href="partikelsturm/">
+      <div class="bild" style="background:radial-gradient(ellipse at 50% 50%,#1a2236,#020204 70%)">
+        <b style="font:800 48px Syne,sans-serif;color:transparent;background:radial-gradient(circle,#fff 0 1px,transparent 1.6px) 0 0/5px 5px;-webkit-background-clip:text;background-clip:text">PARTIKEL</b></div>
+      <div class="info"><h2>Partikelsturm</h2><p>36.000 Lichtteilchen: eine Galaxie zerreißt und setzt sich Wort für Wort zum Titel zusammen.</p>
+        <div class="technik">WebGL-Punkte, alle Formen vorberechnet · Fläche und Glocken · 32 s</div></div></a>
+    <a class="kachel" href="agentenakte/">
+      <div class="bild" style="background:#04070c;background-image:linear-gradient(rgba(63,176,255,.1) 1px,transparent 1px),linear-gradient(90deg,rgba(63,176,255,.1) 1px,transparent 1px);background-size:18px 18px">
+        <b style="font:900 58px 'Big Shoulders Stencil Display',sans-serif;color:#fff;letter-spacing:.04em">AGENTENAKTE</b>
+        <i style="position:absolute;left:-5%;right:-5%;top:62%;height:2px;background:#ff3b3b;box-shadow:0 0 12px #ff3b3b;transform:rotate(-6deg)"></i></div>
+      <div class="info"><h2>Agentenakte</h2><p>Geheimeinsatz „Operation Keller“: Terminal, Grundriss, Laser, entschwärzte Team-Akten, Countdown, Stempel.</p>
+        <div class="technik">SVG, Glitch per clip-path · Herzschlag, Schreibmaschine · 30 s</div></div></a>
+    <a class="kachel" href="bastelbogen/">
+      <div class="bild" style="background:#c9a77c">
+        <b style="font:400 50px 'Titan One',sans-serif;color:#fff;display:flex;gap:6px">
+          <span style="background:#E8453C;padding:4px 10px;transform:rotate(-6deg)">B</span><span style="background:#3B82F6;padding:4px 10px;transform:rotate(4deg)">A</span><span style="background:#F5C842;color:#2b2118;padding:4px 10px;transform:rotate(-3deg)">S</span><span style="background:#49B37A;padding:4px 10px;transform:rotate(7deg)">T</span><span style="background:#F28AB3;padding:4px 10px;transform:rotate(-5deg)">E</span><span style="background:#FF8A3D;padding:4px 10px;transform:rotate(3deg)">L</span></b></div>
+      <div class="info"><h2>Bastelbogen</h2><p>Stop-Motion aus Papier: ausgeschnittene Buchstaben, Stabfiguren für die Teams, Klebezettel, Konfetti aus dem Locher.</p>
+        <div class="technik">GSAP mit 12 Bildern pro Sekunde · Ukulele und Xylophon · 26 s</div></div></a>
+  </div>
+</main>
+</body>
+</html>

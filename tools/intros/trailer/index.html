@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trailer</title>
+<!-- Intro "Trailer": der Kinotrailer, viel zu ernst für einen Spieleabend -
+     genau das ist der Witz. Schwarze Texttafeln in Antiqua-Versalien,
+     tiefe Bläserschläge ("Braam"), dann eine immer schnellere Montage aus
+     Wortfetzen und Lichtblitzen, eine Sekunde Stille - und der Titel mit
+     dem größten Schlag. Kinobalken, Filmkorn, Lichtlecks an den Schnitten. -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;900&family=Inter:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#e8d5a8;--lab-grund:#000;--lab-text:#e8e1d0;}
+  html,body{margin:0;height:100%;background:#000;overflow:hidden;}
+  #kino{position:fixed;inset:0;overflow:hidden;background:#000;}
+  .tafel{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font:400 min(4.6vw,8vh) Cinzel,serif;letter-spacing:.14em;padding-left:.14em;color:#ece6d6;
+    text-shadow:0 0 3vh rgba(255,240,210,.25);opacity:0;}
+  .fetzen{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font:900 min(10vw,18vh) Cinzel,serif;letter-spacing:.06em;color:#fff;opacity:0;}
+  .leck{position:absolute;border-radius:50%;filter:blur(6vh);mix-blend-mode:screen;opacity:0;}
+  #weiss{position:absolute;inset:0;background:#fff;opacity:0;}
+  #titel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;}
+  #titel .k{font:400 min(2vw,3.4vh) Cinzel,serif;letter-spacing:.8em;padding-left:.8em;color:#d9cfb6;margin-bottom:3vh;}
+  #titel .g{font:900 min(10.5vw,18vh)/1 Cinzel,serif;letter-spacing:.04em;text-align:center;color:transparent;
+    background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.9) 50%,transparent 60%) 140% 0/260% 100% no-repeat,linear-gradient(180deg,#fdfbf5 0%,#d8d2c4 40%,#8f8572 52%,#e6dcc4 66%,#b9ad92 100%);
+    -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 2vh rgba(255,235,200,.25));}
+  #titel .zeile{font:400 min(1.6vw,2.8vh) Cinzel,serif;letter-spacing:.5em;padding-left:.5em;color:#bfb49a;margin-top:4vh;opacity:0;}
+  .balken{position:fixed;left:0;right:0;height:12.8vh;background:#000;z-index:6;}
+  .los{position:fixed;bottom:15vh;left:0;right:0;text-align:center;font:500 12px Inter,sans-serif;letter-spacing:.5em;color:#bfb49a;opacity:0;text-transform:uppercase;z-index:7;}
+</style>
+</head>
+<body>
+<div id="kino"></div>
+<i class="balken" style="top:0"></i><i class="balken" style="bottom:0"></i>
+<div class="lab-korn" style="z-index:8;opacity:.1"></div>
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, esc } = Lab;
+const R = gsap.utils.random;
+const TAFELN = [['In einer Welt …', .6], ['… ohne Gnade …', 3.4], ['… treten zwei Teams an.', 6.0]];
+const FETZEN = ['Rot.', 'Blau.', 'Ein Keller.', SHOW.karten[3].text + '.', 'Ein Sieger.', 'Kein Zurück.'];
+const T = { montage: 8.8, stille: 11.6, titel: 12.6 };
+const montageZeiten = FETZEN.map((_, i) => T.montage + i * .48 - i * i * .02);
+
+function aufbauen(){
+  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  document.getElementById('kino').innerHTML = `
+    ${TAFELN.map(([t], i) => `<div class="tafel" id="t${i}">${esc(t)}</div>`).join('')}
+    ${FETZEN.map((t, i) => `<div class="fetzen" id="f${i}" style="${i < 2 ? `color:${i ? '#7aa7ff' : '#ff6a5a'}` : ''}">${esc(t)}</div>`).join('')}
+    <i class="leck" id="leck1" style="left:-10vw;top:10vh;width:60vh;height:60vh;background:#ff8a2a"></i>
+    <i class="leck" id="leck2" style="right:-10vw;bottom:5vh;width:70vh;height:50vh;background:#ff3a6a"></i>
+    <div id="weiss"></div>
+    <div id="titel"><div class="k">${esc(SHOW.titelKlein)}</div><div class="g">${esc(ta)}<br>${esc(tb)}</div><div class="zeile">Heute Abend · Nur hier</div></div>
+    <div class="los">Klicken, um zu beginnen</div>`;
+}
+
+function bauen(tl){
+  /* Ruhige Tafeln: einblenden, langsam näher, ausblenden */
+  TAFELN.forEach(([_, t], i) => {
+    tl.fromTo('#t' + i, { opacity: 0, scale: .96, filter: 'blur(6px)' }, { opacity: 1, scale: 1, filter: 'blur(0px)', duration: .9, ease: 'power2.out', immediateRender: false }, t)
+      .to('#t' + i, { scale: 1.05, duration: 2.2, ease: 'none' }, t + .9)
+      .to('#t' + i, { opacity: 0, filter: 'blur(6px)', duration: .5 }, t + 2.3);
+  });
+  /* Montage: jeder Fetzen ein harter Schnitt mit Lichtblitz */
+  montageZeiten.forEach((t, i) => {
+    const naechst = montageZeiten[i + 1] || T.stille;
+    tl.set('#f' + i, { opacity: 1 }, t).set('#f' + i, { opacity: 0 }, naechst - .05)
+      .fromTo('#f' + i, { scale: 1.12 }, { scale: 1, duration: naechst - t, ease: 'power2.out', immediateRender: false }, t)
+      .fromTo('#weiss', { opacity: .55 }, { opacity: 0, duration: .18, immediateRender: false }, t)
+      .fromTo(i % 2 ? '#leck2' : '#leck1', { opacity: .7 }, { opacity: 0, duration: .45, immediateRender: false }, t);
+  });
+  /* Stille, dann der Titel */
+  tl.fromTo('#titel', { opacity: 0 }, { opacity: 1, duration: .08, immediateRender: false }, T.titel)
+    .fromTo('#titel .g', { scale: 1.18, filter: 'blur(10px)' }, { scale: 1, filter: 'blur(0px)', duration: 2.4, ease: 'power3.out', immediateRender: false }, T.titel)
+    .fromTo('#titel .k', { opacity: 0, letterSpacing: '1.6em' }, { opacity: 1, letterSpacing: '.8em', duration: 2.4, ease: 'power3.out', immediateRender: false }, T.titel + .6)
+    .fromTo('#titel .g', { backgroundPosition: '140% 0%, 0% 0%' }, { backgroundPosition: '-40% 0%, 0% 0%', duration: 1.8, ease: 'power2.inOut', immediateRender: false }, T.titel + 1.4)
+    .fromTo('#titel .zeile', { opacity: 0 }, { opacity: 1, duration: 1.2, immediateRender: false }, T.titel + 2.6)
+    .fromTo('#leck1', { opacity: .5 }, { opacity: 0, duration: 2, immediateRender: false }, T.titel)
+    .to('#titel', { scale: 1.04, duration: 8, ease: 'none' }, T.titel)
+    .fromTo('.los', { opacity: 0 }, { opacity: .8, duration: .9, yoyo: true, repeat: 5, ease: 'sine.inOut', immediateRender: false }, T.titel + 3.4);
+}
+
+function ton(t0, A){
+  /* Braam: tiefer Bläser-Cluster, Filter öffnet sich und schließt */
+  const braam = (t, v, lang) => {
+    const g = A.huelle(t0 + t, .03, .2 * v, lang * .5, lang * .5);
+    const lp = A.filter('lowpass', 160, 4, g);
+    lp.frequency.setValueAtTime(160, t0 + t); lp.frequency.exponentialRampToValueAtTime(1100 * v, t0 + t + .35); lp.frequency.exponentialRampToValueAtTime(240, t0 + t + lang);
+    [41.2, 61.74, 82.41, 98].forEach(f => [-.006, .006].forEach(dt => A.osz('sawtooth', f * (1 + dt), t0 + t, lang + .2, lp)));
+    A.aufprall(t0 + t, .55 * v);
+  };
+  TAFELN.forEach(([_, t]) => braam(t, .8, 2.6));
+  A.flaeche(t0, [41.2, 61.74], T.montage, .05, 220, 2);
+  A.anstieg(t0 + T.montage, T.stille - T.montage, .4);
+  montageZeiten.forEach(t => { A.kick(t0 + t, 1); A.snare(t0 + t, .35); A.rauschen_wisch(t0 + t, .2, .15, 4000, 300); });
+  /* Stille ist Absicht - nur ein Hauch tiefes Summen */
+  braam(T.titel, 1.25, 4.5);
+  A.tusch(t0 + T.titel, [82.41, 123.47, 164.81, 207.65], .6);
+  A.flaeche(t0 + T.titel + .5, [82.41, 123.47, 164.81, 246.94], 8, .04, 900, 2);
+  [1318.5, 1975.5].forEach((f, i) => A.ping(t0 + T.titel + 1.5 + i * .3, f, .04, 3));
+}
+Lab.starte({ name: 'Trailer', aufbauen, bauen, ton });
+</script>
+</body>
+</html>

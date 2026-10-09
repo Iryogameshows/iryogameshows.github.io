@@ -1,0 +1,20 @@
+/* Gemeinsame Teile der Intro-Prototypen: Startbildschirm und Bedienleiste.
+   Farben kommen über --lab-akzent und --lab-grund aus der jeweiligen Seite. */
+:root{--lab-akzent:#ffcf86;--lab-grund:#000;--lab-text:#f6e7cb;}
+#lab-start{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--lab-grund);cursor:pointer;text-align:center;padding:24px;}
+#lab-start b{font:600 clamp(18px,2.2vw,32px) Inter,system-ui,sans-serif;letter-spacing:.45em;padding-left:.45em;color:var(--lab-text);text-transform:uppercase;}
+#lab-start span{font:500 13px Inter,system-ui,sans-serif;letter-spacing:.3em;color:var(--lab-text);opacity:.55;text-transform:uppercase;}
+#lab-start:focus-visible{outline:2px solid var(--lab-akzent);outline-offset:-10px;}
+#lab-leiste{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:101;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;
+  max-width:calc(100vw - 32px);background:rgba(8,8,14,.84);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 14px;
+  font:500 14px Inter,system-ui,sans-serif;color:#fff;transition:opacity .4s;}
+#lab-leiste.weg{opacity:0;pointer-events:none;}
+#lab-leiste button, #lab-leiste a{min-height:36px;display:inline-flex;align-items:center;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.07);color:#fff;font:inherit;cursor:pointer;text-decoration:none;}
+#lab-leiste button:focus-visible, #lab-leiste a:focus-visible, #lab-leiste input:focus-visible{outline:2px solid var(--lab-akzent);outline-offset:2px;}
+#lab-leiste input[type=range]{width:min(32vw,380px);}
+.lab-korn{position:fixed;inset:-50%;pointer-events:none;mix-blend-mode:overlay;opacity:.08;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:lab-korn .45s steps(3) infinite;}
+@keyframes lab-korn{0%{transform:translate(0,0)}33%{transform:translate(-2%,3%)}66%{transform:translate(3%,-1%)}100%{transform:translate(-1%,-2%)}}
+@media (prefers-reduced-motion: reduce){ .lab-korn{animation:none;} }

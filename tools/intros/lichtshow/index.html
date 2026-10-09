@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lichtshow</title>
+<!-- Intro-Prototyp "Lichtshow": du sitzt im Publikum einer Samstagabend-Gala.
+     Dunkel, Gemurmel, dann gehen acht Moving Heads nacheinander an, zählen
+     mit der LED-Wand herunter, und auf dem Schlag fächern die Strahlen auf,
+     das Publikum reißt die Arme hoch. Zum Schluss Pyro und Konfetti.
+
+     Zwei Canvas-Ebenen mit der LED-Wand (DOM) dazwischen: hinten Truss und
+     Wandschein, vorn Lichtstrahlen, Bodenflecken, Funken, Publikum. Die
+     Strahlen werden additiv gezeichnet und durch eine Dunst-Textur maskiert -
+     ohne Dunst sähen sie aus wie Dreiecke. -->
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
+<style>
+  :root{--lab-akzent:#ffc45a;--lab-text:#fff2d8;}
+  html,body{margin:0;height:100%;background:#040407;overflow:hidden;}
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block;}
+  #hinten{z-index:1;} #vorn{z-index:3;}
+
+  /* LED-Wand: alles darin wird durch eine Punktmaske gezeigt, so sieht
+     Schrift wie aus Leuchtdioden aus. --led ist die Helligkeit (0..1). */
+  #wand{position:fixed;left:50%;top:15vh;width:min(72vw,128vh);aspect-ratio:16/7.2;transform:translateX(-50%);z-index:2;
+    background:#07070b;border:2px solid #15151d;box-shadow:0 0 0 6px #0b0b10,0 30px 80px rgba(0,0,0,.8);}
+  #wand::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,#1a1a24 0 38%,transparent 44%) 0 0/7px 7px;}
+  #led{position:absolute;inset:0;overflow:hidden;
+    -webkit-mask-image:radial-gradient(circle,#000 0 44%,rgba(0,0,0,.5) 52%,transparent 60%);-webkit-mask-size:7px 7px;
+    mask-image:radial-gradient(circle,#000 0 44%,rgba(0,0,0,.5) 52%,transparent 60%);mask-size:7px 7px;
+    filter:brightness(calc(.15 + var(--led,0) * 1.25)) saturate(1.2);}
+  .ls{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;text-align:center;}
+  .ls .plasma{position:absolute;inset:-20%;background:radial-gradient(40% 60% at 30% 40%,#ff2e88 0,transparent 70%),radial-gradient(45% 60% at 70% 60%,#2a7bff 0,transparent 70%),#12051f;opacity:.9;}
+  .ls b{position:relative;font-family:Anton,sans-serif;font-weight:400;line-height:.9;color:#ffd27a;text-transform:uppercase;letter-spacing:.02em;}
+  .ls .klein{position:relative;font:800 clamp(18px,2.8vw,44px) Inter,sans-serif;letter-spacing:.4em;padding-left:.4em;color:#fff;text-transform:uppercase;margin-bottom:.6em;}
+  .zahl-gross{font-size:min(30vw,52vh);}
+  .titel-gross{font-size:min(8.6vw,14.5vh);}
+  #ls-titel{padding-bottom:7%;}
+  .titel-gross .w2{display:block;color:#fff;}
+  .k-gross{font-size:min(10vw,18vh);color:#fff !important;}
+  .teams{position:absolute;inset:0;display:flex;}
+  .teams i{flex:1;}
+  .teams i:first-child{background:#E8453C;} .teams i:last-child{background:#3B82F6;}
+  .lauf{position:absolute;left:0;bottom:6%;white-space:nowrap;font:400 min(4vw,7vh) Anton,sans-serif;color:#ffd27a;letter-spacing:.05em;}
+
+  .unten{position:fixed;left:0;right:0;bottom:0;height:9vh;z-index:4;background:linear-gradient(transparent,#000);pointer-events:none;}
+</style>
+</head>
+<body>
+<canvas id="hinten"></canvas>
+<div id="wand"><div id="led"></div></div>
+<canvas id="vorn"></canvas>
+<div class="unten"></div>
+<div class="lab-korn" style="z-index:5"></div>
+
+<script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
+<script>
+const { SHOW, zeichen, esc } = Lab;
+const R = gsap.utils.random;
+const T = { an: 2.0, count: 4.8, hit: 8.8, karten: 16.8, takt: 2, finale: 25.8 };
+const BEAT = .5;
+
+/* Farben der Scheinwerfer. Index in U.fa / U.fb. */
+const FARBEN = [[255,196,90],[255,60,170],[70,220,255],[255,248,236],[232,69,60],[59,130,246]];
+const U = {};
+function grundwerte(){
+  Object.assign(U, { licht:0, fan:0, center:0, sweep:0, spread:.5, phase:0, tempo:3.1, fa:3, fb:3, blitz:0, puls:0, pyro:0,
+    haende:0, wandschein:0, nebel:.6, murmeln:1 });
+  for (let i = 0; i < 8; i++) U['l' + i] = 0;
+}
+grundwerte();
+
+/* ── Canvas ── */
+const hinten = document.getElementById('hinten'), vorn = document.getElementById('vorn');
+const hc = hinten.getContext('2d'), vc = vorn.getContext('2d');
+const strahlEbene = document.createElement('canvas'), sc = strahlEbene.getContext('2d');
+let W = 0, H = 0, dpr = 1;
+function groesse(){
+  dpr = Math.min(1.5, devicePixelRatio || 1);
+  W = innerWidth; H = innerHeight;
+  [hinten, vorn, strahlEbene].forEach(c => { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); });
+  [hc, vc, sc].forEach(c => c.setTransform(dpr, 0, 0, dpr, 0, 0));
+  publikumBauen();
+}
+
+/* Dunst: eine kleine Rauschtextur, groß gezogen. Zwei Lagen, die
+   gegeneinander driften, maskieren die Strahlen. */
+const dunst = (() => {
+  const w = 192, h = 108, c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'), img = x.createImageData(w, h);
+  const gitter = (s) => { const g = []; for (let i = 0; i < (w / s + 2) * (h / s + 2); i++) g.push(Math.random()); return g; };
+  const lagen = [[24, .5], [12, .3], [6, .2]].map(([s, a]) => ({ s, a, g: gitter(s), b: Math.floor(w / s) + 2 }));
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++){
+    let v = 0;
+    lagen.forEach(L => {
+      const gx = xx / L.s, gy = y / L.s, ix = Math.floor(gx), iy = Math.floor(gy), fx = gx - ix, fy = gy - iy;
+      const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+      const q = (a, b) => L.g[b * L.b + a];
+      v += L.a * ((q(ix, iy) * (1 - sx) + q(ix + 1, iy) * sx) * (1 - sy) + (q(ix, iy + 1) * (1 - sx) + q(ix + 1, iy + 1) * sx) * sy);
+    });
+    const i = (y * w + xx) * 4;
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = 255;
+    img.data[i + 3] = Math.round(255 * Math.min(1, .25 + v * 1.05));
+  }
+  x.putImageData(img, 0, 0);
+  return c;
+})();
+
+let publikum = [];
+function publikumBauen(){
+  publikum = [];
+  [[.985, 34, 1], [.93, 26, .8], [.885, 19, .6]].forEach(([y, r, tiefe], reihe) => {
+    const n = Math.ceil(W / (r * 2.1));
+    for (let k = 0; k < n; k++){
+      publikum.push({ x: (k + .5 + (reihe % 2) * .5) * (W / n) + R(-6, 6), y: H * y + R(-4, 4), r: r * R(.85, 1.1), tiefe, reihe,
+        arm: Math.random() < .55, armH: R(.7, 1.2), ph: R(0, 6.28), seite: Math.random() < .5 ? -1 : 1 });
+    }
+  });
+  publikum.sort((a, b) => a.y - b.y);
+}
+addEventListener('resize', groesse);
+groesse();
+
+const rgba = (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+const kopfX = i => W * (.1 + i * .8 / 7), kopfY = () => H * .075;
+
+function strahlWinkel(i){
+  const x0 = kopfX(i), y0 = kopfY();
+  const cx = W / 2, cy = H * .45;
+  const zurMitte = Math.atan((cx - x0) / (cy - y0));
+  const facher = (i - 3.5) / 3.5 * .75;
+  const schwenk = Math.sin(U.phase + i * .55) * .5;
+  return U.center * zurMitte + U.fan * facher + U.sweep * schwenk;
+}
+
+function strahl(ctx, x0, y0, th, L, w, c, a){
+  const dx = Math.sin(th), dy = Math.cos(th), px = dy, py = -dx;
+  const ex = x0 + dx * L, ey = y0 + dy * L;
+  /* Drei Lagen von breit und schwach bis schmal und hell: ergibt den weichen
+     Rand eines Lichtkegels im Dunst. */
+  [[1, .13], [.55, .13], [.22, .16], [.07, .3]].forEach(([s, aa]) => {
+    const g = ctx.createLinearGradient(x0, y0, ex, ey);
+    g.addColorStop(0, rgba(c, a * aa * 1.4)); g.addColorStop(.55, rgba(c, a * aa * .55)); g.addColorStop(1, rgba(c, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x0 + px * 4 * s, y0 + py * 4 * s);
+    ctx.lineTo(ex + px * w * s, ey + py * w * s);
+    ctx.lineTo(ex - px * w * s, ey - py * w * s);
+    ctx.lineTo(x0 - px * 4 * s, y0 - py * 4 * s);
+    ctx.closePath(); ctx.fill();
+  });
+}
+
+/* Funken der Pyro-Fontänen und Konfetti. */
+const funken = [], konfetti = [];
+function konfettiKanone(){
+  const farben = ['#ffd27a', '#ff3ea5', '#4fd8ff', '#ffffff', '#E8453C', '#3B82F6'];
+  for (let k = 0; k < 420; k++){
+    konfetti.push({ x: R(0, W), y: R(-H * .8, -10), vy: R(60, 140), vx: R(-30, 30), w: R(6, 12), h: R(9, 18),
+      rot: R(0, 6.28), vr: R(-6, 6), flat: R(0, 6.28), vf: R(4, 10), c: farben[k % farben.length] });
+  }
+}
+
+let zuletzt = performance.now(), zeitGesamt = 0;
+function zeichnen(jetzt){
+  const dt = Math.min(.05, (jetzt - zuletzt) / 1000); zuletzt = jetzt; zeitGesamt += dt;
+  U.phase += dt * U.tempo;
+  const fa = FARBEN[U.fa | 0], fb = FARBEN[U.fb | 0];
+
+  /* hinten: Bühne, Wandschein, Truss */
+  hc.globalCompositeOperation = 'source-over';
+  const bg = hc.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#05050a'); bg.addColorStop(.7, '#0a0a12'); bg.addColorStop(1, '#030305');
+  hc.fillStyle = bg; hc.fillRect(0, 0, W, H);
+  if (U.wandschein > 0){
+    hc.globalCompositeOperation = 'lighter';
+    const g = hc.createRadialGradient(W / 2, H * .38, 10, W / 2, H * .38, W * .55);
+    g.addColorStop(0, rgba(fa, .22 * U.wandschein)); g.addColorStop(1, 'rgba(0,0,0,0)');
+    hc.fillStyle = g; hc.fillRect(0, 0, W, H);
+  }
+  hc.globalCompositeOperation = 'source-over';
+  hc.fillStyle = '#0d0d14'; hc.fillRect(0, H * .72, W, H * .28);
+  hc.strokeStyle = 'rgba(255,255,255,.05)'; hc.lineWidth = 1;
+  hc.beginPath(); hc.moveTo(0, H * .72); hc.lineTo(W, H * .72); hc.stroke();
+  /* Truss: zwei Rohre mit Diagonalen */
+  const ty = H * .045;
+  hc.strokeStyle = '#22222c'; hc.lineWidth = 3;
+  hc.beginPath(); hc.moveTo(0, ty); hc.lineTo(W, ty); hc.moveTo(0, ty + 18); hc.lineTo(W, ty + 18); hc.stroke();
+  hc.lineWidth = 1.5; hc.beginPath();
+  for (let x = 0; x < W; x += 22){ hc.moveTo(x, ty); hc.lineTo(x + 11, ty + 18); hc.lineTo(x + 22, ty); }
+  hc.stroke();
+
+  /* vorn */
+  vc.clearRect(0, 0, W, H);
+  /* Strahlen auf eigene Ebene, dann durch den Dunst maskieren */
+  sc.globalCompositeOperation = 'source-over';
+  sc.clearRect(0, 0, W, H);
+  sc.globalCompositeOperation = 'lighter';
+  const L = H * 1.35, w = H * (.07 + U.spread * .22);
+  for (let i = 0; i < 8; i++){
+    const a = U['l' + i] * U.licht * (1 + U.puls * .6);
+    if (a <= .002) continue;
+    strahl(sc, kopfX(i), kopfY() + 26, strahlWinkel(i), L, w, i % 2 ? fb : fa, Math.min(1.6, a));
+  }
+  sc.globalCompositeOperation = 'destination-in';
+  const off = zeitGesamt * 18;
+  sc.globalAlpha = 1;
+  /* EIN Bild: jedes weitere destination-in löschte alles außerhalb von sich. */
+  sc.drawImage(dunst, -(off % W), 0, W * 2, H);
+  vc.globalCompositeOperation = 'lighter';
+  vc.drawImage(strahlEbene, 0, 0, W, H);
+
+  /* Linsen der Köpfe und Bodenflecken */
+  for (let i = 0; i < 8; i++){
+    const x0 = kopfX(i), y0 = kopfY();
+    vc.globalCompositeOperation = 'source-over';
+    vc.fillStyle = '#16161e'; vc.fillRect(x0 - 14, y0 + 4, 28, 22);
+    const a = U['l' + i] * U.licht;
+    if (a <= .002) continue;
+    vc.globalCompositeOperation = 'lighter';
+    const c = i % 2 ? fb : fa;
+    const lg = vc.createRadialGradient(x0, y0 + 26, 0, x0, y0 + 26, 34);
+    lg.addColorStop(0, rgba([255, 255, 255], .95 * Math.min(1, a))); lg.addColorStop(.25, rgba(c, .7 * Math.min(1, a))); lg.addColorStop(1, rgba(c, 0));
+    vc.fillStyle = lg; vc.beginPath(); vc.arc(x0, y0 + 26, 34, 0, 6.29); vc.fill();
+    const th = strahlWinkel(i), yb = H * .8;
+    const xb = x0 + Math.tan(th) * (yb - y0);
+    if (Math.abs(th) < 1.2 && xb > -200 && xb < W + 200){
+      vc.save(); vc.translate(xb, yb); vc.scale(1, .22);
+      const fg = vc.createRadialGradient(0, 0, 0, 0, 0, w * 1.4);
+      fg.addColorStop(0, rgba(c, .35 * Math.min(1, a))); fg.addColorStop(1, rgba(c, 0));
+      vc.fillStyle = fg; vc.beginPath(); vc.arc(0, 0, w * 1.4, 0, 6.29); vc.fill(); vc.restore();
+    }
+  }
+  /* Bodennebel */
+  vc.globalCompositeOperation = 'lighter';
+  vc.globalAlpha = .1 * U.nebel * (.4 + U.licht);
+  vc.drawImage(dunst, (-off * 1.7) % W, H * .64, W * 2, H * .3);
+  vc.drawImage(dunst, (-off * 1.7) % W + W * 2, H * .64, W * 2, H * .3);
+  vc.globalAlpha = 1;
+
+  /* Pyro */
+  if (U.pyro > 0){
+    const n = Math.round(U.pyro * 520 * dt * 60 / 60 * 6);
+    [.18, .38, .62, .82].forEach(px => {
+      for (let k = 0; k < n; k++) funken.push({ x: W * px + R(-6, 6), y: H * .74, vx: R(-60, 60), vy: -R(380, 760) * (H / 900), life: 1, d: R(.9, 1.6) });
+    });
+  }
+  vc.globalCompositeOperation = 'lighter';
+  vc.lineCap = 'round';
+  for (let k = funken.length - 1; k >= 0; k--){
+    const f = funken[k];
+    f.vy += 820 * (H / 900) * dt; f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt / f.d;
+    if (f.life <= 0 || f.y > H){ funken.splice(k, 1); continue; }
+    const hot = f.life;
+    vc.strokeStyle = `rgba(255,${Math.round(150 + 100 * hot)},${Math.round(60 + 180 * hot * hot)},${Math.min(1, hot * 1.2)})`;
+    vc.lineWidth = 1.6 + hot;
+    vc.beginPath(); vc.moveTo(f.x, f.y); vc.lineTo(f.x - f.vx * .02, f.y - f.vy * .02); vc.stroke();
+  }
+  if (funken.length > 6000) funken.splice(0, funken.length - 6000);
+
+  /* Publikum als Silhouetten, mit Kantenlicht in der Farbe der Strahlen */
+  vc.globalCompositeOperation = 'source-over';
+  publikum.forEach(p => {
+    const bob = Math.sin(zeitGesamt * 6.3 + p.ph) * 3 * U.haende;
+    const y = p.y + bob;
+    vc.fillStyle = p.reihe === 0 ? '#000' : p.reihe === 1 ? '#030305' : '#06060a';
+    if (p.arm && U.haende > .02){
+      const hoch = p.r * 3.2 * p.armH * U.haende;
+      const hx = p.x + p.seite * p.r * .9, hy = y - p.r * .4;
+      vc.strokeStyle = vc.fillStyle; vc.lineWidth = p.r * .42;
+      vc.beginPath(); vc.moveTo(hx, hy + p.r); vc.lineTo(hx + p.seite * p.r * .5 + Math.sin(zeitGesamt * 6.3 + p.ph) * 4, hy - hoch); vc.stroke();
+    }
+    vc.beginPath(); vc.ellipse(p.x, y + p.r * 1.9, p.r * 1.9, p.r * 1.3, 0, 0, 6.29); vc.fill();
+    vc.beginPath(); vc.arc(p.x, y, p.r, 0, 6.29); vc.fill();
+    if (U.licht > .05){
+      vc.globalCompositeOperation = 'lighter';
+      vc.strokeStyle = rgba(fa, .22 * U.licht * p.tiefe); vc.lineWidth = 1.6;
+      vc.beginPath(); vc.arc(p.x, y, p.r, Math.PI * 1.1, Math.PI * 1.9); vc.stroke();
+      vc.globalCompositeOperation = 'source-over';
+    }
+  });
+
+  /* Konfetti */
+  for (let k = konfetti.length - 1; k >= 0; k--){
+    const c = konfetti[k];
+    c.y += c.vy * dt; c.x += (c.vx + Math.sin(c.flat) * 40) * dt; c.rot += c.vr * dt; c.flat += c.vf * dt;
+    if (c.y > H + 30){ konfetti.splice(k, 1); continue; }
+    if (c.y < -20) continue;
+    vc.save(); vc.translate(c.x, c.y); vc.rotate(c.rot); vc.scale(1, Math.cos(c.flat));
+    vc.fillStyle = c.c; vc.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); vc.restore();
+  }
+
+  if (U.blitz > .001){ vc.globalCompositeOperation = 'source-over'; vc.fillStyle = `rgba(255,252,245,${U.blitz})`; vc.fillRect(0, 0, W, H); }
+  requestAnimationFrame(zeichnen);
+}
+requestAnimationFrame(zeichnen);
+
+/* ── LED-Wand ── */
+const led = document.getElementById('led'), wand = document.getElementById('wand');
+function aufbauen(){
+  grundwerte();
+  funken.length = 0; konfetti.length = 0;
+  wand.style.setProperty('--led', '0');
+  led.innerHTML = `
+    ${['3', '2', '1'].map(n => `<div class="ls zahl"><div class="plasma"></div><b class="zahl-gross">${n}</b></div>`).join('')}
+    <div class="ls" id="ls-titel"><div class="plasma"></div><span class="klein">${esc(SHOW.titelKlein)}</span>
+      <b class="titel-gross"><span class="w1">${esc(SHOW.titel.split(' ')[0])}</span><span class="w2">${esc(SHOW.titel.split(' ').slice(1).join(' '))}</span></b>
+      <div class="lauf">${esc((SHOW.titelZeile + '   ★   ').repeat(4))}</div></div>
+    ${SHOW.karten.map((k, i) => `<div class="ls karte" id="ls-k${i}">${i === 0 ? '<div class="teams"><i></i><i></i></div>' : '<div class="plasma"></div>'}
+      <span class="klein">${esc(k.ueber)}</span><b class="k-gross">${k.zahl != null ? `<span class="zaehler">0</span>${esc(String(k.text).replace(/^\d+/, ''))}` : esc(k.text)}</b></div>`).join('')}`;
+}
+
+function bauen(tl){
+  /* 1 · Dunkel, dann gehen die Köpfe von der Mitte nach außen an. */
+  [3, 4, 2, 5, 1, 6, 0, 7].forEach((i, k) => {
+    tl.to(U, { ['l' + i]: 1, duration: .08 }, T.an + k * .3);
+  });
+  tl.set(U, { licht: 1, spread: .15 }, T.an);
+  tl.to(U, { wandschein: .25, duration: 2 }, T.an);
+  tl.to(wand, { '--led': .25, duration: 1.5 }, T.an + 1);
+
+  /* 2 · Countdown: Strahlen kippen mit jeder Zahl weiter zur Mitte. */
+  led.querySelectorAll('.zahl').forEach((z, k) => {
+    const t = T.count + k;
+    tl.set(z, { opacity: 1 }, t).set(z, { opacity: 0 }, t + .95)
+      .fromTo(z.querySelector('b'), { scale: 1.25 }, { scale: 1, duration: .9, ease: 'power3.out' }, t)
+      .to(wand, { '--led': 1, duration: .05 }, t).to(wand, { '--led': .55, duration: .8 }, t + .05)
+      .to(U, { center: (k + 1) / 3, duration: .4, ease: 'power3.out' }, t)
+      .set(U, { fa: k === 2 ? 0 : 3, fb: k === 2 ? 0 : 3 }, t)
+      .fromTo(U, { puls: 1 }, { puls: 0, duration: .5 }, t);
+  });
+  tl.to(U, { spread: .05, duration: 1, ease: 'power2.in' }, T.hit - 1);
+
+  /* 3 · Schlag: Blitz, Fächer, Arme hoch, Titel. */
+  tl.set(U, { blitz: .9, center: 0, fan: 1, spread: .55, fa: 0, fb: 1 }, T.hit)
+    .to(U, { blitz: 0, duration: .7, ease: 'power2.out' }, T.hit)
+    .to(U, { haende: 1, duration: .6, ease: 'back.out(2)' }, T.hit)
+    .to(U, { wandschein: 1, duration: .3 }, T.hit)
+    .to(U, { sweep: 1, fan: .4, duration: 2, ease: 'sine.inOut' }, T.hit + 1)
+    .set('#ls-titel', { opacity: 1 }, T.hit)
+    .to(wand, { '--led': 1, duration: .1 }, T.hit)
+    .fromTo('#ls-titel .klein', { y: -40, opacity: 0 }, { y: 0, opacity: 1, duration: .6, ease: 'power3.out' }, T.hit + .1)
+    .fromTo('#ls-titel .w1', { yPercent: 110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: .7, ease: 'expo.out' }, T.hit)
+    .fromTo('#ls-titel .w2', { yPercent: -110, opacity: 0 }, { yPercent: 0, opacity: 1, duration: .7, ease: 'expo.out' }, T.hit + .25)
+    .fromTo('#ls-titel .plasma', { xPercent: -10 }, { xPercent: 10, duration: 8, ease: 'sine.inOut' }, T.hit)
+    .fromTo('#ls-titel .lauf', { xPercent: 0 }, { xPercent: -50, duration: 8, ease: 'none' }, T.hit)
+    .to(U, { haende: .35, duration: 2 }, T.hit + 3)
+    .set('#ls-titel', { opacity: 0 }, T.karten);
+  /* Farbwechsel und Puls auf dem Beat, wie ein Lichtpult im Takt */
+  const paare = [[0, 1], [2, 3], [1, 0], [3, 2]];
+  for (let b = 0; b < (T.finale - T.hit) / BEAT; b++){
+    const t = T.hit + b * BEAT;
+    tl.fromTo(U, { puls: b % 2 ? .4 : 1 }, { puls: 0, duration: .35, immediateRender: false }, t);
+    if (b % 8 === 0 && b) tl.set(U, { fa: paare[(b / 8) % 4][0], fb: paare[(b / 8) % 4][1] }, t);
+  }
+
+  /* 4 · Karten auf der Wand. */
+  SHOW.karten.forEach((k, i) => {
+    const t = T.karten + i * T.takt, el = '#ls-k' + i;
+    tl.set(el, { opacity: 1 }, t).set(el, { opacity: 0 }, t + T.takt - .02)
+      .fromTo(el + ' .klein', { opacity: 0, x: -60 }, { opacity: 1, x: 0, duration: .4, ease: 'power3.out' }, t)
+      .fromTo(el + ' b', { scale: 1.35, opacity: 0 }, { scale: 1, opacity: 1, duration: .5, ease: 'expo.out' }, t)
+      .set(U, { blitz: .35 }, t).to(U, { blitz: 0, duration: .3 }, t)
+      .set(U, { fa: i === 0 ? 4 : paare[i % 4][0], fb: i === 0 ? 5 : paare[i % 4][1] }, t);
+    if (i === 0) tl.fromTo(el + ' .teams i', { scaleX: 0 }, { scaleX: 1, duration: .5, ease: 'expo.out', stagger: .1, transformOrigin: (n) => n ? 'right' : 'left' }, t);
+    if (k.zahl != null){
+      const z = { v: 0 }, el2 = document.querySelector(el + ' .zaehler');
+      tl.fromTo(z, { v: 0 }, { v: k.zahl, duration: 1.2, ease: 'power2.out', snap: { v: 1 }, onUpdate: () => { el2.textContent = String(z.v); } }, t + .1);
+    }
+  });
+
+  /* 5 · Finale: alles auf einmal. */
+  tl.to(U, { spread: .02, sweep: 0, fan: 0, center: 1, duration: .8, ease: 'power2.in' }, T.finale - 1)
+    .set(U, { blitz: 1, center: 0, fan: 1, spread: .9, fa: 3, fb: 0, pyro: 1 }, T.finale)
+    .to(U, { blitz: 0, duration: 1, ease: 'power2.out' }, T.finale)
+    .to(U, { pyro: 0, duration: 2.2, ease: 'power2.in' }, T.finale + .3)
+    .to(U, { haende: 1, duration: .5, ease: 'back.out(2)' }, T.finale)
+    .to(U, { sweep: .8, duration: 3, ease: 'sine.inOut' }, T.finale + 1.2)
+    .call(konfettiKanone, null, T.finale + .1)
+    .set('#ls-titel', { opacity: 1 }, T.finale)
+    .fromTo('#ls-titel .titel-gross', { scale: 1.3 }, { scale: 1, duration: 1.2, ease: 'expo.out' }, T.finale)
+    .to({}, { duration: 6 }, T.finale);
+}
+
+function ton(t0, A){
+  /* Gemurmel: gefiltertes Rauschen, leicht schwankend */
+  const mg = A.ctx.createGain(); mg.connect(A.out);
+  mg.gain.setValueAtTime(0.0001, t0); mg.gain.linearRampToValueAtTime(.12, t0 + 1.5);
+  for (let s = 2; s < T.hit; s += .5) mg.gain.linearRampToValueAtTime(.08 + Math.random() * .06, t0 + s);
+  mg.gain.linearRampToValueAtTime(.03, t0 + T.hit); mg.gain.linearRampToValueAtTime(.0001, t0 + 40);
+  A.rauschen(t0, 40, A.filter('bandpass', 700, .6, mg));
+  /* Einschalten der Köpfe */
+  for (let k = 0; k < 8; k++){ A.klick(t0 + T.an + k * .3, .5, 900); A.kick(t0 + T.an + k * .3, .22); }
+  /* Countdown */
+  [0, 1, 2].forEach(k => { A.kick(t0 + T.count + k, .95); A.ping(t0 + T.count + k, 110 * (k + 1), .12, 1); });
+  A.anstieg(t0 + T.hit - 1.9, 1.9, .5);
+  /* Schlag */
+  const jubel = (t, v) => {
+    const g = A.huelle(t, .25, v, 1.5, 3.5);
+    A.rauschen(t, 6, A.filter('bandpass', 1700, .5, g));
+    for (let k = 0; k < 14; k++) A.klatschen(t + .3 + k * R(.15, .3), .12);
+  };
+  A.aufprall(t0 + T.hit, 1); A.becken(t0 + T.hit, .4); A.stoss(t0 + T.hit, [233.08, 293.66, 349.23, 466.16], .14, 1.2); jubel(t0 + T.hit, .3);
+  /* Takt bis zum Finale */
+  const akkorde = [116.54, 87.31, 98.0, 77.78];
+  for (let b = 0; b < (T.finale - T.hit) / BEAT; b++){
+    const t = t0 + T.hit + b * BEAT;
+    if (b) A.kick(t, .85);
+    A.hat(t + BEAT / 2, .12);
+    if (b % 2 === 1) A.snare(t, .4);
+    A.bass(t, akkorde[Math.floor(b / 2) % 4], BEAT * .9, .2);
+  }
+  SHOW.karten.forEach((_, i) => A.stoss(t0 + T.karten + i * T.takt, [233.08, 293.66, 349.23], .08, .5));
+  A.anstieg(t0 + T.finale - 2, 2, .55);
+  /* Finale */
+  A.aufprall(t0 + T.finale, 1.1); A.becken(t0 + T.finale, .5); A.stoss(t0 + T.finale, [233.08, 293.66, 349.23, 466.16, 587.33], .16, 2.2); jubel(t0 + T.finale, .38);
+  const zisch = A.huelle(t0 + T.finale, .05, .18, 1.6, .8);
+  A.rauschen(t0 + T.finale, 2.6, A.filter('highpass', 3500, 0, zisch));
+  for (let b = 0; b < 12; b++){ A.kick(t0 + T.finale + .5 + b * BEAT, .5); A.hat(t0 + T.finale + .75 + b * BEAT, .08); }
+}
+
+Lab.starte({ name: 'Lichtshow', aufbauen, bauen, ton });
+</script>
+</body>
+</html>
