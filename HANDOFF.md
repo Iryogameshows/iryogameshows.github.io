@@ -66,10 +66,9 @@ werden. Entscheidung bei David.
 stimmt nicht: Lokal lädt die App Firebase vom CDN und verbindet sich mit
 der Live-DB. Korrektur vorgeschlagen, noch nicht gemacht.
 
-**Offen.**
-- Live-`buzzer/joinLocked` zurücksetzen? (David)
-- BAUPLAN 5 korrigieren und eine Regel „Tests schalten
-  `firebase.database` stumm“ aufnehmen? (David)
+**Erledigt (2026-10-10, David: „was immer besser ist“).**
+- Live `buzzer` vorher gelesen: `live:false`, `armed:false`, `round` aus meinem Test, 1 Eintrag in `presence`, keine laufende Runde. Danach `update({ joinLocked:false, lockedNames:null })` gesetzt, also genau das, was die App beim Setup-Screen selbst setzt. Nachgelesen: `joinLocked:false`. Die übrigen Testreste (`round`, `teamNames`, Kanäle) bleiben, die nächste echte Runde überschreibt sie.
+- BAUPLAN 5 korrigiert, mit Stummschalter-Snippet (`5205914`).
 
 ## 2026-10-10 — Design-Upgrade: Restprüfung durchgezogen (`546b1b9`)
 
