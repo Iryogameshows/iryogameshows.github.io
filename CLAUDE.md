@@ -121,15 +121,20 @@ siehe Abschnitt „Scripts“).
 
 | Datei | Version | Zweck |
 |---|---|---|
-| `vendor/gsap.min.js` | GSAP 3.15.0 | Animationen (Intros, Übergänge) |
+| `vendor/gsap.min.js` | GSAP 3.15.0 | Animationen für den Host und im Intro-Labor (`tools/intros/`) – nicht für die Leinwand |
 | `vendor/ScrollTrigger.min.js` | GSAP 3.15.0 | scrollgesteuerte Animation |
 | `vendor/lenis.min.js`, `vendor/lenis.css` | Lenis 1.3.26 | weiches Scrollen (MIT) |
 | `vendor/reactbits.js`, `vendor/reactbits.css` | gebaut aus `tools/reactbits/` | React-Bits-Komponenten (siehe unten) |
 
 - GSAP unterliegt der GreenSock-Standardlizenz (https://gsap.com/standard-license),
   Lenis ist MIT. Beim Aktualisieren die Version in dieser Tabelle mitziehen.
-- Neue Animationen vorzugsweise mit GSAP, bei Scrollen Lenis. Immer
-  `prefers-reduced-motion` beachten.
+- **Was das Publikum sieht, wird mit CSS animiert, nicht mit GSAP.** Das
+  Zuschauerfenster (`mainscreen/`) führt keinen App-Code aus, es bekommt nur
+  den DOM gespiegelt. GSAP schriebe jeden Frame ein `style`-Attribut und
+  stünde auf der Leinwand still, sobald das Hauptfenster im Hintergrund ist.
+  Canvas und WebGL kommen gar nicht an (BAUPLAN 4.8). GSAP also nur für das,
+  was der Host sieht, und für die Prototypen in `tools/intros/`. Beim
+  Scrollen Lenis. Immer `prefers-reduced-motion` beachten.
 - `check.js` und `jsconfig.json` prüfen nur `js/`; `vendor/` bleibt dort
   bewusst außen vor.
 
@@ -174,7 +179,8 @@ styles.css      gesamtes CSS
 js/
   theme.js      Design-Richtung (18 Variablensätze)  ← lädt im <head>, vor allem anderen
   core.js       Logo-Rendering, showScreen(), Gemeinsames  ← lädt zuerst im <body>
-  intro.js      Eigenes Intro (Editor, zwei Bühnen) + Intro-Auswahl je Show (INTRO_SLOTS)
+  intro.js      Alle Intros: playIntro(), drei Bühnen, Vorlagen (Keller, Tag 2,
+                Geburtstag), Intro-Editor, Intro-Auswahl je Show (INTRO_SLOTS)
   feud.js       Family Feud
   jeopardy.js   Jeopardy-Logik
   jeopardy-ui.js Jeopardy-Board/Overlays
@@ -188,9 +194,35 @@ js/
   roster.js     Teilnehmer-Auswahl (DDF, Preis ist heiß)
 buzzer/index.html   Handy-Buzzer
 gamepad/index.html  Handy-Gamepad
+mainscreen/index.html  Zuschauerfenster (bekommt den DOM gespiegelt, führt selbst nichts aus)
+tools/
+  intros/       Intro-Labor: 18 Intro-Prototypen, NICHT Teil der Show
+  reactbits/    Bauwerkzeug für vendor/reactbits.js
 ```
 
 Eine Änderung an einem Spiel geht in die jeweilige `js/`-Datei, nicht in `index.html`.
+
+### Intro-Labor (`tools/intros/`)
+
+Eigenständige Seiten, um Intro-Ideen auszuprobieren, bevor eine davon in die
+Show kommt. Übersicht: `tools/intros/index.html` (live unter
+https://iryogameshows.github.io/tools/intros/, weil der Deploy das ganze Repo
+hochlädt).
+
+- Jedes Intro ist ein Ordner mit einer `index.html`. Gemeinsam ist nur
+  `lab.js` / `lab.css`: Texte (`Lab.SHOW`), Startbildschirm, Bedienleiste mit
+  Spulen, Ton-Baukasten (`Lab.Ton`, alles WebAudio, keine Tondateien),
+  Explosions-Baustein.
+- Sie benutzen GSAP, Canvas und WebGL. Deshalb laufen sie **nicht** im
+  Zuschauerfenster (siehe oben, BAUPLAN 4.8). Wer eins in die Show holt, muss
+  es entweder auf reines CSS umschreiben oder das Zuschauerfenster das Intro
+  selbst abspielen lassen.
+- `check.js` und die Typprüfung sehen `tools/` nicht.
+- Zum Prüfen ohne Ton an eine Stelle springen: `lab.zeige(sekunden)` in der
+  Konsole. Ein ausgeblendetes Browser-Pane liefert keine Animationsbilder,
+  Echtzeit-Abspielen bleibt dort stehen.
+- Neue Intros folgen der Dramaturgie der zweiten Runde: Anlauf, dann das
+  Logo als Höhepunkt mit Schlag, dann die stehende Titelkarte.
 
 ## BAUPLAN.md — bevor eine Show angefasst oder gebaut wird
 
