@@ -12,6 +12,64 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Design-Upgrade, Scheibe 2: A–D (`87487b3`)
+
+**Gemacht.** Am Ende von `styles.css` steht ein neuer Block „Material je
+Design-Richtung“. Er enthält je Richtung einen Satz Tokens (siehe
+Scheibe 1), dazu die Regeln, die sich nicht als Token schreiben lassen,
+und einen Aufdeck-Moment beim Feud-Feld (`--tile-reveal`):
+- **A Studio:** Navy-Platten mit Goldring, aufgedeckt als Goldbalken mit
+  einmaligem Glanz (`::after`), Feud-Tafel im Glühbirnenrahmen
+  (Punktraster im Rand, springt alle 1,2 s um eine halbe Teilung).
+- **B Arcade:** keine Rundung, Gelb `#FFE14D` auf `#0B0A12`, Press
+  Start 2P, Kategorien in Cyan. Aufdecken: hartes Blinken mit
+  `steps(1)`.
+- **C Pop:** Aufkleber mit 3px schwarzer Kontur und hartem
+  Versatzschatten, je Feld leicht schief, Farbe reihum. Verdeckte
+  Felder gestrichelt. Jeopardy als Pillen. Aufdecken: „Klatsch“ mit
+  Überschwinger.
+- **D Late Night:** Haarlinien statt Platten, Big-Shoulders-Ziffern,
+  Antwort Nr. 1 in Orange, WWM-Antworten als Papierkarten. Aufdecken:
+  `clip-path` von links wie eine Bauchbinde.
+- Neues Token `--tile-right` für „richtig“ bei WWM und WWDS, getrennt
+  von `--tile-open` (Feud). D braucht das: Feud aufgedeckt ist dort
+  transparent.
+- `prefers-reduced-motion: reduce` setzt `--tile-reveal: none` und hält
+  den Birnenrahmen an.
+
+**Warum so.** Werte direkt aus den Entwürfen gelesen: Inline-Styles von
+`designs/s/<K>-Leinwand/-Jeopardy/-WWM.html` per DOM-Abfrage. Je
+Richtung **ein** Bewegungsmoment, kein Effekt-Teppich (frontend-design).
+Der Birnenrahmen läuft dauerhaft, aber in Stufen und langsam. Verworfen:
+- GSAP, weil die Leinwand nur gespiegelt wird (BAUPLAN 4.8).
+- Ein Lauflicht, das um den Rahmen wandert: zu unruhig neben dem Brett.
+- Bei D die Jeopardy-Kategorien linksbündig wie im Entwurf: über
+  mittigen Zahlen fand das Auge keine Kante (BAUPLAN 4.3), deshalb
+  mittig.
+
+**Geprüft.**
+- `node check.js` meldet „alles in Ordnung“.
+- Studio-Blau ohne Richtung erneut gemessen: 159 von 159 Elementen
+  identisch.
+- Screenshots bei 1280×800 von Feud (3 Antworten offen), Jeopardy (2
+  Felder verbraucht) und WWM (B eingeloggt, C richtig), je für A, B, C
+  und D. Konsole: 0 Fehler.
+- **Ungeprüft:** Zuschauerfenster (Popout) mit den neuen Regeln, WWDS,
+  DDF, PIH und TP mit A–D, Anleitungs-Demos, Handybreite.
+- Das Pane schneidet Jeopardy und WWM im Screenshot rechts ab, auch ohne
+  Richtung. Gemessen liegt das Brett mit 1057 px innerhalb der 1280 px,
+  kein Querüberlauf.
+
+**Offen.**
+- Scheibe 3: F, H, I, J (alphabetisch, G gibt es nicht).
+- Bei C liegt die WWM-Leiter grau auf Creme (`rgba(0,0,0,.25)`). Bei B
+  überdeckt im Feud-Logo das Wort „KELLER“ das Symbol. Beides war schon
+  vorher so und steht nicht in dieser Scheibe.
+
+**Fallstricke.** Ein `cat >> … <<'EOF'` mit diesem CSS brach in Git Bash
+mit „unexpected EOF“ ab. Den Block erst mit dem Write-Werkzeug in eine
+Datei schreiben, dann `tr -d '\r' <datei >> styles.css`.
+
 ## 2026-10-09 — Design-Upgrade, Scheibe 1: Material-Tokens (`b1b1c4a`)
 
 **Auftrag (David).** „upgrade alle Designs … so professionell wie die
