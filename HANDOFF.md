@@ -12,6 +12,51 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Design-Upgrade, Scheibe 4: K, L, M, N (`2b32400`)
+
+**Gemacht.** Weitere Sätze im Block „Material je Design-Richtung“:
+- **K Neon-Bar:** Tafel mit pinkem Neonrand, verdeckte Felder als
+  ausgeschaltete Röhre, aufgedeckt als Cyan-Röhre mit gelben Punkten.
+  Jeopardy-Zahlen leuchten je Spalte in eigener Farbe, verbrauchte Felder
+  bleiben als dunkles Glas stehen. WWM-Antworten als Röhren-Pillen.
+  Aufdecken: zündet mit zwei Aussetzern (`thKFlacker`).
+- **L New York:** Papier mit Doppelrahmen, verdeckte Antwort als
+  geschwärzte Zeile, aufgedeckte schraffiert. Jeopardy als
+  Kreuzworträtsel mit 1px-Gitter, verbrauchte Felder schwarz. WWM als
+  Stimmzettel mit Kästchen. Aufdecken: wie frisch gedruckt (Unschärfe
+  und Kontrast).
+- **M Aurora:** Glas mit `backdrop-filter`, Pillen, aufgedeckt im
+  Polarlicht-Verlauf, Jeopardy als Waben (`clip-path`-Sechseck).
+  Aufdecken: blüht aus der Unschärfe auf.
+- **N Papier:** Papierschilder auf Mint, Nummern im Korallenkreis,
+  Frage als Papierwolke. Jeopardy als Briefumschläge: zwei schräge
+  Bänder bilden die Klappe, die Farbe kommt je Spalte über die Variable
+  `--flap`. Aufdecken: Das Schild wird aufgehängt und pendelt aus.
+- Behoben: In I, J und L schlug die Feldregel der Richtung den Zustand
+  `.used` (I sah aus wie eine volle Karte, J zeigte die Zahl, L war
+  nicht schwarz).
+
+**Warum so.** Die Mindmap (M) und die Schilder an Pfosten (N) aus den
+Entwürfen brauchen eine andere Anordnung als die Tafel. Das wäre Umbau
+in `js/feud.js` und kein Material, deshalb wurden nur Stoff und Farbe
+übernommen. Waben und Umschläge dagegen sind reines Material und sind
+drin.
+
+**Geprüft.**
+- `node check.js` meldet „alles in Ordnung“.
+- Studio-Blau: 159 von 159 identisch.
+- Bei allen 12 bisherigen Richtungen die Fläche des verbrauchten
+  Jeopardy-Felds gemessen. So fielen I, J und L auf. Nach der Korrektur:
+  I und J transparent ohne Schrift, L `rgb(26,23,18)`.
+- Aufdeck-Animation läuft bei K, L, M und N an (`getAnimations`).
+  Screenshots von Feud, Jeopardy und WWM für K, L, M und N.
+- **Ungeprüft:** Zuschauerfenster, insbesondere ob `backdrop-filter`
+  (M) dort flüssig läuft. Außerdem WWDS, DDF, PIH und TP sowie die
+  Handybreite.
+
+**Offen.** Scheibe 5: O, P, Q, R, S. Danach die übrigen Shows (WWDS,
+DDF, PIH, TP) gegen die Tokens durchsehen.
+
 ## 2026-10-09 — Design-Upgrade, Scheibe 3: F, H, I, J (`b5eea83`)
 
 **Gemacht.** Im Block „Material je Design-Richtung“ (`styles.css`)
