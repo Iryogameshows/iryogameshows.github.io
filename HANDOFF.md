@@ -12,6 +12,51 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Branch `game-buzzer-fixes` nach master gemerged (`785a09b`)
+
+**Anlass.** David wollte wissen, warum „löschen“ im Zusammenhang mit dem alten
+Branch auftauchte (ein Vorschlag der App-Oberfläche, nicht von mir). Ich habe
+nichts gelöscht, den Branch gemessen: 17 Commits nicht in master, davon 16
+inhaltlich (`git cherry`). Danach auf Davids Anweisung gemergt und gepusht.
+
+**Gemacht.** Neuer Branch `claude/merge-symbole` von `origin/master`
+(`19c7f38`), `claude/game-buzzer-fixes-90cyjz` hineingemergt (`--no-ff`),
+Merge-Commit `785a09b`. Inhalt des Branches: Design B, Show-Symbole
+(`index.html`: Filter `ico-pixel-g` mit Schatten im Filter; `styles.css`: in
+Tutorial, Titel-Schild und Turnierplan nur Schatten + `crispEdges`, kein
+Mosaik) und der Abschnitt „Abschluss-Übersicht“ in `CLAUDE.md`.
+
+**Konflikt.** Genau einer, `HANDOFF.md` (beide Seiten hatten oben Einträge
+ergänzt). Aufgelöst: Einträge von master zuerst, dann die des Branches,
+beide vollständig. Die Datei hat CRLF; das Auflöse-Skript hat das erhalten
+(erster Versuch mit `\n`-Vergleich scheiterte an `=======\r`, Datei blieb
+unverändert). `CLAUDE.md`, `index.html`, `styles.css` ließen sich ohne Konflikt
+verschmelzen (master hatte `index.html`/`styles.css` seit dem Merge-Base
+`5e339a9` nicht angefasst).
+
+**Geprüft.** `node check.js`: „alles in Ordnung“ (nach dem Merge). Im Browser,
+Design B auf dem gemergten Stand: Menükarten behalten den Mosaik-Filter
+(`url(#ico-pixel) drop-shadow(…)`); `.tut-star-anim`, `.tour-icon-svg`,
+`.game-title-sign` haben berechnet nur `drop-shadow(3px 3px 0 #8A7400)` und
+`shape-rendering: crispedges`. Sicht (Zoom): DDF-Symbol in Tutorialgröße
+(136 px) sichtbar, Feud-Symbol bei 22 px als drei Balken erkennbar, Jeopardy-
+Symbol im Titel-Schild sichtbar.
+
+**Ungeprüft.** Dieselben Stellen im echten Ablauf (`showClickOverlay`,
+Tutorials `pih`/`tp`/`wwds`, Intros der anderen Shows) — ich habe die Symbole
+in einem Probe-Element mit den Klassen gerendert, nicht in den echten
+Screens. Andere Richtungen als B nicht erneut angesehen. Der Konsolenfehler
+„React is not defined“ im Browser-Log stammt vom früheren React-Bits-Test
+(vor dem `jsx: 'automatic'`-Fix), nicht von diesem Stand.
+
+**Offen.** Davids Beanstandung am Jeopardy-Screenshot (Richtung L, „falsch
+zugeschnitten“ / „nicht wie es aussehen soll“) ist weiter ungeklärt; ich
+konnte am Bild keinen Fehler erkennen (siehe Eintrag `bde423d`). Der alte Branch
+`claude/game-buzzer-fixes-90cyjz` existiert noch auf origin (inhaltlich jetzt in
+master); ob er gelöscht wird, entscheidet David.
+
+---
+
 ## 2026-10-09 — caveman-Eintrag und Merge nach master (`a1c67cf`)
 
 **Gemacht.** David gab beides frei („mach den caveman Eintrag und merge nach
