@@ -12,6 +12,26 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — BAUPLAN: Überblick-Zahlen nachgezogen (`590e4c2`)
+
+**Gemacht.** `BAUPLAN.md` Abschnitt 0, Zeile 31: „13 Dateien in `js/`“ → 14,
+„Rund 16.000 Zeilen“ → „Rund 17.000“. Offener Punkt aus dem Eintrag darunter,
+auf Davids „ja korrigier das auch“.
+
+**Warum so.** Die Zeilenzahl stand im selben Satz und war ebenfalls veraltet.
+Wie die ursprünglichen 16.000 gezählt wurden, steht nirgends; gezählt habe ich
+`wc -l index.html styles.css js/*.js buzzer/index.html gamepad/index.html` =
+17.066 (mit `check.js` 17.315). „Sieben Shows“ und „drei Bildschirme“ stimmen
+und blieben.
+
+**Geprüft.** `ls js/*.js` = 14 Dateien. `node check.js`: „alles in Ordnung“.
+
+**Offen.** Nichts aus diesem Schritt.
+
+**Fallstricke.** Keine.
+
+---
+
 ## 2026-10-09 — CLAUDE.md: Struktur-Liste nachgezogen (`8b89c56`)
 
 **Gemacht.** In der Struktur-Liste der `CLAUDE.md` fehlten `js/intro.js`
