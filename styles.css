@@ -2608,7 +2608,15 @@ body {
 }
 
 :root[data-theme="A"] { --ico-cut:#0A0C26; --ico-dim:#2A2E66; --ico-filter:drop-shadow(0 0 6px rgba(255,201,60,.6)); }
-:root[data-theme="B"] { --ico-fill:#FFE14D; --ico-cut:#0B0A12; --ico-dim:#2B2740; --ico-filter:url(#ico-pixel-g) drop-shadow(3px 3px 0 #8A7400); --ico-filter-root:url(#ico-pixel) drop-shadow(3px 3px 0 #8A7400); }
+:root[data-theme="B"] { --ico-fill:#FFE14D; --ico-cut:#0B0A12; --ico-dim:#2B2740; --ico-filter:url(#ico-pixel-g); --ico-filter-root:url(#ico-pixel) drop-shadow(3px 3px 0 #8A7400); }
+/* B: das Mosaik nur dort, wo das Symbol ruhig steht und gross genug ist (Menuekarte,
+   Intro, Logo-Kopf). In Tutorial (dreht sich), Titel-Schild (blendet ein) und
+   Turnierplan (22 px) verschwand es bzw. wurde zum Fleck - dort nur scharfe
+   Kanten und der harte Schatten. */
+:root[data-theme="B"] :is(.tut-star-anim, .tut-danger, .welcome-star, .game-title-sign, .danger-title-sign, .tour-icon-svg) svg.show-icon {
+  filter: drop-shadow(3px 3px 0 #8A7400);
+}
+:root[data-theme="B"] :is(.tut-star-anim, .tut-danger, .welcome-star, .game-title-sign, .danger-title-sign, .tour-icon-svg) svg.show-icon * { shape-rendering: crispEdges; }
 :root[data-theme="C"] { --ico-fill:#FFA3D1; --ico-fstroke:#121212; --ico-fsw:3.5; --ico-line:#121212; --ico-cut:#121212; --ico-dim:#FFF; --ico-filter:drop-shadow(4px 4px 0 #121212); }
 :root[data-theme="D"] { --ico-fill:#FF5B1F; --ico-line:#F2F2F2; --ico-cut:#0E0E0E; --ico-dim:#3A3A3A; }
 :root[data-theme="E"] { --ico-fill:#F6E7CB; --ico-line:#F2B33D; --ico-cut:#2B1810; --ico-dim:#8C3A1A; --ico-filter:drop-shadow(3px 3px 0 #E8622C) drop-shadow(3px 3px 0 #8C3A1A); }

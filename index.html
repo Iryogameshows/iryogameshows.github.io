@@ -40,7 +40,11 @@
       <feComposite width="6" height="6"/>
       <feTile result="raster"/>
       <feComposite in="SourceGraphic" in2="raster" operator="in"/>
-      <feMorphology operator="dilate" radius="3"/>
+      <feMorphology operator="dilate" radius="3" result="mosaik"/>
+      <feOffset in="mosaik" dx="5" dy="5" result="versatz"/>
+      <feFlood flood-color="#8A7400" result="farbe"/>
+      <feComposite in="farbe" in2="versatz" operator="in" result="schatten"/>
+      <feMerge><feMergeNode in="schatten"/><feMergeNode in="mosaik"/></feMerge>
     </filter>
     <filter id="ico-chalk" x="-10%" y="-10%" width="120%" height="120%">
       <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4" result="rausch"/>

@@ -667,6 +667,225 @@ dasselbe Muster geprüft. Gepusht ist nichts.
 
 ---
 
+## 2026-10-08 — B: Mosaik raus aus Tutorial, Titel-Schild, Turnierplan (`bde423d`)
+
+**Auftrag (David).** „nummer 1 ist es falsche zugeschnitten, nummer 2 ist das
+nicht wies aussehen soll. fix das gefälligst. Bei ALLEN. ALLE SPIELE" — mit
+einem Screenshot des Jeopardy-Bretts in Richtung L (Logo-Kopf mit den vier
+Säulen). **Auslegung (nicht bestätigt):** „1" und „2" sind die beiden Befunde
+aus dem Eintrag davor (Tutorial-Symbol in B verschwindet; Turnierplan-Symbol in
+B als Fleck). Was am Screenshot selbst falsch sein soll, konnte ich nicht
+erkennen — das Symbol ist dort vollständig und in L-Farben (dunkle Leuchtsäule,
+graue Nebensäulen).
+
+**Gemacht.** `styles.css`: In B für `.tut-star-anim`, `.tut-danger`,
+`.welcome-star`, `.game-title-sign`, `.danger-title-sign`, `.tour-icon-svg`
+(jeweils `svg.show-icon`) nur noch `drop-shadow(3px 3px 0 #8A7400)` +
+`shape-rendering: crispEdges`, kein `#ico-pixel`. Die Klassen werden von allen
+Shows benutzt (Feud, Jeopardy, WWM, WWDS, DDF, PIH, TP), die Regel gilt also
+für alle. Mosaik bleibt auf Menükarte, Intro-Schild und Logo-Kopf.
+
+**Warum so.** Gemessen am 08.10.: Mosaik-Filter (`url(#ico-pixel)`, feste
+Fläche 0/0/600/600 `userSpaceOnUse`) auf einem `<svg>` in einem sich drehenden
+Wrapper → Symbol weg. Vermutung (nicht belegt): Das Drehen schiebt Teile des
+Symbols aus der festen Filterfläche, sie werden abgeschnitten („falsch
+zugeschnitten"). Bei 22 px (Turnierplan) macht der 4-px-Block aus drei Balken
+einen Fleck. Verworfen: Filter am Wrapper statt am `<svg>`, Fläche vergrößern —
+beides hätte die Animation und das 22-px-Problem nicht gelöst.
+
+**Geprüft.** `node check.js` = „alles in Ordnung". Im Browser in B: Tutorial
+`ddf` zeigt das drehende Symbol wieder (berechneter Filter nur noch Schatten);
+Turnierplan zeigt die drei Balken bei Feud/Jeopardy erkennbar. **Nicht
+geprüft:** Titel-Schild in B im echten Ablauf (`showClickOverlay`), Tutorial
+`pih`/`tp`/`wwds`, Intros der anderen Shows, andere Richtungen mit diesen
+Stellen; ob L-Screenshot eine andere Ursache hat.
+
+**Offen.** David soll sagen, was am L-Screenshot (Jeopardy-Logo) „falsch
+zugeschnitten" bzw. „nicht wie es aussehen soll" ist — Vergleichsbild oder
+Wunsch nötig. Nicht gepusht.
+
+---
+
+## 2026-10-08 — Sichtprüfung Intros, Tutorial, Turnierplan (kein Code geändert)
+
+**Gemacht.** Auf `18d4328` per Konsole in B, J, K, C: Jeopardy-Intro
+(`showJeopardyIntro`), Tutorials (`runTutorial` mit `jeopardyTutorialSlides()`
+und `ddfTutorialSlides()`), Titel-Schild, Turnierplan (`tournament` nur im
+Speicher gesetzt, `renderTournament()`, **kein** `saveTournament()`, nichts nach
+Firebase geschrieben; Seite danach neu geladen).
+
+**Befund.**
+1. **Fehler B, Tutorial `ddf` (und vermutlich `pih`, `tp`):** Das Symbol auf
+   der ersten Folie fehlt. Der Wrapper `.tut-star-anim` dreht sich
+   (`tutStarSpin`, 3 s linear), das `<svg>` darin trägt in B den Filter
+   `url(#ico-pixel) drop-shadow(…)`. Mit `style.filter='none'` auf dem `<svg>`
+   erscheint das Symbol sofort. Gleiches Muster wie beim Logo-`<g>`:
+   Mosaik-Filter plus Kette/Animation → leer. J, K, C zeigen das drehende Symbol
+   korrekt (kein Mosaik-Filter).
+2. **Mangel B, Turnierplan:** Das Family-Feud-Symbol (~24 px) wird im Mosaik
+   (4-px-Blöcke) zu einem gelben Fleck, nicht mehr als drei Balken erkennbar.
+   In C und K sind die Symbole in der Zeile lesbar.
+3. In Ordnung: Jeopardy-Intro in B (Symbol mit Mosaik, 120 px), Jeopardy-
+   Tutorial in B (Symbol sichtbar), Tutorial `ddf` in J, K, C, Turnierplan in
+   C, K.
+
+**Geprüft.** Sicht per Screenshot (0,5–0,6) und berechnete Stile. **Nicht
+belastbar:** das Titel-Schild in B (`game-title-sign`) — ich habe das Overlay von
+Hand zusammengesetzt statt `showClickOverlay` zu nutzen, es blieb bei Deckkraft
+0; deshalb kein Urteil. Nicht angesehen: Intros der anderen Shows (`feud`,
+`ddf`, `pih`, `tp`), Tutorials `pih`/`tp`/`wwds`, Turnierplan in den übrigen
+Richtungen, Mainscreen-Spiegel, Hover im Menü.
+
+**Offen / Vorschlag.** Für B die Filter nur auf kleine/ruhige Fälle: im Tutorial
+(`.tut-star-anim svg`) keinen Mosaik-Filter, im Turnierplan (`.tour-icon-svg
+svg`) kleineren Block (z. B. 2 px) oder gar keinen. Noch nicht umgesetzt,
+wartet auf Davids Entscheidung.
+
+**Fallstricke.** Screenshots direkt nach `applyTheme`/Overlay-Start zeigen oft
+einen Zwischenzustand (Überblendung, Karten noch leer); nach 1–2 s erneut
+aufnehmen. Hilfsfunktionen (`__tut`, `__tour` …) leben nur in der
+Browser-Konsole der Sitzung.
+
+---
+
+## 2026-10-08 — Sichtprüfung der übrigen Richtungen (kein Code geändert)
+
+**Gemacht.** Auf `ea7805e` per `applyTheme(key)` + `renderLogo(…)` je Richtung
+Menü (8 Karten) und Show-Logo oben angesehen, Screenshot bei Skalierung 0,5
+nach 0,9 s Wartezeit: A (feud), C (danger), D (wwds), E (trophy), F (feud),
+I (wwm), J (danger), L (pih), M (tp), N (wwds), P (ddf), Q (wwm), R (trophy).
+Zusätzlich B mit `danger` und `ddf` (Logo-Reparatur `af2d91c`).
+
+**Ergebnis.** In allen 15 Ansichten sind Symbole auf den acht Karten und im
+Logo-Kopf sichtbar und im Stil der Richtung: A Gold mit Schein, C/F Sticker mit
+Kontur, D/R zweifarbig, E Doppelschatten, I/J Linie (J mit Kreide-Körnung),
+L Druckerschwärze, M Aurora, N Papierschnitt, P mehrfarbig, Q Riso. B-Logo mit
+Mosaik und Schatten auch bei `danger` und `ddf`. Keine fehlenden Symbole, keine
+leeren Karten.
+
+**Geprüft.** Nur Sicht, keine Messung. Bei 0,5 Skalierung sind Feinheiten
+(Kontur-Breite, Körnung, ob der Schatten bei Q wirklich Rosa zeigt) nicht
+sicher beurteilbar — nur „da und passend".
+
+**Offen.** Weiter nicht angesehen: Intros, Tutorial, Turnierplan,
+Mainscreen-Spiegel (Zuschauerfenster), Hover im Menü, die Logos oben von
+B mit `feud`/`tp`/`pih`/`trophy`. Frage nach Piktogrammen je Show und Richtung
+weiter offen.
+
+**Fallstricke.** Die Screenshots der Browser-Pane hinken einen Schritt
+hinterher, wenn gleich nach `applyTheme` aufgenommen wird; in der Batch-Zeile
+vor dem Screenshot `await new Promise(r=>setTimeout(r,900))` einbauen.
+
+---
+
+## 2026-10-08 — B: Logo-Symbol im Show-Kopf repariert (`af2d91c`)
+
+**Gemacht.** `--ico-filter` in B ist jetzt nur noch `url(#ico-pixel-g)`
+(`styles.css`); der harte Versatzschatten (#8A7400, 5 Einheiten = rund 3 px
+bei Skalierung 0,575) steckt als `feOffset` + `feFlood` + `feComposite` +
+`feMerge` am Ende des Filters `#ico-pixel-g` in `index.html`.
+`--ico-filter-root` (Karten, `<svg>`) unverändert.
+
+**Ursache (gemessen).** Auf der `<g>` im Logo zeigte `url(#ico-pixel-g)` allein
+das Symbol, die Kette `url(#ico-pixel-g) drop-shadow(3px 3px 0 …)` nicht —
+beides im selben Browser nacheinander per `style.filter` gesetzt. Nicht die
+Filterfläche war also das Problem (anders als in `5ac4376` vermutet),
+sondern die Verkettung mit `drop-shadow()` auf der `<g>`. Verworfen: der
+erste Versuch mit `feDropShadow stdDeviation="0"` im Filter — damit
+verschwand das Symbol wieder (Chrome liefert bei Abweichung 0 leer, vermutet,
+nicht eigens belegt); erst die ausgeschriebene Fassung funktioniert.
+Auch verworfen: meine frühere Notlösung `crispEdges`.
+
+**Geprüft.** `node check.js` = „alles in Ordnung". Im Browser (B, `renderLogo`
+mit `wwm`): Logo-Symbol sichtbar mit Mosaik und Schatten, alle acht Menükarten
+mit Mosaik. Der erste Screenshot nach `applyTheme`+`renderLogo` zeigte die
+Karten noch leer, der zweite vollständig — die Filter brauchen einen Moment.
+
+**Offen.** Ungeprüft: B-Logo in den anderen Shows (`danger`, `ddf` usw. — nur
+`wwm` gesehen), Intros, Tutorial, Turnierplan, Mainscreen-Spiegel, Hover.
+Richtungen A, C, D, E, F, I, J, L, M, N, P, Q, R weiter nicht in der
+master-Fassung gesehen. Piktogramm-Frage offen. Nicht gepusht.
+
+**Fallstricke.** Filterketten (`url() drop-shadow()`) auf einer `<g>` sind in
+Chrome unzuverlässig — Effekte lieber in den Filter selbst legen.
+
+---
+
+## 2026-10-08 — Sichtprüfung der master-Fassung der Show-Symbole (kein Code geändert)
+
+**Gemacht.** Dev-Server „Gameshows" (Port 3000) auf dem Stand `84f53de`, Host-Gate
+war aus der Vorsitzung noch entsperrt. Per `applyTheme(key)` + `renderLogo(…)`
+Menü und Show-Logo oben angesehen: B (Menü + Logo `wwm`), K (`danger`),
+O (`pih`), S (`tp`), H (`ddf`).
+
+**Befund.** (1) **Fehler in B:** Das Symbol im Show-Logo oben fehlt. Berechnet
+ist `filter: url("#ico-pixel-g") drop-shadow(…)` auf der `<g>`
+(`getBoundingClientRect` 41 × 52 px bei x 484, y 39 — Fläche da, nichts
+gezeichnet). Mit `style.filter='none'` auf der `<g>` erscheint das Symbol. Die
+Aussage aus `5ac4376`, der Pixel-Filter sei „repariert", stimmt für die
+`<g>` im Logo also **nicht**. Das Mosaik auf den acht Menükarten (`<svg>`,
+`#ico-pixel`) funktioniert. (2) K, O, S, H: Menü und Logo-Symbol sichtbar, wie
+gedacht (K Neon-Linien, O grüner Schein, S Gold, H dreifarbig).
+(3) In B sind einige Kartensymbole durch das Mosaik grob (Der Dümmste fliegt,
+Preis ist heiß) — Geschmack, kein Fehler.
+
+**Geprüft.** Nur Sicht per Screenshot (0,5–1,0 Skalierung) und berechnete
+Stile; kein `node check.js` nötig, da nichts geändert. **Nicht angesehen:** A, C,
+D, E, F, I, J, L, M, N, P, Q, R mit master-Fassung (vorher mit meiner
+verworfenen Fassung gesehen, das zählt nicht), Intros, Tutorial, Turnierplan,
+Mainscreen-Spiegel, Hover im Menü.
+
+**Offen.** B-Logo-Symbol reparieren: Ursache unbekannt (Vermutung:
+`#ico-pixel-g` mit festem `userSpaceOnUse`-Bereich 0/0/300/300 trifft die
+Position der `<g>` nicht, sie liegt im Logo bei ~127/6 mit Skalierung 0,575).
+Falls nicht rasch lösbar: für `g.show-icon` in B nur Schatten + `crispEdges`
+(meine verworfene Notlösung, die in B funktionierte). Dazu die ungeprüften
+Richtungen oben und die Frage nach Piktogrammen je Show und Richtung.
+
+**Fallstricke.** `preview_start` meldet „Server started", der Port 3000
+antwortet aber erst nach einigen Sekunden (`npx http-server`); `navigate`
+davor scheitert. Mit `curl http://localhost:3000/` warten.
+
+---
+
+## 2026-10-07 — Merge mit master: Show-Symbole doppelt gebaut, master gilt (`e947db4`)
+
+**Gemacht.** `origin/master` in `claude/game-buzzer-fixes-90cyjz` gemergt.
+Konflikte in `styles.css`, `index.html`, `HANDOFF.md`.
+
+**Fund.** Eine parallele Session hatte dieselbe Aufgabe („Show-Symbole je
+Design") schon auf master erledigt (`5ac4376`, Eintrag `e8ba588`): gleiche
+Idee, aber andere Umsetzung (`--ico-fstroke`/`--ico-fsw`/`--ico-lw`) und mit
+**zwei** Pixel-Filtern (`#ico-pixel` für `<svg>`, `#ico-pixel-g` für `<g>`,
+feste `userSpaceOnUse`-Fläche) statt meiner Notlösung `crispEdges`. Beides
+entstand unabhängig, weil mein Zweig nach `d5850ae` nicht mit master abgeglichen
+war.
+
+**Entscheidung.** In `styles.css` und `index.html` die Fassung von master
+genommen, meine Regeln (`4abba0a`, `d74ae24`) verworfen. Begründung: master
+löst das Filterproblem im Pixel-Filter selbst (der Fehler, den ich in B
+gefunden habe, ist dort als Ursache benannt: Filterregion bei `<g>`), meine
+Lösung hätte B auf die schwächere Optik gesetzt. `js/` war ohnehin gleich. Die
+beiden HANDOFF-Zweige zusammengelegt (master-Einträge oben, meine
+darunter); meine Einträge zu `4abba0a`/`d74ae24` beschreiben Code, der nicht
+mehr existiert, und sind nur noch Verlauf.
+
+**Geprüft.** `node check.js` = „alles in Ordnung" (Klammern 1052).
+`git diff origin/master`: nur `CLAUDE.md` (+18) und `HANDOFF.md` (+118)
+weichen ab, der Code ist identisch mit master. **Nicht im Browser angesehen** —
+die Fassung von master habe ich nicht selbst geprüft.
+
+**Offen.** (1) Sichtprüfung der master-Fassung (vor allem B, `#ico-pixel-g` im
+Show-Logo). (2) Die Frage nach eigenen Piktogrammen je Show und Richtung ist
+weiter offen. (3) Nicht gepusht; ein Push des Zweigs ändert live nichts, erst
+`master`.
+
+**Fallstricke.** Vor Arbeit an einer Aufgabe aus der HANDOFF zuerst
+`git log origin/master` ansehen, nicht nur `git status`: der Zweig stand
+„sauber", master war trotzdem schon fertig.
+
+---
+
 ## 2026-10-07 — Entwürfe hochwertiger: acht Richtungen in `designs/s/` (`be7ec34`)
 
 **Auftrag (David).** „1,4,5,8 (deutlich), 11,14, 17 und 18 hochwertiger“.
@@ -876,6 +1095,124 @@ entschieden. Das Mosaik wirkt bei WWDS und Torte unruhig.
 `node -e`. Mehrzeilige Texte nicht per `node -e` in Bash quoten - dafür das
 Edit-Werkzeug nehmen. Der Vorschau-Screenshot lief mehrfach in ein Timeout,
 ein zweiter Versuch klappte jeweils.
+## 2026-10-07 — Show-Symbole im Browser geprüft, Pixel-Filter raus (`d74ae24`)
+
+**Gemacht.** Dev-Server „Gameshows" (Port 3000), Host-Gate mit dem
+Passwort aus `js/jeopardy-ui.js` entsperrt (Davids ausdrückliche Bitte, lokal).
+Per `applyTheme(key)` im Menü angesehen: A, B, C, D, E, F, H, I, J, K, M, N,
+O, P, Q, S. Show-Logo oben (`renderLogo`) zusätzlich in B, F, J.
+
+**Fund: `#ico-pixel` ging nicht.** Mit dem Mosaik-Filter (feTile +
+feMorphology) auf den Symbolen verschwanden in B die Menü-Symbole (nur bei
+einem blieb ein Klecks), das Show-Logo-Symbol (Filter auf `<g>`) fehlte ganz,
+und der Screenshot lief mehrfach in den Timeout (Filter schwer, acht Karten +
+Logo). Ohne den Filter am Logo-`<g>` war das Logo-Symbol da, die Karten blieben
+leer → der Filter ist insgesamt unzuverlässig, nicht nur auf `<g>`.
+Verworfen. Stattdessen in B: `shape-rendering: crispEdges` auf allen
+Symbol-Elementen + harter Versatzschatten (#8A7400). `#ico-pixel` aus
+`index.html` entfernt. Danach Menü und Logo in B vollständig sichtbar.
+`#ico-chalk` (J, Turbulenz) lief in Menü und Logo ohne Ausfall.
+
+**Geprüft.** `node check.js` = „alles in Ordnung". Sichtprüfung wie oben, nur
+im Menü und im Logo-Kopf, mit Screenshots bei 0,6 Skalierung. **Nicht
+angesehen:** Richtungen L und R (Menü/Logo), Logos oben in allen außer B/F/J,
+Intros, Tutorial, Turnierplan, Mainscreen-Spiegel, Hover im Menü,
+Logo-Kopf in K/M/O mit Schein.
+
+**Auffällig, nicht vertieft.** In H und N wirken die Menükarten grau-braun
+(kommt aus den Richtungen selbst, nicht aus den Symbol-Regeln — nicht geprüft).
+In P hat nur ein Teil der Symbole mehrere Farben (`:nth-child` greift je nach
+Aufbau unterschiedlich).
+
+**Offen.** (1) Je-Show-Piktogramm statt nur Stil je Richtung: weiter keine
+Antwort. (2) `origin/master` ist 112 Dateien weiter (u. a. `styles.css`,
+`HANDOFF.md`); ein Merge-Test (`git merge-tree`) zeigt Konflikte in genau diesen
+beiden Dateien — vor dem Zusammenführen auflösen. (3) Branch
+`claude/game-buzzer-fixes-90cyjz`, dieser Stand noch nicht gepusht.
+
+**Fallstricke.** Die Screenshots der Browser-Pane laufen bei schweren Filtern
+in einen Timeout — ein einzelner Wiederholungsversuch reicht meist; trat er
+dauerhaft auf, war das ein Hinweis auf den Filter selbst.
+
+---
+
+## 2026-10-06 — UNFERTIG: Show-Symbole je Design, CSS geschrieben, nicht angesehen (`4abba0a`)
+
+**Aktueller Stand.** Die Regeln aus der Tabelle im Eintrag zu `d226865` stehen
+in `styles.css` (Block hinter `:root[data-theme-hell] #main-logo .logo-word`),
+für alle 17 Richtungen (A–S ohne G). Variablen je Richtung: `--ico-fill`,
+`--ico-line` (Rückfall: Fläche), `--ico-contour` + `--ico-cw` (Kontur um
+Flächen, `paint-order:stroke`), `--ico-cut`, `--ico-dim`, `--ico-filter`. A
+bekommt nur Schein, Aussparung und Dimmung (Gold bleibt). I/J/K zeichnen
+Aussparungen und Säulen als Linie. H und P färben per `:nth-child` mehrfarbig.
+Die alten `#main-logo`-Umfärbungen (Verlaufs-`stop`, `#0b0e2c`, `#3a3f6b`,
+hell-Variante) sind entfernt, die `.logo-word`-Regeln geblieben.
+
+**Stopppunkt.** `node check.js` = „alles in Ordnung" (Klammern 1049). **Im
+Browser nicht angesehen** — auf Davids Wunsch unterbrochen, bevor der
+Dev-Server lief (`.claude/launch.json`, Name „Gameshows", Port 3000). Nicht
+gepusht.
+
+**Kreative Ansätze & Visionen.** Je Richtung ein eigener Zeichenstil statt
+Umfärbung: A Studio-Glühbirnen-Schein · B Mosaik/Pixel · C und F Sticker/Comic
+mit dicker schwarzer Kontur und Versatzschatten · D, R zweifarbig · E 70er-
+Doppelschatten · H Bauhaus-Dreiklang · I Strichzeichnung · J Kreide · K Neon ·
+L Druckerschwärze · M Aurora-Verlauf · N Papierschnitt · O Phosphor mit
+Scanlinien · P Memphis · Q Riso mit `multiply` · S Art déco mit Metallverlauf.
+Weiter offen (David nie beantwortet): reicht der Stil je Richtung, oder je
+Show **und** Richtung ein eigenes Piktogramm (18 × 9 Zeichnungen)?
+
+**Nächste Schritte.**
+1. Dev-Server starten, je Richtung Menü, Show-Logo oben, Intro, Tutorial und
+   Turnierplan ansehen (Screenshot, 17 Richtungen).
+2. Prüfen: wirkt `#ico-pixel` / `#ico-chalk` als CSS-`filter` auf `<g>` im
+   Show-Logo und im Mainscreen-Spiegel? Sonst Filter nur auf `<svg>`.
+3. Prüfen: `:nth-child` in H/P zählt wegen `<defs>` im Symbol schief → ggf.
+   anders lösen; Kontur der Aussparungen in I/J/K (`tp`-Mitte).
+4. Von mir **geraten**, nicht aus dem Plan: Aussparung H (#ECEAE4) und Dimmung
+   H/P (rgba(20,20,20,.25)); Linie in M/Q/L-ähnlichen Richtungen = Fläche.
+5. Bei Hover im Menü ersetzt `--ico-filter` den bisherigen Hover-Schatten —
+   ansehen, ob das stört.
+6. Erst danach push; `node check.js --types` laufen lassen (nur CSS geändert,
+   daher wenig Risiko).
+
+**Fallstricke.** Edge headless: nach jedem CDP-Lauf Prozesse mit `scratchpad`
+in der Kommandozeile beenden (Eintrag `86bc0e2`).
+
+---
+
+## 2026-10-06 — Abschluss-Übersicht um „Kreative Ansätze & Visionen" erweitert (`8b1c8a2`)
+
+**Gemacht.** David hat die Vorgabe präzisiert. Die Abschluss-Übersicht in
+`CLAUDE.md` hat jetzt vier Punkte: Aktueller Stand · Stopppunkt · Kreative
+Ansätze & Visionen (Design-Ideen, Stile, Layouts, auch verworfene) · Nächste
+Schritte. Ergänzt `746eab9`, das nur drei Punkte hatte.
+
+**Geprüft.** `node check.js`: „alles in Ordnung". Nur Markdown.
+
+**Offen.** Weiterhin nicht gepusht (3 Commits vor origin auf
+`claude/game-buzzer-fixes-90cyjz`). Die übergeordnete `Coding/CLAUDE.md` ist
+unverändert.
+
+---
+
+## 2026-10-06 — Regel: Abschluss-Übersicht auch in die HANDOFF (`746eab9`)
+
+**Gemacht.** In `CLAUDE.md` (Abschnitt „HANDOFF.md") neuer Unterabschnitt
+„Abschluss-Übersicht bei Themenwechsel oder Abbruch": bei Abbruch oder
+Themenwechsel einer komplexen Aufgabe kommt eine kurze Übersicht (zuletzt
+bearbeitet · Stand · nächste Schritte) immer auch in die `HANDOFF.md`, auch
+ohne Commit.
+
+**Warum so.** David wollte die Regel dauerhaft statt nur für ein Gespräch. Die
+Projekt-`CLAUDE.md` gewählt, weil dort die HANDOFF-Regeln stehen. Nicht in die
+übergeordnete `Coding/CLAUDE.md` geschrieben (läge außerhalb dieses Repos);
+sie müsste dort bei Bedarf separat ergänzt werden.
+
+**Geprüft.** `node check.js`: „alles in Ordnung". Nur Markdown geändert.
+
+**Offen.** Nicht gepusht (Branch `claude/game-buzzer-fixes-90cyjz`). Der
+unfertige Eintrag zu den Show-Symbolen darunter ist unverändert.
 
 ---
 
