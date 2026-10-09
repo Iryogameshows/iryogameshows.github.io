@@ -12,6 +12,90 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Intro-Labor: Texte bearbeitbar, Jackpot, Boxring, Gürtel, F1-Wagen (`9e17780`)
+
+**Gemacht.** Davids Rückmeldung nach dem Ansehen am anderen PC:
+- Jackpot zeigte Zufallszeichen.
+- Der Ring sah nicht wie ein Boxring aus, der Gürtel nicht gut.
+- Die Autos bei Startampel sahen schlecht aus.
+- Die Intros sollen bearbeitbar sein wie die alten.
+- Lob: „mega, vor allem Arcade“.
+
+Umgesetzt:
+- **Text-Editor** (`Lab.editor()` in `lab.js`, Stile in `lab.css`):
+  - Felder: kleine Zeile, Titel in zwei Zeilen, Untertitel, Vorspann,
+    Uhrzeit, zwei Teams und vier Einblendungen
+  - Gespeichert in `localStorage` unter `introLabor.texte`, gemeinsam für
+    alle Intros. Dazu Export und Import als `intro-texte.json` und eine
+    Schaltfläche „Standard“.
+  - Knopf „✏ Texte“ in jeder Bedienleiste und auf der Übersicht.
+    Ereignishorizont nutzt jetzt auch `Lab.SHOW` und lädt nach dem
+    Übernehmen neu.
+  - Fest eingebaute Wörter kommen jetzt aus den Texten: „20:00“, „Rot“,
+    „Blau“, „KELLER GAMES“, „Grundriss: Keller“, die Trailer-Fetzen.
+  - `Lab.titelZeilen()` ersetzt überall `titel.split(' ')`. `Lab.kurz()`
+    liefert das letzte Wort eines Teamnamens.
+- **Jackpot:** Die Walzen drehen jetzt in `yPercent` statt in Pixeln.
+  - Vor dem Start zeigen alle Walzen einen Stern.
+  - Hinter dem Zielbuchstaben liegt ein Polsterzeichen für das
+    Überschwingen.
+  - Die Walzenbreite richtet sich nach der Buchstabenzahl
+    (`--n`, `calc(78vw / var(--n))`).
+- **Ringansage:** `ringSvg()` und `guertelSvg()` als SVG.
+  - Ring in Zentralperspektive: vier Pfosten, Polster vorn links rot und
+    vorn rechts blau, drei Seile je Seite mit Schatten und Glanz, Schürze
+    mit dem Titel.
+  - Gürtel: Lederriemen mit Naht, Seitenplatten in Team-Farben,
+    Zackenrand, Kranz aus 14 Steinen, Krone, gravierte Schrift (Größe
+    passt sich der Länge an), Glanzbalken, Funkeln.
+- **Startampel:** `wagen()` zeichnet einen Formel-1-Wagen von hinten als
+  SVG: Reifen mit Profil, Querlenker, Motorabdeckung mit Finne, Diffusor,
+  Heckflügel mit Teamnamen, Regenlicht, das beim Start flackert.
+- **Fallblatt:** Die Tafel wächst mit dem Titel, mindestens 14 Felder.
+- **Partikelsturm:** Die Wortformen werden neu berechnet, sobald sich die
+  Texte ändern. Die alten Puffer werden freigegeben.
+
+**Warum so.**
+- *Ursache bei Jackpot:* Vermutet, nicht nachgestellt. Die Pixelstrecke
+  wurde beim Start gemessen, nach einer Größenänderung stimmt sie nicht
+  mehr. Messung danach: bei 1280×720 gestartet und auf 1700×900
+  vergrößert, alle 14 Fenster zeigen „KELLERGAMESHOW“.
+- *Gemeinsamer Text-Speicher statt einem pro Intro:* David will „seine“
+  Show-Texte einmal pflegen. Intro-eigene Wörter (WUMMS, In einer Welt …)
+  bleiben fest.
+- *Nicht gebaut:* Tempo und Länge einstellbar wie „Sekunden je Stufe“ im
+  alten Editor. Der Ton ist zu festen Zeiten eingeplant, ein Tempo-Regler
+  hieße, ihn in jedem Intro mitzuskalieren.
+
+**Geprüft.**
+- Alle 18 per iframe gestartet: keine Fehler, Titel „Keller Gameshow“
+  nach dem Zurücksetzen der Texte.
+- Editor: Titel „Partykeller“, Team „Die Füchse“, „50 €“ übernommen.
+  Arcade zeigte danach PARTYKELLER, DIE FÜCHSE und „HI-SCORE 000050 €“.
+  Jackpot rastete auf PARTYKELLERGAMESHOW ein (Automat 860 von 1024 px
+  breit). Fallblatt zeigte alle vier Zeilen vollständig (Tafel 99–925 px).
+- Ring, Gürtel und Wagen per Screenshot angesehen.
+- `node check.js`: „alles in Ordnung“ (prüft `tools/` nicht).
+
+**Ungeprüft.**
+- Den Jackpot-Fehler selbst habe ich nicht nachgestellt, die Ursache ist
+  vermutet.
+- Sehr lange Texte in den übrigen Intros: Der Editor warnt, dass sie über
+  den Rand laufen können. Angepasst sind nur Jackpot und Fallblatt.
+- Ton weiterhin nicht angehört.
+
+**Offen.** Favoriten für den Weg in die Show (Zuschauerfenster).
+
+**Fallstricke.**
+- Screenshots im Browser-Pane bei fester Größe (1280×720) und
+  Pixeldichte 1,25: Die Seite erscheint verkleinert in der Ecke, bei
+  jedem Intro gleich. Mit `preset: desktop` ist es richtig.
+- Bash-Heredocs mit vielen `'`, `"` und `${}` scheitern an der
+  Werkzeug-Übergabe. Längere Umbau-Skripte als Datei in den Scratchpad
+  schreiben und mit `node` ausführen.
+
+---
+
 ## 2026-10-09 — CLAUDE.md: Intro-Labor eingetragen, gsap-demo gelöscht (`47385fd`)
 
 **Gemacht.** Auf Davids „lösch gsap-demo und trag es in die CLAUDE.md ein“.
