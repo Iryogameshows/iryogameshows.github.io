@@ -100,14 +100,13 @@ Quellen: `anthropics/claude-code` (`plugins/frontend-design`),
   `debugging-and-error-recovery` bei Fehlern, `code-review-and-quality` und
   `security-and-hardening` vor größeren Pushes, `incremental-implementation`
   bei Umbauten.
-- **caveman**: David will es (Anweisung 2026-10-09). Gedacht ist der Autostart
-  als Plugin über die Projekt-Settings (`extraKnownMarketplaces` +
-  `enabledPlugins` mit `caveman@caveman` in `.claude/settings.json`), weil das
-  per Git auf alle Geräte kommt. **Stand: noch nicht eingetragen** (die
-  Änderung an `.claude/settings.json` wartet auf Davids Freigabe, siehe
-  HANDOFF); bis dahin laufen die Skills nur auf Aufruf (`/caveman`,
-  `/caveman-commit`, `/caveman-review`). Sobald der Eintrag drin ist, diesen
-  Satz streichen.
+- **caveman**: David will es (Anweisung 2026-10-09). Der Autostart läuft als
+  Plugin über die Projekt-Settings (`extraKnownMarketplaces` + `enabledPlugins`
+  mit `caveman@caveman` in `.claude/settings.json`), das kommt per Git auf alle
+  Geräte. Beim ersten Öffnen des Projekts auf einem Gerät fragt Claude Code,
+  ob der Marketplace vertraut und das Plugin installiert werden soll.
+  Zusätzlich liegen die Skills global (`/caveman`, `/caveman-commit`,
+  `/caveman-review`). Ausschalten: `/caveman off`.
   **Auch mit caveman gilt unverändert:** Antwortformat (Backslash vor jedem
   Absatz), Deutsch, Belege mit Zahlen. HANDOFF-Einträge, Commit-Nachrichten
   und `CLAUDE.md` bleiben im normalen, ausführlichen Stil. Caveman kürzt nur
