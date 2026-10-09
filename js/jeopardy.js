@@ -249,36 +249,6 @@ function showJeopardyIntro() {
 
 function afterJeopardyStar() { runIntroThen(showJeopardyTitle); }
 
-function showGameshowIntroTag2(onDone) {
-  const overlay = document.createElement('div');
-  overlay.id = 'kg-overlay';
-  overlay.innerHTML = `
-    <div id="kg2">
-      <div class="wall"></div>
-      <div class="floor"></div>
-      <div class="cone coneL"></div>
-      <div class="cone coneR"></div>
-      <div class="cord"><div class="bulb"></div></div>
-      <div class="frame" id="kg2frame"></div>
-      <div class="header"><span class="st">★</span>Die Große Keller Gameshow · <b>TAG 2</b><span class="st">★</span></div>
-      <div class="screen s1"><p class="big">WILLKOMMEN</p><p class="big pink">ZURÜCK!</p></div>
-      <div class="screen s2"><p class="lbl">Runde 2 von 2</p><p class="big">DAS GROSSE</p><p class="big pink sm">FINALE</p></div>
-      <div class="screen s3"><p class="lbl">Gestern noch geheim…</p><p class="big pink"><span class="qm">?</span> <span class="qm">?</span> <span class="qm">?</span></p><p class="sub">heute wird sie gespielt!</p></div>
-      <div class="screen s4">
-        <div class="teamrow">
-          <svg width="70" height="70" viewBox="0 0 70 70"><ellipse cx="35" cy="38" rx="27" ry="29" fill="#6DD3B0" stroke="#111" stroke-width="4"/><circle cx="26" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="45" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="27" cy="35" r="3.5" fill="#111"/><circle cx="46" cy="35" r="3.5" fill="#111"/><path d="M27 49 q8 8 17 0" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/></svg>
-          <svg width="70" height="70" viewBox="0 0 70 70"><ellipse cx="35" cy="38" rx="27" ry="29" fill="#F58BB8" stroke="#111" stroke-width="4"/><circle cx="26" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="45" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="25" cy="35" r="3.5" fill="#111"/><circle cx="44" cy="35" r="3.5" fill="#111"/><path d="M27 49 q8 8 17 0" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/></svg>
-        </div>
-        <p class="lbl">Nichts ändert sich</p><p class="big">DIESELBEN TEAMS</p></div>
-      <div class="screen s5">
-        <div class="plus"><span class="pill">TAG 1</span><b>+</b><span class="pill">TAG 2</span></div>
-        <p class="lbl">Jetzt zählt</p><p class="big green sm">DER GESAMTSTAND</p></div>
-      <div class="screen s6"><p class="lbl">Wer am Ende vorn liegt, gewinnt</p><p class="euro">30&thinsp;€</p><p class="sub">…aufs Gewinner-Team aufgeteilt!</p></div>
-      <div class="kg-hint">Klicken um fortzufahren</div>
-    </div>`;
-  runKgIntro(overlay, onDone);
-}
-
 function showJeopardyTitle() {
   showClickOverlay('welcome-overlay overlay-enter', `
     <div class="danger-title-sign">${dangerSvg()}</div>

@@ -524,6 +524,27 @@ Aus demselben Grund schreibt `openBoardPopout()` das Dokument nicht neu, wenn
 das Fenster schon steht: zwischen zwei Shows wurde es sonst kurz weiß und holte
 Schriften und `styles.css` erneut (`a3fd47c`).
 
+### 4.8 Was das Publikum sieht, animiert CSS — nicht JavaScript
+
+Das Zuschauerfenster (`mainscreen/`) führt keinen App-Code aus. Es bekommt nur
+den DOM des Hauptfensters gespiegelt (`morphMirror`). Daraus folgt:
+
+- **CSS-Animationen** laufen dort selbstständig, sobald Klasse und
+  `style`-Attribut angekommen sind.
+- **GSAP** (oder alles, was je Frame `style` schreibt) löst je Frame einen
+  Spiegel-Durchlauf über den ganzen `body` aus. Liegt das Hauptfenster im
+  Hintergrund, drosselt der Browser es, und auf der Leinwand bleibt die
+  Animation stehen.
+- **Canvas/WebGL** (viele React-Bits-Komponenten) kommt gar nicht an:
+  gespiegelt wird nur Markup.
+
+Taktung deshalb als CSS-Variablen ins `style`-Attribut schreiben und mit
+`calc()` rechnen lassen, wie es die Intros tun (`--d`, `--dur`, `--st`, `--i`
+in `js/intro.js`). GSAP bleibt für das, was nur der Host sieht.
+
+Anlass: der Intro-Umbau vom 2026-10-09. Die Vorgabe war GSAP, die Prüfung des
+Spiegels hat gezeigt, dass es auf der Leinwand nicht flüssig liefe.
+
 ---
 
 ## 5 · Abnahme

@@ -1341,139 +1341,247 @@ body {
 @keyframes hgShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
 #jeopardy-setup-screen { gap: 24px; margin-top: 10px; }
 
-/* ── INTRO-BÜHNEN (Keller-Gameshow, Jeopardy Tag 2, Geburtstag) ───────────
-   Drei Intros spielen auf derselben Bühne: #kg (Keller-Gameshow), #kg2
-   (Jeopardy Tag 2) und #kgb (Geburtstag). Alle drei stecken im selben
-   Wrapper #kg-overlay und bauen Wand, Boden, Scheinwerferkegel, Kabellampe,
-   Marquee-Rahmen, Textstufen und Funken exakt gleich auf.
+/* ── INTRO-BÜHNEN ──────────────────────────────────────────────────────────
+   Alle Intros laufen über playIntro() in js/intro.js. Keller, Tag 2 und
+   Geburtstag sind dort Vorlagen im selben Datenformat wie das eigene Intro,
+   es gibt also nur noch einen Aufbau und eine Taktung. Drei Bühnen:
+   #kg (Keller, Gold), #kgb (Geburtstag, wärmer, mit Luftballons) und
+   #kgn (Neon-Nacht). Alle stecken im Wrapper #kg-overlay.
 
-   Bis September 2026 stand dieser Aufbau dreimal fast wortgleich in der
-   Datei - eine Änderung an der Bühne musste an drei Stellen nachgezogen
-   werden. Jetzt steht der gemeinsame Teil einmal hier, darunter folgt je
-   Bühne nur noch das, was sie wirklich unterscheidet: die Palette (#kgb ist
-   wärmer), eigene Bausteine (Torte, Ballons, Pillen) und die Taktung der
-   Textstufen. */
+   Bis Oktober 2026 standen Keller, Tag 2 und Geburtstag als fertiges Markup
+   in feud.js und jeopardy.js, mit fest verdrahteter Taktung .s1 bis .s7 hier
+   im Stylesheet - jede Änderung an der Bühne an drei Stellen.
+
+   Warum alles in CSS und nichts in GSAP, obwohl GSAP in vendor/ liegt: das
+   Zuschauerfenster (mainscreen/) führt keinen App-Code aus, es spiegelt nur
+   den DOM des Hauptfensters (morphMirror in feud.js). Eine CSS-Animation
+   läuft dort selbstständig, sobald Klasse und style-Attribut angekommen sind.
+   GSAP schriebe dagegen jeden Frame ein style-Attribut: ein Spiegel-Durchlauf
+   pro Frame, und ist das Hauptfenster im Hintergrund, drosselt der Browser
+   es und das Intro auf der Leinwand bleibt stehen.
+
+   Taktung: jede Stufe trägt im style-Attribut --d (Start), --dur (Länge) und
+   --st (Abstand zwischen zwei Buchstaben), jeder Buchstabe trägt --i. Die
+   Verzögerungen rechnet calc() aus.
+
+   Schriftgrößen in vh/vw statt px: das Zuschauerfenster läuft mal mit
+   1280×720, mal im Vollbild am Beamer. Die festen 78px von früher waren im
+   Vollbild klein, auf schmalen Fenstern zu breit. min() deckt beides ab,
+   die Untergrenzen in max() halten die Regel "nichts unter 12px" ein. */
 
 #kg-overlay{position:fixed;inset:0;z-index:4000;background:#141420;cursor:pointer;user-select:none;animation:kgFadeIn .8s ease both;}
 #kg-overlay.leaving{animation:kgFadeOut .8s ease forwards;}
 @keyframes kgFadeIn{from{opacity:0}to{opacity:1}}
 @keyframes kgFadeOut{from{opacity:1}to{opacity:0}}
 
-/* ── Gemeinsame Bühne ── */
-#kg, #kg2, #kgb{position:relative;width:100%;height:100%;overflow:hidden;background:#141420;font-family:var(--font-logo);isolation:isolate;}
-#kg .wall, #kg2 .wall, #kgb .wall{position:absolute;inset:0;background:#171726;background-image:repeating-linear-gradient(0deg,#1b1b2e 0 2px,transparent 2px 74px),repeating-linear-gradient(90deg,#1b1b2e 0 2px,transparent 2px 96px);opacity:.9;}
-#kg .floor, #kg2 .floor, #kgb .floor{position:absolute;left:0;right:0;bottom:0;height:66px;background:#0f0f1a;box-shadow:0 -2px 0 #2a2a44;}
-#kg .cone, #kg2 .cone, #kgb .cone{position:absolute;top:-30px;width:300px;height:640px;clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);background:rgba(255,224,130,.09);z-index:1;transform-origin:top center;pointer-events:none;}
-#kg .coneL, #kg2 .coneL{left:60px;animation:kgSweepL 4.2s ease-in-out infinite;}
-#kg .coneR, #kg2 .coneR{right:60px;animation:kgSweepR 3.6s ease-in-out infinite;}
+/* ── Gemeinsam für alle drei Bühnen ── */
+#kg, #kgb, #kgn{position:relative;width:100%;height:100%;overflow:hidden;font-family:var(--font-logo);isolation:isolate;}
+#kg-overlay .screen{position:absolute;left:0;right:0;top:40px;bottom:30px;max-width:none;width:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px;z-index:5;opacity:0;}
+#kg-overlay .header{position:absolute;top:22px;left:0;right:0;z-index:7;text-align:center;font-size:max(14px,min(2.8vh,1.8vw));}
+#kg-overlay .lbl{font-family:var(--font-body);font-weight:700;letter-spacing:3px;font-size:max(14px,min(2.8vh,1.8vw));text-transform:uppercase;margin:0 0 12px;}
+#kg-overlay .big{font-size:min(10.8vh,6.2vw);line-height:.98;margin:0;}
+#kg-overlay .big.sm{font-size:min(8vh,4.6vw);}
+#kg-overlay .sub{font-family:var(--font-body);font-weight:600;font-size:max(15px,min(3.3vh,2.1vw));letter-spacing:.5px;margin:14px 0 0;}
+#kg-overlay .kg-hint{position:absolute;bottom:20px;left:0;right:0;z-index:7;text-align:center;font-family:var(--font-body);font-size:.75rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(var(--fg-rgb),.3);animation:introPulse 2.5s ease-in-out infinite;}
+
+/* Stufen: wann und wie lange steht im style-Attribut, welche Bewegung hier. */
+#kg-overlay .cs{animation-delay:var(--d);animation-duration:var(--dur);animation-timing-function:ease;animation-fill-mode:both;}
+#kg.play .cs, #kgb.play .cs{animation-name:kgBeat;}
+#kg.play .cs.hold, #kgb.play .cs.hold{animation-name:kgBeatHold;}
+#kgn.play .cs{animation-name:knBeat;}
+#kgn.play .cs.hold{animation-name:knBeatHold;}
+@keyframes kgBeat{0%{opacity:0;transform:translateY(26px) scale(.9)}9%{opacity:1;transform:translateY(0) scale(1)}86%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-16px) scale(.96)}}
+@keyframes kgBeatHold{0%{opacity:0;transform:scale(.55)}55%{opacity:1;transform:scale(1.08)}75%{transform:scale(.98)}100%{opacity:1;transform:scale(1)}}
+
+/* ── Leuchtbuchstaben ──
+   Das eine, was hängen bleiben soll: die großen Zeilen stehen erst als
+   dunkle, tote Leuchtreklame da, dann geht Buchstabe für Buchstabe an -
+   mit einem Flackern, wie eine Glühbirne, die nicht gleich will. Alles
+   andere auf der Bühne bleibt ruhig.
+
+   Jedes Wort ist ein .w mit nowrap, sonst bräche der Browser mitten im Wort
+   um, sobald die Buchstaben einzelne inline-blocks sind. */
+#kg-overlay .big .w{display:inline-block;white-space:nowrap;}
+#kg-overlay .big .ch{display:inline-block;}
+#kg-overlay .play .big .ch{animation:kgBulbOn .62s ease-out both;animation-delay:calc(var(--d) + .25s + var(--i) * var(--st));}
+#kg-overlay .play .big .ch.qm{animation:kgBulbOn .62s ease-out calc(var(--d) + .25s + var(--i) * var(--st)) both,kgWob 1.1s ease-in-out calc(var(--d) + 1s) infinite;}
+@keyframes kgBulbOn{
+  0%{opacity:.14;filter:brightness(.35) saturate(.4);transform:translateY(-.06em);}
+  20%{opacity:1;filter:brightness(1.9) saturate(1);transform:translateY(0);}
+  30%{opacity:.3;filter:brightness(.5);}
+  46%{opacity:1;filter:brightness(1.5);}
+  100%{opacity:1;filter:none;transform:none;}}
+@keyframes kgWob{0%,100%{transform:rotate(-6deg) scale(1)}50%{transform:rotate(6deg) scale(1.08)}}
+
+/* Scheinwerfer-Schlag: wenn eine Stufe kommt, flammt hinter ihr ein warmer
+   Lichtfleck auf und sinkt auf ein Glimmen zurück. Er gehört zur Stufe
+   (::before), blendet also mit ihr aus. Nur Keller und Geburtstag - die
+   Neon-Bühne hat an der Stelle schon ihr dunkles Oval. */
+#kg .cs::before, #kgb .cs::before{content:"";position:absolute;left:50%;top:50%;width:min(110vh,900px);height:min(70vh,560px);transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,214,120,.26),rgba(255,214,120,.08) 60%,transparent);z-index:-1;pointer-events:none;opacity:0;}
+#kg.play .cs::before, #kgb.play .cs::before{animation:kgHit 1.4s ease-out var(--d) both;}
+@keyframes kgHit{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}100%{opacity:.5;transform:translate(-50%,-50%) scale(1)}}
+
+/* ── Extras einer Stufe (Feld "Extra" im Editor) ── */
+#kg-overlay .teamrow{display:flex;align-items:center;justify-content:center;gap:26px;margin-bottom:16px;}
+#kg-overlay .teamrow svg{width:min(10vh,90px);height:auto;}
+#kg-overlay .plus{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px;}
+#kg-overlay .pill{font-family:var(--font-body);font-weight:800;font-size:max(16px,min(3.6vh,2.2vw));color:#141420;background:#FFC93C;border-radius:22px;padding:9px 22px;letter-spacing:1px;}
+#kg-overlay .plus b{font-size:max(24px,min(5.5vh,3.4vw));color:#FF5DA2;}
+#kg-overlay .big.euro{font-size:min(16vh,9.4vw);color:#7FE5B0;-webkit-text-stroke:4px #0b3a24;text-shadow:0 4px 0 #2f9e6a,0 8px 0 #1c6b47,0 12px 18px rgba(0,0,0,.6);margin:4px 0;}
+
+/* Torte mit flackernden Kerzen */
+#kg-overlay .cake{position:relative;width:190px;height:150px;margin-bottom:26px;flex:none;}
+#kg-overlay .cake .plate{position:absolute;bottom:0;left:0;right:0;height:12px;border-radius:8px;background:#E8E3F0;box-shadow:0 3px 0 #9d95b5;}
+#kg-overlay .cake .tier{position:absolute;left:14px;right:14px;border-radius:8px;border:3px solid #3a1226;}
+#kg-overlay .cake .t1{bottom:10px;height:46px;background:linear-gradient(180deg,#FF7FB8,#E24C8E);}
+#kg-overlay .cake .t2{bottom:54px;left:30px;right:30px;height:38px;background:linear-gradient(180deg,#FFD9A0,#F0AC63);}
+#kg-overlay .cake .icing{position:absolute;bottom:88px;left:30px;right:30px;height:14px;border-radius:8px;background:#FFF6E4;border:3px solid #3a1226;}
+#kg-overlay .cake .candle{position:absolute;bottom:100px;width:8px;height:30px;border-radius:2px;background:repeating-linear-gradient(45deg,#fff 0 4px,#FF5DA2 4px 8px);border:2px solid #3a1226;}
+#kg-overlay .cake .c1{left:64px;}
+#kg-overlay .cake .c2{left:91px;}
+#kg-overlay .cake .c3{left:118px;}
+#kg-overlay .cake .flame{position:absolute;bottom:130px;width:12px;height:18px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 50% 70%,#FFF3B0,#FFA630 70%,#FF6A2A);box-shadow:0 0 16px 6px rgba(255,180,80,.55);transform-origin:bottom center;}
+#kg-overlay .cake .f1{left:62px;animation:kgbFlame 1.1s ease-in-out infinite;}
+#kg-overlay .cake .f2{left:89px;animation:kgbFlame 1.3s ease-in-out infinite .2s;}
+#kg-overlay .cake .f3{left:116px;animation:kgbFlame .95s ease-in-out infinite .45s;}
+@keyframes kgbFlame{0%,100%{transform:scale(1) rotate(-4deg);opacity:.95}50%{transform:scale(1.18) rotate(5deg);opacity:1}}
+
+/* ── #kg: Kellerbühne ── */
+#kg{background:#141420;}
+#kg .wall, #kgb .wall{position:absolute;inset:0;background:#171726;background-image:repeating-linear-gradient(0deg,#1b1b2e 0 2px,transparent 2px 74px),repeating-linear-gradient(90deg,#1b1b2e 0 2px,transparent 2px 96px);opacity:.9;}
+#kg .floor, #kgb .floor{position:absolute;left:0;right:0;bottom:0;height:66px;background:#0f0f1a;box-shadow:0 -2px 0 #2a2a44;}
+#kg .cone, #kgb .cone{position:absolute;top:-30px;width:300px;height:640px;clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);background:rgba(255,224,130,.09);z-index:1;transform-origin:top center;pointer-events:none;}
+#kg .coneL, #kgb .coneL{left:60px;animation:kgSweepL 4.2s ease-in-out infinite;}
+#kg .coneR, #kgb .coneR{right:60px;animation:kgSweepR 3.6s ease-in-out infinite;}
 @keyframes kgSweepL{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(14deg)}}
 @keyframes kgSweepR{0%,100%{transform:rotate(20deg)}50%{transform:rotate(-14deg)}}
-#kg .cord, #kg2 .cord, #kgb .cord{position:absolute;top:0;right:110px;width:3px;height:64px;background:#3a3a52;z-index:2;transform-origin:top center;animation:kgSwing 2.4s ease-in-out infinite;}
+#kg .cord, #kgb .cord{position:absolute;top:0;right:110px;width:3px;height:64px;background:#3a3a52;z-index:2;transform-origin:top center;animation:kgSwing 2.4s ease-in-out infinite;}
 @keyframes kgSwing{0%,100%{transform:rotate(9deg)}50%{transform:rotate(-9deg)}}
-#kg .bulb, #kg2 .bulb, #kgb .bulb{position:absolute;top:60px;left:-11px;width:22px;height:28px;border-radius:50% 50% 48% 48%;background:#FFE27A;box-shadow:0 0 20px 7px rgba(255,220,110,.5),0 0 6px 2px #fff6cf inset;}
-#kg .bulb:after, #kg2 .bulb:after, #kgb .bulb:after{content:"";position:absolute;top:-6px;left:6px;width:10px;height:7px;background:#6b6b46;border-radius:2px;}
-#kg .frame, #kg2 .frame, #kgb .frame{position:absolute;inset:0;z-index:6;pointer-events:none;}
-#kg .mb, #kg2 .mb, #kgb .mb{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);animation:kgBlink 1s ease-in-out infinite alternate;}
-@keyframes kgBlink{from{opacity:1}to{opacity:.28}}
-#kg .header, #kg2 .header, #kgb .header{position:absolute;top:22px;left:0;right:0;z-index:5;text-align:center;color:#FFC93C;font-size:20px;letter-spacing:2px;-webkit-text-stroke:1px #2a1600;text-shadow:0 2px 0 #9c6a08;}
-#kg .header .star, #kgb .header .star{color:#FF5DA2;font-size:16px;vertical-align:2px;margin:0 8px;}
-#kg .screen, #kg2 .screen, #kgb .screen{position:absolute;left:0;right:0;top:40px;bottom:30px;max-width:none;width:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px;z-index:5;opacity:0;}
-#kg .lbl, #kg2 .lbl, #kgb .lbl{font-family:var(--font-body);font-weight:700;letter-spacing:3px;font-size:20px;color:#FF7FB8;text-transform:uppercase;margin:0 0 12px;}
-#kg .big, #kg2 .big, #kgb .big{color:#FFC93C;font-size:78px;line-height:.98;margin:0;-webkit-text-stroke:3px #2a1600;text-shadow:0 3px 0 #c98a10,0 6px 0 #9c6a08,0 9px 14px rgba(0,0,0,.6);}
-#kg .big.pink, #kg2 .big.pink, #kgb .big.pink{color:#FF5DA2;text-shadow:0 3px 0 #b2306b,0 6px 12px rgba(0,0,0,.5);-webkit-text-stroke:3px #33091f;}
-#kg .big.sm, #kg2 .big.sm{font-size:58px;}
-#kg .sub, #kg2 .sub, #kgb .sub{color:#FFF3D6;font-family:var(--font-body);font-weight:600;font-size:24px;letter-spacing:.5px;margin:14px 0 0;}
-#kg .euro, #kg2 .euro{color:#7FE5B0;font-size:120px;-webkit-text-stroke:4px #0b3a24;text-shadow:0 4px 0 #2f9e6a,0 8px 0 #1c6b47,0 12px 18px rgba(0,0,0,.6);margin:4px 0;}
-#kg .teamrow, #kg2 .teamrow, #kgb .teamrow{display:flex;align-items:center;justify-content:center;gap:26px;margin-bottom:16px;}
-#kg .spark, #kg2 .spark, #kgb .spark{position:absolute;width:10px;height:10px;z-index:4;background:#FFE27A;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:kgTw 1.8s ease-in-out infinite;}
+#kg .bulb, #kgb .bulb{position:absolute;top:60px;left:-11px;width:22px;height:28px;border-radius:50% 50% 48% 48%;background:#FFE27A;box-shadow:0 0 20px 7px rgba(255,220,110,.5),0 0 6px 2px #fff6cf inset;}
+#kg .bulb:after, #kgb .bulb:after{content:"";position:absolute;top:-6px;left:6px;width:10px;height:7px;background:#6b6b46;border-radius:2px;}
+/* Lämpchenrahmen als Lauflicht: jede dritte Birne gleichzeitig, die
+   Verzögerung (i % 3) setzt runKgIntro. Vorher blinkten alle im selben
+   Takt, das las sich als Warnblinker statt als Theaterrahmen. */
+#kg .frame, #kgb .frame{position:absolute;inset:0;z-index:6;pointer-events:none;}
+#kg .mb, #kgb .mb{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);animation:kgChase 1.2s linear infinite;}
+@keyframes kgChase{0%,30%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}34%,100%{opacity:.22;transform:translate(-50%,-50%) scale(1)}}
+#kg .header, #kgb .header{color:#FFC93C;letter-spacing:2px;-webkit-text-stroke:1px #2a1600;text-shadow:0 2px 0 #9c6a08;}
+#kg .header .star, #kgb .header .star{color:#FF5DA2;font-size:.8em;vertical-align:.1em;margin:0 8px;}
+#kg .lbl{color:#FF7FB8;}
+#kg .big, #kgb .big{color:#FFC93C;-webkit-text-stroke:3px #2a1600;text-shadow:0 3px 0 #c98a10,0 6px 0 #9c6a08,0 9px 14px rgba(0,0,0,.6);}
+#kg .big.pink, #kgb .big.pink{color:#FF5DA2;text-shadow:0 3px 0 #b2306b,0 6px 12px rgba(0,0,0,.5);-webkit-text-stroke:3px #33091f;}
+#kg .sub{color:#FFF3D6;}
+#kg .spark, #kgb .spark{position:absolute;width:10px;height:10px;z-index:4;background:#FFE27A;clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:kgTw 1.8s ease-in-out infinite;}
 @keyframes kgTw{0%,100%{opacity:.12;transform:scale(.5) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(90deg)}}
-#kg .kg-hint, #kg2 .kg-hint, #kgb .kg-hint{position:absolute;bottom:20px;left:0;right:0;z-index:7;text-align:center;font-family:var(--font-body);font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(var(--fg-rgb),.3);animation:introPulse 2.5s ease-in-out infinite;}
-
-/* Textstufen: #kg und #kgb teilen sich Kurve und Taktung, #kg2 laeuft
-   schneller und hat eine Stufe weniger. */
-@keyframes kgBeat{0%{opacity:0;transform:translateY(26px) scale(.9)}9%{opacity:1;transform:translateY(0) scale(1)}86.25%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-16px) scale(.96)}}
-@keyframes kgBeatHold{0%{opacity:0;transform:scale(.55)}55%{opacity:1;transform:scale(1.08)}75%{transform:scale(.98)}100%{opacity:1;transform:scale(1)}}
-#kg.play .s1, #kgb.play .s1{animation:kgBeat 4.8s ease .3s both;}
-#kg.play .s2, #kgb.play .s2{animation:kgBeat 4.8s ease 4.9s both;}
-#kg.play .s3, #kgb.play .s3{animation:kgBeat 4.8s ease 9.5s both;}
-#kg.play .s4, #kgb.play .s4{animation:kgBeat 4.8s ease 14.1s both;}
-#kg.play .s5, #kgb.play .s5{animation:kgBeat 4.8s ease 18.7s both;}
-#kg.play .s6, #kgb.play .s6{animation:kgBeat 4.8s ease 23.3s both;}
-#kg.play .s7, #kgb.play .s7{animation:kgBeatHold 2s ease 27.9s both;}
-
-/* ── #kg2: Jeopardy Tag 2 ── */
-#kg2 .header b{color:#7FE5B0;}
-#kg2 .header span.st{color:#FF5DA2;margin:0 8px;}
-#kg2 .big.green{color:#7FE5B0;text-shadow:0 3px 0 #2f9e6a,0 6px 12px rgba(0,0,0,.5);-webkit-text-stroke:3px #0b3a24;}
-#kg2 .qm{display:inline-block;animation:kg2Wob 1.1s ease-in-out infinite;}
-@keyframes kg2Wob{0%,100%{transform:rotate(-6deg) scale(1)}50%{transform:rotate(6deg) scale(1.08)}}
-#kg2 .plus{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:8px;}
-#kg2 .pill{font-family:var(--font-body);font-weight:800;font-size:26px;color:#141420;background:#FFC93C;border-radius:22px;padding:9px 22px;letter-spacing:1px;}
-#kg2 .plus b{font-size:40px;color:#FF5DA2;}
-#kg2.play .s1{animation:kg2Beat 3.3s ease .3s both;}
-#kg2.play .s2{animation:kg2Beat 3.3s ease 3.4s both;}
-#kg2.play .s3{animation:kg2Beat 3.3s ease 6.5s both;}
-#kg2.play .s4{animation:kg2Beat 3.3s ease 9.6s both;}
-#kg2.play .s5{animation:kg2Beat 3.6s ease 12.7s both;}
-#kg2.play .s6{animation:kg2BeatHold 2s ease 16.2s both;}
-@keyframes kg2Beat{0%{opacity:0;transform:translateY(26px) scale(.9)}13%{opacity:1;transform:translateY(0) scale(1)}80%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-16px) scale(.96)}}
-@keyframes kg2BeatHold{0%{opacity:0;transform:scale(.55)}55%{opacity:1;transform:scale(1.08)}75%{transform:scale(.98)}100%{opacity:1;transform:scale(1)}}
 
 /* ── #kgb: Geburtstag ──
-   Dieselbe Bühne, aber wärmer eingefärbt - plus Torte und Luftballons.
-   Hier steht nur, was von der gemeinsamen Bühne oben abweicht. */
+   Dieselbe Bühne wie #kg, wärmer eingefärbt, dazu Luftballons. Hier steht
+   nur, was von #kg abweicht. */
 #kgb{background:#1a1122;}
 #kgb .wall{background:#20142b;background-image:repeating-linear-gradient(0deg,#291836 0 2px,transparent 2px 74px),repeating-linear-gradient(90deg,#291836 0 2px,transparent 2px 96px);}
 #kgb .floor{background:#150d1c;box-shadow:0 -2px 0 #3a2450;}
 #kgb .cone{background:rgba(255,190,120,.10);}
-#kgb .coneL{left:60px;animation:kgSweepL 4.6s ease-in-out infinite;}
-#kgb .coneR{right:60px;animation:kgSweepR 3.9s ease-in-out infinite;}
+#kgb .coneL{animation-duration:4.6s;}
+#kgb .coneR{animation-duration:3.9s;}
 #kgb .cord{background:#4a3160;}
 #kgb .bulb{background:#FFD9A0;box-shadow:0 0 20px 7px rgba(255,190,120,.5),0 0 6px 2px #fff6cf inset;}
 #kgb .bulb:after{background:#6b5546;}
 #kgb .lbl{color:#FF9EC7;}
 #kgb .sub{color:#FFF0DC;}
 #kgb .spark{background:#FFD9A0;}
-#kgb .big.mint{color:#7FE5B0;text-shadow:0 3px 0 #2f9e6a,0 6px 0 #1c6b47,0 9px 14px rgba(0,0,0,.6);-webkit-text-stroke:3px #0b3a24;}
-#kgb .big.sm{font-size:56px;}
-#kgb .big.xl{font-size:96px;}
+#kgb .cs::before{background:radial-gradient(closest-side,rgba(255,170,140,.26),rgba(255,170,140,.08) 60%,transparent);}
 
-/* Torte mit flackernden Kerzen */
-#kgb .cake{position:relative;width:190px;height:150px;margin-bottom:26px;}
-#kgb .cake .plate{position:absolute;bottom:0;left:0;right:0;height:12px;border-radius:8px;background:#E8E3F0;box-shadow:0 3px 0 #9d95b5;}
-#kgb .cake .tier{position:absolute;left:14px;right:14px;border-radius:8px;border:3px solid #3a1226;}
-#kgb .cake .t1{bottom:10px;height:46px;background:linear-gradient(180deg,#FF7FB8,#E24C8E);}
-#kgb .cake .t2{bottom:54px;left:30px;right:30px;height:38px;background:linear-gradient(180deg,#FFD9A0,#F0AC63);}
-#kgb .cake .icing{position:absolute;bottom:88px;left:30px;right:30px;height:14px;border-radius:8px;background:#FFF6E4;border:3px solid #3a1226;}
-#kgb .cake .candle{position:absolute;bottom:100px;width:8px;height:30px;border-radius:2px;background:repeating-linear-gradient(45deg,#fff 0 4px,#FF5DA2 4px 8px);border:2px solid #3a1226;}
-#kgb .cake .c1{left:64px;}
-#kgb .cake .c2{left:91px;}
-#kgb .cake .c3{left:118px;}
-#kgb .cake .flame{position:absolute;bottom:130px;width:12px;height:18px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:radial-gradient(circle at 50% 70%,#FFF3B0,#FFA630 70%,#FF6A2A);box-shadow:0 0 16px 6px rgba(255,180,80,.55);transform-origin:bottom center;}
-#kgb .cake .f1{left:62px;animation:kgbFlame 1.1s ease-in-out infinite;}
-#kgb .cake .f2{left:89px;animation:kgbFlame 1.3s ease-in-out infinite .2s;}
-#kgb .cake .f3{left:116px;animation:kgbFlame .95s ease-in-out infinite .45s;}
-@keyframes kgbFlame{0%,100%{transform:scale(1) rotate(-4deg);opacity:.95}50%{transform:scale(1.18) rotate(5deg);opacity:1}}
-
-/* Luftballons, die langsam durchs Bild steigen */
+/* Luftballons steigen nur an den Rändern auf (Bahnen setzt playIntro). Quer
+   durch die Mitte wandern sie hinter Torte und Schrift durch und werden als
+   Teil des Bildes gelesen statt als Deko. */
 #kgb .balloon{position:absolute;bottom:-140px;width:54px;height:66px;border-radius:50% 50% 48% 48%;z-index:3;opacity:.9;animation:kgbFloat linear infinite;}
 #kgb .balloon:after{content:"";position:absolute;bottom:-40px;left:50%;width:1px;height:40px;background:rgba(var(--fg-rgb),.25);}
 #kgb .balloon:before{content:"";position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:inherit;}
 @keyframes kgbFloat{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-120vh) rotate(6deg)}}
 
-/* ── Schmale Bildschirme ── */
-@media (max-width:600px){
-  #kg .big, #kg2 .big{font-size:52px;}
-  #kg .big.sm, #kg2 .big.sm{font-size:40px;}
-  #kg .euro, #kg2 .euro{font-size:80px;}
-  #kg .lbl, #kg2 .lbl, #kgb .lbl{font-size:16px;}
-  #kg .sub, #kg2 .sub, #kgb .sub{font-size:18px;}
-  #kg .header, #kg2 .header, #kgb .header{font-size:15px;}
-  #kg2 .pill{font-size:20px;}
-  #kgb .big{font-size:50px;}
-  #kgb .big.sm{font-size:38px;}
-  #kgb .big.xl{font-size:60px;}
-  #kgb .cake{width:150px;height:120px;transform:scale(.85);}
+/* ── #kgn: Neon-Nacht ──
+   Bewusst nichts von der Kellerbühne geerbt: dort Holz, Gold und warmes
+   Scheinwerferlicht, hier Nachthimmel, Gitterboden und Leuchtschrift. Wer
+   beide nacheinander sieht, soll sie nicht verwechseln können.
+
+   Der Gitterboden ist ein flaches Element, das per perspective/rotateX nach
+   hinten gekippt wird - deshalb läuft er über die Bühnenbreite hinaus
+   (left/right negativ), sonst klafften an den Seiten Lücken. */
+#kgn{background:#07031a;}
+#kgn .sky{position:absolute;inset:0;background:linear-gradient(180deg,#05021a 0%,#1b0940 42%,#4a1152 56%,#0a0324 100%);}
+#kgn .stars{position:absolute;left:0;right:0;top:0;bottom:46%;opacity:.8;animation:knTwinkle 4.5s ease-in-out infinite;
+  background-image:
+    radial-gradient(1.7px 1.7px at 12% 24%,#fff,transparent),
+    radial-gradient(1.4px 1.4px at 28% 12%,#cfe8ff,transparent),
+    radial-gradient(1.8px 1.8px at 44% 30%,#fff,transparent),
+    radial-gradient(1.3px 1.3px at 62% 16%,#ffe9f7,transparent),
+    radial-gradient(1.9px 1.9px at 78% 27%,#fff,transparent),
+    radial-gradient(1.4px 1.4px at 88% 9%,#cfe8ff,transparent),
+    radial-gradient(1.5px 1.5px at 7% 45%,#fff,transparent),
+    radial-gradient(1.6px 1.6px at 53% 44%,#fff,transparent);}
+#kgn .sun{position:absolute;left:50%;bottom:46%;width:min(42vh,300px);height:min(42vh,300px);transform:translate(-50%,42%);border-radius:50%;
+  background:linear-gradient(180deg,#FFE86B 0%,#FF9A4D 40%,#FF4E8E 72%,#C22BC9 100%);
+  box-shadow:0 0 90px 26px rgba(255,78,142,.35);}
+/* Die Querstreifen: der klassische Retro-Sonnen-Look. */
+#kgn .sun:after{content:"";position:absolute;left:0;right:0;top:46%;bottom:0;border-radius:0 0 50% 50%;
+  background:repeating-linear-gradient(180deg,transparent 0 7px,#1b0940 7px 12px);}
+#kgn .horizon{position:absolute;left:0;right:0;bottom:46%;height:2px;background:#FF7AC6;box-shadow:0 0 22px 7px rgba(255,122,198,.55);z-index:2;}
+#kgn .grid{position:absolute;left:-60%;right:-60%;bottom:0;height:46%;z-index:2;opacity:.8;
+  background-image:linear-gradient(#FF2E88 2px,transparent 2px),linear-gradient(90deg,#7DF9FF 2px,transparent 2px);
+  background-size:100% 44px,74px 100%;
+  transform:perspective(300px) rotateX(72deg);transform-origin:bottom center;
+  animation:knGrid 1.8s linear infinite;}
+#kgn .scan{position:absolute;inset:0;z-index:6;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,255,255,.045) 0 1px,transparent 1px 3px);}
+#kgn .header{color:#7DF9FF;letter-spacing:5px;text-transform:uppercase;
+  text-shadow:0 2px 6px rgba(0,0,0,.8),0 0 10px rgba(125,249,255,.9),0 0 30px rgba(125,249,255,.5);}
+/* Die Stufen liegen mitten auf der Sonne. Ohne das dunkle Oval darunter
+   stehen helle Schrift und helle Sonne übereinander und die kleine Zeile
+   (Cyan auf Orange) ist nicht mehr zu lesen. Das Oval ist Teil der Stufe,
+   blendet also mit ihr ein und aus. */
+#kgn .screen{background:radial-gradient(ellipse 54% 34% at 50% 50%,rgba(6,2,22,.72) 0%,rgba(6,2,22,.45) 55%,transparent 78%);}
+#kgn .lbl{font-weight:800;letter-spacing:6px;color:#7DF9FF;margin:0 0 14px;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 12px rgba(125,249,255,.75);}
+#kgn .big{color:var(--fg);line-height:1;-webkit-text-stroke:2px #FF2E88;
+  text-shadow:0 0 8px #FF2E88,0 0 26px rgba(255,46,136,.75),0 0 62px rgba(255,46,136,.45);}
+#kgn .big.pink{-webkit-text-stroke:2px #7DF9FF;
+  text-shadow:0 0 8px #7DF9FF,0 0 26px rgba(125,249,255,.75),0 0 62px rgba(125,249,255,.4);}
+#kgn .big.euro{color:var(--fg);-webkit-text-stroke:2px #7FE5B0;
+  text-shadow:0 0 8px #7FE5B0,0 0 26px rgba(127,229,176,.75),0 0 62px rgba(127,229,176,.4);}
+#kgn .sub{color:#D9CCFF;margin:16px 0 0;text-shadow:0 0 14px rgba(160,120,255,.5);}
+#kgn .kg-hint{color:rgba(200,235,255,.6);text-shadow:0 2px 6px rgba(0,0,0,.9);}
+#kgn .pill{background:#7DF9FF;}
+/* Neonröhren zünden statt Birnen: unregelmäßiger, zwei Muster im Wechsel,
+   damit nicht alle Buchstaben im selben Takt zucken. */
+#kgn.play .big .ch{animation-name:knIgnite;animation-duration:.9s;}
+#kgn.play .big .w .ch:nth-child(even){animation-name:knIgnite2;}
+@keyframes knIgnite{0%{opacity:.07}8%{opacity:1}12%{opacity:.15}20%{opacity:.9}24%{opacity:.2}38%{opacity:1}100%{opacity:1}}
+@keyframes knIgnite2{0%,14%{opacity:.07}18%{opacity:1}26%{opacity:.25}44%{opacity:1}100%{opacity:1}}
+@keyframes knGrid{from{background-position:0 0,0 0;}to{background-position:0 44px,0 0;}}
+@keyframes knTwinkle{0%,100%{opacity:.55}50%{opacity:.95}}
+/* Die Kellerbühne schiebt die Stufen von unten hoch, hier fahren sie
+   seitlich mit Unschärfe ein. Gleiche Taktung, anderer Eindruck. */
+@keyframes knBeat{
+  0%{opacity:0;transform:translateX(-70px) skewX(-9deg);filter:blur(7px);}
+  11%{opacity:1;transform:translateX(0) skewX(0);filter:blur(0);}
+  86%{opacity:1;transform:translateX(0) skewX(0);filter:blur(0);}
+  100%{opacity:0;transform:translateX(56px) skewX(7deg);filter:blur(6px);}}
+@keyframes knBeatHold{
+  0%{opacity:0;transform:scale(1.35);filter:blur(12px);}
+  58%{opacity:1;transform:scale(.98);filter:blur(0);}
+  100%{opacity:1;transform:scale(1);filter:blur(0);}}
+
+/* Ruhige Fassung für "Bewegung reduzieren": Stufen blenden nur weich ein und
+   aus, Buchstaben stehen sofort, kein Flackern, kein Lichtschlag.
+
+   Nötig, weil die allgemeine Regel weiter unten jede Animation auf 0,01ms
+   staucht: kgBeat endet bei opacity 0, eine Stufe wäre dann nur einen
+   Augenblick zu sehen gewesen. Deshalb hier die echte Dauer zurück. */
+@keyframes kgFade{0%{opacity:0}9%{opacity:1}86%{opacity:1}100%{opacity:0}}
+@keyframes kgFadeHold{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){
+  #kg-overlay .cs{animation-name:kgFade !important;animation-duration:var(--dur) !important;}
+  #kg-overlay .cs.hold{animation-name:kgFadeHold !important;animation-duration:1s !important;}
+  #kg-overlay .play .big .ch, #kg-overlay .cs::before{animation:none !important;}
+  #kg-overlay .cs::before{opacity:.5;}
 }
 
 /* ── WER WIRD MILLIONÄR ── */
@@ -1866,11 +1974,11 @@ body {
   /* Dauerhafte Stimmungs-Animationen ganz aus, statt sie auf 0.01ms zu
      stauchen - sonst springt der Endzustand sichtbar. */
   #kgn .grid, #kgn .stars,
-  #kg .cone, #kg2 .cone, #kgb .cone,
-  #kg .cord, #kg2 .cord, #kgb .cord,
-  #kg .mb, #kg2 .mb, #kgb .mb,
-  #kg .spark, #kg2 .spark, #kgb .spark,
-  #kgb .balloon, #kgb .cake .flame,
+  #kg .cone, #kgb .cone,
+  #kg .cord, #kgb .cord,
+  #kg .mb, #kgb .mb,
+  #kg .spark, #kgb .spark,
+  #kgb .balloon, #kg-overlay .cake .flame,
   .online-dot, .tut-icon, .tut-star-anim, .tut-trophy-bounce,
   .jsfx-ring, .jsfx-bar, .setup-lobby .pr-dot, .tut-hint, .kg-hint {
     animation: none !important;
@@ -2337,86 +2445,6 @@ body {
   background: rgba(var(--fg-rgb),.05); border: 1.5px solid var(--c);
 }
 
-/* ── Eigenes Intro ────────────────────────────────────────────────────────
-   Die Buehne kommt vom Keller-Intro (#kg). Nur die Taktung ist anders: dort
-   steht je Stufe eine ausgerechnete Verzoegerung im Stylesheet, hier rechnet
-   JavaScript sie aus, weil die Zahl der Stufen frei ist. Deshalb hier nur,
-   WELCHE Animation laeuft - Dauer und Verzoegerung stehen im style-Attribut. */
-#kg.play .cs{animation-name:kgBeat;animation-timing-function:ease;animation-fill-mode:both;}
-#kg.play .cs.hold{animation-name:kgBeatHold;}
-
-/* ── #kgn: Neon-Nacht ──────────────────────────────────────────────────────
-   Die zweite Buehne fuers eigene Intro. Bewusst nichts von der Kellerbuehne
-   geerbt: dort ist alles Holz, Gold und warmes Scheinwerferlicht, hier ist es
-   Nachthimmel, Gitterboden und Leuchtschrift. Wer beide nacheinander sieht,
-   soll sie nicht verwechseln koennen.
-
-   Der Gitterboden ist ein flaches Element, das per perspective/rotateX nach
-   hinten gekippt wird - deshalb laeuft er ueber die Buehnenbreite hinaus
-   (left/right negativ), sonst klafften an den Seiten Luecken. */
-#kgn{position:relative;width:100%;height:100%;overflow:hidden;background:#07031a;font-family:var(--font-logo);isolation:isolate;}
-#kgn .sky{position:absolute;inset:0;background:linear-gradient(180deg,#05021a 0%,#1b0940 42%,#4a1152 56%,#0a0324 100%);}
-#kgn .stars{position:absolute;left:0;right:0;top:0;bottom:46%;opacity:.8;animation:knTwinkle 4.5s ease-in-out infinite;
-  background-image:
-    radial-gradient(1.7px 1.7px at 12% 24%,#fff,transparent),
-    radial-gradient(1.4px 1.4px at 28% 12%,#cfe8ff,transparent),
-    radial-gradient(1.8px 1.8px at 44% 30%,#fff,transparent),
-    radial-gradient(1.3px 1.3px at 62% 16%,#ffe9f7,transparent),
-    radial-gradient(1.9px 1.9px at 78% 27%,#fff,transparent),
-    radial-gradient(1.4px 1.4px at 88% 9%,#cfe8ff,transparent),
-    radial-gradient(1.5px 1.5px at 7% 45%,#fff,transparent),
-    radial-gradient(1.6px 1.6px at 53% 44%,#fff,transparent);}
-#kgn .sun{position:absolute;left:50%;bottom:46%;width:min(42vh,300px);height:min(42vh,300px);transform:translate(-50%,42%);border-radius:50%;
-  background:linear-gradient(180deg,#FFE86B 0%,#FF9A4D 40%,#FF4E8E 72%,#C22BC9 100%);
-  box-shadow:0 0 90px 26px rgba(255,78,142,.35);}
-/* Die Querstreifen: der klassische Retro-Sonnen-Look. Nach unten hin breiter,
-   deshalb drei Baender statt eines gleichmaessigen Musters. */
-#kgn .sun:after{content:"";position:absolute;left:0;right:0;top:46%;bottom:0;border-radius:0 0 50% 50%;
-  background:repeating-linear-gradient(180deg,transparent 0 7px,#1b0940 7px 12px);}
-#kgn .horizon{position:absolute;left:0;right:0;bottom:46%;height:2px;background:#FF7AC6;box-shadow:0 0 22px 7px rgba(255,122,198,.55);z-index:2;}
-#kgn .grid{position:absolute;left:-60%;right:-60%;bottom:0;height:46%;z-index:2;opacity:.8;
-  background-image:linear-gradient(#FF2E88 2px,transparent 2px),linear-gradient(90deg,#7DF9FF 2px,transparent 2px);
-  background-size:100% 44px,74px 100%;
-  transform:perspective(300px) rotateX(72deg);transform-origin:bottom center;
-  animation:knGrid 1.8s linear infinite;}
-#kgn .scan{position:absolute;inset:0;z-index:6;pointer-events:none;background:repeating-linear-gradient(180deg,rgba(255,255,255,.045) 0 1px,transparent 1px 3px);}
-#kgn .header{position:absolute;top:22px;left:0;right:0;z-index:7;text-align:center;color:#7DF9FF;font-size:20px;letter-spacing:5px;text-transform:uppercase;
-  text-shadow:0 2px 6px rgba(0,0,0,.8),0 0 10px rgba(125,249,255,.9),0 0 30px rgba(125,249,255,.5);}
-/* Die Stufen liegen mitten auf der Sonne. Ohne das dunkle Oval darunter
-   stehen helle Schrift und helle Sonne uebereinander und die kleine Zeile
-   (Cyan auf Orange) ist nicht mehr zu lesen. Das Oval ist Teil der Stufe,
-   blendet also mit ihr ein und aus. */
-#kgn .screen{position:absolute;left:0;right:0;top:40px;bottom:30px;max-width:none;width:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 34px;z-index:5;opacity:0;
-  background:radial-gradient(ellipse 54% 34% at 50% 50%,rgba(6,2,22,.72) 0%,rgba(6,2,22,.45) 55%,transparent 78%);}
-#kgn .lbl{font-family:var(--font-body);font-weight:800;letter-spacing:6px;font-size:18px;color:#7DF9FF;text-transform:uppercase;margin:0 0 14px;text-shadow:0 2px 6px rgba(0,0,0,.9),0 0 12px rgba(125,249,255,.75);}
-#kgn .big{color:var(--fg);font-size:76px;line-height:1;margin:0;-webkit-text-stroke:2px #FF2E88;
-  text-shadow:0 0 8px #FF2E88,0 0 26px rgba(255,46,136,.75),0 0 62px rgba(255,46,136,.45);}
-#kgn .big.pink{color:var(--fg);-webkit-text-stroke:2px #7DF9FF;
-  text-shadow:0 0 8px #7DF9FF,0 0 26px rgba(125,249,255,.75),0 0 62px rgba(125,249,255,.4);}
-#kgn .sub{color:#D9CCFF;font-family:var(--font-body);font-weight:600;font-size:22px;letter-spacing:.5px;margin:16px 0 0;text-shadow:0 0 14px rgba(160,120,255,.5);}
-#kgn .kg-hint{position:absolute;bottom:20px;left:0;right:0;z-index:7;text-align:center;font-family:var(--font-body);font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(200,235,255,.6);text-shadow:0 2px 6px rgba(0,0,0,.9);animation:introPulse 2.5s ease-in-out infinite;}
-@keyframes knGrid{from{background-position:0 0,0 0;}to{background-position:0 44px,0 0;}}
-@keyframes knTwinkle{0%,100%{opacity:.55}50%{opacity:.95}}
-/* Eigene Bewegung: die Kellerbuehne schiebt die Stufen von unten hoch, hier
-   fahren sie seitlich mit Unschaerfe ein. Gleiche Taktung, anderer Eindruck. */
-@keyframes knBeat{
-  0%{opacity:0;transform:translateX(-70px) skewX(-9deg);filter:blur(7px);}
-  11%{opacity:1;transform:translateX(0) skewX(0);filter:blur(0);}
-  86%{opacity:1;transform:translateX(0) skewX(0);filter:blur(0);}
-  100%{opacity:0;transform:translateX(56px) skewX(7deg);filter:blur(6px);}}
-@keyframes knBeatHold{
-  0%{opacity:0;transform:scale(1.35);filter:blur(12px);}
-  58%{opacity:1;transform:scale(.98);filter:blur(0);}
-  100%{opacity:1;transform:scale(1);filter:blur(0);}}
-#kgn.play .cs{animation-name:knBeat;animation-timing-function:ease;animation-fill-mode:both;}
-#kgn.play .cs.hold{animation-name:knBeatHold;}
-@media (max-width:760px){
-  #kgn .big{font-size:50px;}
-  #kgn .lbl{font-size:15px;letter-spacing:4px;}
-  #kgn .sub{font-size:17px;}
-  #kgn .header{font-size:14px;letter-spacing:3px;}
-}
-
 /* ── Preis ist heiss: Teamstand ───────────────────────────────────────────
    Gespielt wird in zwei Teams, gezaehlt werden Einzelpunkte. Damit waehrend
    des Spiels trotzdem klar ist, wie es zwischen den Teams steht, liegt diese
@@ -2501,7 +2529,11 @@ body {
    zusammen und sollen nicht ueber den halben Bildschirm auseinanderlaufen. */
 .intro-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
 .intro-fields label{display:flex;flex-direction:column;gap:4px;font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--fg-rgb),.4);}
-.intro-fields input{width:100%;}
+.intro-fields input, .intro-fields select{width:100%;}
+/* Native Auswahlfelder waren rund 20px hoch - zu klein fuer den Host im
+   Halbdunkel (BAUPLAN 4.2: Klickflaechen ab 32px). Optik wie #intro-variant. */
+.intro-fields select{min-height:38px;padding:8px 10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.12);background:rgba(0,0,0,.35);color:#fff;font-family:inherit;font-weight:700;outline:none;}
+.intro-fields select:focus-visible{border-color:var(--gold);}
 @media (max-width:760px){ .intro-fields{grid-template-columns:1fr;} }
 
 /* Platzhalter fuer den Intro-Block. Er ist leer, solange der Block woanders
