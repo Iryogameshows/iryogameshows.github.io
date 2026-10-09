@@ -75,7 +75,7 @@ offenen Punkte aus den Einträgen zu `ab11fe2` und `4a5af20`.
   Messungen per JS stimmen weiter.
 
 **Offen.**
-- Handybreite der Spielbretter: Entscheidung durch David.
+- ~~Handybreite der Spielbretter~~ **Entschieden 2026-10-10 (David): bleibt so.** Die Bretter erscheinen nur im Hauptfenster und im Zuschauerfenster (Beamer). `buzzer/` hat eine eigene Oberfläche, `gamepad/` spiegelt nur das GM-Panel. Den Überlauf bei 400 px nicht wieder als Fehler aufgreifen.
 - Echtes Popout auf dem Beamer-Rechner einmal ansehen.
 
 ## 2026-10-09 — Design-Upgrade, Scheibe 6: übrige Shows (`4a5af20`)
