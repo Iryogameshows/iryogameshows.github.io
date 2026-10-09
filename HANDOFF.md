@@ -12,6 +12,71 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Design-Upgrade, Scheibe 5: O, P, Q, R, S (`ab11fe2`) — alle 17 Richtungen fertig
+
+**Gemacht.** Die letzten fünf Sätze:
+- **O Terminal:** grüner Phosphor mit Zeilenraster (`--brd-tex`).
+  Antworten als Tabellenzeile mit Punktführung, Frage mit `❯`.
+  Jeopardy als `[100]`, verbraucht als `[---]`. Aufdecken: getippt
+  (`steps(18)`).
+- **P Memphis:** Punkteteppich, verdeckte Felder schraffiert,
+  aufgedeckte reihum in vier Farben mit harter Kontur. Jeopardy-Felder
+  als Formen je Spalte, WWM-Buchstaben als Formen. Aufdecken: hüpft.
+- **Q Riso:** Pink und Blau mit Versatz übereinander gedruckt, verdeckte
+  Felder als Abrissmarke mit Lochrand. Aufdecken: der zweite Druckgang
+  rastet in Stufen ein.
+- **R Jazzplatte:** Plattenhüllen, die Kiste als Leiste unten, Punkte auf
+  dem Plattenlabel. Jeopardy-Felder als farbige Rücken, WWM als
+  Klaviertasten unter einem Bogen. Aufdecken: Die Hülle wird aus der
+  Kiste gezogen.
+- **S Art déco:** Messingplatten mit Einwurfschlitz, aufgedeckt eine
+  Karte im Messingrahmen. Aufdecken: wie Aufzugtüren von der Mitte aus.
+- Behoben: In I, P und S schlug die `.wwm-opt`-Regel der Richtung die
+  Zustände eingeloggt und richtig. Sie sahen aus wie eine neutrale
+  Antwort.
+
+**Geprüft.**
+- `node check.js` und `node check.js --types` melden beide „alles in
+  Ordnung“.
+- Studio-Blau: 159 von 159 identisch.
+- Aufdeck-Animation läuft bei O–S an. Bei allen 17 Richtungen gemessen:
+  verbrauchtes Jeopardy-Feld anders als volles, WWM-Zustände neutral,
+  eingeloggt und richtig verschieden. Offen sind nur J (unterscheidet
+  über die Randfarbe) und L (über das gefüllte Kästchen); beides
+  gewollt, die Messung prüft nur Fläche und Schatten.
+- `scrollWidth` 1280 bei 1280 px Breite, Konsole 0 Fehler.
+
+### Abschluss-Übersicht Design-Upgrade (Stand nach `ab11fe2`)
+
+**Aktueller Stand.** Alle 17 Richtungen (A–S ohne G) haben ein eigenes
+Brett-Material für Feud, Jeopardy und WWM (WWDS über die gemeinsamen
+Tokens) und je einen Aufdeck-Moment beim Feud-Feld. Alles steht in
+`styles.css`: die Tokens im `:root` unter „Spielbrett-Material“, die
+Sätze am Dateiende im Block „Material je Design-Richtung“. Ohne
+gewählte Richtung ist alles unverändert.
+
+**Stopppunkt.** Feud, Jeopardy und WWM sind fertig und mit Screenshots
+geprüft.
+
+**Kreative Ansätze.** Je Richtung ist das Material aus dem eigenen
+Entwurf abgeleitet (Glühbirnen, Röhren, Spielkarten, Haftzettel,
+Kreuzworträtsel, Waben, Umschläge, Plattenhüllen, Messingfächer). Je
+Richtung gibt es einen einzigen Bewegungsmoment beim Aufdecken. Nur
+angedacht, weil es Umbau in `js/feud.js` bräuchte: die Feud-Anordnungen
+der Entwürfe als Mindmap (J, M), als Schilder an Pfosten (N), als Kiste
+mit stehenden Hüllen (R) und als Formen statt Reihen (P).
+
+**Nächste Schritte.**
+1. Zuschauerfenster (Popout) mit zwei, drei Richtungen ansehen. Das
+   Pane konnte kein Popout öffnen, deshalb ungeprüft. Vor allem M
+   (`backdrop-filter`) und A (Birnen-Animation) auf Flüssigkeit prüfen.
+2. WWDS, DDF, PIH, TP, Ergebnis und Turnier je Richtung durchsehen.
+   WWDS liest die Tokens schon, DDF, PIH und TP nutzen `--panel` und
+   haben noch kein eigenes Material.
+3. Handybreite (400 px) für die Bretter mit großen Schriften (D, H, O).
+4. Reduced Motion einmal echt prüfen (Emulation war im Pane nicht
+   verfügbar).
+
 ## 2026-10-09 — Design-Upgrade, Scheibe 4: K, L, M, N (`2b32400`)
 
 **Gemacht.** Weitere Sätze im Block „Material je Design-Richtung“:
