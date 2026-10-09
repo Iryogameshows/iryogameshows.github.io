@@ -3874,6 +3874,288 @@ body {
   100% { clip-path: inset(0 0 0 0); }
 }
 
+/* ── F · Comic: Panels mit schwarzen Stegen, Rasterpunkte, Sternblitz ── */
+:root[data-theme="F"] {
+  --brd-surface: #FFFFFF;
+  --brd-tex: radial-gradient(rgba(0,0,0,.1) 1.6px, transparent 2px) 0 0 / 10px 10px;
+  --brd-frame: 0 0 0 5px #111111, 9px 9px 0 5px #111111;
+  --brd-well: #111111;
+  --brd-inner: transparent;
+  --brd-radius: 0;
+  --brd-fg: #111111;
+  --tile: #E8E8E8;
+  --tile-hover: #F4F4F4;
+  --tile-tex: radial-gradient(rgba(0,0,0,.16) 2.2px, transparent 2.5px) 0 0 / 12px 12px;
+  --tile-edge: 0 0 0 4px #111111;
+  --tile-fg: #111111;
+  --tile-head: #111111;
+  --tile-head-fg: #FFFFFF;
+  --tile-used: #E8E8E8;
+  --tile-num: #111111;
+  --tile-num-glow: none;
+  --tile-dim-fg: rgba(0,0,0,.35);
+  --tile-bar: transparent;
+  --tile-rule: #111111;
+  --tile-open: #7CC4FF;
+  --tile-open-edge: 0 0 0 4px #111111;
+  --tile-open-fg: #111111;
+  --tile-open-dim: #111111;
+  --tile-pts-bg: #FF9C8F;
+  --tile-pts-rule: transparent;
+  --tile-pick: #FFE600;
+  --tile-pick-fg: #111111;
+  --tile-right: #7EE3A1;
+  --tile-right-fg: #111111;
+  --tile-radius: 0;
+  --tile-font: 'Bangers', cursive;
+  --tile-reveal: thFPow .45s cubic-bezier(.3,1.7,.5,1);
+}
+:root[data-theme="F"] .board { padding: 14px; }
+:root[data-theme="F"] .answers { gap: 10px; }
+:root[data-theme="F"] .answers.split { row-gap: 10px; column-gap: 10px; }
+:root[data-theme="F"] .tile, :root[data-theme="F"] .tile-inner { overflow: visible; }
+/* Die Frage ist das gelbe Erzaehl-Panel oben links im Entwurf. */
+:root[data-theme="F"] .q-text {
+  margin-bottom: 14px; border-radius: 0; color: #111111; box-shadow: 0 0 0 4px #111111;
+  background: radial-gradient(rgba(0,0,0,.16) 2.2px, transparent 2.5px) 0 0 / 12px 12px, #FFE600;
+  font-family: 'Bangers', cursive; font-weight: 400; font-size: 1.6rem; letter-spacing: 1px; text-transform: uppercase; line-height: 1.1;
+}
+:root[data-theme="F"] .q-text.hidden-q { border: 0; }
+:root[data-theme="F"] .tile-num { font-family: 'Bangers', cursive; color: #111; }
+:root[data-theme="F"] .tile.open .tile-answer { font-size: 1.45rem; font-weight: 400; letter-spacing: 1px; }
+/* Punkte im Sternblitz wie im Entwurf. */
+:root[data-theme="F"] .tile.open .tile-pts {
+  color: #111; text-shadow: none; font-family: 'Bangers', cursive; font-size: 1.6rem; min-width: 74px;
+  clip-path: polygon(50% 0,58% 18%,78% 4%,74% 26%,98% 22%,84% 44%,100% 60%,78% 66%,86% 92%,62% 78%,50% 100%,40% 80%,14% 94%,22% 68%,0 60%,16% 44%,2% 22%,26% 26%,22% 4%,42% 18%);
+}
+:root[data-theme="F"] .jeopardy-board { gap: 6px; padding: 6px; }
+:root[data-theme="F"] .jeopardy-cat { font-family: 'Bangers', cursive; font-weight: 400; font-size: 1.05rem; letter-spacing: 1px; }
+:root[data-theme="F"] .jeopardy-cell {
+  background: radial-gradient(rgba(0,0,0,.16) 2.2px, transparent 2.5px) 0 0 / 12px 12px, #FFE600;
+  font-family: 'Bangers', cursive; font-size: 2.3rem;
+}
+:root[data-theme="F"] .jeopardy-cell:hover:not(.used) { background: radial-gradient(rgba(0,0,0,.16) 2.2px, transparent 2.5px) 0 0 / 12px 12px, #FFF27A; }
+:root[data-theme="F"] .jeopardy-cell.used { background: radial-gradient(rgba(0,0,0,.16) 2.2px, transparent 2.5px) 0 0 / 12px 12px, #E8E8E8; }
+:root[data-theme="F"] .jeopardy-cell.used::after { content: '✕'; color: rgba(0,0,0,.2); font-size: 2rem; }
+:root[data-theme="F"] .wwm-q {
+  background: radial-gradient(rgba(0,0,0,.16) 2.2px, transparent 2.5px) 0 0 / 12px 12px, #FFFFFF;
+  border: 5px solid #111; font-family: 'Bangers', cursive; font-weight: 400; font-size: 1.7rem; letter-spacing: 1px; text-transform: uppercase; line-height: 1.15;
+}
+:root[data-theme="F"] .wwm-opt { background: radial-gradient(rgba(0,0,0,.16) 2.2px, transparent 2.5px) 0 0 / 12px 12px, #7CC4FF; border: 5px solid #111; font-size: 1.4rem; font-weight: 400; letter-spacing: 1px; text-transform: uppercase; }
+:root[data-theme="F"] .wwm-opt.selected { background: radial-gradient(rgba(0,0,0,.16) 2.2px, transparent 2.5px) 0 0 / 12px 12px, #FFE600; }
+:root[data-theme="F"] .wwm-opt.correct { background: radial-gradient(rgba(0,0,0,.16) 2.2px, transparent 2.5px) 0 0 / 12px 12px, #7EE3A1; }
+:root[data-theme="F"] .wwm-opt .wwm-letter { font-family: 'Bangers', cursive; }
+@keyframes thFPow {
+  0%   { transform: scale(.2) rotate(-12deg); filter: brightness(2.5); }
+  55%  { transform: scale(1.12) rotate(3deg); filter: none; }
+  100% { transform: scale(1) rotate(0); }
+}
+
+/* ── H · Bauhaus: schwarzes Raster, Primaerfarben, Kreis oeffnet das Feld ── */
+:root[data-theme="H"] {
+  --brd-surface: #ECEAE4;
+  --brd-frame: 0 0 0 3px #141414;
+  --brd-well: #141414;
+  --brd-inner: transparent;
+  --brd-radius: 0;
+  --tile: #ECEAE4;
+  --tile-hover: #F6F5F1;
+  --tile-edge: 0 0 0 1.5px #141414;
+  --tile-fg: #141414;
+  --tile-head: #ECEAE4;
+  --tile-head-fg: #141414;
+  --tile-used: #ECEAE4;
+  --tile-num: #141414;
+  --tile-num-glow: none;
+  --tile-dim-fg: rgba(20,20,20,.18);
+  --tile-bar: transparent;
+  --tile-rule: transparent;
+  --tile-open: #F2C230;
+  --tile-open-edge: 0 0 0 1.5px #141414;
+  --tile-open-fg: #141414;
+  --tile-open-dim: #141414;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: transparent;
+  --tile-pick: #F2C230;
+  --tile-pick-fg: #141414;
+  --tile-right: #1F4FA3;
+  --tile-right-fg: #FFFFFF;
+  --tile-radius: 0;
+  --tile-font: 'Bricolage Grotesque', sans-serif;
+  --tile-reveal: thHKreis .6s cubic-bezier(.6,0,.2,1);
+}
+:root[data-theme="H"] .board { padding: 3px; }
+:root[data-theme="H"] .answers { gap: 3px; }
+:root[data-theme="H"] .answers.split { row-gap: 3px; column-gap: 3px; }
+:root[data-theme="H"] .q-text { margin-bottom: 3px; border-radius: 0; background: #FFFFFF; color: #141414; justify-content: flex-start; text-align: left; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1.15; padding: 16px 18px; }
+:root[data-theme="H"] .q-text.hidden-q { border: 0; justify-content: center; }
+:root[data-theme="H"] .tile { min-height: 62px; overflow: visible; }
+:root[data-theme="H"] .tile-inner { overflow: visible; }
+:root[data-theme="H"] .tile-num { width: 56px; align-items: flex-end; justify-content: flex-start; padding: 0 0 4px 10px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 2.4rem; line-height: .9; }
+:root[data-theme="H"] .tile.open .tile-num { font-size: .8rem; align-items: flex-start; padding: 6px 0 0 10px; }
+:root[data-theme="H"] .tile.open .tile-answer { text-transform: none; letter-spacing: -.3px; font-weight: 800; font-size: 1.35rem; }
+:root[data-theme="H"] .tile.open .tile-pts { color: #141414; text-shadow: none; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 2rem; }
+/* Erste Antwort gelb, die weiteren weiss mit Farbbalken reihum. */
+:root[data-theme="H"] .answers .tile:not(:first-child).open .tile-inner { background: #FFFFFF; box-shadow: inset 0 -6px 0 #D7372B, 0 0 0 1.5px #141414; }
+:root[data-theme="H"] .answers .tile:nth-child(3n).open .tile-inner { box-shadow: inset 0 -6px 0 #1F4FA3, 0 0 0 1.5px #141414; }
+:root[data-theme="H"] .answers .tile:nth-child(3n+1):not(:first-child).open .tile-inner { box-shadow: inset 0 -6px 0 #F2C230, 0 0 0 1.5px #141414; }
+:root[data-theme="H"] .jeopardy-board { gap: 3px; padding: 3px; }
+:root[data-theme="H"] .jeopardy-cat { justify-content: flex-start; text-align: left; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: .85rem; letter-spacing: 0; text-transform: none; }
+:root[data-theme="H"] .jeopardy-cell { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 2rem; letter-spacing: -1px; }
+:root[data-theme="H"] .jeopardy-cell:not(.used):nth-child(4n+1) { background: #D7372B; color: #FFFFFF; }
+:root[data-theme="H"] .jeopardy-cell:not(.used):nth-child(4n+2) { background: #F2C230; }
+:root[data-theme="H"] .jeopardy-cell:not(.used):nth-child(4n+3) { background: #1F4FA3; color: #FFFFFF; }
+:root[data-theme="H"] .jeopardy-cell:not(.used):nth-child(4n)   { background: #FFFFFF; }
+:root[data-theme="H"] .jeopardy-cell:hover:not(.used) { transform: none; box-shadow: inset 0 0 0 4px #141414; }
+:root[data-theme="H"] .wwm-q { background: #FFFFFF; color: #141414; text-align: left; justify-content: flex-start; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.7rem; line-height: 1.1; }
+:root[data-theme="H"] .wwm-answers { gap: 3px; background: #141414; padding: 3px; }
+:root[data-theme="H"] .wwm-opt { background: #FFFFFF; min-height: 74px; font-weight: 800; font-size: 1.25rem; }
+:root[data-theme="H"] .wwm-opt .wwm-letter { width: 30px; height: 30px; min-width: 30px; border-radius: 50%; background: #D7372B; color: transparent; font-size: 0; }
+:root[data-theme="H"] .wwm-opt:nth-child(2) .wwm-letter { border-radius: 0; background: #F2C230; }
+:root[data-theme="H"] .wwm-opt:nth-child(3) .wwm-letter { border-radius: 0; background: #1F4FA3; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+:root[data-theme="H"] .wwm-opt:nth-child(4) .wwm-letter { border-radius: 30px 30px 0 0; height: 15px; background: #141414; }
+:root[data-theme="H"] .wwm-opt.selected { background: #F2C230; }
+:root[data-theme="H"] .wwm-opt.correct { background: #1F4FA3; }
+:root[data-theme="H"] .wwm-opt.correct .wwm-letter { background: #FFFFFF; }
+@keyframes thHKreis {
+  0%   { clip-path: circle(0 at 0 50%); }
+  100% { clip-path: circle(150% at 0 50%); }
+}
+
+/* ── I · Salon: Spieltisch aus Filz, Karten werden umgedreht ── */
+:root[data-theme="I"] {
+  --brd-surface: radial-gradient(ellipse 90% 80% at 50% 40%, #1E5A42 0%, #13392C 60%, #0B261C 100%);
+  --brd-frame: 0 0 0 3px #C9A54C, 0 0 0 12px #4A2E14, 0 0 0 14px rgba(201,165,76,.6), 0 20px 50px rgba(0,0,0,.55), inset 0 0 60px rgba(0,0,0,.45);
+  --brd-well: transparent;
+  --brd-inner: rgba(201,165,76,.35);
+  --brd-radius: 40px;
+  --brd-fg: #F4EEDF;
+  --tile: repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, rgba(255,255,255,.07) 0 1px, transparent 1px 8px), radial-gradient(ellipse at 50% 40%, #A82339 0%, #8E1B2C 55%, #5F0F1D 100%);
+  --tile-hover: repeating-linear-gradient(45deg, rgba(255,255,255,.1) 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, rgba(255,255,255,.1) 0 1px, transparent 1px 8px), radial-gradient(ellipse at 50% 40%, #BC2A42 0%, #9E2033 55%, #6A1222 100%);
+  --tile-edge: inset 0 0 0 4px #F1E9D2, inset 0 0 0 5px rgba(0,0,0,.35), 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35);
+  --tile-fg: #2A1A12;
+  --tile-head: transparent;
+  --tile-head-fg: #C9A54C;
+  --tile-used: transparent;
+  --tile-num: #8E1B2C;
+  --tile-num-glow: none;
+  --tile-dim-fg: #F1E9D2;
+  --tile-bar: transparent;
+  --tile-rule: transparent;
+  --tile-open: linear-gradient(180deg, #FBF6E9, #F1E9D2);
+  --tile-open-edge: inset 0 0 0 1px rgba(0,0,0,.08), 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35);
+  --tile-open-fg: #2A1A12;
+  --tile-open-dim: #8E1B2C;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: rgba(142,27,44,.25);
+  --tile-pick: linear-gradient(180deg, #FBF6E9, #F1E9D2);
+  --tile-pick-fg: #2A1A12;
+  --tile-right: linear-gradient(180deg, #E9CF8F, #C9A54C);
+  --tile-right-fg: #2A1A12;
+  --tile-radius: 10px;
+  --tile-font: 'Cormorant Garamond', serif;
+  --tile-reveal: thIKarte .7s cubic-bezier(.3,.7,.3,1.1);
+}
+:root[data-theme="I"] .board { padding: 28px 30px; }
+:root[data-theme="I"] .answers { gap: 10px; }
+:root[data-theme="I"] .answers.split { row-gap: 10px; column-gap: 16px; }
+:root[data-theme="I"] .q-text { color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.7rem; }
+:root[data-theme="I"] .tile { min-height: 56px; }
+:root[data-theme="I"] .tile-num { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.5rem; }
+:root[data-theme="I"] .tile:not(.open) .tile-num { opacity: .0; }
+:root[data-theme="I"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 1.45rem; }
+:root[data-theme="I"] .tile.open .tile-pts { color: #8E1B2C; text-shadow: none; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.7rem; }
+:root[data-theme="I"] .jeopardy-board { gap: 10px; padding: 16px; border-radius: 30px; background: radial-gradient(ellipse 90% 80% at 50% 40%, #1E5A42 0%, #13392C 60%, #0B261C 100%); }
+:root[data-theme="I"] .jeopardy-cat { font-family: 'Jost', sans-serif; font-weight: 500; font-size: .75rem; letter-spacing: 3px; }
+:root[data-theme="I"] .jeopardy-cell { background: linear-gradient(180deg, #FBF6E9, #F1E9D2); box-shadow: 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35); font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 2rem; }
+:root[data-theme="I"] .jeopardy-cell:hover:not(.used) { background: #FFFFFF; transform: translateY(-3px) rotate(-1deg); }
+:root[data-theme="I"] .jeopardy-cell.used { box-shadow: inset 0 0 0 1px rgba(201,165,76,.3); }
+:root[data-theme="I"] .wwm-q { color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.9rem; line-height: 1.2; }
+:root[data-theme="I"] .wwm-opt { background: linear-gradient(180deg, #FBF6E9, #F1E9D2); color: #2A1A12; box-shadow: 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35); font-size: 1.4rem; }
+:root[data-theme="I"] .wwm-opt.selected { box-shadow: 0 0 0 3px #C9A54C, 0 0 24px rgba(201,165,76,.55); }
+:root[data-theme="I"] .wwm-opt .wwm-letter { color: #8E1B2C; font-family: 'Cormorant Garamond', serif; font-weight: 700; }
+/* Die Karte wird umgedreht: erst hochkant weg, dann mit der Vorderseite. */
+@keyframes thIKarte {
+  0%   { transform: perspective(900px) rotateY(-180deg) scale(1.04); filter: brightness(.6); }
+  60%  { transform: perspective(900px) rotateY(12deg) scale(1.04); filter: none; }
+  100% { transform: perspective(900px) rotateY(0) scale(1); }
+}
+
+/* ── J · Kreide: Tafel im Holzrahmen, Kreidestrich, Haftzettel ── */
+:root[data-theme="J"] {
+  --brd-surface: radial-gradient(ellipse 120% 90% at 50% 40%, #34453F 0%, #2E3C37 55%, #25312D 100%);
+  --brd-tex: radial-gradient(rgba(237,237,230,.05) 1px, transparent 1.5px) 0 0 / 7px 7px;
+  --brd-frame: 0 0 0 12px #7A4E2A, 0 0 0 14px #5A3A1E, 0 16px 40px rgba(0,0,0,.5), inset 0 0 50px rgba(0,0,0,.35);
+  --brd-well: transparent;
+  --brd-inner: transparent;
+  --brd-radius: 4px;
+  --brd-fg: #EDEDE6;
+  --tile: transparent;
+  --tile-hover: rgba(237,237,230,.05);
+  --tile-edge: none;
+  --tile-fg: #EDEDE6;
+  --tile-head: transparent;
+  --tile-head-fg: #F4E58A;
+  --tile-used: transparent;
+  --tile-num: #26332E;
+  --tile-num-glow: none;
+  --tile-dim-fg: rgba(237,237,230,.45);
+  --tile-bar: transparent;
+  --tile-rule: transparent;
+  --tile-open: transparent;
+  --tile-open-edge: none;
+  --tile-open-fg: #EDEDE6;
+  --tile-open-dim: rgba(237,237,230,.6);
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: transparent;
+  --tile-pick: transparent;
+  --tile-pick-fg: #F2A7B5;
+  --tile-right: transparent;
+  --tile-right-fg: #F4E58A;
+  --tile-radius: 0;
+  --tile-font: 'Patrick Hand', cursive;
+  --tile-reveal: thJKreide .9s steps(14, end);
+}
+:root[data-theme="J"] .q-text { color: #EDEDE6; font-family: 'Patrick Hand', cursive; font-size: 1.6rem; font-weight: 400; }
+:root[data-theme="J"] .q-text.hidden-q { border-color: rgba(237,237,230,.35); }
+/* Verdeckt: eine gestrichelte Kreidelinie mit Fragezeichen-Platz. */
+:root[data-theme="J"] .tile:not(.open) .tile-inner { border-bottom: 2px dashed rgba(237,237,230,.3); }
+:root[data-theme="J"] .tile-num { font-family: 'Patrick Hand', cursive; font-size: 1.4rem; }
+:root[data-theme="J"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 1.6rem; }
+/* Die Punkte sind mit Kreide eingekreist. */
+:root[data-theme="J"] .tile.open .tile-pts {
+  align-self: center; min-width: 0; width: 46px; height: 38px; padding: 0; margin-right: 6px;
+  border: 2px solid #F4E58A; border-radius: 50% 45% 55% 48% / 52% 50% 46% 50%;
+  color: #F4E58A; text-shadow: none; font-family: 'Patrick Hand', cursive; font-size: 1.3rem;
+}
+:root[data-theme="J"] .jeopardy-board { gap: 14px; padding: 18px; background: radial-gradient(ellipse 120% 90% at 50% 40%, #34453F 0%, #2E3C37 55%, #25312D 100%); }
+:root[data-theme="J"] .jeopardy-cat { font-family: 'Patrick Hand', cursive; font-weight: 400; font-size: 1.15rem; letter-spacing: 0; text-transform: none; }
+/* Jeopardy als Haftzettel mit Klebestreifen, Farbe reihum, leicht schief. */
+:root[data-theme="J"] .jeopardy-cell { position: relative; background: #F4E58A; color: #26332E; box-shadow: 0 6px 12px rgba(0,0,0,.4); font-family: 'Permanent Marker', cursive; font-size: 1.7rem; rotate: -2deg; }
+:root[data-theme="J"] .jeopardy-cell:nth-child(3n)   { background: #F2A7B5; rotate: 1.5deg; }
+:root[data-theme="J"] .jeopardy-cell:nth-child(3n+1) { background: #9CC7F0; rotate: -1deg; }
+:root[data-theme="J"] .jeopardy-cell:nth-child(5n)   { background: #A8E0B5; }
+:root[data-theme="J"] .jeopardy-cell::before { content: ''; position: absolute; top: -8px; left: 50%; width: 46px; height: 14px; margin-left: -23px; background: rgba(237,237,230,.45); rotate: 3deg; }
+:root[data-theme="J"] .jeopardy-cell:hover:not(.used) { transform: scale(1.06); }
+:root[data-theme="J"] .jeopardy-cell.used { background: transparent; box-shadow: none; }
+:root[data-theme="J"] .jeopardy-cell.used::before { display: none; }
+:root[data-theme="J"] .wwm-q { color: #EDEDE6; font-family: 'Permanent Marker', cursive; font-weight: 400; font-size: 1.6rem; line-height: 1.3; }
+/* WWM-Antworten als Kreidekaesten - die ungleichen Radien machen die
+   Linie handgezogen. */
+:root[data-theme="J"] .wwm-opt { border: 2px solid rgba(237,237,230,.8); border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; font-size: 1.5rem; font-weight: 400; }
+:root[data-theme="J"] .wwm-opt .wwm-letter { color: #EDEDE6; font-family: 'Patrick Hand', cursive; }
+:root[data-theme="J"] .wwm-opt.selected { border-color: #F2A7B5; }
+:root[data-theme="J"] .wwm-opt.correct { border-color: #F4E58A; border-width: 3px; }
+/* Mit Kreide geschrieben: in Stufen von links nach rechts sichtbar. */
+@keyframes thJKreide {
+  0%   { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+/* Helle Richtungen: die WWM-Leiter lag als rgba(0,0,0,.25) grau auf Creme.
+   Dort eine Panel-Flaeche mit Linie, wie die anderen Kaesten. */
+:root[data-theme-hell] .wwm-ladder { background: var(--panel); box-shadow: inset 0 0 0 2px var(--line); }
+
 /* Reduzierte Bewegung: Signatur-Momente und Dauerlaeufer aus. Steht am Ende
    des Blocks, damit es jede Richtung oben drueber schlaegt. */
 @media (prefers-reduced-motion: reduce) {
