@@ -12,6 +12,118 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Intros: eine Engine für alle, Leuchtbuchstaben (`ad0b630`)
+
+**Gemacht.** Auf Davids „rework mal die Intros mit deinen neuen Tools“, Umfang
+„Engine + Optik“ von ihm gewählt.
+- `js/intro.js`: neue `playIntro(daten, weiter)`. Keller, Keller Tag 2 und
+  Geburtstag sind jetzt Vorlagen (`INTRO_PRESETS`) im Datenformat des eigenen
+  Intros. `showGameshowIntro`, `showGameshowIntroTag2`, `showBirthdayIntro`
+  und `runKgIntro` liegen jetzt hier. Die alten Fassungen sind aus
+  `js/feud.js` (150 Zeilen) und `js/jeopardy.js` (30 Zeilen) entfernt.
+  `getBdayName`/`saveBdayName` bleiben in `feud.js`.
+- Drei Bühnen: `buehne` (#kg), neu `geburtstag` (#kgb, vorher nur fest
+  verdrahtet) und `neon` (#kgn). `#kg2` ist entfallen, Tag 2 läuft auf #kg
+  mit 3,3 s Takt.
+- Neues Feld je Stufe, „Extra über dem Text“: Teams, Torte, Tag 1 + Tag 2,
+  Geldbetrag. Neues Feld „Vorlage laden“ im Kopf-Kasten des Editors (fragt
+  nach, wenn Stufen mit Inhalt da sind).
+- Optik: Die großen Zeilen stehen erst als dunkle Leuchtreklame da und gehen
+  dann Buchstabe für Buchstabe an. Keller und Geburtstag flackern wie
+  Glühbirnen (`kgBulbOn`), Neon zündet wie Röhren (`knIgnite`/`knIgnite2`
+  im Wechsel). Dazu ein Scheinwerfer-Schlag hinter jeder Stufe (`kgHit`,
+  nicht auf Neon) und der Lämpchenrahmen als Lauflicht in drei Phasen
+  (`kgChase`) statt Gleichtakt-Blinken. `?` wackelt nach dem Angehen.
+- Schriftgrößen in `min(vh, vw)` statt fester px. Die Media-Queries für
+  schmale Fenster sind damit entfallen.
+- `prefers-reduced-motion`: Stufen blenden weich mit echter Dauer, Buchstaben
+  stehen sofort.
+- Auswahlfelder im Intro-Editor sind jetzt 38 px hoch (vorher rund 20 px).
+- `BAUPLAN.md` hat eine neue Regel 4.8: Was das Publikum sieht, wird mit CSS
+  animiert.
+
+**Warum so.**
+- *GSAP verworfen*, obwohl es so angefragt war: `mainscreen/index.html`
+  lädt keine `js/`-Dateien (nur ein Inline-Script) und bekommt den DOM per
+  `MutationObserver` + `morphMirror` gespiegelt (`js/feud.js`, `startBoardMirror`).
+  GSAP schreibt je Frame `style`. Das hieße ein Spiegel-Durchlauf je Frame,
+  und im Hintergrund gedrosselt bliebe die Leinwand stehen. Die zweite
+  Möglichkeit, GSAP ins Popout zu laden und über einen eigenen Kanal
+  anzustoßen, wäre viel Aufwand ohne sichtbaren Gewinn für diesen Effekt.
+  David hat gefragt, was hochwertiger aussieht; Antwort: CSS.
+- *React Bits verworfen*: viele Komponenten sind Canvas/WebGL und kommen
+  durch den Spiegel gar nicht an.
+- Die Vorlagen sind Daten statt Markup, damit jede Zeile ohne Code-Änderung
+  im Editor austauschbar ist und die Bühne nur noch einmal existiert.
+- „Spend boldness in one place“ (frontend-design): Der eine auffällige Effekt
+  sind die Leuchtbuchstaben, alles andere bleibt wie es war.
+
+**Geprüft.**
+- `node check.js`: „alles in Ordnung“ (426 Handler, 273 IDs, 1064
+  Klammernpaare).
+- `node check.js --types`: 14 Dateien, keine Meldung.
+- Im Browser-Pane (localhost:3000, 1280×720), Funktionen direkt per JS
+  aufgerufen:
+  - Keller: 7 Stufen, 89 Buchstaben-Spans, 95 Rahmenbirnen. Die große Zeile
+    misst 77,76 px, `WILLKOMMEN!` ist 821 px breit bei 1265 px Bühne.
+    Screenshot: Buchstaben gehen nacheinander an.
+  - Geburtstag: 6 Ballons, 2 Torten, Kopfzeile mit Name.
+  - Neon: kein `.frame`, Buchstaben abwechselnd `knIgnite`/`knIgnite2`, 2 Pills.
+    Die Halte-Stufe steht mit `opacity 1`, Screenshot mit „30 €“.
+  - Editor: Vorlage „Tag 2“ geladen → 6 Stufen, 3,3 s, Extras
+    `['','','','teams','tage','geld']`, 6 Extra-Felder richtig vorbelegt,
+    gespeichert. Danach den vorigen Stand zurückgeschrieben.
+  - Auswahlfelder 38 px hoch.
+  - Konsole: keine Fehler.
+
+**Ungeprüft.**
+- Das echte Zuschauerfenster mit Spiegel. Kein Popout geöffnet, die Aussage
+  „läuft dort flüssig“ beruht auf dem Mechanismus, nicht auf einer Messung.
+  **Vor der nächsten Show einmal mit offenem Popout und Beamer-Vollbild
+  durchklicken.**
+- `prefers-reduced-motion` nicht emuliert, nur die Regeln geschrieben.
+- Der Weg über die Intro-Auswahl im Setup-Screen und einen echten Spielstart
+  (`runIntroThen`). Dessen Code ist unverändert, er ruft dieselben Namen auf.
+- Das Weiterklicken vom GM-Panel aus. `#kg-overlay` steht unverändert in
+  `GM_OVERLAY_SELECTOR`.
+
+**Offen.**
+- `CLAUDE.md` ist an zwei Stellen veraltet, und Änderungen dort brauchen
+  Davids OK:
+  - Zeile 131 sagt „Neue Animationen vorzugsweise mit GSAP“. Das widerspricht
+    der neuen Regel 4.8, gemeint ist jetzt: nur was der Host sieht.
+  - Zeile 177 sagt „Eigenes Intro (Editor, zwei Bühnen)“. Richtig ist: alle
+    Intros, drei Bühnen, Vorlagen.
+- Kleine Abweichungen von den alten festen Intros:
+  - „DIE GROSSE / KELLER / GAMESHOW“ hat jetzt nur zwei große Zeilen, „Die
+    Große“ steht als kleine Zeile darüber.
+  - „TAG 2“ in der Kopfzeile ist nicht mehr grün.
+  - „DER GESAMTSTAND“ und „EWIGE EHRE“ sind gold statt grün.
+  - Der Name im Geburtstags-Intro ist nicht mehr extra groß.
+  Wer das zurück will, braucht eine Farb- bzw. Größenwahl je Zeile.
+- Die Team-Figuren sind weiter Mint und Rosa, nicht die festen Team-Farben
+  aus BAUPLAN 4.4. Bewusst so gelassen und im Code begründet. Ob David das
+  so will, ist nicht gefragt.
+
+**Kreative Ansätze, nur angedacht.** Eine Farb- und Größenwahl je Zeile.
+Eine dritte Wahl der Bewegung je Bühne (z. B. Buchstaben fallen von oben ein
+statt anzugehen). Ein Trommelwirbel-Takt, bei dem der Scheinwerfer-Schlag
+genau mit dem letzten Buchstaben kommt.
+
+**Fallstricke.**
+- Im Browser-Pane liegt die Host-Sperre (`#host-gate`) über allem. Für die
+  Screenshots per JS ausgeblendet, kein Passwort eingegeben.
+- Screenshots im Pane hinken der Animation hinterher. Ein Bild zeigte das
+  Menü durch die Bühne, weil es mitten im 0,8-s-Einblenden entstand. Erst
+  per `getComputedStyle`/`getAnimations()` nachmessen, dann urteilen.
+- Port 3000 belegt der Server einer anderen Session (`preview_start` mit
+  `name` verweigert). Mit `url: http://localhost:3000` ging es, das ist
+  dasselbe Verzeichnis.
+- Dateien haben CRLF im Arbeitsverzeichnis. Beim Ersetzen per Node-Skript
+  `\r` mitbehandeln.
+
+---
+
 ## 2026-10-09 — BAUPLAN: Überblick-Zahlen nachgezogen (`590e4c2`)
 
 **Gemacht.** `BAUPLAN.md` Abschnitt 0, Zeile 31: „13 Dateien in `js/`“ → 14,
