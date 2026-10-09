@@ -39,7 +39,13 @@ nur ShinyText) ist weiterhin nirgends eingebunden (`grep` in `js/` und
 `index.html`: 0 Treffer). In `~/.claude/skills` 16 caveman-Ordner gezählt,
 der Eintrag `8d987e7` unten nennt 17 — nicht geklärt.
 
-**Fallstricke.** Keine.
+**Deploy.** Push `6d093ad` → Pages-Action Lauf 37916413219: `completed`,
+`success` (abgefragt über die öffentliche GitHub-API per `curl`).
+
+**Fallstricke.** `gh` ist auf diesem Gerät nicht installiert (weder in Bash
+noch in PowerShell). Den Deploy-Lauf stattdessen über
+`curl https://api.github.com/repos/Iryogameshows/iryogameshows.github.io/actions/runs?head_sha=<hash>`
+prüfen, das Repo ist öffentlich und braucht kein Token.
 
 ---
 
