@@ -577,12 +577,32 @@ Die Liste, an der eine Show scheitert:
 - [ ] Konsole leer (außer Netzwerk)
 - [ ] `HANDOFF.md`-Eintrag mit Hash, samt verworfener Wege und Messwerten
 
-Was nicht geprüft wurde, wird als ungeprüft benannt. **Firebase läuft in
-keinem lokalen Durchlauf** — alles, was an Lobby, Presence und Handys hängt,
-bleibt bis zum ersten echten Abend eine begründete Vermutung. Für die
-Handy-Seite gibt es inzwischen einen Firebase-Ersatz fürs Testen; ohne ihn
+Was nicht geprüft wurde, wird als ungeprüft benannt. **In einer Umgebung
+ohne Netz läuft Firebase nicht** — alles, was an Lobby, Presence und Handys
+hängt, bleibt dort bis zum ersten echten Abend eine begründete Vermutung. Für
+die Handy-Seite gibt es inzwischen einen Firebase-Ersatz fürs Testen; ohne ihn
 bricht `buzzer/index.html` in der ersten Zeile ab und keine ihrer Funktionen
 ist erreichbar.
+
+**Mit Netz ist es umgekehrt: dann schreibt ein lokaler Test in die
+Live-Datenbank.** Auf einem normalen Rechner (`localhost:3000`) lädt die App
+Firebase vom CDN und verbindet sich mit der echten DB. Jeder Spielstart im
+Test schreibt dann in `buzzer` — `startGameActual()` setzt `live`/`armed`/
+`buzzes`, `lockBuzzerJoins()` setzt `joinLocked:true` (neue Handys kommen
+nicht mehr rein), `revealQuestion()` schärft den Buzzer, dazu die Kanäle
+`ddfvote`, `estimate`, `tpspin`. `showResults()` schreibt sogar Ergebnisse in
+die Spielerkonten. Deshalb vor jedem Browser-Test, der Spiele startet, in der
+Seite stummschalten:
+
+```js
+const noop = new Proxy(function(){}, { get: (t, p) => p === 'then' ? undefined
+  : (p === 'catch' || p === 'finally') ? () => Promise.resolve() : noop, apply: () => noop });
+firebase.database = Object.assign(() => noop, { ServerValue: { TIMESTAMP: 0 } });
+```
+
+Anlass: Design-Tests am 2026-10-09/10 haben die Starts dutzendfach ohne diesen
+Schalter ausgelöst; danach stand `buzzer/joinLocked` live auf `true`
+(zurückgesetzt nach Rückfrage, Vorgang in `HANDOFF.md`).
 
 ### 5.1 Drei Regeln für den Test selbst
 
