@@ -71,6 +71,34 @@
   --t-fast: .12s;
   --t-med: .25s;
   --t-slow: .5s;
+
+  /* ── Spielbrett-Material ─────────────────────────────────────────────────
+     Die Bretter (Feud-Tafel, Jeopardy-Felder, WWM- und WWDS-Antworten, die
+     Demos in den Anleitungen) zeichneten in jeder Design-Richtung Studio-
+     Blau. --blue taugt dafuer nicht: das ist Team Blau (BAUPLAN 4.4).
+     Deshalb eigene Namen, die hier bewusst NICHT gesetzt sind. Jede Stelle
+     liest var(--tile, <ihr alter Studio-Wert>) - ohne Richtung bleibt also
+     alles wie es war, eine Richtung setzt einmal --tile und trifft alle
+     Bretter. Gesetzt werden sie im Block "Material je Design-Richtung" am
+     Dateiende.
+       --brd-surface  Flaeche hinter der Feud-Tafel und der WWM-Frage
+       --brd-frame    deren box-shadow (Rahmen), auch das Jeopardy-Raster
+       --brd-well     Grund zwischen den Jeopardy-Feldern, hinter Bildern
+       --brd-tex      Ebene UEBER --brd-surface (Korn, Raster, Papier)
+       --brd-radius, --brd-fg, --brd-inner (Linie innen an der Feud-Tafel)
+       --tile         verdecktes Feld / Antwortknopf      --tile-hover
+       --tile-edge    dessen box-shadow                   --tile-tex (Ebene darueber)
+       --tile-fg      Schrift darauf                      --tile-font
+       --tile-num     Zahl/Buchstabe darauf (sonst Akzent) --tile-num-glow
+       --tile-dim-fg  leise Schrift (Platznummer)         --tile-rule, --tile-bar
+       --tile-head    Jeopardy-Kategorie (sonst --tile)   --tile-head-fg
+       --tile-used    verbrauchtes Feld
+       --tile-open    aufgedeckt / richtig  (+ -fg, -edge, -dim)
+       --tile-pick    eingeloggt / aktuelle Stufe  (+ -fg)
+       --tile-pts-bg, --tile-pts-rule   Punktekasten im Feud-Feld
+       --tile-reveal  animation beim Aufdecken in Feud (sonst tileFlip)
+       --tile-radius
+     Falsch bleibt Rot - das ist eine Aussage, kein Material. */
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -239,16 +267,16 @@ body {
 /* ── BOARD ── */
 .board {
   width: 100%;
-  background: linear-gradient(180deg, #0F1B5C 0%, #091042 100%);
-  border-radius: 18px; padding: 20px; position: relative;
-  box-shadow:
+  background: var(--brd-tex, none), var(--brd-surface, linear-gradient(180deg, #0F1B5C 0%, #091042 100%));
+  border-radius: var(--brd-radius, 18px); padding: 20px; position: relative;
+  box-shadow: var(--brd-frame,
     0 0 0 3px var(--gold-dark), 0 0 0 5px #0a0e30,
     0 0 0 7px rgba(198,147,10,.3), 0 12px 48px rgba(0,0,0,.6),
-    inset 0 1px 0 rgba(255,255,255,.05);
+    inset 0 1px 0 rgba(255,255,255,.05));
 }
 .board::before {
   content: ''; position: absolute; inset: 3px; border-radius: 15px;
-  border: 1px solid rgba(var(--gold-rgb),.08); pointer-events: none;
+  border: 1px solid var(--brd-inner, rgba(var(--gold-rgb),.08)); pointer-events: none;
 }
 
 /* Question hidden/revealed */
@@ -281,29 +309,30 @@ body {
 .tile {
   display: flex; align-items: stretch;
   min-height: 50px; cursor: pointer;
-  border-radius: 8px; overflow: hidden; transition: transform .15s;
+  border-radius: var(--tile-radius, 8px); overflow: hidden; transition: transform .15s;
 }
 .tile:hover:not(.open) { transform: scale(1.015); }
 .tile-inner {
   display: flex; align-items: stretch; width: 100%;
-  border-radius: 8px; overflow: hidden; position: relative;
+  border-radius: var(--tile-radius, 8px); overflow: hidden; position: relative;
+  color: var(--tile-fg, inherit); font-family: var(--tile-font, inherit);
 }
 .tile:not(.open) .tile-inner {
-  background: linear-gradient(180deg, #1E3FAE 0%, #162E88 50%, #112370 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.2), 0 2px 6px rgba(0,0,0,.3);
+  background: var(--tile-tex, none), var(--tile, linear-gradient(180deg, #1E3FAE 0%, #162E88 50%, #112370 100%));
+  box-shadow: var(--tile-edge, inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.2), 0 2px 6px rgba(0,0,0,.3));
 }
 .tile:not(.open):hover .tile-inner {
-  background: linear-gradient(180deg, #2850C8 0%, #1E3FAE 50%, #162E88 100%);
+  background: var(--tile-tex, none), var(--tile-hover, linear-gradient(180deg, #2850C8 0%, #1E3FAE 50%, #162E88 100%));
 }
 .tile-num {
   width: 44px; display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-size: 1.4rem;
-  color: rgba(var(--fg-rgb),.35); border-right: 1px solid rgba(var(--fg-rgb),.06);
+  color: var(--tile-dim-fg, rgba(var(--fg-rgb),.35)); border-right: 1px solid var(--tile-rule, rgba(var(--fg-rgb),.06));
 }
 .tile:not(.open) .tile-center { flex: 1; display: flex; align-items: center; justify-content: center; }
 .tile:not(.open) .tile-center::after {
   content: ''; width: 40%; height: 8px;
-  background: rgba(var(--fg-rgb),.06); border-radius: 4px;
+  background: var(--tile-bar, rgba(var(--fg-rgb),.06)); border-radius: 4px;
 }
 .tile:not(.open) .tile-pts { display: none; }
 .tile:not(.open) .tile-answer { display: none; }
@@ -312,20 +341,21 @@ body {
   box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -2px 0 rgba(0,0,0,.15), 0 2px 8px rgba(0,0,0,.25);
 }
 .tile.open .tile-inner {
-  background: linear-gradient(180deg, #166534 0%, #14532D 50%, #0F4024 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.1), inset 0 -2px 0 rgba(0,0,0,.15), 0 2px 8px rgba(0,0,0,.25);
-  animation: tileFlip .6s cubic-bezier(.25,.46,.45,.94);
+  background: var(--tile-tex, none), var(--tile-open, linear-gradient(180deg, #166534 0%, #14532D 50%, #0F4024 100%));
+  box-shadow: var(--tile-open-edge, inset 0 1px 0 rgba(255,255,255,.1), inset 0 -2px 0 rgba(0,0,0,.15), 0 2px 8px rgba(0,0,0,.25));
+  color: var(--tile-open-fg, inherit);
+  animation: var(--tile-reveal, tileFlip .6s cubic-bezier(.25,.46,.45,.94));
   transform-origin: center top;
 }
-.tile.open .tile-num { color: rgba(var(--fg-rgb),.5); }
+.tile.open .tile-num { color: var(--tile-open-dim, rgba(var(--fg-rgb),.5)); }
 .tile.open .tile-center { flex: 1; display: flex; align-items: center; padding: 0 16px; }
 .tile.open .tile-answer { font-size: .95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 .tile.open .tile-pts {
   display: flex; align-items: center; justify-content: center;
   padding: 0 18px; min-width: 60px;
-  font-family: var(--font-display); font-size: 1.5rem; color: var(--accent-text);
-  border-left: 2px solid rgba(var(--gold-rgb),.45);
-  background: rgba(0,0,0,.22);
+  font-family: var(--font-display); font-size: 1.5rem; color: var(--tile-num, var(--accent-text));
+  border-left: 2px solid var(--tile-pts-rule, rgba(var(--gold-rgb),.45));
+  background: var(--tile-pts-bg, rgba(0,0,0,.22));
   box-shadow: inset 1px 0 0 rgba(0,0,0,.3);
   text-shadow: 0 0 8px rgba(var(--gold-rgb),.3);
 }
@@ -540,11 +570,11 @@ body {
   display: flex; align-items: center; overflow: hidden;
 }
 .tut-tile-blue {
-  background: linear-gradient(180deg, #1E3FAE, #112370);
+  background: var(--tile, linear-gradient(180deg, #1E3FAE, #112370));
   box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
 }
 .tut-tile-green {
-  background: linear-gradient(180deg, #166534, #0F4024);
+  background: var(--tile-open, linear-gradient(180deg, #166534, #0F4024));
   box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
   animation: tutTileReveal .5s ease-out;
 }
@@ -596,17 +626,17 @@ body {
 /* Jeopardy-Board-Demo */
 .tut-jboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 320px; }
 .tut-jcat {
-  background: linear-gradient(180deg, #1a2a8a, #111d6e); border-radius: 5px;
+  background: var(--tile, linear-gradient(180deg, #1a2a8a, #111d6e)); border-radius: 5px;
   padding: 7px 3px; font-size: .5rem; font-weight: 900; text-transform: uppercase;
   letter-spacing: .5px; color: var(--fg); text-align: center;
   display: flex; align-items: center; justify-content: center; min-height: 34px;
 }
 .tut-jcell {
-  background: linear-gradient(180deg, #1a2a8a, #111d6e); border-radius: 5px; height: 42px;
+  background: var(--tile, linear-gradient(180deg, #1a2a8a, #111d6e)); border-radius: 5px; height: 42px;
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display); font-size: 1.35rem; color: var(--accent-text);
 }
-.tut-jcell.used { background: #080c1e; color: transparent; }
+.tut-jcell.used { background: var(--tile-used, #080c1e); color: transparent; }
 .tut-jcell.pick { animation: tutStrikePop .45s var(--ease-pop); box-shadow: 0 0 18px rgba(var(--gold-rgb),.5); }
 /* Richtig/Falsch-Demo (Jeopardy) */
 .tut-scorerow { display: flex; gap: 14px; margin-top: 6px; }
@@ -621,23 +651,23 @@ body {
 .tut-wwds-cat {
   min-height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
   padding: 6px 4px; text-align: center; font-size: .72rem; font-weight: 700;
-  text-transform: uppercase; letter-spacing: .5px; color: var(--fg);
-  background: linear-gradient(180deg, #1E3FAE, #112370);
+  text-transform: uppercase; letter-spacing: .5px; color: var(--tile-fg, var(--fg));
+  background: var(--tile, linear-gradient(180deg, #1E3FAE, #112370));
   box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
 }
 .tut-wwds-cat.pick { box-shadow: 0 0 18px rgba(var(--gold-rgb),.5); animation: tutStrikePop .45s var(--ease-pop); }
-.tut-wwds-cat.used { background: linear-gradient(180deg,#243056,#141a33); opacity: .4; text-decoration: line-through; }
+.tut-wwds-cat.used { background: var(--tile-used, linear-gradient(180deg,#243056,#141a33)); opacity: .4; text-decoration: line-through; }
 .tut-wwds-opts { display: flex; flex-direction: column; gap: 8px; width: 380px; }
 .tut-wwds-opt {
   display: flex; align-items: center; gap: 12px; padding: 11px 16px; border-radius: 10px;
-  font-size: .9rem; font-weight: 700; color: var(--fg);
-  background: linear-gradient(180deg, #1E3FAE, #112370);
+  font-size: .9rem; font-weight: 700; color: var(--tile-fg, var(--fg));
+  background: var(--tile, linear-gradient(180deg, #1E3FAE, #112370));
   box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
 }
 .tut-wwds-opt span {
   font-family: var(--font-display); font-size: 1.3rem; color: var(--accent-text); min-width: 20px;
 }
-.tut-wwds-opt.right { background: linear-gradient(180deg, #16A34A, #0F4024); }
+.tut-wwds-opt.right { background: var(--tile-open, linear-gradient(180deg, #16A34A, #0F4024)); }
 .tut-wwds-opt.right span { color: var(--fg); }
 /* Daily-Double-Badge */
 .tut-dd {
@@ -1106,40 +1136,41 @@ body {
 .jeopardy-board {
   width: 100%; display: grid;
   border-radius: 14px; overflow: hidden;
-  gap: 4px; background: #050815;
+  gap: 4px; background: var(--brd-well, #050815);
   padding: 4px;
-  box-shadow: 0 0 0 3px var(--gold-dark), 0 0 0 5px #0a0e30, 0 12px 40px rgba(0,0,0,.6);
+  box-shadow: var(--brd-frame, 0 0 0 3px var(--gold-dark), 0 0 0 5px #0a0e30, 0 12px 40px rgba(0,0,0,.6));
 }
 .jeopardy-cat {
-  background: linear-gradient(180deg, #1a2a8a, #111d6e);
+  background: var(--tile-head, var(--tile, linear-gradient(180deg, #1a2a8a, #111d6e)));
   text-align: center; padding: 12px 8px;
   font-size: .7rem; font-weight: 900; text-transform: uppercase;
-  letter-spacing: 2px; color: var(--fg);
+  letter-spacing: 2px; color: var(--tile-head-fg, var(--tile-fg, var(--fg)));
   display: flex; align-items: center; justify-content: center;
   min-height: 60px; line-height: 1.3;
-  border-radius: 6px;
+  border-radius: var(--tile-radius, 6px);
 }
 /* Bild statt Name: contain statt cover, damit bei Logos und Motiven nichts
    abgeschnitten wird, was zum Erraten gebraucht wird. */
 .jeopardy-cat.has-img { padding: 4px; }
 .jeopardy-cat-img { display: block; width: 100%; height: 84px; object-fit: contain; border-radius: 4px; }
 .jeopardy-cell {
-  background: linear-gradient(180deg, #1a2a8a, #111d6e);
+  background: var(--tile-tex, none), var(--tile, linear-gradient(180deg, #1a2a8a, #111d6e));
+  box-shadow: var(--tile-edge, none);
   text-align: center; padding: 10px 6px;
   font-family: var(--font-display); font-size: 1.8rem;
-  color: var(--accent-text); letter-spacing: 2px;
+  color: var(--tile-num, var(--accent-text)); letter-spacing: 2px;
   display: flex; align-items: center; justify-content: center;
-  min-height: 70px; cursor: pointer; border-radius: 6px;
+  min-height: 70px; cursor: pointer; border-radius: var(--tile-radius, 6px);
   transition: background var(--t-med) var(--ease-out), transform var(--t-fast) var(--ease-out),
               box-shadow var(--t-med) var(--ease-out);
-  text-shadow: 0 0 12px rgba(var(--gold-rgb),.3);
+  text-shadow: var(--tile-num-glow, 0 0 12px rgba(var(--gold-rgb),.3));
 }
 .jeopardy-cell:hover:not(.used) {
-  background: linear-gradient(180deg, #2a3eb0, #1a2e8a); transform: scale(1.03);
+  background: var(--tile-tex, none), var(--tile-hover, linear-gradient(180deg, #2a3eb0, #1a2e8a)); transform: scale(1.03);
   box-shadow: 0 6px 18px rgba(0,0,0,.45), inset 0 0 0 1px rgba(var(--gold-rgb), .25);
 }
 .jeopardy-cell:active:not(.used) { transform: scale(.995); }
-.jeopardy-cell.used { background: #080c1e; color: transparent; cursor: default; }
+.jeopardy-cell.used { background: var(--tile-used, #080c1e); color: transparent; cursor: default; }
 .jeopardy-clue-overlay {
   position: fixed; inset: 0; z-index: 1000;
   background: var(--bg);
@@ -1201,9 +1232,9 @@ body {
   box-shadow: 0 8px 30px rgba(0,0,0,.5); border: 2px solid rgba(var(--fg-rgb),.1);
   max-width: min(78vw, 760px);
 }
-.jeopardy-stage img { display: block; width: 100%; height: auto; max-height: 56vh; object-fit: contain; background: #05081a; }
+.jeopardy-stage img { display: block; width: 100%; height: auto; max-height: 56vh; object-fit: contain; background: var(--brd-well, #05081a); }
 .jeopardy-stage-cover { position: absolute; inset: 0; display: grid; gap: 2px; }
-.jeopardy-stage-tile { background: #0F1B5C; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); transition: opacity .35s ease; }
+.jeopardy-stage-tile { background: var(--tile, #0F1B5C); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); transition: opacity .35s ease; }
 .jeopardy-stage-tile.gone { opacity: 0; }
 /* Bilder-Reihe: mehrere einzelne Bilder nebeneinander, eins nach dem anderen
    aufgedeckt (z.B. 5 Pokémon). Jede Zelle ist erst verdeckt, Klick deckt die
@@ -1211,14 +1242,14 @@ body {
 .jeopardy-series { display: grid; gap: 10px; width: 100%; max-width: min(92vw, 1150px); margin: 0 auto; }
 .jeopardy-series-cell {
   position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden;
-  background: #05081a; box-shadow: 0 6px 22px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08);
+  background: var(--brd-well, #05081a); box-shadow: 0 6px 22px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08);
 }
 .jeopardy-series-cell img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .jeopardy-series-cover {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, #1E3FAE 0%, #162E88 50%, #112370 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.2);
-  font-family: var(--font-display); font-size: 2.8rem; color: rgba(var(--fg-rgb),.4);
+  background: var(--tile-tex, none), var(--tile, linear-gradient(180deg, #1E3FAE 0%, #162E88 50%, #112370 100%));
+  box-shadow: var(--tile-edge, inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.2));
+  font-family: var(--font-display); font-size: 2.8rem; color: var(--tile-dim-fg, rgba(var(--fg-rgb),.4));
   transition: opacity .4s ease;
 }
 .jeopardy-series-cell.shown .jeopardy-series-cover { opacity: 0; pointer-events: none; }
@@ -2483,24 +2514,26 @@ body {
 .wwm-wrap{display:flex;gap:18px;width:100%;align-items:stretch;}
 .wwm-main{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
 .wwm-q{
-  background:linear-gradient(180deg,#0F1B5C 0%,#091042 100%);
-  border-radius:16px;padding:22px 24px;text-align:center;
-  font-size:1.25rem;font-weight:700;line-height:1.5;color:var(--fg);min-height:70px;
+  background:var(--brd-tex, none),var(--brd-surface, linear-gradient(180deg,#0F1B5C 0%,#091042 100%));
+  border-radius:var(--brd-radius, 16px);padding:22px 24px;text-align:center;
+  font-size:1.25rem;font-weight:700;line-height:1.5;color:var(--brd-fg, var(--fg));min-height:70px;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 0 3px var(--gold-dark),0 0 0 5px #0a0e30,0 10px 32px rgba(0,0,0,.5);
+  box-shadow:var(--brd-frame, 0 0 0 3px var(--gold-dark),0 0 0 5px #0a0e30,0 10px 32px rgba(0,0,0,.5));
 }
 .wwm-answers{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .wwm-opt{
-  display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:10px;cursor:pointer;
-  background:linear-gradient(180deg,#1E3FAE 0%,#112370 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 6px rgba(0,0,0,.3);
-  transition:transform .12s,filter .12s;font-weight:700;font-size:1rem;color:var(--fg);
+  display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:var(--tile-radius, 10px);cursor:pointer;
+  background:var(--tile-tex, none),var(--tile, linear-gradient(180deg,#1E3FAE 0%,#112370 100%));
+  box-shadow:var(--tile-edge, inset 0 1px 0 rgba(255,255,255,.12),0 2px 6px rgba(0,0,0,.3));
+  transition:transform .12s,filter .12s;font-weight:700;font-size:1rem;color:var(--tile-fg, var(--fg));
+  font-family:var(--tile-font, inherit);
 }
 .wwm-opt:hover{filter:brightness(1.15);}
-.wwm-opt .wwm-letter{color:var(--accent-text);font-family:var(--font-display);font-size:1.4rem;min-width:22px;}
-.wwm-opt.selected{background:linear-gradient(180deg,#F59E0B,#C2410C);}
-.wwm-opt.selected .wwm-letter{color:var(--fg);}
-.wwm-opt.correct{background:linear-gradient(180deg,#16A34A,#0F4024);animation:wwmPulse .5s ease;}
+.wwm-opt .wwm-letter{color:var(--tile-num, var(--accent-text));font-family:var(--font-display);font-size:1.4rem;min-width:22px;}
+.wwm-opt.selected{background:var(--tile-pick, linear-gradient(180deg,#F59E0B,#C2410C));color:var(--tile-pick-fg, var(--tile-fg, var(--fg)));}
+.wwm-opt.selected .wwm-letter{color:var(--tile-pick-fg, var(--fg));}
+.wwm-opt.correct{background:var(--tile-open, linear-gradient(180deg,#16A34A,#0F4024));color:var(--tile-open-fg, var(--tile-fg, var(--fg)));animation:wwmPulse .5s ease;}
+.wwm-opt.correct .wwm-letter{color:var(--tile-open-fg, var(--tile-num, var(--accent-text)));}
 .wwm-opt.wrong{background:linear-gradient(180deg,var(--red),#7F1D1D);}
 .wwm-opt.removed{opacity:.25;pointer-events:none;}
 .wwm-opt.removed .wwm-text{visibility:hidden;}
@@ -2523,8 +2556,8 @@ body {
 .wwm-rung .wwm-lvl{color:rgba(var(--fg-rgb),.3);font-size:.85rem;min-width:22px;}
 .wwm-rung.safe{color:#FFF;}
 .wwm-rung.safe .wwm-amt{color:var(--gold-pale);}
-.wwm-rung.current{background:linear-gradient(90deg,#F59E0B,#C2410C);color:var(--fg);}
-.wwm-rung.current .wwm-lvl,.wwm-rung.current .wwm-amt{color:var(--fg);}
+.wwm-rung.current{background:var(--tile-pick, linear-gradient(90deg,#F59E0B,#C2410C));color:var(--tile-pick-fg, var(--fg));}
+.wwm-rung.current .wwm-lvl,.wwm-rung.current .wwm-amt{color:var(--tile-pick-fg, var(--fg));}
 .wwm-rung.won{color:var(--green);}
 .wwm-audience{display:flex;gap:14px;align-items:flex-end;justify-content:center;height:120px;margin-top:4px;}
 /* Der Balken wird bei jedem Render per innerHTML neu erzeugt und bekommt seine
@@ -2576,14 +2609,15 @@ body {
 .wwds-cat{
   min-height:74px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:4px;padding:8px 6px;text-align:center;
-  background:linear-gradient(180deg,#1E3FAE 0%,#162E88 50%,#112370 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 6px rgba(0,0,0,.3);
+  background:var(--tile-tex, none),var(--tile, linear-gradient(180deg,#1E3FAE 0%,#162E88 50%,#112370 100%));
+  box-shadow:var(--tile-edge, inset 0 1px 0 rgba(255,255,255,.12),0 2px 6px rgba(0,0,0,.3));
+  color:var(--tile-fg, inherit);font-family:var(--tile-font, inherit);
   transition:transform .15s,filter .15s;
 }
 .wwds-cat:hover:not(.done){transform:scale(1.03);filter:brightness(1.15);}
-.wwds-cat .wc-num{font-family:var(--font-display);font-size:1.1rem;color:rgba(var(--fg-rgb),.35);}
+.wwds-cat .wc-num{font-family:var(--font-display);font-size:1.1rem;color:var(--tile-dim-fg, rgba(var(--fg-rgb),.35));}
 .wwds-cat .wc-name{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;line-height:1.25;}
-.wwds-cat.done{background:linear-gradient(180deg,#243056,#141a33);cursor:default;opacity:.45;}
+.wwds-cat.done{background:var(--tile-used, linear-gradient(180deg,#243056,#141a33));cursor:default;opacity:.45;}
 .wwds-cat.done .wc-name{text-decoration:line-through;}
 
 .wwds-q{
@@ -2596,15 +2630,17 @@ body {
   letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
 .wwds-opts{display:flex;flex-direction:column;gap:9px;width:100%;}
 .wwds-opt{
-  display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:10px;cursor:pointer;
-  background:linear-gradient(180deg,#1E3FAE,#112370);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.1);font-weight:700;transition:filter .15s;
+  display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:var(--tile-radius, 10px);cursor:pointer;
+  background:var(--tile-tex, none),var(--tile, linear-gradient(180deg,#1E3FAE,#112370));
+  box-shadow:var(--tile-edge, inset 0 1px 0 rgba(255,255,255,.1));font-weight:700;transition:filter .15s;
+  color:var(--tile-fg, inherit);font-family:var(--tile-font, inherit);
 }
 .wwds-opt:hover{filter:brightness(1.15);}
-.wwds-opt .wo-let{color:var(--accent-text);font-family:var(--font-display);font-size:1.5rem;min-width:24px;}
-.wwds-opt.sel{background:linear-gradient(180deg,#F59E0B,#C2410C);}
-.wwds-opt.sel .wo-let{color:var(--fg);}
-.wwds-opt.right{background:linear-gradient(180deg,#16A34A,#0F4024);animation:wwdsPulse .5s ease;}
+.wwds-opt .wo-let{color:var(--tile-num, var(--accent-text));font-family:var(--font-display);font-size:1.5rem;min-width:24px;}
+.wwds-opt.sel{background:var(--tile-pick, linear-gradient(180deg,#F59E0B,#C2410C));color:var(--tile-pick-fg, var(--tile-fg, inherit));}
+.wwds-opt.sel .wo-let{color:var(--tile-pick-fg, var(--fg));}
+.wwds-opt.right{background:var(--tile-open, linear-gradient(180deg,#16A34A,#0F4024));color:var(--tile-open-fg, var(--tile-fg, inherit));animation:wwdsPulse .5s ease;}
+.wwds-opt.right .wo-let{color:var(--tile-open-fg, var(--tile-num, var(--accent-text)));}
 .wwds-opt.bad{background:linear-gradient(180deg,var(--red),#7F1D1D);}
 @keyframes wwdsPulse{0%{transform:scale(1);}50%{transform:scale(1.02);}100%{transform:scale(1);}}
 .wwds-opt .wo-tags{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap;}
@@ -3573,9 +3609,14 @@ body {
    (BAUPLAN 4.4) - Schrift darauf muss also hell bleiben. Die Variablen erben,
    deshalb reicht es, sie an der Teamflaeche selbst zurueckzusetzen. Die
    halbtransparenten Karten werden dabei deckend, sonst waeren sie auf Creme
-   nur noch rosa und hellblau. */
+   nur noch rosa und hellblau.
+   Die Akzentschrift gehoert mit dazu: helle Richtungen setzen sie dunkel
+   (Comic #B42318, Bauhaus #D7372B, New York #1A1712), und genau darin
+   standen Punktestand und Name des Teams, das dran ist - rot auf Rot, also
+   unsichtbar. Auf der Teamflaeche gilt deshalb ein helles Gold. */
 :root[data-theme-hell] :is(.team-card, .team-panel, .jeopardy-team, .wwds-team, .tut-buzz-btn):is(.red, .blue, .green) {
   --fg: #fff; --fg-rgb: 255,255,255; --muted: rgba(255,255,255,.75);
+  --accent-text: #FFE9A0; --accent-text-rgb: 255,233,160;
   color: #fff;
 }
 :root[data-theme-hell] .team-card.red   { background: linear-gradient(180deg, #B91C1C, #7F1D1D); }
