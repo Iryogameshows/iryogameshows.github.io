@@ -979,6 +979,9 @@ body {
 .finale-reveal-answer {
   font-size: 1rem; font-weight: 700; margin: 8px 0;
 }
+/* Treffer/Fehlgriff - bis 2026-10-09 als Inline-Farbe im JS (js/feud.js). */
+.finale-reveal-answer.hit { color: #22C55E; }
+.finale-reveal-answer.miss { color: #E8453C; }
 .finale-reveal-pts {
   font-family: var(--font-display); font-size: 2rem; color: var(--accent-text);
 }
@@ -4402,7 +4405,7 @@ body {
 :root[data-theme="N"] .tile-num { flex: 0 0 30px; width: 30px; height: 30px; margin: auto 8px auto 10px; border-radius: 50%; border: 0; background: #F06A4E; font-family: 'Karla', sans-serif; font-weight: 700; font-size: .95rem; }
 :root[data-theme="N"] .tile:not(.open) .tile-num { background: rgba(22,57,54,.18); }
 :root[data-theme="N"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 900; font-size: 1.3rem; }
-:root[data-theme="N"] .tile.open .tile-pts { color: #F06A4E; text-shadow: none; font-family: 'Fraunces', serif; font-weight: 900; font-size: 1.7rem; }
+:root[data-theme="N"] .tile.open .tile-pts { color: #C4472F; text-shadow: none; font-family: 'Fraunces', serif; font-weight: 900; font-size: 1.7rem; }
 /* Jeopardy als Briefumschlaege: zwei schraege Baender ergeben die Klappe,
    Farbe je Spalte reihum. */
 :root[data-theme="N"] .jeopardy-board { gap: 12px; padding: 6px; }
@@ -4587,7 +4590,7 @@ body {
   --tile-dim-fg: rgba(50,85,164,.35);
   --tile-bar: transparent;
   --tile-rule: #3255A4;
-  --tile-open: #FF48B0;
+  --tile-open: #E0309A;
   --tile-open-edge: inset 0 0 0 2px #3255A4, 4px 3px 0 #3255A4;
   --tile-open-fg: #FFFFFF;
   --tile-open-dim: #FFFFFF;
@@ -4776,6 +4779,23 @@ body {
 /* Bestes Gebot (PIH): die Abweichung stand in 45 % heller Schrift auf der
    Gewinnerflaeche der Richtung (Gold, Pink, Creme ...) - dort Feldschrift. */
 :root[data-theme] .pih-bid-row.win .pih-bid-diff { color: inherit; opacity: .7; }
+
+/* Finale-Aufloesung und Ergebnis: auf hellen Flaechen (helle Richtungen,
+   Messing bei Art deco) reichten 40 % Schrift und Hellgruen nicht - gemessen
+   2,1-2,6 fuer die Teamnamen, 1,1-2,0 fuer die Antwort. */
+:root[data-theme-hell] :is(.finale-score-name, .finale-reveal-name),
+:root[data-theme="S"] :is(.finale-score-name, .finale-reveal-name),
+:root[data-theme="J"] :is(.finale-score-name, .finale-reveal-name) { color: rgba(var(--fg-rgb),.72); }
+:root[data-theme-hell] .finale-reveal-answer.hit,
+:root[data-theme="S"] .finale-reveal-answer.hit { color: #15803D; }
+:root[data-theme-hell] .finale-reveal-answer.miss,
+:root[data-theme="S"] .finale-reveal-answer.miss { color: #B42318; }
+:root[data-theme-hell] .result-scores { color: rgba(var(--fg-rgb),.75); }
+/* New York: die Karten liegen sonst direkt auf dem mittelbraunen Grund. */
+:root[data-theme="L"] :is(.finale-score-card, .finale-reveal-team) { background: #EDE6D3; box-shadow: 0 0 0 1px #1A1712, 0 0 0 4px #EDE6D3, 0 0 0 5px #1A1712; }
+/* Art deco: Messing ist mittelhell - Gruen und Rot brauchen dort mehr Tinte. */
+:root[data-theme="S"] .finale-reveal-answer.hit { color: #0E3A1E; }
+:root[data-theme="S"] .finale-reveal-answer.miss { color: #6E1410; }
 
 /* Helle Richtungen: Unterzeilen in 45 % Schrift lagen auf hellen Flaechen
    unter Kontrast 3 (gemessen 2,3 bis 2,9). Die gruene Loesung bei DDF

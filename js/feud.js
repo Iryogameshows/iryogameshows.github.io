@@ -650,15 +650,18 @@ function loadRevealQuestion() {
   const team1Pts = team1Ans >= 0 ? (Number(q.answers[team1Ans].points) || 0) : 0;
   const team2Pts = team2Ans >= 0 ? (Number(q.answers[team2Ans].points) || 0) : 0;
   revealDiv.className = 'finale-reveal-cards';
+  // Treffer/Fehlgriff als Klasse statt Inline-Farbe: Hellgruen #22C55E war auf
+  // den hellen Design-Richtungen (Creme, Messing) kaum zu lesen, und eine
+  // Inline-Farbe laesst sich aus styles.css nicht ueberschreiben.
   revealDiv.innerHTML = `
     <div class="finale-reveal-team">
       <div class="finale-reveal-name">${escapeHtml(state.teamNames[finaleState.teams[0]])}</div>
-      <div class="finale-reveal-answer" style="color:${team1Ans >= 0 ? '#22C55E' : '#E8453C'}">${team1Text}</div>
+      <div class="finale-reveal-answer ${team1Ans >= 0 ? 'hit' : 'miss'}">${team1Text}</div>
       <div class="finale-reveal-pts">${team1Pts}</div>
     </div>
     <div class="finale-reveal-team">
       <div class="finale-reveal-name">${escapeHtml(state.teamNames[finaleState.teams[1]])}</div>
-      <div class="finale-reveal-answer" style="color:${team2Ans >= 0 ? '#22C55E' : '#E8453C'}">${team2Text}</div>
+      <div class="finale-reveal-answer ${team2Ans >= 0 ? 'hit' : 'miss'}">${team2Text}</div>
       <div class="finale-reveal-pts">${team2Pts}</div>
     </div>
   `;
