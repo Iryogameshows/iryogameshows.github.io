@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>React Bits - Demo</title>
+<link rel="stylesheet" href="../../vendor/reactbits.css">
+<style>
+  body { background: #101018; color: #fff; font: 700 48px/1.2 system-ui, sans-serif; display: grid; place-items: center; height: 100vh; margin: 0; }
+</style>
+</head>
+<body>
+<div id="demo"></div>
+<script src="../../vendor/reactbits.js"></script>
+<script>
+  // Zeigt, dass React-Bits-Komponenten ohne Build in einer normalen Seite laufen.
+  ReactBits.mount('ShinyText', document.getElementById('demo'), { text: 'Iryo Gameshows' });
+  document.title = 'React Bits - ' + ReactBits.list().join(', ');
+</script>
+</body>
+</html>

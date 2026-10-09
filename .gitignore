@@ -1,3 +1,4 @@
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
 ResourceExtractor_log.txt
+tools/reactbits/node_modules/

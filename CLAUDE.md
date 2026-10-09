@@ -100,9 +100,18 @@ Quellen: `anthropics/claude-code` (`plugins/frontend-design`),
   `debugging-and-error-recovery` bei Fehlern, `code-review-and-quality` und
   `security-and-hardening` vor größeren Pushes, `incremental-implementation`
   bei Umbauten.
-- **caveman**: **nur auf Aufruf.** Der Autostart (Plugin-Hook) ist bewusst nicht
-  eingerichtet: knappe Antworten kollidieren mit dem Antwortformat und den
-  ausführlichen HANDOFF-Einträgen.
+- **caveman**: David will es (Anweisung 2026-10-09). Gedacht ist der Autostart
+  als Plugin über die Projekt-Settings (`extraKnownMarketplaces` +
+  `enabledPlugins` mit `caveman@caveman` in `.claude/settings.json`), weil das
+  per Git auf alle Geräte kommt. **Stand: noch nicht eingetragen** (die
+  Änderung an `.claude/settings.json` wartet auf Davids Freigabe, siehe
+  HANDOFF); bis dahin laufen die Skills nur auf Aufruf (`/caveman`,
+  `/caveman-commit`, `/caveman-review`). Sobald der Eintrag drin ist, diesen
+  Satz streichen.
+  **Auch mit caveman gilt unverändert:** Antwortformat (Backslash vor jedem
+  Absatz), Deutsch, Belege mit Zahlen. HANDOFF-Einträge, Commit-Nachrichten
+  und `CLAUDE.md` bleiben im normalen, ausführlichen Stil. Caveman kürzt nur
+  den Chat-Text.
 
 ## Bibliotheken in `vendor/` (GSAP, Lenis)
 
@@ -116,16 +125,45 @@ siehe Abschnitt „Scripts“).
 | `vendor/gsap.min.js` | GSAP 3.15.0 | Animationen (Intros, Übergänge) |
 | `vendor/ScrollTrigger.min.js` | GSAP 3.15.0 | scrollgesteuerte Animation |
 | `vendor/lenis.min.js`, `vendor/lenis.css` | Lenis 1.3.26 | weiches Scrollen (MIT) |
+| `vendor/reactbits.js`, `vendor/reactbits.css` | gebaut aus `tools/reactbits/` | React-Bits-Komponenten (siehe unten) |
 
 - GSAP unterliegt der GreenSock-Standardlizenz (https://gsap.com/standard-license),
   Lenis ist MIT. Beim Aktualisieren die Version in dieser Tabelle mitziehen.
 - Neue Animationen vorzugsweise mit GSAP, bei Scrollen Lenis. Immer
   `prefers-reduced-motion` beachten.
-- **React Bits** (https://reactbits.dev) ist eine React-Bibliothek und läuft in
-  dieser Seite ohne Build nicht. Einzelne Effekte werden als reines JavaScript
-  (mit GSAP) nachgebaut, nicht als Paket eingebunden.
 - `check.js` und `jsconfig.json` prüfen nur `js/`; `vendor/` bleibt dort
   bewusst außen vor.
+
+### React Bits (https://reactbits.dev)
+
+React Bits sind React-Komponenten. Die Seite bleibt ohne Build-Step: die
+Komponenten werden **vorab** mit esbuild zu einer fertigen Datei gebündelt, die
+eingecheckt wird (`vendor/reactbits.js` + `vendor/reactbits.css`, enthält
+React 19). Die Seite lädt nur diese zwei Dateien.
+
+```bash
+cd tools/reactbits
+npm install                      # einmal pro Gerät (node_modules ist ignoriert)
+node add.js ShinyText BlurText   # holt Komponente(n) aus dem Registry und baut neu
+node build.js                    # nur neu bauen
+```
+
+- Es wird immer die Variante **JS-CSS** geholt (kein Tailwind im Projekt).
+  `add.js` installiert npm-Abhängigkeiten der Komponente selbst (z. B. `gsap`,
+  `ogl`) und meldet `registryDependencies`, die man ebenfalls holen muss.
+- Nutzung in der Seite: `<link href="vendor/reactbits.css">`,
+  `<script src="vendor/reactbits.js">` (Einbindung in `index.html` wie bei
+  GSAP/Lenis erst bei Bedarf), dann
+  `ReactBits.mount('ShinyText', element, { text: '…' })` und
+  `ReactBits.unmount(element)`; `ReactBits.list()` nennt die enthaltenen Namen.
+- **`vendor/reactbits.js` ist gebaut, nicht von Hand zu ändern.** Nach jedem
+  `add.js`/`build.js` die neue Datei mit committen, sonst fehlt sie auf den
+  anderen Geräten.
+- Gewicht: etwa 223 KB mit einer Komponente, fast alles ist React selbst. Nur
+  laden, wo eine Komponente tatsächlich vorkommt.
+- Lizenz: MIT + Commons Clause (frei für private und kommerzielle Nutzung,
+  nicht zum Weiterverkauf der Komponenten selbst).
+- `tools/reactbits/demo.html` zeigt eine Komponente in einer Seite.
 
 ## Struktur
 

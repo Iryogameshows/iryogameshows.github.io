@@ -1,0 +1,16 @@
+{
+  "name": "reactbits-bundle",
+  "private": true,
+  "description": "Nur zum Bauen von vendor/reactbits.js. Die Seite selbst hat keinen Build-Step; das Ergebnis wird eingecheckt.",
+  "scripts": {
+    "add": "node add.js",
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
