@@ -4072,6 +4072,7 @@ body {
 :root[data-theme="I"] .jeopardy-cell.used { background: transparent; box-shadow: inset 0 0 0 1px rgba(201,165,76,.3); }
 :root[data-theme="I"] .wwm-q { color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.9rem; line-height: 1.2; }
 :root[data-theme="I"] .wwm-opt { background: linear-gradient(180deg, #FBF6E9, #F1E9D2); color: #2A1A12; box-shadow: 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35); font-size: 1.4rem; }
+:root[data-theme="I"] .wwm-opt.correct { background: linear-gradient(180deg, #E9CF8F, #C9A54C); }
 :root[data-theme="I"] .wwm-opt.selected { box-shadow: 0 0 0 3px #C9A54C, 0 0 24px rgba(201,165,76,.55); }
 :root[data-theme="I"] .wwm-opt .wwm-letter { color: #8E1B2C; font-family: 'Cormorant Garamond', serif; font-weight: 700; }
 /* Die Karte wird umgedreht: erst hochkant weg, dann mit der Vorderseite. */
@@ -4413,6 +4414,329 @@ body {
   35%  { transform: rotate(5deg); opacity: 1; transform-origin: 50% 0; }
   65%  { transform: rotate(-2deg); transform-origin: 50% 0; }
   100% { transform: rotate(0); transform-origin: 50% 0; }
+}
+
+/* ── O · Terminal: gruener Phosphor, Zeilen statt Platten, wird getippt ── */
+:root[data-theme="O"] {
+  --brd-surface: #031008;
+  --brd-tex: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+  --brd-frame: 0 0 0 2px #2E7D4A, 0 0 24px rgba(124,255,160,.18), inset 0 0 40px rgba(124,255,160,.08);
+  --brd-well: #031008;
+  --brd-inner: transparent;
+  --brd-radius: 6px;
+  --brd-fg: #B8FFCD;
+  --tile: transparent;
+  --tile-hover: rgba(124,255,160,.06);
+  --tile-edge: none;
+  --tile-fg: #B8FFCD;
+  --tile-head: transparent;
+  --tile-head-fg: #7CFFA0;
+  --tile-used: transparent;
+  --tile-num: #B8FFCD;
+  --tile-num-glow: 0 0 8px rgba(124,255,160,.6);
+  --tile-dim-fg: #2E7D4A;
+  --tile-bar: repeating-linear-gradient(90deg, #2E7D4A 0 3px, transparent 3px 9px);
+  --tile-rule: transparent;
+  --tile-open: rgba(124,255,160,.05);
+  --tile-open-edge: none;
+  --tile-open-fg: #B8FFCD;
+  --tile-open-dim: #7CFFA0;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: transparent;
+  --tile-pick: #7CFFA0;
+  --tile-pick-fg: #031008;
+  --tile-right: #B8FFCD;
+  --tile-right-fg: #031008;
+  --tile-radius: 0;
+  --tile-font: 'VT323', monospace;
+  --tile-reveal: thOTippen .7s steps(18, end);
+}
+:root[data-theme="O"] .q-text { color: #B8FFCD; justify-content: flex-start; text-align: left; font-family: 'VT323', monospace; font-weight: 400; font-size: 2rem; line-height: 1; text-shadow: 0 0 8px rgba(124,255,160,.6); }
+:root[data-theme="O"] .q-text:not(.hidden-q)::before { content: '\276F\00a0'; color: #7CFFA0; }
+:root[data-theme="O"] .q-text.hidden-q { border-color: #2E7D4A; }
+:root[data-theme="O"] .tile-num { font-family: 'VT323', monospace; font-size: 1.6rem; color: #7CFFA0; }
+:root[data-theme="O"] .tile.open .tile-answer { font-weight: 400; font-size: 1.7rem; letter-spacing: 1px; text-shadow: 0 0 8px rgba(124,255,160,.6); }
+/* Punkte durch Pünktchen an die Antwort gebunden, wie in einer Tabelle. */
+:root[data-theme="O"] .tile.open .tile-center { background: radial-gradient(circle, #2E7D4A 1px, transparent 1.5px) 0 60% / 8px 8px repeat-x; }
+:root[data-theme="O"] .tile.open .tile-answer { background: #031008; padding-right: 8px; }
+:root[data-theme="O"] .tile.open .tile-pts { color: #B8FFCD; text-shadow: 0 0 8px rgba(124,255,160,.6); font-family: 'VT323', monospace; font-size: 1.8rem; }
+:root[data-theme="O"] .jeopardy-cat { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: .7rem; letter-spacing: 1px; }
+:root[data-theme="O"] .jeopardy-cell { font-family: 'VT323', monospace; font-size: 2.2rem; letter-spacing: 0; }
+:root[data-theme="O"] .jeopardy-cell:not(.used)::before { content: '['; color: #2E7D4A; }
+:root[data-theme="O"] .jeopardy-cell:not(.used)::after { content: ']'; color: #2E7D4A; }
+:root[data-theme="O"] .jeopardy-cell:hover:not(.used) { background: #7CFFA0; color: #031008; text-shadow: none; transform: none; }
+:root[data-theme="O"] .jeopardy-cell.used::after { content: '[---]'; color: #1F5A33; font-size: 1.8rem; }
+:root[data-theme="O"] .wwm-q { color: #B8FFCD; text-align: left; justify-content: flex-start; font-family: 'VT323', monospace; font-weight: 400; font-size: 2.1rem; line-height: 1.05; text-shadow: 0 0 8px rgba(124,255,160,.6); }
+:root[data-theme="O"] .wwm-opt { box-shadow: inset 0 0 0 1px #2E7D4A; font-size: 1.6rem; font-weight: 400; }
+:root[data-theme="O"] .wwm-opt .wwm-letter { color: #7CFFA0; font-family: 'VT323', monospace; }
+:root[data-theme="O"] .wwm-opt.selected .wwm-letter,
+:root[data-theme="O"] .wwm-opt.correct .wwm-letter { color: #031008; }
+/* Die Antwort wird Zeichen fuer Zeichen getippt. */
+@keyframes thOTippen {
+  0%   { clip-path: inset(0 100% 0 0); }
+  100% { clip-path: inset(0 0 0 0); }
+}
+
+/* ── P · Memphis: Formen mit Muster, schwarze Kontur, Punkteteppich ── */
+:root[data-theme="P"] {
+  --brd-surface: #FFFFFF;
+  --brd-tex: radial-gradient(rgba(20,20,20,.18) 1.4px, transparent 1.8px) 0 0 / 16px 16px;
+  --brd-frame: 0 0 0 4px #141414, 10px 10px 0 4px #7B5CFF;
+  --brd-well: transparent;
+  --brd-inner: transparent;
+  --brd-radius: 18px;
+  --tile: #FFFFFF;
+  --tile-hover: #FFF8DF;
+  --tile-tex: repeating-linear-gradient(-45deg, rgba(63,208,201,.35) 0 6px, transparent 6px 14px);
+  --tile-edge: 0 0 0 3px #141414;
+  --tile-fg: #141414;
+  --tile-head: #FFD23F;
+  --tile-head-fg: #141414;
+  --tile-used: transparent;
+  --tile-num: #141414;
+  --tile-num-glow: none;
+  --tile-dim-fg: #FFFFFF;
+  --tile-bar: transparent;
+  --tile-rule: transparent;
+  --tile-open: #FF6FA8;
+  --tile-open-edge: 0 0 0 3px #141414, 6px 6px 0 3px #141414;
+  --tile-open-fg: #141414;
+  --tile-open-dim: #FFFFFF;
+  --tile-pts-bg: #FFFFFF;
+  --tile-pts-rule: #141414;
+  --tile-pick: #3FD0C9;
+  --tile-pick-fg: #141414;
+  --tile-right: #FFD23F;
+  --tile-right-fg: #141414;
+  --tile-radius: 14px;
+  --tile-font: 'Lilita One', sans-serif;
+  --tile-reveal: thPHuepf .7s cubic-bezier(.3,1.8,.5,1);
+}
+:root[data-theme="P"] .board { padding: 22px; }
+:root[data-theme="P"] .answers { gap: 14px; }
+:root[data-theme="P"] .answers.split { row-gap: 14px; column-gap: 20px; }
+:root[data-theme="P"] .q-text { background: #141414; color: #FFFFFF; border-radius: 0; rotate: -1deg; box-shadow: 6px 6px 0 #FFD23F; font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 1.45rem; margin-bottom: 18px; }
+:root[data-theme="P"] .q-text.hidden-q { border: 0; }
+:root[data-theme="P"] .tile, :root[data-theme="P"] .tile-inner { overflow: visible; }
+:root[data-theme="P"] .tile-num { flex: 0 0 30px; width: 30px; height: 30px; margin: auto 8px auto 10px; border-radius: 50%; border: 2px solid #141414; background: #141414; font-family: 'Lilita One', sans-serif; font-size: .95rem; }
+/* Die aufgedeckten Felder reihum in den vier Memphis-Farben. */
+:root[data-theme="P"] .answers .tile:nth-child(4n+2).open .tile-inner { background: #3FD0C9; }
+:root[data-theme="P"] .answers .tile:nth-child(4n+3).open .tile-inner { background: #FFD23F; }
+:root[data-theme="P"] .answers .tile:nth-child(4n).open .tile-inner   { background: #7B5CFF; }
+:root[data-theme="P"] .answers .tile:nth-child(4n).open .tile-answer  { color: #FFFFFF; }
+:root[data-theme="P"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 1.3rem; }
+:root[data-theme="P"] .tile.open .tile-pts { color: #141414; text-shadow: none; font-family: 'Lilita One', sans-serif; margin: 6px; border-radius: 50%; min-width: 46px; border: 2px solid #141414; }
+:root[data-theme="P"] .jeopardy-board { gap: 12px; padding: 16px; border-radius: 18px; background: radial-gradient(rgba(20,20,20,.18) 1.4px, transparent 1.8px) 0 0 / 16px 16px, #FFFFFF; }
+:root[data-theme="P"] .jeopardy-cat { border: 3px solid #141414; font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: .9rem; letter-spacing: 0; text-transform: none; }
+/* Jeopardy als Formen: Kreis, Quadrat, Pille, Tropfen - je Spalte. */
+:root[data-theme="P"] .jeopardy-cell { box-shadow: 0 0 0 3px #141414, 5px 5px 0 3px #141414; font-family: 'Lilita One', sans-serif; font-size: 1.6rem; }
+:root[data-theme="P"] .jeopardy-cell:nth-child(4n+1) { background: #FF6FA8; border-radius: 999px; }
+:root[data-theme="P"] .jeopardy-cell:nth-child(4n+2) { background: #FFD23F; border-radius: 6px; }
+:root[data-theme="P"] .jeopardy-cell:nth-child(4n+3) { background: #3FD0C9; border-radius: 30px 30px 6px 6px; }
+:root[data-theme="P"] .jeopardy-cell:nth-child(4n)   { background: #B9A6FF; border-radius: 50% 50% 50% 10%; }
+:root[data-theme="P"] .jeopardy-cell:hover:not(.used) { transform: rotate(-4deg) scale(1.05); }
+:root[data-theme="P"] .jeopardy-cell.used { background: transparent; box-shadow: none; outline: 2px dashed rgba(20,20,20,.3); outline-offset: -4px; }
+:root[data-theme="P"] .wwm-q { background: #FFFFFF; color: #141414; box-shadow: 0 0 0 4px #141414, 8px 8px 0 4px #FF6FA8; text-align: left; justify-content: flex-start; font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 1.7rem; }
+:root[data-theme="P"] .wwm-opt { background: #FFFFFF; box-shadow: 0 0 0 3px #141414, 6px 6px 0 3px #141414; font-weight: 400; font-size: 1.3rem; }
+:root[data-theme="P"] .wwm-opt.selected { background: #3FD0C9; }
+:root[data-theme="P"] .wwm-opt.correct { background: #FFD23F; }
+:root[data-theme="P"] .wwm-opt .wwm-letter { width: 26px; height: 26px; min-width: 26px; border-radius: 50%; background: #FF6FA8; box-shadow: 0 0 0 2px #141414; color: transparent; font-size: 0; }
+:root[data-theme="P"] .wwm-opt:nth-child(2) .wwm-letter { border-radius: 2px; background: #3FD0C9; }
+:root[data-theme="P"] .wwm-opt:nth-child(3) .wwm-letter { border-radius: 0; background: #FFD23F; clip-path: polygon(50% 0, 100% 100%, 0 100%); box-shadow: none; }
+:root[data-theme="P"] .wwm-opt:nth-child(4) .wwm-letter { border-radius: 2px; background: #7B5CFF; rotate: 45deg; }
+@keyframes thPHuepf {
+  0%   { transform: translateY(-30px) scale(.6) rotate(8deg); opacity: 0; }
+  55%  { transform: translateY(4px) scale(1.06) rotate(-2deg); opacity: 1; }
+  100% { transform: translateY(0) scale(1) rotate(0); }
+}
+
+/* ── Q · Riso: Pink und Blau ueberdrucken sich, leicht verrutscht ── */
+:root[data-theme="Q"] {
+  --brd-surface: #F2EEE4;
+  --brd-tex: radial-gradient(rgba(50,85,164,.07) 1px, transparent 1.3px) 0 0 / 5px 5px;
+  --brd-frame: 0 0 0 2px #3255A4;
+  --brd-well: transparent;
+  --brd-inner: transparent;
+  --brd-radius: 0;
+  --tile: transparent;
+  --tile-hover: rgba(255,72,176,.06);
+  --tile-edge: inset 0 0 0 2px #3255A4;
+  --tile-fg: #3255A4;
+  --tile-head: transparent;
+  --tile-head-fg: #3255A4;
+  --tile-used: transparent;
+  --tile-num: #3255A4;
+  --tile-num-glow: 3px 2px 0 rgba(255,72,176,.85);
+  --tile-dim-fg: rgba(50,85,164,.35);
+  --tile-bar: transparent;
+  --tile-rule: #3255A4;
+  --tile-open: #FF48B0;
+  --tile-open-edge: inset 0 0 0 2px #3255A4, 4px 3px 0 #3255A4;
+  --tile-open-fg: #FFFFFF;
+  --tile-open-dim: #FFFFFF;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: rgba(255,255,255,.5);
+  --tile-pick: #3255A4;
+  --tile-pick-fg: #FFFFFF;
+  --tile-right: #FF48B0;
+  --tile-right-fg: #FFFFFF;
+  --tile-radius: 0;
+  --tile-font: 'Bowlby One', sans-serif;
+  --tile-reveal: thQPasser .55s steps(5, end);
+}
+:root[data-theme="Q"] .q-text { color: #3255A4; justify-content: flex-start; text-align: left; font-family: 'Bowlby One', sans-serif; font-weight: 400; font-size: 1.6rem; line-height: 1.1; text-shadow: 3px 2px 0 rgba(255,72,176,.85); }
+:root[data-theme="Q"] .q-text.hidden-q { border-color: #3255A4; text-shadow: none; }
+/* Verdeckte Felder als Abriss-Marke mit Lochrand. */
+:root[data-theme="Q"] .tile:not(.open) .tile-inner { background: radial-gradient(circle at 0 50%, #F2EEE4 6px, transparent 6.5px), radial-gradient(circle at 100% 50%, #F2EEE4 6px, transparent 6.5px); }
+:root[data-theme="Q"] .tile-num { font-family: 'Bowlby One', sans-serif; font-size: 1.2rem; }
+:root[data-theme="Q"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 1.15rem; text-shadow: 2px 2px 0 rgba(50,85,164,.6); }
+:root[data-theme="Q"] .tile.open .tile-pts { color: #FFFFFF; text-shadow: 2px 2px 0 rgba(50,85,164,.6); font-family: 'Bowlby One', sans-serif; font-size: 1.5rem; }
+:root[data-theme="Q"] .jeopardy-board { gap: 6px; padding: 10px; background: #F2EEE4; }
+:root[data-theme="Q"] .jeopardy-cat { justify-content: flex-start; text-align: left; border-bottom: 2px solid #3255A4; font-family: 'Familjen Grotesk', sans-serif; font-weight: 700; font-size: .7rem; letter-spacing: 1px; }
+:root[data-theme="Q"] .jeopardy-cell { box-shadow: none; font-family: 'Bowlby One', sans-serif; font-size: 2.2rem; }
+:root[data-theme="Q"] .jeopardy-cell:hover:not(.used) { transform: none; color: #FF48B0; text-shadow: 3px 2px 0 rgba(50,85,164,.85); }
+/* Verbraucht: nur noch ein blasser Fehldruck. */
+:root[data-theme="Q"] .jeopardy-cell.used { color: rgba(50,85,164,.1); text-shadow: 3px 2px 0 rgba(255,72,176,.12); }
+:root[data-theme="Q"] .wwm-q { color: #3255A4; text-align: left; justify-content: flex-start; font-family: 'Bowlby One', sans-serif; font-weight: 400; font-size: 1.8rem; line-height: 1.1; text-shadow: 3px 2px 0 rgba(255,72,176,.85); }
+:root[data-theme="Q"] .wwm-opt { font-weight: 700; font-size: 1.2rem; font-family: 'Familjen Grotesk', sans-serif; }
+:root[data-theme="Q"] .wwm-opt .wwm-letter { font-family: 'Bowlby One', sans-serif; }
+/* Der zweite Druckgang rastet in Stufen ein. */
+@keyframes thQPasser {
+  0%   { transform: translate(10px, -6px); opacity: .3; filter: hue-rotate(40deg); }
+  40%  { transform: translate(-5px, 3px); opacity: 1; }
+  70%  { transform: translate(2px, -1px); }
+  100% { transform: none; filter: none; }
+}
+
+/* ── R · Jazzplatte: Plattenhuellen in der Kiste, Label mit Punkten ── */
+:root[data-theme="R"] {
+  --brd-surface: linear-gradient(180deg, #3A2617, #2A1B10) bottom / 100% 22px no-repeat, linear-gradient(180deg, #161616, #111111);
+  --brd-frame: 0 18px 40px rgba(0,0,0,.6);
+  --brd-well: #111111;
+  --brd-inner: transparent;
+  --brd-radius: 4px;
+  --tile: linear-gradient(180deg, #232323, #181818);
+  --tile-hover: linear-gradient(180deg, #2C2C2C, #1E1E1E);
+  --tile-edge: inset 0 0 0 1px #333333, 0 6px 10px rgba(0,0,0,.45);
+  --tile-fg: #F4F1EA;
+  --tile-head: transparent;
+  --tile-head-fg: #F4F1EA;
+  --tile-used: #161616;
+  --tile-num: #111111;
+  --tile-num-glow: none;
+  --tile-dim-fg: #555555;
+  --tile-bar: rgba(244,241,234,.05);
+  --tile-rule: transparent;
+  --tile-open: #2D5BD7;
+  --tile-open-edge: inset 0 0 0 1px rgba(255,255,255,.12), 0 10px 18px rgba(0,0,0,.55);
+  --tile-open-fg: #F4F1EA;
+  --tile-open-dim: rgba(244,241,234,.6);
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: transparent;
+  --tile-pick: #F2A900;
+  --tile-pick-fg: #111111;
+  --tile-right: #F4F1EA;
+  --tile-right-fg: #111111;
+  --tile-radius: 3px;
+  --tile-font: 'Antonio', sans-serif;
+  --tile-reveal: thRZiehen .55s cubic-bezier(.2,.9,.3,1.1);
+}
+:root[data-theme="R"] .board { padding: 20px 20px 34px; }
+:root[data-theme="R"] .q-text { color: #F4F1EA; justify-content: flex-start; text-align: left; font-family: 'Antonio', sans-serif; font-weight: 700; font-size: 2rem; line-height: 1.05; text-transform: uppercase; }
+:root[data-theme="R"] .q-text.hidden-q { justify-content: center; }
+:root[data-theme="R"] .tile { min-height: 56px; }
+:root[data-theme="R"] .tile-num { font-family: 'Antonio', sans-serif; font-weight: 700; font-size: 1.1rem; }
+/* Die Huellen reihum in den Farben der Kiste. */
+:root[data-theme="R"] .answers .tile:nth-child(3n+2).open .tile-inner { background: #E8542A; }
+:root[data-theme="R"] .answers .tile:nth-child(3n).open .tile-inner   { background: #F2A900; color: #111111; }
+:root[data-theme="R"] .tile.open .tile-answer { font-weight: 700; font-size: 1.5rem; letter-spacing: .5px; }
+/* Punkte auf dem Plattenlabel: Label in Senfgelb, aussen die schwarze Rille. */
+:root[data-theme="R"] .tile.open .tile-pts {
+  align-self: center; width: 44px; height: 44px; min-width: 44px; padding: 0; margin-right: 8px; border-radius: 50%;
+  background: radial-gradient(circle, #F2A900 0 14px, #111 14.5px); color: #111111; text-shadow: none;
+  font-family: 'Antonio', sans-serif; font-weight: 700; font-size: .95rem;
+}
+:root[data-theme="R"] .jeopardy-board { gap: 8px; padding: 10px; }
+:root[data-theme="R"] .jeopardy-cat { font-family: 'Antonio', sans-serif; font-weight: 700; font-size: .95rem; letter-spacing: 1px; }
+/* Jeopardy als Buchruecken im Regal, je Spalte eine Farbe. */
+:root[data-theme="R"] .jeopardy-cell { font-family: 'Antonio', sans-serif; font-weight: 700; font-size: 2rem; color: #111111; text-shadow: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+:root[data-theme="R"] .jeopardy-cell:nth-child(5n+1) { background: #F2A900; }
+:root[data-theme="R"] .jeopardy-cell:nth-child(5n+2) { background: #E8542A; }
+:root[data-theme="R"] .jeopardy-cell:nth-child(5n+3) { background: #2D5BD7; color: #F4F1EA; }
+:root[data-theme="R"] .jeopardy-cell:nth-child(5n+4) { background: #E9E4D8; }
+:root[data-theme="R"] .jeopardy-cell:nth-child(5n)   { background: #C93A2E; color: #F4F1EA; }
+:root[data-theme="R"] .jeopardy-cell:hover:not(.used) { transform: translateY(-4px); }
+:root[data-theme="R"] .jeopardy-cell.used { background: #1B1B1B; color: transparent; }
+:root[data-theme="R"] .wwm-q { background: radial-gradient(ellipse 80% 70% at 50% 0%, rgba(242,169,0,.12), transparent 70%), linear-gradient(180deg, #1E1E1E, #141414); box-shadow: inset 0 0 0 2px #3A2617, 0 0 0 6px #2A1B10, 0 18px 40px rgba(0,0,0,.55); color: #F4F1EA; font-family: 'Antonio', sans-serif; font-weight: 700; font-size: 2.1rem; line-height: 1.05; text-transform: uppercase; border-radius: 200px 200px 16px 16px; padding-top: 34px; }
+/* WWM als Klaviertasten. */
+:root[data-theme="R"] .wwm-opt { background: linear-gradient(180deg, #F4F1EA, #DCD6C8); color: #111111; box-shadow: inset 0 -5px 0 rgba(0,0,0,.18), 0 6px 12px rgba(0,0,0,.45); font-size: 1.4rem; font-weight: 700; text-transform: uppercase; }
+:root[data-theme="R"] .wwm-opt .wwm-letter { color: #111111; font-family: 'Antonio', sans-serif; }
+:root[data-theme="R"] .wwm-opt.selected { background: #F2A900; }
+:root[data-theme="R"] .wwm-opt.correct { background: #2D5BD7; color: #F4F1EA; }
+:root[data-theme="R"] .wwm-opt.correct .wwm-letter { color: #F4F1EA; }
+/* Die Huelle wird aus der Kiste gezogen. */
+@keyframes thRZiehen {
+  0%   { transform: translateY(40%); clip-path: inset(0 0 40% 0); filter: brightness(.6); }
+  70%  { transform: translateY(-6%); clip-path: inset(0 0 0 0); filter: none; }
+  100% { transform: translateY(0); }
+}
+
+/* ── S · Art deco: Messing, Hotelfaecher, Aufzugtueren ── */
+:root[data-theme="S"] {
+  --brd-surface: linear-gradient(180deg, #17140E, #0E0C08);
+  --brd-frame: 0 0 0 1px #D9B66B, 0 0 0 6px #0B0A08, 0 0 0 7px #A8853F, 0 20px 50px rgba(0,0,0,.6);
+  --brd-well: #0B0A08;
+  --brd-inner: rgba(217,182,107,.35);
+  --brd-radius: 2px;
+  --tile: linear-gradient(180deg, #E9CF8F 0%, #B8954E 45%, #8A6A2C 55%, #D9B66B 100%);
+  --tile-hover: linear-gradient(180deg, #F6E1A8 0%, #C9A65E 45%, #9C7A3A 55%, #E9CF8F 100%);
+  --tile-edge: inset 0 1px 0 rgba(255,245,210,.6), inset 0 -2px 0 rgba(60,40,10,.5), 0 4px 10px rgba(0,0,0,.5);
+  --tile-fg: #1B150A;
+  --tile-head: transparent;
+  --tile-head-fg: #D9B66B;
+  --tile-used: #12100B;
+  --tile-num: #1B150A;
+  --tile-num-glow: 0 1px 0 rgba(255,245,210,.5);
+  --tile-dim-fg: #1B150A;
+  --tile-bar: #0B0A08;
+  --tile-rule: rgba(60,40,10,.35);
+  --tile-open: linear-gradient(180deg, #FBF3DE, #EFE3C2);
+  --tile-open-edge: inset 0 0 0 3px #A8853F, inset 0 0 0 4px #EFE3C2, inset 0 0 0 5px #A8853F, 0 6px 14px rgba(0,0,0,.5);
+  --tile-open-fg: #1B150A;
+  --tile-open-dim: #8A6A2C;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: rgba(168,133,63,.6);
+  --tile-pick: rgba(217,182,107,.18);
+  --tile-pick-fg: #FBEBC0;
+  --tile-right: linear-gradient(180deg, #FBEBC0, #D9B66B);
+  --tile-right-fg: #1B150A;
+  --tile-radius: 2px;
+  --tile-font: 'Bodoni Moda', serif;
+  --tile-reveal: thSTueren .75s cubic-bezier(.65,0,.25,1);
+}
+:root[data-theme="S"] .board { padding: 26px; }
+:root[data-theme="S"] .answers { gap: 9px; }
+:root[data-theme="S"] .answers.split { row-gap: 9px; column-gap: 14px; }
+:root[data-theme="S"] .q-text { color: #EFE6D2; font-family: 'Bodoni Moda', serif; font-style: italic; font-weight: 600; font-size: 1.7rem; }
+/* Verdeckt: Messingplatte mit dunklem Einwurfschlitz, Nummer darin. */
+:root[data-theme="S"] .tile:not(.open) .tile-center::after { width: 54%; height: 10px; border-radius: 1px; box-shadow: inset 0 2px 3px rgba(0,0,0,.8), 0 1px 0 rgba(255,245,210,.5); }
+:root[data-theme="S"] .tile-num { font-family: 'Poiret One', sans-serif; font-weight: 400; font-size: 1.3rem; }
+:root[data-theme="S"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 1.4rem; }
+:root[data-theme="S"] .tile.open .tile-pts { color: #8A6A2C; text-shadow: none; font-family: 'Bodoni Moda', serif; font-weight: 800; font-size: 1.6rem; }
+:root[data-theme="S"] .jeopardy-board { gap: 8px; padding: 12px; }
+:root[data-theme="S"] .jeopardy-cat { border-bottom: 1px solid #A8853F; font-family: 'Josefin Sans', sans-serif; font-weight: 600; font-size: .7rem; letter-spacing: 3px; }
+:root[data-theme="S"] .jeopardy-cell { font-family: 'Bodoni Moda', serif; font-weight: 800; font-size: 2rem; letter-spacing: 1px; }
+:root[data-theme="S"] .jeopardy-cell:hover:not(.used) { transform: none; filter: brightness(1.08); }
+:root[data-theme="S"] .wwm-q { color: #EFE6D2; font-family: 'Bodoni Moda', serif; font-weight: 600; font-size: 1.9rem; line-height: 1.15; }
+:root[data-theme="S"] .wwm-opt { background: transparent; color: #EFE6D2; box-shadow: inset 0 0 0 1px #A8853F; font-family: 'Bodoni Moda', serif; font-weight: 600; font-size: 1.35rem; }
+:root[data-theme="S"] .wwm-opt .wwm-letter { color: #D9B66B; font-family: 'Poiret One', sans-serif; }
+:root[data-theme="S"] .wwm-opt.selected { box-shadow: inset 0 0 0 2px #D9B66B, 0 0 22px rgba(217,182,107,.3); }
+:root[data-theme="S"] .wwm-opt.correct { background: linear-gradient(180deg, #FBEBC0, #D9B66B); color: #1B150A; }
+:root[data-theme="S"] .wwm-opt.correct .wwm-letter { color: #1B150A; }
+/* Wie Aufzugtueren im Grand Hotel: von der Mitte nach aussen. */
+@keyframes thSTueren {
+  0%   { clip-path: inset(0 50% 0 50%); filter: brightness(1.6); }
+  100% { clip-path: inset(0 0 0 0); filter: none; }
 }
 
 /* Helle Richtungen: die WWM-Leiter lag als rgba(0,0,0,.25) grau auf Creme.
