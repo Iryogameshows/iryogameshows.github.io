@@ -12,6 +12,55 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Regie, Tresor, Outrun als Film-Intros (`86ae5ab`)
+
+**Gemacht.** Die Arbeit an drei weiteren Film-Intros lag ungespeichert
+im Arbeitsverzeichnis (Dateien zuletzt 20:07 geändert, Herkunft: eine
+frühere Session, nicht diese). David: „Zuerst prüfen, dann committen“.
+- `#intro-variant` um `regie`, `tresor` und `outrun` erweitert,
+  registriert in `INTRO_FILME`. Die Zeitpläne stehen in `INTRO_RG`,
+  `INTRO_TR` und `INTRO_OR`, der Ton in `introRegieTon`,
+  `introTresorTon` und `introOutrunTon`.
+- Der Logo-Höhepunkt aus Primetime ist in Bausteine zerlegt:
+  `introFilmLogo` (Optionen `spiegel` und `preisWort`), `introFunken`,
+  `introPyro`, `introKonfetti` und `introGlitzer`. Die vier Intros außer
+  Arcade nutzen sie, deshalb betrifft die Änderung auch Primetime.
+- Das Textfeld `vorab` gilt jetzt für alle Intros außer Arcade, bisher
+  nur für Primetime.
+- Für Outrun kommt die Schrift Mr Dafoe dazu, in `index.html`, in
+  `#font-warm` und in `injectBoardStyles` (`js/feud.js`).
+
+**Warum so.** Alles ist reines CSS wie bei Arcade und Primetime
+(BAUPLAN 4.8, siehe Eintrag zu `d090a50`). Die Entwurfsentscheidungen
+hat die frühere Session getroffen. Hier wurden sie nur geprüft, nicht
+neu begründet.
+
+**Geprüft.**
+- `node check.js` und `node check.js --types` ergeben „alles in
+  Ordnung“: 14 Dateien, 428 Handler, 277 IDs.
+- Im Browser (localhost:3000) habe ich alle drei per
+  `document.getAnimations()` angehalten und auf 0,5 / 2 / 3,5 / 5 / 6,5
+  / 8 / 9,5 / 11 / 13 s gespult. Geprüft wurde, welche `.ifw` sichtbar
+  ist. Die Abfolge passt zu den Zeitplänen: Titelkarte ab etwa 9,5 s,
+  Klick-Hinweis bei 13 s.
+- **Ungeprüft:** das Bild selbst. Das Browser-Pane war ausgeblendet, die
+  Screenshots liefen in Zeitüberschreitung. Ebenfalls ungeprüft sind der
+  Ton und das Zuschauerfenster. Arcade und Primetime wurden nach dem
+  Umbau auf gemeinsame Bausteine nicht erneut angesehen.
+
+**Offen.**
+- Bei Outrun ist zwischen 0,5 und 2 s keine `.ifw` sichtbar, bei
+  Tresor bei 8 s ebenfalls nicht. Möglicherweise ist das gewollt
+  (Linie und Sonne stehen außerhalb der Einstellungen, oder es ist der
+  Flug der Tür). Am Bild nachsehen.
+- Als Nächstes hat David ein großes Design-Upgrade angekündigt: „Designs
+  so professionell wie die Intros, we going big“, GSAP nicht zwingend.
+  Was das Publikum sieht, bleibt CSS (BAUPLAN 4.8). Vor dem Start kurze
+  Pause auf Davids Wunsch.
+
+**Fallstricke.** Ein ausgeblendetes Pane liefert keine Screenshots. Die
+Zustände per `getAnimations()` auszulesen, funktioniert trotzdem.
+
 ## 2026-10-09 — Arcade und Primetime als Show-Intros (`d090a50`)
 
 **Gemacht.** David: „bau arcade in die show ein … zum Auswählen wie die
