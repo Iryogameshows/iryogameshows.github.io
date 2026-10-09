@@ -61,6 +61,72 @@ editiert und committet — und damit fremde Arbeit überschrieben.
 - Im Zweifel nachsehen statt schätzen. Ein zusätzlicher Befehl kostet Sekunden,
   eine Falschauskunft kostet Davids Zeit und Vertrauen.
 
+## Geräte-Setup — Skills prüfen und selbst nachladen, DANN erst weiterarbeiten
+
+David arbeitet auf mehreren Geräten. Was im Repo liegt (`vendor/`), kommt per
+Git mit. Skills liegen dagegen lokal in `~/.claude/skills` und kommen **nicht**
+mit. Deshalb am Anfang jeder Session, nach dem Repo-Stand:
+
+```bash
+ls ~/.claude/skills/frontend-design ~/.claude/skills/caveman ~/.claude/skills/using-agent-skills
+```
+
+Fehlt eines davon, selbstständig nachladen — ohne Rückfrage, David hat das am
+2026-10-09 ausdrücklich angewiesen — und **erst danach** mit der eigentlichen
+Aufgabe weitermachen (Node mit `npx` genügt, die `claude`-CLI ist nicht nötig):
+
+```bash
+npx --yes skills add anthropics/claude-code --skill frontend-design -g -a claude-code -y
+npx --yes skills add JuliusBrussee/caveman -g -a claude-code -y
+npx --yes skills add addyosmani/agent-skills -g -a claude-code -y
+```
+
+Die Skills-Liste einer laufenden Session ist beim Start festgelegt. Frisch
+installierte Skills erscheinen daher erst in der nächsten Session. Bis dahin
+die `SKILL.md` direkt aus `~/.claude/skills/<name>/` lesen und befolgen. Am
+Ende sagen, dass nachinstalliert wurde und eine neue Session nötig ist.
+
+Quellen: `anthropics/claude-code` (`plugins/frontend-design`),
+`JuliusBrussee/caveman`, `addyosmani/agent-skills`.
+
+### Wann was benutzen
+
+- **frontend-design**: bei jeder Arbeit an Oberfläche, Intro, Logo, Layout oder
+  Animation. Zuerst Gestaltungsplan, dann Code. Ihre Regeln hebeln die
+  Gestaltungsregeln im `BAUPLAN.md` nicht aus; bei Widerspruch gilt das
+  `BAUPLAN.md`.
+- **agent-skills** (Osmani): nach Aufgabe wählen — `spec-driven-development`
+  und `planning-and-task-breakdown` vor größeren Vorhaben,
+  `debugging-and-error-recovery` bei Fehlern, `code-review-and-quality` und
+  `security-and-hardening` vor größeren Pushes, `incremental-implementation`
+  bei Umbauten.
+- **caveman**: **nur auf Aufruf.** Der Autostart (Plugin-Hook) ist bewusst nicht
+  eingerichtet: knappe Antworten kollidieren mit dem Antwortformat und den
+  ausführlichen HANDOFF-Einträgen.
+
+## Bibliotheken in `vendor/` (GSAP, Lenis)
+
+Liegen als feste Kopien im Repo, nicht per CDN: eine Show läuft vor Publikum und
+muss ohne Netz auskommen. Eingebunden ist **noch nichts** — wer sie nutzt, trägt
+das `<script>`-Tag in `index.html` ein (klassisch, kein `type="module"`, Reihenfolge
+siehe Abschnitt „Scripts“).
+
+| Datei | Version | Zweck |
+|---|---|---|
+| `vendor/gsap.min.js` | GSAP 3.15.0 | Animationen (Intros, Übergänge) |
+| `vendor/ScrollTrigger.min.js` | GSAP 3.15.0 | scrollgesteuerte Animation |
+| `vendor/lenis.min.js`, `vendor/lenis.css` | Lenis 1.3.26 | weiches Scrollen (MIT) |
+
+- GSAP unterliegt der GreenSock-Standardlizenz (https://gsap.com/standard-license),
+  Lenis ist MIT. Beim Aktualisieren die Version in dieser Tabelle mitziehen.
+- Neue Animationen vorzugsweise mit GSAP, bei Scrollen Lenis. Immer
+  `prefers-reduced-motion` beachten.
+- **React Bits** (https://reactbits.dev) ist eine React-Bibliothek und läuft in
+  dieser Seite ohne Build nicht. Einzelne Effekte werden als reines JavaScript
+  (mit GSAP) nachgebaut, nicht als Paket eingebunden.
+- `check.js` und `jsconfig.json` prüfen nur `js/`; `vendor/` bleibt dort
+  bewusst außen vor.
+
 ## Struktur
 
 Statische Seite, **kein Build-Step**. GitHub Pages served die Dateien direkt.
