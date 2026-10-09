@@ -12,6 +12,59 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Werkzeuge für alle Geräte: Skills, GSAP, Lenis (`8d987e7`)
+
+**Gemacht.** David schickte sechs Links (caveman, React Bits, Lenis, GSAP,
+frontend-design, agent-skills) mit dem Auftrag „alle installieren und künftig
+nutzen“, auf allen Geräten.
+
+- Skills global installiert mit `npx skills add … -g -a claude-code -y` nach
+  `~/.claude/skills` (frontend-design: 1, caveman: 17, agent-skills: die Phasen
+  Define bis Ship). Insgesamt 47 Ordner dort.
+- `vendor/`: `gsap.min.js` und `ScrollTrigger.min.js` (3.15.0),
+  `lenis.min.js` und `lenis.css` (1.3.26), von jsdelivr geladen, ins Repo
+  eingecheckt. **Noch in keiner HTML-Datei eingebunden.**
+- `CLAUDE.md`: neuer Abschnitt „Geräte-Setup“ (Skills prüfen, bei Fehlen selbst
+  nachladen, dann erst weiterarbeiten) und „Bibliotheken in `vendor/`“.
+
+**Warum so.**
+
+- Skills liegen lokal, nicht im Repo → Übertragung nur über Anweisung in der
+  `CLAUDE.md`, wie von David gewünscht. Verworfen: 47 Skills ins Repo unter
+  `.claude/skills/` kopieren (aufgebläht, Fremdcode im Projektverlauf).
+- `claude plugin install` ging nicht: die `claude`-CLI liegt hier nicht im PATH.
+  Deshalb der `skills`-Installer. **Folge:** der Autostart-Hook von caveman ist
+  nicht aktiv, caveman läuft nur auf Aufruf. Das ist gewollt (kollidiert mit
+  Antwortformat und HANDOFF-Detailtiefe); steht so in der `CLAUDE.md`.
+- GSAP/Lenis als lokale Kopie statt CDN: Show vor Publikum, kein Netz nötig.
+- `vendor/` statt `js/vendor/`: `check.js` liest alle `.js` in `js/` und würde
+  minifizierte Fremddateien auf Handler und `@ts-check` prüfen.
+- React Bits nicht installiert: React-Bibliothek, kein Build vorhanden. Effekte
+  werden bei Bedarf in reinem JS nachgebaut.
+
+**Geprüft.** `node check.js`: „alles in Ordnung“ (14 js-Dateien, 424
+Handler-Aufrufe, 273 IDs). Dateigrößen: gsap 72 927 B, ScrollTrigger 44 575 B,
+lenis 18 722 B, lenis.css 513 B; Versionskopf in gsap/lenis gelesen.
+
+**Ungeprüft.** Inhalt der installierten Skills nicht gelesen (nur
+installiert). Ob sie in einer neuen Session in der Skills-Liste erscheinen.
+Ob GSAP/Lenis im Browser mit dieser Seite laufen (nirgends eingebunden). Das
+Nachladen auf einem zweiten Gerät ist nicht getestet. Git meldet beim Commit
+„LF wird durch CRLF ersetzt“ für `vendor/*`: Bytes der Fremddateien ändern sich
+dadurch auf Windows, bei Minified-Code ohne Folgen erwartet, aber nicht geprüft.
+
+**Offen.** Branch `claude/tooling-setup` ist nicht in `master`, solange David
+nicht zustimmt (Änderung an `CLAUDE.md` fällt unter „groß“). Der alte Branch
+`claude/game-buzzer-fixes-90cyjz` (17 Commits voraus, 22 hinter master) ist
+unangetastet; was damit geschehen soll, ist unbeantwortet.
+
+**Fallstricke.** `gh` ist auf diesem Gerät nicht installiert. GSAP-LICENSE per
+jsdelivr gibt 404; Lizenz steht im Dateikopf (GreenSock-Standardlizenz).
+Skill-Listen sind pro Session fest, Neuinstalliertes erscheint erst in der
+nächsten Session.
+
+---
+
 ## 2026-10-09 — Audit Lauf 2: N1 bis N4 (`6c698b5`)
 
 **Anlass.** Zweiter Lauf des `import-auditor` zur Kontrolle (rund 9 Minuten,
