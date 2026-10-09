@@ -18,3 +18,26 @@
   animation:lab-korn .45s steps(3) infinite;}
 @keyframes lab-korn{0%{transform:translate(0,0)}33%{transform:translate(-2%,3%)}66%{transform:translate(3%,-1%)}100%{transform:translate(-1%,-2%)}}
 @media (prefers-reduced-motion: reduce){ .lab-korn{animation:none;} }
+
+/* Text-Editor: eigene, ruhige Optik, unabhängig vom jeweiligen Intro */
+#lab-editor{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:4vh 16px;
+  background:rgba(4,4,8,.72);backdrop-filter:blur(6px);font:400 15px/1.45 Inter,system-ui,sans-serif;color:#f2f2f4;}
+#lab-editor .lab-panel{width:min(760px,100%);background:#15151b;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:22px 24px;box-shadow:0 30px 80px rgba(0,0,0,.6);}
+#lab-editor h2{margin:0 0 4px;font:700 20px Inter,sans-serif;}
+#lab-editor .lab-info{margin:0 0 16px;color:rgba(242,242,244,.6);font-size:14px;}
+#lab-editor fieldset{border:1px solid rgba(255,255,255,.1);border-radius:10px;margin:0 0 14px;padding:12px 14px 4px;display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
+#lab-editor legend{padding:0 6px;font-weight:700;font-size:13px;letter-spacing:.06em;color:rgba(242,242,244,.7);}
+#lab-editor label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:rgba(242,242,244,.7);margin-bottom:8px;}
+#lab-editor small{color:rgba(242,242,244,.45);font-size:12px;}
+#lab-editor input[type=text]{min-height:38px;padding:0 10px;border-radius:8px;border:1px solid rgba(255,255,255,.16);background:#0c0c10;color:#fff;font:500 15px Inter,sans-serif;}
+#lab-editor input[type=text]:focus-visible{outline:2px solid var(--lab-akzent,#ffcf86);outline-offset:1px;}
+#lab-editor .lab-karten{grid-template-columns:1fr;}
+#lab-editor .lab-karte{display:grid;grid-template-columns:22px 1fr 1fr;gap:10px;align-items:start;}
+#lab-editor .lab-karte b{padding-top:24px;color:rgba(242,242,244,.45);}
+#lab-editor .lab-knoepfe{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px;}
+#lab-editor .lab-luecke{flex:1;}
+#lab-editor button, #lab-editor .lab-knopf{min-height:38px;display:inline-flex;align-items:center;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);color:#fff;font:600 14px Inter,sans-serif;cursor:pointer;margin:0;flex-direction:row;}
+#lab-editor button.lab-haupt{background:#f2f2f4;color:#111;border-color:#f2f2f4;}
+#lab-editor button:focus-visible, #lab-editor .lab-knopf:focus-within{outline:2px solid var(--lab-akzent,#ffcf86);outline-offset:2px;}
+@media (max-width:600px){ #lab-editor fieldset{grid-template-columns:1fr;} #lab-editor .lab-karte{grid-template-columns:22px 1fr;} #lab-editor .lab-karte label:last-child{grid-column:2;} }

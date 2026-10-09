@@ -56,7 +56,7 @@ const SCHICHTEN = 18;
 const T = { streifen: .2, flug: 1.5, aufschlag: 3.3, glanz: 3.7 };
 
 function aufbauen(){
-  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const [ta, tb] = Lab.titelZeilen();
   const inhalt = `<span class="k">${esc(SHOW.titelKlein)}</span><span class="g">${esc(ta)}</span><span class="g g2">${esc(tb)}</span>`;
   /* Hinterste Schicht zuerst; Farbe von Bernstein nach Fast-Schwarz */
   const schichten = Array.from({ length: SCHICHTEN }, (_, i) => {

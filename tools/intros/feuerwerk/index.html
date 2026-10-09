@@ -87,7 +87,7 @@ function zerplatzen(r){
 function zielBerechnen(){
   const c = document.createElement('canvas'), w = 1400, h = 600; c.width = w; c.height = h;
   const x = c.getContext('2d'); x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
-  const [ta, tb] = [SHOW.titel.split(' ')[0].toUpperCase(), SHOW.titel.split(' ').slice(1).join(' ').toUpperCase()];
+  const [ta, tb] = Lab.titelZeilen().map(t => t.toUpperCase());
   [[ta, 200, 190], [tb, 140, 420]].forEach(([t, s, y]) => { x.font = `${s}px "Bowlby One"`; const k = Math.min(1, 1300 / x.measureText(t).width); x.font = `${s * k}px "Bowlby One"`; x.fillText(t, w / 2, y); });
   const d = x.getImageData(0, 0, w, h).data, p = [];
   for (let y = 0; y < h; y += 7) for (let xx = 0; xx < w; xx += 7) if (d[(y * w + xx) * 4 + 3] > 128) p.push([xx / w, y / h]);
@@ -144,6 +144,7 @@ requestAnimationFrame(zeichnen);
 const T = { schrift: 8.0, fertig: 10.6 };
 function aufbauen(){
   teile.length = 0; raketen.length = 0; schriftFallen = false;
+  zielPunkte = null;   // Titel kann sich geändert haben (Text-Editor)
   fc.clearRect(0, 0, W, H);
   document.getElementById('klein').textContent = SHOW.titelKlein;
 }

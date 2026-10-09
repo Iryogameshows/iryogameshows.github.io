@@ -10,8 +10,11 @@
      Licht aus, Trommelwirbel, "Macht euch bereit für …" - und der Titel
      steigt als Meistergürtel aus dem Ring auf, mit Funken und Konfetti.
 
-     Der Gürtel ist CSS: Lederriemen, große goldene Platte mit Innenring,
-     zwei Steine in den Team-Farben. -->
+     Ring und Gürtel sind SVG (ringSvg, guertelSvg): der Ring in
+     Zentralperspektive mit vier Pfosten, gepolsterten Ecken (vorn links rot,
+     vorn rechts blau) und drei Seilen je Seite; der Gürtel mit Lederriemen,
+     Naht, Seitenplatten in Team-Farben und einer großen Platte mit
+     Zackenrand, Steinkranz und eingravierter Schrift. -->
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../lab.css">
 <style>
@@ -21,24 +24,14 @@
   .dunst{position:absolute;inset:-20%;background:radial-gradient(40% 30% at 30% 40%,rgba(200,210,255,.08),transparent 70%),radial-gradient(35% 30% at 70% 55%,rgba(200,210,255,.07),transparent 70%);}
   .publikum{position:absolute;left:0;right:0;bottom:30vh;height:22vh;background:linear-gradient(transparent,#0a0a10 40%);}
   .blitzlicht{position:absolute;width:.8vh;height:.8vh;border-radius:50%;background:#fff;box-shadow:0 0 1.6vh .6vh rgba(255,255,255,.8);opacity:0;}
-  .ring{position:absolute;left:8vw;right:8vw;bottom:0;height:34vh;background:linear-gradient(#26314a,#151a28);clip-path:polygon(12% 0,88% 0,100% 100%,0 100%);}
-  .seil{position:absolute;left:4vw;right:4vw;height:.7vh;border-radius:1vh;}
+  .ring{position:absolute;left:0;right:0;bottom:0;height:54vh;}
+  .ring svg{width:100%;height:100%;display:block;}
   .kegel{position:absolute;top:-10vh;width:60vh;height:120vh;clip-path:polygon(45% 0,55% 0,100% 100%,0 100%);mix-blend-mode:screen;opacity:0;}
   .flut{position:absolute;top:0;bottom:0;width:60vw;opacity:0;mix-blend-mode:screen;}
   .ansage{position:absolute;left:0;right:0;top:40%;transform:translateY(-50%);text-align:center;font:500 clamp(18px,2.8vw,46px) Oswald,sans-serif;letter-spacing:.3em;padding-left:.3em;color:#e9e9f2;text-transform:uppercase;opacity:0;}
   .name{position:absolute;left:0;right:0;top:44%;transform:translateY(-50%);text-align:center;font:700 min(19vw,34vh)/1 Oswald,sans-serif;text-transform:uppercase;opacity:0;letter-spacing:.02em;}
-  #guertel{position:absolute;left:50%;top:44%;width:min(86vw,150vh);height:min(36vw,62vh);transform:translate(-50%,-50%);opacity:0;}
-  .riemen{position:absolute;left:0;right:0;top:50%;height:34%;transform:translateY(-50%);border-radius:2vh;
-    background:repeating-linear-gradient(90deg,rgba(255,255,255,.04) 0 .3vh,transparent .3vh 1.4vh),linear-gradient(#1b1b22,#33333f 50%,#141418);box-shadow:inset 0 .6vh 0 rgba(255,255,255,.08),0 2vh 4vh rgba(0,0,0,.7);}
-  .riemen::before,.riemen::after{content:"";position:absolute;top:18%;bottom:18%;width:15%;border-radius:1.4vh;background:linear-gradient(180deg,#fff2b0,#e3ac2c 45%,#8f5f08 55%,#f0c44c);}
-  .riemen::before{left:4%;} .riemen::after{right:4%;}
-  .platte{position:absolute;left:50%;top:50%;width:52%;height:100%;transform:translate(-50%,-50%);border-radius:48%/44%;
-    background:radial-gradient(ellipse at 40% 30%,#fff7cf,#f2c64a 35%,#b07a10 70%,#6e4a05);box-shadow:0 2vh 5vh rgba(0,0,0,.7),inset 0 0 0 1.2vh #8f5f08,inset 0 0 0 1.8vh #f5d36a;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
-  .platte .k{font:700 min(1.6vw,2.8vh) Inter,sans-serif;letter-spacing:.45em;padding-left:.45em;color:#5a3a02;text-transform:uppercase;margin-bottom:1vh;}
-  .platte .g{font:700 min(6.6vw,11.5vh)/.95 Oswald,sans-serif;text-transform:uppercase;color:#3d2600;text-shadow:0 .3vh 0 rgba(255,240,180,.7);}
-  .stein{position:absolute;top:50%;width:6%;aspect-ratio:1;border-radius:50%;transform:translateY(-50%);box-shadow:0 0 0 .5vh #f5d36a,0 0 3vh currentColor;}
-  .glanz{position:absolute;inset:0;border-radius:48%/44%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%) 140% 0/260% 100% no-repeat;mix-blend-mode:screen;}
+  #guertel{position:absolute;left:50%;top:41%;width:min(78vw,136vh);aspect-ratio:1000/430;transform:translate(-50%,-50%);opacity:0;}
+  #guertel svg{width:100%;height:100%;overflow:visible;}
   #schwarz{position:absolute;inset:0;background:#000;opacity:0;}
   .los{position:absolute;bottom:5vh;left:0;right:0;text-align:center;font:700 13px Inter,sans-serif;letter-spacing:.45em;color:#e9e9f2;opacity:0;text-transform:uppercase;}
 </style>
@@ -53,14 +46,117 @@ const { SHOW, esc, zeichen } = Lab;
 const R = gsap.utils.random;
 const T = { damen: .9, rot: 2.8, rotName: 3.7, blau: 5.8, blauName: 6.7, aus: 8.7, bereit: 9.4, guertel: 11.4 };
 
+/* Boxring in Zentralperspektive. Boden als Trapez, die hintere Kante
+   kürzer und höher als die vordere; Pfosten und Seile vorn dicker als
+   hinten - daraus liest das Auge die Tiefe. Gezeichnet wird von hinten
+   nach vorn, damit die vorderen Seile über allem liegen. */
+function ringSvg(){
+  const VL = [170, 440], VR = [1430, 440], HL = [440, 205], HR = [1160, 205];
+  const hV = 175, hH = 108;
+  const oben = (p, h, f) => [p[0], p[1] - h * f];
+  const SEILE = [[.93, '#d9343f'], [.63, '#f4f4f4'], [.33, '#2f6fe0']];
+  const linie = (a, b, farbe, w) => `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${farbe}" stroke-width="${w}" stroke-linecap="round"/>`;
+  /* Ein Seil: Schatten darunter, die Farbe, ein Glanzstreif obendrauf */
+  const seil = (a, ha, b, hb, w) => SEILE.map(([f, c]) => {
+    const p = oben(a, ha, f), q = oben(b, hb, f);
+    return linie([p[0], p[1] + w * .5], [q[0], q[1] + w * .5], 'rgba(0,0,0,.45)', w * .9)
+      + linie(p, q, c, w)
+      + linie([p[0], p[1] - w * .22], [q[0], q[1] - w * .22], 'rgba(255,255,255,.45)', w * .28);
+  }).join('');
+  const pfosten = (p, h, w, polster) =>
+    `<rect x="${p[0] - w / 2}" y="${p[1] - h - 6}" width="${w}" height="${h + 6}" rx="${w / 3}" fill="url(#rMetall)"/>`
+    + `<rect x="${p[0] - w * .75}" y="${p[1] - h - 2}" width="${w * 1.5}" height="${h * .82}" rx="${w * .5}" fill="url(#${polster})"/>`
+    + `<rect x="${p[0] - w * .55}" y="${p[1] - h + 4}" width="${w * .35}" height="${h * .7}" rx="${w * .2}" fill="rgba(255,255,255,.28)"/>`;
+  const punkte = arr => arr.map(p => p.join(',')).join(' ');
+  return `<svg viewBox="0 0 1600 600" preserveAspectRatio="xMidYMax meet">
+    <defs>
+      <radialGradient id="rBoden" cx=".5" cy=".55" r=".65"><stop offset="0" stop-color="#eef1f7"/><stop offset=".6" stop-color="#c3cbdb"/><stop offset="1" stop-color="#8a96ad"/></radialGradient>
+      <linearGradient id="rSchuerze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c2746"/><stop offset="1" stop-color="#0a0f1e"/></linearGradient>
+      <linearGradient id="rMetall" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5d6474"/><stop offset=".45" stop-color="#e3e7ef"/><stop offset="1" stop-color="#4b5160"/></linearGradient>
+      <linearGradient id="rRot" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8f1d16"/><stop offset=".45" stop-color="#ff5a4e"/><stop offset="1" stop-color="#9b1f18"/></linearGradient>
+      <linearGradient id="rBlau" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#173f99"/><stop offset=".45" stop-color="#5c9bff"/><stop offset="1" stop-color="#1a45a5"/></linearGradient>
+      <linearGradient id="rWeiss" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9aa3b5"/><stop offset=".45" stop-color="#ffffff"/><stop offset="1" stop-color="#a3abbc"/></linearGradient>
+      <radialGradient id="rLicht" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    </defs>
+    <polygon points="${punkte([VL, HL, [HL[0], HL[1] + 70], [VL[0], 590]])}" fill="#0d1428"/>
+    <polygon points="${punkte([VR, HR, [HR[0], HR[1] + 70], [VR[0], 590]])}" fill="#0d1428"/>
+    <rect x="${VL[0]}" y="${VL[1]}" width="${VR[0] - VL[0]}" height="150" fill="url(#rSchuerze)"/>
+    <rect x="${VL[0]}" y="${VL[1]}" width="70" height="150" fill="#E8453C" opacity=".85"/>
+    <rect x="${VR[0] - 70}" y="${VR[1]}" width="70" height="150" fill="#3B82F6" opacity=".85"/>
+    <text x="800" y="${VL[1] + 96}" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="58" letter-spacing="14" fill="rgba(255,255,255,.88)">${esc(SHOW.titel.toUpperCase())}</text>
+    <polygon points="${punkte([HL, HR, VR, VL])}" fill="url(#rBoden)"/>
+    <ellipse cx="800" cy="330" rx="430" ry="95" fill="url(#rLicht)"/>
+    <ellipse cx="800" cy="320" rx="190" ry="48" fill="none" stroke="rgba(40,55,95,.28)" stroke-width="6"/>
+    <line x1="${VL[0]}" y1="${VL[1]}" x2="${VR[0]}" y2="${VR[1]}" stroke="rgba(255,255,255,.7)" stroke-width="5"/>
+    ${seil(HL, hH, HR, hH, 5)}
+    ${pfosten(HL, hH, 16, 'rWeiss')}${pfosten(HR, hH, 16, 'rWeiss')}
+    ${seil(VL, hV, HL, hH, 8)}${seil(VR, hV, HR, hH, 8)}
+    ${pfosten(VL, hV, 28, 'rRot')}${pfosten(VR, hV, 28, 'rBlau')}
+    ${seil(VL, hV, VR, hV, 12)}
+  </svg>`;
+}
+
+/* Meistergürtel. Die Schriftgröße richtet sich nach der Länge, damit auch
+   ein bearbeiteter, längerer Titel auf die Platte passt. */
+function guertelSvg(klein, a, b){
+  const groesse = (t, max, breite) => Math.min(max, breite / Math.max(1, Array.from(t).length * .5));
+  const ga = groesse(a, 96, 300), gb = groesse(b, 72, 300);
+  const ring = (n, rx, ry, fn) => Array.from({ length: n }, (_, k) => {
+    const w = k / n * Math.PI * 2 - Math.PI / 2;
+    return fn(500 + Math.cos(w) * rx, 215 + Math.sin(w) * ry, k);
+  }).join('');
+  const steine = ring(14, 197, 157, (x, y, k) =>
+    `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="11" fill="${['#E8453C', '#ffffff', '#3B82F6'][k % 3]}" stroke="#5a3a02" stroke-width="2"/>`
+    + `<circle cx="${(x - 3).toFixed(1)}" cy="${(y - 4).toFixed(1)}" r="3.5" fill="rgba(255,255,255,.85)"/>`);
+  const zacken = ring(22, 238, 198, (x, y) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="20" fill="url(#gGold)" stroke="#6b4505" stroke-width="3"/>`);
+  const stern = (cx, cy, r) => [[0, -1], [.29, -.33], [1, -.33], [.42, .12], [.62, .83], [0, .42], [-.62, .83], [-.42, .12], [-1, -.33], [-.29, -.33]]
+    .map(([u, v]) => (cx + u * r).toFixed(1) + ',' + (cy + v * r).toFixed(1)).join(' ');
+  const seite = (x, voll, hell) =>
+    `<rect x="${x}" y="160" width="196" height="110" rx="28" fill="url(#gGold)" stroke="#6b4505" stroke-width="4"/>`
+    + `<rect x="${x + 16}" y="176" width="164" height="78" rx="18" fill="${voll}" stroke="#5a3a02" stroke-width="3"/>`
+    + `<rect x="${x + 22}" y="181" width="152" height="24" rx="12" fill="${hell}" opacity=".55"/>`
+    + `<polygon points="${stern(x + 98, 218, 24)}" fill="#fff6d6"/>`;
+  const funkel = [[340, 120], [660, 110], [610, 330], [380, 320]].map(([x, y]) =>
+    `<polygon class="funkel" points="${[[0, -22], [5, -5], [22, 0], [5, 5], [0, 22], [-5, 5], [-22, 0], [-5, -5]].map(([u, v]) => (x + u) + ',' + (y + v)).join(' ')}" fill="#fff" opacity="0"/>`).join('');
+  const zeile = (t, y, g) => {
+    const s = esc(t.toUpperCase());
+    return `<text x="500" y="${y + 2}" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="${g.toFixed(0)}" fill="rgba(255,248,210,.75)">${s}</text>`
+      + `<text x="500" y="${y}" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="700" font-size="${g.toFixed(0)}" fill="#3d2600">${s}</text>`;
+  };
+  return `<svg viewBox="0 0 1000 430">
+    <defs>
+      <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6c8"/><stop offset=".32" stop-color="#f2c548"/><stop offset=".52" stop-color="#a8730c"/><stop offset=".74" stop-color="#f0c650"/><stop offset="1" stop-color="#8a5a06"/></linearGradient>
+      <radialGradient id="gScheibe" cx=".4" cy=".32" r=".85"><stop offset="0" stop-color="#fffbe6"/><stop offset=".45" stop-color="#f3cd5a"/><stop offset="1" stop-color="#a87510"/></radialGradient>
+      <linearGradient id="gLeder" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34343e"/><stop offset=".5" stop-color="#17171c"/><stop offset="1" stop-color="#09090c"/></linearGradient>
+      <linearGradient id="gGlanz" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <clipPath id="cPlatte"><ellipse cx="500" cy="215" rx="240" ry="200"/><rect x="40" y="160" width="920" height="110" rx="28"/></clipPath>
+      <filter id="fSchatten" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#000" flood-opacity=".65"/></filter>
+    </defs>
+    <g filter="url(#fSchatten)">
+      <rect x="6" y="148" width="988" height="134" rx="34" fill="url(#gLeder)"/>
+      <rect x="22" y="162" width="956" height="106" rx="26" fill="none" stroke="#c9a24a" stroke-width="3" stroke-dasharray="11 8" opacity=".75"/>
+      ${seite(64, '#c42a20', '#ff8a80')}${seite(740, '#1f55c4', '#9cc0ff')}
+      ${zacken}
+      <ellipse cx="500" cy="215" rx="236" ry="196" fill="url(#gGold)" stroke="#6b4505" stroke-width="5"/>
+      <ellipse cx="500" cy="215" rx="216" ry="176" fill="#3a2604"/>
+      ${steine}
+      <ellipse cx="500" cy="215" rx="178" ry="138" fill="url(#gScheibe)" stroke="#8a5a06" stroke-width="4"/>
+      <polygon points="440,30 470,62 500,18 530,62 560,30 552,78 448,78" fill="url(#gGold)" stroke="#6b4505" stroke-width="4"/>
+      <circle cx="500" cy="52" r="9" fill="#E8453C" stroke="#5a3a02" stroke-width="2"/>
+      <text x="500" y="136" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="22" letter-spacing="7" fill="#5a3a02">${esc(klein.toUpperCase())}</text>
+      ${zeile(a, 228, ga)}${zeile(b, 296, gb)}
+      <g clip-path="url(#cPlatte)"><rect id="glanzbalken" x="-360" y="-40" width="170" height="520" fill="url(#gGlanz)" transform="skewX(-18)"/></g>
+      ${funkel}
+    </g>
+  </svg>`;
+}
+
 function aufbauen(){
-  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const [ta, tb] = Lab.titelZeilen();
   document.getElementById('arena').innerHTML = `
     <div class="dunst"></div>
     <div class="publikum">${Array.from({ length: 36 }, () => `<i class="blitzlicht" style="left:${R(2, 98)}%;top:${R(10, 80)}%"></i>`).join('')}</div>
-    <div class="ring">
-      <i class="seil" style="top:6%;background:#d9343f"></i><i class="seil" style="top:16%;background:#f2f2f2"></i><i class="seil" style="top:26%;background:#2f6fe0"></i>
-    </div>
+    <div class="ring">${ringSvg()}</div>
     <div class="kegel" style="left:-5vw;background:linear-gradient(rgba(255,255,255,.3),transparent);transform:rotate(-24deg);transform-origin:50% 0"></div>
     <div class="kegel" style="right:-5vw;background:linear-gradient(rgba(255,255,255,.3),transparent);transform:rotate(24deg);transform-origin:50% 0"></div>
     <div class="flut" id="flut0" style="left:0;background:radial-gradient(ellipse at 0 50%,rgba(232,69,60,.75),transparent 70%)"></div>
@@ -72,12 +168,7 @@ function aufbauen(){
     <div class="name" id="n-blau" style="color:#4f8bff;text-shadow:0 0 6vh rgba(59,130,246,.7)">${esc(SHOW.teams[1])}</div>
     <div id="schwarz"></div>
     <div class="ansage" id="a-bereit" style="color:#ffd24d">Macht euch bereit für …</div>
-    <div id="guertel">
-      <div class="riemen"></div>
-      <div class="platte"><div class="k">${esc(SHOW.titelKlein)}</div><div class="g">${esc(ta)}</div><div class="g">${esc(tb)}</div><i class="glanz"></i></div>
-      <i class="stein" style="left:20%;background:radial-gradient(circle at 35% 30%,#ffb0a8,#E8453C 50%,#7a1510);color:#E8453C"></i>
-      <i class="stein" style="right:20%;background:radial-gradient(circle at 35% 30%,#b8d2ff,#3B82F6 50%,#123a8a);color:#3B82F6"></i>
-    </div>
+    <div id="guertel">${guertelSvg(SHOW.titelKlein, ta, tb)}</div>
     <div class="los">Klicken, um zu beginnen</div>`;
 }
 
@@ -115,7 +206,8 @@ function bauen(tl){
     .to('.kegel', { opacity: .8, duration: .3 }, T.guertel)
     .to('#flut0, #flut1', { opacity: .45, duration: .3 }, T.guertel)
     .fromTo('#guertel', { opacity: 0, y: '40vh', scale: .6, rotationX: 50 }, { opacity: 1, y: 0, scale: 1, rotationX: 0, duration: 1, ease: 'expo.out', immediateRender: false }, T.guertel)
-    .fromTo('#guertel .glanz', { backgroundPosition: '140% 0%' }, { backgroundPosition: '-40% 0%', duration: 1.4, ease: 'power2.inOut', immediateRender: false }, T.guertel + 1)
+    .fromTo('#glanzbalken', { attr: { x: -360 } }, { attr: { x: 1240 }, duration: 1.5, ease: 'power2.inOut', immediateRender: false }, T.guertel + 1)
+    .fromTo('#guertel .funkel', { scale: 0, opacity: 0, transformOrigin: '50% 50%' }, { scale: 1, opacity: 1, duration: .25, yoyo: true, repeat: 5, repeatDelay: .5, stagger: .2, ease: 'sine.inOut', immediateRender: false }, T.guertel + 1.4)
     .to('#guertel', { y: -10, duration: 1.6, yoyo: true, repeat: 3, ease: 'sine.inOut' }, T.guertel + 1.2)
     .fromTo('.los', { opacity: 0 }, { opacity: .8, duration: .8, yoyo: true, repeat: 5, ease: 'sine.inOut' }, T.guertel + 2);
   Lab.explosion(tl, arena, T.guertel + .2, { n: 80, farben: ['#ffd24d', '#fff', '#ff9f3d'], y: 70, weite: .7, rund: true, groesse: [3, 7], glanz: true, dauer: [1.2, 2.2], fall: .3 });

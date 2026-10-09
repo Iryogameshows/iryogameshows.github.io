@@ -88,7 +88,7 @@ const LOG = [
   ['> Verbindung wird aufgebaut', ''],
   ['> Entschlüssele Akte 0-17 …', ''],
   ['> Zugriff gewährt', 'ok'],
-  ['> Lade Grundriss: Keller', ''],
+  ['> Lade Grundriss: {titel}', ''],
   ['> Bewegung im Sektor B', 'warn'],
 ];
 
@@ -112,10 +112,10 @@ function aufbauen(){
   document.getElementById('hud').innerHTML = `
     <div class="raster"></div>
     <i class="ecke lo"></i><i class="ecke ro"></i><i class="ecke lu"></i><i class="ecke ru"></i>
-    <div id="log">${LOG.map(([t, k], i) => `<div class="z ${k}" id="log${i}">${zeichen(t)}</div>`).join('')}<span class="cursor" id="cur"></span></div>
+    <div id="log">${LOG.map(([t, k], i) => `<div class="z ${k}" id="log${i}">${zeichen(t.replace('{titel}', SHOW.titel1))}</div>`).join('')}<span class="cursor" id="cur"></span></div>
     <div id="plan">${grundriss()}<i id="scan"></i></div>
     <div id="rechts">
-      <div>OPERATION</div><div class="wert">KELLER</div><div class="balken"><i></i></div>
+      <div>OPERATION</div><div class="wert">${esc(SHOW.titel1.toUpperCase())}</div><div class="balken"><i></i></div>
       <div>SIGNAL</div><div class="wert" id="sig">0 %</div><div class="balken"><i></i></div>
       <div>ZIELE</div><div class="wert" id="ziele">–</div><div class="balken"><i></i></div>
       <div>STATUS</div><div class="wert" id="status">SUCHE</div>
@@ -126,7 +126,7 @@ function aufbauen(){
     ${[0, 1].map(i => `<div class="akte" id="akte${i}" style="${i ? 'right:6vw' : 'left:6vw'};border-top:4px solid ${i ? '#3B82F6' : '#E8453C'}">
       <div class="foto">${['● ● ●', '● ● ●'][i]}</div>
       <h3 style="color:${i ? '#7aa7ff' : '#ff6a5a'}">${esc(SHOW.teams[i])}</h3>
-      ${[['Codename', i ? 'BLAU' : 'ROT'], ['Mitglieder', 'Unbekannt'], ['Gefahr', 'Hoch'], ['Status', 'Bereit']].map(([k, v]) =>
+      ${[['Codename', esc(Lab.kurz(SHOW.teams[i]).toUpperCase())], ['Mitglieder', 'Unbekannt'], ['Gefahr', 'Hoch'], ['Status', 'Bereit']].map(([k, v]) =>
         `<div class="zeile"><span>${k}</span><span class="val">${v}<i class="schwarz"></i></span></div>`).join('')}
     </div>`).join('')}
     <div id="briefing">
@@ -136,7 +136,7 @@ function aufbauen(){
     </div>`;
   document.getElementById('titel').innerHTML = `
     <div class="op">Operation</div>
-    <div class="gross" id="tgross">${esc(SHOW.titel).replace(' ', '<br>')}</div>
+    <div class="gross" id="tgross">${esc(SHOW.titel1)}<br>${esc(SHOW.titel2)}</div>
     <div class="klein">${esc(SHOW.titelKlein)} · ${esc(SHOW.titelZeile)}</div>
     <div id="stempel">Freigegeben</div>
     <div id="los">KLICKEN, UM ZU BEGINNEN_</div>`;

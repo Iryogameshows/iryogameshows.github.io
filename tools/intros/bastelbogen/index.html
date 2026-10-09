@@ -68,7 +68,7 @@ function schnitt(){
 const blob = (fill, b) => `<svg width="100%" height="100%" viewBox="0 0 70 70"><ellipse cx="35" cy="38" rx="29" ry="31" fill="#fff"/><ellipse cx="35" cy="38" rx="25" ry="27" fill="${fill}"/><circle cx="26" cy="34" r="7.5" fill="#fff"/><circle cx="45" cy="34" r="7.5" fill="#fff"/><circle cx="${26 + b}" cy="35" r="3.3" fill="#2b2118"/><circle cx="${45 + b}" cy="35" r="3.3" fill="#2b2118"/><path d="M27 48 q8 8 17 0" fill="none" stroke="#2b2118" stroke-width="3.2" stroke-linecap="round"/></svg>`;
 
 function aufbauen(){
-  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const [ta, tb] = Lab.titelZeilen();
   const buchstaben = (wort, zeile) => Array.from(wort.toUpperCase()).map((c, i, a) => {
     const breite = zeile ? 8.6 : 12.5, x = (i - (a.length - 1) / 2) * breite * 1.04;
     return `<div class="stueck schatten bst ${zeile ? 'b2' : 'b1'}" style="left:calc(50vw + ${x.toFixed(2)}vh - ${breite / 2}vh);top:${zeile ? 47 : 26}vh;width:${breite}vh;height:${breite * 1.15}vh;

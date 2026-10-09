@@ -23,6 +23,7 @@
      DOM, ein Canvas kommt dort nicht an. Soll das hier auf die Leinwand,
      muss das Zuschauerfenster es selbst abspielen. -->
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200..900&family=Inter:wght@300;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../lab.css">
 <style>
   :root{color-scheme:dark;}
   *{box-sizing:border-box;}
@@ -98,6 +99,7 @@
 <div id="start" tabindex="0" role="button"><b>EREIGNISHORIZONT</b><span>Klicken zum Starten · mit Ton</span></div>
 <div id="leiste" class="weg">
   <a href="../">◱ Übersicht</a>
+  <button id="b-texte">✏ Texte</button>
   <button id="b-neu">↻ Von vorn</button>
   <button id="b-pause">⏸ Pause</button>
   <button id="b-ton">🔊 Ton an</button>
@@ -107,21 +109,14 @@
 <div id="fehler">Dieser Browser kann kein WebGL - das Intro braucht eine Grafikkarte mit WebGL.</div>
 
 <script src="../../../vendor/gsap.min.js"></script>
+<script src="../lab.js"></script>
 <script>
 /* ═══ INHALT ═══════════════════════════════════════════════════════════════
    Texte wie im Keller-Intro. Alles andere ergibt sich daraus. */
-const SHOW = {
-  vorab: 'Heute Abend',
-  titelKlein: 'Die Große',
-  titel: 'Keller Gameshow',
-  titelZeile: 'Zwei Teams · Zwei Abende · Ein Sieger',
-  karten: [
-    { ueber: 'Es treten an',        text: 'Zwei Teams' },
-    { ueber: 'Gespielt wird an',    text: 'Zwei Abenden' },
-    { ueber: 'Heute Abend',         text: 'Gameshow Nr. 1' },
-    { ueber: 'Für das Siegerteam',  text: '30 €', zahl: 30 },
-  ],
-};
+/* Texte aus dem Intro-Labor (lab.js): bearbeitbar über ✏ Texte, gemeinsam
+   für alle Intros. Nach dem Übernehmen lädt die Seite neu, weil die Schrift
+   hier nur einmal beim Laden gesetzt wird. */
+const SHOW = Lab.SHOW;
 
 /* ═══ SHADER ═══════════════════════════════════════════════════════════════ */
 const VERT = `attribute vec2 a; void main(){ gl_Position = vec4(a, 0., 1.); }`;
@@ -539,6 +534,7 @@ bPause.onclick = () => {
   if (Ton.ctx) (p ? Ton.ctx.suspend() : Ton.ctx.resume());
   bPause.textContent = p ? '▶ Weiter' : '⏸ Pause';
 };
+document.getElementById('b-texte').onclick = () => { if (master) master.pause(); if (Ton.ctx) Ton.ctx.suspend(); Lab.editor(() => location.reload()); };
 bTon.onclick = () => { Ton.laut(!Ton.an); bTon.textContent = Ton.an ? '🔊 Ton an' : '🔇 Ton aus'; };
 /* Spulen und Ton passen nicht zusammen - beim Spulen schweigt der Ton, bis
    "Von vorn" ihn wieder synchron startet. */

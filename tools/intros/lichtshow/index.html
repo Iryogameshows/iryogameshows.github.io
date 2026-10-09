@@ -306,7 +306,7 @@ function aufbauen(){
   led.innerHTML = `
     ${['3', '2', '1'].map(n => `<div class="ls zahl"><div class="plasma"></div><b class="zahl-gross">${n}</b></div>`).join('')}
     <div class="ls" id="ls-titel"><div class="plasma"></div><span class="klein">${esc(SHOW.titelKlein)}</span>
-      <b class="titel-gross"><span class="w1">${esc(SHOW.titel.split(' ')[0])}</span><span class="w2">${esc(SHOW.titel.split(' ').slice(1).join(' '))}</span></b>
+      <b class="titel-gross"><span class="w1">${esc(SHOW.titel1)}</span><span class="w2">${esc(SHOW.titel2)}</span></b>
       <div class="lauf">${esc((SHOW.titelZeile + '   ★   ').repeat(4))}</div></div>
     ${SHOW.karten.map((k, i) => `<div class="ls karte" id="ls-k${i}">${i === 0 ? '<div class="teams"><i></i><i></i></div>' : '<div class="plasma"></div>'}
       <span class="klein">${esc(k.ueber)}</span><b class="k-gross">${k.zahl != null ? `<span class="zaehler">0</span>${esc(String(k.text).replace(/^\d+/, ''))}` : esc(k.text)}</b></div>`).join('')}`;

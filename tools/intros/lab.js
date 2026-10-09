@@ -3,28 +3,80 @@
    Zeitleiste, Ton. Was alle brauchen, steht hier einmal:
 
      Lab.SHOW      die Texte - in allen Intros dieselben, damit man sie
-                   vergleichen kann
+                   vergleichen kann; bearbeitbar über Lab.editor()
      Lab.zeichen   Text in einzelne Buchstaben-Spans zerlegen
      Lab.Ton       WebAudio-Baukasten (Kick, Snare, Aufprall, Saite, ...)
      Lab.starte    Startbildschirm, Bedienleiste, Neustart, Spulen
+     Lab.editor    Texte bearbeiten, speichern, exportieren, importieren
 
    Kein Teil der Show und nicht von check.js geprüft (das prüft nur js/).
    Klassisches Script, kein Modul - wie im Rest des Projekts.
    ════════════════════════════════════════════════════════════════════════ */
 (function(){
-  const SHOW = {
+  /* Die Voreinstellung - wie beim eigenen Intro der Show ein fertiges
+     Beispiel, das man abwandelt, statt mit leeren Feldern anzufangen. */
+  const STANDARD = {
     vorab: 'Heute Abend',
     titelKlein: 'Die Große',
-    titel: 'Keller Gameshow',
+    titel1: 'Keller',
+    titel2: 'Gameshow',
     titelZeile: 'Zwei Teams · Zwei Abende · Ein Sieger',
+    uhrzeit: '20:00',
     teams: ['Team Rot', 'Team Blau'],
     karten: [
       { ueber: 'Es treten an',       text: 'Zwei Teams' },
       { ueber: 'Gespielt wird an',   text: 'Zwei Abenden' },
       { ueber: 'Heute Abend',        text: 'Gameshow Nr. 1' },
-      { ueber: 'Für das Siegerteam', text: '30 €', zahl: 30 },
+      { ueber: 'Für das Siegerteam', text: '30 €' },
     ],
   };
+  const SPEICHER = 'introLabor.texte';
+
+  /* SHOW bleibt immer dasselbe Objekt: die Intros holen es sich einmal
+     (const { SHOW } = Lab) und lesen es bei jedem Neustart neu aus. */
+  const SHOW = {};
+  /* Fremde Eingabe (localStorage, Importdatei) auf die erwartete Form
+     bringen: nur Texte, begrenzte Länge, genau zwei Teams, vier Karten. */
+  function bereinigen(d){
+    d = d && typeof d === 'object' ? d : {};
+    const txt = (v, s) => (typeof v === 'string' ? v : s).slice(0, 60);
+    return {
+      vorab: txt(d.vorab, STANDARD.vorab),
+      titelKlein: txt(d.titelKlein, STANDARD.titelKlein),
+      titel1: txt(d.titel1, STANDARD.titel1),
+      titel2: txt(d.titel2, STANDARD.titel2),
+      titelZeile: txt(d.titelZeile, STANDARD.titelZeile),
+      uhrzeit: txt(d.uhrzeit, STANDARD.uhrzeit),
+      teams: [0, 1].map(i => txt(Array.isArray(d.teams) ? d.teams[i] : undefined, STANDARD.teams[i])),
+      karten: [0, 1, 2, 3].map(i => {
+        const k = Array.isArray(d.karten) && d.karten[i] && typeof d.karten[i] === 'object' ? d.karten[i] : {};
+        return { ueber: txt(k.ueber, STANDARD.karten[i].ueber), text: txt(k.text, STANDARD.karten[i].text) };
+      }),
+    };
+  }
+  /* Abgeleitete Werte: titel als Ganzes (für Intros, die ihn in einem
+     Stück setzen) und die Zahl einer Karte, wenn ihr Text mit einer Zahl
+     beginnt - die wird in vielen Intros hochgezählt. */
+  function anwenden(d){
+    const b = bereinigen(d);
+    Object.keys(SHOW).forEach(k => delete SHOW[k]);
+    Object.assign(SHOW, b);
+    SHOW.titel = (b.titel1 + ' ' + b.titel2).trim();
+    SHOW.karten.forEach(k => { const m = k.text.match(/^\s*(\d+)/); if (m) k.zahl = Number(m[1]); });
+  }
+  function laden(){
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(SPEICHER) || 'null'); } catch { d = null; }
+    anwenden(d);
+  }
+  function speichern(d){
+    anwenden(d);
+    try { localStorage.setItem(SPEICHER, JSON.stringify(bereinigen(SHOW))); } catch {}
+  }
+  laden();
+  const titelZeilen = () => [SHOW.titel1, SHOW.titel2];
+  /* Kurzname eines Teams fürs große Bild: das letzte Wort ("Team Rot" -> "Rot") */
+  const kurz = name => String(name).trim().split(/\s+/).pop() || String(name);
 
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
   /* Leerzeichen als eigener Span mit &nbsp;: als inline-block hätte ein
@@ -271,6 +323,77 @@
     }
   }
 
+  /* ── Text-Editor ───────────────────────────────────────────────────────
+     Wie beim eigenen Intro der Show: jede Zeile aus einem Feld. Gespeichert
+     im Browser (localStorage) und für alle Intros des Labors gemeinsam -
+     einmal bearbeitet, überall übernommen. Export/Import als JSON, damit
+     ein Stand auf den anderen Rechner wandern kann.
+     nachher() läuft nach dem Übernehmen (z.B. Intro neu starten). */
+  function editor(nachher){
+    const alt = document.getElementById('lab-editor');
+    if (alt) alt.remove();
+    const d = bereinigen(SHOW);
+    const feld = (name, wert, beschriftung, hinweis) => `<label>${esc(beschriftung)}
+      <input type="text" name="${name}" value="${esc(wert)}" maxlength="60" autocomplete="off">${hinweis ? `<small>${esc(hinweis)}</small>` : ''}</label>`;
+    const box = document.createElement('div');
+    box.id = 'lab-editor';
+    box.innerHTML = `
+      <form class="lab-panel" role="dialog" aria-modal="true" aria-label="Intro-Texte bearbeiten">
+        <h2>Intro-Texte bearbeiten</h2>
+        <p class="lab-info">Gilt für alle Intros im Labor und bleibt in diesem Browser gespeichert. Sehr lange Texte können in einzelnen Intros über den Rand laufen.</p>
+        <fieldset><legend>Titel</legend>
+          ${feld('titelKlein', d.titelKlein, 'Kleine Zeile über dem Titel')}
+          ${feld('titel1', d.titel1, 'Titel, erste Zeile')}
+          ${feld('titel2', d.titel2, 'Titel, zweite Zeile')}
+          ${feld('titelZeile', d.titelZeile, 'Zeile unter dem Titel')}
+        </fieldset>
+        <fieldset><legend>Anlauf und Teams</legend>
+          ${feld('vorab', d.vorab, 'Erste Worte ganz am Anfang')}
+          ${feld('uhrzeit', d.uhrzeit, 'Uhrzeit', 'Für Anzeigetafel, Startampel, Uhr')}
+          ${feld('team0', d.teams[0], 'Team 1 (rot)')}
+          ${feld('team1', d.teams[1], 'Team 2 (blau)')}
+        </fieldset>
+        <fieldset class="lab-karten"><legend>Vier Einblendungen</legend>
+          ${d.karten.map((k, i) => `<div class="lab-karte"><b>${i + 1}</b>${feld('ueber' + i, k.ueber, 'Kleine Zeile')}${feld('text' + i, k.text, 'Große Zeile', i === 3 ? 'Beginnt sie mit einer Zahl, wird hochgezählt' : '')}</div>`).join('')}
+        </fieldset>
+        <div class="lab-knoepfe">
+          <button type="submit" class="lab-haupt">Übernehmen</button>
+          <button type="button" data-a="abbruch">Abbrechen</button>
+          <span class="lab-luecke"></span>
+          <button type="button" data-a="export">Exportieren</button>
+          <label class="lab-knopf">Importieren<input type="file" accept=".json,application/json" hidden></label>
+          <button type="button" data-a="standard">Standard</button>
+        </div>
+      </form>`;
+    document.body.appendChild(box);
+    const form = box.querySelector('form');
+    const lesen = () => {
+      const f = n => form.elements[n].value;
+      return { vorab: f('vorab'), titelKlein: f('titelKlein'), titel1: f('titel1'), titel2: f('titel2'), titelZeile: f('titelZeile'), uhrzeit: f('uhrzeit'),
+        teams: [f('team0'), f('team1')], karten: [0, 1, 2, 3].map(i => ({ ueber: f('ueber' + i), text: f('text' + i) })) };
+    };
+    const schliessen = () => { box.remove(); document.removeEventListener('keydown', esc_); };
+    const esc_ = e => { if (e.key === 'Escape') schliessen(); };
+    document.addEventListener('keydown', esc_);
+    form.addEventListener('submit', e => { e.preventDefault(); speichern(lesen()); schliessen(); if (nachher) nachher(); });
+    form.querySelector('[data-a=abbruch]').onclick = schliessen;
+    form.querySelector('[data-a=standard]').onclick = () => { if (confirm('Alle Texte auf die Voreinstellung zurücksetzen?')){ speichern(STANDARD); schliessen(); editor(nachher); } };
+    form.querySelector('[data-a=export]').onclick = () => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(bereinigen(lesen()), null, 2)], { type: 'application/json' }));
+      a.download = 'intro-texte.json'; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    };
+    form.querySelector('input[type=file]').onchange = e => {
+      const datei = e.target.files && e.target.files[0];
+      if (!datei) return;
+      datei.text().then(t => { speichern(JSON.parse(t.replace(/^﻿/, ''))); schliessen(); editor(nachher); })
+        .catch(() => alert('Die Datei ließ sich nicht lesen - ist es eine exportierte intro-texte.json?'));
+    };
+    box.addEventListener('click', e => { if (e.target === box) schliessen(); });
+    form.elements.titelKlein.focus();
+  }
+
   /* ── Rahmen: Start, Bedienleiste, Zeitleiste ──────────────────────────
      cfg = {
        name, untertitel,
@@ -289,6 +412,7 @@
     leiste.className = 'weg';
     leiste.innerHTML = `
       <a href="../" title="Alle Intros">◱ Übersicht</a>
+      <button data-a="texte">✏ Texte</button>
       <button data-a="neu">↻ Von vorn</button>
       <button data-a="pause">⏸ Pause</button>
       <button data-a="ton">🔊 Ton an</button>
@@ -326,6 +450,12 @@
     start.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); los(); } });
     start.focus();
     leiste.querySelector('[data-a=neu]').onclick = abspielen;
+    /* Nach dem Übernehmen gleich neu abspielen - aber nur, wenn das Intro
+       schon lief; vor dem Start bleibt der Startbildschirm stehen. */
+    leiste.querySelector('[data-a=texte]').onclick = () => {
+      if (tl) { tl.pause(); if (Ton.ctx) Ton.ctx.suspend(); bPause.textContent = '▶ Weiter'; }
+      editor(() => { if (tl) abspielen(); });
+    };
     bPause.onclick = () => {
       if (!tl) return;
       const p = !tl.paused();
@@ -355,5 +485,5 @@
     };
   }
 
-  window.Lab = { SHOW, esc, zeichen, Ton, starte, explosion };
+  window.Lab = { SHOW, esc, zeichen, Ton, starte, explosion, editor, titelZeilen, kurz };
 })();

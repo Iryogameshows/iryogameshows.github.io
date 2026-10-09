@@ -7,12 +7,17 @@
 <!-- Übersicht der Intro-Prototypen. Jede Kachel zeigt den Namen in der
      Schrift und den Farben ihres Intros - als Vorgeschmack, ohne Vorschaubild. -->
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;600&family=Anton&family=Archivo:wdth,wght@62..125,900&family=Syne:wght@800&family=Big+Shoulders+Stencil+Display:wght@900&family=Titan+One&family=Bowlby+One&family=Abril+Fatface&family=Bungee+Shade&family=Archivo+Black&family=Press+Start+2P&family=Oswald:wght@500;700&family=Bangers&family=Cinzel:wght@400&family=Shrikhand&family=Racing+Sans+One&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="lab.css">
 <style>
   :root{color-scheme:dark;--grund:#0b0b0f;--flaeche:#131318;--linie:rgba(255,255,255,.1);--text:#f2f2f4;--leise:rgba(242,242,244,.62);}
   *{box-sizing:border-box;}
   body{margin:0;background:var(--grund);color:var(--text);font:400 16px/1.5 Inter,system-ui,sans-serif;}
   main{max-width:1180px;margin:0 auto;padding:56px 16px 80px;}
   h1{margin:0 0 8px;font:600 clamp(28px,4vw,44px)/1.1 Inter,sans-serif;letter-spacing:-.01em;}
+  .kopfzeile{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .kopfzeile h1{margin:0;}
+  #texte{min-height:40px;padding:0 16px;border-radius:9px;border:1px solid rgba(255,255,255,.2);background:#f2f2f4;color:#111;font:700 14px Inter,sans-serif;cursor:pointer;}
+  #texte:focus-visible{outline:2px solid #ffcf86;outline-offset:3px;}
   .vorspann{margin:0 0 40px;max-width:62ch;color:var(--leise);}
   .raster{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
   a.kachel{display:flex;flex-direction:column;border:1px solid var(--linie);border-radius:14px;overflow:hidden;color:inherit;text-decoration:none;background:var(--flaeche);
@@ -32,7 +37,7 @@
 </head>
 <body>
 <main>
-  <h1>Intro-Labor</h1>
+  <div class="kopfzeile"><h1>Intro-Labor</h1><button type="button" id="texte">✏ Texte für alle Intros bearbeiten</button></div>
   <p class="vorspann">Achtzehn Intros für die Keller Gameshow, jedes mit eigener Idee, eigenem Look und eigenem Ton. Alle zeigen dieselben Texte, damit man sie vergleichen kann. Zum Ansehen eins öffnen und klicken – der Ton startet mit dem Klick. Bewegt man die Maus, erscheint unten eine Leiste zum Anhalten und Spulen.</p>
   <h2 class="abschnitt">Zweite Runde · zwölf Intros mit Logo-Moment</h2>
   <p class="hinweis">Jedes folgt derselben Dramaturgie: Anlauf, das Logo als Höhepunkt mit Schlag, dann die stehende Titelkarte mit „Klicken, um zu beginnen“.</p>
@@ -100,5 +105,7 @@
         <div class="technik">GSAP mit 12 Bildern pro Sekunde · Ukulele und Xylophon · 26 s</div></div></a>
   </div>
 </main>
+<script src="lab.js"></script>
+<script>document.getElementById('texte').onclick = () => Lab.editor();</script>
 </body>
 </html>

@@ -31,12 +31,13 @@
     background:linear-gradient(180deg,#f2f2f6,#9aa0ad 18%,#e8e8ee 32%,#7c8290 55%,#d8dae2 78%,#8a8f9c);box-shadow:0 3vh 6vh rgba(0,0,0,.6),inset 0 0 0 .5vh rgba(255,255,255,.6);}
   .reihe{display:flex;justify-content:center;gap:1vh;margin:1.4vh 0;}
   .fenster{position:relative;overflow:hidden;background:linear-gradient(#cfcfcf,#fff 30%,#fff 70%,#cfcfcf);border-radius:1vh;box-shadow:inset 0 .8vh 1.2vh rgba(0,0,0,.45),inset 0 -.8vh 1.2vh rgba(0,0,0,.45);}
-  .r1 .fenster{width:min(10.5vw,17vh);height:min(13vw,21vh);}
-  .r2 .fenster{width:min(7.6vw,12.4vh);height:min(9.4vw,15vh);}
+  /* Walzenbreite nach Buchstabenzahl (--n an der Reihe): ein bearbeiteter,
+     längerer Titel soll in die Breite passen statt über den Rand zu laufen. */
+  .r1 .fenster{--w:min(10.5vw,17vh,calc(78vw / var(--n)));width:var(--w);height:calc(var(--w) * 1.24);}
+  .r2 .fenster{--w:min(7.6vw,12.4vh,calc(78vw / var(--n)));width:var(--w);height:calc(var(--w) * 1.24);}
   .streifen{position:absolute;left:0;right:0;top:0;}
   .streifen span{display:flex;align-items:center;justify-content:center;font:400 1em/1 Bungee,sans-serif;color:#1c1030;}
-  .r1 .streifen span{height:min(13vw,21vh);font-size:min(9vw,15vh);}
-  .r2 .streifen span{height:min(9.4vw,15vh);font-size:min(6.4vw,10.4vh);}
+  .streifen span{height:calc(var(--w) * 1.24);font-size:calc(var(--w) * .86);}
   .streifen span.sym{color:#d4202f;} .streifen span.blau{color:#2b6fe0;}
   .gewinn{position:absolute;inset:0;border-radius:1vh;box-shadow:inset 0 0 0 .5vh #ffd24d,0 0 3vh #ffd24d;opacity:0;}
   .schale{margin:1.8vh auto 0;width:40%;height:3.2vh;border-radius:0 0 2vh 2vh;background:linear-gradient(#3a3a44,#111);box-shadow:inset 0 .6vh 1vh rgba(0,0,0,.8);}
@@ -60,8 +61,12 @@ const SYMBOLE = ['★', '7', '€', '♦', '♥', 'K', 'A', 'G', 'S', 'X', 'O', 
 const T = { licht: .3, hebel: 1.1, r1: 1.5, r2: 4.9, jackpot: 7.6 };
 
 function walze(ziel){
-  const zeichen = Array.from({ length: N - 1 }, () => SYMBOLE[(Math.random() * SYMBOLE.length) | 0]);
-  zeichen.push(ziel);
+  /* Vorn ein Stern (so steht der Automat vor dem Start da), dann Zufall,
+     an Stelle N-1 das Ziel und dahinter noch ein Zeichen - beim Überschwingen
+     (back.out) rutscht die Walze kurz darüber hinaus und soll dort nicht
+     ins Leere zeigen. */
+  const zeichen = ['★'].concat(Array.from({ length: N - 2 }, () => SYMBOLE[(Math.random() * SYMBOLE.length) | 0]));
+  zeichen.push(ziel, SYMBOLE[(Math.random() * SYMBOLE.length) | 0]);
   return `<div class="fenster"><div class="streifen">${zeichen.map((z, i) => `<span class="${i < N - 1 && '★7€♦♥'.includes(z) ? (i % 2 ? 'sym' : 'blau') : ''}">${esc(z)}</span>`).join('')}</div><i class="gewinn"></i></div>`;
 }
 function birnen(n, breit, hoch){
@@ -79,7 +84,7 @@ function birnen(n, breit, hoch){
   return pos.join('');
 }
 function aufbauen(){
-  const [ta, tb] = [SHOW.titel.split(' ')[0].toUpperCase(), SHOW.titel.split(' ').slice(1).join(' ').toUpperCase()];
+  const [ta, tb] = Lab.titelZeilen().map(t => t.toUpperCase());
   document.getElementById('casino').innerHTML = `
     ${Array.from({ length: 18 }, (_, i) => `<i class="bokeh" style="left:${R(0, 100)}%;top:${R(0, 100)}%;width:${R(4, 14)}vh;height:${R(4, 14)}vh;background:${['#ff3ea5', '#ffd24d', '#4fa3ff'][i % 3]}"></i>`).join('')}
     <div id="jackpot">JACKPOT!</div>
@@ -87,8 +92,8 @@ function aufbauen(){
       <div class="kopf"><b>${esc(SHOW.titelKlein.toUpperCase())}</b><div class="bulbs">${birnen(26, 3, 1)}</div></div>
       <div class="rahmen">
         <div class="bulbs">${birnen(44, 4, 2)}</div>
-        <div class="reihe r1">${Array.from(ta).map(walze).join('')}</div>
-        <div class="reihe r2">${Array.from(tb).map(walze).join('')}</div>
+        <div class="reihe r1" style="--n:${Array.from(ta).length}">${Array.from(ta).map(walze).join('')}</div>
+        <div class="reihe r2" style="--n:${Array.from(tb).length}">${Array.from(tb).map(walze).join('')}</div>
         <div class="schale"></div>
         <div id="hebel"><i></i><b></b></div>
       </div>
@@ -108,9 +113,13 @@ function bauen(tl){
   /* Walzen: Höhe eines Zeichens messen, auf das letzte drehen */
   const drehen = (sel, start, grund, abstand) => {
     document.querySelectorAll(sel + ' .fenster').forEach((f, i) => {
-      const s = f.querySelector('.streifen'), h = f.querySelector('span').getBoundingClientRect().height;
+      /* In Prozent des Streifens statt in Pixeln: ein Streifen ist N Zeichen
+         hoch plus eins, das Ziel liegt bei (N-1)/(N+1). Feste Pixel stimmten nicht mehr,
+         sobald sich nach dem Start die Fenstergröße änderte (Vollbild, Zoom) -
+         die Walze blieb dann zwischen zwei Zeichen stehen. */
+      const s = f.querySelector('.streifen'), ziel = -(N - 1) / (N + 1) * 100;
       const dauer = grund + i * abstand;
-      tl.fromTo(s, { y: 0 }, { y: -(N - 1) * h, duration: dauer, ease: 'back.out(.6)' }, start)
+      tl.fromTo(s, { yPercent: 0 }, { yPercent: ziel, duration: dauer, ease: 'back.out(.6)' }, start)
         .set(s, { filter: 'blur(5px)' }, start)
         .to(s, { filter: 'blur(0px)', duration: .3 }, start + dauer - .45)
         .fromTo(f.querySelector('.gewinn'), { opacity: 0 }, { opacity: 1, duration: .15, immediateRender: false }, start + dauer - .1);

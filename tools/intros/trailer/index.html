@@ -40,15 +40,17 @@
 const { SHOW, esc } = Lab;
 const R = gsap.utils.random;
 const TAFELN = [['In einer Welt …', .6], ['… ohne Gnade …', 3.4], ['… treten zwei Teams an.', 6.0]];
-const FETZEN = ['Rot.', 'Blau.', 'Ein Keller.', SHOW.karten[3].text + '.', 'Ein Sieger.', 'Kein Zurück.'];
+/* Bei jedem Aufbau neu, damit bearbeitete Texte ankommen */
+const fetzen = () => [Lab.kurz(SHOW.teams[0]) + '.', Lab.kurz(SHOW.teams[1]) + '.', 'Ein ' + SHOW.titel1 + '.', SHOW.karten[3].text + '.', 'Ein Sieger.', 'Kein Zurück.'];
+const FETZEN = fetzen();
 const T = { montage: 8.8, stille: 11.6, titel: 12.6 };
 const montageZeiten = FETZEN.map((_, i) => T.montage + i * .48 - i * i * .02);
 
 function aufbauen(){
-  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const [ta, tb] = Lab.titelZeilen();
   document.getElementById('kino').innerHTML = `
     ${TAFELN.map(([t], i) => `<div class="tafel" id="t${i}">${esc(t)}</div>`).join('')}
-    ${FETZEN.map((t, i) => `<div class="fetzen" id="f${i}" style="${i < 2 ? `color:${i ? '#7aa7ff' : '#ff6a5a'}` : ''}">${esc(t)}</div>`).join('')}
+    ${fetzen().map((t, i) => `<div class="fetzen" id="f${i}" style="${i < 2 ? `color:${i ? '#7aa7ff' : '#ff6a5a'}` : ''}">${esc(t)}</div>`).join('')}
     <i class="leck" id="leck1" style="left:-10vw;top:10vh;width:60vh;height:60vh;background:#ff8a2a"></i>
     <i class="leck" id="leck2" style="right:-10vw;bottom:5vh;width:70vh;height:50vh;background:#ff3a6a"></i>
     <div id="weiss"></div>

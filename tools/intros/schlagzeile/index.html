@@ -56,15 +56,17 @@ const bt = b => START + b * BEAT;
 const SCHLUSS = 28;
 
 /* Die Wörter. Alles in Großbuchstaben über CSS; hier steht, was gezeigt wird. */
-const [titelA, titelB] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+/* Bei jedem Neustart frisch aus den (bearbeitbaren) Texten */
+let titelA = '', titelB = '';
 const KNALL = ['Ein', 'Sieger', 'Nur', 'Einer', 'Geht', 'Ganz', 'Nach', 'Oben'];
 
 function aufbauen(){
+  [titelA, titelB] = Lab.titelZeilen();
   const b = document.getElementById('buehne');
   b.innerHTML = `
     <div class="sz schwarz" id="s0">
       <div class="meta tw" style="left:4vw;top:4vh">Keller TV</div>
-      <div class="meta tw" style="right:4vw;top:4vh" id="uhr">20:00:00</div>
+      <div class="meta tw" style="right:4vw;top:4vh" id="uhr">${esc(SHOW.uhrzeit)}:00</div>
       <div class="meta tw" style="left:4vw;bottom:4vh" id="vorab">${zeichen(SHOW.vorab)}</div>
       <div class="meta tr" style="right:4vw;bottom:4vh">● Live</div>
       <i class="rec"></i>
@@ -81,8 +83,8 @@ function aufbauen(){
         <div class="wort ${i === 2 ? 'ts' : 'tw'}" style="--w:${i % 2 ? 70 : 110}">${esc(w)}</div></div>`).join('')}
     </div>
     <div class="sz schwarz" id="s6">
-      <div class="haelfte rot" id="vs-l" style="top:0;bottom:0;height:auto;width:50%;right:auto"><div class="wort tw" style="right:16vh;top:50%;font-size:34vh;transform:translateY(-50%);--w:70">Rot</div></div>
-      <div class="haelfte blau" id="vs-r" style="top:0;bottom:0;height:auto;width:50%;left:auto"><div class="wort tw" style="left:16vh;top:50%;font-size:34vh;transform:translateY(-50%);--w:70">Blau</div></div>
+      <div class="haelfte rot" id="vs-l" style="top:0;bottom:0;height:auto;width:50%;right:auto"><div class="wort tw" style="right:16vh;top:50%;font-size:34vh;transform:translateY(-50%);--w:70">${esc(Lab.kurz(SHOW.teams[0]))}</div></div>
+      <div class="haelfte blau" id="vs-r" style="top:0;bottom:0;height:auto;width:50%;left:auto"><div class="wort tw" style="left:16vh;top:50%;font-size:34vh;transform:translateY(-50%);--w:70">${esc(Lab.kurz(SHOW.teams[1]))}</div></div>
       <div class="vs" id="vs">VS</div>
     </div>
     <div class="sz weiss" id="s7">
@@ -121,7 +123,7 @@ function bauen(tl){
   szene(tl, 's0', -.8, 4);
   for (let b = 0; b < 4; b++){
     tl.fromTo('.rec', { scale: 1.6, opacity: 1 }, { scale: 1, opacity: .35, duration: BEAT * .9, ease: 'power2.out', immediateRender: false }, bt(b));
-    tl.set('#uhr', { textContent: '20:00:0' + (b + 1) }, bt(b));
+    tl.set('#uhr', { textContent: SHOW.uhrzeit + ':0' + (b + 1) }, bt(b));
   }
   tl.fromTo('#vorab .ch', { opacity: 0 }, { opacity: 1, duration: .01, stagger: BEAT * 3 / SHOW.vorab.length }, bt(0));
 

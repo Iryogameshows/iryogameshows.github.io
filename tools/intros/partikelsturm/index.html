@@ -127,10 +127,15 @@ function auswahl(pts, out, off){
     out[i * 4 + off + 1] = p[1] + (Math.random() - .5) * .004;
   }
 }
-let gebaut = false;
+/* Neu berechnen, sobald sich ein Text geändert hat (Text-Editor), sonst nicht -
+   das Abtasten kostet spürbar Zeit. Alte Puffer werden freigegeben. */
+let gebaut = false, formSchluessel = '', puffer = [];
 function formenBauen(){
-  if (gebaut) return;
+  const schluessel = JSON.stringify([SHOW.titelKlein, SHOW.titel1, SHOW.titel2, SHOW.karten[3].text]);
+  if (gebaut && schluessel === formSchluessel) return;
+  formSchluessel = schluessel;
   gebaut = true;
+  puffer.forEach(b => gl.deleteBuffer(b)); puffer = [];
   const P01 = new Float32Array(N * 4), P23 = new Float32Array(N * 4), P45 = new Float32Array(N * 4), P6R = new Float32Array(N * 4);
   /* 0 · Galaxie mit drei Armen */
   for (let i = 0; i < N; i++){
@@ -139,7 +144,7 @@ function formenBauen(){
     const s = (Math.random() - .5) * .12 * (1.6 - r);
     P01[i * 4] = Math.cos(a) * r + s; P01[i * 4 + 1] = (Math.sin(a) * r + s) * .42;
   }
-  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const [ta, tb] = Lab.titelZeilen();
   auswahl(textPunkte([{ t: SHOW.titelKlein, s: 210, y: 450 }]), P01, 2);
   auswahl(textPunkte([{ t: ta, s: 330, y: 450 }]), P23, 0);
   auswahl(textPunkte([{ t: tb, s: 250, y: 450 }]), P23, 2);
@@ -152,7 +157,7 @@ function formenBauen(){
   auswahl(textPunkte([{ t: SHOW.titelKlein, s: 80, w: 500, y: 250 }, { t: ta, s: 230, y: 420 }, { t: tb, s: 175, y: 625 }]), P6R, 0);
   for (let i = 0; i < N; i++){ P6R[i * 4 + 2] = Math.random(); P6R[i * 4 + 3] = Math.random(); }
   [['aP01', P01], ['aP23', P23], ['aP45', P45], ['aP6R', P6R]].forEach(([name, data]) => {
-    const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    const b = gl.createBuffer(); puffer.push(b); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, name); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 4, gl.FLOAT, false, 0, 0);
   });
 }

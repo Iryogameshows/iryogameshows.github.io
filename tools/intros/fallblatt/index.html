@@ -23,9 +23,9 @@
   .kopf{display:flex;justify-content:space-between;align-items:center;margin-bottom:2.2vh;font:700 clamp(12px,1.25vw,20px) Inter,sans-serif;letter-spacing:.3em;color:#e8e8e8;text-transform:uppercase;}
   .kopf .uhr{color:#ffd24d;letter-spacing:.12em;}
   .reihe{display:flex;justify-content:center;gap:.45vw;margin:.9vh 0;}
-  .feld{position:relative;width:min(4.4vw,7.6vh);height:min(6.6vw,11.4vh);border-radius:.5vh;overflow:hidden;
+  .feld{position:relative;--fw:min(4.4vw,7.6vh,calc(84vw / var(--n,14) - .45vw));width:var(--fw);height:calc(var(--fw) * 1.5);border-radius:.5vh;overflow:hidden;
     background:linear-gradient(#2a2c32 0 49.5%,#000 49.5% 50.5%,#25272c 50.5%);box-shadow:inset 0 .3vh .4vh rgba(255,255,255,.06),0 .3vh .6vh rgba(0,0,0,.6);}
-  .feld span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 min(4.6vw,8vh)/1 Oswald,sans-serif;color:#f2f2ea;transform-origin:50% 50%;}
+  .feld span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 calc(var(--fw) * 1.05)/1 Oswald,sans-serif;color:#f2f2ea;transform-origin:50% 50%;}
   .feld.gold span{color:#ffd24d;}
   .klein .feld{width:min(2.2vw,3.8vh);height:min(3.3vw,5.7vh);}
   .klein .feld span{font-size:min(2.3vw,4vh);}
@@ -43,7 +43,10 @@
 const { SHOW, esc } = Lab;
 const R = gsap.utils.random;
 const ZEICHEN = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ0123456789·-';
-const BREIT = 14, KLEIN = 28;
+/* Breite der großen Reihen: mindestens 14 Felder, bei längerem Titel mehr
+   (wird in aufbauen gesetzt) - sonst schnitte die Tafel ihn ab. */
+let BREIT = 14;
+const KLEIN = 28;
 const T = { gong: .3, los: 1.6, info: 6.4 };
 let klickZeiten = [];
 
@@ -53,13 +56,14 @@ function mitte(text, breite){
 }
 function aufbauen(){
   klickZeiten = [];
-  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const [ta, tb] = Lab.titelZeilen();
+  BREIT = Math.max(14, ...[SHOW.titelKlein, ta, tb].map(t => Array.from(t).length + 2));
   const reihen = [mitte(SHOW.titelKlein, BREIT), mitte(ta, BREIT), mitte(tb, BREIT)];
-  const info = mitte('20:00 · Gleis 1 · Einsteigen', KLEIN);
+  const info = mitte(SHOW.uhrzeit + ' · Gleis 1 · Einsteigen', KLEIN);
   const reihe = (text, gold, klein) => `<div class="reihe${klein ? ' klein' : ''}">${Array.from(text).map(c => `<div class="feld${gold && c !== ' ' ? ' gold' : ''}" data-ziel="${esc(c)}"><span> </span></div>`).join('')}</div>`;
   document.getElementById('halle').innerHTML = `
-    <div id="tafel">
-      <div class="kopf"><span><i class="lampe"></i>Abfahrt · Departures</span><span class="uhr" id="uhr">19:59</span></div>
+    <div id="tafel" style="--n:${BREIT}">
+      <div class="kopf"><span><i class="lampe"></i>Abfahrt · Departures</span><span class="uhr" id="uhr">--:--</span></div>
       ${reihe(reihen[0], false)}${reihe(reihen[1], true)}${reihe(reihen[2], true)}
       ${reihe(info, false, true)}
     </div>
@@ -93,7 +97,7 @@ function bauen(tl){
   });
   const ende = T.los + (16 + 2 * 14 + 13 * 2 + 2) * .065;
   [...reihen[3].children].forEach((f, i) => { if (f.dataset.ziel !== ' ') blaettern(tl, f, T.info + i * .03, 6 + ((Math.random() * 4) | 0)); });
-  tl.set('#uhr', { textContent: '20:00' }, T.info)
+  tl.set('#uhr', { textContent: SHOW.uhrzeit }, T.info)
     .fromTo('#uhr', { opacity: .2 }, { opacity: 1, duration: .3, immediateRender: false }, T.info)
     .fromTo('.feld.gold', { boxShadow: '0 0 0 rgba(255,210,77,0)' }, { boxShadow: '0 0 2.4vh rgba(255,210,77,.55)', duration: .5, stagger: .03, immediateRender: false }, ende + .2)
     .fromTo('#tafel', { scale: 1 }, { scale: 1.03, duration: 2, yoyo: true, repeat: 2, ease: 'sine.inOut', immediateRender: false }, ende + .6)

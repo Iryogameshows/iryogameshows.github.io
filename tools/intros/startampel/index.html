@@ -24,12 +24,8 @@
     background:linear-gradient(90deg,transparent 30%,#e8e8e8 30% 30.5%,transparent 30.5% 69.5%,#e8e8e8 69.5% 70%,transparent 70%);}
   .mitte{position:absolute;left:50%;top:0;bottom:0;width:.25%;margin-left:-.125%;background:repeating-linear-gradient(180deg,#f2f2f2 0 7vh,transparent 7vh 16vh);}
   .startlinie{position:absolute;left:10%;right:10%;top:62%;height:2vh;background:repeating-linear-gradient(90deg,#fff 0 2vh,#111 2vh 4vh);}
-  .wagen{position:absolute;bottom:10vh;width:26vh;height:16vh;}
-  .wagen .koerper{position:absolute;left:10%;right:10%;bottom:3vh;height:7vh;border-radius:2vh 2vh .8vh .8vh;}
-  .wagen .cockpit{position:absolute;left:36%;right:36%;bottom:9vh;height:4.6vh;border-radius:2vh 2vh 0 0;background:#111;}
-  .wagen .fluegel{position:absolute;left:0;right:0;bottom:10vh;height:1.6vh;border-radius:.4vh;}
-  .wagen .rad{position:absolute;bottom:0;width:6vh;height:7vh;border-radius:1.2vh;background:#0c0c0c;box-shadow:inset 0 0 0 .5vh #222;}
-  .wagen .licht{position:absolute;left:44%;right:44%;bottom:5vh;height:1.2vh;border-radius:.4vh;background:#ff2a2a;box-shadow:0 0 2vh #ff2a2a;}
+  .wagen{position:absolute;bottom:7vh;width:34vh;height:22vh;}
+  .wagen svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;}
   .rauch{position:absolute;bottom:2vh;width:14vh;height:10vh;border-radius:50%;background:radial-gradient(closest-side,rgba(220,220,230,.7),transparent);opacity:0;}
   #ampel{position:absolute;left:50%;top:16vh;transform:translateX(-50%);display:flex;gap:1.6vh;padding:1.6vh 2vh;background:#111;border-radius:1.2vh;box-shadow:0 1vh 3vh rgba(0,0,0,.7);}
   #ampel::before{content:"";position:absolute;left:-40vw;right:-40vw;top:45%;height:1.4vh;background:#1c1c1c;z-index:-1;}
@@ -57,23 +53,57 @@ const { SHOW, esc } = Lab;
 const R = gsap.utils.random;
 const T = { licht: 1.0, aus: 6.4, flagge: 7.6 };
 
-function wagen(farbe, seite){
-  return `<div class="wagen" id="w${seite}" style="${seite ? 'right:24vw' : 'left:24vw'}">
+/* Formel-1-Wagen von hinten - so sieht man ihn in der Startaufstellung und
+   beim Wegfahren. Breite Hinterreifen mit Profil und Glanz, Heckflügel mit
+   Endplatten in der Team-Farbe und dem Teamnamen, Motorabdeckung mit
+   Hai-Flosse, Diffusor mit Lamellen, Regenlicht, Auspuff, Querlenker.
+   Zwei Verläufe je Wagen; die ids tragen die Seite, damit sich die beiden
+   Wagen nicht gegenseitig die Farben überschreiben. */
+function wagen(farbe, dunkel, seite, name){
+  const id = n => n + seite;
+  const reifen = x => `<rect x="${x}" y="118" width="86" height="132" rx="20" fill="url(#${id('reifen')})"/>`
+    + Array.from({ length: 7 }, (_, k) => `<line x1="${x + 8}" y1="${134 + k * 16}" x2="${x + 78}" y2="${134 + k * 16}" stroke="rgba(255,255,255,.05)" stroke-width="3"/>`).join('')
+    + `<rect x="${x + 10}" y="124" width="14" height="118" rx="7" fill="rgba(255,255,255,.12)"/>`
+    + `<rect x="${x + 22}" y="160" width="42" height="48" rx="10" fill="#1d1d22" stroke="#333" stroke-width="3"/>`;
+  return `<div class="wagen" id="w${seite}" style="${seite ? 'right:20vw' : 'left:20vw'}">
     <i class="rauch" style="left:-4vh"></i><i class="rauch" style="right:-4vh"></i>
-    <div class="fluegel" style="background:${farbe}"></div><div class="cockpit"></div>
-    <div class="koerper" style="background:linear-gradient(${farbe},#111 140%)"></div><i class="licht"></i>
-    <i class="rad" style="left:0"></i><i class="rad" style="right:0"></i></div>`;
+    <svg viewBox="0 0 400 260" aria-hidden="true">
+      <defs>
+        <linearGradient id="${id('lack')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${farbe}"/><stop offset=".55" stop-color="${farbe}"/><stop offset="1" stop-color="${dunkel}"/></linearGradient>
+        <linearGradient id="${id('reifen')}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#050506"/><stop offset=".5" stop-color="#26262c"/><stop offset="1" stop-color="#050506"/></linearGradient>
+        <linearGradient id="${id('glanz')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      </defs>
+      <ellipse cx="200" cy="252" rx="196" ry="12" fill="rgba(0,0,0,.6)"/>
+      ${reifen(8)}${reifen(306)}
+      <line x1="92" y1="168" x2="150" y2="150" stroke="#2a2a30" stroke-width="7"/><line x1="92" y1="200" x2="148" y2="196" stroke="#2a2a30" stroke-width="7"/>
+      <line x1="308" y1="168" x2="250" y2="150" stroke="#2a2a30" stroke-width="7"/><line x1="308" y1="200" x2="252" y2="196" stroke="#2a2a30" stroke-width="7"/>
+      <path d="M118 214 L132 134 Q148 104 176 96 L224 96 Q252 104 268 134 L282 214 Z" fill="url(#${id('lack')})"/>
+      <path d="M150 140 Q200 120 250 140 L246 150 Q200 132 154 150 Z" fill="url(#${id('glanz')})"/>
+      <path d="M190 96 L196 34 Q200 26 204 34 L210 96 Z" fill="${dunkel}"/>
+      <rect x="182" y="70" width="36" height="30" rx="8" fill="#111"/>
+      <path d="M126 212 L274 212 L262 246 L138 246 Z" fill="#141418"/>
+      ${Array.from({ length: 6 }, (_, k) => `<line x1="${150 + k * 20}" y1="214" x2="${146 + k * 21.6}" y2="244" stroke="#2c2c34" stroke-width="4"/>`).join('')}
+      <circle cx="200" cy="200" r="8" fill="#333" stroke="#555" stroke-width="2"/>
+      <rect class="regenlicht" x="186" y="218" width="28" height="12" rx="3" fill="#ff2a2a" style="filter:drop-shadow(0 0 6px #ff2a2a)"/>
+      <rect x="40" y="18" width="16" height="104" rx="3" fill="url(#${id('lack')})"/>
+      <rect x="344" y="18" width="16" height="104" rx="3" fill="url(#${id('lack')})"/>
+      <rect x="44" y="26" width="312" height="30" rx="6" fill="#121216"/>
+      <rect x="44" y="60" width="312" height="18" rx="5" fill="${farbe}"/>
+      <rect x="44" y="26" width="312" height="6" rx="3" fill="rgba(255,255,255,.18)"/>
+      <text x="200" y="48" text-anchor="middle" font-family="Racing Sans One, sans-serif" font-size="20" letter-spacing="5" fill="#fff">${esc(name.toUpperCase())}</text>
+      <line x1="196" y1="78" x2="190" y2="98" stroke="#2a2a30" stroke-width="5"/><line x1="204" y1="78" x2="210" y2="98" stroke="#2a2a30" stroke-width="5"/>
+    </svg></div>`;
 }
 function aufbauen(){
-  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const [ta, tb] = Lab.titelZeilen();
   document.getElementById('strecke').innerHTML = `
     <i class="flutlicht" style="left:8vw"></i><i class="flutlicht" style="right:8vw"></i>
     <div class="asphalt"><div class="linien"><i class="mitte"></i></div><div class="startlinie"></div></div>
     <div class="speed"></div>
-    ${wagen('#E8453C', 0)}${wagen('#3B82F6', 1)}
+    ${wagen('#E8453C', '#7a1510', 0, Lab.kurz(SHOW.teams[0]))}${wagen('#3B82F6', '#123a8a', 1, Lab.kurz(SHOW.teams[1]))}
     <div id="ampel">${'<div class="topf"><i></i><i></i></div>'.repeat(5)}</div>
     <div id="flagge">${'<i></i>'.repeat(12)}</div>
-    <div id="banner"><div class="k">${esc(SHOW.titelKlein)}</div><div class="g">${esc(ta)}<br>${esc(tb)}</div><div class="zeit">Start 20:00 · Rot vs. Blau</div></div>
+    <div id="banner"><div class="k">${esc(SHOW.titelKlein)}</div><div class="g">${esc(ta)}<br>${esc(tb)}</div><div class="zeit">Start ${esc(SHOW.uhrzeit)} · ${esc(Lab.kurz(SHOW.teams[0]))} vs. ${esc(Lab.kurz(SHOW.teams[1]))}</div></div>
     <div class="los"><span>Klicken, um zu beginnen</span></div>`;
 }
 
@@ -86,6 +116,7 @@ function bauen(tl){
     tl.to(t.querySelectorAll('i'), { background: '#ff2020', boxShadow: '0 0 3vh 1vh rgba(255,40,40,.7),inset 0 0 0 .4vh #ff6a6a', duration: .05 }, T.licht + i);
   });
   /* Alle aus - Start */
+  tl.fromTo('.regenlicht', { opacity: 1 }, { opacity: .15, duration: .06, yoyo: true, repeat: 11, ease: 'steps(1)', immediateRender: false }, T.aus);
   tl.to('.topf i', { background: '#2a0a0a', boxShadow: 'inset 0 0 0 .4vh #160404', duration: .03 }, T.aus)
     .fromTo('.rauch', { opacity: .9, scale: .3 }, { opacity: 0, scale: 3, x: (i) => (i % 2 ? 1 : -1) * 80, duration: 1.4, ease: 'power2.out', immediateRender: false }, T.aus)
     .to('#w0', { y: '-30vh', x: '10vw', scale: .12, duration: 1.1, ease: 'power3.in' }, T.aus + .05)

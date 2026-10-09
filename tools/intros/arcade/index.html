@@ -63,7 +63,7 @@ function sprite(farbe){
 const pixelText = t => Array.from(t).map(c => c === ' ' ? '&nbsp;' : `<span class="ch">${esc(c)}</span>`).join('');
 
 function aufbauen(){
-  const [ta, tb] = [SHOW.titel.split(' ')[0].toUpperCase(), SHOW.titel.split(' ').slice(1).join(' ').toUpperCase()];
+  const [ta, tb] = Lab.titelZeilen().map(t => t.toUpperCase());
   document.getElementById('bild').innerHTML = `
     <div class="sterne">${Array.from({ length: 60 }, () => `<i style="left:${R(0, 100)}%;top:${R(0, 100)}%;opacity:${R(.3, 1)}"></i>`).join('')}</div>
     <div class="zeile" id="coin" style="top:46%;font-size:min(3vw,5vh);color:#ffe14d">INSERT COIN</div>
@@ -79,7 +79,7 @@ function aufbauen(){
     <div class="gross" id="go" style="color:#39ff88">GO!!</div>
     <div class="zeile" id="hiscore" style="top:6%;font-size:min(1.5vw,2.5vh)">HI-SCORE&nbsp;&nbsp;<span style="color:#ffe14d">${String(SHOW.karten[3].zahl).padStart(6, '0')} €</span></div>
     <div class="zeile" id="start" style="bottom:16%;font-size:min(2.2vw,3.6vh);color:#fff">PRESS START</div>
-    <div class="zeile" id="copy" style="bottom:7%;font-size:min(1.1vw,1.9vh);color:#8a8fa8">© 2026 KELLER GAMES · ${esc(SHOW.titelZeile.toUpperCase())}</div>
+    <div class="zeile" id="copy" style="bottom:7%;font-size:min(1.1vw,1.9vh);color:#8a8fa8">© 2026 ${esc(SHOW.titel1.toUpperCase())} GAMES · ${esc(SHOW.titelZeile.toUpperCase())}</div>
     <div id="weiss"></div>`;
 }
 

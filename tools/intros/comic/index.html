@@ -53,7 +53,7 @@ const T = { p1: .3, p2: 1.6, p3: 2.8, p4: 4.0, riss: 5.5, splash: 6.0 };
 const blob = (fill, b, spiegel) => `<svg viewBox="0 0 70 70" style="width:100%;${spiegel ? 'transform:scaleX(-1)' : ''}"><ellipse cx="35" cy="38" rx="27" ry="29" fill="${fill}" stroke="#111" stroke-width="4"/><circle cx="26" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="45" cy="34" r="8" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="${26 + b}" cy="35" r="3.5" fill="#111"/><circle cx="${45 + b}" cy="35" r="3.5" fill="#111"/><path d="M24 22 L33 27 M46 22 L37 27" stroke="#111" stroke-width="3.5" stroke-linecap="round"/><path d="M27 50 q8 -5 17 0" fill="none" stroke="#111" stroke-width="3.5" stroke-linecap="round"/></svg>`;
 
 function aufbauen(){
-  const [ta, tb] = [SHOW.titel.split(' ')[0], SHOW.titel.split(' ').slice(1).join(' ')];
+  const [ta, tb] = Lab.titelZeilen();
   document.getElementById('seite').innerHTML = `
     <div class="panel" id="p1" style="left:3vw;top:4vh;width:44vw;height:44vh;--r:-2deg">
       <div class="flaeche raster" style="background-color:#7fd3ff"></div>
