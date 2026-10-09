@@ -12,6 +12,113 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Intro-Labor: 18 Intro-Prototypen (`f58ac59`)
+
+**Gemacht.** Unter `tools/intros/` liegen 18 eigenständige Intro-Seiten.
+Sie sind **nicht** in die Show eingebunden, eine Übersicht steht in
+`tools/intros/index.html`. Entstanden in drei Schritten auf Davids Wunsch:
+„zeig wie es mit GSAP aussehen würde“, „komplett neues, kein Limit,
+Interstellar-Qualität“, „5 kernverschiedene“, dann „sehen schön aus, haben
+aber zu wenig mit einem Intro zu tun – mach 12 mehr“.
+- *Erste Runde (Stimmungen):*
+  - Ereignishorizont: WebGL-Shader, Schwarzes Loch mit Lichtkrümmung,
+    Sprung durchs Sternenfeld, eigener Ton, 40 s
+  - Lichtshow: Canvas, Moving Heads im Dunst, LED-Wand, Pyro, 32 s
+  - Schlagzeile: Typo-Plakat mit Archivo und variabler Breite, Schnitte auf
+    120 BPM, 21 s
+  - Partikelsturm: 36.000 WebGL-Punkte, alle Formen vorberechnet, spulbar,
+    32 s
+  - Agentenakte: SVG-Grundriss, Laser, Akten, Glitch, 30 s
+  - Bastelbogen: Stop-Motion mit `gsap.ticker.fps(12)`, Papier, 26 s
+- *Zweite Runde (Anlauf, dann Logo-Moment mit Schlag, dann Titelkarte):*
+  Countdown 16 s, Vorhang auf 16 s, Jackpot 16 s, Senderlogo (CSS-3D mit
+  18 Schichten) 14 s, Arcade 17 s, Ringansage 19 s, Feuerwerk
+  (Canvas-Simulation) 19 s, Fallblatt 13 s, Comic 16 s, Trailer 21 s,
+  70er-Show 20 s, Startampel 17 s.
+- *`lab.js` / `lab.css`* (gemeinsam):
+  - `Lab.SHOW` mit allen Texten, `Lab.zeichen`
+  - `Lab.starte`: Startbildschirm, Bedienleiste mit Neustart, Pause, Ton
+    und Spulen. Lädt vor dem Start alle Schriften.
+  - `Lab.Ton`: WebAudio-Baukasten, alles synthetisch: Kick, Snare, Hi-Hat,
+    Aufprall, Anstieg, Saite (Karplus-Strong), Fläche, Bläser-Stoß, Ping,
+    Wirbel, Jubel, Chiptune, Tusch, Motor, Pfiff
+  - `Lab.explosion`: Teilchen an der Zeitleiste, deshalb spulbar
+  - `window.lab.zeige(t)`: baut ohne Ton auf und springt an Stelle `t`,
+    gedacht für Tests
+
+**Warum so.**
+- *Eigene Seiten statt Show-Code:* Erst die Richtung finden, dann einbauen.
+  Ins Zuschauerfenster kommt davon so nichts (BAUPLAN 4.8: es spiegelt nur
+  den DOM und führt kein GSAP und keinen Canvas aus).
+- *Dieselbe Dramaturgie in Runde zwei:* Davids Kritik war, dass Runde eins
+  zu viel erklärt (Grundriss, Akten, Klebezettel) und zu wenig „Intro“ ist.
+- *Ton synthetisch:* Keine Dateien, kein Download, keine Lizenzfrage.
+- *Verworfen:* Ein Generator für alle Intros. Jedes hat bewusst eigenen
+  Code, weil die Ideen grundverschieden sind. Gemeinsam ist nur das Gerüst
+  in `lab.js`.
+
+**Geprüft.**
+- Alle 18 Seiten nacheinander per iframe gestartet (Startknopf geklickt,
+  2,2 s laufen lassen): keine Fehler, keine abgelehnten Promises. Ton-Knoten
+  je Intro zwischen 49 (Senderlogo) und 673 (Feuerwerk).
+- Jedes Intro an mindestens zwei Stellen mit `lab.zeige(t)` angehalten und
+  per Screenshot angesehen. Feuerwerk ist eine Simulation, deshalb von Hand
+  mit 30 Schritten pro Sekunde vorgespult.
+- `node check.js`: „alles in Ordnung“. Es prüft `tools/` aber gar nicht,
+  nur `js/`.
+
+**Ungeprüft.**
+- **Der Ton ist nicht angehört.** Er startet ohne Fehler, mehr nicht.
+- **Leistung auf dem Show-Rechner.** Am teuersten dürften Ereignishorizont
+  (Shader mit 100 Schritten je Pixel, regelt selbst auf 55 % Auflösung
+  herunter), Lichtshow und Partikelsturm sein.
+- Ohne Netz: Alle Schriften kommen von Google Fonts.
+- Schmale Fenster und Handy: nicht angesehen.
+
+**Offen.**
+- David soll Favoriten wählen. Für die gewählten muss geklärt werden, wie
+  sie ins Zuschauerfenster kommen: Entweder spielt das Popout sie selbst ab,
+  angestoßen über eine Nachricht vom Hauptfenster (nötig für GSAP, Canvas
+  und WebGL), oder die DOM-Intros werden auf reines CSS umgeschrieben.
+  Leichteste Kandidaten für CSS: Schlagzeile, Vorhang auf, Fallblatt, 70er.
+- `tools/gsap-demo/` (Keller-Intro mit GSAP) liegt nur lokal, **nicht
+  committet** und überholt. Löschen nach Rückfrage.
+- `CLAUDE.md` nennt `tools/intros/` in der Struktur-Liste nicht. Dazu die
+  zwei veralteten Stellen aus dem Eintrag zu `ad0b630` (GSAP-Regel, „zwei
+  Bühnen“). Alles braucht Davids OK.
+- Die Intros sind jetzt öffentlich unter `iryogameshows.github.io/tools/intros/`,
+  weil der Deploy das ganze Repo hochlädt.
+
+**Kreative Ansätze, nicht gebaut.** Senderwechsel (Testbild, Rauschen,
+Kanal landet auf „Keller TV“), Zaubertrick (Rauchwolke, Zylinder),
+Neon-Motelschild, Spiegelung der Neonschrift im Gitterboden.
+
+**Fallstricke.**
+- **Ausgeblendetes Browser-Pane liefert keine Animationsbilder**
+  (`requestAnimationFrame` steht). GSAP läuft dann nicht weiter, Zeitleisten
+  bleiben bei 0. Zum Prüfen mit `lab.zeige(t)` an feste Stellen springen
+  statt in Echtzeit abspielen. Ein Screenshot löst einzelne Bilder aus.
+- **`fromTo` später in der Zeitleiste setzt seinen Startwert sofort**
+  (`immediateRender`). Das ergab einen weißen Countdown und eine zu früh
+  sichtbare Spiegelung. Bei `fromTo`, das nicht am Anfang steht, immer
+  `immediateRender: false`.
+- `pause(t)` unterdrückt `onUpdate` (Zähler blieben stehen), deshalb
+  `seek(t, false)`.
+- GSAP rechnet `letterSpacing` in `em` falsch um (1 px statt 14 px).
+  Stattdessen eine CSS-Variable `--ls` mit `calc(var(--ls) * 1em)` tweenen.
+- `non-scaling-stroke`: Strichlängen in Bildschirmpixeln, `getTotalLength`
+  in SVG-Einheiten. Umrechnen, sonst zeichnet sich der Grundriss nur halb.
+- `destination-in` zweimal hintereinander löscht alles außerhalb des
+  zweiten Bilds. Die Dunstmaske muss ein einziges Bild sein.
+- Beim Vorspulen der Feuerwerk-Simulation wurde `dt` negativ, Funken flogen
+  ins Unendliche. `dt` ist jetzt nach unten auf 0 begrenzt.
+- Schriften lädt der Browser erst bei der ersten Sichtbarkeit. Deshalb lädt
+  `Lab.starte` vorher alle über `document.fonts`.
+- Node unter Git-Bash sieht `/tmp` nicht. Pfade mit `cygpath -w`
+  übersetzen oder in den Scratchpad schreiben.
+
+---
+
 ## 2026-10-09 — Intros: Profi-Schicht (`fc31f21`)
 
 **Gemacht.** Auf Davids „Ich will dass es krass aussieht. Richtig hochwertig
