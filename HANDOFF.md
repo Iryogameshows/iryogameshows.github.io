@@ -12,6 +12,91 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-09 — Intros: Profi-Schicht (`fc31f21`)
+
+**Gemacht.** Auf Davids „Ich will dass es krass aussieht. Richtig hochwertig
+wie von Profis“. Aufbauend auf `ad0b630`, gleiche Engine.
+- **Eigene Schriften.** Bungee für Keller und Geburtstag, Tilt Neon für Neon.
+  Vorher erbten die Intros `--font-logo` vom Theme, im Test war das „Press
+  Start 2P“. Geladen über den Google-Fonts-Link in `index.html` und über
+  `injectBoardStyles()` (`js/feud.js`) für das Zuschauerfenster.
+- **Metallschrift.** Jeder Buchstabe hat einen Chrom-Verlauf mit harter Kante
+  bei 50 % als Horizont: Gold, Pink, und Grün für den Geldbetrag. Er läuft
+  über `background-clip:text`. Die Tiefe kommt aus 4 gestapelten
+  `drop-shadow` plus Schlagschatten plus Glühen an der ganzen Zeile. Ein
+  Glanzstreifen läuft einmal durch (`kgShine`), auf der letzten Stufe alle
+  4 s (`kgShineLoop`).
+- **Raum.** Strahlenkranz (`.rays`, `repeating-conic-gradient`, 80 s je
+  Umdrehung, Maske), Dunst (`.haze`), die Wand zieht über 40 s auf
+  (`kgPush`), Vignette (`.vig`), Filmkorn (`.grain`, SVG-Rauschen, 7 %,
+  `overlay`).
+- **Ereignisse je Stufe.** Eine anamorphe Flare (`.flare`) und eine
+  Konfetti-Explosion (`.cf`, 22 Stück, Richtung in JS gewürfelt). Das
+  Konfetti kommt auf der Geburtstagsbühne bei jeder Stufe, sonst nur beim
+  Geldbetrag und auf der letzten Stufe.
+- **Goldstaub** (`introDust`): 26 kleine Körner hinten und 5 große, weiche
+  vorn. Nur Keller und Geburtstag.
+- **Bauchbinde.** Die kleine Zeile bekommt zwei Linien, die nach außen
+  wachsen.
+- **Neon.** Beim Zünden blitzen kurz Farbsäume in Rot und Cyan auf
+  (`knIgnite`).
+- **Reduzierte Bewegung.** Strahlen, Dunst, Korn und Wand stehen still,
+  Staub, Konfetti und Flare sind aus, die Linien stehen voll da.
+
+**Warum so.** Was eine Fernseh-Intro von einer Folie unterscheidet, sind
+Schichten: Material in der Schrift, Licht im Raum, ein Ereignis beim
+Wechsel, ein Bildfilter über allem. Alles bleibt CSS (BAUPLAN 4.8).
+Animiert werden nur `transform` und `opacity`. Einzige Ausnahme ist der
+Glanz (`background-position`), und der läuft einmal je Stufe.
+- *`text-shadow` verworfen* für die Metallschrift: Bei durchsichtiger Füllung
+  läge der Schatten über dem Verlauf. Deshalb `drop-shadow` am `<p>`.
+- *`filter:blur` verworfen* für den Staub vorn, bei 31 bewegten Teilchen zu
+  teuer. Die Unschärfe kommt aus dem weichen Verlauf.
+- *Glühbirnen-Punkte in den Buchstaben* angedacht und verworfen, das kippt
+  ins Kitschige und ist aus 3 m schlechter lesbar.
+- *Spiegelung im Neon-Boden* (`-webkit-box-reflect`) angedacht. Sie hätte mit
+  der kleinen Zeile darunter kollidiert, deshalb nicht gebaut.
+
+**Geprüft.**
+- `node check.js --types`: alles in Ordnung (1129 Klammernpaare, 14 Dateien
+  typgeprüft).
+- Browser-Pane bei 1280×720: `document.fonts.check` ergibt für Bungee und
+  Tilt Neon `true`. Das Keller-Intro hat 31 Staubteilchen, 22
+  Konfettistücke, 7 Flares und den Strahlenkranz.
+- Screenshots angesehen:
+  - Keller „GAMESHOW / NUMMER 1“: Gold- und Pink-Chrom mit Tiefe, Bauchbinde.
+  - Keller „30 €“ mit Konfetti und Flare.
+  - Geburtstag „HAPPY BIRTHDAY / AJDIN!“ mit Torte und Konfetti.
+  - Neon „GAMESHOW / NUMMER 1“.
+- Die Rahmenbirnen liegen in der Bühne (rechteste bei 1257 px von 1265 px).
+
+**Ungeprüft.**
+- **Leistung.** Das Browser-Pane drosselt selbst eine leere Seite auf 1 fps.
+  Mit laufendem Intro waren es 29 fps, schlimmster Frame 50 ms. Das ist kein
+  Maß für den Beamer-Rechner. Zwei Fenster zeichnen gleichzeitig. Wenn es
+  ruckelt, zuerst die Ebenen abschalten, in dieser Reihenfolge: `.grain`
+  (ganzflächig mit `mix-blend-mode`), dann die `drop-shadow`-Kette, dann
+  `.rays`.
+- Das Zuschauerfenster selbst, wie im Eintrag darunter, und ohne Netz: Die
+  Schriften kommen von Google Fonts. Ohne Netz fällt die Bühne auf
+  `--font-logo` zurück und ist dann wieder Theme-Schrift.
+- Reduzierte Bewegung nicht emuliert.
+
+**Offen.**
+- Die Schriften liegen bei Google Fonts. Für einen Abend ohne Netz müssten
+  sie als `woff2` nach `vendor/fonts/` (wie GSAP). Das braucht einen
+  Download, also Davids OK.
+- Die zwei Stellen in `CLAUDE.md` aus dem Eintrag darunter stehen weiter aus.
+
+**Fallstricke.**
+- Die Screenshots im Pane hinken wieder hinterher. Ein Bild zeigte noch die
+  vorige Bühne. Zweimal aufnehmen.
+- Ein Ersetzen per `node -e` mit Template-Strings scheiterte an `${...}` in
+  der Bash („bad substitution“). Für solche Stellen das Edit-Werkzeug
+  nehmen.
+
+---
+
 ## 2026-10-09 — Intros: eine Engine für alle, Leuchtbuchstaben (`ad0b630`)
 
 **Gemacht.** Auf Davids „rework mal die Intros mit deinen neuen Tools“, Umfang
