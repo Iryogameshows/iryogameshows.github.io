@@ -12,6 +12,27 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `8c49067` Marketplaces in den Projekt-Settings · gh installiert
+
+**Gemacht:** `.claude/settings.json` → `extraKnownMarketplaces` um
+`claude-plugins-official` (`anthropics/claude-plugins-official`) und
+`knowledge-work-plugins` (`anthropics/knowledge-work-plugins`) ergänzt;
+CLAUDE.md-Hinweis entsprechend. Beim ersten Versuch (`0931323`) hatte die
+Rechteprüfung die Änderung abgelehnt; jetzt nach ausdrücklichem Ja von David.
+
+**Geprüft:** JSON parst, `node check.js` fehlerfrei. `gh` 2.102.0 per winget
+installiert (Exit 0), `gh auth status`: noch nicht angemeldet.
+
+**Offen:**
+- `gh auth login` und `npx firebase-tools login` durch David (Gemini-Frage
+  dort mit Nein beantworten empfohlen).
+- Firebase-MCP verband in der neuen Session nicht (`CONNECT_TIMEOUT` nach
+  30 s) — vermutlich fehlende Anmeldung, ungeprüft.
+- Ob ein anderes Gerät die Marketplaces über die Projekt-Settings anbietet:
+  ungeprüft.
+
+**Fallstricke:** keine bekannt.
+
 ## 2026-10-10 — `0931323` Projekt-Skills, Design-Erinnerung, Plugins, gh
 
 **Anlass:** David: „installier alles aus der Liste“ (Vorschlagstabelle:
