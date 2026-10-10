@@ -12,6 +12,35 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `86c0cb9` Buzzer-Listener gezielt, nie zwei zugleich (Liste Punkt 8)
+
+**Gemacht (`js/buzzer.js`):** `buzzerListen(bz, ref, cb)` /
+`buzzerUnlisten(bz)` mit gemerkten Callbacks (`subs` an
+`jeopardyBuzzer`/`feudBuzzer`), für die vier Spiel-Listener und Presence;
+Disconnect ohne `off()`-ohne-Argumente. `jeopardyBuzzConnect` trennt
+Feud, `feudBuzzConnect` trennt Jeopardy. Feud-Startteam mit
+`(state.teamNames || [])`.
+
+**Wie geprüft:** RTDB-Emulator (Java 21 portabel im Scratchpad, offene
+Regeln, `demo-keller`), Seite mit der **echten** SDK von gstatic, per
+Route auf `useEmulator('127.0.0.1', 9000)` umgebogen — keine
+Live-Daten berührt. Gezählt: Aufrufe von `recordReaction` je Buzz.
+Vorher/nachher: Feud 1/1, Feud neu verbunden 1/1, Jeopardy-Lobby dann
+Feud 2/1, Feud dann Jeopardy 2/1, Online-Anzeige der Spielerliste nach
+Umschalten false/true, JS-Fehler 3/0. `check.js`, `--types` ok.
+
+**Warum so:** Zuerst nur gegenseitiges Trennen probiert — blieb bei 2,
+weil das parameterlose `off()` die Listener nicht verlässlich entfernte
+(dafür aber fremde auf derselben Stelle). Meine Vermutung aus der
+Fehlersuche, Listener vermehrten sich mit jedem Spiel, hat der Test
+**widerlegt** (Neuverbinden blieb bei 1).
+
+**Fallstricke:** `fbstub.js` taugt für solche Fragen nicht — er bildet
+`off()`-Semantik nicht nach. Für Listener-Verhalten den Emulator nehmen
+(Aufbau siehe oben, Skripte im Scratchpad).
+
+---
+
 ## 2026-10-10 — `1034939` PIH-Finale ohne Team-Vertreter (Liste Punkt 7)
 
 **Gemacht:** `pihSetFinalists` setzt Vertreter nur, wenn beide Teams einen
