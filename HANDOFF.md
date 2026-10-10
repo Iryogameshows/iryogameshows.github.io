@@ -12,6 +12,20 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `1034939` PIH-Finale ohne Team-Vertreter (Liste Punkt 7)
+
+**Gemacht:** `pihSetFinalists` setzt Vertreter nur, wenn beide Teams einen
+haben, sonst leere Liste; `pihMayBid`: leere Liste im Finale = alle bieten;
+`pihBidProgress` zählt nur Bietberechtigte; Hinweis „Superpreis — alle
+bieten, er zählt mehrfach“.
+**Warum so:** Verworfen: die zwei punktbesten Einzelspieler als Finalisten
+— das Finale soll Teams gegeneinander stellen; ohne Teams gibt es keine
+sinnvolle Paarung, also bleibt es eine offene Runde mit Mehrfachwertung.
+**Geprüft (Browser, gestubbt):** 3/3. `check.js`, `--types` ok.
+**Offen:** keine für diesen Punkt.
+
+---
+
 ## 2026-10-10 — `62be7c1` WWDS-Stichfrage (Liste Punkt 6)
 
 **Gemacht:** `wwdsRevealTie` mit Wache (`phase === 'tie'`, nicht
