@@ -35,7 +35,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
-const ALLE_SHOWS = ['feud', 'jeop', 'wwm', 'wwds', 'gm', 'buzzer', 'buzzer-login'];
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'gm', 'buzzer', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -100,6 +100,42 @@ const AUFBAU = {
   wwds: () => {
     const mr = Math.random; Math.random = () => 0; startWwdsActual(); Math.random = mr;
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+  },
+  // Die drei Zustaende, die bis 73803b1 nicht gemessen waren (HANDOFF dort).
+  // Jeweils der hoechste Fall: die Runde mit den meisten Antworten, eine
+  // Frage ueber zwei Zeilen, Publikumsjoker eingeblendet.
+  'feud-lang': () => {
+    const mr = Math.random; Math.random = () => 0; startGameActual(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    const rq = state.roundQuestions;
+    const i = rq.reduce((b, q, k) => q.answers.length > rq[b].answers.length ? k : b, 0);
+    rq[i] = Object.assign({}, rq[i], { question: 'Nennt etwas, das man auf einer langen Autofahrt mit der ganzen Familie unbedingt dabeihaben sollte!' });
+    state.currentRound = i;
+    showScreen('game-screen'); loadRound(); revealQuestion(); revealAnswer(0); revealAnswer(2);
+  },
+  'feud-finale': () => {
+    const mr = Math.random; Math.random = () => 0; startGameActual(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    // Finalfragen gibt es nur per Import (finaleQuestions startet leer) -
+    // dann die Rundenfragen nehmen, sie haben dieselbe Form.
+    if (!finaleState.questions.length) finaleState.questions = state.roundQuestions.slice();
+    const fq = finaleState.questions;
+    const i = fq.reduce((b, q, k) => q.answers.length > fq[b].answers.length ? k : b, 0);
+    finaleState.teams = [0, 1];
+    finaleState.teamAnswers = [fq.map(() => 0), fq.map(() => -1)];
+    finaleState.scores = [0, 0];
+    finaleState.phase = 'reveal';
+    finaleState.revealQ = i;
+    showScreen('finale-screen');
+    showEl('finale-timer', false); // wie startFinale(), das hier uebersprungen wird
+    setText('finale-team-label', 'Auflösung');
+    loadRevealQuestion();
+  },
+  'wwm-joker': () => {
+    startWwmActual();
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    showScreen('wwm-screen'); loadWwmQuestion();
+    const mr = Math.random; Math.random = () => 0.5; wwmAudience(); Math.random = mr;
   },
 };
 AUFBAU.gm = AUFBAU.feud;
