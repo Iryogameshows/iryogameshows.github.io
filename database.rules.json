@@ -1,0 +1,50 @@
+{
+  "rules": {
+    "design": { ".read": true, ".write": true,
+      ".validate": "newData.isString() && newData.val().length <= 40" },
+    "tournament": { ".read": true, ".write": true },
+    "votes": {
+      ".read": true,
+      "$k": { ".write": "newData.exists()",
+        ".validate": "newData.hasChildren(['top', 'ts'])" }
+    },
+    "gmremote": {
+      "html": { ".read": true, ".write": true, ".validate": "newData.isString()" },
+      "commands": {
+        ".read": true,
+        "$id": { ".write": true,
+          ".validate": "newData.child('fn').isString() && newData.child('fn').val().length <= 64 && newData.child('t').isNumber()" }
+      }
+    },
+    "buzzer": {
+      ".read": true,
+      "players": {
+        "$key": {
+          ".write": true,
+          ".validate": "newData.hasChildren(['name', 'pin'])",
+          "name":    { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "pin":     { ".validate": "newData.isString() && newData.val().length === 64" },
+          "avatar":  { ".validate": "newData.isString() && newData.val().length <= 16" },
+          "color":   { ".validate": "newData.isString() && newData.val().length <= 32" },
+          "team":    { ".validate": "newData.isNumber()" },
+          "created": { ".validate": "newData.isNumber()" },
+          "stats":   { },
+          "$other":  { ".validate": false }
+        }
+      },
+      "presence":    { "$key": { ".write": true } },
+      "buzzes":      { ".write": true },
+      "estimate":    { ".write": true },
+      "ddfvote":     { ".write": true },
+      "tpspin":      { ".write": true },
+      "excluded":    { ".write": true },
+      "teamNames":   { ".write": true },
+      "lockedNames": { ".write": true },
+      "joinLocked":  { ".write": true, ".validate": "newData.isBoolean()" },
+      "live":        { ".write": true, ".validate": "newData.isBoolean()" },
+      "armed":       { ".write": true, ".validate": "newData.isBoolean()" },
+      "armStart":    { ".write": true, ".validate": "newData.isNumber()" },
+      "round":       { ".write": true, ".validate": "newData.isNumber()" }
+    }
+  }
+}

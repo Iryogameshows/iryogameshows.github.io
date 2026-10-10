@@ -28,21 +28,24 @@ in Englisch (so wie du sie siehst). Dauer: ca. 5 Minuten. **Keine Kreditkarte n�
 
 ---
 
-## 3. Regeln dauerhaft freischalten (wichtig!)
-Der Testmodus („test mode") sperrt nach 30 Tagen automatisch. Damit der Buzzer dauerhaft läuft:
-1. In der Realtime Database oben auf den Tab **„Rules"**.
-2. Den Inhalt komplett ersetzen durch:
-   ```json
-   {
-     "rules": {
-       ".read": true,
-       ".write": true
-     }
-   }
-   ```
-3. **„Publish"** klicken.
+## 3. Regeln dauerhaft setzen (wichtig!)
+Der Testmodus („test mode") sperrt nach 30 Tagen automatisch. Die Regeln liegen
+deshalb im Repo: `database.rules.json`, eingebunden über `firebase.json`.
+Veröffentlicht werden sie per CLI, nicht per Hand in der Konsole:
 
-> Hinweis: Damit kann theoretisch jeder mit der Adresse Daten schreiben/lesen. Für ein Party-Buzzerspiel ist das unkritisch (es liegen nur Namen + Buzz-Zeiten drin).
+```bash
+npx firebase-tools deploy --only database --project keller-buzzer
+```
+
+Sie erlauben nur die Pfade, die die App benutzt (`buzzer`, `design`, `votes`,
+`tournament`, `gmremote`), prüfen Typen und Längen und sperren das Löschen
+ganzer Zweige. Wer einen neuen Pfad in Firebase einführt, trägt ihn dort ein —
+sonst lehnt die Datenbank das Schreiben ab (Fehler `PERMISSION_DENIED`).
+
+> Hinweis: Ohne Firebase Auth können die Regeln Host und Fremde nicht
+> unterscheiden. Lesen kann weiterhin jeder mit der Adresse, und in die
+> erlaubten Pfade kann jeder schreiben. Die Regeln verhindern Löschen im
+> Ganzen, fremde Pfade und falsche Typen, nicht gezieltes Stören.
 
 ---
 
