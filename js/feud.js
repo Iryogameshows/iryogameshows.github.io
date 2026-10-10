@@ -353,6 +353,15 @@ function showFlash(){const f=document.createElement('div');f.className='reveal-f
 function revealAll() {
   saveSnapshot();
   const q = state.roundQuestions[state.currentRound];
+  /* Erst die erspielten Punkte gutschreiben, dann den Rest zeigen. Vorher
+     wurden sie hier auf 0 gesetzt - und nextRound() vergibt nur, solange
+     nicht alles aufgedeckt ist. Wer nach der Runde dem Publikum die
+     restlichen Antworten zeigte, nahm dem Team am Zug damit seine Punkte.
+     Bei "alle out" sind roundPoints schon 0 (switchTeam), dort gibt es nichts. */
+  if (!state.revealed.every(Boolean) && state.roundPoints) {
+    state.scores[state.currentTeam] += state.roundPoints;
+    updateScores();
+  }
   q.answers.forEach((a,i) => { state.revealed[i] = true; });
   state.roundPoints = 0;
   updateRoundPts(); renderBoard(); updateGamemaster();
