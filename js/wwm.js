@@ -95,6 +95,8 @@ function startWwmActual(){
   wwmState.lifelines = {fifty:false, phone:false, audience:false};
   wwmState.gameOver = false;
   wwmState.active = true;
+  // Sonst holt "↩ Undo" im ersten Zug den Stand des vorigen Spiels zurueck.
+  wwmUndoStack.reset();
   setText('wwm-name-label', wwmState.name);
   runIntroThen(() => {
     showScreen('wwm-screen');
@@ -174,8 +176,8 @@ function wwmSelect(i){
 }
 
 function wwmLock(){
-  wwmUndoStack.save();
   if (wwmState.selected === null || wwmState.locked) return;
+  wwmUndoStack.save();
   wwmState.locked = true;
   renderWwm();
   updateGamemaster();
@@ -191,9 +193,9 @@ function wwmReveal(){
 }
 
 function wwmNext(){
-  wwmUndoStack.save();
   const q = wwmData.questions[wwmState.currentQ];
   if (!wwmState.revealed) return;
+  wwmUndoStack.save();
   if (wwmState.selected === q.correct){
     const letzteFrage   = wwmState.currentQ >= wwmData.questions.length - 1;
     const oberstesFeld  = wwmState.currentQ >= WWM_LADDER.length - 1;
@@ -241,8 +243,8 @@ function wwmEnd(amount, jackpot){
 
 // ── LIFELINES ──
 function wwmFifty(){
-  wwmUndoStack.save();
   if (wwmState.lifelines.fifty || wwmState.revealed) return;
+  wwmUndoStack.save();
   const q = wwmData.questions[wwmState.currentQ];
   // An der tatsächlichen Antwortzahl entlang statt an fest verdrahteten vier:
   // eine importierte Frage kann auch drei haben, dann verwies [0,1,2,3] auf
@@ -258,16 +260,16 @@ function wwmFifty(){
 }
 
 function wwmPhone(){
-  wwmUndoStack.save();
   if (wwmState.lifelines.phone) return;
+  wwmUndoStack.save();
   wwmState.lifelines.phone = true;
   renderWwm();
   updateGamemaster();
 }
 
 function wwmAudience(){
-  wwmUndoStack.save();
   if (wwmState.lifelines.audience || wwmState.revealed) return;
+  wwmUndoStack.save();
   const q = wwmData.questions[wwmState.currentQ];
   const active = q.answers.map((_, i) => i).filter(i => !wwmState.removed.includes(i));
   // gewichteter Zufall: die richtige Antwort bekommt den grossen Anteil

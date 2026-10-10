@@ -91,6 +91,8 @@ function startDdf(){
     votes:{}, hostVotes:{},
     runoff:null, tied:null, lastCounts:null, loser:null,
   };
+  // Sonst holt "↩ Undo" im ersten Zug das vorige Spiel samt Spielerliste zurueck.
+  ddfUndoStack.reset();
   ddfSaveSettings();
   ddfIntroThenGame();
 }
@@ -396,9 +398,9 @@ function ddfEvaluateVote(){
 }
 
 function ddfApplyLoss(uid){
-  ddfUndoStack.save();
   const p = ddfByUid(uid);
   if (!p || p.out) return;
+  ddfUndoStack.save();
   p.lives--;
   if (p.lives <= 0) { p.lives = 0; p.out = true; }
   ddfState.phase = 'result';

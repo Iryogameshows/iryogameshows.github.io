@@ -109,6 +109,8 @@ function startWwdsActual(){
   wwdsState.tieRevealed = false;
   wwdsState.active = true;
   wwdsStopTimer();
+  // Sonst holt "↩ Undo" im ersten Zug den Stand des vorigen Spiels zurueck.
+  wwdsUndoStack.reset();
 
   runIntroThen(() => {
     showScreen('wwds-screen');
@@ -284,8 +286,8 @@ function wwdsTieHtml(){
 
 // ── HAUPTRUNDE ──
 function wwdsPick(i){
-  wwdsUndoStack.save();
   if (wwdsState.phase !== 'pick' || wwdsState.used[i]) return;
+  wwdsUndoStack.save();
   wwdsState.currentCat = i;
   wwdsState.selected = null;
   wwdsState.locked = false;
@@ -307,8 +309,8 @@ function wwdsSelect(i){
 }
 
 function wwdsLock(){
-  wwdsUndoStack.save();
   if (wwdsState.phase !== 'question' || wwdsState.selected === null || wwdsState.locked) return;
+  wwdsUndoStack.save();
   wwdsState.locked = true;
   wwdsStopTimer();
   renderWwds();
@@ -316,8 +318,8 @@ function wwdsLock(){
 }
 
 function wwdsReveal(){
-  wwdsUndoStack.save();
   if (wwdsState.phase !== 'question' || !wwdsState.locked || wwdsState.revealed) return;
+  wwdsUndoStack.save();
   wwdsState.revealed = true;
   wwdsStopTimer();
   const c = wwdsData.categories[wwdsState.currentCat];
@@ -330,8 +332,8 @@ function wwdsReveal(){
 }
 
 function wwdsNext(){
-  wwdsUndoStack.save();
   if (wwdsState.phase !== 'question' || !wwdsState.revealed) return;
+  wwdsUndoStack.save();
   wwdsState.used[wwdsState.currentCat] = true;
   wwdsState.currentCat = null;
   wwdsState.audienceShown = false;
@@ -347,10 +349,10 @@ function wwdsNext(){
 }
 
 function wwdsAudience(){
-  wwdsUndoStack.save();
   if (wwdsState.phase !== 'question') return;
   const t = wwdsState.currentTeam;
   if (wwdsState.audienceUsed[t] || wwdsState.revealed) return;
+  wwdsUndoStack.save();
   const c = wwdsData.categories[wwdsState.currentCat];
   // Publikum liegt meistens, aber nicht immer richtig
   const right = 45 + Math.floor(Math.random()*30);

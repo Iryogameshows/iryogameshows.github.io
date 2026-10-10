@@ -124,6 +124,8 @@ function startPih(){
     finalWeight: Math.max(1, Math.min(20, Number(fieldVal('pih-final-weight')) || 2)),
     finalists: [],
   };
+  // Sonst holt "↩ Undo" im ersten Zug das vorige Spiel samt Spielerliste zurueck.
+  pihUndoStack.reset();
   pihSaveSettings();
   pihIntroThenGame();
 }
@@ -490,7 +492,6 @@ function pihBidProgress(){
 /* ── Auflösung ─────────────────────────────────────────────────────────── */
 
 function pihEvaluate(){
-  pihUndoStack.save();
   const it = pihCurrentItem();
   if (!it) return;
   const price = Number(it.price);
@@ -499,6 +500,7 @@ function pihEvaluate(){
   // Erst prüfen, dann schließen: sonst wäre die Eingabe auf den Handys zu,
   // während der Host noch in der Gebotsphase feststeckt.
   if (!Object.keys(all).length) { alert('Es wurde noch kein Gebot abgegeben.'); return; }
+  pihUndoStack.save();
 
   pihStopTimer();
   pihCloseBids();
