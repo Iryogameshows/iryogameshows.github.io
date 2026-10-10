@@ -378,31 +378,32 @@ function renderWwmEditor(){
       <label>Frage ${i+1} <span style="color:#FFD23F;">(${wwmMoney(WWM_LADDER[i]||0)})</span>
         <button class="btn btn-danger" style="float:right;padding:4px 10px;font-size:.7rem;" onclick="wwmDeleteQuestion(${i})">Del</button>
       </label>
-      <input type="text" value="${escAttr(q.q)}" onchange="wwmData.questions[${i}].q=this.value" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.9rem;font-weight:600;outline:none;margin-bottom:8px;">
+      <input type="text" value="${escAttr(q.q)}" onchange="wwmData.questions[${i}].q=this.value;wwmSave()" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.9rem;font-weight:600;outline:none;margin-bottom:8px;">
       ${q.answers.map((a,j) => `
         <div style="display:flex;gap:8px;margin-bottom:5px;align-items:center;">
           <label style="display:flex;align-items:center;gap:5px;color:${q.correct===j?'#22C55E':'rgba(255,255,255,.4)'};font-size:.8rem;font-weight:700;min-width:52px;">
-            <input type="radio" name="wwm-correct-${i}" ${q.correct===j?'checked':''} onchange="wwmData.questions[${i}].correct=${j};renderWwmEditor();" style="accent-color:#22C55E;"> ${WWM_LETTERS[j]}
+            <input type="radio" name="wwm-correct-${i}" ${q.correct===j?'checked':''} onchange="wwmData.questions[${i}].correct=${j};wwmSave();renderWwmEditor();" style="accent-color:#22C55E;"> ${WWM_LETTERS[j]}
           </label>
-          <input type="text" value="${escAttr(a)}" onchange="wwmData.questions[${i}].answers[${j}]=this.value" style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;">
+          <input type="text" value="${escAttr(a)}" onchange="wwmData.questions[${i}].answers[${j}]=this.value;wwmSave()" style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.85rem;outline:none;">
         </div>`).join('')}
       <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:8px 0 4px;">Einblendungen (0-3 Bilder/Videos)</label>
       ${mediaSlotsHtml(q.media || (q.media = []), (slot, inputExpr) => `wwmEditMedia(${i},${slot},${inputExpr})`)}
-      <input type="text" placeholder="📝 Notiz für den Host" value="${escAttr(q.note)}" onchange="wwmData.questions[${i}].note=this.value" style="width:100%;margin-top:6px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
+      <input type="text" placeholder="📝 Notiz für den Host" value="${escAttr(q.note)}" onchange="wwmData.questions[${i}].note=this.value;wwmSave()" style="width:100%;margin-top:6px;padding:7px 10px;border-radius:6px;border:1px solid rgba(255,210,63,.25);background:rgba(255,210,63,.05);color:#fff;font-family:inherit;font-size:.82rem;outline:none;">
     </div>`).join('');
 }
 function wwmEditMedia(i,slot,input){
   const q = wwmData.questions[i];
   q.media = q.media || [];
-  setMediaSlot(q.media, slot, input, renderWwmEditor);
+  setMediaSlot(q.media, slot, input, () => { wwmSave(); renderWwmEditor(); });
 }
 
 function wwmAddQuestion(){
   wwmData.questions.push({ q:'Neue Frage', answers:['','','',''], correct:0 });
+  wwmSave();
   renderWwmEditor();
 }
 function wwmDeleteQuestion(i){
-  if (confirm('Frage löschen?')){ wwmData.questions.splice(i,1); renderWwmEditor(); }
+  if (confirm('Frage löschen?')){ wwmData.questions.splice(i,1); wwmSave(); renderWwmEditor(); }
 }
 function exportWwm(){ downloadJSON(wwmData, 'millionaer-fragen.json'); }
 function importWwm(e){
@@ -414,15 +415,43 @@ function importWwm(e){
     // Vorher wurde nur abgeschnitten: eine Datei mit zwei Antworten ergab eine
     // Frage, bei der 50:50 und der Publikumsjoker auf Nichts zugriffen, und
     // ein correct von 7 zeigte gar keine richtige Antwort an.
-    qs = qs.map(x => {
-      const answers = (Array.isArray(x.answers) ? x.answers : []).slice(0, 4)
-        .map(a => String(a == null ? '' : a));
-      while (answers.length < 4) answers.push('');
-      let correct = Number(x.correct);
-      if (!Number.isInteger(correct) || correct < 0 || correct >= answers.length) correct = 0;
-      return { q:x.q||x.question||'', answers, correct, media:x.media||[], note:x.note||'' };
-    });
-    wwmData = { questions: qs };
+    wwmData = { questions: wwmNormalize(qs) };
+    wwmSave();
     renderWwmEditor();
   });
 }
+
+/** Fragen aus Importdatei oder Speicher auf die erwartete Form bringen.
+ *  @param {any[]} qs */
+function wwmNormalize(qs){
+  return qs.filter(x => x && typeof x === 'object').map(x => {
+    const answers = (Array.isArray(x.answers) ? x.answers : []).slice(0, 4)
+      .map(a => String(a == null ? '' : a));
+    while (answers.length < 4) answers.push('');
+    let correct = Number(x.correct);
+    if (!Number.isInteger(correct) || correct < 0 || correct >= answers.length) correct = 0;
+    return { q:String(x.q||x.question||''), answers, correct,
+             media:Array.isArray(x.media) ? x.media : [], note:String(x.note||'') };
+  });
+}
+
+/* Speichern wie bei DDF, PIH, TP und WWDS. Bis 2026-10-10 lagen die
+   Millionaer-Fragen nur im Arbeitsspeicher: Editor-Aenderungen und Importe
+   waren nach dem Neuladen weg. Schlaegt das Speichern fehl (localStorage
+   voll, meist wegen grosser Bilder oder Videos), sagt es das einmal - sonst
+   faellt es erst nach dem Neuladen auf. */
+let wwmSaveWarned = false;
+function wwmSave(){
+  const ok = storeSetJson('wwmData', wwmData);
+  if (!ok && !wwmSaveWarned){
+    wwmSaveWarned = true;
+    alert('Die Millionär-Fragen konnten nicht gespeichert werden - der Speicher ist voll (meist zu große Bilder oder Videos). Nach dem Neuladen wären die Änderungen weg. Tipp: exportieren.');
+  }
+  return ok;
+}
+function wwmLoad(){
+  const d = storeGetJson('wwmData', null);
+  const qs = d && Array.isArray(d.questions) ? wwmNormalize(d.questions) : [];
+  if (qs.length) wwmData = { questions: qs };
+}
+wwmLoad();

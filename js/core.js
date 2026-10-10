@@ -919,6 +919,7 @@ function showScreen(id) {
   // direkt ins Objekt, ohne selbst zu speichern).
   const leaving = document.querySelector('.screen.active');
   if (leaving && leaving.id === 'wwds-edit-screen' && id !== 'wwds-edit-screen') wwdsSave();
+  if (leaving && leaving.id === 'wwm-edit-screen' && id !== 'wwm-edit-screen') wwmSave();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   setClass(id, 'active', true);
   if (id === 'edit-screen') renderQuestionList();
