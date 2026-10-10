@@ -525,13 +525,11 @@ function tournamentStandingsHtml(){
   const order = totals.map((t, i) => ({ t, i })).sort((a, b) => b.t - a.t);
   const medals = ['🥇','🥈','🥉'];
   return order.map((o, rank) => `
-    <div class="q-list-item" style="${rank===0 && o.t>0 ? 'border-color:rgba(255,210,63,.35);background:rgba(255,210,63,.06);' : ''}">
+    <div class="q-list-item${rank===0 && o.t>0 ? ' tour-lead' : ''}">
       <span class="q-label"><span class="q-num">${medals[rank]||rank+1+'.'}</span><strong>${escapeHtml(tournament.teams[o.i])}</strong></span>
-      <div style="display:flex;align-items:center;gap:12px;flex:1;max-width:50%;">
-        <div style="flex:1;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;">
-          <div style="width:${Math.round(o.t/maxT*100)}%;height:100%;background:linear-gradient(90deg,#FFD23F,#F0B800);border-radius:5px;transition:width .5s;"></div>
-        </div>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:#FFD23F;min-width:36px;text-align:right;">${o.t}</span>
+      <div class="tour-bar-row">
+        <div class="tour-bar"><div class="tour-bar-fill" style="width:${Math.round(o.t/maxT*100)}%;"></div></div>
+        <span class="tour-total">${o.t}</span>
       </div>
     </div>`).join('');
 }
@@ -541,25 +539,28 @@ function renderTournamentBoard(){
   if (!el) return;
   if (!tournament){
     el.innerHTML = `<div class="page-title"><em>🏆 Turnier</em></div>
-      <div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch kein Turnier angelegt.</div>`;
+      <div class="q-list-item tour-leer">Noch kein Turnier angelegt.</div>`;
     return;
   }
+  // Farben als Klassen (styles.css, "Turnierstand"), nicht inline: die
+  // Inline-Werte waren fuer dunklen Grund gesetzt - in den hellen Richtungen
+  // stand der Spielplan weiss auf Creme und war kaum zu lesen.
   const naechste = tournamentNextGameIndex();
   const plan = tournament.games.map((g, i) => {
     const verdeckt = g.secret && !g.done;
     const pts = tournamentGamePoints(g, tournament.teams.length);
     const stand = g.done
-      ? tournament.teams.map((t, ti) => `${escapeHtml(t)} <b style="color:#FFD23F;">+${pts[ti]}</b>`).join(' · ')
-      : (i === naechste ? '<span style="color:#FFD23F;font-weight:700;">jetzt</span>'
-                        : '<span style="color:rgba(255,255,255,.3);">kommt noch</span>');
-    return `<div class="q-list-item"${i === naechste && !g.done ? ' style="border-color:rgba(255,210,63,.35);"' : ''}>
+      ? tournament.teams.map((t, ti) => `${escapeHtml(t)} <b class="tour-pts">+${pts[ti]}</b>`).join(' · ')
+      : (i === naechste ? '<span class="tour-jetzt">jetzt</span>'
+                        : '<span class="tour-spaeter">kommt noch</span>');
+    return `<div class="q-list-item${i === naechste && !g.done ? ' tour-next' : ''}">
       <span class="q-label"><span class="q-num">${i+1}.</span>
         <span style="margin-right:4px;">${verdeckt ? '❓' : tournamentGameIcon(g.game)}</span>
         <strong>${verdeckt ? '???' : escapeHtml(g.game)}</strong>
-        <span class="q-meta" style="color:#FFD23F;">×${Number(g.weight) || 0}</span></span>
-      <span style="font-size:.78rem;color:rgba(255,255,255,.6);">${stand}</span>
+        <span class="q-meta tour-weight">×${Number(g.weight) || 0}</span></span>
+      <span class="tour-stand">${stand}</span>
     </div>`;
-  }).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spiele geplant.</div>`;
+  }).join('') || `<div class="q-list-item tour-leer">Noch keine Spiele geplant.</div>`;
 
   el.innerHTML = `
     <div class="page-title" style="margin-bottom:18px;"><em>🏆 ${escapeHtml(tournament.name)}</em></div>

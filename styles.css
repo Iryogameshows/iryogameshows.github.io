@@ -797,6 +797,25 @@ body {
 .q-list-item .q-label { flex: 1; font-size: .85rem; color: rgba(var(--fg-rgb),.6); }
 .q-list-item .q-num { color: var(--accent-text); font-weight: 700; margin-right: 8px; }
 .q-list-item .q-meta { color: rgba(var(--fg-rgb),.25); font-size: .75rem; margin-left: 6px; }
+/* Turnierstand (js/tournament.js). Bis 2026-10-10 als Inline-Farben fuer
+   dunklen Grund - in den hellen Richtungen stand der Spielplan weiss auf
+   Creme. Ueber die Tokens folgt er jetzt der Richtung; im Studio-Blau sind
+   die Werte dieselben wie vorher (--accent-text = #FFD23F, --fg-rgb weiss). */
+.tour-lead { border-color: rgba(var(--gold-rgb),.35); background: rgba(var(--gold-rgb),.06); }
+.tour-next { border-color: rgba(var(--gold-rgb),.35); }
+.tour-bar-row { display: flex; align-items: center; gap: 12px; flex: 1; max-width: 50%; }
+.tour-bar { flex: 1; height: 10px; background: rgba(var(--fg-rgb),.06); border-radius: 5px; overflow: hidden; }
+.tour-bar-fill { height: 100%; background: linear-gradient(90deg, #FFD23F, #F0B800); border-radius: 5px; transition: width .5s; }
+.tour-total { font-family: var(--font-display); font-size: 1.5rem; color: var(--accent-text); min-width: 36px; text-align: right; }
+.tour-stand { font-size: .78rem; color: rgba(var(--fg-rgb),.6); }
+.tour-pts, .tour-jetzt { color: var(--accent-text); }
+.tour-jetzt { font-weight: 700; }
+.tour-spaeter { color: rgba(var(--fg-rgb),.3); }
+/* "kommt noch" ist bewusst blass - auf Creme aber mit .3 blasser (1,7-2,0)
+   als im Studio-Blau (2,7). .45 gleicht das an. */
+:root[data-theme-hell] .tour-spaeter { color: rgba(var(--fg-rgb),.45); }
+.q-list-item .q-meta.tour-weight { color: var(--accent-text); }
+.q-list-item.tour-leer { justify-content: center; color: rgba(var(--fg-rgb),.35); }
 .tour-icon-svg { display: inline-flex; vertical-align: middle; margin-right: 2px; }
 .tour-icon-svg svg { width: 22px; height: 22px; }
 .pmini-av { width: 34px; height: 34px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
