@@ -12,6 +12,15 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `5dbaa63` Jeopardy-Leertaste (mittlere Punkte, 2)
+
+**Gemacht:** `jeopardyKeyHandler` (`js/jeopardy-ui.js`): Leertaste erst
+nach der Verbindungsprüfung und nur bei `currentClue` +
+`questionRevealed`. **Geprüft (Browser, gestubbt):** 4/4. `check.js` ok.
+**Offen:** keine für diesen Punkt.
+
+---
+
 ## 2026-10-10 — `eba0e2e` WWM-Fragen werden gespeichert (mittlere Punkte, 1)
 
 **Gemacht:** `wwmSave`/`wwmLoad`/`wwmNormalize` in `js/wwm.js`
