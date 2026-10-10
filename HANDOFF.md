@@ -12,6 +12,21 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `0d35dd3` DDF/PIH: Turnierwertung Team oder Einzelspieler
+
+**Gemacht:** `#ddf-tour-mode`/`#pih-tour-mode` (`index.html`, Klasse
+`.tour-mode-select`); `tournamentTeamScoresFromPlayers(…, modus)` —
+`'einzel'`: Maximum je Team, sonst Summe; `ddfFinish`/`pihFinish` geben die
+Einstellung mit; in `ddfSettings`/`pihSettings` gemerkt. Entscheidung David:
+„nur Team oder nur Einzelspieler, beides Summe“ → auf Rückfrage „bester
+Spieler zählt fürs Team“.
+**Geprüft (Browser, gestubbt):** 4/4. `check.js`, `--types` ok.
+**Offen:** Wirkt nur aufs Turnier. Die Teamleiste im PIH-Spiel und das
+Vertreter-Finale bleiben, wie sie sind. Setup-Screens sind nicht in
+`tools/shots`, die neue Auswahl ist nicht fotografiert.
+
+---
+
 ## 2026-10-10 — `977e3a3` Feud: Gleichstand um Platz 2, Host wählt (mittlere Punkte, 8)
 
 **Gemacht:** `endGame` (3 Teams) → bei `sorted[1].score === sorted[2].score`
