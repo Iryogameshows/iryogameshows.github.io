@@ -12,6 +12,20 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `8bba3fd` Feud-Finale: Undo, doppelte Antwort, Finalfragen-Hinweis (mittlere Punkte, 6)
+
+**Gemacht:** `finaleUndoStack`/`finaleSaveUndo`/`finaleUndo` (`js/feud.js`),
+GM-Knopf im Finale, freigegeben; Wachen in `finalePickAnswer`/
+`finaleMarkMiss`; `#feud-setup-info` (`index.html`, befüllt in
+`showScreen`). **Korrektur zur Fehlerliste:** „doppelte Antworten nicht
+abgefangen“ stimmte fürs GM-Fenster nicht — dort war die Antwort schon
+ausgegraut; ungeschützt war nur der Weg über einen Fernbefehl.
+**Geprüft (Browser, gestubbt):** 5/5. `check.js`, `--types` ok.
+**Offen:** Gleichstand um Platz 2 bei drei Teams — braucht eine
+Entscheidung (Stichfrage? Host wählt?).
+
+---
+
 ## 2026-10-10 — `488cd54` WWDS-Undo/Import, GM-Timer (mittlere Punkte, 5)
 
 **Gemacht:** WWDS `save()` in `wwdsAdjustBet`, `wwdsStartMaster`,
