@@ -12,6 +12,49 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `db196d1` Helle Richtungen: Eingabefelder und `.q-meta` lesbar
+
+**Gemacht:** `styles.css` vor dem Reduced-Motion-Block am Dateiende, nur
+`:root[data-theme-hell]`: `--field-bg` (weiß .78), `--field-line`;
+alle Felder (außer Checkbox/Radio/Farbe/Range/Datei), `textarea`,
+`select` mit `background`, `color: var(--fg)` und `border-color` per
+`!important`; Fokus `--accent-text`; Platzhalter .45; `.q-meta` .5
+(außer `.tour-weight`). Auf farbigen Teamkarten (`.team-card` u. a. mit
+`.red/.blue/.green`) bleibt `--field-bg` dunkel.
+
+**Warum so:** Freigegeben war ein Umbau mit Feld-Tokens in ~8 Dateien.
+Umgesetzt nur in `styles.css`: `!important` schlägt die Inline-Styles
+der 121 Feld-Tags, ohne jedes im JS anzufassen, und ein künftiges Feld
+ist automatisch richtig. Nur hell, damit Studio-Blau und die dunklen
+Richtungen sicher gleich bleiben. Platzhalter nur hell kräftiger
+(Entscheidung David). Erster Versuch ohne Teamkarten-Ausnahme: Weiß auf
+Weiß (1,00), weil die hellen Richtungen auf den Teamkarten `--fg` weiß
+setzen.
+
+**Geprüft (1280×900, 16 Setup-/Editor-Screens, Turnier-Host):**
+- Felder hell vorher Median 2,27–6,42 (C/F/H/P/Q 2,27–2,69), Minimum
+  1,02–1,51, unter 3: 36–183 von 218 → nachher Median 6,74–18,55, Minimum
+  2,11–6,05; die 9 Werte unter 3 je Richtung sind die Teamkarten-Felder —
+  das Skript misst gegen `--bg`, nicht gegen den Kartenverlauf; im Bild
+  (C) Weiß auf Dunkelrot, gut lesbar.
+- Platzhalter hell 1,00–1,38 → 2,25–3,22. Studio-Blau 1,53–1,61, unverändert.
+- `.q-meta` hell 1,54–1,75 → 2,55–3,50. Studio-Blau 2,24, unverändert.
+- Studio-Blau Felder 12,95/18,70 vorher wie nachher. Dunkle Richtungen
+  (B, D, E, I, J, K, M, O, R, S) nur nachher gemessen: Minimum 10,35, keine
+  unter 4,5 — unverändert durch Bauart (Regel nur unter
+  `data-theme-hell`); der Commit-Text sagt fälschlich „wie vorher“.
+- Bilder C Setup, N WWM-Editor, Q TP-Editor angesehen.
+- `tools/shots` turnier-host, gm, ergebnis ohne Befunde; `check.js` ok.
+
+**Offen:** Platzhalter in Studio-Blau und dunklen Richtungen bleiben bei
+~1,5 (bewusst). Handy-Seiten (`buzzer/`, `gamepad/`) haben eigenes CSS,
+nicht geprüft.
+
+**Fallstricke:** Mess-Skripte, die nur `background-color` mischen,
+übersehen Verläufe (Teamkarten) — dort Bild ansehen.
+
+---
+
 ## 2026-10-10 — `3ce6b69` CLAUDE.md: 17 Zustände
 
 **Gemacht:** Stand der Screenshot-Prüfung in `CLAUDE.md` auf 17 Zustände
