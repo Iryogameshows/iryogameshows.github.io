@@ -1210,8 +1210,8 @@ body {
    (also auch bei 1920x1080) bleibt alles wie vorher. */
 .jeopardy-cell { min-height: clamp(40px, 9vh - 10px, 70px); padding-block: clamp(3px, 2.5vh - 12px, 10px); }
 .jeopardy-cat { min-height: clamp(38px, 8vh - 11px, 60px); padding-block: clamp(4px, 2.5vh - 10px, 12px); }
-body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen).active) .logo { margin-top: clamp(8px, 6vh - 24px, 30px); }
-body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen).active) .logo svg { max-height: max(72px, 22vh - 48px); }
+body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-screen, #pih-screen, #tournament-board-screen).active) .logo { margin-top: clamp(8px, 6vh - 24px, 30px); }
+body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-screen, #pih-screen, #tournament-board-screen).active) .logo svg { max-height: max(72px, 22vh - 48px); }
 .jeopardy-clue-overlay {
   position: fixed; inset: 0; z-index: 1000;
   background: var(--bg);
@@ -4938,6 +4938,50 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen).active
   :root[data-theme="P"] .q-text { margin-bottom: 10px; }
   :root[data-theme="P"] .answers { gap: 8px; }
   :root[data-theme="P"] .answers.split { row-gap: 8px; }
+}
+
+/* Niedriges Fenster (Beamer-Popout 1280x720), DDF, Preis ist heiss und
+   Turnierstand mit acht Spielern bzw. vier Teams und sechs Spielen: DDF
+   52-126, PIH 195-276, Turnierstand 133-153 px zu hoch (tools/shots,
+   d897a6d). Unter 900 px Hoehe flacher; die Gebotsliste bei PIH steht in
+   zwei Spalten (Platz 1 oben links). Darueber unveraendert. Steht hinter den
+   Richtungen, damit gleich spezifische Regeln von dort nicht gewinnen. */
+@media (max-height: 900px) {
+  .ddf-players { gap: 8px; padding-bottom: 6px; margin-bottom: 2px; }
+  .ddf-player { padding: 5px 14px; }
+  .ddf-player-name { margin-bottom: 2px; }
+  .ddf-question { font-size: clamp(1.6rem, 6vh, 3.4rem); padding: 6px 20px; }
+  .ddf-answer { padding: 2px 20px 8px; }
+  .ddf-note { padding-bottom: 4px; }
+  .ddf-vote-grid { padding: 2px 0 6px; }
+
+  .pih-teamrow { margin-bottom: 4px; }
+  .pih-team { padding-block: 3px; }
+  .pih-scores { gap: 6px 8px; margin-bottom: 6px; padding-bottom: 6px; }
+  .pih-score { padding-block: 4px; }
+  .pih-item { padding: 2px 12px 4px; line-height: 1.2; }
+  /* Foto in der Bietphase: bei 720 px ~195 statt 245 px. */
+  .pih-stage :is(img, video) { max-height: max(120px, 34vh - 50px); }
+  .pih-media-bar { padding: 4px 0; }
+  .pih-price { font-size: 2.1rem; padding: 0; }
+  .pih-note { padding-bottom: 2px; }
+  .pih-bid-grid { padding: 2px 0 6px; }
+  .pih-bid-row { padding-block: 5px; }
+
+  #tournament-board-content .q-list-item { padding-block: 6px; }
+}
+/* Preis ist heiss, Aufloesung mit Foto: schon bei 1920x1080 mit acht Geboten
+   233 px zu hoch (Foto 34vh = 367 px plus Liste 8 x 45 px). Steht die
+   Gebotsliste, laeuft sie in zwei Spalten (Platz 1 oben links, zeilenweise
+   gelesen) und das Foto wird kleiner - bei jeder Fensterhoehe. Nicht auf
+   schmalen Fenstern, dort waeren zwei Spalten zu eng. */
+@media (min-width: 700px) {
+  .pih-bid-grid:has(.pih-bid-row) {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 420px));
+    justify-content: center; column-gap: 12px; row-gap: 6px;
+  }
+  .pih-bid-grid > :not(.pih-bid-row) { grid-column: 1 / -1; }
+  #pih-screen:has(.pih-bid-row) .pih-stage :is(img, video) { max-height: clamp(80px, 34vh - 160px, 250px); }
 }
 
 /* Reduzierte Bewegung: Signatur-Momente und Dauerlaeufer aus. Steht am Ende

@@ -11,6 +11,16 @@
 //   node shots.js --shows jeop,buzzer --themes E,J --size 1920x1080
 //   node shots.js --basis                Studio-Blau als Vergleichsstand merken
 //   node shots.js --vergleich            Studio-Blau gegen den Stand vergleichen
+//   node shots.js --reduced              mit prefers-reduced-motion: reduce
+//
+// --reduced: der Browser meldet "Bewegung reduzieren" (echte Media-
+// Emulation). Je Bild ist dann ein Befund, was noch laeuft: Animationen und
+// Uebergaenge mit Endlosschleife oder laenger als 50 ms. Zuerst gelaufen am
+// 2026-10-10 von Hand (210 Zustaende, 0 Funde; ohne Emulation 51
+// verschiedene) - vorher war Reduced Motion nie geprueft, die Emulation
+// fehlte im Browser-Pane. Die Intro-Vorlagen (Keller, Tag 2, Geburtstag)
+// blenden auch dann bewusst 3-5 s ueber (styles.css, kgFade); sie sind hier
+// nicht dabei.
 //
 // Ergebnis in tools/shots/out/: je Show ein Kontaktbogen bogen-<show>.png
 // (alle Richtungen nebeneinander) und die Einzelbilder. Am Ende eine Liste
@@ -35,7 +45,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'tp', 'ergebnis', 'turnier', 'gm', 'buzzer', 'buzzer-login'];
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'gm', 'buzzer', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -148,9 +158,23 @@ const AUFBAU = {
     Object.assign(roster('pih'), { selected: new Set(allPlayers.map(p => p.key)), guests: [], seeded: true });
     const mr = Math.random; Math.random = () => 0; startPih(); Math.random = mr;
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    // Artikel mit Foto (4:3) - der uebliche Fall, das Bild teilt sich die Hoehe mit der Gebotsliste.
+    const it = pihCurrentItem();
+    if (it) it.media = [{ type: 'image', data: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#8a8f99"/><circle cx="400" cy="300" r="160" fill="#c9ccd2"/></svg>') }];
     showScreen('pih-screen'); pihRenderRound(); pihBeginBids();
     pihState.players.forEach((p, i) => { pihState.bids[p.uid] = { name: p.name, value: String(10 + i * 7), num: 10 + i * 7, ts: i }; });
     pihEvaluate();
+  },
+  // Bietphase: Foto gross, darunter nur Hinweis und Zaehler.
+  'pih-gebot': () => {
+    allPlayers = ['Anna', 'Bert', 'Carla', 'Dieter', 'Eva', 'Frank', 'Gina', 'Hugo'].map((name, i) => ({ key: 'p' + i, name, avatar: '🦊', color: '#E8453C' }));
+    Object.assign(roster('pih'), { selected: new Set(allPlayers.map(p => p.key)), guests: [], seeded: true });
+    const mr = Math.random; Math.random = () => 0; startPih(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    // Artikel mit Foto (4:3) - der uebliche Fall, das Bild teilt sich die Hoehe mit der Gebotsliste.
+    const it = pihCurrentItem();
+    if (it) it.media = [{ type: 'image', data: 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#8a8f99"/><circle cx="400" cy="300" r="160" fill="#c9ccd2"/></svg>') }];
+    showScreen('pih-screen'); pihRenderRound(); pihBeginBids();
   },
   tp: () => {
     const mr = Math.random; Math.random = () => 0; startTp(); Math.random = mr;
@@ -254,7 +278,7 @@ async function kontaktbogen(page, show, bilder) {
   const srv = await server();
   const base = `http://127.0.0.1:${srv.address().port}`;
   const browser = await chromium.launch({ executablePath: browserPfad(), headless: true });
-  const ctx = await browser.newContext();
+  const ctx = await browser.newContext(flag('reduced') ? { reducedMotion: 'reduce' } : {});
   await ctx.route('**/firebase-database-compat.js', r => r.fulfill({ contentType: 'application/javascript', body: STUB }));
   await ctx.route(/firebasedatabase\.app|firebaseio\.com/, r => r.abort());
   await ctx.addInitScript(() => { window.alert = () => {}; window.confirm = () => true; window.open = () => null; });
@@ -282,6 +306,19 @@ async function kontaktbogen(page, show, bilder) {
       if (m.theme !== t) befunde.push(`${show} ${name}: data-theme ist "${m.theme}"`);
       if (!handy && show !== 'gm' && m.ueber > 1) befunde.push(`${show} ${name}: ${m.ueber} px hoeher als das Fenster (${W}x${H}, Screen ${m.screen})`);
       fehler.forEach(f => befunde.push(`${show} ${name}: JS-Fehler - ${f}`));
+      if (flag('reduced')) {
+        const lauf = await page.evaluate(() => ({
+          an: matchMedia('(prefers-reduced-motion: reduce)').matches,
+          liste: document.getAnimations().filter(a => a.playState === 'running').map(a => {
+            const t = a.effect.getComputedTiming();
+            const el = /** @type {Element|null} */ (a.effect.target);
+            const wer = el ? el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/)[0] : '') + (a.effect.pseudoElement || '') : '?';
+            return { wer, was: a.animationName || ('Uebergang ' + a.transitionProperty), ms: Math.round(Number(t.duration)), mal: t.iterations };
+          }).filter(x => x.mal === Infinity || x.ms > 50),
+        }));
+        if (!lauf.an) befunde.push(`${show} ${name}: Reduced Motion kommt in der Seite nicht an`);
+        lauf.liste.forEach(x => befunde.push(`${show} ${name}: laeuft trotz Reduced Motion - ${x.wer} ${x.was} (${x.ms} ms, ${x.mal === Infinity ? 'endlos' : x.mal + 'x'})`));
+      }
       const datei = path.join(OUT, `${show}-${name}.png`);
       if (show === 'gm') await page.locator('#gm-embed-frame').screenshot({ path: datei });
       else await page.screenshot({ path: datei });
