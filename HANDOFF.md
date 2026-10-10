@@ -12,6 +12,19 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `a1f6381` Antwortformat: Abschluss mit „Offen“ und „Nächste Schritte“
+
+**Gemacht:** In `CLAUDE.md` (Projekt) und `Coding/CLAUDE.md` (übergreifend,
+kein Git-Repo, daher ohne Commit) unter „Antwortformat“ ein Abschnitt
+„Abschluss jeder Ergebnis-Nachricht“: zwei Listen am Ende, „Offen“ und
+„Nächste Schritte“ (nummeriert), leere Liste = „keine“.
+
+**Warum:** Anweisung David. Seine Nachricht brach bei „säuberlich
+aufgelistet“ ab; Inhalt per Rückfrage geklärt (Auswahl: Offene Punkte,
+Nächste Schritte; nicht gewählt: Entscheidungen, Erledigtes mit Commits).
+
+**Geprüft:** `node check.js` fehlerfrei. **Offen:** keine.
+
 ## 2026-10-10 — `e2af07d` Jeopardy passt in 1280×720 · `8197f0a` Screenshot-Prüfung `tools/shots/`
 
 **Gemacht:**
