@@ -12,6 +12,41 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `da023cb` WWM im Turnier: Kandidat spielt für ein Team (Liste Punkt 1)
+
+**Gemacht:** `TOURNAMENT_GAMES['Wer wird Millionär'].pickTeam` — kein
+Direktstart aus dem Turnier (`tournamentStartAt` behandelt es wie
+`roster`). WWM-Setup zeigt aus dem Turnier heraus „Spielt fürs Turnier
+für“ mit einem Knopf je Team (`#wwm-tour-teams`, `renderWwmTourTeams`,
+`wwmPickTourTeam` in `js/wwm.js`, Aufruf aus `showScreen`); der Kandidat
+heißt dann wie das Team. `startWwm` lehnt im Turnier einen Namen ohne
+Team ab. `tournamentAutoRecordIfActive`: kein Namenstreffer UND andere
+Teamzahl → nichts eintragen, Platz bleibt offen (vorher „alle 0“ = alle
+Erster). GM-Turnierstand: „Einrichten“ + Hinweis für `pickTeam`.
+
+**Warum so:** Entscheidung David (Kandidat = ein Team). Zuordnung läuft
+weiter über den Namen — das ist die vorhandene Logik in
+`tournamentAutoRecordIfActive`, deshalb Kandidat = Teamname statt eines
+zweiten Felds. Verworfen: „von Hand eintragen“ (offerTournamentResult
+ordnet bei einem Namen nach Reihenfolge zu → immer Team 1) und „jedes Team
+spielt“ (Umbau).
+
+**Geprüft (Browser, Firebase gestubbt, Skript im Scratchpad):** 7/7 —
+Turnierstart bleibt auf Setup, Knöpfe „Team Rot, Team Blau“, Start ohne
+Team gesperrt (Meldung), Team Blau gewählt → Ergebnis [0, 16000],
+Turnierpunkte [1, 2]; ohne Namenstreffer `false`, Spiel offen; ohne
+Turnier kein Picker. 0 JS-Fehler. Bild WWM-Setup (Studio) angesehen.
+`check.js`, `--types` in Ordnung. `tools/shots` nicht gelaufen (neue
+Regel betrifft nur das Setup, das shots nicht abbildet).
+
+**Offen:** Team wählen geht nur am Hauptrechner (wie die Teilnehmerwahl bei
+DDF/PIH), nicht vom Gamepad. Der neue Schutz in
+`tournamentAutoRecordIfActive` gilt für alle Shows: Feud mit 3 Teams in
+einem 2-Team-Turnier ohne gleiche Namen trägt jetzt nichts mehr automatisch
+ein, sondern bietet den Knopf zum Eintragen an.
+
+---
+
 ## 2026-10-10 — Fehlersuche über alle Shows (nur Analyse, kein Code)
 
 **Auftrag David:** „Zähl mir sämtliche Stolpersteine auf, wo's Bugs gibt,
