@@ -12,6 +12,18 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `99fa1f9` Feud: Undo für „Nächste Runde“ (mittlere Punkte, 3)
+
+**Gemacht:** `feudRoundUndo`/`feudUndoRound` in `js/feud.js`; `nextRound`
+merkt den Stand vor dem Wechsel (nicht vor dem letzten), `undoLast`
+(`js/core.js`) nutzt ihn bei leerem Verlauf; Reset in `startGameActual`.
+**Geprüft (Browser, gestubbt):** 4/4. `check.js`, `--types` ok.
+**Offen:** Der Buzzer bleibt nach dem Rücksprung im Zustand der neuen
+Runde (vorbereitet, nicht scharf) — beim Weiterspielen unkritisch, nicht
+eigens getestet.
+
+---
+
 ## 2026-10-10 — `5dbaa63` Jeopardy-Leertaste (mittlere Punkte, 2)
 
 **Gemacht:** `jeopardyKeyHandler` (`js/jeopardy-ui.js`): Leertaste erst
