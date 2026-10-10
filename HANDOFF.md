@@ -12,6 +12,33 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `5269c29` Datenbank-Regeln wieder offen
+
+**Gemacht:** `database.rules.json` zurück auf
+`{ "rules": { ".read": true, ".write": true } }`, live veröffentlicht
+(`deploy --only database --project keller-buzzer`).
+`FIREBASE-ANLEITUNG.md` Abschnitt 3: Regeln bewusst offen, Verweis auf die
+strengen Regeln in `641a008` (`git show 641a008:database.rules.json`).
+
+**Warum:** Entscheidung David. Die Shows laufen privat; eine strengere Regel
+könnte mitten im Spiel einen Schreibvorgang ablehnen, und die App verschluckt
+solche Fehler fast überall (`.catch(()=>{})`, auf dem Handy `await` ohne
+`try`). Der Test der echten Seiten gegen die strengen Regeln entfällt damit.
+
+**Geprüft:** Regeln live zurückgelesen: `.read`/`.write: true`.
+`GET /.json?shallow=true` ohne Anmeldung → 200. `node check.js` fehlerfrei.
+
+**Offen:** „Fehler sichtbar machen“ (abgelehnte Schreibvorgänge anzeigen)
+hatte David mitgewählt, ist nicht umgesetzt: mit offenen Regeln lehnt der
+Server praktisch nichts mehr ab, und ohne Netz bleiben Schreibvorgänge im
+SDK hängen, statt zu scheitern — die Anzeige hätte kaum einen Anlass.
+Rückfrage an David gestellt.
+
+**Fallstricke:** `database:get /.settings/rules … | tail -1` liefert eine
+leere Zeile (Ausgabe endet mit Zeilenumbruch) — ohne `tail` lesen.
+
+---
+
 ## 2026-10-10 — Entscheidung: keine weitere Absicherung (nur HANDOFF)
 
 **Aktueller Stand:** Nach den Datenbankregeln (`641a008`, Eintrag unten)
