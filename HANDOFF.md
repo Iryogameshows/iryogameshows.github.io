@@ -32,7 +32,7 @@ solche Fehler fast überall (`.catch(()=>{})`, auf dem Handy `await` ohne
 hatte David mitgewählt, ist nicht umgesetzt: mit offenen Regeln lehnt der
 Server praktisch nichts mehr ab, und ohne Netz bleiben Schreibvorgänge im
 SDK hängen, statt zu scheitern — die Anzeige hätte kaum einen Anlass.
-Rückfrage an David gestellt.
+Rückfrage an David: wird nicht gebraucht, bleibt weg.
 
 **Fallstricke:** `database:get /.settings/rules … | tail -1` liefert eine
 leere Zeile (Ausgabe endet mit Zeilenumbruch) — ohne `tail` lesen.
