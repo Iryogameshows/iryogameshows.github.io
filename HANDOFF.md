@@ -12,6 +12,54 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `e3acca7` Drei Zustände gemessen: Feud lang, Feud-Finale, WWM-Joker
+
+**Gemacht:** `tools/shots/shots.js` um drei Aufbauten erweitert, die seit
+`73803b1` als ungemessen offen standen; sie laufen im vollen Lauf mit
+(`ALLE_SHOWS`):
+- `feud-lang`: Runde mit den meisten Antworten, Frage auf 103 Zeichen
+  verlängert (zwei Zeilen), Antworten 1 und 3 offen.
+- `feud-finale`: Auflösung im Finale (Brett + Vergleichskarten), die Frage
+  mit den meisten Antworten, Team 1 Treffer, Team 2 „Nicht auf dem Board“.
+- `wwm-joker`: Publikumsjoker eingeblendet, `Math.random` fest auf 0,5.
+
+**Warum so:** Jeweils der höchste Fall, damit ein „passt“ auch für die
+anderen gilt. `finaleQuestions` ist ohne Import leer (`js/core.js:765`) —
+dann landete der Aufbau sofort auf `result-screen`; jetzt werden die
+Rundenfragen genommen (gleiche Form). Der erste Finale-Lauf zeigte eine
+große „20“: der Timer, weil `startFinale()` übersprungen wird — Aufbau
+blendet ihn jetzt wie dort aus. Die Finale-Antwortphase (nur große Frage)
+nicht eigens gemessen, sie ist niedriger als die Auflösung.
+
+**Geprüft (1280×720, 19 Fassungen je Zustand):**
+- `wwm-joker`: alle passen. Kontaktbogen angesehen, Balken in allen
+  Richtungen sichtbar.
+- `feud-lang`: 15 passen; zu hoch I 34, P 34, S 14, M 6 px. Die
+  Testfrage ist knapp doppelt so lang wie die längste mitgelieferte
+  (54 Zeichen) — mit den eigenen Fragen tritt das nur bei langen
+  importierten Fragen auf.
+- `feud-finale`: **alle 19 zu hoch, 157–280 px** (Studio 205, H 157,
+  E 280). Im Studio-Bild endet das Fenster bei Antwort 5; die
+  Vergleichskarten der Teams sind ganz außerhalb. Bei 1920×1080:
+  alle passen.
+- `node check.js` fehlerfrei.
+
+**Offen:**
+- Finale-Auflösung bei 1280×720 passt in keiner Richtung — gleiche Art
+  Fehler wie Jeopardy/Feud/WWM vor `e2af07d`/`73803b1`, nicht behoben.
+  Kandidaten: Logo-Verkleinerung auch für `#finale-screen`, Kacheln mit
+  `clamp(… vh …)` wie beim Feud-Brett.
+- Feud lang: I, M, P, S bei sehr langen Fragen 6–34 px zu hoch.
+- Der volle `node shots.js` endet damit jetzt mit 23 Befunden; die Zeile
+  „Stand 2026-10-10: voller Lauf … ohne Befunde“ in `CLAUDE.md` stimmt
+  nicht mehr. Nicht geändert, weil Änderungen an `CLAUDE.md` erst mit
+  Rückfrage passieren.
+
+**Fallstricke:** Wer im Finale-Aufbau `startFinale()` weglässt, sieht den
+Timer — er steht im Markup sichtbar und wird nur dort ausgeblendet.
+
+---
+
 ## 2026-10-10 — `5269c29` Datenbank-Regeln wieder offen
 
 **Gemacht:** `database.rules.json` zurück auf
