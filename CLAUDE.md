@@ -422,12 +422,13 @@ anderer Pfad per Umgebungsvariable `CHROME`. Eigener kleiner Server, der
 Dev-Server muss nicht laufen. Warum es das gibt und die Einzelheiten:
 BAUPLAN 5.
 
-**Stand 2026-10-10 (`00ecc8e`):** voller Lauf bei 1280×720, 1280×800 und
-1920×1080 ohne Befunde, ebenso `--reduced` — 16 Zustände: Feud (auch Frage
+**Stand 2026-10-10 (`dffe0bd`):** voller Lauf bei 1280×720, 1280×800 und
+1920×1080 ohne Befunde, ebenso `--reduced` — 17 Zustände: Feud (auch Frage
 über zwei Zeilen, Finale-Auflösung), Jeopardy, WWM (auch Publikumsjoker),
 WWDS, DDF, Preis ist heiß (Auflösung und Bietphase, mit Produktfoto), TP,
-Ergebnis, Turnierstand, GM-Panel, Handy-Buzzer und -Login, je in allen
-Richtungen. Neue Befunde gehören also zur Änderung, die gerade gemacht
+Ergebnis, Turnierstand, Turnier-Host-Seite, GM-Panel, Handy-Buzzer und
+-Login, je in allen Richtungen. GM-Panel und Turnier-Host-Seite ohne
+Höhenprüfung (`HOST_SEITEN`), sie kommen nicht auf den Beamer. Neue Befunde gehören also zur Änderung, die gerade gemacht
 wurde. Ein voller Lauf dauert gut 6 Minuten je Größe — im Hintergrund
 starten.
 
