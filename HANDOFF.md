@@ -12,6 +12,52 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `e2af07d` Jeopardy passt in 1280×720 · `8197f0a` Screenshot-Prüfung `tools/shots/`
+
+**Gemacht:**
+- `e2af07d` `styles.css`: Jeopardy-Feld (`min-height`, `padding-block`),
+  Kategoriezeile und Logo über dem Brett schrumpfen per `clamp()` mit der
+  Fensterhöhe. Obergrenzen = alte feste Werte (70 px, 60 px, 10/12 px).
+  J und S: engere Abstände auf niedrigen Fenstern, Q und S feste
+  Zeilenhöhe (Bowlby/Bodoni trieben die Felder auf 75 px).
+- `8197f0a` `tools/shots/shots.js` + `fbstub.js` + `package.json`
+  (playwright-core 1.48.2). Doku in CLAUDE.md („Screenshot-Prüfung“, Pflicht
+  nach Design-Änderungen) und BAUPLAN 5 (Checkliste, Stub statt
+  Stummschalten nach dem Laden). `.gitignore`: `node_modules/`, `out/`.
+
+**Warum so:**
+- Jeopardy: verworfen war ein Grid mit schrumpfenden Zeilen
+  (`minmax(0,70px)` + flex-shrink) — `min-height` am Feld schlägt
+  `max-height`, und ohne `min-height` fiele die natürliche Höhe unter 70 px,
+  also hätte sich auch 1920×1080 verändert. `clamp()` mit `vh` ändert ab
+  ~890 px Höhe nichts.
+- Tool mit eigenem Server und Stub statt Dev-Server + Stummschalter:
+  läuft auf jedem Gerät, schreibt garantiert nicht in die Live-DB.
+
+**Geprüft:**
+- Jeopardy-Brettunterkante, alle 19 Fassungen: 1280×680 max. 658 (J),
+  1280×720 max. 694 (J), alle unter Fensterhöhe. 1920×1080: Studio 757
+  (vorher 757), übrige ±1 px gegen den Stand vor der Änderung (per
+  `git stash` gemessen), Q 815 vorher → 790 (feste Zeilenhöhe, gewollt).
+  Kontaktbogen 1280×720 angesehen: nichts angeschnitten.
+- `shots.js` vollständig: 7 Shows × 19 = 133 Bilder in 5 min 14 s.
+  `--basis` dann `--vergleich` (feud, jeop, gm, buzzer): 48/40/82/4 Elemente,
+  0 Abweichungen — der Vergleich ist reproduzierbar.
+- `node check.js` fehlerfrei.
+
+**Offen (Befunde der neuen Prüfung, nicht behoben):**
+- Feud bei 1280×720 29–105 px zu hoch (Studio 29, I 105).
+- WWM bei 1280×720 13–178 px zu hoch, auch Studio 103 — die Gewinnleiter
+  läuft unten aus dem Bild. Gleiche Art Fehler wie Jeopardy; David hatte
+  nur Jeopardy beauftragt. In CLAUDE.md als bekannte Befunde eingetragen.
+
+**Fallstricke:**
+- `page.goto(..., { waitUntil: 'load' })` lief im Headless-Chrome
+  gelegentlich in 30 s Timeout (Schriften/CDN). `domcontentloaded` plus
+  `waitForFunction` auf eine App-Funktion ist stabil.
+- `node -e` mit vielen verschachtelten Backticks hing in Git Bash ohne
+  Ausgabe — längere Textänderungen mit dem Edit-Werkzeug machen.
+
 ## 2026-10-10 — `431a43e` 70er-Brett, GM-Fenster, Gamepad und Handy-Buzzer in der Richtung
 
 **Anlass:** David meldete per Screenshot Studio-Blau-Felder auf braunem Grund
