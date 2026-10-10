@@ -12,6 +12,21 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `62be7c1` WWDS-Stichfrage (Liste Punkt 6)
+
+**Gemacht:** `wwdsRevealTie` mit Wache (`phase === 'tie'`, nicht
+`tieRevealed`); `wwdsFinish` nur einmal; neu `wwdsEndDraw` (nur bei
+Gleichstand ohne Schaetzfrage) als GM-Knopf „Unentschieden beenden“ und
+für den Knopf am Hauptbildschirm, in `GM_REMOTE_ALLOWED_FNS`;
+`wwdsSetGuess` ohne `Math.floor`.
+**Geprüft (Browser, gestubbt):** 5/5 — Doppelklick: Sieger +1, ein Ende;
+wieder gleich: `tieIdx` 1; ohne Schätzfrage GM-Knopf, endet einmal
+„Unentschieden!“; 3,7 bleibt 3,7. `check.js`, `--types` ok.
+**Offen:** keine für diesen Punkt (WWDS-Undo in Master/Stichfrage steht
+weiter auf der Liste).
+
+---
+
 ## 2026-10-10 — `52244ac` Gamepad-Freigaben vollständig, DDF-Patt im GM (Liste Punkt 5 + neu)
 
 **Gemacht:** `GM_REMOTE_ALLOWED_FNS` (`js/buzzer.js`) um 15 Funktionen
