@@ -987,6 +987,29 @@ body {
 .finale-reveal-pts {
   font-family: var(--font-display); font-size: 2rem; color: var(--accent-text);
 }
+/* Niedriges Fenster (Beamer-Popout 1280x720): die Aufloesung war in allen
+   Richtungen 157-280 px zu hoch, die Vergleichskarten ganz ausserhalb
+   (gemessen mit tools/shots, e3acca7). Unter 900 px Hoehe stehen Kopf und
+   Punktestand in einer Zeile, Karten und Brett werden flacher. Ab 900 px
+   (also auch bei 1920x1080) bleibt alles wie vorher. */
+@media (max-height: 900px) {
+  #finale-screen.active {
+    flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center;
+    column-gap: 32px; row-gap: clamp(6px, 2vh - 4px, 14px);
+  }
+  #finale-screen > :is(.finale-timer, .board, .finale-reveal-cards) { flex-basis: 100%; }
+  .finale-header { text-align: left; }
+  .finale-title { font-size: 2rem; line-height: 1.15; }
+  .finale-q-info { margin-top: 4px; }
+  #finale-question { padding-block: 4px 10px; }
+  .finale-score-card { padding: 6px 20px; }
+  .finale-score-pts { font-size: 2rem; line-height: 1.15; }
+  #finale-screen .board { padding-block: 12px; }
+  .finale-reveal-cards { margin-top: 0; }
+  .finale-reveal-team { padding: 8px 16px; }
+  .finale-reveal-answer { margin: 2px 0; }
+  .finale-reveal-pts { font-size: 1.6rem; line-height: 1.15; }
+}
 
 /* ── GM BAR ── */
 .gm-bar {
@@ -1187,8 +1210,8 @@ body {
    (also auch bei 1920x1080) bleibt alles wie vorher. */
 .jeopardy-cell { min-height: clamp(40px, 9vh - 10px, 70px); padding-block: clamp(3px, 2.5vh - 12px, 10px); }
 .jeopardy-cat { min-height: clamp(38px, 8vh - 11px, 60px); padding-block: clamp(4px, 2.5vh - 10px, 12px); }
-body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen).active) .logo { margin-top: clamp(8px, 6vh - 24px, 30px); }
-body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen).active) .logo svg { max-height: max(72px, 22vh - 48px); }
+body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen).active) .logo { margin-top: clamp(8px, 6vh - 24px, 30px); }
+body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen).active) .logo svg { max-height: max(72px, 22vh - 48px); }
 .jeopardy-clue-overlay {
   position: fixed; inset: 0; z-index: 1000;
   background: var(--bg);
