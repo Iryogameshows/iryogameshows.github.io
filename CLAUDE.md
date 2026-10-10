@@ -137,10 +137,9 @@ Liegen im Repo und kommen per Git mit:
   braucht einmal `npx firebase-tools login` durch David). **Firebase-MCP nur
   lesend benutzen** — Schreiben in Live-Daten bleibt „erst fragen“.
 - Die Marketplaces `claude-plugins-official` und `knowledge-work-plugins`
-  stehen (Stand 2026-10-10) nur in den User-Settings dieses Rechners. Auf
-  einem anderen Gerät einmal
-  `claude plugin marketplace add anthropics/knowledge-work-plugins` und
-  `claude plugin marketplace add anthropics/claude-plugins-official`.
+  stehen wie `caveman` unter `extraKnownMarketplaces` in
+  `.claude/settings.json` und kommen per Git mit. Beim ersten Öffnen auf
+  einem Gerät fragt Claude Code, ob ihnen vertraut werden soll.
 - GitHub-CLI `gh` für den Deploy-Nachweis (`gh run list`); ohne `gh` die
   Action-API, siehe `/abschluss`.
 
