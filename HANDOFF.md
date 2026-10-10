@@ -12,6 +12,46 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `56de705` Turnierstand in den hellen Richtungen lesbar
+
+**Gemacht:** `js/tournament.js` — `tournamentStandingsHtml` und
+`renderTournamentBoard` ohne Inline-Farben, stattdessen Klassen
+`.tour-lead`, `.tour-next`, `.tour-bar-row`, `.tour-bar`, `.tour-bar-fill`
+(Breite bleibt inline), `.tour-total`, `.tour-stand`, `.tour-pts`,
+`.tour-jetzt`, `.tour-spaeter`, `.tour-weight`, `.tour-leer`;
+`styles.css` neben `.tour-icon-svg`, auf `--accent-text`, `--fg-rgb`,
+`--gold-rgb`, `--font-display`. `:root[data-theme-hell] .tour-spaeter`
+mit .45 statt .3.
+
+**Warum so:** Tokens statt Regeln je Richtung — die Werte im Studio-Blau
+sind identisch (`--accent-text` = #FFD23F, `--fg-rgb` = 255,255,255,
+`--font-display` = Bebas Neue), jede Richtung bekommt ihre Farben ohne
+eigenen Block. Die Turnierpunkte stehen damit in der Display-Schrift der
+Richtung statt fest in Bebas. Der Balken bleibt gelb (auf Creme gut
+sichtbar, Kontaktbogen angesehen).
+
+**Geprüft:**
+- Kontrast (Schrift gegen `--bg` + halbtransparente Flächen gemischt):
+  Ergebniszeile hell vorher C 1,07, F 1,04, H 1,16, L 2,27, N 1,27,
+  P 1,11, Q 1,13 → jetzt 4,71 / 4,84 / 4,43 / 3,40 / 3,19 / 4,55 / 4,08;
+  Studio 6,97 vorher wie nachher. L und N liegen auf Höhe ihrer eigenen
+  Teamnamen (3,33 / 3,24). „kommt noch“ hell 2,29–3,00 (Studio 2,68).
+- Studio-Blau 1280×720 und 1920×1080: je 109 Elemente, berechnete Werte
+  gleich — `--vergleich` selbst meldet 96 Abweichungen, weil die
+  Schlüssel die Klassennamen enthalten; verglichen deshalb in
+  DOM-Reihenfolge ohne Klassennamen.
+- `tools/shots --shows turnier` ohne Befunde, Kontaktbogen angesehen.
+- `node check.js` und `node check.js --types`: alles in Ordnung.
+
+**Offen:** Die Host-Seite des Turniers (`renderTournament`,
+`js/tournament.js` ab ~600: Spielplan-Editor, Ergebnisse, Depot) hat
+dieselben weißen Inline-Farben — nicht auf der Leinwand, nicht angefasst.
+
+**Fallstricke:** `shots.js --vergleich` taugt nicht, wenn sich
+Klassennamen ändern — der Schlüssel ist `Index:TAG#id.klassen`.
+
+---
+
 ## 2026-10-10 — `00ecc8e` DDF, PIH, Turnierstand passen · `shots --reduced` · `0df6c46` CLAUDE.md
 
 **Gemacht (`styles.css`):**
