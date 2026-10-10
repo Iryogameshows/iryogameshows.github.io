@@ -421,12 +421,10 @@ anderer Pfad per Umgebungsvariable `CHROME`. Eigener kleiner Server, der
 Dev-Server muss nicht laufen. Warum es das gibt und die Einzelheiten:
 BAUPLAN 5.
 
-**Stand 2026-10-10 (`e80ad5f`):** voller Lauf bei 1280×720 mit genau
-**4 bekannten Befunden**, alle `feud-lang` (Feud-Frage über zwei Zeilen,
-103 Zeichen): I 34, P 34, S 14, M 6 px zu hoch. Jeopardy, Feud, WWM (auch
-mit Publikumsjoker) und die Feud-Finale-Auflösung passen in allen
-Richtungen. Jeder weitere Befund gehört zur Änderung, die gerade gemacht
-wurde.
+**Stand 2026-10-10 (`8a84676`):** voller Lauf bei 1280×720 ohne Befunde —
+Jeopardy, Feud (auch mit Frage über zwei Zeilen), WWM (auch mit
+Publikumsjoker) und die Feud-Finale-Auflösung passen in allen Richtungen.
+Neue Befunde gehören also zur Änderung, die gerade gemacht wurde.
 
 ## Deploy
 
