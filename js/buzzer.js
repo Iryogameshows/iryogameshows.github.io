@@ -610,6 +610,12 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'pihHostBidValue','pihShowMedia',
   // Trivial Pursuit
   'tpSpin','tpShowAnswer','tpJudge','tpStealAward','tpStealNobody','tpQuit',
+  /* Bis 2026-10-10 fehlten diese, obwohl ihre Knoepfe im GM-Fenster stehen:
+     vom Handy-Gamepad taten sie wortlos nichts. WWM war vom Gamepad aus
+     praktisch nicht spielbar, kein Undo ausser Feud/Jeopardy. Abgleich:
+     alle opener.X( und ${pfx}X( in js/ gegen diese Liste. */
+  'wwmLock','wwmReveal','wwmNext','wwmWalkAway','wwmFifty','wwmPhone','wwmAudience','wwmUndo',
+  'wwdsUndo','ddfUndo','pihUndo','tpUndo','ddfVoteOut','jeopardyStepsReveal','gmShowScreen',
 ]);
 
 function gmRemoteInitFirebase() {

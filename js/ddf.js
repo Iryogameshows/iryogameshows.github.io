@@ -734,13 +734,20 @@ function ddfGmControlsHtml(pfx){
     b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfEvaluateVote()">Auswerten${done < total ? ' (vorzeitig)' : ''}</button>`;
   } else if (s.phase === 'runoffAnnounce'){
     b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfStartRunoff()">🔁 Stichwahl starten</button>`;
+  } else if (s.phase === 'tiebreak'){
+    /* Auch die Stichwahl endet gleich: der Host entscheidet. Die Knoepfe dafuer
+       standen bis 2026-10-10 nur auf dem Hauptbildschirm (ddfRenderVoteGrid) -
+       wer vom GM-Fenster oder vom Handy-Gamepad aus moderierte, sass fest. */
+    (s.tied || []).forEach(u => {
+      b += `<button class="gm-btn gm-red" onclick="${pfx}ddfVoteOut(${escJsArg(u)})">✕ ${escapeHtml(ddfNameOf(u))} verliert ein Herz</button>`;
+    });
   } else if (s.phase === 'result'){
     b += `<button class="gm-btn gm-gold" onclick="${pfx}ddfAfterResult()">Weiter →</button>`;
   }
   if (s.phase === 'done'){
     return tournamentEndButtonHtml(pfx)
-         + `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('ddf-setup-screen')">Nochmal</button>`
-         + `<button class="gm-btn gm-gray" onclick="${pfx}showScreen('menu-screen')">Zum Menü</button>`;
+         + `<button class="gm-btn gm-gold" onclick="${pfx}gmShowScreen('ddf-setup-screen')">Nochmal</button>`
+         + `<button class="gm-btn gm-gray" onclick="${pfx}gmShowScreen('menu-screen')">Zum Menü</button>`;
   }
   if (ddfUndoStack.can()) b += `<button class="gm-btn gm-orange" onclick="${pfx}ddfUndo()">↩ Undo</button>`;
   return b;

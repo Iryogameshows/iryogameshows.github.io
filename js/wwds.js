@@ -664,6 +664,16 @@ function updateGamemasterWwds(){
 
 // ── GAMEMASTER: ERGEBNIS-SCREEN (für alle Spielmodi) ──
 function gmBackToMenu(){ showScreen('menu-screen'); updateGamemaster(); }
+/* Screenwechsel aus dem GM-Fenster und vom Handy-Gamepad ("Nochmal", "Zum
+   Menue" am Ende von DDF, PIH, TP). showScreen selbst steht bewusst nicht in
+   GM_REMOTE_ALLOWED_FNS - es nimmt jede ID. Hier nur die Ziele, die die
+   Knoepfe brauchen. @param {string} id */
+const GM_SCREENS = new Set(['menu-screen', 'ddf-setup-screen', 'pih-setup-screen', 'tp-setup-screen']);
+function gmShowScreen(id){
+  if (!GM_SCREENS.has(id)) return;
+  showScreen(id);
+  updateGamemaster();
+}
 function gmGotoTournament(){ showScreen('tournament-screen'); updateGamemaster(); }
 function gmPlayAgain(){
   const btn = /** @type {HTMLElement|null} */ (

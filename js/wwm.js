@@ -220,7 +220,8 @@ function wwmSecured(qIdx){
 }
 
 function wwmWalkAway(){
-  if (wwmState.gameOver) return;
+  // Auszahlen nur vor dem Loggen - so steht der Knopf auch im GM-Fenster.
+  if (wwmState.gameOver || wwmState.locked) return;
   const amt = wwmState.currentQ > 0 ? WWM_LADDER[wwmState.currentQ-1] : 0;
   wwmEnd(amt, false);
 }
@@ -243,7 +244,7 @@ function wwmEnd(amount, jackpot){
 
 // ── LIFELINES ──
 function wwmFifty(){
-  if (wwmState.lifelines.fifty || wwmState.revealed) return;
+  if (wwmState.lifelines.fifty || wwmState.locked || wwmState.revealed) return;
   wwmUndoStack.save();
   const q = wwmData.questions[wwmState.currentQ];
   // An der tatsächlichen Antwortzahl entlang statt an fest verdrahteten vier:

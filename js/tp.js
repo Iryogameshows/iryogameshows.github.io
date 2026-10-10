@@ -941,8 +941,8 @@ function tpGmControlsHtml(pfx){
     // Nach dem Spiel steuert der Host von hier weiter. Frueher standen diese
     // beiden Knoepfe auf dem Hauptbildschirm - also auf der Leinwand.
     return tournamentEndButtonHtml(pfx)
-         + `<button class="gm-btn gm-gold" onclick="${pfx}showScreen('tp-setup-screen')">Nochmal</button>`
-         + `<button class="gm-btn gm-gray" onclick="${pfx}showScreen('menu-screen')">Zum Menü</button>`;
+         + `<button class="gm-btn gm-gold" onclick="${pfx}gmShowScreen('tp-setup-screen')">Nochmal</button>`
+         + `<button class="gm-btn gm-gray" onclick="${pfx}gmShowScreen('menu-screen')">Zum Menü</button>`;
   }
   if (tpUndoStack.can()) b += `<button class="gm-btn gm-orange" onclick="${pfx}tpUndo()">↩ Undo</button>`;
   return b;
