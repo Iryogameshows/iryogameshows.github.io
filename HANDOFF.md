@@ -12,6 +12,108 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — Fehlersuche über alle Shows (nur Analyse, kein Code)
+
+**Auftrag David:** „Zähl mir sämtliche Stolpersteine auf, wo's Bugs gibt,
+sämtliche Logikfehler in den Shows, alles.“ Stand `c9fbea7`ff. (Code
+unverändert seit `db196d1`).
+
+**Wie geprüft:** Code gelesen — `wwm.js`, `ddf.js`, `pih.js` (Spiellauf),
+`tp.js` (Spiellauf), `wwds.js`, `jeopardy.js`/`jeopardy-ui.js`
+(Spiellauf), `feud.js` (Runde, Strikes, Finale, GM), `buzzer.js`
+(Listener), `core.js` (Undo, Speichern, showScreen), `tournament.js`
+(Start, Wertung). Belege mit Zeile. **Nicht live nachgestellt** — außer wo
+angegeben ist jeder Punkt aus dem Code abgeleitet.
+**Nicht gelesen:** `intro.js`, `roster.js`, `theme.js`, `voting/`,
+`gamepad/`, `mainscreen/`, Editoren im Detail, `buzzer/index.html` nur
+Buzz-Teil.
+
+Nebenbei: Handy-Seiten in den hellen Richtungen gemessen (Kontrast aller
+Texte, 10 Screens + Gamepad): lesbar; blass nur Statuszeilen („Warte auf
+die Frage…“ 1,8–2,5, Gamepad-Status 2,3–2,6), Studio-Blau ähnlich (2,2–2,8).
+Nicht geändert.
+
+### Querschnitt
+- Undo-Stapel wird beim Spielstart nicht geleert: wwm, wwds, ddf, pih (nur tp.js:172 reset). Folge: Undo im ersten Zug einer neuen Runde holt Zustand des vorigen Spiels zurueck (bei ddf/pih inkl. alter Spielerliste). Belegt: grep UndoStack.reset -> nur tp.
+- WWM- und Jeopardy-Daten werden nicht gespeichert (kein storeSetJson fuer wwmData/jeopardyData). Editor-Aenderungen und Importe sind nach Neuladen weg. Jeopardy laut Kommentar tournament.js bewusst (Bildergroesse), WWM ohne Begruendung.
+
+### WWM (js/wwm.js)
+- wwmLock/wwmNext/wwmFifty/wwmPhone/wwmAudience: undo.save() VOR der Guard-Pruefung -> No-op-Eintraege im Undo-Stapel (Undo-Knopf erscheint, Klick tut sichtbar nichts). wwm.js:144,161,211,228,236.
+- wwmReveal speichert kein Undo -> Undo nach Aufloesen springt vor das Loggen (zwei Schritte zurueck). wwm.js:151.
+- wwmWalkAway prueft locked/revealed nicht; ueber GM-Remote-Befehl jederzeit aufrufbar (Knopf nur vor Loggen sichtbar). wwm.js:187.
+- wwmFifty prueft locked nicht (nur revealed). wwm.js:212.
+- Editor: Frage 16+ zeigt "(0 €)" (WWM_LADDER[i]||0); mehr als 15 Fragen werden nie gespielt (oberstesFeld beendet bei 15). wwm.js:342,166.
+- WWM im Turnier: tournamentStartAt startet startWwm sofort (lobby:null), der Kandidatenname ist, was zufaellig im Feld steht. wwmEnd meldet tournamentAutoRecordIfActive([name],[amount]) - 1 Name gegen >=2 Teams: kein Namenstreffer, sameLength false -> alle Teams mit Ergebnis 0, Spiel als "gespielt" markiert. Weil die Turnierpunkte nach Platz vergeben werden, landen alle auf Platz 1 und JEDES Team bekommt die vollen Punkte. Richtig nur, wenn der Kandidat exakt wie ein Team heisst. wwm.js:202, tournament.js:356-371, 240-258.
+
+### DDF (js/ddf.js)
+- ddfFinish ruft updateGamemaster nicht auf (auch ddfRenderRound kehrt vorher zurueck). GM-Fenster/Gamepad zeigt nach Spielende weiter "Weiter ->"; erneuter Klick ruft ddfFinish nochmal -> tournamentReportTeamless ein zweites Mal (Platz schon frei -> bietet das Ergebnis erneut an). ddf.js:198,443-465.
+- Phase 'tiebreak' (Stichwahl wieder gleich): ddfGmControlsHtml hat keinen Zweig dafuer -> im GM-Fenster/Gamepad KEIN Knopf; aufloesen nur am Hauptbildschirm (ddf-vote-grid). Kopfzeile zeigt dann "Frage". ddf.js:718-742, 796-798.
+- Siegertext nutzt winner.name statt winner.label (bei zwei gleichen Namen nicht unterscheidbar). ddf.js:459.
+- Kein Undo-Reset beim Start (siehe Querschnitt) - Undo im ersten Zug holt alte Spielerliste.
+- Rundenuhr (startRoundClock, core.js:70) aktualisiert das GM-Fenster nicht: GM zeigt "Timer: 30 s" fest, "Zeit abgelaufen" erst beim naechsten Anlass. Betrifft DDF und PIH. ddf.js:805.
+
+### PIH (js/pih.js)
+- pihFinish ruft updateGamemaster nicht auf (wie DDF): GM/Gamepad bleiben auf "Weiter ->", zweiter Klick -> pihFinish + Turnierbericht nochmal. pih.js:313,594-632.
+- Finale (★-Artikel) ohne Team-Zuordnung: finalists leer -> pihMayBid fuer alle false; "only" wird null gesendet -> alle Handys duerfen tippen, ihre Gebote fallen in pihAllBids stumm raus; Auswerten meldet ewig "noch kein Gebot". Nur "Ueberspringen" fuehrt raus. pih.js:236-242,445-461,501. Ebenso: nur ein Team besetzt -> nur ein Finalist.
+- Gebotszaehler im Finale: total = alle Spieler statt der 2 Finalisten -> "0 / 8 Gebote", Knopf "Auswerten (vorzeitig)" obwohl alle Finalisten geboten haben. pih.js:486-488.
+- pihEvaluate: undo.save vor Guard (No-op bei "noch kein Gebot"). pih.js:493.
+- Teamzuordnung kommt aus allPlayers (Firebase). Offline/ohne Firebase: alle "ohne Team", Teamwertung 0:0, Finale ohne Finalisten (siehe oben). pih.js:182-187.
+
+### WWDS (js/wwds.js)
+- wwdsRevealTie ohne Wache gegen Doppelaufruf (prueft tieRevealed nicht): Doppeltipp/Fernbefehl zweimal -> Sieger bekommt +2 statt +1 und wwdsFinish laeuft zweimal (Turnier: zweiter Lauf bietet Ergebnis erneut an); bei Gleichstand tieIdx++ zweimal -> eine Schaetzfrage wird uebersprungen. wwds.js:464-490.
+- Keine Schaetzfrage hinterlegt + Gleichstand: GM/Gamepad-Knoepfe "Aufloesen"/"Schaetzungen aufdecken" tun nichts (wwdsRevealTie return bei !t); "Trotzdem beenden" gibt es nur am Hauptbildschirm. Fernsteuernder Host steckt fest. wwds.js:265,465,539-541.
+- Undo in Masterfrage/Stichfrage: wwdsToBetting/StartMaster/RevealMaster/AdjustBet sichern nicht -> Undo springt zurueck in die Hauptrunde (letzte Frage aufgeloest), Einsaetze und Master-Ergebnis weg. wwds.js:378-424.
+- wwdsPick/Lock/Reveal/Next/Audience: undo.save vor Guard (No-op-Eintraege). wwds.js:287,310,319,333,350.
+- Timer schickt jede Sekunde updateGamemaster -> Handy-Gamepad laedt sein Panel jede Sekunde komplett neu (Firebase gmremote/html jede Sekunde neu geschrieben). wwds.js:129-139.
+- Stichfrage-Schaetzung wird per Math.floor abgeschnitten (3,7 -> 3), Antwort aber Number(...) mit Nachkommastellen -> Abstand falsch bei Dezimal-Antworten. wwds.js:448, 823.
+- Editor: Felder schreiben ohne wwdsSave; gesichert wird erst beim Verlassen des Editor-Screens (core.js:921). Browser zu waehrend im Editor -> Aenderungen weg. (DDF/PIH/TP speichern je Tastendruck.)
+- Import: correct nicht auf 0..2 begrenzt (Number(x.correct)||0; 5 bleibt 5 -> keine richtige Antwort), answers nicht auf 3 aufgefuellt. wwds.js:856-857 (WWM macht das richtig, wwm.js:381-387).
+
+### Jeopardy (js/jeopardy.js, js/jeopardy-ui.js)
+- Letzte Frage eines Boards: jeopardyFinishClue wechselt sofort aufs naechste Board/Ergebnis und leert die Undo-Historie -> eine Fehlwertung bei der letzten Frage ist nicht mehr rueckgaengig zu machen. jeopardy-ui.js:338, 401.
+- Leertaste (Tastatur-Fallback) macht die Buzzer scharf, solange Jeopardy aktiv ist - auch ohne offene Frage und auch mit Firebase-Verbindung (der connected-Check kommt erst danach). Handys koennen dann ohne Frage buzzern. jeopardy-ui.js:119-120.
+- Daily Double angekuendigt (ddPending): Board bleibt fuer alle sichtbar und klickbar; Klick auf ein anderes Feld ueberschreibt die offene DD-Frage, das DD-Feld bleibt ungespielt und unmarkiert. jeopardy.js:343-366.
+- Daily Double kann auf ein leeres Feld (ohne Frage) fallen - die Auswahl prueft nur den Wert. jeopardy.js:211-220.
+- Daily Double + getippte Frage (Schaetzung/Einzelantwort): Eingabe oeffnet fuer ALLE Handys, werten darf nur das DD-Team - die anderen tippen umsonst. jeopardy.js:413.
+- Undo bei ddPending: jeopardyUndo rendert das Frage-Overlay, obwohl die Frage noch nicht angekuendigt ist (DD verraet sich auf der Leinwand). jeopardy.js:181.
+- Jeopardy-Boards werden nicht gespeichert (s. Querschnitt) - nach Neuladen Standard-Boards.
+
+### Family Feud (js/feud.js, core.js)
+- "Alle aufdecken" vor "Naechste Runde" vernichtet die Rundenpunkte: revealAll setzt roundPoints=0 und deckt alles auf; nextRound vergibt nur, wenn NICHT alles aufgedeckt ist -> das Team am Zug bekommt nichts. Knopf steht immer im GM (auch mitten in der Runde). feud.js:353-359, 432-438, 1112, 1697.
+- "Naechste Runde" ist nicht rueckgaengig zu machen (kein Snapshot, actionHistory wird in loadRound geleert) - ein Fehlklick vergibt die Punkte und springt weiter. feud.js:432, core.js:845.
+- Strike: Teamwechsel kommt per setTimeout 750 ms. Undo innerhalb dieser Zeit -> Wechsel passiert trotzdem nach dem Undo. feud.js:373-376.
+- "Team wechseln" im GM speichert keinen Snapshot (nicht rueckgaengig). feud.js:1111.
+- 3 Teams, Gleichstand um Platz 2/3 vor dem Finale: wer ausscheidet, entscheidet die Sortierreihenfolge (Teamindex), keine Stichfrage, kein Hinweis. feud.js:443-446.
+- Finale (Fast Money): kein Undo - falsch angeklickte Antwort (finalePickAnswer/finaleMarkMiss) ist nicht korrigierbar; doppelte Antworten der beiden Teams werden nicht abgefangen. feud.js:571-590.
+- Finalfragen gibt es nur per Import (finaleQuestions startet leer, core.js:765) - ohne Import endet Feud ohne Finale direkt im Ergebnis, ohne Hinweis vorher.
+
+### Buzzer (js/buzzer.js, Host-Seite)
+- Jeopardy- und Feud-Buzzer haengen beide eigene Listener an denselben Firebase-Pfad 'buzzer' (attachBuzzerGameListeners). Wer erst die Jeopardy-Lobby und dann die Feud-Lobby oeffnet (oder umgekehrt), hat danach beide aktiv: jeder Buzz wird doppelt gezaehlt (Reaktions-Bestenliste, Account-Statistik buzzes, Buzz-Ton doppelt), und im Jeopardy-Spiel setzt der Feud-Listener nebenher das Feud-Startteam. Getrennt wird erst bei Spielende (jeopardyBuzzDisconnect/feudBuzzDisconnect). buzzer.js:294-319, 337-339, 424-429, 457-467. Plausibel aus dem Code, nicht live nachgestellt.
+- Reaktionszeit = Server-Eingangszeit (ServerValue.TIMESTAMP am Handy-Buzz) minus armStart: Netzlatenz entscheidet mit; ein Handy im langsamen WLAN/Mobilfunk verliert knappe Duelle. Bauart, kein Fehler im engeren Sinn. buzzer.js:303-308, buzzer/index.html:815.
+- Doppelte Buzzes werden nach Name entfernt (seen[b.name]): zwei Geraete mit demselben Account zaehlen als einer - gewollt; zwei verschiedene Spieler mit gleichem Anzeigenamen gibt es nicht (Account-Key = Name).
+
+### Turnier (js/tournament.js)
+- Punkte nach Platzierung (tournamentGamePoints): Gleichstand teilt den Platz. Folge fuer den WWM-Fehler oben: alle Teams 0 -> alle auf Platz 1 -> JEDES Team bekommt die vollen Punkte (Teamzahl x Gewichtung). tournament.js:490-507.
+- Teamlose Shows (DDF: Summe der uebrigen Leben, PIH: Summe der Punkte) addieren je Team ueber die Mitspieler: ein Team mit mehr Leuten gewinnt strukturell. tournament.js:399-416, ddf.js:453, pih.js:603.
+- Teamzuordnung fuer DDF/PIH-Turnierwertung kommt aus allPlayers (Firebase) zum Spielende - ohne Verbindung "keine Team-Zuordnung", Ergebnis muss von Hand.
+
+### Querschnitt / Betrieb
+- Spielstand wird nirgends gesichert: Neuladen oder Absturz des Host-Browsers mitten in einer Show = Stand weg (nur Turnier, Fragen, Einstellungen liegen im Speicher). grep storeSetJson: kein state/jeopardyState/...
+- Pop-up-Blocker: openBoardPopout kehrt still zurueck, wenn window.open blockiert ist - kein Beamerfenster, keine Meldung. feud.js:888.
+- Start aus dem Gamepad/GM-Fernbefehl (z. B. tournamentStartNext) ruft window.open ohne Nutzergeste -> Popup wird blockiert, falls das Beamerfenster nicht schon offen ist.
+- Handy offline beim Buzzern: Firebase-push wird gepuffert, nicht abgelehnt -> Handy zeigt "Gebuzzert ✔", der Buzz kommt erst bei Wiederverbindung (mit spaeterem Zeitstempel). Der .catch-Zweig greift nur bei Ablehnung. buzzer/index.html:815-822.
+- Zu-frueh-Sperre 3 s haengt am lokal bekannten armed-Zustand: kommt "scharf" verspaetet aufs Handy, sperrt ein rechtzeitiger Druck trotzdem 3 s. buzzer/index.html:813.
+- Zweiter Host-Rechner auf der Seite schreibt seine Design-Richtung nach design -> der zuletzt geoeffnete gewinnt (HANDOFF 431a43e, weiter offen).
+- Bewusst offen (Entscheidung David): Datenbank offen, PIN-Hashes lesbar, gmremote/html beschreibbar, Host-Passwort im JS.
+
+**Offen:** alles oben; nichts behoben. **Nächste Schritte:** mit David
+Reihenfolge festlegen — Vorschlag zuerst: WWM-Turnierwertung, Feud „Alle
+aufdecken“, Undo-Reset bei Spielstart, DDF/PIH-Spielende im GM,
+DDF-Stichwahl-Patt im GM, WWDS Doppelklick Stichfrage, PIH-Finale ohne
+Teams, doppelte Buzzer-Listener.
+
+---
+
 ## 2026-10-10 — `db196d1` Helle Richtungen: Eingabefelder und `.q-meta` lesbar
 
 **Gemacht:** `styles.css` vor dem Reduced-Motion-Block am Dateiende, nur
