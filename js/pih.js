@@ -1119,7 +1119,7 @@ function updateGamemasterPih(){
   <div class="panel">
     <div class="panel-head"><span>🏆 Wertung</span></div>
     ${rows}
-    <div class="tm">${s.roundTime ? (s.timeUp ? 'Zeit abgelaufen' : 'Timer: ' + s.timer + ' s') : ''}</div>
+    <div class="tm">${s.roundTime ? (s.timeUp ? 'Zeit abgelaufen' : s.timerInt ? '⏱ Zeit läuft' : '') : ''}</div>
   </div>
   ${gmNotesPanelHtml()}
   </div>

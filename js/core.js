@@ -79,11 +79,14 @@ function startRoundClock(state, elId) {
     // timeUp vor dem Stoppen setzen: stopRoundClock() loescht die Anzeige nur,
     // solange die Zeit nicht abgelaufen ist - sonst verschwindet "Zeit um!"
     // im selben Moment, in dem es erscheinen soll.
-    if (state.timer <= 0) { state.timeUp = true; stopRoundClock(state, elId); return; }
+    // GM-Fenster nachziehen, damit dort "Zeit abgelaufen" steht - es zeigt
+    // keine Sekunden (das Gamepad laedt sonst jede Sekunde neu, siehe wwds.js).
+    if (state.timer <= 0) { state.timeUp = true; stopRoundClock(state, elId); updateGamemaster(); return; }
     state.timer--;
   };
   tick();
   state.timerInt = setInterval(tick, 1000);
+  updateGamemaster();
 }
 function stopRoundClock(state, elId) {
   if (state.timerInt) { clearInterval(state.timerInt); state.timerInt = null; }

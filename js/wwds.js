@@ -137,9 +137,13 @@ function wwdsStartTimer(){
       SFX.wrong();
     } else if (wwdsState.timer <= 5) SFX.tick();
     wwdsRenderTimer();
-    updateGamemaster();
+    /* Das GM-Fenster nur beim Ablauf nachziehen, nicht jede Sekunde: jede
+       Aktualisierung schreibt das ganze Panel nach Firebase, und das
+       Handy-Gamepad laedt es komplett neu - 20-mal pro Frage. */
+    if (wwdsState.timeUp) updateGamemaster();
   }, 1000);
   wwdsRenderTimer();
+  updateGamemaster();
 }
 function wwdsRenderTimer(){
   const el = document.getElementById('wwds-timer');
@@ -388,6 +392,7 @@ function wwdsToBetting(){
 // der Hauptbildschirm zeigt ihn nur an.
 function wwdsAdjustBet(i, delta){
   if (wwdsState.phase !== 'bet') return;
+  wwdsUndoStack.save();
   const cur = wwdsState.bets[i] || 0;
   const next = delta === 'max' ? wwdsState.scores[i] : delta === 'min' ? 0 : cur + delta;
   wwdsState.bets[i] = Math.max(0, Math.min(Math.floor(next), wwdsState.scores[i]));
@@ -395,6 +400,8 @@ function wwdsAdjustBet(i, delta){
   updateGamemaster();
 }
 function wwdsStartMaster(){
+  if (wwdsState.phase !== 'bet') return;
+  wwdsUndoStack.save();
   wwdsState.phase = 'master';
   wwdsState.masterPick = wwdsState.teamNames.map(() => null);
   wwdsState.masterRevealed = false;
@@ -405,12 +412,14 @@ function wwdsStartMaster(){
 }
 function wwdsMasterSet(team, i){
   if (wwdsState.phase !== 'master' || wwdsState.masterRevealed) return;
+  wwdsUndoStack.save();
   wwdsState.masterPick[team] = (wwdsState.masterPick[team] === i) ? null : i;
   renderWwds();
   updateGamemaster();
 }
 function wwdsRevealMaster(){
   if (wwdsState.phase !== 'master' || wwdsState.masterRevealed) return;
+  wwdsUndoStack.save();   // Master-Ergebnis zuruecknehmbar (vorher sprang Undo in die Hauptrunde)
   wwdsState.masterRevealed = true;
   wwdsStopTimer();
   const m = wwdsData.master;
@@ -425,7 +434,8 @@ function wwdsRevealMaster(){
   updateGamemaster();
 }
 function wwdsAfterMaster(){
-  if (!wwdsState.masterRevealed) return;
+  if (wwdsState.phase !== 'master' || !wwdsState.masterRevealed) return;
+  wwdsUndoStack.save();
   const max = Math.max(...wwdsState.scores);
   const leaders = wwdsState.scores.filter(s => s === max).length;
   if (leaders > 1){ wwdsToTie(); return; }
@@ -460,6 +470,7 @@ function wwdsShowTieGuesses(){
   const max = Math.max(...wwdsState.scores);
   const tied = wwdsState.teamNames.map((_,i) => i).filter(i => wwdsState.scores[i] === max);
   if (tied.some(i => wwdsState.tieGuesses[i] === null)) return alert('Alle beteiligten Teams müssen erst schätzen!');
+  wwdsUndoStack.save();
   wwdsState.tieGuessesShown = true;
   SFX.point();
   renderWwds();
@@ -671,7 +682,7 @@ function updateGamemasterWwds(){
   <div class="panel">
     <div class="panel-head"><span>💰 Stand</span></div>
     ${scoreRows}
-    <div class="tm">${(s.phase==='question'||s.phase==='master') ? (s.timeUp?'Zeit abgelaufen':'Timer: '+s.timer+' s') : ''}</div>
+    <div class="tm">${(s.phase==='question'||s.phase==='master') ? (s.timeUp ? 'Zeit abgelaufen' : s.timerInt ? '⏱ Zeit läuft' : '') : ''}</div>
     ${(s.phase==='pick'||s.phase==='question') ? `<div class="tm">Am Zug: <b style="color:${WWDS_HEX[s.currentTeam]}">${escapeHtml(s.teamNames[s.currentTeam])}</b></div>` : ''}
   </div>
   ${gmNotesPanelHtml()}
@@ -879,6 +890,20 @@ function wwdsDeleteTiebreaker(i){
   wwdsData.tiebreakers.splice(i,1); renderWwdsEditor(); wwdsSave();
 }
 function exportWwds(){ downloadJSON(wwdsData, 'wer-weiss-denn-sowas.json'); }
+/* Import-Hilfen: genau drei Antworten (Texte), richtige Antwort 0..2. Vorher
+   blieb ein correct von 5 stehen - dann war keine Antwort richtig - und eine
+   Datei mit zwei Antworten ergab eine Frage mit Luecke.
+   @param {any} a @returns {string[]} */
+function wwdsDrei(a){
+  const out = (Array.isArray(a) ? a : []).slice(0, 3).map(x => String(x == null ? '' : x));
+  while (out.length < 3) out.push('');
+  return out;
+}
+/** @param {any} c @returns {number} */
+function wwdsRichtig(c){
+  const n = Number(c);
+  return Number.isInteger(n) && n >= 0 && n <= 2 ? n : 0;
+}
 function importWwds(e){
   readJsonFile(e, d => {
     const cats = Array.isArray(d.categories) ? d.categories : (Array.isArray(d) ? d : null);
@@ -887,12 +912,12 @@ function importWwds(e){
       categories: cats.map(x => ({
         cat: x.cat || x.category || '',
         q: x.q || x.question || '',
-        answers: (x.answers || ['','','']).slice(0,3),
-        correct: Number(x.correct) || 0,
+        answers: wwdsDrei(x.answers),
+        correct: wwdsRichtig(x.correct),
         note: x.note || '', media: x.media || []
       })),
       master: d.master
-        ? { q:d.master.q||'', answers:(d.master.answers||['','','']).slice(0,3), correct:Number(d.master.correct)||0, note:d.master.note||'', media:d.master.media||[] }
+        ? { q:d.master.q||'', answers:wwdsDrei(d.master.answers), correct:wwdsRichtig(d.master.correct), note:d.master.note||'', media:d.master.media||[] }
         : wwdsData.master,
       tiebreakers: Array.isArray(d.tiebreakers)
         ? d.tiebreakers.map(t => ({ q:t.q||'', answer:Number(t.answer)||0, note:t.note||'' }))
