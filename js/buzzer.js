@@ -30,6 +30,9 @@ let jeopardyBuzzer = {
   presenceRef: null, presence: [], // verbundene Handys (Firebase-Presence)
   hidden: false,      // manuell vom GM ausgeblendet
   poppedForQuestion: false, // true sobald der Erste bei der aktuellen Frage gebuzzert hat
+  /** Angemeldete Listener [Referenz, Callback] - zum gezielten Abmelden.
+   *  @type {Array<[any, Function]>} */
+  subs: [],
 };
 
 function jeopardyBuzzInitFirebase(){
@@ -313,13 +316,35 @@ function attachBuzzerGameListeners(bz, label, render, onFirstBuzz){
     }
     refresh();
   };
-  bz.fbRef.child('armed').on('value', s => { bz.armed = !!s.val(); refresh(); });
-  bz.fbRef.child('excluded').on('value', s => { bz.excluded = Object.keys(s.val() || {}); refresh(); });
-  bz.fbRef.child('armStart').on('value', s => { armStart = s.val() || 0; armStartKnown = true; apply(); });
-  bz.fbRef.child('buzzes').on('value', s => { raw = s.val() || {}; apply(); });
+  buzzerListen(bz, bz.fbRef.child('armed'), s => { bz.armed = !!s.val(); refresh(); });
+  buzzerListen(bz, bz.fbRef.child('excluded'), s => { bz.excluded = Object.keys(s.val() || {}); refresh(); });
+  buzzerListen(bz, bz.fbRef.child('armStart'), s => { armStart = s.val() || 0; armStartKnown = true; apply(); });
+  buzzerListen(bz, bz.fbRef.child('buzzes'), s => { raw = s.val() || {}; apply(); });
 }
 
+/* Listener anmelden und merken - abgemeldet wird gezielt mit genau diesem
+   Callback. Vorher stand beim Trennen ref.off() ohne Argumente: das liess
+   (gemessen mit der echten SDK am Emulator) Listener stehen, die Buzzes
+   doppelt zaehlten, und riss zugleich fremde Listener auf derselben Stelle
+   mit (die Online-Anzeige der Spielerliste auf buzzer/presence).
+   @param {any} bz @param {any} ref @param {(s:any) => void} cb */
+function buzzerListen(bz, ref, cb){
+  ref.on('value', cb);
+  bz.subs.push([ref, cb]);
+}
+/** @param {any} bz */
+function buzzerUnlisten(bz){
+  bz.subs.forEach(([ref, cb]) => { try { ref.off('value', cb); } catch {} });
+  bz.subs = [];
+}
+
+/* Jeopardy und Feud/WWDS/TP lauschen beide auf 'buzzer'. Waren beide
+   verbunden (erst die eine Lobby, dann die andere), wurde jeder Buzz doppelt
+   gezaehlt - Bestenliste, Account-Statistik, Ton (gemessen 2026-10-10 mit der
+   echten SDK am Emulator: 2 statt 1). Es laeuft immer nur ein Spiel, also
+   haengt sich der eine ab, bevor der andere sich anmeldet. */
 function jeopardyBuzzConnect(){
+  if (feudBuzzer.fbRef) feudBuzzDisconnect();
   // 1) Firebase
   if (jeopardyBuzzInitFirebase()){
     jeopardyBuzzer.mode = 'firebase';
@@ -340,7 +365,7 @@ function jeopardyBuzzConnect(){
     attachBuzzerGameListeners(jeopardyBuzzer, 'Jeopardy', renderBuzzer);
     // Presence: welche Handys sind gerade verbunden (inkl. Team-Zuteilung)
     jeopardyBuzzer.presenceRef = firebase.database().ref('buzzer/presence');
-    jeopardyBuzzer.presenceRef.on('value', (snap) => {
+    buzzerListen(jeopardyBuzzer, jeopardyBuzzer.presenceRef, (snap) => {
       const v = snap.val() || {};
       jeopardyBuzzer.presence = Object.entries(v)
         .filter(([id, p]) => p && p.name)
@@ -376,8 +401,7 @@ function jeopardyBuzzConnect(){
 }
 
 function jeopardyBuzzDisconnect(){
-  if (jeopardyBuzzer.fbRef) { try { jeopardyBuzzer.fbRef.off(); } catch {} }
-  if (jeopardyBuzzer.presenceRef) { try { jeopardyBuzzer.presenceRef.off(); } catch {} }
+  buzzerUnlisten(jeopardyBuzzer);   // gezielt, siehe buzzerListen
   if (jeopardyBuzzer.es) { jeopardyBuzzer.es.close(); jeopardyBuzzer.es = null; }
   jeopardyBuzzer.connected = false;
   jeopardyBuzzer.mode = 'none';
@@ -397,9 +421,12 @@ let feudBuzzer = {
   presenceRef: null, presence: [],
   hidden: false,      // manuell vom GM ausgeblendet
   poppedForQuestion: false,
+  /** @type {Array<[any, Function]>} siehe jeopardyBuzzer.subs */
+  subs: [],
 };
 
 function feudBuzzConnect(){
+  if (jeopardyBuzzer.fbRef) jeopardyBuzzDisconnect();   // siehe jeopardyBuzzConnect
   if (feudBuzzer.fbRef) {
     // Schon verbunden (z.B. seit dem Setup-Screen) - nur den Buzzer für die
     // neue Runde sauber zurücksetzen, keine zweiten Firebase-Listener anhängen.
@@ -423,12 +450,12 @@ function feudBuzzConnect(){
   // (feudBuzzPrepare() setzt es dann zurück).
   attachBuzzerGameListeners(feudBuzzer, 'Family Feud', renderFeudBuzzer, (first) => {
     const winnerTeam = first.team;
-    if (winnerTeam !== undefined && winnerTeam !== null && winnerTeam >= 0 && winnerTeam < state.teamNames.length) {
+    if (winnerTeam !== undefined && winnerTeam !== null && winnerTeam >= 0 && winnerTeam < (state.teamNames || []).length) {
       feudAutoSetStartTeam(winnerTeam);
     }
   });
   feudBuzzer.presenceRef = firebase.database().ref('buzzer/presence');
-  feudBuzzer.presenceRef.on('value', (snap) => {
+  buzzerListen(feudBuzzer, feudBuzzer.presenceRef, (snap) => {
     const v = snap.val() || {};
     feudBuzzer.presence = Object.entries(v)
       .filter(([id, p]) => p && p.name)
@@ -481,8 +508,7 @@ function broadcastWwdsSetupTeamNames(){ broadcastSetupTeamNames('wwds'); }
 function broadcastJeopardySetupTeamNames(){ broadcastSetupTeamNames('jeopardy'); }
 
 function feudBuzzDisconnect(){
-  if (feudBuzzer.fbRef) { try { feudBuzzer.fbRef.off(); } catch {} }
-  if (feudBuzzer.presenceRef) { try { feudBuzzer.presenceRef.off(); } catch {} }
+  buzzerUnlisten(feudBuzzer);   // gezielt, siehe buzzerListen
   feudBuzzer.connected = false;
   feudBuzzer.presence = [];
   const el = document.getElementById('feud-buzzer');
