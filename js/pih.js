@@ -237,10 +237,22 @@ function pihRenderTeams(){
 /** Laeuft gerade das Finale? @returns {boolean} */
 function pihIsFinal(){ return pihState.finalAt >= 0 && pihState.idx === pihState.finalAt; }
 /** Darf dieser Mitspieler gerade bieten? @param {any} p @returns {boolean} */
-function pihMayBid(p){ return !pihIsFinal() || pihState.finalists.indexOf(p.uid) >= 0; }
+function pihMayBid(p){
+  if (!pihIsFinal()) return true;
+  // Ohne Vertreter (siehe pihSetFinalists) bieten im Finale alle.
+  if (!pihState.finalists.length) return true;
+  return pihState.finalists.indexOf(p.uid) >= 0;
+}
 /** Vor dem Finale die Vertreter bestimmen. */
 function pihSetFinalists(){
-  pihState.finalists = pihTeamChampions().filter(Boolean).map(p => p.uid);
+  /* Nur wenn BEIDE Teams einen Vertreter haben. Ohne Teamzuordnung (keine
+     Verbindung, Gaeste, niemand zugeteilt) war die Liste bis 2026-10-10 leer:
+     dann durfte niemand bieten, die Handys schickten trotzdem Gebote, die
+     still herausfielen, und "Auswerten" meldete endlos "kein Gebot". Mit nur
+     einem Vertreter waere es ein Finale gegen niemanden. In beiden Faellen
+     bieten jetzt alle - der Superpreis zaehlt trotzdem mehrfach. */
+  const vertreter = pihTeamChampions();
+  pihState.finalists = vertreter.every(Boolean) ? vertreter.map(p => p.uid) : [];
 }
 
 // picked: uids, die hervorgehoben werden (Rundensieger bzw. Gesamtsieger).
@@ -338,7 +350,9 @@ function pihRenderBidGrid(){
   if (pihState.phase === 'bid') {
     const guests = pihGuestBidders();
     // Während der Gebote sieht niemand die Zahlen - nur wie viele schon da sind.
-    const wer = pihIsFinal()
+    const wer = pihIsFinal() && !pihState.finalists.length
+      ? 'Superpreis — alle bieten, er zählt mehrfach'
+      : pihIsFinal()
       ? 'Finale — es bieten nur ' + (pihState.finalists
           .map(u => { const p = pihByUid(u); return p ? escAttr(p.label) : ''; })
           .filter(Boolean).join(' und ') || '—')
@@ -486,7 +500,8 @@ function pihAllBids(){
 }
 
 function pihBidProgress(){
-  return { done: Object.keys(pihAllBids()).length, total: pihState.players.length };
+  // Im Finale nur die, die bieten duerfen - vorher "0 / 8" bei zwei Vertretern.
+  return { done: Object.keys(pihAllBids()).length, total: pihState.players.filter(pihMayBid).length };
 }
 
 /* ── Auflösung ─────────────────────────────────────────────────────────── */
