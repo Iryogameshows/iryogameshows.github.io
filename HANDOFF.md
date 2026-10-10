@@ -12,6 +12,73 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `00ecc8e` DDF, PIH, Turnierstand passen · `shots --reduced` · `0df6c46` CLAUDE.md
+
+**Gemacht (`styles.css`):**
+- Logo-Verkleinerung (`body:has(… .active) .logo`) auch für `#ddf-screen`,
+  `#pih-screen`, `#tournament-board-screen`.
+- `@media (max-height: 900px)` am Dateiende (vor Reduced Motion): DDF
+  Karten 5px/14px, Frage `clamp(1.6rem, 6vh, 3.4rem)` mit 6px Polster,
+  Antwort/Hinweis/Stimmen flacher; PIH Team-Leiste 3px, Wertung, Artikel
+  (Zeilenhöhe 1,2), Preis 2,1rem, Foto in der Bietphase
+  `max(120px, 34vh - 50px)`; Turnierstand-Zeilen 6px Polster.
+- `@media (min-width: 700px)`, jede Höhe: steht die PIH-Gebotsliste
+  (`.pih-bid-grid:has(.pih-bid-row)`), zwei Spalten à max. 420px, Platz 1
+  oben links, zeilenweise gelesen; Foto dann
+  `clamp(80px, 34vh - 160px, 250px)`.
+
+**Gemacht (`tools/shots/shots.js`):** `pih` mit Produktfoto (SVG 4:3),
+neuer Zustand `pih-gebot` (Bietphase); `--reduced` — Kontext mit
+`reducedMotion: 'reduce'`, Befund je laufender Animation mit
+Endlosschleife oder > 50 ms und wenn `matchMedia` nicht anspricht.
+`CLAUDE.md`: Stand und Aufruf `--reduced` (Freigabe David).
+
+**Warum so:** Gemessen (Studio 1280×720): PIH Gebotsliste 369 px
+(8 × 45), DDF Spielerkarten 196 + Frage 169 (54-px-Schrift), Turnierstand
+Logo 161 + 10 Zeilen. Zwei Spalten sparen bei PIH ~180 px, ohne Schrift zu
+verkleinern. Das Produktfoto erst nachträglich in den Aufbau genommen —
+mit Foto war PIH auch bei **1920×1080 schon 233 px zu hoch** (vorher
+unbemerkt, die Messung hatte kein Foto). Deshalb gelten zwei Spalten und
+kleines Foto in der Auflösung bei jeder Höhe, nicht nur unter 900 px; nur
+ab 700 px Breite, weil zwei Spalten auf dem Handy zu eng wären. Das Foto
+schrumpft nur, wenn die Liste steht (`:has(.pih-bid-row)`) — in der
+Bietphase bleibt es groß (bei 720 px ~195 px). Verworfen: Foto immer klein
+(85 px bei 720 — fürs Publikum zu klein). Spieler im Aufbau als
+Handy-Accounts statt Gäste (siehe Eintrag zu `d897a6d`).
+
+**Geprüft:**
+- Voller `node shots.js` bei 1280×720, 1280×800, 1920×1080: je **keine
+  Befunde** (16 Zustände × 19 Fassungen).
+- `--vergleich` 1920×1080 Studio-Blau gegen Basis vor der Änderung: ddf
+  68, pih-gebot 62, turnier 109, feud 48, feud-lang 48, feud-finale 54
+  Elemente → 0 Abweichungen; pih 91 → **20 Abweichungen, gewollt** (zwei
+  Spalten, kleineres Foto).
+- `--reduced` voller Lauf: keine Befunde. Gegenprobe (Kopie ohne
+  Emulation): 12 Befunde, u. a. Buzzer-Ring endlos, Glühbirnen A, POW F —
+  die Prüfung schlägt also an. Vorher von Hand: 210 Zustände, 0 laufende
+  Animationen mit Emulation, 51 verschiedene ohne; TP-Rad 500 statt
+  3200 ms. Intros: 5 Film-Intros 0 laufende Animationen, Titelkarte steht;
+  die 3 Vorlagen blenden bewusst per `kgFade` 3,3–4,6 s über
+  (`styles.css:1796`).
+- Kontaktbögen PIH, DDF, Turnierstand angesehen.
+- `node check.js` fehlerfrei.
+
+**Offen:**
+- **Neu, nicht behoben:** Turnierstand in den hellen Richtungen (C, F, H,
+  L, N, P, Q): Spielplan-Zeilen fast unlesbar — `renderTournamentBoard`
+  (`js/tournament.js:552–560`) setzt Inline-Farben für dunklen Grund
+  (`rgba(255,255,255,.6)`, `#FFD23F`, `rgba(255,255,255,.3)`).
+- DDF und PIH mit Gästen ohne Handy: zusätzliche Eingabezeilen für den
+  Host auf dem Screen, nicht als eigener Zustand gemessen.
+- Echtes Popout am Beamer, echte Handys: ungesehen.
+
+**Fallstricke:** `--basis` nach einer Änderung am Aufbau neu ziehen, sonst
+vergleicht `--vergleich` zwei verschiedene Zustände (hier: PIH ohne und
+mit Foto). Dafür die CSS-Änderung kurz per `git stash push styles.css`
+beiseitelegen.
+
+---
+
 ## 2026-10-10 — `d897a6d` DDF, PIH, TP, Ergebnis, Turnierstand gemessen
 
 **Gemacht:** `tools/shots/shots.js` um fünf Aufbauten erweitert (in
