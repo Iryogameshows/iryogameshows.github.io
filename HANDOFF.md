@@ -12,6 +12,18 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `8fa6bb8` Pop-up-Meldung; Handy-offline geprüft (mittlere Punkte, 7)
+
+**Gemacht:** `openBoardPopout` meldet einen blockierten `window.open`
+einmal je Sitzung (`popoutBlockedWarned`); `openMainscreen` setzt den
+Merker, weil es selbst meldet. **Geprüft:** 1 Meldung bei 2 Versuchen.
+**Korrektur zur Fehlerliste:** „Handy offline zeigt Gebuzzert ✔“ — das
+Handy sperrt den Buzz-Knopf schon über `.info/connected`
+(`buzzer/index.html:778`); offen bleibt nur das Fenster, bis Firebase
+den Abriss erkennt. Nicht geändert.
+
+---
+
 ## 2026-10-10 — `8bba3fd` Feud-Finale: Undo, doppelte Antwort, Finalfragen-Hinweis (mittlere Punkte, 6)
 
 **Gemacht:** `finaleUndoStack`/`finaleSaveUndo`/`finaleUndo` (`js/feud.js`),
