@@ -575,6 +575,9 @@ Die Liste, an der eine Show scheitert:
 - [ ] Bei 400px Fensterbreite kein Querüberlauf, keine Überlappung
 - [ ] Turnier: gestartet, Ergebnis eingetragen, Stand stimmt
 - [ ] Konsole leer (außer Netzwerk)
+- [ ] CSS, Design-Richtung, GM-Panel oder Handy-Seite geändert:
+      `node tools/shots/shots.js` ohne Befunde — oder jeder Befund benannt
+      (siehe unten)
 - [ ] `HANDOFF.md`-Eintrag mit Hash, samt verworfener Wege und Messwerten
 
 Was nicht geprüft wurde, wird als ungeprüft benannt. **In einer Umgebung
@@ -603,6 +606,33 @@ firebase.database = Object.assign(() => noop, { ServerValue: { TIMESTAMP: 0 } })
 Anlass: Design-Tests am 2026-10-09/10 haben die Starts dutzendfach ohne diesen
 Schalter ausgelöst; danach stand `buzzer/joinLocked` live auf `true`
 (zurückgesetzt nach Rückfrage, Vorgang in `HANDOFF.md`).
+
+**Seit `431a43e` reicht Stummschalten nach dem Laden nicht mehr:** die
+Hostseite schreibt schon beim `load` die Design-Richtung nach `design`
+(`designPushToPhones`). Sicher ist nur, das Datenbank-Skript gar nicht erst
+zu laden: Playwright beantwortet `firebase-database-compat.js` per
+`context.route` mit `tools/shots/fbstub.js`. Der Ersatz sammelt jeden
+Schreibversuch in `window.__fbWrites`, `window.__fbSet(pfad, wert)` spielt
+Werte ein (z. B. `design` für den Handy-Buzzer).
+
+**Screenshot-Prüfung `tools/shots/`.** Fotografiert jede Show in allen 18
+Richtungen plus Studio-Blau, dazu GM-Fenster und Handy-Buzzer, und legt je
+Show einen Kontaktbogen nach `tools/shots/out/`. Befunde: JS-Fehler, Richtung
+nicht angekommen, Screen höher als das Fenster (Standard 1280×720 — so groß
+öffnet sich das Beamer-Popout). `--basis`/`--vergleich` belegen, dass das
+Studio-Blau unverändert ist. Den Kontaktbogen **ansehen**, nicht nur die
+Befunde lesen: ein Brett im falschen Material meldet keine Messung. Anlass:
+Richtung E hatte kein Brett, und GM-Fenster, Gamepad und Buzzer waren in
+keiner Richtung gestaltet — jede Arbeitsscheibe war einzeln geprüft, das
+Ganze nie; gefunden hat es David (`431a43e`).
+
+```bash
+cd tools/shots && npm install           # einmal pro Gerät
+node shots.js                           # alles, 1280x720, rund 5 Minuten
+node shots.js --shows jeop,buzzer --themes E,Studio --size 1920x1080
+node shots.js --basis                   # vor der Änderung: Studio-Blau merken
+node shots.js --vergleich               # danach: 0 Abweichungen erwartet
+```
 
 ### 5.1 Drei Regeln für den Test selbst
 

@@ -1,0 +1,11 @@
+{
+  "name": "iryo-shots",
+  "private": true,
+  "description": "Screenshot-Pruefung aller Design-Richtungen (node shots.js). Nur Werkzeug, nicht Teil der Seite.",
+  "scripts": {
+    "shots": "node shots.js"
+  },
+  "dependencies": {
+    "playwright-core": "1.48.2"
+  }
+}

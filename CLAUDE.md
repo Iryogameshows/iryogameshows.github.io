@@ -200,6 +200,7 @@ mainscreen/index.html  Zuschauerfenster (bekommt den DOM gespiegelt, führt selb
 tools/
   intros/       Intro-Labor: 18 Intro-Prototypen, NICHT Teil der Show
   reactbits/    Bauwerkzeug für vendor/reactbits.js
+  shots/        Screenshot-Prüfung aller Design-Richtungen (siehe unten)
 ```
 
 Eine Änderung an einem Spiel geht in die jeweilige `js/`-Datei, nicht in `index.html`.
@@ -367,6 +368,31 @@ die komplette Navigation lahmgelegt.
 Inline-Wert weg und lässt wieder gelten, was in `styles.css` steht. Ein fest
 eingetragenes `display` würde dort jede spätere Änderung aushebeln — und zwar
 still, weil ein Inline-Style jede Regel schlägt.
+
+## Screenshot-Prüfung
+
+```bash
+cd tools/shots && npm install      # einmal pro Gerät (node_modules ist ignoriert)
+node shots.js                      # alle Shows x alle Richtungen, 1280x720
+node shots.js --basis              # vor einer Änderung: Studio-Blau merken
+node shots.js --vergleich          # danach: Studio-Blau unverändert?
+```
+
+**Pflicht nach jeder Änderung an CSS, Design-Richtungen, GM-Panel oder
+Handy-Seiten**, vor dem Commit. Legt je Show einen Kontaktbogen nach
+`tools/shots/out/` (ignoriert) und meldet Befunde: JS-Fehler, Richtung nicht
+angekommen, Screen höher als das Fenster. Endet mit Code 1, wenn es Befunde
+gibt. Den Kontaktbogen ansehen, nicht nur die Befunde lesen.
+
+Firebase ist dabei ersetzt (`fbstub.js` statt `firebase-database-compat.js`),
+kein Lauf erreicht die Live-Datenbank. Browser: vorhandener Chrome oder Edge,
+anderer Pfad per Umgebungsvariable `CHROME`. Eigener kleiner Server, der
+Dev-Server muss nicht laufen. Warum es das gibt und die Einzelheiten:
+BAUPLAN 5.
+
+**Bekannte Befunde (Stand `e2af07d`, 1280×720):** Feud 29–105 px und WWM
+13–178 px zu hoch, auch im Studio-Blau (WWM: die Gewinnleiter läuft unten
+aus dem Bild). Jeopardy passt seit `e2af07d` in allen Richtungen.
 
 ## Deploy
 

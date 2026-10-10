@@ -2,3 +2,5 @@
 .claude/scheduled_tasks.lock
 ResourceExtractor_log.txt
 tools/reactbits/node_modules/
+tools/shots/node_modules/
+tools/shots/out/
