@@ -677,6 +677,9 @@ function pushGamemasterHtmlToFirebase(html) {
 // Ersetzt document.open()/write()/close() an allen GM-Render-Stellen: schreibt
 // wie bisher ins Popup UND spiegelt dieselbe HTML nach Firebase fürs Handy.
 function commitGamemasterHtml(html) {
+  // Design-Richtung einsetzen (js/theme.js) - vor dem Anzeigen UND vor dem
+  // Verschicken, damit das Gamepad dasselbe Bild zeigt wie das GM-Fenster.
+  html = themeGmHtml(html);
   // Statt jedes Mal das ganze iframe-Dokument neu zu schreiben (document.write),
   // wird nur reingepatcht was sich wirklich geändert hat (per morphMirror, siehe
   // Board-Popout weiter oben). Das lässt z.B. das Notizen-Textfeld beim Tippen
@@ -686,6 +689,19 @@ function commitGamemasterHtml(html) {
   morphMirror(gamemasterWin.document.body, doc.body);
   pushGamemasterHtmlToFirebase(html);
 }
+
+// ── Design-Richtung an die Handys ──
+// Buzzer und Gamepad laufen auf fremden Geraeten und kennen den localStorage
+// des Show-Rechners nicht. Die Richtung steht deshalb zusaetzlich unter
+// design in Firebase; beide Seiten lesen sie dort (buzzer/index.html,
+// gamepad/index.html). Eigener Knoten statt buzzer/theme: buzzer wird beim
+// Aufbau mehrerer Spiele teilweise neu gesetzt. Geschrieben wird beim Laden
+// der Hostseite und bei jedem Wechsel (applyTheme).
+function designPushToPhones() {
+  if (!gmRemoteInitFirebase()) return;
+  try { firebase.database().ref('design').set(themeKey()).catch(() => {}); } catch {}
+}
+window.addEventListener('load', designPushToPhones);
 
 let gmRemoteListenerStarted = false;
 function startGmRemoteCommandListener() {

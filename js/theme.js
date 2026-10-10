@@ -588,6 +588,11 @@ function applyTheme(key) {
     try { applyThemeToDoc(boardWin.document, key); } catch {}
   }
   if (typeof renderDesignScreen === 'function' && document.getElementById('design-list')) renderDesignScreen();
+  /* GM-Fenster neu zeichnen (themeGmHtml) und die Handys benachrichtigen. */
+  if (typeof gamemasterWin !== 'undefined' && gamemasterWin && typeof updateGamemaster === 'function') {
+    try { updateGamemaster(); } catch {}
+  }
+  if (typeof designPushToPhones === 'function') designPushToPhones();
   /* Logo oben und auf dem Wartebildschirm des Mainscreens neu setzen - beide
      haengen an der Richtung (DESIGN_LOGOS). Der Spiegel traegt #board-idle
      von selbst hinueber. */
@@ -595,6 +600,81 @@ function applyTheme(key) {
     if (screenActive('menu-screen') || screenActive('design-screen')) renderIryoHubLogo();
     if (typeof BOARD_IDLE_WIDTH !== 'undefined') renderIryoHubLogo('board-idle', BOARD_IDLE_WIDTH, 4);
   }
+}
+
+/* ── Gamemaster-Fenster und Gamepad ───────────────────────────────────────
+
+   Das GM-Fenster ist ein eigenes Dokument ohne styles.css: jedes Template
+   bringt GM_SHARED_CSS (core.js) und eigene Inline-Farben mit, alles im
+   Studio-Blau. Dasselbe HTML geht per Firebase ans Gamepad-Handy. Statt rund
+   150 Stellen in neun Dateien umzuschreiben, laeuft hier jedes GM-HTML einmal
+   durch, bevor es angezeigt und verschickt wird (commitGamemasterHtml):
+
+   1. die Studio-Literale werden zu Variablen (Weiss -> --fg-rgb, Gold ->
+      --gold-rgb/--accent-text, Grund -> --bg, Inter/Bebas -> Richtungsschrift),
+   2. vor </head> kommen die Variablen der Richtung und ein paar Regeln fuer
+      das, was sich nicht per Ersetzen sagen laesst (Kopfleiste, Knoepfe,
+      Gruen/Rot auf hellem Grund).
+
+   Ohne Richtung bleibt das HTML unveraendert - Byte fuer Byte. Rot, Gruen
+   und Blau als Aussage (falsch, richtig, Team) bleiben stehen (BAUPLAN 4.4).
+   Die Variablen stehen in einem <style> im <head> und nicht als Attribut am
+   <html>: der Abgleich im GM-Fenster und am Gamepad (morphMirror) patcht nur
+   <head> und <body>, ein Wechsel am <html> kaeme nie an. */
+
+/** Studio-Werte fuer Variablen, die nicht jede Richtung setzt. */
+const THEME_GM_DEFAULTS = {
+  '--accent-text': 'rgb(var(--gold-rgb))',
+  '--accent-text-rgb': 'var(--gold-rgb)',
+  '--on-accent': '#1a1200',
+  '--bg-img': 'none',
+  '--bg-size': 'auto',
+};
+
+/** @param {string} html  fertiges GM-Dokument
+ *  @returns {string} */
+function themeGmHtml(html) {
+  const t = themeByKey(themeKey());
+  if (!t) return html;
+  let h = html
+    .replace(/rgba\(255,\s*255,\s*255,/g, 'rgba(var(--fg-rgb),')
+    .replace(/rgba\(255,\s*210,\s*63,/g, 'rgba(var(--gold-rgb),')
+    .replace(/color:\s*#FFD23F/gi, 'color:var(--accent-text)')
+    .replace(/#FFD23F/gi, 'rgb(var(--gold-rgb))')
+    .replace(/#F0B800/gi, 'var(--gold-deep)')
+    .replace(/#eef0fb/gi, 'var(--fg)')
+    .replace(/color:\s*#fff(?![0-9a-f])/gi, 'color:var(--fg)')
+    .replace(/#0b0e2c/gi, 'var(--bg)')
+    .replace(/font-family:\s*'Inter',\s*sans-serif/g, 'font-family:var(--font-body)')
+    .replace(/font-family:\s*'Bebas Neue',\s*sans-serif/g, 'font-family:var(--font-display)');
+  if (t.hell) {
+    /* Hellgruen, Hellrot und die Pastell-Tags sind fuer dunklen Grund
+       gewaehlt - auf Creme lagen sie unter Kontrast 2. */
+    h = h
+      .replace(/color:\s*#(4ADE80|86EFAC|22C55E)/gi, 'color:#15803D')
+      .replace(/color:\s*#FF8A80/gi, 'color:#B42318')
+      .replace(/color:\s*#93C5FD/gi, 'color:#1D4ED8')
+      .replace(/color:\s*#C4B5FD/gi, 'color:#6D28D9');
+  }
+  const vars = Object.entries({ ...THEME_GM_DEFAULTS, ...t.vars }).map(([n, v]) => `${n}:${v};`).join('');
+  const css = `
+:root{${vars}color-scheme:${t.hell ? 'light' : 'dark'};}
+body{background:var(--bg);background-image:var(--bg-img);background-size:var(--bg-size);color:var(--fg);font-family:var(--font-body);}
+.gm-header,.gm-actions{background:var(--panel);border-color:var(--line);}
+.gm-title{color:var(--accent-text);}
+.panel,.score-card,.score-row{background:var(--panel);border-color:var(--line);}
+.score-row{border-left-color:var(--team);}
+.answer.hidden{background:rgba(var(--fg-rgb),.06);border-color:rgba(var(--fg-rgb),.18);}
+.info-card{background:rgba(var(--accent-text-rgb),.08);border-color:rgba(var(--accent-text-rgb),.3);color:var(--fg);}
+.gm-btn.gold,.gm-btn.gm-gold{background:linear-gradient(180deg,rgb(var(--gold-rgb)),var(--gold-deep));color:var(--on-accent);}
+.gm-btn.red,.gm-btn.gm-red,.gm-btn.blue,.gm-btn.gm-blue,.gm-btn.orange,.gm-btn.gm-orange,.gm-btn.purple{color:#fff;}
+.notes-panel textarea{background:rgba(var(--fg-rgb),.05);color:var(--fg);}
+${t.hell ? `.gm-btn{box-shadow:0 2px 0 rgba(var(--fg-rgb),.25);}
+.chip-ok,.badge,.hint-ok,.answer.shown .text,.round-label.green{color:#15803D;}
+.chip-bad,.excl-tag,.round-label.warn,.sr-btn.minus,.gm-btn.danger-outline{color:#B42318;}
+.tag-blue{color:#1D4ED8;}.tag-green{color:#15803D;}.tag-purple{color:#6D28D9;}` : ''}`;
+  const fonts = `<link id="gm-theme-fonts" href="${t.fonts}" rel="stylesheet">`;
+  return h.replace('</head>', `${fonts}<style id="gm-theme">${css}</style></head>`);
 }
 
 /* Sofort beim Laden - der Grund, warum diese Datei im <head> steht. */
@@ -663,4 +743,6 @@ function designPreviewScale() {
   if (!pv || !pv.offsetWidth) return;
   list.style.setProperty('--pv-scale', String(pv.offsetWidth / 1280));
 }
-window.addEventListener('resize', () => { if (screenActive('design-screen')) designPreviewScale(); });
+/* screenActive kommt aus core.js - auf Buzzer und Gamepad, die diese Datei
+   fuer die Variablen mitladen, gibt es das nicht. */
+window.addEventListener('resize', () => { if (typeof screenActive === 'function' && screenActive('design-screen')) designPreviewScale(); });
