@@ -12,6 +12,20 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `977e3a3` Feud: Gleichstand um Platz 2, Host wählt (mittlere Punkte, 8)
+
+**Gemacht:** `endGame` (3 Teams) → bei `sorted[1].score === sorted[2].score`
+`feudTieChoice` + `feudShowTieChoice` (Overlay `.feud-tie-overlay`, bewusst
+nicht in `GM_OVERLAY_SELECTOR`), GM `updateGamemasterFeudTie`, Wahl
+`feudPickFinalist` (freigegeben). Entscheidung David: „Host wählt“.
+**Geprüft (Browser, gestubbt):** Ablauf 100/50/50 bis zum Ausscheiden.
+Voller `tools/shots` 1280×720 nach allen heutigen JS-Änderungen ohne
+Befunde (1 Lade-Timeout, wiederholt sauber).
+**Offen:** Turnier-Wertung DDF/PIH — Rückfrage an David („nur Team oder
+nur Einzelspieler“, siehe Chat). Spielstand-Sicherung: Plan folgt.
+
+---
+
 ## 2026-10-10 — `8fa6bb8` Pop-up-Meldung; Handy-offline geprüft (mittlere Punkte, 7)
 
 **Gemacht:** `openBoardPopout` meldet einen blockierten `window.open`
