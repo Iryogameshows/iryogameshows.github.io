@@ -12,6 +12,46 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `0931323` Projekt-Skills, Design-Erinnerung, Plugins, gh
+
+**Anlass:** David: „installier alles aus der Liste“ (Vorschlagstabelle:
+Projekt-Skills, Design-, firebase-, code-review-Plugin, `gh`, Hook).
+
+**Gemacht:**
+- `.claude/skills/design-pruefung`, `neue-show`, `abschluss` (SKILL.md).
+- `.claude/hooks/design-reminder.js` + Eintrag in `.claude/settings.json`
+  (PreToolUse/Bash neben `commit-gate.js`).
+- Plugins über die gebündelte `claude.exe` 2.1.293,
+  `plugin install <name> --marketplace <repo> --scope project`:
+  `code-review@claude-plugins-official`, `firebase@claude-plugins-official`,
+  `design@knowledge-work-plugins` — alle drei `outcome: ok`, stehen unter
+  `enabledPlugins`.
+- `gh`: `winget install --id GitHub.cli` gestartet (v2.102.0, Hash geprüft),
+  hing bei „Starting package install…“ — vermutlich wartet die
+  UAC-Abfrage auf dem Bildschirm.
+- CLAUDE.md: Abschnitt „Projekt-Skills, Plugins, Hooks“.
+
+**Warum so:** Scope project, damit Plugins wie caveman per Git auf alle
+Geräte kommen. Der Hook erinnert statt zu sperren (voller Lauf ~5 min).
+
+**Geprüft:** Hook in einem Wegwerf-Repo: gestagte `styles.css` + alter Bogen
+→ JSON-Erinnerung; frischer Bogen → still; `git log --grep=commit` → still.
+Exit immer 0. Ob Claude Code die `additionalContext` aus PreToolUse
+anzeigt, ist **ungeprüft** (erst ab der nächsten Session aktiv).
+`node check.js` fehlerfrei.
+
+**Offen:**
+- Die Marketplaces `claude-plugins-official` und `knowledge-work-plugins`
+  in `extraKnownMarketplaces` eintragen — die Änderung an
+  `.claude/settings.json` hat die Rechteprüfung abgelehnt. Auf anderen
+  Geräten fehlen sie deshalb, Befehl steht in der CLAUDE.md.
+- `gh`: Installation abschließen (UAC), dann `gh auth login` durch David.
+- Firebase-MCP: `npx firebase-tools login` durch David.
+- Plugins und Skills erscheinen erst in einer neuen Session.
+
+**Fallstricke:** Das Design-Plugin bringt neun weitere Konnektoren mit
+(Slack, Figma, Notion, …), alle unangemeldet — nicht nötig, stört nicht.
+
 ## 2026-10-10 — `73803b1` Feud und WWM passen in 1280×720
 
 **Gemacht:** Gleiche Methode wie Jeopardy (`e2af07d`), `clamp()` mit `vh`,
