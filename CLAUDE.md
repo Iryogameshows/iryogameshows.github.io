@@ -504,6 +504,19 @@ sonst weg, weil die Zeile wie ein Nebensatz wirkt und nicht wie eine Nachricht.
 Überschriften, Code-Blöcke, Tabellen sowie Aufzählungs- und Listenpunkte.
 Dort trägt ihn der Absatz davor oder danach.
 
+### Abschluss jeder Ergebnis-Nachricht
+
+Jede Nachricht, die einen Arbeitsschritt abschließt (Ergebnis, Befunde,
+Commits), endet mit zwei Listen, in dieser Reihenfolge:
+
+- **Offen:** was noch nicht behoben oder nicht geprüft ist, ein Punkt je Zeile.
+- **Nächste Schritte:** was als Nächstes ansteht, nummeriert in der
+  vorgeschlagenen Reihenfolge.
+
+Ist eine Liste leer, steht dort „keine“, statt sie wegzulassen. Davids
+Anweisung vom 2026-10-10: Offenes stand bisher verstreut im Fließtext und
+musste herausgesucht werden.
+
 ## Ton
 
 Deutsch. Keine Füllwörter, keine gespiegelten Umgangswörter ("yalla", "habibi", "bro").
