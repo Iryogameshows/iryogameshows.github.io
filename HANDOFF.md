@@ -12,6 +12,86 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `431a43e` 70er-Brett, GM-Fenster, Gamepad und Handy-Buzzer in der Richtung
+
+**Anlass:** David meldete per Screenshot Studio-Blau-Felder auf braunem Grund
+„in sämtlichen Designs“, in Feud wie in Jeopardy, und dass Hostfenster,
+Gamepad und Handy-Buzzer die Designs nirgends zeigen.
+
+**Befund (frischer Chrome headless, 1280×800, alle 18 Richtungen + Studio):**
+17 von 18 Richtungen zeigten ihr Brett. Nur **E (70er)** hatte gar keinen
+Material-Block — die Scheibe `b5eea83` hieß „F-J“, E fiel zwischen „A-D“ und
+„F-J“ durch. Der Screenshot war E (Shrikhand-Ziffern). Dass David es in
+*allen* sah, ließ sich nicht nachstellen; Live-`index.html` hängt `?v=4ed627d5`
+an `styles.css` (Cache-Buster greift). Ungeklärt, ob er nur E angesehen hat.
+GM-Fenster, Gamepad und Buzzer waren tatsächlich in keiner Richtung gestaltet:
+das GM-HTML bringt `GM_SHARED_CSS` mit festen Studio-Farben mit, Buzzer und
+Gamepad sind eigene Seiten ohne Kenntnis der Richtung.
+
+**Gemacht:**
+- `styles.css`: Block E nach `designs/s/E-Leinwand/-Jeopardy/-WWM.html` —
+  Senf/Orange-Balken im Wechsel, dreifacher Streifenrand (innen, sonst lag er
+  über „Board 1/2“), Jeopardy als Spaltenfarben des Sonnenfächers, WWM-Pillen
+  mit Senfrand, Richtig in Avocado, Aufdecken `thERollo`.
+- `js/theme.js` `themeGmHtml(html)`: jedes GM-HTML läuft vor Anzeige und
+  Versand durch. Ersetzt `rgba(255,255,255,` → `--fg-rgb`, Gold →
+  `--gold-rgb`/`--accent-text`, `#0b0e2c` → `--bg`, Inter/Bebas → Richtungsschrift,
+  bei hellen Richtungen Hellgrün/-rot/Pastell → dunkle Fassung; dazu vor
+  `</head>` Variablen + Regeln (Kopf-/Aktionsleiste, Panels, Knöpfe).
+  Ohne Richtung kommt der String unverändert zurück.
+- `js/buzzer.js`: `commitGamemasterHtml` ruft `themeGmHtml` — das Gamepad
+  bekommt dasselbe HTML per Firebase, also dasselbe Bild.
+  `designPushToPhones()` schreibt `themeKey()` nach **Firebase `design`**
+  (neuer Knoten), beim Laden der Hostseite und bei jedem `applyTheme`.
+- `buzzer/index.html`: lädt `../js/theme.js`, hört auf `design`
+  (nur bekannte Schlüssel via `themeByKey`), merkt sie im localStorage.
+  Farben als Variablen mit Studio-Rückfall, Statusfarben (`--st-*`) statt
+  Literalen im JS. Je Richtung Form/Rand/Schrift des Buzzers nach
+  `designs/s/<K>-Handy.html`. Die **Füllung bleibt Teamfarbe** (BAUPLAN 4.4).
+- `gamepad/index.html`: Statusseite vor dem Panel in der Richtung.
+- `theme.js` Resize-Handler prüft `typeof screenActive` (gibt es auf den
+  Handyseiten nicht).
+
+**Warum so:**
+- GM: eine Umwandlung an der einzigen Engstelle statt ~150 Stellen in neun
+  Dateien. Variablen als `<style>` im `<head>`, nicht als Attribut an
+  `<html>`: `morphMirror` patcht im GM-Fenster und am Gamepad nur `<head>`
+  und `<body>`, ein Wechsel am `<html>` käme nie an.
+- Eigener Knoten `design` statt `buzzer/theme`: `buzzer` wird beim Spielaufbau
+  teilweise neu gesetzt. Regeln sind `.read/.write: true`, kein Regelwechsel nötig.
+- Buzzer-Füllung in Teamfarbe statt Akzentfarbe der Entwürfe: am Tisch sieht
+  man daran, für wen man drückt. Verworfen: die Handy-Entwürfe 1:1 (eigene
+  Layouts je Richtung mit Punkteständen) — der Buzzer kennt die Stände nicht.
+
+**Geprüft (Chrome headless über playwright-core, Firebase-DB per Route durch
+einen Stub ersetzt — keine Schreibvorgänge an die Live-DB, alle in `__fbWrites`):**
+- Bretter Feud + Jeopardy, 19 Fassungen je Show: E jetzt im Material, übrige unverändert.
+- GM-Fenster in 19 Fassungen fotografiert: Studio wie vorher, helle lesbar.
+- `design`-Schreiben: beim Laden der gespeicherte Schlüssel, nach
+  `applyTheme(t)` jeweils `['set','design',t]` — 19 von 19.
+- Buzzer 390×844, 19 Fassungen: Login- und Buzz-Screen; `data-theme` und
+  Schrift kommen per `design` an (19/19).
+- Studio-Blau auf den Handyseiten: computed styles alt (HEAD) gegen neu,
+  Buzzer 751 Elemente über alle Screens 0 Abweichungen, Gamepad 6/0.
+- `node check.js` und `node check.js --types` (14 Dateien, keine Meldung).
+
+**Offen / ungeprüft:**
+- Auf echten Handys nicht getestet, nur im Headless-Browser mit Stub.
+- Gamepad-Panel in der Richtung nur indirekt geprüft (gleiches HTML wie das
+  GM-Fenster), das Gamepad selbst nicht mit echtem Firebase.
+- Wer die Hostseite auf einem zweiten Gerät öffnet, schreibt dessen Richtung
+  nach `design` — der zuletzt geöffnete Host gewinnt.
+- Jeopardy-Brett bei 1280×720: schon im Studio-Blau 37 px zu hoch (Board-Unterkante
+  757), die Richtungen bis 847 (J). Bei 1920×1080 passen alle. Nicht angefasst.
+- Weitere Screens der Shows (DDF, PIH, TP, Finale) in E nur über Tokens, nicht fotografiert.
+
+**Fallstricke:**
+- Headless-Tests: Firebase am sichersten stummschalten, indem
+  `firebase-database-compat.js` per `context.route` durch einen Stub ersetzt
+  wird — dann schreibt schon das Laden nichts (das neue `designPushToPhones`
+  schreibt beim `load`!). Skripte: Scratchpad `opera/tool/lib.js`, `fbstub.js`.
+- Arbeitskopie ist CRLF (autocrlf), Einfügungen mit `\n` erzeugen gemischte Enden.
+
 ## 2026-10-10 — Echtes Popout in Opera geprüft · Tests haben in Live-Firebase geschrieben (kein Code-Commit)
 
 **Gemacht.**
