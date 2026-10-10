@@ -35,7 +35,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'gm', 'buzzer', 'buzzer-login'];
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'tp', 'ergebnis', 'turnier', 'gm', 'buzzer', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -130,6 +130,52 @@ const AUFBAU = {
     showEl('finale-timer', false); // wie startFinale(), das hier uebersprungen wird
     setText('finale-team-label', 'Auflösung');
     loadRevealQuestion();
+  },
+  // DDF, PIH, TP, Ergebnis, Turnier: bis c9fbea7 nie gemessen. Je der hoechste
+  // uebliche Zustand - acht Spieler mit Handy-Account (Gaeste ohne Handy
+  // bekommen zusaetzlich Eingabezeilen fuer den Host, das ist ein eigener
+  // Fall), DDF in der Abstimmung, PIH mit allen Geboten aufgeloest, TP mit
+  // gezogener Frage und Loesung, Turnierstand mit vier Teams und sechs Spielen.
+  ddf: () => {
+    allPlayers = ['Anna', 'Bert', 'Carla', 'Dieter', 'Eva', 'Frank', 'Gina', 'Hugo'].map((name, i) => ({ key: 'p' + i, name, avatar: '🦊', color: '#E8453C' }));
+    Object.assign(roster('ddf'), { selected: new Set(allPlayers.map(p => p.key)), guests: [], seeded: true });
+    const mr = Math.random; Math.random = () => 0; startDdf(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    showScreen('ddf-screen'); ddfReveal(); ddfBeginVote();
+  },
+  pih: () => {
+    allPlayers = ['Anna', 'Bert', 'Carla', 'Dieter', 'Eva', 'Frank', 'Gina', 'Hugo'].map((name, i) => ({ key: 'p' + i, name, avatar: '🦊', color: '#E8453C' }));
+    Object.assign(roster('pih'), { selected: new Set(allPlayers.map(p => p.key)), guests: [], seeded: true });
+    const mr = Math.random; Math.random = () => 0; startPih(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    showScreen('pih-screen'); pihRenderRound(); pihBeginBids();
+    pihState.players.forEach((p, i) => { pihState.bids[p.uid] = { name: p.name, value: String(10 + i * 7), num: 10 + i * 7, ts: i }; });
+    pihEvaluate();
+  },
+  tp: () => {
+    const mr = Math.random; Math.random = () => 0; startTp(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    showScreen('tp-screen'); tpBuildWheel(); tpRender();
+    const mr2 = Math.random; Math.random = () => 0; tpDrawQuestion(0); Math.random = mr2;
+    tpShowAnswer();
+  },
+  ergebnis: () => {
+    const mr = Math.random; Math.random = () => 0; startGameActual(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    state.scores = state.scores.map((_, i) => 180 - i * 45);
+    showResults();
+    document.querySelectorAll('.confetti-p').forEach(e => e.remove());
+  },
+  turnier: () => {
+    const spiele = Object.keys(TOURNAMENT_GAMES);
+    tournament = tournamentClean({
+      name: 'Spieleabend', teams: ['Team Rot', 'Team Blau', 'Team Grün', 'Team Gelb'],
+      games: spiele.concat(spiele).slice(0, 6).map((game, i) => ({
+        game, weight: 1 + (i % 2), date: '2026-10-10', secret: false,
+        done: i < 4, scores: i < 4 ? [300 - i * 20, 250, 180 + i * 30, 120] : null,
+      })),
+    });
+    tournamentShowBoard();
   },
   'wwm-joker': () => {
     startWwmActual();
