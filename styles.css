@@ -306,9 +306,11 @@ body {
   display: grid; grid-auto-flow: column;
   grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 5px;
 }
+/* Feldhoehe waechst mit dem Fenster bis 50 px (ab ~830 px Hoehe wie
+   frueher) - im 1280x720-Popout ragte das Brett sonst unten heraus. */
 .tile {
   display: flex; align-items: stretch;
-  min-height: 50px; cursor: pointer;
+  min-height: clamp(38px, 7vh - 8px, 50px); cursor: pointer;
   border-radius: var(--tile-radius, 8px); overflow: hidden; transition: transform .15s;
 }
 .tile:hover:not(.open) { transform: scale(1.015); }
@@ -1185,8 +1187,8 @@ body {
    (also auch bei 1920x1080) bleibt alles wie vorher. */
 .jeopardy-cell { min-height: clamp(40px, 9vh - 10px, 70px); padding-block: clamp(3px, 2.5vh - 12px, 10px); }
 .jeopardy-cat { min-height: clamp(38px, 8vh - 11px, 60px); padding-block: clamp(4px, 2.5vh - 10px, 12px); }
-body:has(#jeopardy-screen.active) .logo { margin-top: clamp(8px, 6vh - 24px, 30px); }
-body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px); }
+body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen).active) .logo { margin-top: clamp(8px, 6vh - 24px, 30px); }
+body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen).active) .logo svg { max-height: max(72px, 22vh - 48px); }
 .jeopardy-clue-overlay {
   position: fixed; inset: 0; z-index: 1000;
   background: var(--bg);
@@ -2531,7 +2533,7 @@ body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px)
 .wwm-main{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0;}
 .wwm-q{
   background:var(--brd-tex, none),var(--brd-surface, linear-gradient(180deg,#0F1B5C 0%,#091042 100%));
-  border-radius:var(--brd-radius, 16px);padding:22px 24px;text-align:center;
+  border-radius:var(--brd-radius, 16px);padding:clamp(12px, 3.6vh - 8px, 22px) 24px;text-align:center;
   font-size:1.25rem;font-weight:700;line-height:1.5;color:var(--brd-fg, var(--fg));min-height:70px;
   display:flex;align-items:center;justify-content:center;
   box-shadow:var(--brd-frame, 0 0 0 3px var(--gold-dark),0 0 0 5px #0a0e30,0 10px 32px rgba(0,0,0,.5));
@@ -2562,11 +2564,13 @@ body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px)
 }
 .wwm-ll.used{opacity:.3;text-decoration:line-through;border-color:rgba(var(--fg-rgb),.15);color:rgba(var(--fg-rgb),.3);}
 .wwm-ladder{
-  width:210px;flex-shrink:0;display:flex;flex-direction:column-reverse;gap:3px;
-  background:rgba(0,0,0,.25);border-radius:12px;padding:10px;
+  width:210px;flex-shrink:0;display:flex;flex-direction:column-reverse;gap:clamp(1px, .6vh - 2px, 3px);
+  background:rgba(0,0,0,.25);border-radius:12px;padding:clamp(6px, 1.2vh, 10px);
 }
 .wwm-rung{
-  display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-radius:6px;
+  /* 15 Stufen: bei 1280x720 lief die Leiter unten aus dem Bild. Der
+     Innenabstand schrumpft mit dem Fenster, ab ~920 px Hoehe wie frueher. */
+  display:flex;justify-content:space-between;align-items:center;padding:clamp(1px, 1.2vh - 5px, 6px) 12px;border-radius:6px;
   font-family:var(--font-display);font-size:1.05rem;letter-spacing:1px;color:rgba(var(--fg-rgb),.55);
 }
 .wwm-rung .wwm-lvl{color:rgba(var(--fg-rgb),.3);font-size:.85rem;min-width:22px;}
@@ -3773,6 +3777,14 @@ body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px)
 :root[data-theme="B"] .jeopardy-cell.used { box-shadow: inset 0 0 0 3px #2B2740; }
 :root[data-theme="B"] .wwm-q { font-family: 'Press Start 2P', monospace; font-size: .85rem; line-height: 1.7; border: 4px solid #fff; }
 :root[data-theme="B"] .wwm-opt { font-size: .72rem; line-height: 1.5; }
+/* Press Start ist breit: in 1.05rem brach "1.000.000 €" in der 210 px breiten
+   Leiter um, jede Stufe wurde zweizeilig und die Leiter lief unten heraus. */
+:root[data-theme="B"] .wwm-rung { font-size: .62rem; letter-spacing: 0; }
+/* Feste Zeilenhoehe in allen Richtungen: Bowlby, Bodoni, Permanent Marker
+   haben eine viel groessere natuerliche Zeilenhoehe als Bebas (1,31) - die
+   15 Stufen wurden dadurch bis zu 80 px hoeher. Studio-Blau bleibt bei normal. */
+:root[data-theme] .wwm-rung { line-height: 1.3; }
+:root[data-theme="B"] .wwm-rung .wwm-lvl { font-size: .55rem; }
 /* Arcade-Treffer: das Feld blinkt hart auf, wie eine Punkteanzeige. */
 @keyframes thBBlink {
   0%   { opacity: 0; }
@@ -3881,7 +3893,7 @@ body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px)
   --tile-reveal: thDWisch .55s cubic-bezier(.7,0,.2,1);
 }
 :root[data-theme="D"] .board { padding: 8px 0; }
-:root[data-theme="D"] .tile { min-height: 56px; }
+:root[data-theme="D"] .tile { min-height: clamp(38px, 7vh - 8px, 56px); }
 :root[data-theme="D"] .tile-num { width: 56px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 2.4rem; }
 :root[data-theme="D"] .tile.open .tile-answer { font-weight: 800; font-size: 1.6rem; letter-spacing: .5px; }
 :root[data-theme="D"] .tile.open .tile-pts { color: #F2F2F2; text-shadow: none; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.6rem; }
@@ -3940,7 +3952,7 @@ body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px)
 }
 :root[data-theme="E"] .board { padding: 30px; }
 :root[data-theme="E"] .q-text { color: #F2B33D; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.6rem; line-height: 1.15; }
-:root[data-theme="E"] .tile { min-height: 54px; }
+:root[data-theme="E"] .tile { min-height: clamp(38px, 7vh - 8px, 54px); }
 :root[data-theme="E"] .tile-num { font-family: 'Shrikhand', serif; font-size: 1.35rem; }
 :root[data-theme="E"] .tile:not(.open) .tile-num { color: #8C5A3A; }
 :root[data-theme="E"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 1.35rem; }
@@ -4088,7 +4100,7 @@ body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px)
 :root[data-theme="H"] .answers.split { row-gap: 3px; column-gap: 3px; }
 :root[data-theme="H"] .q-text { margin-bottom: 3px; border-radius: 0; background: #FFFFFF; color: #141414; justify-content: flex-start; text-align: left; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.5rem; line-height: 1.15; padding: 16px 18px; }
 :root[data-theme="H"] .q-text.hidden-q { border: 0; justify-content: center; }
-:root[data-theme="H"] .tile { min-height: 62px; overflow: visible; }
+:root[data-theme="H"] .tile { min-height: clamp(38px, 7vh - 8px, 62px); overflow: visible; }
 :root[data-theme="H"] .tile-inner { overflow: visible; }
 :root[data-theme="H"] .tile-num { width: 56px; align-items: flex-end; justify-content: flex-start; padding: 0 0 4px 10px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 2.4rem; line-height: .9; }
 :root[data-theme="H"] .tile.open .tile-num { font-size: .8rem; align-items: flex-start; padding: 6px 0 0 10px; }
@@ -4159,7 +4171,7 @@ body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px)
 :root[data-theme="I"] .answers { gap: 10px; }
 :root[data-theme="I"] .answers.split { row-gap: 10px; column-gap: 16px; }
 :root[data-theme="I"] .q-text { color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.7rem; }
-:root[data-theme="I"] .tile { min-height: 56px; }
+:root[data-theme="I"] .tile { min-height: clamp(38px, 7vh - 8px, 56px); }
 :root[data-theme="I"] .tile-num { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.5rem; }
 :root[data-theme="I"] .tile:not(.open) .tile-num { opacity: .0; }
 :root[data-theme="I"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 1.45rem; }
@@ -4744,7 +4756,7 @@ body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px)
 :root[data-theme="R"] .board { padding: 20px 20px 34px; }
 :root[data-theme="R"] .q-text { color: #F4F1EA; justify-content: flex-start; text-align: left; font-family: 'Antonio', sans-serif; font-weight: 700; font-size: 2rem; line-height: 1.05; text-transform: uppercase; }
 :root[data-theme="R"] .q-text.hidden-q { justify-content: center; }
-:root[data-theme="R"] .tile { min-height: 56px; }
+:root[data-theme="R"] .tile { min-height: clamp(38px, 7vh - 8px, 56px); }
 :root[data-theme="R"] .tile-num { font-family: 'Antonio', sans-serif; font-weight: 700; font-size: 1.1rem; }
 /* Die Huellen reihum in den Farben der Kiste. */
 :root[data-theme="R"] .answers .tile:nth-child(3n+2).open .tile-inner { background: #E8542A; }

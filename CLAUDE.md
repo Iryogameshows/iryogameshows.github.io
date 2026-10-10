@@ -390,9 +390,9 @@ anderer Pfad per Umgebungsvariable `CHROME`. Eigener kleiner Server, der
 Dev-Server muss nicht laufen. Warum es das gibt und die Einzelheiten:
 BAUPLAN 5.
 
-**Bekannte Befunde (Stand `e2af07d`, 1280×720):** Feud 29–105 px und WWM
-13–178 px zu hoch, auch im Studio-Blau (WWM: die Gewinnleiter läuft unten
-aus dem Bild). Jeopardy passt seit `e2af07d` in allen Richtungen.
+**Stand 2026-10-10:** voller Lauf bei 1280×720 ohne Befunde — Jeopardy,
+Feud und WWM passen in allen Richtungen ins Fenster. Neue Befunde gehören
+also zur Änderung, die gerade gemacht wurde.
 
 ## Deploy
 
