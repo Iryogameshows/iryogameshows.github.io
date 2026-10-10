@@ -116,8 +116,15 @@ function jeopardyKeyHandler(e){
   const tag = (e.target && e.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
   const k = e.key === ' ' ? ' ' : (e.key || '').toLowerCase();
-  if (k === ' ') { e.preventDefault(); jeopardyBuzzArm(); return; }
   if (jeopardyBuzzer.connected) return; // Handys übernehmen das Buzzern
+  /* Leertaste = Buzzer scharf, nur im Tastatur-Ersatzbetrieb und nur bei
+     offener, aufgedeckter Frage. Bis 2026-10-10 stand sie vor der Pruefung
+     auf die Verbindung: mit Handys machte ein versehentlicher Druck (oder
+     ein Leertaste-"Klick" auf einen Knopf) den Buzzer ohne Frage scharf. */
+  if (k === ' ') {
+    if (!jeopardyState.currentClue || !jeopardyState.questionRevealed) return;
+    e.preventDefault(); jeopardyBuzzArm(); return;
+  }
   const team = jeopardyBuzzer.keys.indexOf(k);
   if (team < 0 || team >= jeopardyState.teamCount) return;
   if (!jeopardyBuzzer.armed) return;
