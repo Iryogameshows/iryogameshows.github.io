@@ -12,6 +12,21 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `488cd54` WWDS-Undo/Import, GM-Timer (mittlere Punkte, 5)
+
+**Gemacht:** WWDS `save()` in `wwdsAdjustBet`, `wwdsStartMaster`,
+`wwdsMasterSet`, `wwdsRevealMaster`, `wwdsAfterMaster`,
+`wwdsShowTieGuesses`; Import über `wwdsDrei`/`wwdsRichtig`;
+`wwdsStartTimer` aktualisiert das GM nur bei Start/Ablauf. GM-Timertext
+(WWDS/DDF/PIH) „⏱ Zeit läuft“/„Zeit abgelaufen“; `startRoundClock`
+(`js/core.js`) ruft `updateGamemaster` bei Start und Ablauf.
+**Geprüft (Browser, gestubbt):** GM-Updates 4 → 1 in 3,2 s; Master-Undo;
+Import. `check.js`, `--types` ok.
+**Offen:** Die eine verbleibende GM-Aktualisierung während des Timers ist
+nicht zugeordnet (vermutlich Poller/Overlay) — unkritisch.
+
+---
+
 ## 2026-10-10 — `d43b604` Jeopardy: Boardwechsel per Knopf, Daily Double (mittlere Punkte, 4)
 
 **Gemacht:** `jeopardyFinishClue` wechselt nicht mehr selbst; GM-Boardansicht
