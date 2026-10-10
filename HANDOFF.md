@@ -12,6 +12,30 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — Entscheidung: keine weitere Absicherung (nur HANDOFF)
+
+**Aktueller Stand:** Nach den Datenbankregeln (`641a008`, Eintrag unten)
+stand als Nächstes an, `gmremote/html` abzusichern: das GM-Handy rendert
+dort beliebiges HTML, das jeder schreiben kann. Angefangen wurde nichts,
+nur gelesen (`js/buzzer.js:672` schreibt, `:712` nimmt Befehle an).
+
+**Stopppunkt / Entscheidung David:** Wird nicht gebraucht. Die Shows
+laufen privat im Freundeskreis; zum jetzigen Stand keine weitere
+Absicherung — weder `gmremote/html` noch Anonymous Auth, PIN-Hashes oder
+Host-Passwort im JS. Die Regeln aus `641a008` bleiben live.
+
+**Kreative Ansätze (angedacht, nicht verfolgt):** GM-Fernsteuerung nur
+Daten statt HTML übertragen; Anonymous Auth mit Host-UID in den Regeln.
+
+**Nächste Schritte:** Beim nächsten Spiel einmal mit Handy durchspielen
+(Login, buzzen, Schätzung, DDF, Glücksrad, Gamepad, Voting, Turnier) und
+auf `PERMISSION_DENIED` in der Konsole achten — das ist weiter ungeprüft.
+Wer einen neuen Firebase-Pfad einführt, muss ihn in `database.rules.json`
+eintragen und `npx firebase-tools deploy --only database --project keller-buzzer`
+ausführen.
+
+---
+
 ## 2026-10-10 — `641a008` Firebase-Datenbankregeln statt `.read/.write: true`
 
 **Gemacht:** `database.rules.json` (neu) + `firebase.json` (nur
