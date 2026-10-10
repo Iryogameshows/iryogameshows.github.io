@@ -12,6 +12,83 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `641a008` Firebase-Datenbankregeln statt `.read/.write: true`
+
+**Gemacht:** `database.rules.json` (neu) + `firebase.json` (nur
+`database.rules`) im Wurzelverzeichnis; per
+`npx firebase-tools deploy --only database --project keller-buzzer` live
+veröffentlicht. `FIREBASE-ANLEITUNG.md` Abschnitt 3 verweist jetzt auf die
+Datei statt auf offene Regeln in der Konsole. Vorher galt live
+`{ "rules": { ".read": true, ".write": true } }`.
+
+Die Regeln erlauben nur die Pfade, die die App benutzt: `design` (Text
+≤ 40), `tournament`, `votes/$k` (mit `top` und `ts`, nicht löschbar),
+`gmremote/html` (Text), `gmremote/commands/$id` (`fn` Text ≤ 64, `t` Zahl),
+`buzzer/players/$key` (nur `name`, `pin` = 64 Zeichen, `avatar`, `color`,
+`team`, `created`, `stats`), `buzzer/presence/$key` und die Spielzustände
+unter `buzzer` (`live`/`armed`/`joinLocked` Boolean, `round`/`armStart`
+Zahl). Die Wurzel ist nicht lesbar; Wurzel, `buzzer`, `buzzer/players` und
+`votes` lassen sich nicht als Ganzes überschreiben oder löschen.
+
+**Warum so:** Ohne Firebase Auth können Regeln Host und Fremde nicht
+unterscheiden — mehr als Pfade eingrenzen und Formen prüfen geht nicht.
+Verworfen für jetzt: Anonymous Auth + Host-UID (echter Schutz, aber Umbau
+an Host, Handy-Seiten und Regeln). Verworfen: PIN nicht lesbar machen —
+der Login vergleicht den Hash auf dem Handy (`buzzer/index.html:510`) und
+der Host setzt PINs zurück (`js/core.js:1834`); ohne Auth wäre jede
+Schreibsperre für `pin` auch für Angreifer per Löschen-und-neu umgehbar.
+
+**Geprüft:**
+- Pfade aus dem Code (26 Fundstellen in `js/`, `buzzer/`, `gamepad/`,
+  `voting/`) gegen die Live-Datenbank (flach gelesen): 5 Zweige oben, 11
+  unter `buzzer` — deckungsgleich, kein verwaister Zweig.
+- Live-Accounts (8): Felder nur `name`, `pin` (64), `avatar` (≤ 2),
+  `color` (≤ 7), `created`, `stats` (4 Zahlen), `team` (2 von 8). `round`
+  ist eine Zahl (`nextRoundId`, `js/buzzer.js:292`, live `number`).
+- RTDB-Emulator (`--project demo-keller`), REST-Nachbau der App-Zugriffe:
+  **59/59 wie erwartet**, 38 erlaubt, 21 gesperrt (401); Bestandsaccount
+  danach unverändert. Skript lag im Scratchpad, nicht im Repo.
+- Nach dem Deploy: Regeln live zurückgelesen, identisch mit der Datei.
+  Ohne Anmeldung: `GET /buzzer/round`, `/votes`, `/design` → 200,
+  `GET /` → 401, `PUT /spam` → 401, `DELETE /buzzer` → 401; Zweige oben
+  danach unverändert (5).
+- `node check.js` fehlerfrei.
+- **Ungeprüft:** die echten Seiten gegen die neuen Regeln — kein Buzz,
+  kein Login, kein Voting am Handy nach dem Deploy. Der Emulator-Test
+  bildet die SDK-Zugriffe per REST nach (Transaktion = `PUT`,
+  `onDisconnect` = `DELETE`).
+
+**Offen:**
+- Beim nächsten Spiel einmal durchspielen: anlegen, Profil, buzzen,
+  Schätzung, DDF-Abstimmung, Glücksrad, Gamepad, Voting, Turnier. Ein
+  `PERMISSION_DENIED` in der Konsole heißt: Pfad oder Form fehlt in
+  `database.rules.json`. Zurück auf offen notfalls in der Konsole.
+- Weiter offen ohne Auth: alles lesbar, auch die PIN-Hashes (SHA-256 mit
+  `keller:<name>:`, bei 5-stelligen PINs schnell durchprobierbar);
+  `gmremote/html` beschreibbar und wird auf dem GM-Handy als HTML
+  gerendert (`gamepad/index.html:76`) — Skript-Einschleusung möglich, die
+  Befehle an den Host bleiben durch `GM_REMOTE_ALLOWED_FNS` begrenzt.
+- Host-Passwort steht im Klartext im ausgelieferten JS
+  (`js/jeopardy-ui.js:237`).
+- Abgaben im Voting lassen sich nur noch in der Firebase-Konsole löschen.
+
+**Fallstricke:**
+- Firebase-MCP `firebase_get_security_rules` (rtdb) scheitert mit
+  `Error: Invalid URL` — vermutlich Region `europe-west1`, ungeprüft.
+  Lesen per CLI:
+  `MSYS_NO_PATHCONV=1 npx firebase-tools database:get /.settings/rules --instance keller-buzzer-default-rtdb`
+  (ohne `MSYS_NO_PATHCONV` macht Git Bash aus `/.settings` einen
+  Windows-Pfad: „Path must begin with /“). `database:rules:get` gibt es
+  nicht.
+- Emulator braucht Java ≥ 21; auf diesem Rechner ist Java 8 installiert.
+  Für den Test lag ein portables Temurin 21 im Scratchpad
+  (`JAVA_HOME` nur für den Lauf gesetzt), System unverändert.
+- Aktives Firebase-Projekt (`keller-buzzer`) steht nur lokal in
+  `~/.config/configstore/firebase-tools.json`, nicht im Repo; `--project`
+  beim Deploy deshalb ausdrücklich angeben.
+
+---
+
 ## 2026-10-10 — `8c49067` Marketplaces in den Projekt-Settings · gh installiert
 
 **Gemacht:** `.claude/settings.json` → `extraKnownMarketplaces` um
