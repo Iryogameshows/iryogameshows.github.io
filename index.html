@@ -357,9 +357,10 @@
   <div class="team-setup">
     <div class="team-card blue">
       <div class="label">Kandidat</div>
-      <input type="text" id="wwm-name" placeholder="Name..." value="Kandidat">
+      <input type="text" id="wwm-name" placeholder="Name..." value="Kandidat" oninput="renderWwmTourTeams()">
     </div>
   </div>
+  <div class="wwm-tour-teams" id="wwm-tour-teams"></div>
   <div class="intro-slot" id="wwm-intro-slot"></div>
   <div class="setup-actions">
     <button class="btn btn-primary" onclick="startWwm()">Spiel starten</button>

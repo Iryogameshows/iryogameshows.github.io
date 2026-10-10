@@ -45,10 +45,43 @@ function wwmUndo(){ if (wwmUndoStack.undo()) SFX.tick(); }
 
 function wwmMoney(n){ return n.toLocaleString('de-DE') + ' €'; }
 
+/* Turnier: fuer welches Team spielt der Kandidat? WWM kennt nur einen Namen,
+   das Turnier rechnet mit Teams. Das Ergebnis wird ueber den Namen
+   zugeordnet (tournamentAutoRecordIfActive) - also ist der Kandidat hier
+   genau der Teamname. Nur sichtbar, wenn das Spiel aus dem Turnier kommt. */
+/** @returns {boolean} laeuft gerade ein WWM-Platz aus dem Turnier? */
+function wwmTourSlot(){
+  if (!tournament || activeTournamentGameIndex === null) return false;
+  const g = tournament.games[activeTournamentGameIndex];
+  return !!g && g.game === 'Wer wird Millionär';
+}
+function renderWwmTourTeams(){
+  if (!wwmTourSlot()) { setHtml('wwm-tour-teams', ''); return; }
+  const name = fieldVal('wwm-name').trim().toLowerCase();
+  setHtml('wwm-tour-teams',
+    `<div class="label">Spielt fürs Turnier für</div>` +
+    tournament.teams.map((t, i) =>
+      `<button class="btn ${t.trim().toLowerCase() === name ? 'btn-primary' : 'btn-secondary'}" onclick="wwmPickTourTeam(${i})">${escapeHtml(t)}</button>`
+    ).join(''));
+}
+/** @param {number} i */
+function wwmPickTourTeam(i){
+  if (!tournament || !tournament.teams[i]) return;
+  fieldSet('wwm-name', tournament.teams[i]);
+  renderWwmTourTeams();
+}
+
 function startWwm(){
   // Prüfen bevor das Board-Fenster aufgeht: sonst steht ein leeres Fenster
   // offen und der Hauptbildschirm zeigt die Reste der letzten Runde.
   if (!wwmData.questions.length) { alert('Keine Fragen vorhanden.'); return; }
+  if (wwmTourSlot()){
+    const name = fieldVal('wwm-name').trim().toLowerCase();
+    if (!tournament.teams.some(t => t.trim().toLowerCase() === name)) {
+      alert('Erst das Team wählen, für das der Kandidat spielt - sonst zählt das Ergebnis im Turnier nicht.');
+      return;
+    }
+  }
   openBoardPopout();
   startWwmActual();
 }

@@ -727,6 +727,8 @@ function updateGamemasterTournamentBoard(){
        <div class="hint-line">Spieldaten: ${escapeHtml(tournamentFileInfo(g.game))}</div>
        ${cfg && cfg.roster
          ? `<div class="info-card">Bei dieser Show wählst du erst aus, wer mitspielt — der Knopf führt dich auf den Setup-Screen.</div>`
+         : cfg && cfg.pickTeam
+         ? `<div class="info-card">Bei dieser Show wählst du erst, für welches Team der Kandidat spielt — der Knopf führt dich auf den Setup-Screen.</div>`
          : ''}`;
 
   const gmHtml = `<!DOCTYPE html>
@@ -749,7 +751,7 @@ function updateGamemasterTournamentBoard(){
   </div>
   </div>
   <div class="gm-actions">
-    ${g ? `<button class="gm-btn gold" onclick="opener.tournamentStartNext()">▶ ${cfg && cfg.roster ? 'Einrichten' : 'Nächstes Spiel starten'}</button>` : ''}
+    ${g ? `<button class="gm-btn gold" onclick="opener.tournamentStartNext()">▶ ${cfg && (cfg.roster || cfg.pickTeam) ? 'Einrichten' : 'Nächstes Spiel starten'}</button>` : ''}
     <button class="gm-btn blue" onclick="opener.tournamentCheckData()">📦 Nächste Spieldaten überprüfen</button>
     <button class="gm-btn gray" onclick="opener.gmGotoTournament()">🛠 Turnier bearbeiten</button>
     <button class="gm-btn gray" onclick="opener.gmBackToMenu()">🏠 Zum Menü</button>

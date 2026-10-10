@@ -107,7 +107,7 @@ function saveTournament(){
 
    Zwei Fragen, zwei Felder. Ein Wert, der zwei Dinge bedeutet, faellt
    irgendwann auf die Nase.
-   @type {Record<string, {setup:string, start:string, lobby:string|null, roster?:boolean, import:string, info:() => string}>} */
+   @type {Record<string, {setup:string, start:string, lobby:string|null, roster?:boolean, pickTeam?:boolean, import:string, info:() => string}>} */
 const TOURNAMENT_GAMES = {
   'Family Feud':         { setup:'setup-screen',          start:'startGame',    lobby:'feud',
                            import:'importQuestions',
@@ -115,7 +115,7 @@ const TOURNAMENT_GAMES = {
   'Jeopardy':            { setup:'jeopardy-setup-screen', start:'startJeopardy',lobby:'jeopardy',
                            import:'importJeopardy',
                            info:() => `${jeopardyData.boards.length} Boards · ${jeopardyFilledClues()} von ${jeopardyData.boards.length*JEOPARDY_CATS*JEOPARDY_VALUES.length} Feldern gefüllt` },
-  'Wer wird Millionär':  { setup:'wwm-setup-screen',      start:'startWwm',     lobby:null,
+  'Wer wird Millionär':  { setup:'wwm-setup-screen',      start:'startWwm',     lobby:null, pickTeam:true,
                            import:'importWwm',
                            info:() => `${(wwmData.questions||[]).length} Fragen` },
   'Wer weiß denn sowas': { setup:'wwds-setup-screen',     start:'startWwds',    lobby:'wwds',
@@ -248,7 +248,12 @@ function tournamentStartAt(i){
   activeTournamentGameIndex = i;
   showScreen(cfg.setup);
   tournamentFillTeamNames(g.game);
-  if (cfg.roster){
+  /* WWM ebenso: ein Kandidat, aber das Turnier rechnet mit Teams. Bis
+     2026-10-10 startete es sofort, mit dem Namen, der zufaellig im Feld
+     stand - passte der zu keinem Team, bekamen ALLE Teams das Ergebnis 0
+     und damit (Wertung nach Platz) alle die vollen Punkte. Jetzt waehlt der
+     Host zuerst, fuer welches Team der Kandidat spielt (renderWwmTourTeams). */
+  if (cfg.roster || cfg.pickTeam){
     // Kein Direktstart: der Host waehlt erst die Teilnehmer aus. Die
     // Teamnamen sind trotzdem schon eingetragen, er muss nur noch die
     // Teilnehmer bestaetigen und selbst starten.
@@ -360,6 +365,12 @@ function tournamentAutoRecordIfActive(gameTeamNames, gameScores){
   const g = tournament.games[gi];
   if (!g) return false;
   const sameLength = gameTeamNames.length === tournament.teams.length;
+  /* Weder ein Name passt noch die Anzahl: dann ist jede Zuordnung geraten,
+     und "alle 0" hiesse bei der Wertung nach Platz "alle Erster". Lieber
+     nichts eintragen - der Platz bleibt offen, der Host traegt von Hand ein. */
+  const nameTreffer = tournament.teams.some(t =>
+    gameTeamNames.some(n => n.trim().toLowerCase() === t.trim().toLowerCase()));
+  if (!sameLength && !nameTreffer) return false;
   g.scores = tournament.teams.map((t, ti) => {
     const byName = gameTeamNames.findIndex(n => n.trim().toLowerCase() === t.trim().toLowerCase());
     if (byName >= 0) return Number(gameScores[byName]) || 0;

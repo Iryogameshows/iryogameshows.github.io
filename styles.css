@@ -178,6 +178,10 @@ body {
 /* ── SETUP ── */
 #setup-screen { gap: 28px; margin-top: 10px; }
 .team-setup { display: flex; gap: 16px; width: 100%; justify-content: center; flex-wrap: wrap; margin: 8px 0 16px; }
+/* WWM aus dem Turnier: fuer welches Team spielt der Kandidat (js/wwm.js). */
+.wwm-tour-teams { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; margin: -4px 0 16px; }
+.wwm-tour-teams:empty { display: none; }
+.wwm-tour-teams .label { width: 100%; text-align: center; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: rgba(var(--fg-rgb),.5); }
 .team-card {
   flex: 1; min-width: 200px; max-width: 300px;
   border-radius: 16px; padding: 28px 24px; text-align: center;

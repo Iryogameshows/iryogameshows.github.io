@@ -924,6 +924,7 @@ function showScreen(id) {
   if (id === 'edit-screen') renderQuestionList();
   if (id === 'jeopardy-edit-screen') renderJeopardyEditor();
   if (id === 'wwm-edit-screen') renderWwmEditor();
+  if (id === 'wwm-setup-screen') renderWwmTourTeams();
   if (id === 'wwds-edit-screen') renderWwdsEditor();
   if (id === 'wwds-setup-screen') { wwdsToggleTeam3(); ensureWwdsLobbyConnected(); }
   if (id === 'ddf-edit-screen') renderDdfEditor();
