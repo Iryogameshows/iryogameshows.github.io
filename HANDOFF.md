@@ -12,6 +12,27 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `d43b604` Jeopardy: Boardwechsel per Knopf, Daily Double (mittlere Punkte, 4)
+
+**Gemacht:** `jeopardyFinishClue` wechselt nicht mehr selbst; GM-Boardansicht
+(`updateGamemasterJeopardy`, `js/feud.js`) zeigt bei vollem Board
+„▶ Weiter zu Board 2“ / „🏁 Zum Ergebnis“ → `jeopardyAdvanceBoard` (Wache:
+aktiv, kein offenes Feld, Board voll, einmal; freigegeben).
+`openJeopardyClue` blockt bei `ddPending`/offenem Feld. DD-Auswahl nur
+über `jeopardyClueHasContent`. `jeopardyUndo` rendert kein Overlay bei
+`ddPending`.
+**Warum so:** Verworfen: Undo über den Boardwechsel hinweg (müsste das
+neue Board samt Übergang zurückdrehen). Ein Klick mehr pro Board ist der
+kleinere Preis. **Achtung Ablauf:** Der Host muss jetzt am Boardende
+selbst weiterklicken.
+**Geprüft (Browser, gestubbt):** 4/4 + 3/3. `check.js`, `--types` ok.
+**Offen:** DD + getippte Frage öffnet die Eingabe weiter für alle Handys
+(werten darf nur das DD-Team) — nicht angefasst. Ob Undo je in einen
+`ddPending`-Stand führt, ist fraglich (kein Snapshot in dem Zustand) — die
+Absicherung schadet nicht.
+
+---
+
 ## 2026-10-10 — `99fa1f9` Feud: Undo für „Nächste Runde“ (mittlere Punkte, 3)
 
 **Gemacht:** `feudRoundUndo`/`feudUndoRound` in `js/feud.js`; `nextRound`
