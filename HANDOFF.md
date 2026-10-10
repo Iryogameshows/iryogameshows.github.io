@@ -12,6 +12,20 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `45fed04` DDF/PIH: Spielende im GM, nur einmal (Liste Punkt 4)
+
+**Gemacht:** `updateGamemaster` (`js/feud.js`) leitet nach den
+`active`-Prüfungen über `screenActive('ddf-screen'|'pih-screen')` weiter.
+`ddfFinish`/`pihFinish`: Wache `phase === 'done'`, am Ende
+`updateGamemaster()`. GM-Kopf: „Spielende“, DDF-Patt „Stichwahl gleich“.
+**Warum:** nach Spielende war `active` aus, das GM fand nicht mehr hin und
+blieb auf „Weiter →“; Doppelaufruf meldete ans Turnier erneut.
+**Geprüft (Browser, gestubbt):** 6/6. `check.js`, `--types` ok.
+**Offen:** Im DDF-GM steht nach dem Ende weiter die letzte Frage mit
+„· noch verdeckt“ (Kosmetik).
+
+---
+
 ## 2026-10-10 — `3be649e` Undo: Reset beim Start, Sichern nach der Prüfung (Liste Punkt 3)
 
 **Gemacht:** `wwmUndoStack/wwdsUndoStack/ddfUndoStack/pihUndoStack.reset()`
