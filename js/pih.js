@@ -594,6 +594,8 @@ function pihStartTimer(){ startRoundClock(pihState, 'pih-timer'); }
 function pihStopTimer(){ stopRoundClock(pihState, 'pih-timer'); }
 
 function pihFinish(){
+  // Nur einmal - siehe ddfFinish.
+  if (pihState.phase === 'done') return;
   pihStopTimer();
   pihCloseBids();
   activeMediaSlot = null; renderMediaOverlay(null);
@@ -630,7 +632,7 @@ function pihFinish(){
   setHtml('pih-price', '');
   setHtml('pih-note', escAttr(turnierBericht));
   pihRenderBidGrid();
-
+  updateGamemaster();
 }
 
 function pihQuit(){
@@ -1095,7 +1097,7 @@ function updateGamemasterPih(){
   .money strong{color:#FFD23F;}
   .tm{font-size:.72rem;color:rgba(255,255,255,.5);}
 </style></head><body>
-  ${gmHeaderHtml('Gamemaster', `Der Preis ist heiß · Artikel ${Math.min(s.idx + 1, s.order.length)}/${s.order.length}`)}
+  ${gmHeaderHtml('Gamemaster', `Der Preis ist heiß · ${s.phase === 'done' ? 'Spielende' : 'Artikel ' + Math.min(s.idx + 1, s.order.length) + '/' + s.order.length}`)}
   <div class="gm-body">
   <div class="gm-main">${body}</div>
   <div class="gm-side">

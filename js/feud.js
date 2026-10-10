@@ -1064,6 +1064,12 @@ function updateGamemaster() {
   if (ddfState.active) return updateGamemasterDdf();
   if (pihState.active) return updateGamemasterPih();
   if (tpState.active) return updateGamemasterTp();
+  /* DDF und PIH enden auf ihrem eigenen Screen und schalten dabei active
+     aus. Ohne diese Zeilen fand das GM-Fenster danach nicht mehr zu ihnen
+     und blieb auf "Weiter ->" stehen - der Knopf rief das Spielende ein
+     zweites Mal auf. */
+  if (screenActive('ddf-screen')) return updateGamemasterDdf();
+  if (screenActive('pih-screen')) return updateGamemasterPih();
   if (finaleState.active) return updateGamemasterFinale();
   if (screenActive('tournament-screen')) return updateGamemasterTournament();
   // Ohne diesen Zweig bleibt das GM-Fenster am Spielende auf dem letzten Stand

@@ -443,6 +443,9 @@ function ddfStartTimer(){ startRoundClock(ddfState, 'ddf-timer'); }
 function ddfStopTimer(){ stopRoundClock(ddfState, 'ddf-timer'); }
 
 function ddfFinish(){
+  // Nur einmal: ein zweiter Aufruf (Doppelklick, Fernbefehl) meldete das
+  // Ergebnis sonst noch einmal ans Turnier.
+  if (ddfState.phase === 'done') return;
   ddfStopTimer();
   ddfCloseVote();
   activeMediaSlot = null; renderMediaOverlay(null);
@@ -463,7 +466,7 @@ function ddfFinish(){
   setHtml('ddf-note', escAttr(turnierBericht));
   setHtml('ddf-media-bar', '');
   setHtml('ddf-vote-grid', '');
-
+  updateGamemaster();
 }
 
 function ddfQuit(){
@@ -797,7 +800,8 @@ function updateGamemasterDdf(){
 </style></head><body>
   ${gmHeaderHtml('Gamemaster', `Der Dümmste fliegt · ${
     s.phase === 'vote' ? 'Abstimmung' : s.phase === 'runoffAnnounce' ? 'Stichwahl'
-    : s.phase === 'result' ? 'Ergebnis' : s.phase === 'answer' ? 'Aufgelöst' : 'Frage'}`)}
+    : s.phase === 'result' ? 'Ergebnis' : s.phase === 'answer' ? 'Aufgelöst'
+    : s.phase === 'tiebreak' ? 'Stichwahl gleich' : s.phase === 'done' ? 'Spielende' : 'Frage'}`)}
   <div class="gm-body">
   <div class="gm-main">${body}</div>
   <div class="gm-side">
