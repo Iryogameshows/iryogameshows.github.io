@@ -1546,12 +1546,16 @@ function updateGamemasterJeopardy() {
       });
     });
     boardHtml += `</div>`;
+    const voll = jeopardyBoardComplete();
     body = `
-      <div class="round-label">Board ${jeopardyState.currentBoard + 1} / ${JEOPARDY_BOARDS} · Feld wählen</div>
+      <div class="round-label">Board ${jeopardyState.currentBoard + 1} / ${JEOPARDY_BOARDS} · ${voll ? 'Board fertig' : 'Feld wählen'}</div>
       <div class="scores-row">${scoresHtml}</div>
       ${boardHtml}`;
     sideHtml = connectPanel;
-    controlsHtml = `<button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
+    controlsHtml = (voll
+      ? `<button class="gm-btn gold" onclick="opener.jeopardyAdvanceBoard()">${jeopardyState.currentBoard < JEOPARDY_BOARDS - 1
+          ? '▶ Weiter zu Board ' + (jeopardyState.currentBoard + 2) : '🏁 Zum Ergebnis'}</button>` : '')
+      + `<button class="gm-btn orange" onclick="opener.jeopardyUndo()">↩ Undo</button>`;
   }
 
   const gmHtml = `<!DOCTYPE html>

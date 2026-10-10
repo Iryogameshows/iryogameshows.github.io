@@ -342,7 +342,10 @@ function jeopardyFinishClue() {
   renderJeopardyScores();
   renderJeopardyBoard();
   updateGamemaster();
-  if (jeopardyBoardComplete()) jeopardyAdvanceBoard();
+  /* Kein automatischer Boardwechsel mehr: er leerte den Undo-Verlauf, eine
+     Fehlwertung bei der letzten Frage war nicht mehr zu korrigieren. Ist das
+     Board voll, steht im GM-Fenster "Weiter zu Board 2" bzw. "Zum Ergebnis"
+     (jeopardyAdvanceBoard). */
 }
 
 /* Der Abschluss-Knopf bei getippten Fragen. Eigener Name statt

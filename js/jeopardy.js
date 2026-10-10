@@ -135,6 +135,14 @@ function jeopardyValueOf(clue, row) {
 }
 /** Der Wert eines Feldes ueber seine Koordinaten, auf dem aktuellen Board.
  *  @param {number} col @param {number} row @returns {number} */
+/** Hat das Feld ueberhaupt eine Frage - Text, Bild, Staffelbild, Reihe,
+ *  Schritte oder Ton?  @param {JeopardyClue|null|undefined} c @returns {boolean} */
+function jeopardyClueHasContent(c) {
+  if (!c) return false;
+  return !!(String(c.q || '').trim() || c.qImg || c.stageImg || c.sound
+    || (c.seriesImgs || []).some(Boolean) || (c.stepTexts || []).some(t => String(t || '').trim())
+    || (c.stepImgs || []).some(Boolean));
+}
 function jeopardyCellValue(col, row) {
   const cat = jBoard()[col];
   return jeopardyValueOf(cat && cat.clues[row], row);
@@ -178,7 +186,9 @@ function jeopardyUndo() {
   jeopardyState.scoredTeams = prev.scoredTeams || [];
   renderJeopardyScores();
   renderJeopardyBoard();
-  if (jeopardyState.currentClue) renderJeopardyClueOverlay();
+  // Steht ein Daily Double noch vor seiner Ansage, bleibt das Board zu sehen -
+  // das Overlay wuerde das DD auf der Leinwand verraten.
+  if (jeopardyState.currentClue && !jeopardyState.ddPending) renderJeopardyClueOverlay();
   else closeJeopardyClue();
   updateGamemaster();
 }
@@ -213,7 +223,9 @@ function startJeopardyActual() {
     board.categories.forEach((cat, col) => {
       if (cat.noDD) return;
       cat.clues.forEach((clue, row) => {
-        if (jeopardyValueOf(clue, row) >= 300) spots.push({ col, row });
+        // Nur Felder mit Inhalt - ein DD auf einem leeren Feld waere eine leere Ansage.
+        const hatFrage = jeopardyClueHasContent(clue);
+        if (hatFrage && jeopardyValueOf(clue, row) >= 300) spots.push({ col, row });
       });
     });
     return spots.length ? { ...spots[Math.floor(Math.random() * spots.length)], done: false } : null;
@@ -299,7 +311,13 @@ function jeopardyBoardComplete() {
   return jeopardyState.used.every(col => col.every(Boolean));
 }
 
+let jeopardyAdvancing = false;
 function jeopardyAdvanceBoard() {
+  // Nur bei vollem Board ohne offene Frage, und nur einmal (Doppeltipp,
+  // Fernbefehl) - sonst sprang das Spiel zwei Boards weiter.
+  if (!jeopardyState.active || jeopardyAdvancing || jeopardyState.currentClue || !jeopardyBoardComplete()) return;
+  jeopardyAdvancing = true;
+  setTimeout(() => { jeopardyAdvancing = false; }, 2500);
   if (jeopardyState.currentBoard < JEOPARDY_BOARDS - 1) {
     showJeopardyBoardTransition();
   } else {
@@ -342,6 +360,11 @@ function jeopardySetDdTeam(i) {
 
 function openJeopardyClue(col, row) {
   if (jeopardyState.used[col][row]) return;
+  /* Solange eine Frage offen ist oder ein Daily Double auf seine Ansage
+     wartet, oeffnet kein zweites Feld. Beim DD steht das Board fuer alle
+     sichtbar und klickbar da - ein Klick daneben ueberschrieb die offene
+     DD-Frage, das DD-Feld blieb ungespielt. Erst ansagen oder Undo. */
+  if (jeopardyState.ddPending || jeopardyState.currentClue) return;
   jeopardySnapshot();
   jeopardyState.currentClue = { col, row };
   jeopardyState.answerShown = false;
