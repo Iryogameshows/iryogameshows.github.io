@@ -1,12 +1,4 @@
 {
-  "extraKnownMarketplaces": {
-    "caveman": {
-      "source": { "source": "github", "repo": "JuliusBrussee/caveman" }
-    }
-  },
-  "enabledPlugins": {
-    "caveman@caveman": true
-  },
   "hooks": {
     "PreToolUse": [
       {
@@ -17,6 +9,12 @@
             "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/commit-gate.js\"",
             "timeout": 120,
             "statusMessage": "check.js vor dem Commit..."
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/design-reminder.js\"",
+            "timeout": 30,
+            "statusMessage": "Design-Pruefung aktuell?"
           }
         ]
       }
@@ -33,5 +31,19 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "caveman@caveman": true,
+    "code-review@claude-plugins-official": true,
+    "firebase@claude-plugins-official": true,
+    "design@knowledge-work-plugins": true
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
   }
 }

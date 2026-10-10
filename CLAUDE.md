@@ -112,6 +112,38 @@ Quellen: `anthropics/claude-code` (`plugins/frontend-design`),
   und `CLAUDE.md` bleiben im normalen, ausführlichen Stil. Caveman kürzt nur
   den Chat-Text.
 
+### Projekt-Skills, Plugins, Hooks (seit 2026-10-10)
+
+Liegen im Repo und kommen per Git mit:
+
+- **`/design-pruefung`** (`.claude/skills/design-pruefung/`): `tools/shots`
+  laufen lassen, Kontaktbögen ansehen, Studio-Blau vergleichen. Nach jeder
+  Änderung an Aussehen oder Layout.
+- **`/neue-show`**: Bau einer neuen Show entlang BAUPLAN — sieben Fragen,
+  Skelett, elf Anmeldungen, Design, Abnahme.
+- **`/abschluss`**: check.js, Commit, HANDOFF, Push, Deploy-Nachweis,
+  Antwort mit „Offen“ und „Nächste Schritte“. `/handoff` bleibt der Teil
+  für den HANDOFF-Eintrag allein.
+- **Hook `design-reminder.js`** (PreToolUse, Bash): bei `git commit` mit
+  `styles.css`, `js/theme.js`, `js/core.js` oder einer Handy-/Mainscreen-Seite
+  und älteren Kontaktbögen eine Erinnerung an `/design-pruefung`. Sperrt
+  nicht.
+- **Plugins** (`enabledPlugins` in `.claude/settings.json`, Scope project):
+  `code-review@claude-plugins-official` (`/code-review` vor großen Pushes),
+  `design@knowledge-work-plugins` (Barrierefreiheit, Design-Kritik,
+  Designsystem; bringt außerdem Konnektoren für Slack, Figma, Notion usw.
+  mit, die hier nicht gebraucht werden und unangemeldet bleiben dürfen),
+  `firebase@claude-plugins-official` (MCP über `npx firebase-tools mcp`,
+  braucht einmal `npx firebase-tools login` durch David). **Firebase-MCP nur
+  lesend benutzen** — Schreiben in Live-Daten bleibt „erst fragen“.
+- Die Marketplaces `claude-plugins-official` und `knowledge-work-plugins`
+  stehen (Stand 2026-10-10) nur in den User-Settings dieses Rechners. Auf
+  einem anderen Gerät einmal
+  `claude plugin marketplace add anthropics/knowledge-work-plugins` und
+  `claude plugin marketplace add anthropics/claude-plugins-official`.
+- GitHub-CLI `gh` für den Deploy-Nachweis (`gh run list`); ohne `gh` die
+  Action-API, siehe `/abschluss`.
+
 ## Bibliotheken in `vendor/` (GSAP, Lenis)
 
 Liegen als feste Kopien im Repo, nicht per CDN: eine Show läuft vor Publikum und
