@@ -177,6 +177,11 @@ body {
 
 /* ── SETUP ── */
 #setup-screen { gap: 28px; margin-top: 10px; }
+/* Laufendes Spiel fortsetzen (js/resume.js) - nur im Menue, nur mit Stand. */
+.resume-banner { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 4px 0 14px; padding: 12px 16px;
+  border-radius: 12px; border: 1.5px solid rgba(var(--gold-rgb),.45); background: rgba(var(--gold-rgb),.08); }
+.resume-banner:empty { display: none; }
+.resume-text { font-size: .9rem; color: var(--fg); }
 .team-setup { display: flex; gap: 16px; width: 100%; justify-content: center; flex-wrap: wrap; margin: 8px 0 16px; }
 /* WWM aus dem Turnier: fuer welches Team spielt der Kandidat (js/wwm.js). */
 .wwm-tour-teams { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; margin: -4px 0 16px; }

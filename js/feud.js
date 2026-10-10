@@ -1176,6 +1176,8 @@ function updateGamemasterTournament() {
   commitGamemasterHtml(gmHtml);
 }
 function updateGamemaster() {
+  // Spielstand sichern (js/resume.js) - fast jeder Spielschritt kommt hier vorbei.
+  if (typeof resumeSaveSoon === 'function') resumeSaveSoon();
   updateGMBar();
   if (!gamemasterWin || gamemasterWin.closed) return;
   if (gmActiveOverlay()) return updateGamemasterOverlay();

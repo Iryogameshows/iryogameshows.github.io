@@ -959,6 +959,8 @@ function showScreen(id) {
   if (id === 'tournament-screen') { renderTournament(); updateGamemaster(); }
   if (id === 'tournament-board-screen') renderTournamentBoard();
   if (id === 'result-screen') renderResultLeaderboard();
+  if (id === 'menu-screen' && typeof resumeOffer === 'function') resumeOffer();
+  if (typeof resumeSaveSoon === 'function') resumeSaveSoon();
   // Eingebettetes GM-Panel nur beim echten Rücksprung zum Hauptmenü wieder
   // ausblenden - bleibt bei internen Übergängen (z.B. Feud → Finale) sichtbar,
   // genau wie das alte Popup-Fenster das auch nie automatisch geschlossen hat.
