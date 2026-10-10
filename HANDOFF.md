@@ -12,6 +12,19 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — Screenshot-Prüfung bei 1280×800 und 1280×900 (nur Messung)
+
+**Geprüft (Stand `b5f9b30`):** `node shots.js --size 1280x800` (alle 10
+Zustände × 19 Fassungen): **keine Befunde**. `--size 1280x900` für feud,
+feud-lang, feud-finale, jeop, wwm, wwm-joker: **keine Befunde**.
+Kontaktbogen `feud-finale` bei 900 angesehen (900 ist die Grenze der
+Media Queries, dort gilt noch die Zeilenanordnung): alles im Bild.
+
+**Offen:** damit nur noch das echte Popout am Beamer ungesehen. Ein voller
+Lauf beider Größen dauert über 10 Minuten — im Hintergrund starten.
+
+---
+
 ## 2026-10-10 — `8a84676` Lange Feud-Frage in I, M, P, S · `01b4e79` CLAUDE.md
 
 **Gemacht:** `styles.css`, neuer `@media (max-height: 900px)`-Block direkt
