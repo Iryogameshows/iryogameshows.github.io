@@ -12,6 +12,24 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `9ab5ee8` CLAUDE.md: Stand der Screenshot-Prüfung
+
+**Gemacht:** Abschnitt „Screenshot-Prüfung“ in `CLAUDE.md`: statt „voller
+Lauf ohne Befunde“ jetzt „4 bekannte Befunde, alle `feud-lang`“ (I 34,
+P 34, S 14, M 6 px) mit Stand `e80ad5f`.
+
+**Warum:** Seit `e3acca7` misst `tools/shots` drei Zustände mehr; die
+alte Zeile hätte jeden `feud-lang`-Befund wie einen neuen Fehler aussehen
+lassen. Freigabe David (Änderungen an `CLAUDE.md` nur mit Rückfrage).
+
+**Geprüft:** `node check.js` fehlerfrei. Zahlen aus dem vollen Lauf nach
+`e80ad5f` (HANDOFF-Eintrag darunter), nicht neu gemessen.
+
+**Offen:** Sobald `feud-lang` behoben ist, die Zeile wieder auf
+„ohne Befunde“ setzen.
+
+---
+
 ## 2026-10-10 — `e80ad5f` Feud-Finale passt in 1280×720
 
 **Gemacht (`styles.css`):**
