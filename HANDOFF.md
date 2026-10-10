@@ -12,6 +12,40 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `1d113a8` Spielstand sichern/fortsetzen (`js/resume.js`)
+
+**Gemacht:** Neue Datei `js/resume.js` (lädt als letztes Skript, nach
+`tp.js`): `resumeSaveSoon`/`resumeSave` (localStorage `liveGame`,
+400 ms gebündelt; Aufruf oben in `updateGamemaster` und am Ende von
+`showScreen`), `resumeOffer` (Menü `#resume-banner`, bis 6 h),
+`resumeGame`, `resumeDiscard`. Je Show: Feud (state, finaleState,
+Gleichstandswahl), Jeopardy (Zustand + Board), WWM, WWDS, DDF, PIH, TP.
+Offene Handy-Runden springen zurück (DDF-Abstimmung → `answer`,
+PIH-Gebote → `show`); Jeopardy-Buzzer zu, offene Frage bleibt; TP-
+Nachfassen wird neu scharf. Gelöscht wird nur bei klarem Ende (Ergebnis,
+Menü, Setup) — in schwarzen Übergängen bleibt der letzte Stand.
+
+**Warum so:** Plan mit David abgestimmt („Ja, wie beschrieben“).
+`updateGamemaster` als Haken, weil fast jeder Spielschritt dort
+vorbeikommt — kein Eingriff in jede einzelne Aktion. Jeopardy speichert
+das Board nur im laufenden Stand (nicht als Dauer-Daten — dort bleibt es
+bei Davids „So lassen“).
+
+**Geprüft (Browser, gestubbt, Skript im Scratchpad):** 7/7 Shows
+spielen → neu laden → Banner → fortsetzen → Stand gleich; Menü löscht den
+Stand. `tools/shots` (9 Zustände × 4 Richtungen) ohne Befunde.
+`check.js`, `--types` ok.
+
+**Offen / ungeprüft:** Echter Neustart des Browsers (Tab-Absturz) nicht
+nachgestellt, nur `reload`. Handys nach dem Fortsetzen mit echtem
+Firebase ungetestet. Großes Jeopardy-Board über 5 MB: Meldung,
+nicht getestet. `CLAUDE.md` (Strukturliste `js/`, „14 Dateien“) nennt
+`resume.js` noch nicht — Änderung braucht Davids Freigabe. BAUPLAN:
+eine neue Show muss in `resumeSave`/`resumeGame` angemeldet werden,
+sonst wird sie nicht gesichert — noch nicht in den BAUPLAN eingetragen.
+
+---
+
 ## 2026-10-10 — `0d35dd3` DDF/PIH: Turnierwertung Team oder Einzelspieler
 
 **Gemacht:** `#ddf-tour-mode`/`#pih-tour-mode` (`index.html`, Klasse
