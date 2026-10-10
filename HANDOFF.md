@@ -12,6 +12,34 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `52244ac` Gamepad-Freigaben vollständig, DDF-Patt im GM (Liste Punkt 5 + neu)
+
+**Gemacht:** `GM_REMOTE_ALLOWED_FNS` (`js/buzzer.js`) um 15 Funktionen
+ergänzt: `wwmLock/Reveal/Next/WalkAway/Fifty/Phone/Audience/Undo`,
+`wwdsUndo`, `ddfUndo`, `pihUndo`, `tpUndo`, `ddfVoteOut`,
+`jeopardyStepsReveal`, `gmShowScreen`. Neu `gmShowScreen(id)` (`js/wwds.js`,
+feste Liste: Menü, Setup DDF/PIH/TP) statt `showScreen` in den
+Endknöpfen von DDF/PIH/TP. DDF: Phase `tiebreak` hat im GM je Kandidat
+„✕ … verliert ein Herz“ (`ddfVoteOut`). WWM: `wwmWalkAway` und
+`wwmFifty` nach dem Loggen gesperrt.
+
+**Warum:** Beim Arbeiten an Punkt 5 gefunden — vom Handy-Gamepad wurden
+nicht freigegebene Befehle stumm verworfen (`js/buzzer.js` Listener:
+`if (!GM_REMOTE_ALLOWED_FNS.has(cmd.fn)) return`). WWM war vom Gamepad
+praktisch unspielbar. `showScreen` nicht freigegeben, weil es jede ID
+nimmt.
+
+**Geprüft (Browser, gestubbt):** 9/9; Abgleich aller `opener.X(` und
+`${pfx}X(` in `js/` gegen die Liste — nichts fehlt (nur „X“/„xxx“ aus
+Kommentaren). `check.js`, `--types` ok. **Ungeprüft:** echter Weg
+Handy → Firebase → Host.
+
+**Fallstricke:** Wer einen neuen GM-Knopf baut, muss die Funktion in
+`GM_REMOTE_ALLOWED_FNS` eintragen — sonst geht er im GM-Fenster, aber
+nicht vom Gamepad. Abgleich-Befehl siehe Commit.
+
+---
+
 ## 2026-10-10 — `45fed04` DDF/PIH: Spielende im GM, nur einmal (Liste Punkt 4)
 
 **Gemacht:** `updateGamemaster` (`js/feud.js`) leitet nach den
