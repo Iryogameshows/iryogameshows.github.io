@@ -265,7 +265,7 @@ function wwdsMasterHtml(){
 function wwdsTieHtml(){
   const t = wwdsData.tiebreakers[wwdsState.tieIdx];
   if (!t) return `<div class="wwds-banner">Keine Schätzfrage hinterlegt</div>
-    <div style="text-align:center;margin-top:14px;"><button class="btn btn-primary" onclick="wwdsFinish(true)">Trotzdem beenden</button></div>`;
+    <div style="text-align:center;margin-top:14px;"><button class="btn btn-primary" onclick="wwdsEndDraw()">Trotzdem beenden</button></div>`;
   return `<div style="text-align:center;"><span class="wwds-cat-chip">Stichfrage ${wwdsState.tieIdx+1}</span></div>
     <div class="wwds-banner">Gleichstand!</div>
     <div class="wwds-sub" style="margin:6px 0 14px;">Wer am nächsten dran ist, gewinnt.</div>
@@ -447,7 +447,10 @@ function wwdsToTie(){
 // ginge eine gerade getippte Zahl im Nachbarfeld verloren. Der Hauptbildschirm
 // wird trotzdem sofort mitgezogen.
 function wwdsSetGuess(i, v){
-  wwdsState.tieGuesses[i] = (v === '' ? null : Math.floor(Number(String(v).replace(',', '.')) || 0));
+  // Nachkommastellen bleiben: die Antwort darf welche haben (Editor nimmt
+  // Number), und Math.floor verschob den Abstand bei 3,7 gegen 3,5.
+  const n = Number(String(v).replace(',', '.'));
+  wwdsState.tieGuesses[i] = (v === '' || !isFinite(n)) ? null : n;
   renderWwds();
 }
 // Zwischenschritt vor der Auflösung: erst werden die abgegebenen Schätzungen
@@ -464,6 +467,10 @@ function wwdsShowTieGuesses(){
 }
 
 function wwdsRevealTie(){
+  /* Nur einmal je Stichfrage. Ein Doppeltipp oder ein zweimal ankommender
+     Fernbefehl gab dem Sieger sonst +2, beendete das Spiel zweimal oder
+     schob tieIdx doppelt weiter (eine Schaetzfrage fiel weg). */
+  if (wwdsState.phase !== 'tie' || wwdsState.tieRevealed) return;
   const t = wwdsData.tiebreakers[wwdsState.tieIdx];
   if (!t) return;
   const max = Math.max(...wwdsState.scores);
@@ -491,8 +498,18 @@ function wwdsRevealTie(){
   }
 }
 
+/* Gleichstand ohne (weitere) Schaetzfrage: unentschieden beenden. Eigene
+   Funktion statt wwdsFinish(true) am Knopf, damit sie fuers Gamepad
+   freigegeben werden kann, ohne das Spiel von dort jederzeit beenden zu
+   lassen. */
+function wwdsEndDraw(){
+  if (wwdsState.phase !== 'tie' || wwdsData.tiebreakers[wwdsState.tieIdx]) return;
+  wwdsFinish(true);
+}
+
 // ── ENDE ──
 function wwdsFinish(forceDraw){
+  if (wwdsState.phase === 'done') return;   // nur einmal
   wwdsStopTimer();
   wwdsState.phase = 'done';
   wwdsState.active = false;
@@ -538,6 +555,9 @@ function wwdsControlsHtml(pfx){
     } else {
       b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsAfterMaster()">Weiter →</button>`;
     }
+  } else if (s.phase === 'tie' && !wwdsData.tiebreakers[s.tieIdx]){
+    // Bis 2026-10-10 nur am Hauptbildschirm - vom GM/Gamepad aus sass man fest.
+    b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsEndDraw()">Unentschieden beenden</button>`;
   } else if (s.phase === 'tie'){
     if (!s.tieGuessesShown) b += `<button class="gm-btn gm-blue" onclick="${pfx}wwdsShowTieGuesses()">👁 Schätzungen aufdecken</button>`;
     if (!s.tieRevealed) b += `<button class="gm-btn gm-gold" onclick="${pfx}wwdsRevealTie()">Auflösen</button>`;

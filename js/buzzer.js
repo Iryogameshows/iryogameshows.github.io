@@ -615,7 +615,7 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
      praktisch nicht spielbar, kein Undo ausser Feud/Jeopardy. Abgleich:
      alle opener.X( und ${pfx}X( in js/ gegen diese Liste. */
   'wwmLock','wwmReveal','wwmNext','wwmWalkAway','wwmFifty','wwmPhone','wwmAudience','wwmUndo',
-  'wwdsUndo','ddfUndo','pihUndo','tpUndo','ddfVoteOut','jeopardyStepsReveal','gmShowScreen',
+  'wwdsUndo','ddfUndo','pihUndo','tpUndo','ddfVoteOut','jeopardyStepsReveal','gmShowScreen','wwdsEndDraw',
 ]);
 
 function gmRemoteInitFirebase() {
