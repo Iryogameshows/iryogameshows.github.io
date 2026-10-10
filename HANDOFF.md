@@ -12,6 +12,39 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `73803b1` Feud und WWM passen in 1280×720
+
+**Gemacht:** Gleiche Methode wie Jeopardy (`e2af07d`), `clamp()` mit `vh`,
+Obergrenze = alter Wert:
+- Logo-Verkleinerung über dem Brett gilt jetzt für `#jeopardy-screen`,
+  `#game-screen`, `#wwm-screen`.
+- Feud `.tile` `min-height: clamp(38px, 7vh - 8px, 50px)`; die festen
+  Höhen von D (56), E (54), H (62), I (56), R (56) ebenso mit ihrer alten
+  Obergrenze.
+- WWM: Stufen-Innenabstand `clamp(1px, 1.2vh - 5px, 6px)`, Leiter-Abstand
+  und -Polster, Polster der Frage. In Richtungen `.wwm-rung { line-height: 1.3 }`,
+  B kleinere Leiterschrift (Press Start brach „1.000.000 €“ zweizeilig um).
+
+**Warum so:** `line-height: 1.2` für alle verworfen — Bebas hat normal 1,31,
+`--vergleich` bei 1920×1080 zeigte 48 abweichende Elemente im Studio-Blau.
+Deshalb nur unter `:root[data-theme]`.
+
+**Geprüft (`tools/shots`):**
+- Voller Lauf 1280×720, 7 Shows × 19 Fassungen: **keine Befunde**
+  (vorher 38: Feud 19, WWM 19). Kontaktbögen Feud und WWM angesehen,
+  nichts angeschnitten.
+- `--vergleich` gegen Basis von vor der Änderung, 1920×1080: Feud 48,
+  WWM 70 Elemente, 0 Abweichungen. Bei 1280×720 weichen Feud 24 und WWM 19
+  Elemente ab — gewollt, das ist die Verkleinerung.
+- `node check.js` fehlerfrei.
+
+**Offen:** WWM mit eingeblendetem Publikumsjoker (`.wwm-audience`, 120 px)
+nicht gemessen — die Prüfung zeigt nur den Fragezustand. Feud mit offener
+Frage auf zwei Zeilen und Finale nicht gemessen.
+
+**Fallstricke:** `styles.css` liegt in der Arbeitskopie jetzt durchgehend
+mit LF (vorher CRLF), Inhalt unverändert; Git speichert ohnehin LF.
+
 ## 2026-10-10 — `a1f6381` Antwortformat: Abschluss mit „Offen“ und „Nächste Schritte“
 
 **Gemacht:** In `CLAUDE.md` (Projekt) und `Coding/CLAUDE.md` (übergreifend,
