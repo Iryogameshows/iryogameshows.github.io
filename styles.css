@@ -210,6 +210,11 @@ body {
 }
 .team-card input:focus { border-color: rgba(var(--gold-rgb),.5); box-shadow: 0 0 0 3px rgba(var(--gold-rgb),.1); }
 .team-card input::placeholder { color: rgba(var(--fg-rgb),.2); }
+/* Turnierwertung DDF/PIH (Team-Summe oder bester Einzelspieler). */
+.team-card .tour-mode-select {
+  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1.5px solid rgba(var(--fg-rgb),.12);
+  background: rgba(0,0,0,.3); color: var(--fg); font-family: inherit; font-size: .9rem; font-weight: 700; outline: none;
+}
 .team-toggle { display: flex; gap: 8px; align-items: center; justify-content: center; margin-bottom: 10px; }
 .team-toggle label { font-size: .8rem; color: rgba(var(--fg-rgb),.5); font-weight: 600; }
 .team-toggle input[type=text] {

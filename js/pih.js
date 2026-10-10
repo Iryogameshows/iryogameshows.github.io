@@ -619,7 +619,7 @@ function pihFinish(){
   pihState.timeUp = false;
 
   // Fuers Turnier: Punkte je Team, aufsummiert ueber die Teilnehmer.
-  const turnierBericht = tournamentReportTeamless('Der Preis ist heiß', pihState.players, p => p.score);
+  const turnierBericht = tournamentReportTeamless('Der Preis ist heiß', pihState.players, p => p.score, fieldVal('pih-tour-mode'));
 
   const rank = [...pihState.players].sort((a,b) => b.score - a.score);
   const top = rank.length && rank[0].score > 0 ? rank.filter(p => p.score === rank[0].score) : [];
@@ -925,6 +925,7 @@ function pihSaveSettings(){
     rounds: Number(fieldVal('pih-rounds')) || 0,
     time: pihState.roundTime,
     rule: pihState.rule,
+    tourMode: fieldVal('pih-tour-mode'),
   });
 }
 function pihLoadSettings(){
@@ -933,6 +934,7 @@ function pihLoadSettings(){
   if (s.rule && PIH_RULES.some(r => r.key === s.rule)) pihState.rule = s.rule;
   if (s.rounds != null) fieldSet('pih-rounds', s.rounds);
   if (s.time   != null && fieldSet('pih-time', s.time)) pihState.roundTime = s.time;
+  if (s.tourMode === 'team' || s.tourMode === 'einzel') fieldSet('pih-tour-mode', s.tourMode);
 }
 
 

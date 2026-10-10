@@ -407,7 +407,9 @@ function tournamentReleaseActive(){
 /** @param {any[]} players Teilnehmer der Show (brauchen .key und .label)
  *  @param {(p:any) => number} punkteVon was ein Teilnehmer wert ist
  *  @returns {{scores:number[], zugeordnet:number, ohneTeam:string[]}} */
-function tournamentTeamScoresFromPlayers(players, punkteVon){
+/* modus 'einzel': je Team zaehlt nur der beste Mitspieler (Entscheidung
+   David 2026-10-10), sonst die Summe. */
+function tournamentTeamScoresFromPlayers(players, punkteVon, modus){
   const n = tournament ? tournament.teams.length : 0;
   const scores = new Array(n).fill(0);
   const ohneTeam = [];
@@ -420,7 +422,8 @@ function tournamentTeamScoresFromPlayers(players, punkteVon){
       ohneTeam.push(p.label || p.name || '?');
       return;
     }
-    scores[team] += Number(punkteVon(p)) || 0;
+    const wert = Number(punkteVon(p)) || 0;
+    scores[team] = modus === 'einzel' ? Math.max(scores[team], wert) : scores[team] + wert;
     zugeordnet++;
   });
   return { scores, zugeordnet, ohneTeam };
@@ -431,9 +434,9 @@ function tournamentTeamScoresFromPlayers(players, punkteVon){
  *  @param {any[]} players
  *  @param {(p:any) => number} punkteVon
  *  @returns {string} Ein Satz fuer den Bildschirm - leer, wenn nichts anliegt */
-function tournamentReportTeamless(gameName, players, punkteVon){
+function tournamentReportTeamless(gameName, players, punkteVon, modus){
   if (!tournament){ tournamentReleaseActive(); return ''; }
-  const { scores, zugeordnet, ohneTeam } = tournamentTeamScoresFromPlayers(players, punkteVon);
+  const { scores, zugeordnet, ohneTeam } = tournamentTeamScoresFromPlayers(players, punkteVon, modus);
   if (!zugeordnet){
     // Niemand hat ein Team - hochrechnen waere geraten. Platz freigeben und
     // sagen, warum nichts passiert ist.

@@ -479,6 +479,13 @@
         <div class="label">Rundenzeit (Sek., 0 = aus)</div>
         <input type="number" id="ddf-time" min="0" max="600" value="30">
       </div>
+      <div class="team-card">
+        <div class="label">Turnierwertung</div>
+        <select id="ddf-tour-mode" class="tour-mode-select">
+          <option value="team">Team (Summe)</option>
+          <option value="einzel">Einzelspieler (bester zählt)</option>
+        </select>
+      </div>
     </div>
 
     <div class="setup-lobby" id="ddf-setup-lobby"></div>
@@ -561,6 +568,13 @@
       <div class="team-card">
         <div class="label">Superpreis zählt …fach</div>
         <input type="number" id="pih-final-weight" min="1" max="20" value="2">
+      </div>
+      <div class="team-card">
+        <div class="label">Turnierwertung</div>
+        <select id="pih-tour-mode" class="tour-mode-select">
+          <option value="team">Team (Summe)</option>
+          <option value="einzel">Einzelspieler (bester zählt)</option>
+        </select>
       </div>
     </div>
 

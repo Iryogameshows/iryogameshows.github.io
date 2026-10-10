@@ -455,7 +455,7 @@ function ddfFinish(){
   /* Fuers Turnier: uebrige Leben je Team. Wer laenger drinbleibt, bringt mehr
      - das belohnt Durchhalten statt nur den einen Sieg, und bei mehreren
      Teilnehmern pro Team ergibt es eine Zahl statt eines Namens. */
-  const turnierBericht = tournamentReportTeamless('Der Dümmste fliegt', ddfState.players, p => p.lives);
+  const turnierBericht = tournamentReportTeamless('Der Dümmste fliegt', ddfState.players, p => p.lives, fieldVal('ddf-tour-mode'));
   const winner = ddfAlive()[0];
   ddfRenderPlayers(winner ? winner.uid : null);
   // Direkt leeren: ddfStopTimer() lässt ein "Zeit um!" bewusst stehen, auf dem
@@ -617,7 +617,7 @@ ddfLoad();
 // Herzen und Rundenzeit bleiben pro Gerät gemerkt - sonst muss der Host sie
 // vor jeder Show neu eintippen.
 function ddfSaveSettings(){
-  storeSetJson('ddfSettings', { lives: ddfState.maxLives, time: ddfState.roundTime });
+  storeSetJson('ddfSettings', { lives: ddfState.maxLives, time: ddfState.roundTime, tourMode: fieldVal('ddf-tour-mode') });
 }
 function ddfLoadSettings(){
   const s = storeGetJson('ddfSettings');
@@ -626,6 +626,7 @@ function ddfLoadSettings(){
   const time  = fieldEl('ddf-time');
   if (lives && s.lives != null) lives.value = String(s.lives);
   if (time  && s.time  != null) time.value  = String(s.time);
+  if (s.tourMode === 'team' || s.tourMode === 'einzel') fieldSet('ddf-tour-mode', s.tourMode);
 }
 
 
