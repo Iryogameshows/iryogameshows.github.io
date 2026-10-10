@@ -12,6 +12,20 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `9761b5a` Feud: „Alle aufdecken“ schreibt Punkte gut (Liste Punkt 2)
+
+**Gemacht:** `revealAll` (`js/feud.js`) schreibt erspielte
+`roundPoints` dem Team am Zug gut, bevor es den Rest aufdeckt.
+**Warum:** vorher auf 0 gesetzt, `nextRound` zahlt nur bei nicht
+vollständig aufgedecktem Brett → Punkte weg. Bei „alle out“ unverändert
+(dort sind `roundPoints` schon 0). Verworfen: Knopf erst nach Rundenende
+zeigen — der Host nutzt ihn auch, um die Runde abzuschließen.
+**Geprüft (Browser, gestubbt):** 3/3 — 68 Punkte gutgeschrieben, nächste
+Runde nicht doppelt, Undo nimmt die Gutschrift zurück. `check.js` ok.
+**Offen:** keine für diesen Punkt.
+
+---
+
 ## 2026-10-10 — `da023cb` WWM im Turnier: Kandidat spielt für ein Team (Liste Punkt 1)
 
 **Gemacht:** `TOURNAMENT_GAMES['Wer wird Millionär'].pickTeam` — kein
