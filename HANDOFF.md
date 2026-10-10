@@ -12,6 +12,18 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `eba0e2e` WWM-Fragen werden gespeichert (mittlere Punkte, 1)
+
+**Gemacht:** `wwmSave`/`wwmLoad`/`wwmNormalize` in `js/wwm.js`
+(localStorage `wwmData`); gespeichert bei jeder Editor-Änderung, Bild,
+Hinzufügen, Löschen, Import und beim Verlassen des Editors
+(`showScreen`, `js/core.js`); bei vollem Speicher einmal `alert`.
+**Geprüft (Browser, gestubbt):** 3/3. `check.js`, `--types` ok.
+**Offen:** Jeopardy-Boards weiter ungespeichert — laut Kommentar in
+`tournament.js` bewusst (Bilder mehrere MB); eigene Entscheidung nötig.
+
+---
+
 ## 2026-10-10 — `86c0cb9` Buzzer-Listener gezielt, nie zwei zugleich (Liste Punkt 8)
 
 **Gemacht (`js/buzzer.js`):** `buzzerListen(bz, ref, cb)` /
