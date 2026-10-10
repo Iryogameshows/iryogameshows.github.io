@@ -604,8 +604,8 @@ function renderTournament(){
     const icon = hidden ? '❓' : tournamentGameIcon(g.game);
     const label = hidden ? '???' : g.game;
     const result = g.done
-      ? tournament.teams.map((t, ti) => `${escapeHtml(t)}: ${Number(g.scores[ti]) || 0} <span style="color:#FFD23F;">(+${pts[ti]})</span>`).join(' · ')
-      : '<span style="color:rgba(255,255,255,.35);">Noch nicht gespielt</span>';
+      ? tournament.teams.map((t, ti) => `${escapeHtml(t)}: ${Number(g.scores[ti]) || 0} <span class="tour-pts">(+${pts[ti]})</span>`).join(' · ')
+      : '<span class="tour-blass">Noch nicht gespielt</span>';
     const canAutoStart = !hidden && !g.done && TOURNAMENT_STARTABLE[g.game];
     // Bei den teamlosen Shows kommt das Ergebnis von Hand. Das gehoert in die
     // Zeile, nicht in eine Fussnote: sonst wartet der Host nach dem Spiel
@@ -613,15 +613,15 @@ function renderTournament(){
     const handEintrag = !hidden && !g.done && TOURNAMENT_STARTABLE[g.game] && !TOURNAMENT_AUTO_RESULT.has(g.game);
     return `
       <div class="q-list-item" style="flex-wrap:wrap;gap:6px;">
-        <span class="q-label"><span class="q-num">${i+1}.</span><span style="margin-right:2px;">${icon}</span><strong>${escapeHtml(label)}</strong>${(!hidden && g.date) ? `<span class="q-meta">${escapeHtml(g.date)}</span>` : ''}<span class="q-meta" style="color:#FFD23F;">Gewichtung ×${Number(g.weight) || 0}</span></span>
+        <span class="q-label"><span class="q-num">${i+1}.</span><span style="margin-right:2px;">${icon}</span><strong>${escapeHtml(label)}</strong>${(!hidden && g.date) ? `<span class="q-meta">${escapeHtml(g.date)}</span>` : ''}<span class="q-meta tour-weight">Gewichtung ×${Number(g.weight) || 0}</span></span>
         <div class="q-btns">
           ${canAutoStart ? `<button class="btn btn-accent" onclick="tournamentStartAt(${i})">▶ Spiel starten</button>` : ''}
           <button class="btn btn-secondary" onclick="tournamentEnterResult(${i})">${g.done ? 'Ergebnis ändern' : 'Ergebnis eintragen'}</button>
           <button class="btn btn-danger" onclick="tournamentRemoveGame(${i})">Del</button>
         </div>
-        <div style="width:100%;font-size:.78rem;color:rgba(255,255,255,.6);">${result}${handEintrag ? ' <span style="color:rgba(255,210,63,.75);">· zählt über die Team-Zuordnung der Teilnehmer</span>' : ''}</div>
+        <div class="tour-stand tour-zeile">${result}${handEintrag ? ' <span class="tour-hinweis">· zählt über die Team-Zuordnung der Teilnehmer</span>' : ''}</div>
       </div>`;
-  }).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Noch keine Spiele geplant.</div>`;
+  }).join('') || `<div class="q-list-item tour-leer">Noch keine Spiele geplant.</div>`;
 
   const allDone = tournament.games.length > 0 && tournament.games.every(g => g.done);
   const naechste = tournamentNextGameIndex();
@@ -642,7 +642,7 @@ function renderTournament(){
     <div class="editor-card">
       <label>Spiel hinzufügen</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <select id="tour-game-type" onchange="tournamentGameTypeChanged()" style="flex:2;min-width:150px;padding:11px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.3);color:#fff;font-family:inherit;font-size:.95rem;font-weight:600;outline:none;">
+        <select id="tour-game-type" class="tour-select" onchange="tournamentGameTypeChanged()">
           <option>Family Feud</option>
           <option>Jeopardy</option>
           <option>Wer wird Millionär</option>
@@ -656,10 +656,10 @@ function renderTournament(){
         <input type="text" id="tour-game-date" placeholder="z.B. Freitag" style="flex:1;min-width:110px;margin-bottom:0;">
         <button class="btn btn-accent" onclick="tournamentAddGame()">+ Hinzufügen</button>
       </div>
-      <label style="display:flex;align-items:center;gap:7px;font-size:.8rem;font-weight:600;color:rgba(255,255,255,.7);margin-top:10px;">
+      <label class="tour-check">
         <input type="checkbox" id="tour-game-secret" style="width:auto;margin:0;"> 🔒 Geheim halten (zeigt "???" im Spielplan, bis das Spiel gespielt wurde)
       </label>
-      <div style="font-size:.7rem;color:rgba(255,255,255,.35);margin-top:8px;">Gewichtung = wie viel das Spiel zählt. Platz 1 bekommt (Teamanzahl × Gewichtung) Turnierpunkte, Platz 2 entsprechend weniger.</div>
+      <div class="tour-fussnote">Gewichtung = wie viel das Spiel zählt. Platz 1 bekommt (Teamanzahl × Gewichtung) Turnierpunkte, Platz 2 entsprechend weniger.</div>
     </div>
     <div class="edit-bar" style="margin-top:12px;">
       <button class="btn btn-danger" onclick="tournamentDelete()">Turnier löschen</button>
@@ -692,8 +692,8 @@ function tournamentDataPanelHtml(){
                  onchange="tournamentImportFor(${escJsArg(name)}, this)">
         </label>
       </div>
-      <div style="width:100%;font-size:.72rem;color:rgba(255,255,255,.45);">${escapeHtml(tournamentFileInfo(name))}</div>
-    </div>`).join('') || `<div class="q-list-item" style="justify-content:center;color:rgba(255,255,255,.35);">Erst Spiele in den Plan legen.</div>`;
+      <div class="tour-datei">${escapeHtml(tournamentFileInfo(name))}</div>
+    </div>`).join('') || `<div class="q-list-item tour-leer">Erst Spiele in den Plan legen.</div>`;
 
   const intro = (tournament.files && tournament.files['Intro']) || null;
   return `<div class="editor-card" style="margin-bottom:20px;">
@@ -706,14 +706,14 @@ function tournamentDataPanelHtml(){
             <input type="file" accept="application/json,.json" style="display:none;" onchange="tournamentImportIntro(this)">
           </label>
         </div>
-        <div style="width:100%;font-size:.72rem;color:rgba(255,255,255,.45);">${
+        <div class="tour-datei">${
           intro ? escapeHtml(intro.name) : 'keine Datei geladen (es gilt, was gerade eingestellt ist)'}</div>
       </div>
     </div>
     <div class="editor-actions">
       <button class="btn btn-secondary" onclick="tournamentToggleData()">Zuklappen</button>
     </div>
-    <div style="font-size:.7rem;color:rgba(255,255,255,.35);margin-top:8px;">
+    <div class="tour-fussnote">
       Die Dateien gehen genau dorthin, wo auch der Editor sie ablegt — hier steht nur,
       welche es war. Ein Jeopardy-Board mit Bildern wäre zu groß, um es im Turnier
       mitzuschleppen; nach einem Neustart des Browsers gehört deshalb ein Blick auf
@@ -759,7 +759,7 @@ function tournamentRenamePanelHtml(){
       <button class="btn btn-primary" onclick="tournamentRenameSave()">Übernehmen</button>
       <button class="btn btn-secondary" onclick="tournamentToggleRename()">Abbrechen</button>
     </div>
-    <div style="font-size:.7rem;color:rgba(255,255,255,.35);margin-top:8px;">
+    <div class="tour-fussnote">
       Die Reihenfolge bleibt: Zeile 1 ist und bleibt das Team, das bisher als Erstes stand.
       Zwei Namen zu vertauschen tauscht die Punkte nicht mit.
     </div>

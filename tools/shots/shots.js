@@ -45,7 +45,9 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'gm', 'buzzer', 'buzzer-login'];
+// Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
+const HOST_SEITEN = new Set(['gm', 'turnier-host']);
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'buzzer', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -201,6 +203,21 @@ const AUFBAU = {
     });
     tournamentShowBoard();
   },
+  // Host-Seite des Turniers (Spielplan-Editor, Depot offen). Kommt nicht auf
+  // die Leinwand und darf scrollen - deshalb ohne Hoehenpruefung
+  // (HOST_SEITEN). Da fuer die Farben in hellen Richtungen (56de705 ff.).
+  'turnier-host': () => {
+    const spiele = Object.keys(TOURNAMENT_GAMES);
+    tournament = tournamentClean({
+      name: 'Spieleabend', teams: ['Team Rot', 'Team Blau', 'Team Grün', 'Team Gelb'],
+      games: spiele.concat(spiele).slice(0, 6).map((game, i) => ({
+        game, weight: 1 + (i % 2), date: 'Freitag', secret: i === 5,
+        done: i < 3, scores: i < 3 ? [300 - i * 20, 250, 180 + i * 30, 120] : null,
+      })),
+    });
+    tournamentDataOpen = true;
+    showScreen('tournament-screen'); renderTournament();
+  },
   'wwm-joker': () => {
     startWwmActual();
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
@@ -304,7 +321,7 @@ async function kontaktbogen(page, show, bilder) {
         screen: (document.querySelector('.screen.active') || {}).id || '',
       }));
       if (m.theme !== t) befunde.push(`${show} ${name}: data-theme ist "${m.theme}"`);
-      if (!handy && show !== 'gm' && m.ueber > 1) befunde.push(`${show} ${name}: ${m.ueber} px hoeher als das Fenster (${W}x${H}, Screen ${m.screen})`);
+      if (!handy && !HOST_SEITEN.has(show) && m.ueber > 1) befunde.push(`${show} ${name}: ${m.ueber} px hoeher als das Fenster (${W}x${H}, Screen ${m.screen})`);
       fehler.forEach(f => befunde.push(`${show} ${name}: JS-Fehler - ${f}`));
       if (flag('reduced')) {
         const lauf = await page.evaluate(() => ({

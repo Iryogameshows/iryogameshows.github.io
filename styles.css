@@ -816,6 +816,26 @@ body {
 :root[data-theme-hell] .tour-spaeter { color: rgba(var(--fg-rgb),.45); }
 .q-list-item .q-meta.tour-weight { color: var(--accent-text); }
 .q-list-item.tour-leer { justify-content: center; color: rgba(var(--fg-rgb),.35); }
+/* Host-Seite des Turniers (renderTournament, Depot, Umbenennen) - dieselbe
+   Umstellung; im Studio-Blau unveraendert. Die blassen Hinweise sind auf
+   Creme heller als auf Dunkelblau, deshalb dort mehr Deckkraft. */
+.tour-zeile { width: 100%; }
+.tour-blass { color: rgba(var(--fg-rgb),.35); }
+.tour-hinweis { color: rgba(var(--gold-rgb),.75); }
+.tour-fussnote { font-size: .7rem; color: rgba(var(--fg-rgb),.35); margin-top: 8px; }
+.tour-datei { width: 100%; font-size: .72rem; color: rgba(var(--fg-rgb),.45); }
+.editor-card .tour-check {
+  display: flex; align-items: center; gap: 7px; margin-top: 10px;
+  font-size: .8rem; font-weight: 600; color: rgba(var(--fg-rgb),.7);
+}
+.tour-select {
+  flex: 2; min-width: 150px; padding: 11px 14px; border-radius: 8px;
+  border: 1.5px solid rgba(var(--fg-rgb),.1); background: rgba(0,0,0,.3); color: var(--fg);
+  font-family: inherit; font-size: .95rem; font-weight: 600; outline: none;
+}
+:root[data-theme-hell] :is(.tour-blass, .tour-fussnote, .q-list-item.tour-leer) { color: rgba(var(--fg-rgb),.5); }
+:root[data-theme-hell] .tour-datei { color: rgba(var(--fg-rgb),.6); }
+:root[data-theme-hell] .tour-hinweis { color: var(--accent-text); }
 .tour-icon-svg { display: inline-flex; vertical-align: middle; margin-right: 2px; }
 .tour-icon-svg svg { width: 22px; height: 22px; }
 .pmini-av { width: 34px; height: 34px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
