@@ -542,7 +542,28 @@ function showFinaleMatchup() {
   }, 'gap:16px;');
 }
 
+/* Undo im Finale. Eine falsch angeklickte Antwort war bis 2026-10-10 nicht
+   zu korrigieren. Gesichert wird vor jeder Antwort bzw. jedem "Nicht auf
+   dem Board"; zurueck geht es auch ueber den Teamwechsel hinweg. */
+/** @type {any[]} */
+let finaleUndoStack = [];
+function finaleSaveUndo() {
+  finaleUndoStack.push({
+    currentTeamIdx: finaleState.currentTeamIdx, currentQ: finaleState.currentQ,
+    scores: finaleState.scores.slice(), teamAnswers: finaleState.teamAnswers.map(a => a.slice()),
+  });
+}
+function finaleUndo() {
+  if (finaleState.phase !== 'answer' || !finaleUndoStack.length) return;
+  const u = finaleUndoStack.pop();
+  finaleState.currentTeamIdx = u.currentTeamIdx; finaleState.currentQ = u.currentQ;
+  finaleState.scores = u.scores; finaleState.teamAnswers = u.teamAnswers;
+  showScreen('finale-screen');
+  loadFinaleQuestion();
+}
+
 function startFinale() {
+  finaleUndoStack = [];
   finaleState.active = true;
   finaleState.currentTeamIdx = 0;
   finaleState.currentQ = 0;
@@ -613,6 +634,11 @@ function loadFinaleQuestion() {
 
 function finalePickAnswer(i) {
   const q = finaleState.questions[finaleState.currentQ];
+  if (finaleState.phase !== 'answer' || !q || !q.answers[i]) return;
+  // Dieselbe Antwort wie das erste Team zaehlt nicht (im GM ausgegraut;
+  // hier die Wache fuer Fernbefehle).
+  if (finaleState.currentTeamIdx === 1 && finaleState.teamAnswers[0][finaleState.currentQ] === i) return;
+  finaleSaveUndo();
   finaleState.teamAnswers[finaleState.currentTeamIdx][finaleState.currentQ] = i;
   finaleState.scores[finaleState.currentTeamIdx] += Number(q.answers[i].points) || 0;
   // Die Punktekarte existiert waehrend des Antwortens nicht (siehe
@@ -626,6 +652,8 @@ function finalePickAnswer(i) {
 }
 
 function finaleMarkMiss() {
+  if (finaleState.phase !== 'answer' || !finaleState.questions[finaleState.currentQ]) return;
+  finaleSaveUndo();
   finaleState.teamAnswers[finaleState.currentTeamIdx][finaleState.currentQ] = -1;
   updateGamemaster();
   finaleState.currentQ++;
@@ -1250,6 +1278,7 @@ function updateGamemasterFinale() {
   </div>
   <div class="gm-actions">
     <button class="gm-btn red" onclick="opener.finaleMarkMiss()">Nicht auf dem Board</button>
+    ${finaleUndoStack.length ? `<button class="gm-btn orange" onclick="opener.finaleUndo()">↩ Undo</button>` : ''}
   </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml);

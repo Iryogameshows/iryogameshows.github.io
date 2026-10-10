@@ -946,7 +946,13 @@ function showScreen(id) {
   setBoardIdle(!BOARD_PUBLIC_SCREENS.includes(id));
   moveIntroPickerTo(id);
   if (id === 'intro-edit-screen') renderIntroEditor();
-  if (id === 'setup-screen') ensureFeudLobbyConnected();
+  if (id === 'setup-screen') {
+    ensureFeudLobbyConnected();
+    // Finalfragen gibt es nur per Import - ohne sie endet Feud ohne Finale,
+    // das soll vor dem Start zu sehen sein, nicht erst am Ende.
+    setText('feud-setup-info', `${questions.length} Fragen · ${finaleQuestions.length} Finalfragen`
+      + (finaleQuestions.length ? '' : ' — ohne Finalfragen endet das Spiel ohne Finale'));
+  }
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
   if (id === 'reaction-board-screen') renderReactionBoard();
   if (id === 'players-screen') { ensurePlayersConnected(); setPlayersTab(playersTab); }
