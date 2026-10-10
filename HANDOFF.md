@@ -12,6 +12,53 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `dffe0bd` Turnier-Host-Seite in den hellen Richtungen lesbar
+
+**Gemacht:** `js/tournament.js` — die letzten 13 Inline-Farben
+(`renderTournament`, `tournamentDataPanelHtml`, Umbenennen-Panel) durch
+Klassen ersetzt: `.tour-pts`, `.tour-weight`, `.tour-stand` +
+`.tour-zeile`, `.tour-hinweis`, `.tour-blass`, `.tour-leer`,
+`.tour-fussnote`, `.tour-datei`, `.tour-check` (Haken-Label),
+`.tour-select` (Spieltyp-Auswahl). In `js/tournament.js` steht jetzt keine
+feste Farbe mehr (`grep "rgba(255,255,255\|#FFD23F"` leer).
+`styles.css` neben den `.tour-*`-Regeln von `56de705`; hell
+(`:root[data-theme-hell]`) blasse Hinweise .5 bzw. .6, Hinweis „zählt
+über die Team-Zuordnung“ in `--accent-text`.
+`tools/shots/shots.js`: Zustand `turnier-host` (Depot offen, Spiel 6
+geheim, Spiel 5 DDF mit Ergebnis von Hand), `HOST_SEITEN` (`gm`,
+`turnier-host`) ohne Höhenprüfung.
+
+**Warum so:** wie `56de705` — Tokens statt Regeln je Richtung, Studio-Blau
+bleibt gleich. Die Deckkraft hell nur dort angehoben, wo die blassen
+Hinweise auf Creme deutlich unter ihrem Studio-Wert lagen.
+
+**Geprüft (1280×720):**
+- Kontrast vorher → nachher, hell C/F/H/L/N/P/Q: „Noch nicht gespielt“
+  1,02–1,66 → 2,55–3,50; Ergebnis „Team Rot: 300 …“ 1,04–2,27 →
+  3,19–4,84; Punkte/Gewichtung 1,03–2,43 → 3,68–6,18; Hinweis Team-
+  Zuordnung 1,01–1,99 → 3,68–6,18; Fußnote 1,03–1,67 → 2,53–3,48;
+  „Geheim halten“ 1,06–2,59 → 4,01–6,81; Datei-Info 1,07–1,97 →
+  3,10–4,71. Studio-Blau: alle Werte gleich.
+- Berechnete Werte Studio-Blau (Reihenfolge, ohne Klassennamen):
+  `turnier` 109/0, `turnier-host` 225/3 abweichend — Breite von
+  `#intro-pick` und zwei Kindern 194,969 → 194,953 px (Rundung, im
+  Commit-Text vertauscht).
+- `node shots.js --shows turnier,turnier-host`: keine Befunde. Bild C
+  angesehen (oberer Teil).
+- `node check.js`, `node check.js --types`: alles in Ordnung.
+
+**Offen:**
+- Datum im Spielplan („Freitag“, `.q-meta`, global .25) bleibt hell bei
+  1,54–1,75 (Studio 2,24) — gemeinsame Klasse für alle Listen, nicht
+  angefasst.
+- Auswahlfeld und Eingaben der Editor-Karten liegen hell auf
+  `rgba(0,0,0,.3)` (grau auf Creme) — wie alle `.editor-card input`, nicht
+  angefasst, nicht gemessen.
+- `CLAUDE.md` nennt „16 Zustände“ — mit `turnier-host` sind es 17; nicht
+  geändert (braucht Freigabe).
+
+---
+
 ## 2026-10-10 — `56de705` Turnierstand in den hellen Richtungen lesbar
 
 **Gemacht:** `js/tournament.js` — `tournamentStandingsHtml` und
