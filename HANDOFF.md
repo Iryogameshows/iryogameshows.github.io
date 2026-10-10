@@ -12,6 +12,44 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `8a84676` Lange Feud-Frage in I, M, P, S · `01b4e79` CLAUDE.md
+
+**Gemacht:** `styles.css`, neuer `@media (max-height: 900px)`-Block direkt
+vor dem `prefers-reduced-motion`-Block am Dateiende:
+- I, M, P, S: `.q-text { line-height: 1.25 }` (vorher 1.5 geerbt).
+- I, S: `.board` `padding-block: 16px` (vorher 28 bzw. 26 px).
+- P: `.board` `padding-block: 14px` (vorher 22), `.q-text`
+  `margin-bottom: 10px` (vorher 18), `.answers` Abstand 8px (vorher 14).
+
+`CLAUDE.md` (`01b4e79`): Stand der Screenshot-Prüfung zurück auf „ohne
+Befunde“, wie im Eintrag zu `9ab5ee8` als offen vermerkt.
+
+**Warum so:** Gemessen bei 1280×720 mit der 103-Zeichen-Frage: Frage
+I 112, P 114, S 112, M 97 px hoch gegen Studio 83 — Schrift 1,4–1,7rem bei
+Zeilenhöhe 1,5; dazu weitere Brett-Polster und Feldabstände. E und Q
+haben ähnlich große Schrift, aber Zeilenhöhe ~1,1 und passten. Nur die
+Richtung und nur unter 900 px, damit 1920×1080 und Studio-Blau gleich
+bleiben. Schriftgröße bewusst nicht angefasst.
+
+**Geprüft:**
+- Messung danach 1280×720: I, M, P, S je 0 px Überstand; bei 1920×1080
+  dieselben Werte wie vorher (z. B. I Zeilenhöhe 40,8 px).
+- Voller `node shots.js` 1280×720: **keine Befunde** (alle 10 Zustände ×
+  19 Fassungen). Kontaktbogen `feud-lang` angesehen: Frage zweizeilig,
+  alle vier Zeilen des Bretts sichtbar.
+- `--vergleich` 1920×1080 Studio-Blau: `feud` 48, `feud-lang` 48
+  Elemente, 0 Abweichungen.
+- `node check.js` fehlerfrei.
+
+**Offen:** Fensterhöhen zwischen 721 und 900 px weiter ungemessen. Echtes
+Popout am Beamer nicht angesehen.
+
+**Fallstricke:** Die Regeln stehen absichtlich am Dateiende — gleiche
+Spezifität wie die Richtungsregeln (`:root[data-theme="X"] …`), sie müssen
+also danach kommen. Wer sie nach oben verschiebt, hebelt sie still aus.
+
+---
+
 ## 2026-10-10 — `9ab5ee8` CLAUDE.md: Stand der Screenshot-Prüfung
 
 **Gemacht:** Abschnitt „Screenshot-Prüfung“ in `CLAUDE.md`: statt „voller
