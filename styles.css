@@ -1178,6 +1178,15 @@ body {
 }
 .jeopardy-cell:active:not(.used) { transform: scale(.995); }
 .jeopardy-cell.used { background: var(--tile-used, #080c1e); color: transparent; cursor: default; }
+/* Niedrige Fenster: Das Brett passte bei 1280x720 (Beamer-Popout) schon im
+   Studio-Blau nicht - Unterkante 757 px, mit den Design-Richtungen bis 846 px
+   (J). Felder, Kopfzeile und Logo werden deshalb mit der Fensterhoehe
+   kleiner. Die Obergrenzen sind die alten festen Werte: ab etwa 890 px Hoehe
+   (also auch bei 1920x1080) bleibt alles wie vorher. */
+.jeopardy-cell { min-height: clamp(40px, 9vh - 10px, 70px); padding-block: clamp(3px, 2.5vh - 12px, 10px); }
+.jeopardy-cat { min-height: clamp(38px, 8vh - 11px, 60px); padding-block: clamp(4px, 2.5vh - 10px, 12px); }
+body:has(#jeopardy-screen.active) .logo { margin-top: clamp(8px, 6vh - 24px, 30px); }
+body:has(#jeopardy-screen.active) .logo svg { max-height: max(72px, 22vh - 48px); }
 .jeopardy-clue-overlay {
   position: fixed; inset: 0; z-index: 1000;
   background: var(--bg);
@@ -4220,7 +4229,7 @@ body {
   border: 2px solid #F4E58A; border-radius: 50% 45% 55% 48% / 52% 50% 46% 50%;
   color: #F4E58A; text-shadow: none; font-family: 'Patrick Hand', cursive; font-size: 1.3rem;
 }
-:root[data-theme="J"] .jeopardy-board { gap: 14px; padding: 18px; background: radial-gradient(ellipse 120% 90% at 50% 40%, #34453F 0%, #2E3C37 55%, #25312D 100%); }
+:root[data-theme="J"] .jeopardy-board { gap: clamp(8px, 2vh - 4px, 14px); padding: 18px; background: radial-gradient(ellipse 120% 90% at 50% 40%, #34453F 0%, #2E3C37 55%, #25312D 100%); }
 :root[data-theme="J"] .jeopardy-cat { font-family: 'Patrick Hand', cursive; font-weight: 400; font-size: 1.15rem; letter-spacing: 0; text-transform: none; }
 /* Jeopardy als Haftzettel mit Klebestreifen, Farbe reihum, leicht schief. */
 :root[data-theme="J"] .jeopardy-cell { position: relative; background: #F4E58A; color: #26332E; box-shadow: 0 6px 12px rgba(0,0,0,.4); font-family: 'Permanent Marker', cursive; font-size: 1.7rem; rotate: -2deg; }
@@ -4684,7 +4693,7 @@ body {
 :root[data-theme="Q"] .tile.open .tile-pts { color: #FFFFFF; text-shadow: 2px 2px 0 rgba(50,85,164,.6); font-family: 'Bowlby One', sans-serif; font-size: 1.5rem; }
 :root[data-theme="Q"] .jeopardy-board { gap: 6px; padding: 10px; background: #F2EEE4; }
 :root[data-theme="Q"] .jeopardy-cat { justify-content: flex-start; text-align: left; border-bottom: 2px solid #3255A4; font-family: 'Familjen Grotesk', sans-serif; font-weight: 700; font-size: .7rem; letter-spacing: 1px; }
-:root[data-theme="Q"] .jeopardy-cell { box-shadow: none; font-family: 'Bowlby One', sans-serif; font-size: 2.2rem; }
+:root[data-theme="Q"] .jeopardy-cell { box-shadow: none; font-family: 'Bowlby One', sans-serif; font-size: 2.2rem; line-height: 1.05; }
 :root[data-theme="Q"] .jeopardy-cell:hover:not(.used) { transform: none; color: #FF48B0; text-shadow: 3px 2px 0 rgba(50,85,164,.85); }
 /* Verbraucht: nur noch ein blasser Fehldruck. */
 :root[data-theme="Q"] .jeopardy-cell.used { color: rgba(50,85,164,.1); text-shadow: 3px 2px 0 rgba(255,72,176,.12); }
@@ -4814,9 +4823,9 @@ body {
 :root[data-theme="S"] .tile-num { font-family: 'Poiret One', sans-serif; font-weight: 400; font-size: 1.3rem; }
 :root[data-theme="S"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 1.4rem; }
 :root[data-theme="S"] .tile.open .tile-pts { color: #8A6A2C; text-shadow: none; font-family: 'Bodoni Moda', serif; font-weight: 800; font-size: 1.6rem; }
-:root[data-theme="S"] .jeopardy-board { gap: 8px; padding: 12px; }
+:root[data-theme="S"] .jeopardy-board { gap: clamp(5px, 1.6vh - 6px, 8px); padding: 12px; }
 :root[data-theme="S"] .jeopardy-cat { border-bottom: 1px solid #A8853F; font-family: 'Josefin Sans', sans-serif; font-weight: 600; font-size: .7rem; letter-spacing: 3px; }
-:root[data-theme="S"] .jeopardy-cell { font-family: 'Bodoni Moda', serif; font-weight: 800; font-size: 2rem; letter-spacing: 1px; }
+:root[data-theme="S"] .jeopardy-cell { font-family: 'Bodoni Moda', serif; font-weight: 800; font-size: 2rem; letter-spacing: 1px; line-height: 1.1; }
 :root[data-theme="S"] .jeopardy-cell:hover:not(.used) { transform: none; filter: brightness(1.08); }
 :root[data-theme="S"] .wwm-q { color: #EFE6D2; font-family: 'Bodoni Moda', serif; font-weight: 600; font-size: 1.9rem; line-height: 1.15; }
 :root[data-theme="S"] .wwm-opt { background: transparent; color: #EFE6D2; box-shadow: inset 0 0 0 1px #A8853F; font-family: 'Bodoni Moda', serif; font-weight: 600; font-size: 1.35rem; }
