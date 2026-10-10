@@ -12,6 +12,59 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `e80ad5f` Feud-Finale passt in 1280×720
+
+**Gemacht (`styles.css`):**
+- Logo-Verkleinerung (`body:has(… .active) .logo`) um `#finale-screen`
+  erweitert — dieselbe Regel wie Jeopardy, Feud, WWM.
+- `@media (max-height: 900px)` direkt hinter dem Finale-Block:
+  `#finale-screen.active` als umbrechende Zeile (`flex-direction: row;
+  flex-wrap: wrap`), Timer/Brett/Vergleichskarten `flex-basis: 100%` —
+  dadurch stehen Kopf (links ausgerichtet) und Punktestand in einer Zeile.
+  Titel 2rem, Punktekarten 6px/20px Polster, Punkte 2rem, Brett-Polster
+  oben/unten 12px, Frage 4px/10px, Vergleichskarten 8px/16px, Punkte
+  1,6rem, Abstände `clamp(6px, 2vh - 4px, 14px)`.
+
+**Warum so:** Gemessen (Studio, 1280×720): Logo 191, Kopf 94,
+Punktestand 91, Brett 328, Karten 124 px — 205 px zu viel. Nur Logo und
+Polster zu verkleinern hätte geschätzt 160 px gebracht, für E (280 px zu
+hoch) nicht genug. Kopf und Punktestand nebeneinander spart allein eine
+ganze Zeile (~90 px), ohne Schrift im Brett anzufassen. Media Query statt
+`clamp()`, weil es ein Umbau der Anordnung ist, kein stufenloses
+Schrumpfen; Schwelle 900 px, damit 1920×1080 unverändert bleibt.
+Verworfen: Vergleichskarten neben das Brett (Screen ist 880 px breit,
+hätte `max-width` für den Finale-Screen gebraucht), Kopfzeilen „Auflösung“
+doppelt ausblenden (Text kommt aus JS, CSS hat keinen Haken dafür).
+
+**Geprüft:**
+- Erste Stufe (ohne Titel/Frage-Anpassung): Studio, A, H, S passten,
+  E 11, I 12, Q 8, P 25 px zu hoch. Danach alle 0.
+- Voller `node shots.js` 1280×720: **4 Befunde**, nur noch `feud-lang`
+  I 34, P 34, S 14, M 6 px (bekannt, nicht Teil dieser Änderung);
+  `feud-finale` in allen 19 Fassungen ohne Befund. Kontaktbogen
+  angesehen: Brett, Punktestand und beide Vergleichskarten in allen
+  Richtungen vollständig sichtbar.
+- `--vergleich` 1920×1080 gegen Basis von vor der Änderung:
+  `feud-finale` 54, `feud` 48 Elemente, **0 Abweichungen**.
+- Antwortphase des Finales (große Frage, `startFinale()`): in allen 19
+  Fassungen 0 px zu hoch (Messskript im Scratchpad, nicht im Repo).
+- `node check.js` fehlerfrei.
+
+**Offen:**
+- Ungeprüft zwischen 721 und 900 px Fensterhöhe (nur 720 und 1080
+  gemessen) — dort gilt schon die Zeilenanordnung.
+- Echtes Popout am Beamer-Rechner nicht angesehen.
+- `CLAUDE.md`: „voller Lauf … ohne Befunde“ stimmt weiter nicht (jetzt 4,
+  `feud-lang`), Änderung wartet auf Davids Freigabe.
+
+**Fallstricke:** Themen-Regeln haben höhere Spezifität
+(`:root[data-theme] …`); die Media Query setzt sich hier nur durch, weil
+keine Richtung `.finale-title`, `.finale-score-card`-Polster oder
+`.finale-reveal-team`-Polster selbst setzt — bei einer neuen Richtung, die
+das tut, greift die Verkleinerung dort nicht.
+
+---
+
 ## 2026-10-10 — `e3acca7` Drei Zustände gemessen: Feud lang, Feud-Finale, WWM-Joker
 
 **Gemacht:** `tools/shots/shots.js` um drei Aufbauten erweitert, die seit
