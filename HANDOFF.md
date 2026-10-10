@@ -12,6 +12,23 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `3ce6b69` CLAUDE.md: 17 Zustände
+
+**Gemacht:** Stand der Screenshot-Prüfung in `CLAUDE.md` auf 17 Zustände
+(mit `turnier-host`) und Hinweis auf `HOST_SEITEN` ohne Höhenprüfung.
+Freigabe David.
+
+**Geprüft:** `turnier-host` zusätzlich bei 1280×800, 1920×1080 und
+`--reduced`: je keine Befunde (1280×720 schon mit `dffe0bd`). Die
+übrigen 16 Zustände nicht neu gelaufen — Stand `00ecc8e`, seitdem nur
+`js/tournament.js` und `.tour-*`-Regeln geändert. `node check.js`
+fehlerfrei.
+
+**Offen:** keine neuen; siehe Eintrag zu `dffe0bd` (`.q-meta`,
+Eingabefelder hell).
+
+---
+
 ## 2026-10-10 — `dffe0bd` Turnier-Host-Seite in den hellen Richtungen lesbar
 
 **Gemacht:** `js/tournament.js` — die letzten 13 Inline-Farben
