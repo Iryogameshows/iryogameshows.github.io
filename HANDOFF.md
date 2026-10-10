@@ -12,6 +12,21 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `3be649e` Undo: Reset beim Start, Sichern nach der Prüfung (Liste Punkt 3)
+
+**Gemacht:** `wwmUndoStack/wwdsUndoStack/ddfUndoStack/pihUndoStack.reset()`
+beim Spielstart (TP hatte es schon). `save()` hinter die Wache verschoben
+in `wwmLock/Next/Fifty/Phone/Audience`, `wwdsPick/Lock/Reveal/Next/Audience`,
+`pihEvaluate` (nach „kein Gebot“), `ddfApplyLoss`.
+**Warum:** Undo im ersten Zug holte das vorige Spiel zurück (DDF/PIH mit
+alter Spielerliste); abgewiesene Klicks legten wirkungslose Einträge ab.
+**Geprüft (Browser, gestubbt):** 12/12. `check.js`, `--types` ok.
+**Offen:** Die übrigen Undo-Lücken der Liste (WWM-Reveal ohne Sichern,
+WWDS-Master/Stichfrage, Feud „Nächste Runde“/Finale) sind nicht Teil
+davon.
+
+---
+
 ## 2026-10-10 — `9761b5a` Feud: „Alle aufdecken“ schreibt Punkte gut (Liste Punkt 2)
 
 **Gemacht:** `revealAll` (`js/feud.js`) schreibt erspielte
