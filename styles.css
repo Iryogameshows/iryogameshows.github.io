@@ -5023,6 +5023,27 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   #pih-screen:has(.pih-bid-row) .pih-stage :is(img, video) { max-height: clamp(80px, 34vh - 160px, 250px); }
 }
 
+/* Eingabefelder in den hellen Richtungen. Die Felder haben fest
+   rgba(0,0,0,.3) als Grund, viele dazu inline color:#fff oder #FFD23F (121
+   Feld-Tags in js/ und index.html). Auf Creme ergab das Kontrast 1,0-2,7,
+   Median 2,3-3,1 (Studio-Blau 18,7). Hier ein heller Feldgrund mit Schrift
+   in --fg. !important, weil sonst jedes Inline-Style im JS einzeln
+   umgestellt werden muesste - und ein neues Feld waere wieder falsch.
+   Nur hell: Studio-Blau und die dunklen Richtungen bleiben unberuehrt. */
+:root[data-theme-hell] { --field-bg: rgba(255,255,255,.78); --field-line: rgba(var(--fg-rgb),.28); }
+/* Auf den farbigen Teamkarten ist --fg weiss (siehe oben) - dort bleibt der
+   dunkle Feldgrund, sonst stuende Weiss auf Weiss. */
+:root[data-theme-hell] :is(.team-card, .team-panel, .jeopardy-team, .wwds-team):is(.red, .blue, .green) {
+  --field-bg: rgba(0,0,0,.3); --field-line: rgba(255,255,255,.12);
+}
+:root[data-theme-hell] :is(input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]):not([type=file]), textarea, select) {
+  background: var(--field-bg) !important; color: var(--fg) !important; border-color: var(--field-line) !important;
+}
+:root[data-theme-hell] :is(input, textarea, select):focus { border-color: var(--accent-text) !important; }
+:root[data-theme-hell] :is(input, textarea)::placeholder { color: rgba(var(--fg-rgb),.45) !important; }
+/* Zusatzinfo in Listen (".q-meta", z. B. "5 Antworten"): hell 1,5-1,75. */
+:root[data-theme-hell] .q-meta:not(.tour-weight) { color: rgba(var(--fg-rgb),.5); }
+
 /* Reduzierte Bewegung: Signatur-Momente und Dauerlaeufer aus. Steht am Ende
    des Blocks, damit es jede Richtung oben drueber schlaegt. */
 @media (prefers-reduced-motion: reduce) {
