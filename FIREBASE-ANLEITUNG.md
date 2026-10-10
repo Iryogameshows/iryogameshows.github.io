@@ -37,15 +37,14 @@ Veröffentlicht werden sie per CLI, nicht per Hand in der Konsole:
 npx firebase-tools deploy --only database --project keller-buzzer
 ```
 
-Sie erlauben nur die Pfade, die die App benutzt (`buzzer`, `design`, `votes`,
-`tournament`, `gmremote`), prüfen Typen und Längen und sperren das Löschen
-ganzer Zweige. Wer einen neuen Pfad in Firebase einführt, trägt ihn dort ein —
-sonst lehnt die Datenbank das Schreiben ab (Fehler `PERMISSION_DENIED`).
+Die Regeln sind bewusst offen (`.read`/`.write: true`): die Shows laufen
+privat, und jede strengere Regel kann mitten im Spiel einen Schreibvorgang
+ablehnen (`PERMISSION_DENIED`), den die App still verschluckt.
 
-> Hinweis: Ohne Firebase Auth können die Regeln Host und Fremde nicht
-> unterscheiden. Lesen kann weiterhin jeder mit der Adresse, und in die
-> erlaubten Pfade kann jeder schreiben. Die Regeln verhindern Löschen im
-> Ganzen, fremde Pfade und falsche Typen, nicht gezieltes Stören.
+> Hinweis: Damit kann jeder mit der Adresse Daten lesen, schreiben und
+> löschen. Strengere, im Emulator getestete Regeln stehen in Commit
+> `641a008` (`git show 641a008:database.rules.json`), falls sie später
+> gebraucht werden.
 
 ---
 
