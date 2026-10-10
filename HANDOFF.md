@@ -12,6 +12,49 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-10 — `d897a6d` DDF, PIH, TP, Ergebnis, Turnierstand gemessen
+
+**Gemacht:** `tools/shots/shots.js` um fünf Aufbauten erweitert (in
+`ALLE_SHOWS`): `ddf` (acht Handy-Spieler, Antwort offen, Abstimmung),
+`pih` (acht Spieler, alle Gebote aufgelöst), `tp` (Frage gezogen, Lösung
+gezeigt), `ergebnis` (Feud-Ergebnis), `turnier` (`tournament-board-screen`,
+vier Teams, sechs Spiele). Behoben ist nichts.
+
+**Warum so:** Spieler als Accounts (`allPlayers` + `roster(game).selected`)
+statt Gäste. Erster Versuch mit acht Gästen: DDF 425 px zu hoch — davon
+gut 300 px die Knopfreihen, mit denen der Host für Gäste ohne Handy
+abstimmt (`ddfRenderVoteGrid`, `js/ddf.js:212`). Das ist ein eigener,
+seltener Fall. Turnier zuerst am `tournament-screen` gemessen (978 px) —
+das ist die Verwaltungsseite des Hosts, nicht in `BOARD_PUBLIC_SCREENS`
+(`js/feud.js:728`); gemessen wird jetzt der Turnierstand für die Leinwand.
+TP zog die Frage zufällig, je Richtung eine andere — `Math.random` beim
+Ziehen jetzt fest.
+
+**Geprüft:**
+- 1280×720, alle 19 Fassungen: **57 Befunde** — `ddf` 52–126 px (Studio
+  101, I 126), `pih` 195–276 px (Studio 222, Q 276), `turnier` 133–153 px
+  (Studio 135). `tp` und `ergebnis`: alle passen.
+- 1920×1080, dieselben fünf: keine Befunde.
+- Bilder angesehen: DDF — unter dem Bild liegen der Hinweis „Abstimmung
+  läuft“ und der Stimmenzähler. PIH — die Gebotsliste läuft ab Platz 5
+  unten heraus. Turnier — der Spielplan ab Spiel 4.
+- `node check.js` fehlerfrei.
+
+**Offen:**
+- DDF, PIH, Turnierstand passen bei 1280×720 in keiner Richtung.
+- DDF mit Gästen ohne Handy: zusätzlich die Host-Knopfreihen auf dem
+  Screen, auch im Zuschauerfenster sichtbar — nicht gemessen als eigener
+  Zustand.
+- `CLAUDE.md` „voller Lauf … ohne Befunde“ stimmt wieder nicht (jetzt 57);
+  nicht geändert, wartet auf Davids Freigabe.
+
+**Fallstricke:** Aufbau-Funktionen werden per `page.evaluate` in die Seite
+geschickt — Hilfsfunktionen aus `shots.js` gibt es dort nicht, alles muss
+im Funktionsrumpf stehen. `--out` mit relativem Pfad landet unter
+`tools/shots/`, dort ist nur `out/` ignoriert.
+
+---
+
 ## 2026-10-10 — Screenshot-Prüfung bei 1280×800 und 1280×900 (nur Messung)
 
 **Geprüft (Stand `b5f9b30`):** `node shots.js --size 1280x800` (alle 10
