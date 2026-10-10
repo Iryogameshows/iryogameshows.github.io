@@ -20,6 +20,7 @@ function startGameActual() {
   state.teamStrikes = new Array(state.teamCount).fill(0);
   state.currentRound = 0; state.currentTeam = Math.floor(Math.random() * state.teamCount);
   feudRoundUndo = null;   // kein Ruecksprung ins vorige Spiel
+  feudTieChoice = null;
   state.roundQuestions = shuffled(questions);
   finaleState.questions = shuffled(finaleQuestions);
   finaleState.active = false;
@@ -485,6 +486,16 @@ function endGame() {
   feudBuzzDisconnect(); // ab jetzt läuft das Finale, kein Buzzer mehr nötig
   if (state.teamCount === 3) {
     const sorted = state.scores.map((s,i) => ({score:s, idx:i})).sort((a,b) => b.score - a.score);
+    /* Gleichstand um Platz 2: der Host entscheidet (Entscheidung David
+       2026-10-10). Vorher entschied still die Teamnummer. Gilt auch, wenn
+       alle drei gleich stehen - dann ist Platz 1 der mit der kleinsten
+       Nummer, um Platz 2 wird gewaehlt. */
+    if (sorted[1].score === sorted[2].score) {
+      finaleState.teams = [sorted[0].idx, -1];
+      feudTieChoice = [sorted[1].idx, sorted[2].idx];
+      showFinaleIntroScreen(feudShowTieChoice);
+      return;
+    }
     finaleState.teams = [sorted[0].idx, sorted[1].idx];
     showFinaleIntroScreen(() => showEliminationScreen(sorted[2].idx));
   } else {
@@ -510,6 +521,48 @@ function showResults() {
   recordAccountGameResult(state.teamNames, state.scores);
   showScreen('result-screen');
   if (winners.length === 1) confetti();
+}
+
+/** Gleichstand um Platz 2: wer ins Finale kommt, waehlt der Host.
+ *  @type {number[]|null} */
+let feudTieChoice = null;
+function feudShowTieChoice() {
+  if (!feudTieChoice) return;
+  const [a, b] = feudTieChoice;
+  // Bewusst KEIN Klick-Overlay (GM_OVERLAY_SELECTOR): ein "Weiter" ohne
+  // Wahl gaebe es hier nicht. Die Knoepfe stehen im GM-Fenster.
+  const ov = document.createElement('div');
+  ov.className = 'feud-tie-overlay';
+  ov.innerHTML = `<div class="elim-text" style="opacity:1;animation:none;">Gleichstand um Platz 2</div>
+    <div class="elim-team" style="color:var(--accent-text);opacity:1;animation:none;">${escapeHtml(state.teamNames[a])} · ${escapeHtml(state.teamNames[b])}</div>
+    <div class="elim-sub" style="opacity:1;animation:none;">Der Host entscheidet, wer ins Finale kommt</div>`;
+  document.body.appendChild(ov);
+  updateGamemaster();
+}
+/** @param {number} idx */
+function feudPickFinalist(idx) {
+  if (!feudTieChoice || feudTieChoice.indexOf(idx) < 0) return;
+  const raus = feudTieChoice[0] === idx ? feudTieChoice[1] : feudTieChoice[0];
+  feudTieChoice = null;
+  finaleState.teams = [finaleState.teams[0], idx];
+  document.querySelectorAll('.feud-tie-overlay').forEach(e => e.remove());
+  showEliminationScreen(raus);
+}
+function updateGamemasterFeudTie() {
+  const ch = feudTieChoice || [];
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}</style></head><body>
+  ${gmHeaderHtml('Gamemaster', 'Family Feud · Gleichstand um Platz 2')}
+  <div class="gm-body"><div class="gm-main">
+    <div class="question">Wer kommt ins Finale?</div>
+    <div class="hint-line">${ch.map(i => escapeHtml(state.teamNames[i]) + ': ' + state.scores[i]).join(' · ')}</div>
+  </div><div class="gm-side">${gmNotesPanelHtml()}</div></div>
+  <div class="gm-actions">${ch.map(i => `<button class="gm-btn gold" onclick="opener.feudPickFinalist(${i})">${escapeHtml(state.teamNames[i])} kommt weiter</button>`).join('')}</div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml);
 }
 
 function showEliminationScreen(eliminatedIdx) {
@@ -1144,6 +1197,7 @@ function updateGamemaster() {
      zweites Mal auf. */
   if (screenActive('ddf-screen')) return updateGamemasterDdf();
   if (screenActive('pih-screen')) return updateGamemasterPih();
+  if (feudTieChoice && !gmActiveOverlay()) return updateGamemasterFeudTie();
   if (finaleState.active) return updateGamemasterFinale();
   if (screenActive('tournament-screen')) return updateGamemasterTournament();
   // Ohne diesen Zweig bleibt das GM-Fenster am Spielende auf dem letzten Stand
