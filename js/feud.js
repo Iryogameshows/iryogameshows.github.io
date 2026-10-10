@@ -19,6 +19,7 @@ function startGameActual() {
   state.scores = new Array(state.teamCount).fill(0);
   state.teamStrikes = new Array(state.teamCount).fill(0);
   state.currentRound = 0; state.currentTeam = Math.floor(Math.random() * state.teamCount);
+  feudRoundUndo = null;   // kein Ruecksprung ins vorige Spiel
   state.roundQuestions = shuffled(questions);
   finaleState.questions = shuffled(finaleQuestions);
   finaleState.active = false;
@@ -438,7 +439,40 @@ function updateScores() {
   }
 }
 
+/* "Naechste Runde" rueckgaengig. Der Rundenwechsel leert actionHistory
+   (loadRound), ein Fehlklick vergab bis 2026-10-10 die Punkte und war nicht
+   mehr zu holen. Gemerkt wird der ganze Stand VOR dem Wechsel samt Verlauf;
+   undoLast() greift darauf zu, sobald die neue Runde nichts mehr zum
+   Zuruecknehmen hat. Nicht beim letzten Wechsel: danach laeuft das Finale. */
+/** @type {any} */
+let feudRoundUndo = null;
+function feudUndoRound() {
+  const u = feudRoundUndo;
+  if (!u) return false;
+  feudRoundUndo = null;
+  state.currentRound = u.currentRound;
+  state.scores = u.scores; state.revealed = u.revealed; state.roundPoints = u.roundPoints;
+  state.teamStrikes = u.teamStrikes; state.currentTeam = u.currentTeam; state.allOut = u.allOut;
+  state.questionRevealed = u.questionRevealed;
+  actionHistory = u.history;
+  const q = state.roundQuestions[state.currentRound];
+  setText('round-info', `Runde ${state.currentRound+1} / ${state.roundQuestions.length}`);
+  const qEl = document.getElementById('question-display');
+  if (qEl && q) {
+    qEl.classList.toggle('hidden-q', !state.questionRevealed);
+    const inner = qEl.querySelector('.q-inner'); if (inner) inner.textContent = q.question;
+  }
+  resetMediaOverlay();
+  updateScores(); updateRoundPts(); renderBoard(); updateStrikes(); updateActiveTeam(); updateGamemaster();
+  return true;
+}
+
 function nextRound() {
+  feudRoundUndo = state.currentRound + 1 < state.roundQuestions.length ? {
+    currentRound: state.currentRound, scores: [...state.scores], revealed: [...state.revealed],
+    roundPoints: state.roundPoints, teamStrikes: [...state.teamStrikes], currentTeam: state.currentTeam,
+    allOut: state.allOut, questionRevealed: state.questionRevealed, history: actionHistory.slice(),
+  } : null;
   if (!state.revealed.every(Boolean)) {
     state.scores[state.currentTeam] += state.roundPoints;
     state.roundPoints = 0; updateScores();

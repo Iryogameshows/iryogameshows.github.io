@@ -854,7 +854,8 @@ function saveSnapshot() {
 }
 
 function undoLast() {
-  if (!actionHistory.length) return;
+  // Nichts mehr in dieser Runde? Dann den Rundenwechsel selbst (feud.js).
+  if (!actionHistory.length) { feudUndoRound(); return; }
   const prev = actionHistory.pop();
   state.scores = prev.scores;
   state.revealed = prev.revealed;
