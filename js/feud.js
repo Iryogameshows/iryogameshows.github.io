@@ -774,6 +774,7 @@ function showFinaleSwitch() {
 // Render-Funktion angefasst werden muss. Das Hauptfenster bleibt dabei für
 // den Host nutzbar (Menü, GM-Panel usw.).
 let boardWin = null;
+let popoutBlockedWarned = false;
 let boardMirrorObserver = null;
 let boardMirrorScheduled = false;
 
@@ -848,6 +849,7 @@ function boardIdleFromCurrentScreen() {
 }
 
 function openMainscreen() {
+  popoutBlockedWarned = true;   // die Meldung kommt hier ohnehin, s. unten
   openBoardPopout();
   if (!boardWin || boardWin.closed) {
     alert('Der Browser hat das Fenster blockiert.\n\nPop-ups für diese Seite erlauben und noch einmal klicken.');
@@ -957,7 +959,17 @@ function openBoardPopout() {
      Wurzelverzeichnis liegt. */
   const url = new URL('mainscreen/', location.href).href;
   boardWin = window.open(url, 'Board', 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no');
-  if (!boardWin) return; // vom Browser blockiert (Pop-up-Blocker)
+  if (!boardWin) {
+    /* Vom Pop-up-Blocker verhindert. Bis 2026-10-10 ohne Meldung - der Host
+       merkte es erst am leeren Beamer. Einmal je Sitzung sagen, sonst kommt
+       die Meldung bei jedem Spielstart. Passiert auch, wenn das Spiel vom
+       Handy-Gamepad gestartet wird: dort fehlt die Nutzergeste. */
+    if (!popoutBlockedWarned) {
+      popoutBlockedWarned = true;
+      alert('Das Zuschauerfenster (Beamer) wurde vom Pop-up-Blocker verhindert.\n\nPop-ups für diese Seite erlauben oder das Fenster über "🖥 Mainscreen öffnen" starten.');
+    }
+    return;
+  }
   /* Die Seite meldet sich selbst ueber boardPageReady(). Der load-Haken hier
      ist der Rueckfall fuer den Fall, dass sie aus dem Cache kommt und ihr
      Skript schon gelaufen ist, bevor diese Zeile ueberhaupt erreicht wurde. */
