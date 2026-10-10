@@ -407,6 +407,7 @@ cd tools/shots && npm install      # einmal pro Gerät (node_modules ist ignorie
 node shots.js                      # alle Shows x alle Richtungen, 1280x720
 node shots.js --basis              # vor einer Änderung: Studio-Blau merken
 node shots.js --vergleich          # danach: Studio-Blau unverändert?
+node shots.js --reduced            # mit „Bewegung reduzieren“: läuft noch etwas?
 ```
 
 **Pflicht nach jeder Änderung an CSS, Design-Richtungen, GM-Panel oder
@@ -421,10 +422,14 @@ anderer Pfad per Umgebungsvariable `CHROME`. Eigener kleiner Server, der
 Dev-Server muss nicht laufen. Warum es das gibt und die Einzelheiten:
 BAUPLAN 5.
 
-**Stand 2026-10-10 (`8a84676`):** voller Lauf bei 1280×720 ohne Befunde —
-Jeopardy, Feud (auch mit Frage über zwei Zeilen), WWM (auch mit
-Publikumsjoker) und die Feud-Finale-Auflösung passen in allen Richtungen.
-Neue Befunde gehören also zur Änderung, die gerade gemacht wurde.
+**Stand 2026-10-10 (`00ecc8e`):** voller Lauf bei 1280×720, 1280×800 und
+1920×1080 ohne Befunde, ebenso `--reduced` — 16 Zustände: Feud (auch Frage
+über zwei Zeilen, Finale-Auflösung), Jeopardy, WWM (auch Publikumsjoker),
+WWDS, DDF, Preis ist heiß (Auflösung und Bietphase, mit Produktfoto), TP,
+Ergebnis, Turnierstand, GM-Panel, Handy-Buzzer und -Login, je in allen
+Richtungen. Neue Befunde gehören also zur Änderung, die gerade gemacht
+wurde. Ein voller Lauf dauert gut 6 Minuten je Größe — im Hintergrund
+starten.
 
 ## Deploy
 
