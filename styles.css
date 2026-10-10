@@ -4926,6 +4926,20 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen).active
    Dort eine Panel-Flaeche mit Linie, wie die anderen Kaesten. */
 :root[data-theme-hell] .wwm-ladder { background: var(--panel); box-shadow: inset 0 0 0 2px var(--line); }
 
+/* Niedriges Fenster (Beamer-Popout 1280x720): I, M, P, S setzen die Frage
+   gross (1.4-1.7rem) bei Zeilenhoehe 1.5 und haben weite Brett-Polster und
+   Abstaende - eine Frage ueber zwei Zeilen schob das Feud-Brett 6-34 px
+   unten heraus (tools/shots feud-lang). Unter 900 px Hoehe enger, darueber
+   unveraendert. */
+@media (max-height: 900px) {
+  :root:is([data-theme="I"], [data-theme="M"], [data-theme="P"], [data-theme="S"]) .q-text { line-height: 1.25; }
+  :root:is([data-theme="I"], [data-theme="S"]) .board { padding-block: 16px; }
+  :root[data-theme="P"] .board { padding-block: 14px; }
+  :root[data-theme="P"] .q-text { margin-bottom: 10px; }
+  :root[data-theme="P"] .answers { gap: 8px; }
+  :root[data-theme="P"] .answers.split { row-gap: 8px; }
+}
+
 /* Reduzierte Bewegung: Signatur-Momente und Dauerlaeufer aus. Steht am Ende
    des Blocks, damit es jede Richtung oben drueber schlaegt. */
 @media (prefers-reduced-motion: reduce) {
