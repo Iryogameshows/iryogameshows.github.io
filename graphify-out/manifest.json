@@ -1,0 +1,1910 @@
+{
+  ".claude/hooks/commit-gate.js": {
+    "mtime": 1791539230.0078917,
+    "seen": 1791807199.3309655,
+    "ast_hash": "0cf8dc59b1b5f1f88ee6efe29b935f59",
+    "semantic_hash": "0cf8dc59b1b5f1f88ee6efe29b935f59"
+  },
+  ".claude/hooks/design-reminder.js": {
+    "mtime": 1791642859.2136376,
+    "seen": 1791807199.3309717,
+    "ast_hash": "a78c782a4220a3877bb9011b0da34718",
+    "semantic_hash": "a78c782a4220a3877bb9011b0da34718"
+  },
+  ".claude/launch.json": {
+    "mtime": 1789457328.533086,
+    "seen": 1791807199.330974,
+    "ast_hash": "230a300d21497d438d49f95bf8300dbd",
+    "semantic_hash": "230a300d21497d438d49f95bf8300dbd"
+  },
+  ".claude/settings.json": {
+    "mtime": 1791648578.758864,
+    "seen": 1791807199.330976,
+    "ast_hash": "2bf9c124ca5aaa7da6240ba4a36d4b8d",
+    "semantic_hash": "2bf9c124ca5aaa7da6240ba4a36d4b8d"
+  },
+  "check.js": {
+    "mtime": 1790236854.1414204,
+    "seen": 1791807199.3309774,
+    "ast_hash": "fa49941f96e1c80436109c2144f1b07d",
+    "semantic_hash": "fa49941f96e1c80436109c2144f1b07d"
+  },
+  "database.rules.json": {
+    "mtime": 1791651542.6867578,
+    "seen": 1791807199.3309789,
+    "ast_hash": "f98f14d9b3debdbdea5d814b14a84e44",
+    "semantic_hash": "f98f14d9b3debdbdea5d814b14a84e44"
+  },
+  "designs/polish/lib.js": {
+    "mtime": 1791539230.0230017,
+    "seen": 1791807199.3309803,
+    "ast_hash": "1b43d7cf7f549cd278f0b3e67531e173",
+    "semantic_hash": "1b43d7cf7f549cd278f0b3e67531e173"
+  },
+  "designs/polish/polish-A.js": {
+    "mtime": 1791539230.0230017,
+    "seen": 1791807199.3309815,
+    "ast_hash": "6f6144249eec006046e2f93e4ee318a1",
+    "semantic_hash": "6f6144249eec006046e2f93e4ee318a1"
+  },
+  "designs/polish/polish-D.js": {
+    "mtime": 1791539230.0230017,
+    "seen": 1791807199.3309824,
+    "ast_hash": "acb67d7000ad4727850d13b0bc7656f0",
+    "semantic_hash": "acb67d7000ad4727850d13b0bc7656f0"
+  },
+  "designs/polish/polish-E.js": {
+    "mtime": 1791539230.023999,
+    "seen": 1791807199.3309836,
+    "ast_hash": "4d4a34e14d8956e2e54d17512b149444",
+    "semantic_hash": "4d4a34e14d8956e2e54d17512b149444"
+  },
+  "designs/polish/polish-E2.js": {
+    "mtime": 1791539230.0252528,
+    "seen": 1791807199.330985,
+    "ast_hash": "d2f2bdc8e00a536347d2237414012a51",
+    "semantic_hash": "d2f2bdc8e00a536347d2237414012a51"
+  },
+  "designs/polish/polish-I.js": {
+    "mtime": 1791539230.0257566,
+    "seen": 1791807199.3309863,
+    "ast_hash": "91a2604565a8be46c73b1511cf8c0269",
+    "semantic_hash": "91a2604565a8be46c73b1511cf8c0269"
+  },
+  "designs/polish/polish-L.js": {
+    "mtime": 1791539230.026113,
+    "seen": 1791807199.3309875,
+    "ast_hash": "ca2a5b23e6374b7577b960c419615688",
+    "semantic_hash": "ca2a5b23e6374b7577b960c419615688"
+  },
+  "designs/polish/polish-O.js": {
+    "mtime": 1791539230.026764,
+    "seen": 1791807199.3309884,
+    "ast_hash": "0d8b1f66fdf03179718081ef12a7a455",
+    "semantic_hash": "0d8b1f66fdf03179718081ef12a7a455"
+  },
+  "designs/polish/polish-R.js": {
+    "mtime": 1791539230.026764,
+    "seen": 1791807199.3309894,
+    "ast_hash": "8e3794d1d4851ee417ce861b03df0a12",
+    "semantic_hash": "8e3794d1d4851ee417ce861b03df0a12"
+  },
+  "designs/polish/polish-S.js": {
+    "mtime": 1791539230.026764,
+    "seen": 1791807199.3309906,
+    "ast_hash": "04ea2cb0e4de2285ec86bdd64f782486",
+    "semantic_hash": "04ea2cb0e4de2285ec86bdd64f782486"
+  },
+  "firebase.json": {
+    "mtime": 1791650883.2633896,
+    "seen": 1791807199.3309915,
+    "ast_hash": "3d5299b2c0fde049f89aac7480fc2fd7",
+    "semantic_hash": "3d5299b2c0fde049f89aac7480fc2fd7"
+  },
+  "js/buzzer.js": {
+    "mtime": 1791667344.3572092,
+    "seen": 1791807199.3309927,
+    "ast_hash": "623f6481c50a2c00c2e1a700c62cdd35",
+    "semantic_hash": "623f6481c50a2c00c2e1a700c62cdd35"
+  },
+  "js/core.js": {
+    "mtime": 1791667885.4277575,
+    "seen": 1791807199.3309937,
+    "ast_hash": "0bc45dbe007b761f6779cf5b1be780a6",
+    "semantic_hash": "0bc45dbe007b761f6779cf5b1be780a6"
+  },
+  "js/ddf.js": {
+    "mtime": 1791667753.7113569,
+    "seen": 1791807199.3309946,
+    "ast_hash": "4f68d81d5402046bc95bd3e3ea6ed89d",
+    "semantic_hash": "4f68d81d5402046bc95bd3e3ea6ed89d"
+  },
+  "js/feud.js": {
+    "mtime": 1791667885.425756,
+    "seen": 1791807199.3309958,
+    "ast_hash": "113ca884051d4234b2c11c7b4afcdb62",
+    "semantic_hash": "113ca884051d4234b2c11c7b4afcdb62"
+  },
+  "js/intro.js": {
+    "mtime": 1791568979.559905,
+    "seen": 1791807199.330997,
+    "ast_hash": "cff8212cccacdb715788ba535e7f516d",
+    "semantic_hash": "cff8212cccacdb715788ba535e7f516d"
+  },
+  "js/jeopardy-ui.js": {
+    "mtime": 1791666193.135116,
+    "seen": 1791807199.3309984,
+    "ast_hash": "e7540223bf327db021bf2d3995c619fd",
+    "semantic_hash": "e7540223bf327db021bf2d3995c619fd"
+  },
+  "js/jeopardy.js": {
+    "mtime": 1791666269.5550334,
+    "seen": 1791807199.3309996,
+    "ast_hash": "02828c5953ed5484b415a13a2be6b298",
+    "semantic_hash": "02828c5953ed5484b415a13a2be6b298"
+  },
+  "js/pih.js": {
+    "mtime": 1791667753.8829293,
+    "seen": 1791807199.3310006,
+    "ast_hash": "bc276953f479adb50ed860a9b7dc3917",
+    "semantic_hash": "bc276953f479adb50ed860a9b7dc3917"
+  },
+  "js/resume.js": {
+    "mtime": 1791667871.0326614,
+    "seen": 1791807199.3310013,
+    "ast_hash": "2c59e19e6bed55ae12889e44e8a9108d",
+    "semantic_hash": "2c59e19e6bed55ae12889e44e8a9108d"
+  },
+  "js/roster.js": {
+    "mtime": 1791191461.2912292,
+    "seen": 1791807199.3310027,
+    "ast_hash": "4f87174e20f075e0ca579eb8153d90df",
+    "semantic_hash": "4f87174e20f075e0ca579eb8153d90df"
+  },
+  "js/theme.js": {
+    "mtime": 1791598158.4777212,
+    "seen": 1791807199.3310034,
+    "ast_hash": "dec3f5871147449cd6c79ec7eb9c4f24",
+    "semantic_hash": "dec3f5871147449cd6c79ec7eb9c4f24"
+  },
+  "js/tournament.js": {
+    "mtime": 1791667753.633103,
+    "seen": 1791807199.3310044,
+    "ast_hash": "f5de6a7e18534bfe42ef70235197337f",
+    "semantic_hash": "f5de6a7e18534bfe42ef70235197337f"
+  },
+  "js/tp.js": {
+    "mtime": 1791665123.753384,
+    "seen": 1791807199.3310058,
+    "ast_hash": "1b1989987ab565df6feca0ae2b04a848",
+    "semantic_hash": "1b1989987ab565df6feca0ae2b04a848"
+  },
+  "js/wwds.js": {
+    "mtime": 1791666396.1329765,
+    "seen": 1791807199.3310068,
+    "ast_hash": "aa89dbe695cbec4723e36295a2212c5b",
+    "semantic_hash": "aa89dbe695cbec4723e36295a2212c5b"
+  },
+  "js/wwm.js": {
+    "mtime": 1791666019.4313433,
+    "seen": 1791807199.3310077,
+    "ast_hash": "085d01c5c4a7fb9bca0b0b452d9324e7",
+    "semantic_hash": "085d01c5c4a7fb9bca0b0b452d9324e7"
+  },
+  "jsconfig.json": {
+    "mtime": 1790236854.1565142,
+    "seen": 1791807199.3310087,
+    "ast_hash": "df4b81f05745378b7d620e1e5e0111be",
+    "semantic_hash": "df4b81f05745378b7d620e1e5e0111be"
+  },
+  "tools/intros/lab.js": {
+    "mtime": 1791559490.8423986,
+    "seen": 1791807199.3310099,
+    "ast_hash": "7e4e641858229fb4e057a4dd2c5df3ef",
+    "semantic_hash": "7e4e641858229fb4e057a4dd2c5df3ef"
+  },
+  "tools/reactbits/add.js": {
+    "mtime": 1791539230.2227218,
+    "seen": 1791807199.3310108,
+    "ast_hash": "444bb1553629a05c3e7d1b8cfe325ed7",
+    "semantic_hash": "444bb1553629a05c3e7d1b8cfe325ed7"
+  },
+  "tools/reactbits/build.js": {
+    "mtime": 1791539230.2237246,
+    "seen": 1791807199.331012,
+    "ast_hash": "1f737d57227ab10d71c8bf0844f92a99",
+    "semantic_hash": "1f737d57227ab10d71c8bf0844f92a99"
+  },
+  "tools/reactbits/package.json": {
+    "mtime": 1791539230.2252455,
+    "seen": 1791807199.3310132,
+    "ast_hash": "ae9ab7fccc5b6dc9f6f36d7931f8d6ae",
+    "semantic_hash": "ae9ab7fccc5b6dc9f6f36d7931f8d6ae"
+  },
+  "tools/reactbits/src/components/ShinyText.jsx": {
+    "mtime": 1791539230.227769,
+    "seen": 1791807199.3310144,
+    "ast_hash": "aa94828ab4b30006b9eb3f9f52299623",
+    "semantic_hash": "aa94828ab4b30006b9eb3f9f52299623"
+  },
+  "tools/reactbits/src/entry.jsx": {
+    "mtime": 1791539230.2287643,
+    "seen": 1791807199.3310153,
+    "ast_hash": "7f0223089def77e62c76fae869c52afd",
+    "semantic_hash": "7f0223089def77e62c76fae869c52afd"
+  },
+  "tools/shots/fbstub.js": {
+    "mtime": 1791599745.6919172,
+    "seen": 1791807199.3310165,
+    "ast_hash": "a80a0eb1472d3da1705887e8b9a36d49",
+    "semantic_hash": "a80a0eb1472d3da1705887e8b9a36d49"
+  },
+  "tools/shots/package.json": {
+    "mtime": 1791599821.0938284,
+    "seen": 1791807199.3310175,
+    "ast_hash": "b753ec8ce5c76973da180f1854a22cdf",
+    "semantic_hash": "b753ec8ce5c76973da180f1854a22cdf"
+  },
+  "tools/shots/shots.js": {
+    "mtime": 1791661383.4829934,
+    "seen": 1791807199.3310184,
+    "ast_hash": "6cedab695e8f138fd33e1596999c0aec",
+    "semantic_hash": "6cedab695e8f138fd33e1596999c0aec"
+  },
+  "types/globals.d.ts": {
+    "mtime": 1790236854.1606376,
+    "seen": 1791807199.3310194,
+    "ast_hash": "0946e9aacb751050211fcfadd26b5010",
+    "semantic_hash": "0946e9aacb751050211fcfadd26b5010"
+  },
+  "vendor/ScrollTrigger.min.js": {
+    "mtime": 1791539230.2297707,
+    "seen": 1791807199.3310213,
+    "ast_hash": "73a8d7ab83c061859cefddcd7f69120e",
+    "semantic_hash": "73a8d7ab83c061859cefddcd7f69120e"
+  },
+  "vendor/gsap.min.js": {
+    "mtime": 1791539230.2307649,
+    "seen": 1791807199.3310223,
+    "ast_hash": "ca5f3b302741c4edcb42f3b6b1b95f4e",
+    "semantic_hash": "ca5f3b302741c4edcb42f3b6b1b95f4e"
+  },
+  "vendor/lenis.min.js": {
+    "mtime": 1791539230.2322705,
+    "seen": 1791807199.3310235,
+    "ast_hash": "23ff8e76ad16fd5dac9e96bfc64e5047",
+    "semantic_hash": "23ff8e76ad16fd5dac9e96bfc64e5047"
+  },
+  "vendor/reactbits.js": {
+    "mtime": 1791539230.2391336,
+    "seen": 1791807199.3310244,
+    "ast_hash": "988ed63a66ff61b0ca525b0a27e85ac0",
+    "semantic_hash": "988ed63a66ff61b0ca525b0a27e85ac0"
+  },
+  "voting/data.js": {
+    "mtime": 1791539230.2402978,
+    "seen": 1791807199.3310254,
+    "ast_hash": "14754d46e8d5457a681f4adae83ee315",
+    "semantic_hash": "14754d46e8d5457a681f4adae83ee315"
+  },
+  ".claude/agents/import-auditor.md": {
+    "mtime": 1791539230.0068934,
+    "seen": 1791807199.3310263,
+    "ast_hash": "a165bbf852209f97462e39b69ff5e340",
+    "semantic_hash": "a165bbf852209f97462e39b69ff5e340"
+  },
+  ".claude/skills/abschluss/SKILL.md": {
+    "mtime": 1791642840.4814065,
+    "seen": 1791807199.3310275,
+    "ast_hash": "4f3cf05403878d4467d7380e2442741f",
+    "semantic_hash": "4f3cf05403878d4467d7380e2442741f"
+  },
+  ".claude/skills/design-pruefung/SKILL.md": {
+    "mtime": 1791642802.9192662,
+    "seen": 1791807199.3310285,
+    "ast_hash": "6d716f65106aa551b8c2dedbfdcf5f14",
+    "semantic_hash": "6d716f65106aa551b8c2dedbfdcf5f14"
+  },
+  ".claude/skills/handoff/SKILL.md": {
+    "mtime": 1791539230.0104096,
+    "seen": 1791807199.3310294,
+    "ast_hash": "0bcc007e637b56d20e56fed5cea64a7f",
+    "semantic_hash": "0bcc007e637b56d20e56fed5cea64a7f"
+  },
+  ".claude/skills/neue-show/SKILL.md": {
+    "mtime": 1791642840.3711853,
+    "seen": 1791807199.3310306,
+    "ast_hash": "29fd788d8f3cb2c258a3164e643619ec",
+    "semantic_hash": "29fd788d8f3cb2c258a3164e643619ec"
+  },
+  ".github/workflows/pages.yml": {
+    "mtime": 1790313505.0471363,
+    "seen": 1791807199.3310318,
+    "ast_hash": "60ab87dd69fdd6f76a89c821fccf9912",
+    "semantic_hash": "60ab87dd69fdd6f76a89c821fccf9912"
+  },
+  "BAUPLAN.md": {
+    "mtime": 1791600391.8765767,
+    "seen": 1791807199.3310325,
+    "ast_hash": "8c96c5497a4c3337de44e19758ea7395",
+    "semantic_hash": "8c96c5497a4c3337de44e19758ea7395"
+  },
+  "CLAUDE.md": {
+    "mtime": 1791661983.5306811,
+    "seen": 1791807199.3310337,
+    "ast_hash": "01d5081a70964cdc6e0d06a94b01bdda",
+    "semantic_hash": "01d5081a70964cdc6e0d06a94b01bdda"
+  },
+  "FIREBASE-ANLEITUNG.md": {
+    "mtime": 1791651542.7748446,
+    "seen": 1791807199.3310347,
+    "ast_hash": "a47dfedc6e06b93dcc45a2fc440c9009",
+    "semantic_hash": "a47dfedc6e06b93dcc45a2fc440c9009"
+  },
+  "HANDOFF.md": {
+    "mtime": 1791668071.7867498,
+    "seen": 1791807199.3310356,
+    "ast_hash": "a20cf65b45a6c91491ce7c8186a992c1",
+    "semantic_hash": "a20cf65b45a6c91491ce7c8186a992c1"
+  },
+  "buzzer.html": {
+    "mtime": 1789457328.5353642,
+    "seen": 1791807199.3310366,
+    "ast_hash": "ce1d2321467bcfcdc725cc0dc81d8d7c",
+    "semantic_hash": "ce1d2321467bcfcdc725cc0dc81d8d7c"
+  },
+  "buzzer/index.html": {
+    "mtime": 1791598668.6045218,
+    "seen": 1791807199.3310378,
+    "ast_hash": "ebb03164c564049217f17d47a76075bc",
+    "semantic_hash": "ebb03164c564049217f17d47a76075bc"
+  },
+  "designs/index.html": {
+    "mtime": 1791539230.0210009,
+    "seen": 1791807199.3310387,
+    "ast_hash": "14663035977fc4259997c34d1b94f7f3",
+    "semantic_hash": "14663035977fc4259997c34d1b94f7f3"
+  },
+  "designs/polish/README.md": {
+    "mtime": 1791539230.0219984,
+    "seen": 1791807199.33104,
+    "ast_hash": "896c617aeea329d2afdedc8bf456aaca",
+    "semantic_hash": "896c617aeea329d2afdedc8bf456aaca"
+  },
+  "designs/s/A-DDF.html": {
+    "mtime": 1791539230.0282683,
+    "seen": 1791807199.331041,
+    "ast_hash": "4f2493a977e4082a275638e527b7d69b",
+    "semantic_hash": "4f2493a977e4082a275638e527b7d69b"
+  },
+  "designs/s/A-Ergebnis.html": {
+    "mtime": 1791539230.0282683,
+    "seen": 1791807199.331042,
+    "ast_hash": "240ee08ece35611037a6350b9861afea",
+    "semantic_hash": "240ee08ece35611037a6350b9861afea"
+  },
+  "designs/s/A-Handy.html": {
+    "mtime": 1791539230.0282683,
+    "seen": 1791807199.331043,
+    "ast_hash": "95d18460786a71e4d55cf9113b4cf7e0",
+    "semantic_hash": "95d18460786a71e4d55cf9113b4cf7e0"
+  },
+  "designs/s/A-Jeopardy.html": {
+    "mtime": 1791539230.0297835,
+    "seen": 1791807199.3310442,
+    "ast_hash": "0d6f8294ecf381185f18052dfd3f6c4f",
+    "semantic_hash": "0d6f8294ecf381185f18052dfd3f6c4f"
+  },
+  "designs/s/A-Leinwand.html": {
+    "mtime": 1791539230.0297835,
+    "seen": 1791807199.3310452,
+    "ast_hash": "726f249d304a75df7263394d83c54a0f",
+    "semantic_hash": "726f249d304a75df7263394d83c54a0f"
+  },
+  "designs/s/A-Lobby.html": {
+    "mtime": 1791539230.0307949,
+    "seen": 1791807199.331046,
+    "ast_hash": "fca3dafef75e1e644eef7d99f5119364",
+    "semantic_hash": "fca3dafef75e1e644eef7d99f5119364"
+  },
+  "designs/s/A-Menu.html": {
+    "mtime": 1791539230.0333154,
+    "seen": 1791807199.331047,
+    "ast_hash": "0cd294031d013c24a8bf781b4f3107a3",
+    "semantic_hash": "0cd294031d013c24a8bf781b4f3107a3"
+  },
+  "designs/s/A-PIH.html": {
+    "mtime": 1791539230.0358906,
+    "seen": 1791807199.3310483,
+    "ast_hash": "857aa158d371ffd722c6f0d07cd7294b",
+    "semantic_hash": "857aa158d371ffd722c6f0d07cd7294b"
+  },
+  "designs/s/A-TP.html": {
+    "mtime": 1791539230.038057,
+    "seen": 1791807199.3310492,
+    "ast_hash": "727e62c0bea84c8b385587fd63219866",
+    "semantic_hash": "727e62c0bea84c8b385587fd63219866"
+  },
+  "designs/s/A-Turnier.html": {
+    "mtime": 1791539230.040594,
+    "seen": 1791807199.3310502,
+    "ast_hash": "afb85b7c871cf71625c74f528725bb86",
+    "semantic_hash": "afb85b7c871cf71625c74f528725bb86"
+  },
+  "designs/s/A-WWDS.html": {
+    "mtime": 1791539230.0425832,
+    "seen": 1791807199.3310513,
+    "ast_hash": "6e617fb37dc6e462b82af8ac65cd38fd",
+    "semantic_hash": "6e617fb37dc6e462b82af8ac65cd38fd"
+  },
+  "designs/s/A-WWM.html": {
+    "mtime": 1791539230.0425832,
+    "seen": 1791807199.3310523,
+    "ast_hash": "0299daa6131ecb5f2eda39b3aa405bf8",
+    "semantic_hash": "0299daa6131ecb5f2eda39b3aa405bf8"
+  },
+  "designs/s/B-DDF.html": {
+    "mtime": 1791539230.0425832,
+    "seen": 1791807199.3310533,
+    "ast_hash": "06fcdcc1aa55d2a8796a748814cfe957",
+    "semantic_hash": "06fcdcc1aa55d2a8796a748814cfe957"
+  },
+  "designs/s/B-Ergebnis.html": {
+    "mtime": 1791539230.0425832,
+    "seen": 1791807199.331054,
+    "ast_hash": "1c00c4b9caef506599dd29a654a9a14b",
+    "semantic_hash": "1c00c4b9caef506599dd29a654a9a14b"
+  },
+  "designs/s/B-Handy.html": {
+    "mtime": 1791539230.044094,
+    "seen": 1791807199.3310554,
+    "ast_hash": "9ea6071039e666c971731c011447bf35",
+    "semantic_hash": "9ea6071039e666c971731c011447bf35"
+  },
+  "designs/s/B-Jeopardy.html": {
+    "mtime": 1791539230.044094,
+    "seen": 1791807199.3310564,
+    "ast_hash": "06d48b3631309f1e6535c8b8a79a000f",
+    "semantic_hash": "06d48b3631309f1e6535c8b8a79a000f"
+  },
+  "designs/s/B-Leinwand.html": {
+    "mtime": 1791539230.044094,
+    "seen": 1791807199.3310575,
+    "ast_hash": "4e5d461153b65684e6d0c7f3874c1f0f",
+    "semantic_hash": "4e5d461153b65684e6d0c7f3874c1f0f"
+  },
+  "designs/s/B-Lobby.html": {
+    "mtime": 1791539230.0456235,
+    "seen": 1791807199.3310587,
+    "ast_hash": "6023a0e339df5f65c6995c27b673a907",
+    "semantic_hash": "6023a0e339df5f65c6995c27b673a907"
+  },
+  "designs/s/B-Menu.html": {
+    "mtime": 1791539230.0466442,
+    "seen": 1791807199.3310597,
+    "ast_hash": "adba490b20f800a16eed21be32938c52",
+    "semantic_hash": "adba490b20f800a16eed21be32938c52"
+  },
+  "designs/s/B-PIH.html": {
+    "mtime": 1791539230.0466442,
+    "seen": 1791807199.3310606,
+    "ast_hash": "6a02f583058769d6078f9c7e1e3f25d8",
+    "semantic_hash": "6a02f583058769d6078f9c7e1e3f25d8"
+  },
+  "designs/s/B-TP.html": {
+    "mtime": 1791539230.0466442,
+    "seen": 1791807199.3310618,
+    "ast_hash": "0f2a5230fda912dbd91330294743cb47",
+    "semantic_hash": "0f2a5230fda912dbd91330294743cb47"
+  },
+  "designs/s/B-Turnier.html": {
+    "mtime": 1791539230.04816,
+    "seen": 1791807199.3310628,
+    "ast_hash": "b45223d3c73bc7593c74026b1658fc91",
+    "semantic_hash": "b45223d3c73bc7593c74026b1658fc91"
+  },
+  "designs/s/B-WWDS.html": {
+    "mtime": 1791539230.0507133,
+    "seen": 1791807199.3310637,
+    "ast_hash": "8b7691910fe37a089a5d85cf00e70bc9",
+    "semantic_hash": "8b7691910fe37a089a5d85cf00e70bc9"
+  },
+  "designs/s/B-WWM.html": {
+    "mtime": 1791539230.0517175,
+    "seen": 1791807199.331065,
+    "ast_hash": "4183c6d25d088652d5620a734c268361",
+    "semantic_hash": "4183c6d25d088652d5620a734c268361"
+  },
+  "designs/s/C-DDF.html": {
+    "mtime": 1791539230.0538073,
+    "seen": 1791807199.3310668,
+    "ast_hash": "a4f401e772106bb0be083325877530ac",
+    "semantic_hash": "a4f401e772106bb0be083325877530ac"
+  },
+  "designs/s/C-Ergebnis.html": {
+    "mtime": 1791539230.0548327,
+    "seen": 1791807199.3310678,
+    "ast_hash": "959fe59aea06dc688296cc6996abe466",
+    "semantic_hash": "959fe59aea06dc688296cc6996abe466"
+  },
+  "designs/s/C-Handy.html": {
+    "mtime": 1791539230.0561595,
+    "seen": 1791807199.331069,
+    "ast_hash": "0ed997783fd66a3296a24bb8fbc190df",
+    "semantic_hash": "0ed997783fd66a3296a24bb8fbc190df"
+  },
+  "designs/s/C-Jeopardy.html": {
+    "mtime": 1791539230.057185,
+    "seen": 1791807199.3310697,
+    "ast_hash": "395ce38f7d642cdffccd652e0cba6da7",
+    "semantic_hash": "395ce38f7d642cdffccd652e0cba6da7"
+  },
+  "designs/s/C-Leinwand.html": {
+    "mtime": 1791539230.058186,
+    "seen": 1791807199.3310707,
+    "ast_hash": "5b9cb47501a24cdfc6f05e2b7bc8c728",
+    "semantic_hash": "5b9cb47501a24cdfc6f05e2b7bc8c728"
+  },
+  "designs/s/C-Lobby.html": {
+    "mtime": 1791539230.058186,
+    "seen": 1791807199.3310719,
+    "ast_hash": "098dc467507e88ee573cedbbabbfefce",
+    "semantic_hash": "098dc467507e88ee573cedbbabbfefce"
+  },
+  "designs/s/C-Menu.html": {
+    "mtime": 1791539230.058186,
+    "seen": 1791807199.3310728,
+    "ast_hash": "b37c09f9001cb61866646fddfacdaa7f",
+    "semantic_hash": "b37c09f9001cb61866646fddfacdaa7f"
+  },
+  "designs/s/C-PIH.html": {
+    "mtime": 1791539230.0596974,
+    "seen": 1791807199.3310738,
+    "ast_hash": "971ea1a1afa34f028ce2326f9abef877",
+    "semantic_hash": "971ea1a1afa34f028ce2326f9abef877"
+  },
+  "designs/s/C-TP.html": {
+    "mtime": 1791539230.0596974,
+    "seen": 1791807199.3310747,
+    "ast_hash": "073a156543b60659e00ab7e359a07eb8",
+    "semantic_hash": "073a156543b60659e00ab7e359a07eb8"
+  },
+  "designs/s/C-Turnier.html": {
+    "mtime": 1791539230.0596974,
+    "seen": 1791807199.331076,
+    "ast_hash": "1aded11156e54faafe23a6507634b118",
+    "semantic_hash": "1aded11156e54faafe23a6507634b118"
+  },
+  "designs/s/C-WWDS.html": {
+    "mtime": 1791539230.060707,
+    "seen": 1791807199.3310769,
+    "ast_hash": "1e1ecf4d31cc0ffd6b69f95063302576",
+    "semantic_hash": "1e1ecf4d31cc0ffd6b69f95063302576"
+  },
+  "designs/s/C-WWM.html": {
+    "mtime": 1791539230.060707,
+    "seen": 1791807199.3310778,
+    "ast_hash": "d91db07614752f543f9f6b3bc3594bf9",
+    "semantic_hash": "d91db07614752f543f9f6b3bc3594bf9"
+  },
+  "designs/s/D-DDF.html": {
+    "mtime": 1791539230.060707,
+    "seen": 1791807199.331079,
+    "ast_hash": "b177411d980f23677be990ff91698357",
+    "semantic_hash": "b177411d980f23677be990ff91698357"
+  },
+  "designs/s/D-Ergebnis.html": {
+    "mtime": 1791539230.060707,
+    "seen": 1791807199.3310797,
+    "ast_hash": "036c2c858cf5e03098b7af058c73fde9",
+    "semantic_hash": "036c2c858cf5e03098b7af058c73fde9"
+  },
+  "designs/s/D-Handy.html": {
+    "mtime": 1791539230.0617063,
+    "seen": 1791807199.3310807,
+    "ast_hash": "b05b140c0259872bf049e50aba75a4a5",
+    "semantic_hash": "b05b140c0259872bf049e50aba75a4a5"
+  },
+  "designs/s/D-Jeopardy.html": {
+    "mtime": 1791539230.0617063,
+    "seen": 1791807199.3310816,
+    "ast_hash": "da643a54c5b339a65d55ff96692bc2b4",
+    "semantic_hash": "da643a54c5b339a65d55ff96692bc2b4"
+  },
+  "designs/s/D-Leinwand.html": {
+    "mtime": 1791539230.0617063,
+    "seen": 1791807199.3310828,
+    "ast_hash": "2b0b9004c57cead716b3d7804af37936",
+    "semantic_hash": "2b0b9004c57cead716b3d7804af37936"
+  },
+  "designs/s/D-Lobby.html": {
+    "mtime": 1791539230.0632179,
+    "seen": 1791807199.3310838,
+    "ast_hash": "3fcea859a77de24e1e75ce5eeac61c37",
+    "semantic_hash": "3fcea859a77de24e1e75ce5eeac61c37"
+  },
+  "designs/s/D-Menu.html": {
+    "mtime": 1791539230.0632179,
+    "seen": 1791807199.3310847,
+    "ast_hash": "f855bf053689088495f9419085110e57",
+    "semantic_hash": "f855bf053689088495f9419085110e57"
+  },
+  "designs/s/D-PIH.html": {
+    "mtime": 1791539230.063763,
+    "seen": 1791807199.331086,
+    "ast_hash": "071a3e70fc9b7206975c77b38c318023",
+    "semantic_hash": "071a3e70fc9b7206975c77b38c318023"
+  },
+  "designs/s/D-TP.html": {
+    "mtime": 1791539230.063763,
+    "seen": 1791807199.3310866,
+    "ast_hash": "3a20f0f5249df65b3d17960f87ec8356",
+    "semantic_hash": "3a20f0f5249df65b3d17960f87ec8356"
+  },
+  "designs/s/D-Turnier.html": {
+    "mtime": 1791539230.063763,
+    "seen": 1791807199.3310878,
+    "ast_hash": "8c2c317f4b31e1e07fc5444f97dfa2ed",
+    "semantic_hash": "8c2c317f4b31e1e07fc5444f97dfa2ed"
+  },
+  "designs/s/D-WWDS.html": {
+    "mtime": 1791539230.064783,
+    "seen": 1791807199.3310888,
+    "ast_hash": "f004409785d9b7d5614cd3ff8794415b",
+    "semantic_hash": "f004409785d9b7d5614cd3ff8794415b"
+  },
+  "designs/s/D-WWM.html": {
+    "mtime": 1791539230.0663233,
+    "seen": 1791807199.33109,
+    "ast_hash": "a8065475ac597b6f1bc293359ff9d0aa",
+    "semantic_hash": "a8065475ac597b6f1bc293359ff9d0aa"
+  },
+  "designs/s/E-DDF.html": {
+    "mtime": 1791539230.0683427,
+    "seen": 1791807199.331091,
+    "ast_hash": "02d1231089e451db04b55cf2afcc1e4f",
+    "semantic_hash": "02d1231089e451db04b55cf2afcc1e4f"
+  },
+  "designs/s/E-Ergebnis.html": {
+    "mtime": 1791539230.0693436,
+    "seen": 1791807199.331092,
+    "ast_hash": "b322a1ffd3ba171fba733ba8a07491e4",
+    "semantic_hash": "b322a1ffd3ba171fba733ba8a07491e4"
+  },
+  "designs/s/E-Handy.html": {
+    "mtime": 1791539230.0705159,
+    "seen": 1791807199.331093,
+    "ast_hash": "7c11b7d07bca18fe0841725e84fa3236",
+    "semantic_hash": "7c11b7d07bca18fe0841725e84fa3236"
+  },
+  "designs/s/E-Jeopardy.html": {
+    "mtime": 1791539230.0715144,
+    "seen": 1791807199.3310943,
+    "ast_hash": "40034a223344f75ec57fd2b59ba63307",
+    "semantic_hash": "40034a223344f75ec57fd2b59ba63307"
+  },
+  "designs/s/E-Leinwand.html": {
+    "mtime": 1791539230.0715144,
+    "seen": 1791807199.3310952,
+    "ast_hash": "891ea4c0f8230f8858286686eb2acf6d",
+    "semantic_hash": "891ea4c0f8230f8858286686eb2acf6d"
+  },
+  "designs/s/E-Lobby.html": {
+    "mtime": 1791539230.073038,
+    "seen": 1791807199.3310964,
+    "ast_hash": "4ef7620f5d91d798768ab3c9ff019f91",
+    "semantic_hash": "4ef7620f5d91d798768ab3c9ff019f91"
+  },
+  "designs/s/E-Menu.html": {
+    "mtime": 1791539230.073038,
+    "seen": 1791807199.3310974,
+    "ast_hash": "79517a2c68ad09254cc57c3aaeb0c3d2",
+    "semantic_hash": "79517a2c68ad09254cc57c3aaeb0c3d2"
+  },
+  "designs/s/E-PIH.html": {
+    "mtime": 1791539230.074578,
+    "seen": 1791807199.3310983,
+    "ast_hash": "865682443ff63c42f2dea08fcb0251d7",
+    "semantic_hash": "865682443ff63c42f2dea08fcb0251d7"
+  },
+  "designs/s/E-TP.html": {
+    "mtime": 1791539230.074578,
+    "seen": 1791807199.3310995,
+    "ast_hash": "91d3b608547f031f183b24a086c7fc06",
+    "semantic_hash": "91d3b608547f031f183b24a086c7fc06"
+  },
+  "designs/s/E-Turnier.html": {
+    "mtime": 1791539230.074578,
+    "seen": 1791807199.3311005,
+    "ast_hash": "27c506ef443a63099ac738af1a327c7e",
+    "semantic_hash": "27c506ef443a63099ac738af1a327c7e"
+  },
+  "designs/s/E-WWDS.html": {
+    "mtime": 1791539230.0755887,
+    "seen": 1791807199.3311014,
+    "ast_hash": "72893fbdd2feefd72205228afaf7099c",
+    "semantic_hash": "72893fbdd2feefd72205228afaf7099c"
+  },
+  "designs/s/E-WWM.html": {
+    "mtime": 1791539230.0755887,
+    "seen": 1791807199.3311024,
+    "ast_hash": "542d1fdaaa668cd90c5e1588de59aa4f",
+    "semantic_hash": "542d1fdaaa668cd90c5e1588de59aa4f"
+  },
+  "designs/s/F-DDF.html": {
+    "mtime": 1791539230.076599,
+    "seen": 1791807199.3311036,
+    "ast_hash": "dba64d24eb33347b1ee1318b9897dd0d",
+    "semantic_hash": "dba64d24eb33347b1ee1318b9897dd0d"
+  },
+  "designs/s/F-Ergebnis.html": {
+    "mtime": 1791539230.077595,
+    "seen": 1791807199.3311045,
+    "ast_hash": "1a80c7e1b126c4b1f0cbda951f969b59",
+    "semantic_hash": "1a80c7e1b126c4b1f0cbda951f969b59"
+  },
+  "designs/s/F-Handy.html": {
+    "mtime": 1791539230.077595,
+    "seen": 1791807199.3311055,
+    "ast_hash": "03115320cc38cf2c277238fadab59e1b",
+    "semantic_hash": "03115320cc38cf2c277238fadab59e1b"
+  },
+  "designs/s/F-Jeopardy.html": {
+    "mtime": 1791539230.077595,
+    "seen": 1791807199.3311067,
+    "ast_hash": "166e4fec9e123589ae35a3b495446ebe",
+    "semantic_hash": "166e4fec9e123589ae35a3b495446ebe"
+  },
+  "designs/s/F-Leinwand.html": {
+    "mtime": 1791539230.0791008,
+    "seen": 1791807199.3311076,
+    "ast_hash": "5b06ba65ddfc5a103bfb5ba47997effd",
+    "semantic_hash": "5b06ba65ddfc5a103bfb5ba47997effd"
+  },
+  "designs/s/F-Lobby.html": {
+    "mtime": 1791539230.0791008,
+    "seen": 1791807199.3311086,
+    "ast_hash": "1bc807912f730cf109fcc96d0cc49747",
+    "semantic_hash": "1bc807912f730cf109fcc96d0cc49747"
+  },
+  "designs/s/F-Menu.html": {
+    "mtime": 1791539230.0801065,
+    "seen": 1791807199.3311095,
+    "ast_hash": "2769efe2fe2f81684b09caf9f7551bfb",
+    "semantic_hash": "2769efe2fe2f81684b09caf9f7551bfb"
+  },
+  "designs/s/F-PIH.html": {
+    "mtime": 1791539230.0801065,
+    "seen": 1791807199.3311107,
+    "ast_hash": "0e75f8899f541fd5fe7576c1bc8f573f",
+    "semantic_hash": "0e75f8899f541fd5fe7576c1bc8f573f"
+  },
+  "designs/s/F-TP.html": {
+    "mtime": 1791539230.0801065,
+    "seen": 1791807199.3311117,
+    "ast_hash": "02c93da5dac725243defe136efe2f50c",
+    "semantic_hash": "02c93da5dac725243defe136efe2f50c"
+  },
+  "designs/s/F-Turnier.html": {
+    "mtime": 1791539230.0811064,
+    "seen": 1791807199.3311126,
+    "ast_hash": "522e76d6a819c279dc3080de7a54bfcf",
+    "semantic_hash": "522e76d6a819c279dc3080de7a54bfcf"
+  },
+  "designs/s/F-WWDS.html": {
+    "mtime": 1791539230.0811064,
+    "seen": 1791807199.3311138,
+    "ast_hash": "73ca7961271a54471b840816f75f517c",
+    "semantic_hash": "73ca7961271a54471b840816f75f517c"
+  },
+  "designs/s/F-WWM.html": {
+    "mtime": 1791539230.0821083,
+    "seen": 1791807199.3311145,
+    "ast_hash": "11581f8bf34b5ff9e16ff9af279113e7",
+    "semantic_hash": "11581f8bf34b5ff9e16ff9af279113e7"
+  },
+  "designs/s/H-DDF.html": {
+    "mtime": 1791539230.0821083,
+    "seen": 1791807199.3311157,
+    "ast_hash": "75c50582a2a4b62b6ac5fbb626b46d67",
+    "semantic_hash": "75c50582a2a4b62b6ac5fbb626b46d67"
+  },
+  "designs/s/H-Ergebnis.html": {
+    "mtime": 1791539230.08362,
+    "seen": 1791807199.331117,
+    "ast_hash": "322565321aa6c428f16a48e4048343c8",
+    "semantic_hash": "322565321aa6c428f16a48e4048343c8"
+  },
+  "designs/s/H-Handy.html": {
+    "mtime": 1791539230.08362,
+    "seen": 1791807199.3311179,
+    "ast_hash": "222ce20adb30fa901095fc865b2d0cfa",
+    "semantic_hash": "222ce20adb30fa901095fc865b2d0cfa"
+  },
+  "designs/s/H-Jeopardy.html": {
+    "mtime": 1791539230.0865424,
+    "seen": 1791807199.3311188,
+    "ast_hash": "497db93677ab6eb11d91a6cbb3bc3806",
+    "semantic_hash": "497db93677ab6eb11d91a6cbb3bc3806"
+  },
+  "designs/s/H-Leinwand.html": {
+    "mtime": 1791539230.0875437,
+    "seen": 1791807199.3311198,
+    "ast_hash": "413b4cef1741b44d6b33a73e8e8d7b40",
+    "semantic_hash": "413b4cef1741b44d6b33a73e8e8d7b40"
+  },
+  "designs/s/H-Lobby.html": {
+    "mtime": 1791539230.089054,
+    "seen": 1791807199.331121,
+    "ast_hash": "1da1e8ccc15a667c983fe8bbf9d6efee",
+    "semantic_hash": "1da1e8ccc15a667c983fe8bbf9d6efee"
+  },
+  "designs/s/H-Menu.html": {
+    "mtime": 1791203656.6991603,
+    "seen": 1791807199.331122,
+    "ast_hash": "b5449d83750f6849b7b33da971ec266f",
+    "semantic_hash": "b5449d83750f6849b7b33da971ec266f"
+  },
+  "designs/s/H-PIH.html": {
+    "mtime": 1791539230.089054,
+    "seen": 1791807199.3311226,
+    "ast_hash": "ac9dcf7e851915cfa3f59d4da1781754",
+    "semantic_hash": "ac9dcf7e851915cfa3f59d4da1781754"
+  },
+  "designs/s/H-TP.html": {
+    "mtime": 1791539230.0900657,
+    "seen": 1791807199.3311238,
+    "ast_hash": "15c61ded8461f3190f563c7d873ce644",
+    "semantic_hash": "15c61ded8461f3190f563c7d873ce644"
+  },
+  "designs/s/H-Turnier.html": {
+    "mtime": 1791539230.0905726,
+    "seen": 1791807199.3311248,
+    "ast_hash": "18018522241c85467f0660ac8ffb41fb",
+    "semantic_hash": "18018522241c85467f0660ac8ffb41fb"
+  },
+  "designs/s/H-WWDS.html": {
+    "mtime": 1791539230.0905726,
+    "seen": 1791807199.3311257,
+    "ast_hash": "b2a6eea235d0ba7fb84a490849c3c263",
+    "semantic_hash": "b2a6eea235d0ba7fb84a490849c3c263"
+  },
+  "designs/s/H-WWM.html": {
+    "mtime": 1791539230.0915787,
+    "seen": 1791807199.3311267,
+    "ast_hash": "db43bb3d79293b015e99835426744b71",
+    "semantic_hash": "db43bb3d79293b015e99835426744b71"
+  },
+  "designs/s/I-DDF.html": {
+    "mtime": 1791539230.0915787,
+    "seen": 1791807199.331128,
+    "ast_hash": "66a586920ff9316431f0997a345b0559",
+    "semantic_hash": "66a586920ff9316431f0997a345b0559"
+  },
+  "designs/s/I-Ergebnis.html": {
+    "mtime": 1791539230.0915787,
+    "seen": 1791807199.3311288,
+    "ast_hash": "39fbec3ec42e01e49b7e895b512ef288",
+    "semantic_hash": "39fbec3ec42e01e49b7e895b512ef288"
+  },
+  "designs/s/I-Handy.html": {
+    "mtime": 1791539230.0915787,
+    "seen": 1791807199.33113,
+    "ast_hash": "b8af31606e01a1ec4e9b457ba26b8913",
+    "semantic_hash": "b8af31606e01a1ec4e9b457ba26b8913"
+  },
+  "designs/s/I-Jeopardy.html": {
+    "mtime": 1791539230.0930843,
+    "seen": 1791807199.331131,
+    "ast_hash": "74ae48f3cecf2687bd0db21adfa56ae3",
+    "semantic_hash": "74ae48f3cecf2687bd0db21adfa56ae3"
+  },
+  "designs/s/I-Leinwand.html": {
+    "mtime": 1791539230.0930843,
+    "seen": 1791807199.3311322,
+    "ast_hash": "08bdd48f95174eac62bf1afddf1ed278",
+    "semantic_hash": "08bdd48f95174eac62bf1afddf1ed278"
+  },
+  "designs/s/I-Lobby.html": {
+    "mtime": 1791539230.0930843,
+    "seen": 1791807199.3311331,
+    "ast_hash": "89f841318edc7f6cdbe1ec25816541f5",
+    "semantic_hash": "89f841318edc7f6cdbe1ec25816541f5"
+  },
+  "designs/s/I-Menu.html": {
+    "mtime": 1791539230.0930843,
+    "seen": 1791807199.3311343,
+    "ast_hash": "230ce557debbb54eaf27538daa527b29",
+    "semantic_hash": "230ce557debbb54eaf27538daa527b29"
+  },
+  "designs/s/I-PIH.html": {
+    "mtime": 1791539230.0940902,
+    "seen": 1791807199.331135,
+    "ast_hash": "1bc48c45a8085f2e882bb3163cb149b1",
+    "semantic_hash": "1bc48c45a8085f2e882bb3163cb149b1"
+  },
+  "designs/s/I-TP.html": {
+    "mtime": 1791539230.0946066,
+    "seen": 1791807199.331136,
+    "ast_hash": "7463225bc30c4da05fa05a5a7dae6969",
+    "semantic_hash": "7463225bc30c4da05fa05a5a7dae6969"
+  },
+  "designs/s/I-Turnier.html": {
+    "mtime": 1791539230.0946066,
+    "seen": 1791807199.331137,
+    "ast_hash": "b29275216016d7474656f6739d17fee6",
+    "semantic_hash": "b29275216016d7474656f6739d17fee6"
+  },
+  "designs/s/I-WWDS.html": {
+    "mtime": 1791539230.0956204,
+    "seen": 1791807199.3311384,
+    "ast_hash": "5794c052ad4d33b1e6026f9369b5cfb4",
+    "semantic_hash": "5794c052ad4d33b1e6026f9369b5cfb4"
+  },
+  "designs/s/I-WWM.html": {
+    "mtime": 1791539230.0956204,
+    "seen": 1791807199.3311393,
+    "ast_hash": "b7199834f6f645bdb272efa93e659ec5",
+    "semantic_hash": "b7199834f6f645bdb272efa93e659ec5"
+  },
+  "designs/s/J-DDF.html": {
+    "mtime": 1791539230.0956204,
+    "seen": 1791807199.3311403,
+    "ast_hash": "a30fc6180d575eeb6eb6f654bb095842",
+    "semantic_hash": "a30fc6180d575eeb6eb6f654bb095842"
+  },
+  "designs/s/J-Ergebnis.html": {
+    "mtime": 1791539230.0956204,
+    "seen": 1791807199.3311415,
+    "ast_hash": "df83218a1fbc1db14e1951bdaabb373c",
+    "semantic_hash": "df83218a1fbc1db14e1951bdaabb373c"
+  },
+  "designs/s/J-Handy.html": {
+    "mtime": 1791539230.0971377,
+    "seen": 1791807199.3311424,
+    "ast_hash": "2cd49b3df1cced6c27abe28fc0c8729c",
+    "semantic_hash": "2cd49b3df1cced6c27abe28fc0c8729c"
+  },
+  "designs/s/J-Jeopardy.html": {
+    "mtime": 1791539230.0971377,
+    "seen": 1791807199.3311434,
+    "ast_hash": "031a6627f698b3162e73fe2fcd1ffc9b",
+    "semantic_hash": "031a6627f698b3162e73fe2fcd1ffc9b"
+  },
+  "designs/s/J-Leinwand.html": {
+    "mtime": 1791539230.0971377,
+    "seen": 1791807199.3311443,
+    "ast_hash": "cbd43d334e5f8823b1b1d9d89cab6ca7",
+    "semantic_hash": "cbd43d334e5f8823b1b1d9d89cab6ca7"
+  },
+  "designs/s/J-Lobby.html": {
+    "mtime": 1791539230.0971377,
+    "seen": 1791807199.3311455,
+    "ast_hash": "91f92edc119211c0d7d6585a5e881164",
+    "semantic_hash": "91f92edc119211c0d7d6585a5e881164"
+  },
+  "designs/s/J-Menu.html": {
+    "mtime": 1791539230.0986598,
+    "seen": 1791807199.3311465,
+    "ast_hash": "4c14b7b0942a286dae05ef64e2bbc858",
+    "semantic_hash": "4c14b7b0942a286dae05ef64e2bbc858"
+  },
+  "designs/s/J-PIH.html": {
+    "mtime": 1791539230.100667,
+    "seen": 1791807199.3311477,
+    "ast_hash": "04d4d4cc9fa16c0e0887ec2f8640d239",
+    "semantic_hash": "04d4d4cc9fa16c0e0887ec2f8640d239"
+  },
+  "designs/s/J-TP.html": {
+    "mtime": 1791539230.1016715,
+    "seen": 1791807199.3311489,
+    "ast_hash": "f30c78ad6a79f0be3fe1e3d5891100ef",
+    "semantic_hash": "f30c78ad6a79f0be3fe1e3d5891100ef"
+  },
+  "designs/s/J-Turnier.html": {
+    "mtime": 1791539230.102677,
+    "seen": 1791807199.3311498,
+    "ast_hash": "5ea26daefd52598d8eab13f78a2f93dc",
+    "semantic_hash": "5ea26daefd52598d8eab13f78a2f93dc"
+  },
+  "designs/s/J-WWDS.html": {
+    "mtime": 1791539230.1036718,
+    "seen": 1791807199.3311508,
+    "ast_hash": "f24ed5bed137fd6f4cf1f090a350857e",
+    "semantic_hash": "f24ed5bed137fd6f4cf1f090a350857e"
+  },
+  "designs/s/J-WWM.html": {
+    "mtime": 1791539230.1041808,
+    "seen": 1791807199.331152,
+    "ast_hash": "62a9fe867b32ef905201862c3a751844",
+    "semantic_hash": "62a9fe867b32ef905201862c3a751844"
+  },
+  "designs/s/K-DDF.html": {
+    "mtime": 1791539230.1051948,
+    "seen": 1791807199.331153,
+    "ast_hash": "6175b01ad0b5ce84333c0a55d0da434f",
+    "semantic_hash": "6175b01ad0b5ce84333c0a55d0da434f"
+  },
+  "designs/s/K-Ergebnis.html": {
+    "mtime": 1791539230.1062155,
+    "seen": 1791807199.3311563,
+    "ast_hash": "ce2eb0a5ef69227c1d5cd7931bb35337",
+    "semantic_hash": "ce2eb0a5ef69227c1d5cd7931bb35337"
+  },
+  "designs/s/K-Handy.html": {
+    "mtime": 1791539230.1062155,
+    "seen": 1791807199.3311572,
+    "ast_hash": "2f2ce1722c503eb5b9d47ec287329c57",
+    "semantic_hash": "2f2ce1722c503eb5b9d47ec287329c57"
+  },
+  "designs/s/K-Jeopardy.html": {
+    "mtime": 1791539230.1072123,
+    "seen": 1791807199.3311582,
+    "ast_hash": "7bf14b93b2fde47e401131862b63989c",
+    "semantic_hash": "7bf14b93b2fde47e401131862b63989c"
+  },
+  "designs/s/K-Leinwand.html": {
+    "mtime": 1791539230.1072123,
+    "seen": 1791807199.3311594,
+    "ast_hash": "339b5a538715ff82eb4e3661b9aa51d5",
+    "semantic_hash": "339b5a538715ff82eb4e3661b9aa51d5"
+  },
+  "designs/s/K-Lobby.html": {
+    "mtime": 1791539230.1072123,
+    "seen": 1791807199.3311603,
+    "ast_hash": "cc13fd92f2bb5fc3648fab357035aa76",
+    "semantic_hash": "cc13fd92f2bb5fc3648fab357035aa76"
+  },
+  "designs/s/K-Menu.html": {
+    "mtime": 1791539230.1072123,
+    "seen": 1791807199.3311613,
+    "ast_hash": "055eb78440700bcbaf45c0e0dea1af5e",
+    "semantic_hash": "055eb78440700bcbaf45c0e0dea1af5e"
+  },
+  "designs/s/K-PIH.html": {
+    "mtime": 1791539230.1087227,
+    "seen": 1791807199.3311627,
+    "ast_hash": "9bc467066d08c5b59d49648d029fe781",
+    "semantic_hash": "9bc467066d08c5b59d49648d029fe781"
+  },
+  "designs/s/K-TP.html": {
+    "mtime": 1791539230.1087227,
+    "seen": 1791807199.3311636,
+    "ast_hash": "ef5d48c77abfc7bf1d607d42750a363a",
+    "semantic_hash": "ef5d48c77abfc7bf1d607d42750a363a"
+  },
+  "designs/s/K-Turnier.html": {
+    "mtime": 1791539230.1087227,
+    "seen": 1791807199.3311646,
+    "ast_hash": "7ec71186bf042eeda16e4defe9982f5e",
+    "semantic_hash": "7ec71186bf042eeda16e4defe9982f5e"
+  },
+  "designs/s/K-WWDS.html": {
+    "mtime": 1791539230.1097288,
+    "seen": 1791807199.3311658,
+    "ast_hash": "4a933cd6e5501a03e26ef111f61a994e",
+    "semantic_hash": "4a933cd6e5501a03e26ef111f61a994e"
+  },
+  "designs/s/K-WWM.html": {
+    "mtime": 1791539230.1107516,
+    "seen": 1791807199.3311667,
+    "ast_hash": "956a983fbe974854a39174e432a20645",
+    "semantic_hash": "956a983fbe974854a39174e432a20645"
+  },
+  "designs/s/L-DDF.html": {
+    "mtime": 1791539230.1117315,
+    "seen": 1791807199.3311677,
+    "ast_hash": "9828fb41c2cc96cf9e9d6e622f23198e",
+    "semantic_hash": "9828fb41c2cc96cf9e9d6e622f23198e"
+  },
+  "designs/s/L-Ergebnis.html": {
+    "mtime": 1791539230.1117315,
+    "seen": 1791807199.3311691,
+    "ast_hash": "18190eacd4c44217b54df79dd4f87eb7",
+    "semantic_hash": "18190eacd4c44217b54df79dd4f87eb7"
+  },
+  "designs/s/L-Handy.html": {
+    "mtime": 1791539230.1117315,
+    "seen": 1791807199.3311698,
+    "ast_hash": "fd6e7ab2948b83116644c144fc133008",
+    "semantic_hash": "fd6e7ab2948b83116644c144fc133008"
+  },
+  "designs/s/L-Jeopardy.html": {
+    "mtime": 1791539230.1127284,
+    "seen": 1791807199.331171,
+    "ast_hash": "da9ccbd4fc7d621a7d93e14d0568cf9d",
+    "semantic_hash": "da9ccbd4fc7d621a7d93e14d0568cf9d"
+  },
+  "designs/s/L-Leinwand.html": {
+    "mtime": 1791539230.1132333,
+    "seen": 1791807199.331172,
+    "ast_hash": "5e22d22af76753fbad31819a2dec7bf9",
+    "semantic_hash": "5e22d22af76753fbad31819a2dec7bf9"
+  },
+  "designs/s/L-Lobby.html": {
+    "mtime": 1791539230.1137393,
+    "seen": 1791807199.3311732,
+    "ast_hash": "7a86a9d4f2275b56fa9e751038ad30a1",
+    "semantic_hash": "7a86a9d4f2275b56fa9e751038ad30a1"
+  },
+  "designs/s/L-Menu.html": {
+    "mtime": 1791203656.7501464,
+    "seen": 1791807199.331174,
+    "ast_hash": "187d87fbbbc7edc4f82a53e361bba77c",
+    "semantic_hash": "187d87fbbbc7edc4f82a53e361bba77c"
+  },
+  "designs/s/L-PIH.html": {
+    "mtime": 1791539230.1137393,
+    "seen": 1791807199.331175,
+    "ast_hash": "a3e9a932cb17cda6cf3aeeadd5d65598",
+    "semantic_hash": "a3e9a932cb17cda6cf3aeeadd5d65598"
+  },
+  "designs/s/L-TP.html": {
+    "mtime": 1791539230.1137393,
+    "seen": 1791807199.3311763,
+    "ast_hash": "7d70a425ed8d7f1fb4c2b6ef34a54e5b",
+    "semantic_hash": "7d70a425ed8d7f1fb4c2b6ef34a54e5b"
+  },
+  "designs/s/L-Turnier.html": {
+    "mtime": 1791539230.1137393,
+    "seen": 1791807199.3311772,
+    "ast_hash": "81b2cf9bc917ff2d88dde94df279f478",
+    "semantic_hash": "81b2cf9bc917ff2d88dde94df279f478"
+  },
+  "designs/s/L-WWDS.html": {
+    "mtime": 1791539230.1152565,
+    "seen": 1791807199.331178,
+    "ast_hash": "5006934bea21e1a94c3e5850384b3ae9",
+    "semantic_hash": "5006934bea21e1a94c3e5850384b3ae9"
+  },
+  "designs/s/L-WWM.html": {
+    "mtime": 1791539230.1172674,
+    "seen": 1791807199.331179,
+    "ast_hash": "88146612b9fe86ea391917f0d75e122a",
+    "semantic_hash": "88146612b9fe86ea391917f0d75e122a"
+  },
+  "designs/s/M-DDF.html": {
+    "mtime": 1791539230.11878,
+    "seen": 1791807199.3311803,
+    "ast_hash": "78902cec3d166e35905b99a1aba78c19",
+    "semantic_hash": "78902cec3d166e35905b99a1aba78c19"
+  },
+  "designs/s/M-Ergebnis.html": {
+    "mtime": 1791539230.120953,
+    "seen": 1791807199.3311813,
+    "ast_hash": "3aabedbe651d2e9707ee689d02bbcbeb",
+    "semantic_hash": "3aabedbe651d2e9707ee689d02bbcbeb"
+  },
+  "designs/s/M-Handy.html": {
+    "mtime": 1791539230.1213014,
+    "seen": 1791807199.331182,
+    "ast_hash": "28a7dcad12ee4c25fad4ead61f7d5ebc",
+    "semantic_hash": "28a7dcad12ee4c25fad4ead61f7d5ebc"
+  },
+  "designs/s/M-Jeopardy.html": {
+    "mtime": 1791539230.1228201,
+    "seen": 1791807199.3311834,
+    "ast_hash": "1afabd5d88dd0fc73dbe62c863ee44ac",
+    "semantic_hash": "1afabd5d88dd0fc73dbe62c863ee44ac"
+  },
+  "designs/s/M-Leinwand.html": {
+    "mtime": 1791539230.1228201,
+    "seen": 1791807199.3311844,
+    "ast_hash": "6c0e8069357bb8d957c17070ae680e59",
+    "semantic_hash": "6c0e8069357bb8d957c17070ae680e59"
+  },
+  "designs/s/M-Lobby.html": {
+    "mtime": 1791539230.1238256,
+    "seen": 1791807199.331185,
+    "ast_hash": "baa3280040e2ec754bf28cb17b657ed5",
+    "semantic_hash": "baa3280040e2ec754bf28cb17b657ed5"
+  },
+  "designs/s/M-Menu.html": {
+    "mtime": 1791539230.1238256,
+    "seen": 1791807199.3311865,
+    "ast_hash": "eb6d47e6c856721391209aa7dab27e74",
+    "semantic_hash": "eb6d47e6c856721391209aa7dab27e74"
+  },
+  "designs/s/M-PIH.html": {
+    "mtime": 1791539230.1248355,
+    "seen": 1791807199.3311875,
+    "ast_hash": "8bcfb595f08543cdb3769227c2ebcd05",
+    "semantic_hash": "8bcfb595f08543cdb3769227c2ebcd05"
+  },
+  "designs/s/M-TP.html": {
+    "mtime": 1791539230.125345,
+    "seen": 1791807199.3311884,
+    "ast_hash": "b67b4d6c28c1b9f193e5b5ff89a8ec58",
+    "semantic_hash": "b67b4d6c28c1b9f193e5b5ff89a8ec58"
+  },
+  "designs/s/M-Turnier.html": {
+    "mtime": 1791539230.125345,
+    "seen": 1791807199.3311894,
+    "ast_hash": "3438e7deb579233bdc70aafed98820ae",
+    "semantic_hash": "3438e7deb579233bdc70aafed98820ae"
+  },
+  "designs/s/M-WWDS.html": {
+    "mtime": 1791539230.1263494,
+    "seen": 1791807199.3311906,
+    "ast_hash": "fde78af4aea4fb02b1c84cbe828f71f6",
+    "semantic_hash": "fde78af4aea4fb02b1c84cbe828f71f6"
+  },
+  "designs/s/M-WWM.html": {
+    "mtime": 1791539230.1263494,
+    "seen": 1791807199.3311915,
+    "ast_hash": "5c1394c9a225bb5867f8ce5333cf0a53",
+    "semantic_hash": "5c1394c9a225bb5867f8ce5333cf0a53"
+  },
+  "designs/s/N-DDF.html": {
+    "mtime": 1791539230.1263494,
+    "seen": 1791807199.3311925,
+    "ast_hash": "f5e1b5990e3debe19a85d20abf64ff36",
+    "semantic_hash": "f5e1b5990e3debe19a85d20abf64ff36"
+  },
+  "designs/s/N-Ergebnis.html": {
+    "mtime": 1791539230.1278734,
+    "seen": 1791807199.3311937,
+    "ast_hash": "902e652ced944653d25fa964eaab9976",
+    "semantic_hash": "902e652ced944653d25fa964eaab9976"
+  },
+  "designs/s/N-Handy.html": {
+    "mtime": 1791539230.1278734,
+    "seen": 1791807199.3311946,
+    "ast_hash": "2175c418341c1b346e6bd0549e48c19f",
+    "semantic_hash": "2175c418341c1b346e6bd0549e48c19f"
+  },
+  "designs/s/N-Jeopardy.html": {
+    "mtime": 1791539230.1278734,
+    "seen": 1791807199.3311954,
+    "ast_hash": "4f24866699ac6e3b825febc01b2e0a4f",
+    "semantic_hash": "4f24866699ac6e3b825febc01b2e0a4f"
+  },
+  "designs/s/N-Leinwand.html": {
+    "mtime": 1791539230.1288817,
+    "seen": 1791807199.3311963,
+    "ast_hash": "180ffe299b97d28ce71a80b17f6b8d50",
+    "semantic_hash": "180ffe299b97d28ce71a80b17f6b8d50"
+  },
+  "designs/s/N-Lobby.html": {
+    "mtime": 1791539230.1288817,
+    "seen": 1791807199.3311975,
+    "ast_hash": "eebb7b66b572d1211ef0a985e48a7c6d",
+    "semantic_hash": "eebb7b66b572d1211ef0a985e48a7c6d"
+  },
+  "designs/s/N-Menu.html": {
+    "mtime": 1791539230.1288817,
+    "seen": 1791807199.3311985,
+    "ast_hash": "3f09fba6d7320ab98cd1efd88cb120df",
+    "semantic_hash": "3f09fba6d7320ab98cd1efd88cb120df"
+  },
+  "designs/s/N-PIH.html": {
+    "mtime": 1791539230.1298833,
+    "seen": 1791807199.3311994,
+    "ast_hash": "a616236f2e02bb4939c8c9d0e2c7c281",
+    "semantic_hash": "a616236f2e02bb4939c8c9d0e2c7c281"
+  },
+  "designs/s/N-TP.html": {
+    "mtime": 1791539230.1298833,
+    "seen": 1791807199.3312006,
+    "ast_hash": "d1a74de11c67f9fba6722ff8e50d891c",
+    "semantic_hash": "d1a74de11c67f9fba6722ff8e50d891c"
+  },
+  "designs/s/N-Turnier.html": {
+    "mtime": 1791539230.130882,
+    "seen": 1791807199.3312018,
+    "ast_hash": "d17a012b638c6c655d3f5c21c82c5ee5",
+    "semantic_hash": "d17a012b638c6c655d3f5c21c82c5ee5"
+  },
+  "designs/s/N-WWDS.html": {
+    "mtime": 1791539230.130882,
+    "seen": 1791807199.3312025,
+    "ast_hash": "a491b4da22dcc5b73e772c7a5e3d4b6d",
+    "semantic_hash": "a491b4da22dcc5b73e772c7a5e3d4b6d"
+  },
+  "designs/s/N-WWM.html": {
+    "mtime": 1791539230.130882,
+    "seen": 1791807199.3312037,
+    "ast_hash": "9b40660230f137ee88724db1f7fe13c7",
+    "semantic_hash": "9b40660230f137ee88724db1f7fe13c7"
+  },
+  "designs/s/O-DDF.html": {
+    "mtime": 1791539230.1357021,
+    "seen": 1791807199.3312047,
+    "ast_hash": "799a9a9b6cb69e567cf78ac3d4c5a07c",
+    "semantic_hash": "799a9a9b6cb69e567cf78ac3d4c5a07c"
+  },
+  "designs/s/O-Ergebnis.html": {
+    "mtime": 1791539230.1390493,
+    "seen": 1791807199.3312056,
+    "ast_hash": "23a16d4844653bacfeace5506fa57a7b",
+    "semantic_hash": "23a16d4844653bacfeace5506fa57a7b"
+  },
+  "designs/s/O-Handy.html": {
+    "mtime": 1791539230.141043,
+    "seen": 1791807199.3312068,
+    "ast_hash": "15fe83d159ba04a2320cea7b07f17a54",
+    "semantic_hash": "15fe83d159ba04a2320cea7b07f17a54"
+  },
+  "designs/s/O-Jeopardy.html": {
+    "mtime": 1791539230.1442738,
+    "seen": 1791807199.3312078,
+    "ast_hash": "eeae9744a18d75080f5daf819dd814b0",
+    "semantic_hash": "eeae9744a18d75080f5daf819dd814b0"
+  },
+  "designs/s/O-Leinwand.html": {
+    "mtime": 1791539230.1462946,
+    "seen": 1791807199.3312087,
+    "ast_hash": "9afe7927b07684c56279f1fd2e4bfa92",
+    "semantic_hash": "9afe7927b07684c56279f1fd2e4bfa92"
+  },
+  "designs/s/O-Lobby.html": {
+    "mtime": 1791539230.148512,
+    "seen": 1791807199.3312097,
+    "ast_hash": "c3eb54dc475cfa45709fe43e868541db",
+    "semantic_hash": "c3eb54dc475cfa45709fe43e868541db"
+  },
+  "designs/s/O-Menu.html": {
+    "mtime": 1791539230.153016,
+    "seen": 1791807199.3312109,
+    "ast_hash": "68177f2abe2fe08317326b503b0d2354",
+    "semantic_hash": "68177f2abe2fe08317326b503b0d2354"
+  },
+  "designs/s/O-PIH.html": {
+    "mtime": 1791539230.1563132,
+    "seen": 1791807199.331212,
+    "ast_hash": "c14bf2c920f802daec0618c4efd635c9",
+    "semantic_hash": "c14bf2c920f802daec0618c4efd635c9"
+  },
+  "designs/s/O-TP.html": {
+    "mtime": 1791539230.157835,
+    "seen": 1791807199.331213,
+    "ast_hash": "d8f228c6107f077375cfcc33680e8f04",
+    "semantic_hash": "d8f228c6107f077375cfcc33680e8f04"
+  },
+  "designs/s/O-Turnier.html": {
+    "mtime": 1791539230.1588502,
+    "seen": 1791807199.3312142,
+    "ast_hash": "994c5c28716859ae48dffae55df28f30",
+    "semantic_hash": "994c5c28716859ae48dffae55df28f30"
+  },
+  "designs/s/O-WWDS.html": {
+    "mtime": 1791539230.159844,
+    "seen": 1791807199.3312151,
+    "ast_hash": "a6ea5b06286d8a0f7b91de2c6943a0ab",
+    "semantic_hash": "a6ea5b06286d8a0f7b91de2c6943a0ab"
+  },
+  "designs/s/O-WWM.html": {
+    "mtime": 1791539230.159844,
+    "seen": 1791807199.331216,
+    "ast_hash": "b43c74d58e2ee093dcacd5ba07fe5088",
+    "semantic_hash": "b43c74d58e2ee093dcacd5ba07fe5088"
+  },
+  "designs/s/P-DDF.html": {
+    "mtime": 1791539230.159844,
+    "seen": 1791807199.331217,
+    "ast_hash": "5d6e8d7e02ac0f6617f046de5a35093d",
+    "semantic_hash": "5d6e8d7e02ac0f6617f046de5a35093d"
+  },
+  "designs/s/P-Ergebnis.html": {
+    "mtime": 1791539230.1608438,
+    "seen": 1791807199.3312182,
+    "ast_hash": "f7225683081f09569ebbeca3947c7e2e",
+    "semantic_hash": "f7225683081f09569ebbeca3947c7e2e"
+  },
+  "designs/s/P-Handy.html": {
+    "mtime": 1791539230.1608438,
+    "seen": 1791807199.3312192,
+    "ast_hash": "6f61540f28f1827681e6274b9341af33",
+    "semantic_hash": "6f61540f28f1827681e6274b9341af33"
+  },
+  "designs/s/P-Jeopardy.html": {
+    "mtime": 1791539230.1608438,
+    "seen": 1791807199.3312204,
+    "ast_hash": "789f536c634bad644f6aa5b8a4d29a67",
+    "semantic_hash": "789f536c634bad644f6aa5b8a4d29a67"
+  },
+  "designs/s/P-Leinwand.html": {
+    "mtime": 1791539230.1618476,
+    "seen": 1791807199.3312216,
+    "ast_hash": "a322702107d2af219200341e45513b87",
+    "semantic_hash": "a322702107d2af219200341e45513b87"
+  },
+  "designs/s/P-Lobby.html": {
+    "mtime": 1791539230.1618476,
+    "seen": 1791807199.3312225,
+    "ast_hash": "6b65d60043bfe2ffd22d4af5643a3722",
+    "semantic_hash": "6b65d60043bfe2ffd22d4af5643a3722"
+  },
+  "designs/s/P-Menu.html": {
+    "mtime": 1791539230.1618476,
+    "seen": 1791807199.3312232,
+    "ast_hash": "d28fda1fa7fe74798d9045f0ed33d48c",
+    "semantic_hash": "d28fda1fa7fe74798d9045f0ed33d48c"
+  },
+  "designs/s/P-PIH.html": {
+    "mtime": 1791539230.1618476,
+    "seen": 1791807199.3312247,
+    "ast_hash": "b5b23f8b81f5499bb63441eedcc441aa",
+    "semantic_hash": "b5b23f8b81f5499bb63441eedcc441aa"
+  },
+  "designs/s/P-TP.html": {
+    "mtime": 1791539230.1633558,
+    "seen": 1791807199.3312256,
+    "ast_hash": "b90357d4350a5e2ce896263e1ee043f7",
+    "semantic_hash": "b90357d4350a5e2ce896263e1ee043f7"
+  },
+  "designs/s/P-Turnier.html": {
+    "mtime": 1791539230.1633558,
+    "seen": 1791807199.3312266,
+    "ast_hash": "b72eb7ef113d6d6cc472d1486dafcfb2",
+    "semantic_hash": "b72eb7ef113d6d6cc472d1486dafcfb2"
+  },
+  "designs/s/P-WWDS.html": {
+    "mtime": 1791539230.164362,
+    "seen": 1791807199.3312275,
+    "ast_hash": "f57476b6b4c70cdf28f9a008a4bba360",
+    "semantic_hash": "f57476b6b4c70cdf28f9a008a4bba360"
+  },
+  "designs/s/P-WWM.html": {
+    "mtime": 1791539230.1648717,
+    "seen": 1791807199.3312287,
+    "ast_hash": "92a9e375327e5bab29aa86c5545486cb",
+    "semantic_hash": "92a9e375327e5bab29aa86c5545486cb"
+  },
+  "designs/s/Q-DDF.html": {
+    "mtime": 1791539230.1674466,
+    "seen": 1791807199.3312297,
+    "ast_hash": "07a09fcec631f2ed9991707dc8999e38",
+    "semantic_hash": "07a09fcec631f2ed9991707dc8999e38"
+  },
+  "designs/s/Q-Ergebnis.html": {
+    "mtime": 1791539230.1690001,
+    "seen": 1791807199.3312306,
+    "ast_hash": "f6ef29ce59e1d56407a588d77150f05f",
+    "semantic_hash": "f6ef29ce59e1d56407a588d77150f05f"
+  },
+  "designs/s/Q-Handy.html": {
+    "mtime": 1791539230.1710217,
+    "seen": 1791807199.331232,
+    "ast_hash": "b42022eb6c2e593bf4fff8111a8338f2",
+    "semantic_hash": "b42022eb6c2e593bf4fff8111a8338f2"
+  },
+  "designs/s/Q-Jeopardy.html": {
+    "mtime": 1791539230.1720145,
+    "seen": 1791807199.331233,
+    "ast_hash": "86f79c29f008963b2649c461e331d91a",
+    "semantic_hash": "86f79c29f008963b2649c461e331d91a"
+  },
+  "designs/s/Q-Leinwand.html": {
+    "mtime": 1791539230.1720145,
+    "seen": 1791807199.331234,
+    "ast_hash": "7164c4af418f8c739436801ca2bb057f",
+    "semantic_hash": "7164c4af418f8c739436801ca2bb057f"
+  },
+  "designs/s/Q-Lobby.html": {
+    "mtime": 1791539230.173535,
+    "seen": 1791807199.3312352,
+    "ast_hash": "e00a0f59512399585d8f8630f503d3b4",
+    "semantic_hash": "e00a0f59512399585d8f8630f503d3b4"
+  },
+  "designs/s/Q-Menu.html": {
+    "mtime": 1791539230.1740446,
+    "seen": 1791807199.3312361,
+    "ast_hash": "2dd0ebf9eb4ae335db4c5ae59b009eb4",
+    "semantic_hash": "2dd0ebf9eb4ae335db4c5ae59b009eb4"
+  },
+  "designs/s/Q-PIH.html": {
+    "mtime": 1791539230.1750553,
+    "seen": 1791807199.3312373,
+    "ast_hash": "e933640767f1295f148cf618fde71b87",
+    "semantic_hash": "e933640767f1295f148cf618fde71b87"
+  },
+  "designs/s/Q-TP.html": {
+    "mtime": 1791539230.1750553,
+    "seen": 1791807199.3312385,
+    "ast_hash": "52fd5a0a824039f746ecb4d3454532ca",
+    "semantic_hash": "52fd5a0a824039f746ecb4d3454532ca"
+  },
+  "designs/s/Q-Turnier.html": {
+    "mtime": 1791539230.1760507,
+    "seen": 1791807199.3312395,
+    "ast_hash": "2abbef9d4bfb406c270be64c3c10b133",
+    "semantic_hash": "2abbef9d4bfb406c270be64c3c10b133"
+  },
+  "designs/s/Q-WWDS.html": {
+    "mtime": 1791539230.1760507,
+    "seen": 1791807199.3312404,
+    "ast_hash": "b07bc71e85182c16b0800f8cb560465e",
+    "semantic_hash": "b07bc71e85182c16b0800f8cb560465e"
+  },
+  "designs/s/Q-WWM.html": {
+    "mtime": 1791539230.1760507,
+    "seen": 1791807199.3312414,
+    "ast_hash": "a2a9f3a5a01cb2aeadc315dd78941854",
+    "semantic_hash": "a2a9f3a5a01cb2aeadc315dd78941854"
+  },
+  "designs/s/R-DDF.html": {
+    "mtime": 1791539230.1770496,
+    "seen": 1791807199.3312426,
+    "ast_hash": "b894e6aceb434b96b5fadb30e13e15f5",
+    "semantic_hash": "b894e6aceb434b96b5fadb30e13e15f5"
+  },
+  "designs/s/R-Ergebnis.html": {
+    "mtime": 1791539230.1775541,
+    "seen": 1791807199.3312435,
+    "ast_hash": "c1bd07c8cea0e2b94450d224dd564b70",
+    "semantic_hash": "c1bd07c8cea0e2b94450d224dd564b70"
+  },
+  "designs/s/R-Handy.html": {
+    "mtime": 1791539230.1775541,
+    "seen": 1791807199.3312445,
+    "ast_hash": "835b58d845631598d9f4fd44fc805322",
+    "semantic_hash": "835b58d845631598d9f4fd44fc805322"
+  },
+  "designs/s/R-Jeopardy.html": {
+    "mtime": 1791539230.1775541,
+    "seen": 1791807199.331246,
+    "ast_hash": "1c9591392c25789d57fa3cb6fb49c02c",
+    "semantic_hash": "1c9591392c25789d57fa3cb6fb49c02c"
+  },
+  "designs/s/R-Leinwand.html": {
+    "mtime": 1791539230.1795568,
+    "seen": 1791807199.3312469,
+    "ast_hash": "ff9ae3ddf9ac3dc23ad477cc05a2ced1",
+    "semantic_hash": "ff9ae3ddf9ac3dc23ad477cc05a2ced1"
+  },
+  "designs/s/R-Lobby.html": {
+    "mtime": 1791539230.1795568,
+    "seen": 1791807199.3312478,
+    "ast_hash": "309d5ac6ce91efdf05279a17ef8065a3",
+    "semantic_hash": "309d5ac6ce91efdf05279a17ef8065a3"
+  },
+  "designs/s/R-Menu.html": {
+    "mtime": 1791539230.1805584,
+    "seen": 1791807199.331249,
+    "ast_hash": "2da3b9187ee90d0eb521deda04d5333a",
+    "semantic_hash": "2da3b9187ee90d0eb521deda04d5333a"
+  },
+  "designs/s/R-PIH.html": {
+    "mtime": 1791539230.1805584,
+    "seen": 1791807199.33125,
+    "ast_hash": "5f2d7f846280becfdf66bcf8791ce2a1",
+    "semantic_hash": "5f2d7f846280becfdf66bcf8791ce2a1"
+  },
+  "designs/s/R-TP.html": {
+    "mtime": 1791539230.181561,
+    "seen": 1791807199.3312511,
+    "ast_hash": "149839ac925f2ffd21676ddc4552c036",
+    "semantic_hash": "149839ac925f2ffd21676ddc4552c036"
+  },
+  "designs/s/R-Turnier.html": {
+    "mtime": 1791539230.182568,
+    "seen": 1791807199.3312523,
+    "ast_hash": "ab6d24dc417b2f80745bae5aac72a8bf",
+    "semantic_hash": "ab6d24dc417b2f80745bae5aac72a8bf"
+  },
+  "designs/s/R-WWDS.html": {
+    "mtime": 1791539230.1840858,
+    "seen": 1791807199.3312533,
+    "ast_hash": "7d601a11609066e78873f369cde67ab3",
+    "semantic_hash": "7d601a11609066e78873f369cde67ab3"
+  },
+  "designs/s/R-WWM.html": {
+    "mtime": 1791539230.1866183,
+    "seen": 1791807199.3312542,
+    "ast_hash": "f2e3bb6101eebd8564ed491b36dd2b27",
+    "semantic_hash": "f2e3bb6101eebd8564ed491b36dd2b27"
+  },
+  "designs/s/S-DDF.html": {
+    "mtime": 1791539230.1886332,
+    "seen": 1791807199.3312552,
+    "ast_hash": "05a6f15c4c55dc494fbb50edeb9c84e7",
+    "semantic_hash": "05a6f15c4c55dc494fbb50edeb9c84e7"
+  },
+  "designs/s/S-Ergebnis.html": {
+    "mtime": 1791539230.1896274,
+    "seen": 1791807199.3312566,
+    "ast_hash": "f30a9cd6a397132ba7bbd146b6ca575c",
+    "semantic_hash": "f30a9cd6a397132ba7bbd146b6ca575c"
+  },
+  "designs/s/S-Handy.html": {
+    "mtime": 1791539230.1906266,
+    "seen": 1791807199.3312576,
+    "ast_hash": "bb017ad998e8eaa05712dce1c07fa056",
+    "semantic_hash": "bb017ad998e8eaa05712dce1c07fa056"
+  },
+  "designs/s/S-Jeopardy.html": {
+    "mtime": 1791539230.1916306,
+    "seen": 1791807199.3312585,
+    "ast_hash": "14719dee3025314e9bd509d63bab10b7",
+    "semantic_hash": "14719dee3025314e9bd509d63bab10b7"
+  },
+  "designs/s/S-Leinwand.html": {
+    "mtime": 1791539230.1926458,
+    "seen": 1791807199.3312595,
+    "ast_hash": "03c7e69e6a3ace366e3500311f8bc462",
+    "semantic_hash": "03c7e69e6a3ace366e3500311f8bc462"
+  },
+  "designs/s/S-Lobby.html": {
+    "mtime": 1791539230.1926458,
+    "seen": 1791807199.3312607,
+    "ast_hash": "689070372c3621781b1f3145da61640f",
+    "semantic_hash": "689070372c3621781b1f3145da61640f"
+  },
+  "designs/s/S-Menu.html": {
+    "mtime": 1791539230.1926458,
+    "seen": 1791807199.3312616,
+    "ast_hash": "e0fdbeb2b648562535bacaeba311d69c",
+    "semantic_hash": "e0fdbeb2b648562535bacaeba311d69c"
+  },
+  "designs/s/S-PIH.html": {
+    "mtime": 1791539230.193836,
+    "seen": 1791807199.3312628,
+    "ast_hash": "f933e86cd3ab80b478f81f3de1e3e4f5",
+    "semantic_hash": "f933e86cd3ab80b478f81f3de1e3e4f5"
+  },
+  "designs/s/S-TP.html": {
+    "mtime": 1791539230.1954095,
+    "seen": 1791807199.3312638,
+    "ast_hash": "1ec470c0160f7380eb1df066e553c3a3",
+    "semantic_hash": "1ec470c0160f7380eb1df066e553c3a3"
+  },
+  "designs/s/S-Turnier.html": {
+    "mtime": 1791539230.1969295,
+    "seen": 1791807199.3312647,
+    "ast_hash": "a222f947b3f340a0e4d81ae5e1464e99",
+    "semantic_hash": "a222f947b3f340a0e4d81ae5e1464e99"
+  },
+  "designs/s/S-WWDS.html": {
+    "mtime": 1791539230.1979449,
+    "seen": 1791807199.3312657,
+    "ast_hash": "883476fc48f8959251b501f56a63a2e6",
+    "semantic_hash": "883476fc48f8959251b501f56a63a2e6"
+  },
+  "designs/s/S-WWM.html": {
+    "mtime": 1791539230.199463,
+    "seen": 1791807199.3312669,
+    "ast_hash": "66574342573b1dbc7179770af480e937",
+    "semantic_hash": "66574342573b1dbc7179770af480e937"
+  },
+  "gamepad/index.html": {
+    "mtime": 1791598581.1214294,
+    "seen": 1791807199.3312678,
+    "ast_hash": "0006cb1da12274e355445a3954b1d163",
+    "semantic_hash": "0006cb1da12274e355445a3954b1d163"
+  },
+  "index.html": {
+    "mtime": 1791667885.4322987,
+    "seen": 1791807199.3312688,
+    "ast_hash": "5cb7c111160e2ef2cae4ab23b08f400d",
+    "semantic_hash": "5cb7c111160e2ef2cae4ab23b08f400d"
+  },
+  "mainscreen/index.html": {
+    "mtime": 1791191461.2952304,
+    "seen": 1791807199.33127,
+    "ast_hash": "6dad160b61dab8942452b4e559aa7973",
+    "semantic_hash": "6dad160b61dab8942452b4e559aa7973"
+  },
+  "tools/intros/agentenakte/index.html": {
+    "mtime": 1791559544.3187861,
+    "seen": 1791807199.3312712,
+    "ast_hash": "b526d5f8c8d7efa00d67a22d23ce526d",
+    "semantic_hash": "b526d5f8c8d7efa00d67a22d23ce526d"
+  },
+  "tools/intros/arcade/index.html": {
+    "mtime": 1791559544.321347,
+    "seen": 1791807199.3312721,
+    "ast_hash": "45f8333fbe518d26a0563ef4a2e5d247",
+    "semantic_hash": "45f8333fbe518d26a0563ef4a2e5d247"
+  },
+  "tools/intros/bastelbogen/index.html": {
+    "mtime": 1791559544.3106208,
+    "seen": 1791807199.3312733,
+    "ast_hash": "7e10084853c2ebef2780974ecc16ead9",
+    "semantic_hash": "7e10084853c2ebef2780974ecc16ead9"
+  },
+  "tools/intros/comic/index.html": {
+    "mtime": 1791559544.311921,
+    "seen": 1791807199.3312743,
+    "ast_hash": "304a61966f8fa26b00f8f3ce7c964889",
+    "semantic_hash": "304a61966f8fa26b00f8f3ce7c964889"
+  },
+  "tools/intros/countdown/index.html": {
+    "mtime": 1791559544.311921,
+    "seen": 1791807199.3312752,
+    "ast_hash": "90e7c6ffb2cc920af5f05554d1061fac",
+    "semantic_hash": "90e7c6ffb2cc920af5f05554d1061fac"
+  },
+  "tools/intros/ereignishorizont/index.html": {
+    "mtime": 1791559601.2829978,
+    "seen": 1791807199.3312762,
+    "ast_hash": "c12d94a83ee150641cf6bfd9fad5ca2f",
+    "semantic_hash": "c12d94a83ee150641cf6bfd9fad5ca2f"
+  },
+  "tools/intros/fallblatt/index.html": {
+    "mtime": 1791560064.1649847,
+    "seen": 1791807199.3312774,
+    "ast_hash": "e3107ce3ea2d0e8db1d21154c518a6e5",
+    "semantic_hash": "e3107ce3ea2d0e8db1d21154c518a6e5"
+  },
+  "tools/intros/feuerwerk/index.html": {
+    "mtime": 1791559544.328061,
+    "seen": 1791807199.3312783,
+    "ast_hash": "89628acc4286d40694e35ab79a403d3f",
+    "semantic_hash": "89628acc4286d40694e35ab79a403d3f"
+  },
+  "tools/intros/index.html": {
+    "mtime": 1791559612.2146425,
+    "seen": 1791807199.3312793,
+    "ast_hash": "fe5b446e924697c8fed9674f8b50536c",
+    "semantic_hash": "fe5b446e924697c8fed9674f8b50536c"
+  },
+  "tools/intros/jackpot/index.html": {
+    "mtime": 1791560064.163403,
+    "seen": 1791807199.3312805,
+    "ast_hash": "05a10a9083d1684095ed7bd6de189640",
+    "semantic_hash": "05a10a9083d1684095ed7bd6de189640"
+  },
+  "tools/intros/lichtshow/index.html": {
+    "mtime": 1791559544.3159459,
+    "seen": 1791807199.3312814,
+    "ast_hash": "c3f2c6c11a1a97e8246720211b074c09",
+    "semantic_hash": "c3f2c6c11a1a97e8246720211b074c09"
+  },
+  "tools/intros/partikelsturm/index.html": {
+    "mtime": 1791559592.6481626,
+    "seen": 1791807199.3312824,
+    "ast_hash": "f8c27bbbc908dd2fb57eb48c2e02a012",
+    "semantic_hash": "f8c27bbbc908dd2fb57eb48c2e02a012"
+  },
+  "tools/intros/ringansage/index.html": {
+    "mtime": 1791559964.2979622,
+    "seen": 1791807199.3312838,
+    "ast_hash": "aa0c1dfd2da0bfccaf03e1f92799e9f4",
+    "semantic_hash": "aa0c1dfd2da0bfccaf03e1f92799e9f4"
+  },
+  "tools/intros/schlagzeile/index.html": {
+    "mtime": 1791559544.3159459,
+    "seen": 1791807199.3312845,
+    "ast_hash": "c4c46a20168de2aaba63f66f85d24775",
+    "semantic_hash": "c4c46a20168de2aaba63f66f85d24775"
+  },
+  "tools/intros/senderlogo/index.html": {
+    "mtime": 1791559544.3139474,
+    "seen": 1791807199.3312857,
+    "ast_hash": "7ce34cb234161a79a957d140226035ce",
+    "semantic_hash": "7ce34cb234161a79a957d140226035ce"
+  },
+  "tools/intros/siebziger/index.html": {
+    "mtime": 1791559544.3139474,
+    "seen": 1791807199.3312867,
+    "ast_hash": "726459c5ac349d2ece82f68d5f3f9796",
+    "semantic_hash": "726459c5ac349d2ece82f68d5f3f9796"
+  },
+  "tools/intros/startampel/index.html": {
+    "mtime": 1791559994.3640804,
+    "seen": 1791807199.3312879,
+    "ast_hash": "90cc59a420ec5f3bb19ac019ff035253",
+    "semantic_hash": "90cc59a420ec5f3bb19ac019ff035253"
+  },
+  "tools/intros/trailer/index.html": {
+    "mtime": 1791559544.329604,
+    "seen": 1791807199.3312886,
+    "ast_hash": "059d0a07023a5e08344e0968e8c0cf55",
+    "semantic_hash": "059d0a07023a5e08344e0968e8c0cf55"
+  },
+  "tools/intros/vorhang/index.html": {
+    "mtime": 1791559544.3149376,
+    "seen": 1791807199.3312895,
+    "ast_hash": "fdcb2d1ee1e8ac40d7ee523b19cd55af",
+    "semantic_hash": "fdcb2d1ee1e8ac40d7ee523b19cd55af"
+  },
+  "tools/reactbits/demo.html": {
+    "mtime": 1791539230.224234,
+    "seen": 1791807199.3312907,
+    "ast_hash": "b079346c3128588a09e849d792fe9359",
+    "semantic_hash": "b079346c3128588a09e849d792fe9359"
+  },
+  "voting/ergebnis.html": {
+    "mtime": 1791539230.2413332,
+    "seen": 1791807199.331292,
+    "ast_hash": "6c3ad0c3e1e53ad56719541a47e8cb8d",
+    "semantic_hash": "6c3ad0c3e1e53ad56719541a47e8cb8d"
+  },
+  "voting/index.html": {
+    "mtime": 1791539230.2423165,
+    "seen": 1791807199.3312929,
+    "ast_hash": "7d1124705ce9780ee191e0e1e8d1bf71",
+    "semantic_hash": "7d1124705ce9780ee191e0e1e8d1bf71"
+  },
+  "buzzer/images/freddy-fazbear-fnaf.gif": {
+    "mtime": 1786986017.740305,
+    "seen": 1791807199.331294,
+    "ast_hash": "4578b69c080b697fe51c2087a29907ee",
+    "semantic_hash": "4578b69c080b697fe51c2087a29907ee"
+  },
+  "buzzer/images/lobby-gifs/67-south-park-67.gif": {
+    "mtime": 1786986017.7423542,
+    "seen": 1791807199.331295,
+    "ast_hash": "19dd8739fee932ab51b6ab1a004faa16",
+    "semantic_hash": "19dd8739fee932ab51b6ab1a004faa16"
+  },
+  "buzzer/images/lobby-gifs/ai-dog.gif": {
+    "mtime": 1786986017.7530053,
+    "seen": 1791807199.331296,
+    "ast_hash": "ad6220a1355fa75a2679055d31f8605e",
+    "semantic_hash": "ad6220a1355fa75a2679055d31f8605e"
+  },
+  "buzzer/images/lobby-gifs/arna-celebration.gif": {
+    "mtime": 1786986017.758588,
+    "seen": 1791807199.331297,
+    "ast_hash": "97f96eb345f6cb7f2a010acc09878f99",
+    "semantic_hash": "97f96eb345f6cb7f2a010acc09878f99"
+  },
+  "buzzer/images/lobby-gifs/freddy-fazbear-fnaf.gif": {
+    "mtime": 1786986017.8079717,
+    "seen": 1791807199.331298,
+    "ast_hash": "4578b69c080b697fe51c2087a29907ee",
+    "semantic_hash": "4578b69c080b697fe51c2087a29907ee"
+  },
+  "buzzer/images/lobby-gifs/higuruma-hiromi-higaruma.gif": {
+    "mtime": 1786986017.81303,
+    "seen": 1791807199.3312993,
+    "ast_hash": "228496e4f2e648c43ccaffb7a957f3aa",
+    "semantic_hash": "228496e4f2e648c43ccaffb7a957f3aa"
+  },
+  "buzzer/images/lobby-gifs/kingdom-hearts-kingdom-hearts-2.gif": {
+    "mtime": 1786986017.8184068,
+    "seen": 1791807199.3313,
+    "ast_hash": "0ebedee42cb1dda06285afe1688466d3",
+    "semantic_hash": "0ebedee42cb1dda06285afe1688466d3"
+  },
+  "buzzer/images/lobby-gifs/nature-vegeta.gif": {
+    "mtime": 1786986017.823979,
+    "seen": 1791807199.3313015,
+    "ast_hash": "0f72c8af2ce9438418c44c1c53718cb7",
+    "semantic_hash": "0f72c8af2ce9438418c44c1c53718cb7"
+  },
+  "buzzer/images/lobby-gifs/nose-fur.gif": {
+    "mtime": 1786986017.8666918,
+    "seen": 1791807199.3313024,
+    "ast_hash": "6d015418c169d1d6571d3acccbb17473",
+    "semantic_hash": "6d015418c169d1d6571d3acccbb17473"
+  },
+  "buzzer/images/lobby-gifs/on-it-yes-sir.gif": {
+    "mtime": 1786986017.8708084,
+    "seen": 1791807199.3313034,
+    "ast_hash": "aded3c935cf631f0bc360517bc715a59",
+    "semantic_hash": "aded3c935cf631f0bc360517bc715a59"
+  },
+  "buzzer/images/lobby-gifs/stich.gif": {
+    "mtime": 1786986017.9070432,
+    "seen": 1791807199.3313046,
+    "ast_hash": "27e15c5d3329928405fcdddc7b679fd0",
+    "semantic_hash": "27e15c5d3329928405fcdddc7b679fd0"
+  },
+  "buzzer/images/lobby-gifs/stunned-wow.gif": {
+    "mtime": 1786986017.9118633,
+    "seen": 1791807199.3313055,
+    "ast_hash": "835230387fc01806d76eb0fe3ba7c958",
+    "semantic_hash": "835230387fc01806d76eb0fe3ba7c958"
+  },
+  "buzzer/images/lobby-gifs/sweep-spongebob.gif": {
+    "mtime": 1786986017.9172246,
+    "seen": 1791807199.3313065,
+    "ast_hash": "f334109918e754e28dbe2465ab44e993",
+    "semantic_hash": "f334109918e754e28dbe2465ab44e993"
+  },
+  "buzzer/images/lobby-gifs/triplet-tung-tung-tung-sahur.gif": {
+    "mtime": 1786986017.9393373,
+    "seen": 1791807199.3313074,
+    "ast_hash": "18f4bbdd9631727ba766d0a5b817a06e",
+    "semantic_hash": "18f4bbdd9631727ba766d0a5b817a06e"
+  },
+  "buzzer/images/lobby-gifs/vaya.gif": {
+    "mtime": 1786986017.945357,
+    "seen": 1791807199.3313086,
+    "ast_hash": "8e3f29be1ab0f8f82ec478359cfbba9f",
+    "semantic_hash": "8e3f29be1ab0f8f82ec478359cfbba9f"
+  }
+}

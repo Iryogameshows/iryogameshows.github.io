@@ -4,3 +4,11 @@ ResourceExtractor_log.txt
 tools/reactbits/node_modules/
 tools/shots/node_modules/
 tools/shots/out/
+
+# graphify: nur Spar-Dateien einchecken (cache/ + manifest.json machen
+# `/graphify --update` auf allen Geraeten billig). Der Rest bleibt lokal:
+# graph.html/json und GRAPH_REPORT.md waeren per Pages-Deploy (path: '.')
+# oeffentlich, .graphify_python traegt einen geraetespezifischen Pfad.
+graphify-out/*
+!graphify-out/cache/
+!graphify-out/manifest.json
