@@ -12,6 +12,49 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-12 — `988961b` graphify-Cache + Manifest eingecheckt
+
+**Gemacht:** `/graphify` (Skill) einmal voll über das ganze Repo laufen
+lassen: AST aller 48 Code-Dateien (1762 Knoten, 4543 Kanten) plus 26
+Subagent-Chunks für 270 Dokumente/GIFs (621 Knoten). Ergebnis-Graph: 2388
+Knoten, 5658 Kanten, 110 Communities. Danach `.gitignore` erweitert und nur
+`graphify-out/cache/` (278 Dateien) + `graphify-out/manifest.json`
+eingecheckt. `graph.html`/`graph.json`/`GRAPH_REPORT.md`/`cost.json` und die
+`.graphify_*`-Pfaddateien bleiben per `.gitignore` lokal.
+
+**Warum so:** David: einmalige Investition, danach dauerhaft sparen.
+`cache/` + `manifest.json` lassen `/graphify --update` auf jedem Gerät nur
+geänderte Dateien neu extrahieren statt aller 318 — ein voller Lauf kostete
+rund 2,9 Mio. Subagent-Tokens. Verworfen: (1) ganzen `graphify-out/`
+committen — der Pages-Deploy lädt per `path: '.'` alles hoch, dann wären
+`graph.json`/`GRAPH_REPORT.md` mit eingebettetem HANDOFF-/BAUPLAN-Text
+öffentlich unter iryogameshows.github.io; `.graphify_python` trägt zudem
+einen gerätespezifischen Pfad. (2) `graphify-out/` ganz löschen — verwirft
+den Cache, nächster Lauf wieder teuer. David hat die öffentliche Freigabe
+der reinen Knoten-Labels (keine Volltexte) in `cache/semantic/` bewusst in
+Kauf genommen.
+
+**Geprüft:** `node check.js` fehlerfrei (300 feste IDs gegen 239 Markup-IDs,
+styles.css 2465 Klammernpaare). Health-Check des Graphen: 0 fehlende/hängende
+Endpunkte, 47 Self-Loops, 216 zusammengefallene Kanten (fast alles im
+minifizierten `vendor/`-Code). `git add -An` zeigte 279 Dateien, Rest von
+`graphify-out/` korrekt ignoriert.
+
+**Offen:** `vendor/` verzerrt God Nodes und rund 30 Communities (nicht
+ausgeschlossen). `HANDOFF.md` (7299 Zeilen) wurde vom Extraktor nur teilweise
+gelesen, ältere Einträge fehlen im Graphen. 15 GIF→`buzzer/index.html`-Kanten
+nur abgeleitet, ungeprüft. Zwei Entwurfsfehler nebenbei gefunden, nicht
+behoben: `designs/s/H-PIH.html` enthält nicht ersetzten Template-Ausdruck
+`{t(e(PIH_PROD),34)}` (per Grep bestätigt, nur diese Datei);
+`designs/s/R-PIH.html` trägt „IRY 4003".
+
+**Fallstricke:** Chunk 02 brach am Nutzungslimit ab, Datei war aber schon
+gültig geschrieben. `Remove-Item` mit einem `/`-Argument sperrt den ganzen
+PowerShell-Befehl — Aufräumen getrennt. Subagent-Limit 20 gleichzeitig, die
+restlichen 6 Chunks starteten nach.
+
+---
+
 ## 2026-10-10 — `1d113a8` Spielstand sichern/fortsetzen (`js/resume.js`)
 
 **Gemacht:** Neue Datei `js/resume.js` (lädt als letztes Skript, nach
