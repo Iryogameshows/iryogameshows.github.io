@@ -12,6 +12,28 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — Am PC: Branches aufgeräumt, Screenshots mit echten Schriften (kein Code geändert)
+
+**Gemacht:** Nächste Schritte 1 und 4 aus dem Pause-Eintrag darunter.
+- `wip/beenden-f5` und `ccr-42a1f1c9-bjm7g8` auf origin gelöscht (David selbst; die
+  Umgebung hat `git push --delete` für Claude gesperrt). Nach `git fetch --prune` per
+  `git branch -r` geprüft: weg.
+- `node tools/shots/shots.js --shows gm,feud,buzzer` am PC mit Netz: „keine Befunde“,
+  Exit 0. Kontaktbögen GM, Feud, Buzzer angesehen: echte Schriften, „■ Beenden“ oben
+  rechts im GM-Panel und auf der Feud-Hostseite in allen 19 Richtungen, überdeckt nichts.
+
+**Beobachtet, nicht geändert:** Auf hellen Richtungen (C, F, H, L, N, P, Q) ist der
+Hostknopf „Beenden“ blass (rot-transparent auf Hell). Lesbar, aber schwach. Er ist nur
+für den Host, aufs Beamerbild kommt er nicht (Ausblendliste in `js/feud.js`) — darum
+bewusst so gelassen, bis David etwas anderes will.
+
+**Offen:**
+- `origin/claude/game-buzzer-fixes-90cyjz` und `origin/claude/tooling-setup`: je 0
+  Commits außerhalb master (`git rev-list --count origin/master..<branch>`), also
+  löschbar. Nicht gelöscht, wartet auf David.
+- Gamepad-Beenden am echten Handy und F5 mitten in Feud am echten Aufbau: weiter
+  ungeprüft (Schritte 2 und 3 unten).
+
 ## 2026-10-13 — PAUSE: Stand nach Beenden-Knopf/F5 (`c571568` live) — hier weitermachen
 
 **Aktueller Stand:** Beenden-Knopf (Hostseite + GM-Panel/Gamepad) und Fortsetzen nach F5
