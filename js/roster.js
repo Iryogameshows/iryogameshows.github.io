@@ -167,8 +167,8 @@ function ensureRosterConnected(game) {
   ensurePlayersConnected();
   const isFresh = !feudBuzzer.fbRef;
   feudBuzzConnect();
-  // Wie ensureLobbyConnected: alte Sperre und offenes Rad der letzten Show weg.
-  if (isFresh && feudBuzzer.fbRef) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null, ...TPSPIN_ZU }).catch(() => {});
+  // Wie ensureLobbyConnected: alte Sperre und offene Runden der letzten Show weg.
+  if (isFresh && feudBuzzer.fbRef) feudBuzzer.fbRef.update({ joinLocked: false, lockedNames: null, ...RUNDEN_ZU }).catch(() => {});
   renderRosterLobby(game);
 }
 
