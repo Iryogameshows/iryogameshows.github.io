@@ -77,6 +77,14 @@ function lockBuzzerJoins(buzzer){
    alle drei mit. Jede Show oeffnet ihre Runde danach ohnehin frisch. */
 const RUNDEN_ZU = { 'tpspin/active': false, 'ddfvote/active': false, 'estimate/active': false };
 
+/* Was das erste Verbinden einer Lobby schreibt: Sperre los, offene Runden zu,
+   und lobbyReset neu. An lobbyReset erkennt das Handy, dass eine neue Show
+   eingerichtet wird, auch wenn joinLocked schon aus war (buzzer/index.html,
+   Listener auf lobbyReset). */
+function lobbyFrisch(){
+  return { joinLocked: false, lockedNames: null, ...RUNDEN_ZU, lobbyReset: firebase.database.ServerValue.TIMESTAMP };
+}
+
 function buzzerBroadcastTeams(names){
   const ref = currentBuzzer().fbRef;
   if (ref) ref.child('teamNames').set(names || []).catch(()=>{});
@@ -503,7 +511,7 @@ function ensureLobbyConnected(game){
   // Nur beim ersten Verbinden: eine noch offene Sperre aus der letzten Show
   // wuerde sonst neue Gaeste aussperren, eine offene Runde die Handys
   // festhalten (RUNDEN_ZU).
-  if (isFresh && buzzer.fbRef) buzzer.fbRef.update({ joinLocked: false, lockedNames: null, ...RUNDEN_ZU }).catch(()=>{});
+  if (isFresh && buzzer.fbRef) buzzer.fbRef.update(lobbyFrisch()).catch(()=>{});
   broadcastSetupTeamNames(game);
 }
 function broadcastSetupTeamNames(game){

@@ -221,6 +221,21 @@
   :root[data-theme="N"] #buzz::after{border-radius:34px;}
   :root[data-theme="E"] #buzz::after{inset:-30px;}
 
+  /* Was eine Richtung um den Knopf zeichnet (Ringe per box-shadow-Spread,
+     outline, ::before, harter Versatz), zaehlt nicht zum Layout und lag
+     deshalb ueber Team-Chip und Statuszeile (E und R, gemeldet 2026-10-13).
+     --buzz-rand haelt oben und unten so viel frei, wie es ueber den Knopf
+     hinausragt - Werte aus den box-shadows unten abgelesen. */
+  #buzz{margin-block:var(--buzz-rand,0px);}
+  :root[data-theme="A"] #buzz{--buzz-rand:26px;}
+  :root[data-theme="B"] #buzz,:root[data-theme="P"] #buzz{--buzz-rand:12px;}
+  :root[data-theme="C"] #buzz{--buzz-rand:16px;}
+  :root[data-theme="E"] #buzz{--buzz-rand:22px;}
+  :root[data-theme="H"] #buzz,:root[data-theme="J"] #buzz{--buzz-rand:16px;}
+  :root[data-theme="I"] #buzz,:root[data-theme="S"] #buzz{--buzz-rand:13px;}
+  :root[data-theme="K"] #buzz,:root[data-theme="O"] #buzz{--buzz-rand:8px;}
+  :root[data-theme="R"] #buzz{--buzz-rand:28px;}
+
   /* A Studio: Gluehbirnenring um den Knopf, funkelt solange scharf. */
   :root[data-theme="A"] #buzz{font-weight:400;font-size:3.6rem;letter-spacing:4px;}
   :root[data-theme="A"] #buzz::before{content:"";position:absolute;inset:-26px;border-radius:50%;pointer-events:none;
@@ -1113,6 +1128,21 @@
     const jetzt = !!s.val();
     if (joinLocked && !jetzt) clearActive();
     joinLocked = jetzt;
+    refreshRoot();
+  });
+  /* Der Wechsel oben greift nicht, wenn die Sperre schon aus war - dann
+     aendert sich nichts, und ein Merker aus einer haengengebliebenen Runde
+     blieb stehen: am 2026-10-13 hielt ein seit dem 10.10. offenes TP-Rad die
+     Handys so dauerhaft auf dem Buzzer statt in der Lobby. Deshalb setzt der
+     Host beim Einrichten einer Show zusaetzlich lobbyReset (Zeitstempel).
+     Weicht er vom zuletzt gesehenen ab - auch ueber ein Neuladen hinweg,
+     daher sessionStorage -, ist die Lobby wieder dran. */
+  ref.child('lobbyReset').on('value', s => {
+    const jetzt = String(s.val() || '');
+    let alt = null;
+    try { alt = sessionStorage.getItem('buzzerReset'); } catch {}
+    if (alt !== null && alt !== jetzt) clearActive();
+    try { sessionStorage.setItem('buzzerReset', jetzt); } catch {}
     refreshRoot();
   });
   ref.child('lockedNames').on('value', s => { lockedNames = s.val()||[]; refreshRoot(); });
