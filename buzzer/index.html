@@ -956,7 +956,16 @@
   ref.child('excluded').on('value', s => { excludedSet = s.val() || {}; refreshBuzz(); });
   ref.child('round').on('value', s => {
     const round = s.val() || 0;
-    if (round !== lastRound){ lastRound = round; buzzedThisRound = false; lockUntil = 0; buzzFailed = false; }
+    /* rawBuzzes mit leeren: der Host loescht die Buzzes im selben Schreibvorgang
+       wie den Rundenwechsel, aber welcher der beiden Listener zuerst feuert, ist
+       nicht festgelegt. Kam 'round' zuerst, fand recomputeResults noch den
+       eigenen Buzz der alten Runde und setzte buzzedThisRound gleich wieder -
+       das Handy stand in der neuen Runde auf "Gebuzzert! ✔" und war gesperrt
+       (tools/shots/geraete.js, Feud nextRound ohne Schliessen dazwischen).
+       Nicht beim ersten Wert nach dem Laden (lastRound 0): dann sind die
+       Buzzes die der laufenden Runde, und ohne sie koennte man nach einem
+       Neuladen ein zweites Mal buzzern. */
+    if (round !== lastRound){ if (lastRound) rawBuzzes = {}; lastRound = round; buzzedThisRound = false; lockUntil = 0; buzzFailed = false; }
     recomputeResults();
     refreshRoot();
   });
