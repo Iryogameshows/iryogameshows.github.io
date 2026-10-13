@@ -921,7 +921,7 @@ function boardStyleCss() {
 body{pointer-events:none;}
 /* Nur die Zuschauer-Screens, alles andere aus. */
 ${boardHiddenScreensCss()}
-#gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay,#ms-warten{display:none!important;}
+#gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay,#ms-warten,#host-quit{display:none!important;}
 /* Wartebildschirm: solange kein Spiel-Screen laeuft, steht hier das grosse
    Logo statt einer schwarzen Flaeche. Die Klasse am <body> setzt das
    Hauptfenster (setBoardIdle), der Mirror traegt sie herueber. Das kleine
@@ -981,6 +981,14 @@ function injectBoardStyles() {
    auch nach einem Neuladen dort. Ohne das spiegelte das Hauptfenster nach
    einem F5 im Zuschauerfenster in ein Dokument ohne Regeln, und es stuenden
    alle Screens auf einmal darin. */
+/** Vom Beamerfenster alle 1,5 s: haengt es nach einem Neuladen des Hosts
+ *  wieder an. Tut nichts, solange es schon angehaengt ist. @param {Window} win */
+function boardReattach(win) {
+  if (boardWin === win && !win.closed) return;
+  if (boardWin && !boardWin.closed) return;
+  boardWin = win;
+  boardPageReady();
+}
 function boardPageReady() {
   injectBoardStyles();
   boardIdleFromCurrentScreen();

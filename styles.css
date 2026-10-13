@@ -1071,6 +1071,17 @@ body {
 }
 
 /* ── GM BAR ── */
+/* Show beenden (js/resume.js, hostQuitClick). Ueber den Intro-Overlays
+   (bis 3000) und dem QR-Bild (4500), unter Host-Sperre (5000). Ist das
+   GM-Panel offen, hat es seinen eigenen Knopf oben rechts - dann hier aus. */
+.host-quit {
+  position: fixed; top: 12px; right: 12px; z-index: 4900;
+  padding: 8px 14px; border-radius: 10px; cursor: pointer;
+  border: 1px solid rgba(232,69,60,.6); background: rgba(232,69,60,.16);
+  color: #FF8A80; font: 700 .85rem var(--font-ui, Inter), system-ui, sans-serif;
+}
+.host-quit:hover, .host-quit:focus-visible { background: rgba(232,69,60,.32); outline: 2px solid #FF8A80; outline-offset: 1px; }
+body:has(#gm-embed-overlay.visible) #host-quit { display: none !important; }
 .gm-bar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 1200;
   background: linear-gradient(180deg, var(--panel-hi), var(--bg));

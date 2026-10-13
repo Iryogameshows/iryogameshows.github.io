@@ -121,13 +121,16 @@ function resumeFeudRoundUi(){
   updateScores(); updateRoundPts(); renderBoard(); updateStrikes(); updateActiveTeam();
 }
 
-function resumeGame(){
+/** @param {boolean} [ohneKlick] nach F5 automatisch: kein Beamerfenster
+ *  oeffnen (ohne Nutzergeste blockt der Browser es) - ein noch offenes meldet
+ *  sich selbst wieder an (boardReattach, mainscreen/index.html). */
+function resumeGame(ohneKlick){
   const d = storeGetJson(RESUME_KEY, null);
   if (!d || d.v !== 1 || !d.show) return;
   resumeRestoring = true;
   try {
     // Der Klick ist die Nutzergeste - jetzt geht das Beamerfenster auf.
-    openBoardPopout();
+    if (!ohneKlick) openBoardPopout();
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay,.tut-overlay').forEach(e => e.remove());
     if (d.turnier !== undefined) activeTournamentGameIndex = d.turnier;
     const s = d.state || {};
@@ -137,7 +140,10 @@ function resumeGame(){
       buildScoreboard();
       activeBuzzerContext = 'feud';
       feudBuzzConnect();
-      lockBuzzerJoins(feudBuzzer);
+      /* Kein lockBuzzerJoins hier: die Sperre samt Namensliste steht seit dem
+         Spielstart in Firebase. Gleich nach dem Verbinden ist die Presence-
+         Liste noch leer - ein erneutes Sperren schrieb lockedNames: [] und
+         sperrte damit jedes Handy aus (aufgefallen 2026-10-13, ablauf.js). */
       if (d.tie){
         feudTieChoice = d.tie;
         feudShowTieChoice();
@@ -217,4 +223,63 @@ function resumeGame(){
   updateGamemaster();
 }
 
-resumeOffer();
+/* Show beenden - aus dem GM-Panel, vom Handy-Gamepad und ueber den festen
+   Knopf auf der Hostseite (Anweisung David, 2026-10-13: "ein Beenden-Button,
+   der immer da ist"). Geht fuer jede Show und auch mitten im Intro: alles aus,
+   Handys zurueck in die Lobby, gesicherter Stand weg, Menue.
+   Rueckfrage macht der Knopf auf dem Geraet, auf dem gedrueckt wurde - hier
+   nicht, sonst stuende ein Gamepad-Druck als Dialog auf dem Host-Rechner. */
+function gmQuitShow(){
+  const show = resumeCurrentShow();
+  if (show === 'tp') tpQuit();
+  else if (show === 'ddf') ddfQuit();
+  else if (show === 'pih') pihQuit();
+  if (show === 'wwds') wwdsStopTimer();
+  try { jeopardyEstimateClose(); } catch {}
+  try { jeopardyBuzzClose(); } catch {}
+  try { feudBuzzEndRound(); } catch {}
+  jeopardyState.active = false;
+  wwmState.active = false;
+  wwdsState.active = false;
+  ddfState.active = false;
+  pihState.active = false;
+  tpState.active = false;
+  finaleState.active = false;
+  feudTieChoice = null;
+  activeMediaSlot = null; renderMediaOverlay(null);
+  document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay,.tut-overlay').forEach(e => e.remove());
+  storeRemove(RESUME_KEY);
+  // Beitrittssperre der beendeten Show loesen - sonst stehen Handys, die nicht
+  // auf der Namensliste waren, bis zur naechsten Sitzung auf "gesperrt".
+  try { firebase.database().ref('buzzer').update({ joinLocked: false, lockedNames: null }).catch(() => {}); } catch {}
+  if (typeof lobbyNeueShow === 'function') lobbyNeueShow();
+  showScreen('menu-screen');
+  updateGamemaster();
+}
+function hostQuitClick(){
+  if (confirm('Show beenden und zurück ins Menü?')) gmQuitShow();
+}
+/* Der feste Knopf auf der Hostseite steht, solange eine Show laeuft - auch im
+   Intro, wo noch kein Spiel-Flag gesetzt ist, aber Overlays stehen. Ein
+   Intervall statt Haken an jeder Stelle, die eine Show startet oder beendet. */
+setInterval(() => {
+  const an = resumeCurrentShow() !== ''
+    || !!document.querySelector('.intro-overlay,.black-backdrop,.welcome-overlay,.tut-overlay');
+  showEl('host-quit', an);
+}, 700);
+
+/* Nach F5 (Neuladen) laeuft das Spiel ohne Rueckfrage weiter (David,
+   2026-10-13). Das Angebot im Menue bleibt fuer alles andere: neuer Tab,
+   Absturz, Browser neu gestartet. Erst nach 'load', damit nichts aus dem
+   Seitenaufbau das wiederhergestellte Spiel gleich wieder ueberdeckt. */
+(function(){
+  /** @type {any} */
+  const nav = performance.getEntriesByType ? performance.getEntriesByType('navigation')[0] : null;
+  const d = storeGetJson(RESUME_KEY, null);
+  const frisch = !!d && d.v === 1 && !!d.show && Date.now() - d.ts < RESUME_MAX_AGE_MS;
+  if (nav && nav.type === 'reload' && frisch){
+    window.addEventListener('load', () => setTimeout(() => resumeGame(true), 0));
+    return;
+  }
+  resumeOffer();
+})();

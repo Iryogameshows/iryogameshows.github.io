@@ -35,7 +35,7 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   const errors = { host: [], handy: [] };
 
   const host = await ctx.newPage(); await host.setViewportSize({ width: 1280, height: 720 });
-  host.on('pageerror', e => errors.host.push(String(e))); host.on('dialog', d => d.accept());
+  host.on('pageerror', e => errors.host.push(String(e.stack || e).split('\n').slice(0, 4).join(' | '))); host.on('dialog', d => d.accept());
   await host.goto(base + '/', { waitUntil: 'domcontentloaded' });
   await host.waitForFunction(() => typeof lobbyNeueShow === 'function' && document.readyState !== 'loading');
   await host.evaluate(() => { const g = document.getElementById('host-gate'); if (g) g.style.display = 'none'; window.open = () => null; if (window.SFX) SFX.enabled = false; });
@@ -183,6 +183,49 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   check('PIH nach der Auswertung: Pause (kein Buzzer)', (await screen()) === 'screen-wait', await screen());
   await host.evaluate(() => pihQuit());
   await warte(300);
+
+  // ── F5 mitten im Spiel, Beamerfenster, Beenden ──
+  await host.evaluate(() => { showScreen('menu-screen'); showScreen('setup-screen'); });
+  await start('startGameActual');
+  await weg();
+  await host.evaluate(() => { showScreen('game-screen'); loadRound(); revealQuestion(); state.scores[0] = 77; updateScores(); updateGamemaster(); });
+  await warte(900);   // resumeSaveSoon sichert nach 400 ms
+  check('Feud laeuft: Beenden-Knopf auf der Hostseite sichtbar', await host.evaluate(() => getComputedStyle(document.getElementById('host-quit')).display !== 'none'));
+  check('Beenden-Knopf im GM-Panel', await host.evaluate(() => !!document.getElementById('gm-embed-frame').contentDocument.querySelector('.gm-quit')));
+  await host.reload({ waitUntil: 'load' });
+  await host.evaluate(() => { const g = document.getElementById('host-gate'); if (g) g.style.display = 'none'; });
+  await warte(1200);
+  const nachF5 = await host.evaluate(() => ({ show: resumeCurrentShow(), screen: (document.querySelector('.screen.active') || {}).id, punkte: state.scores[0], runde: state.currentRound }));
+  check('F5: Feud laeuft ohne Klick weiter, Punkte erhalten', nachF5.show === 'feud' && nachF5.screen === 'game-screen' && nachF5.punkte === 77, nachF5);
+  // Beamerfenster oeffnen, dann F5 am Host: das Fenster meldet sich selbst wieder an.
+  await host.evaluate(() => openBoardPopout());
+  await warte(1500);
+  check('Beamerfenster offen', await host.evaluate(() => !!boardWin && !boardWin.closed));
+  await host.reload({ waitUntil: 'load' });
+  await host.evaluate(() => { const g = document.getElementById('host-gate'); if (g) g.style.display = 'none'; });
+  await warte(3500);
+  const beamer = await host.evaluate(() => ({ dran: !!boardWin && !boardWin.closed,
+    spiel: !!boardWin && !!boardWin.document.querySelector('#game-screen.active') }));
+  check('F5: Beamerfenster wieder angehaengt und zeigt das Spiel', beamer.dran && beamer.spiel, beamer);
+  // Beenden ueber das GM-Panel (Rueckfrage wird bestaetigt).
+  await host.evaluate(() => { if (typeof showGamemasterEmbed === 'function') showGamemasterEmbed(); updateGamemaster(); });
+  await host.frameLocator('#gm-embed-frame').locator('.gm-quit').click({ force: true });
+  await warte(600);
+  const nachEnde = await host.evaluate(() => ({ show: resumeCurrentShow(), screen: (document.querySelector('.screen.active') || {}).id,
+    gesichert: !!storeGetJson(RESUME_KEY, null), knopf: getComputedStyle(document.getElementById('host-quit')).display }));
+  check('Beenden: Menue, keine Show, Stand geloescht, Knopf weg', nachEnde.show === '' && nachEnde.screen === 'menu-screen' && !nachEnde.gesichert && nachEnde.knopf === 'none', nachEnde);
+  check('Beenden: Handy zurueck in der Lobby', (await screen()) === 'screen-lobby', await screen());
+  // Beenden mitten im Intro
+  await host.evaluate(() => showScreen('tp-setup-screen'));
+  await start('startTp');
+  await warte(900);
+  // Ist das GM-Panel eingeblendet, hat es seinen eigenen Knopf und der Hostknopf ist aus.
+  check('GM-Panel offen: Hostknopf aus (Panel hat eigenen)', await host.evaluate(() => { const o = document.getElementById('gm-embed-overlay'); o.classList.add('visible'); const aus = getComputedStyle(document.getElementById('host-quit')).display === 'none'; o.classList.remove('visible'); return aus; }));
+  check('TP-Intro: Beenden-Knopf sichtbar', await host.evaluate(() => getComputedStyle(document.getElementById('host-quit')).display !== 'none'));
+  await host.click('#host-quit');
+  await warte(600);
+  check('Beenden im Intro: Menue, keine Overlays', await host.evaluate(() => resumeCurrentShow() === '' && screenActive('menu-screen')
+    && !document.querySelector('.intro-overlay,.black-backdrop,.welcome-overlay,.tut-overlay')));
 
   // ── Spieleruebersicht ──
   await host.evaluate(() => { openPlayersScreen('menu-screen'); });

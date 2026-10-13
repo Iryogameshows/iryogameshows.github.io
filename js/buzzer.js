@@ -694,7 +694,7 @@ const GM_REMOTE_ALLOWED_FNS = new Set([
   'jeopardyEstimateOpen','jeopardyEstimateClose','jeopardyEstimateReopen',
   'wwdsAdjustBet','wwdsSetGuess','wwdsShowTieGuesses','wwdsStartMaster','wwdsMasterSet','wwdsRevealMaster','wwdsAfterMaster',
   'wwdsPick','wwdsSelect','wwdsLock','wwdsReveal','wwdsNext','wwdsAudience','wwdsStartTimer',
-  'wwdsRevealTie','wwdsToggleMedia','gmBackToMenu','gmPlayAgain','gmGotoTournament',
+  'wwdsRevealTie','wwdsToggleMedia','gmBackToMenu','gmQuitShow','gmPlayAgain','gmGotoTournament',
   'revealAll','revealAnswer','revealQuestion','setGmFeudTab','toggleJeopardyQR','popOutQR','switchTeam',
   'undoLast','updateActiveTeam','updateGamemaster','wwmSelect','wwmToggleMedia','saveHostNotesRemote',
   'tournamentStartGame','tournamentStartAt','tournamentStartNext','tournamentRevealSecret',
@@ -779,7 +779,15 @@ function pushGamemasterHtmlToFirebase(html) {
 
 // Ersetzt document.open()/write()/close() an allen GM-Render-Stellen: schreibt
 // wie bisher ins Popup UND spiegelt dieselbe HTML nach Firebase fürs Handy.
+/* Der Beenden-Knopf steht in JEDEM GM-Panel und damit auch auf dem Gamepad
+   (beide bekommen dieses HTML). Eine Stelle statt eines Knopfes in jeder der
+   rund zwanzig Panel-Vorlagen. Die Rueckfrage laeuft im Panel bzw. auf dem
+   Handy, nicht auf dem Host (gmQuitShow in js/resume.js). */
+const GM_QUIT_HTML = `<style>.gm-quit{position:fixed;top:8px;right:8px;z-index:50;padding:6px 12px;border-radius:8px;border:1px solid rgba(232,69,60,.6);background:rgba(232,69,60,.16);color:#FF8A80;font:700 .78rem Inter,system-ui,sans-serif;cursor:pointer;}
+.gm-quit:hover,.gm-quit:focus-visible{background:rgba(232,69,60,.32);outline:2px solid #FF8A80;outline-offset:1px;}</style>
+<button class="gm-quit" onclick="if(confirm('Show beenden und zurück ins Menü?'))opener.gmQuitShow()">⏹ Beenden</button>`;
 function commitGamemasterHtml(html) {
+  html = html.includes('</body>') ? html.replace('</body>', GM_QUIT_HTML + '</body>') : html + GM_QUIT_HTML;
   // Design-Richtung einsetzen (js/theme.js) - vor dem Anzeigen UND vor dem
   // Verschicken, damit das Gamepad dasselbe Bild zeigt wie das GM-Fenster.
   html = themeGmHtml(html);
