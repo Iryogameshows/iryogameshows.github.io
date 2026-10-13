@@ -12,6 +12,51 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `c1d0f91` Offenes TP-Rad hielt Team-Handys in jeder Show fest
+
+**Gemacht:** `TPSPIN_ZU = {'tpspin/active': false}` in `js/buzzer.js`, mitgeschickt
+beim ersten Verbinden einer Lobby (`ensureLobbyConnected`, `ensureRosterConnected`
+in `js/roster.js`) und bei jedem Spielstart (`lockBuzzerJoins`). `startTp` ruft
+vorher `tpCloseSpin()`.
+
+**Warum:** David schickte ein Handy-Bild „🎡 Ihr seid dran / Sony hat gedreht /
+Gedreht ✔" statt der Lobby. Live gelesen (REST, nur GET):
+`buzzer/tpspin = {active:true, by:{name:"Sony", ts:1791597342931}, round:1791583178838, team:0}`.
+Runde am 09.10. ~22:20 UTC geöffnet, Sony drückte ~4 h später (10.10. ~02:15 UTC),
+der Host schloss nie. Geschlossen wird das Rad sonst nur von TP selbst (`tpSpin`,
+`tpQuit`); wird die Hostseite mitten in einer offenen Runde geschlossen oder neu
+geladen, passiert das nie. Weil `refreshRoot` im Handy-Buzzer `myTeamSpins()` **vor**
+Lobby und Buzzer prüft (`buzzer/index.html` ~Z. 830), blieb jedes Handy von Team Rot
+in jeder Show auf diesem Screen — auch beim Buzzern in Feud.
+- Die Stellen sind dieselben, die schon eine liegengebliebene `joinLocked`-Sperre
+  „aus der letzten Show“ lösen — gleiche Art Problem, gleicher Ort.
+- `tpCloseSpin` in `startTp`: ohne das stand `tpSpinOpen` nach einer nicht beendeten
+  TP-Runde noch auf `true`, und `tpRender` öffnete nie wieder eine Dreh-Runde.
+- Verworfen: Handy-seitig ein „veraltetes“ Rad erkennen (über `by.ts`) — hängt an
+  Handy-Uhren und rät; der Host weiß es sicher.
+- Nicht direkt in die Live-Datenbank geschrieben (Live-Daten nur nach Rückfrage).
+  Der Fix räumt den Zustand selbst ab, sobald die Hostseite eine Show-Einrichtung
+  öffnet.
+
+**Geprüft:** Headless Chrome, Firebase-Stub mit mitgeschriebenen Nutzdaten (Test im
+Scratchpad): 8/8 — Feud-Lobby und Roster-Lobby (DDF) schließen beim ersten
+Verbinden, `lockBuzzerJoins` schließt, zweites Verbinden schreibt nichts, TP-Start
+mit `tpSpinOpen = true`: erst `tpspin/active:false`, danach `set` mit `active:true`
+und frischer Runde; 0 JS-Fehler. `node check.js` und `--types` (15 Dateien) ohne
+Meldung.
+
+**Offen:**
+- Live steht der alte Zustand noch, bis die Hostseite (neuer Stand) eine
+  Show-Einrichtung öffnet. Danach live nachlesen: `buzzer/tpspin/active` muss `false` sein.
+- Gleiches Muster bei `ddfvote` und `estimate` (Abstimmung, Schätzen/Bieten haben auf
+  dem Handy ebenfalls Vorrang). Live stehen beide auf `active:false`; ein
+  Absicherungs-Reset wie hier fehlt dort noch.
+- DDF/PIH/WWM rufen `lockBuzzerJoins` beim Start nicht auf — innerhalb einer laufenden
+  Host-Sitzung schließt dort nur das erste Verbinden.
+
+**Fallstricke:** `tools/shots/fbstub.js` schreibt nur `typeof` der Werte mit; für
+Nutzdaten im Test `typeof v === 'string' ? v : typeof v` durch `JSON.stringify(v)` ersetzen.
+
 ## 2026-10-13 — `b33680d` Lobby als MP4, 10-MB-Dublette weg, Pages-Upload eingegrenzt
 
 **Gemacht:**
