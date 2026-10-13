@@ -76,7 +76,11 @@ const CHROME = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/
     ctx.setDefaultTimeout(8000);
     const page = await ctx.newPage();
     errors[name] = [];
-    page.on('pageerror', e => errors[name].push(String(e).slice(0, 200)));
+    /* Ausgenommen: WebKit meldet einen Abbruch der Test-Datenbank-Verbindung
+       (EventSource auf /__fb/events, z. B. wenn das Gamepad sein iframe neu
+       aufbaut) als "access control checks". Das betrifft nur das Testwerkzeug;
+       fbrelay.js verbindet neu und holt den vollen Stand. */
+    page.on('pageerror', e => { const t = String(e); if (/EventSource cannot load .*\/__fb\/events/.test(t)) return; errors[name].push(t.slice(0, 200)); });
     page.on('dialog', d => d.accept());
     return page;
   }
@@ -123,7 +127,7 @@ const CHROME = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/
   await gx.locator('#login-name').tap(); await gx.keyboard.type('Carla');
   await gx.locator('#login-pin').tap(); await gx.keyboard.type('carla1');
   await gx.locator('#screen-login .btn').tap();
-  check('Galaxy: neuer Name fuehrt zum Account-Anlegen', await bis(async () => (await screen(H.galaxyS9)) === 'screen-signup'));
+  check('Galaxy: neuer Name fuehrt zum Account-Anlegen', await bis(async () => (await screen(H.galaxyS9)) === 'screen-signup', 10000));
   await gx.locator('#screen-signup .btn:not(.ghost)').tap();
   check('Alle vier Handys angemeldet und in der Lobby', await alle('screen-lobby'), await screens());
   check('Carla-Account liegt in der Datenbank, PIN gehasht', relay.get('buzzer/players/carla/pin') === hashPin('Carla', 'carla1'));
@@ -136,12 +140,28 @@ const CHROME = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/
   await pad.goto(base + '/gamepad/', { waitUntil: 'domcontentloaded' });
   const gp = pad.frameLocator('#gmFrame');
   const gpKnopf = t => gp.locator('button', { hasText: t });
+  /* Buzzern per Touch. Unter Last (CI, paralleler Lauf) kam ein WebKit-Tap
+     gelegentlich nicht als pointerdown an - der Wettlauf zaehlte dann nur zwei
+     Buzzes und drei Folgepunkte schlugen fehl (2026-10-13, 1 von 7 Laeufen).
+     Deshalb: tippen, bis das Handy selbst "gebuzzert" meldet, hoechstens 3x.
+     force: der scharfe Buzzer pulsiert (CSS-Animation); ohne force wartet
+     Playwright, bis er stillsteht - in WebKit oft nie, beide iPhones fielen
+     dann ganz aus (4 von 10 Laeufen). Ein Finger wartet auch nicht. */
+  const buzzere = async page => {
+    const fehler = [];
+    for (let i = 0; i < 3; i++) {
+      await page.locator('#buzz').tap({ timeout: 2000, force: true }).catch(e => fehler.push(String(e).split(/\r?\n/)[0].slice(0, 120)));
+      if (await bis(() => page.evaluate(() => buzzedThisRound), 800)) return true;
+    }
+    return { fehler, server: relay.get('buzzer/armed'), zustand: await page.evaluate(() => ({ fb: __fbGet('buzzer/armed'), fbRunde: __fbGet('buzzer/round'), runde: lastRound, aus: document.getElementById('buzz').disabled, armed, live, gesperrt: locked(), online, screen: document.querySelector('.screen.active').id,
+      oben: (() => { const r = document.getElementById('buzz').getBoundingClientRect(); const e = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return e ? e.id || e.className : null; })() })) };
+  };
   const zaehle = async loc => { for (let i = 0; ; i++) { try { return await loc.count(); } catch (e) { if (i > 6) throw e; await warte(300); } } };
 
   // ── Feud: Intro vom Gamepad ──
   await host.evaluate(() => { const r = Math.random; Math.random = () => 0; startGameActual(); Math.random = r; });
   check('Feud-Intro: alle Handys in der Lobby', await alle('screen-lobby'), await screens());
-  check('Gamepad zeigt die Zwischensequenz', await bis(async () => (await zaehle(gpKnopf('Weiter'))) > 0, 8000));
+  check('Gamepad zeigt die Zwischensequenz', await bis(async () => (await zaehle(gpKnopf('Weiter'))) > 0, 15000));
   for (let i = 0; i < 8 && !(await host.evaluate(() => !!activeTutorialSkip)); i++) { await gpKnopf('Weiter').first().tap(); await warte(2500); }
   check('Gamepad "Weiter" fuehrt bis ins Tutorial', await host.evaluate(() => !!activeTutorialSkip));
   check('Gamepad: "Tutorial überspringen" da', await bis(async () => (await zaehle(gpKnopf('Tutorial überspringen'))) > 0));
@@ -162,29 +182,54 @@ const CHROME = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/
 
   // Wettlauf: alle vier fast gleichzeitig. Die Reihenfolge bestimmt der Server-Zeitstempel.
   await host.evaluate(() => revealQuestion());
-  check('Frage aufgedeckt: Buzzer scharf (ausser dem gesperrten)', await bis(() => Promise.all(['iphone15', 'iphoneSE', 'pixel7'].map(n => H[n].page.evaluate(() => !document.getElementById('buzz').disabled))).then(a => a.every(Boolean))));
+  check('Frage aufgedeckt: Buzzer scharf (ausser dem gesperrten)', await bis(() => Promise.all(['iphone15', 'iphoneSE', 'pixel7'].map(n => H[n].page.evaluate(() => armed && !document.getElementById('buzz').disabled))).then(a => a.every(Boolean))));
   await warte(3100);   // Sperre der Galaxy laeuft ab
-  await Promise.all(handys.map(h => h.page.locator('#buzz').tap().catch(() => {})));
-  const reihenfolgeOk = await bis(async () => (await host.evaluate(() => feudBuzzer.results.length)) === 4, 5000);
+  /* Wie viele durchkommen, ist offen: wechselt mit dem ersten Buzz das Team,
+     macht der Host den Buzzer zu (feudAutoSetStartTeam). Wer danach drueckt,
+     ist zu spaet. Geprueft wird deshalb: jeder angenommene Buzz kommt an,
+     keiner doppelt, und wer zu spaet war, wird nicht bestraft. */
+  const NAME = { iphone15: 'Sony', iphoneSE: 'Anna', pixel7: 'Bert', galaxyS9: 'Carla' };
+  const getippt = await Promise.all(handys.map(h => buzzere(h.page)));
+  const angenommen = handys.filter((h, i) => getippt[i] === true).map(h => NAME[h.name]);
+  await bis(async () => (await host.evaluate(() => feudBuzzer.results.length)) === angenommen.length, 5000);
   const hostReihe = await host.evaluate(() => feudBuzzer.results.map(r => r.name));
-  check('Wettlauf: vier Buzzes beim Host, jeder einmal', reihenfolgeOk && new Set(hostReihe).size === 4, hostReihe);
+  check('Wettlauf: jeder angenommene Buzz kommt beim Host an, keiner doppelt',
+    angenommen.length > 0 && hostReihe.length === angenommen.length && angenommen.every(n => hostReihe.includes(n)) && new Set(hostReihe).size === hostReihe.length, { hostReihe, angenommen });
+  for (const [i, h] of handys.entries()) if (getippt[i] !== true)
+    check(`Wettlauf: ${h.name} zu spaet - nicht gesperrt, "Zu spät"`, !getippt[i].zustand.gesperrt && await h.page.evaluate(() => /Zu spät/.test(document.getElementById('status').textContent)), getippt[i]);
   const handyReihen = await Promise.all(handys.map(h => h.page.evaluate(() => results.map(r => r.name))));
   check('Wettlauf: jedes Handy zeigt dieselbe Reihenfolge wie der Host', handyReihen.every(r => r.join() === hostReihe.join()), handyReihen);
   check('Gamepad: Buzzer-Liste mit dem Ersten', await bis(async () => (await gp.locator('body').textContent()).includes(hostReihe[0])));
   await passt('Buzz'); await bilder('buzz');
   // Neuladen nach dem eigenen Buzz, gleiche Runde: kein zweiter Buzz moeglich.
-  await H.iphone15.page.reload({ waitUntil: 'domcontentloaded' });
-  await bis(async () => (await screen(H.iphone15)) === 'screen-buzz', 6000);
+  // Am liebsten ein iPhone (WebKit), sonst wer eben gebuzzert hat.
+  const neu = handys.find(h => h.engine === 'webkit' && hostReihe.includes(NAME[h.name])) || handys.find(h => hostReihe.includes(NAME[h.name]));
+  await neu.page.reload({ waitUntil: 'domcontentloaded' });
+  await bis(async () => (await screen(neu)) === 'screen-buzz', 6000);
   await warte(800);
-  check('iPhone neu geladen nach eigenem Buzz: Buzzer bleibt gesperrt', await H.iphone15.page.evaluate(() => buzzedThisRound && document.getElementById('buzz').disabled),
-    await H.iphone15.page.evaluate(() => ({ buzzedThisRound, aus: document.getElementById('buzz').disabled })));
+  check(`${neu.name} neu geladen nach eigenem Buzz: Buzzer bleibt gesperrt`, await neu.page.evaluate(() => buzzedThisRound && document.getElementById('buzz').disabled),
+    await neu.page.evaluate(() => ({ buzzedThisRound, aus: document.getElementById('buzz').disabled })));
 
-  // Runde 2 mit langer Leitung am iPhone 15: es drueckt 150 ms VOR dem Pixel,
-  // kommt aber 350 ms spaeter an. Wie bei Firebase gewinnt die Ankunft.
-  relay.delay('iphone15', 350);
+  // Duell entschieden, gezielt: Team Rot ist dran, Carla (Blau) buzzert zuerst ->
+  // der Host macht zu. Anna drueckt danach: "Zu spät", keine Strafe.
+  await host.evaluate(() => { state.currentTeam = 0; updateActiveTeam(); feudBuzzPrepare(); feudBuzzArm(); });
+  await bis(() => gx.evaluate(() => armed && !document.getElementById('buzz').disabled), 5000);
+  await buzzere(gx);
+  check('Duell entschieden: Host macht den Buzzer zu', await bis(() => relay.get('buzzer/armed') === false, 4000));
+  const sp = H.iphoneSE.page;
+  check('Duell entschieden: iPhone SE zeigt "Zu spät", Knopf aus', await bis(() => sp.evaluate(() => /Zu spät/.test(document.getElementById('status').textContent) && document.getElementById('buzz').disabled), 4000),
+    await sp.evaluate(() => ({ status: document.getElementById('status').textContent, aus: document.getElementById('buzz').disabled })));
+  await sp.locator('#buzz').tap({ force: true, timeout: 2000 }).catch(() => {});
+  await warte(400);
+  check('Duell entschieden: Druck danach bestraft nicht (keine Sperre)', await sp.evaluate(() => !locked() && !buzzedThisRound));
+  await sp.screenshot({ path: `${OUT}/geraete-zuspaet-iphoneSE.png` });
+
+  // Runde 2 mit langer Leitung am iPhone 15: es drueckt VOR dem Pixel (der Pixel
+  // drueckt erst, wenn das iPhone den Druck bestaetigt hat), kommt aber 800 ms spaeter an. Wie bei Firebase gewinnt die Ankunft.
+  relay.delay('iphone15', 800);
   await host.evaluate(() => { feudBuzzPrepare(); feudBuzzArm(); });
-  check('Runde 2: auch das iPhone mit Verzoegerung ist scharf', await bis(() => H.iphone15.page.evaluate(() => !document.getElementById('buzz').disabled), 5000));
-  await H.iphone15.page.locator('#buzz').tap(); await warte(150); await px.locator('#buzz').tap();
+  check('Runde 2: auch das iPhone mit Verzoegerung ist scharf', await bis(() => H.iphone15.page.evaluate(() => armed && !document.getElementById('buzz').disabled), 5000));
+  await buzzere(H.iphone15.page); await buzzere(px);
   await bis(() => host.evaluate(() => feudBuzzer.results.length === 2), 5000);
   const r2 = await host.evaluate(() => feudBuzzer.results.map(r => r.name));
   check('Lange Leitung: wer zuerst ANKOMMT, buzzert zuerst (Bert vor Sony)', r2.join() === 'Bert,Sony', r2);
@@ -196,13 +241,15 @@ const CHROME = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/
   check('Pixel offline: Buzzer gesperrt', await px.evaluate(() => document.getElementById('buzz').disabled));
   check('Pixel offline: faellt beim Host aus der Presence (onDisconnect)', await bis(() => !(relay.get('buzzer/presence') || {}).bert));
   await warte(500);   // Banner faehrt in 0,25 s ein
+  const ueber = await px.evaluate(() => ({ banner: document.getElementById('conn').getBoundingClientRect().bottom, knoepfe: document.getElementById('topbar').getBoundingClientRect().top }));
+  check('Pixel offline: Banner verdeckt Einstellungen/Abmelden nicht', ueber.banner <= ueber.knoepfe, ueber);
   await px.screenshot({ path: `${OUT}/geraete-offline-pixel7.png` });
   relay.offline('pixel7', false);
   check('Pixel zurueck: "Wieder verbunden"', await bis(() => px.evaluate(() => /Wieder verbunden/.test(document.getElementById('conn').textContent))));
   check('Pixel zurueck: wieder in der Presence', await bis(() => !!(relay.get('buzzer/presence') || {}).bert));
   await host.evaluate(() => { feudBuzzPrepare(); feudBuzzArm(); });
   await bis(() => px.evaluate(() => !document.getElementById('buzz').disabled));
-  await px.locator('#buzz').tap();
+  await buzzere(px);
   check('Pixel nach Netzabriss: Buzz kommt an', await bis(() => host.evaluate(() => feudBuzzer.results.some(r => r.name === 'Bert'))));
 
   // ── Netzabriss Gamepad: Strike wartet und kommt nach der Rueckkehr an ──
@@ -210,6 +257,10 @@ const CHROME = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/
   const strikes = await host.evaluate(() => state.teamStrikes[state.currentTeam]);
   relay.offline('gamepad', true);
   check('Gamepad offline: Banner', await bis(() => pad.evaluate(() => document.getElementById('conn').classList.contains('show'))));
+  await warte(500);
+  const ueberPad = await pad.evaluate(() => ({ banner: document.getElementById('conn').getBoundingClientRect().bottom, panel: document.getElementById('gmFrame').getBoundingClientRect().top }));
+  check('Gamepad offline: Banner verdeckt die Kopfzeile (Beenden) nicht', ueberPad.banner <= ueberPad.panel, ueberPad);
+  await pad.screenshot({ path: `${OUT}/geraete-offline-gamepad.png` });
   await gpKnopf('Strike').first().tap();
   await warte(800);
   check('Gamepad offline: Strike kommt (noch) nicht an', await host.evaluate(n => state.teamStrikes[state.currentTeam] === n, strikes));
@@ -249,10 +300,12 @@ const CHROME = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/
   await start('startTp'); await warte(500); await weg();
   await host.evaluate(() => { showScreen('tp-screen'); tpBuildWheel(); tpRender(); });
   check('TP: Team Rot (Sony, Bert) hat das Rad', await bis(async () => (await screen(H.iphone15)) === 'screen-tpspin' && (await screen(H.pixel7)) === 'screen-tpspin'), await screens());
-  // 200 ms Leitung bei beiden: keiner sieht den Dreh des anderen, bevor er selbst drueckt.
-  relay.delay('iphone15', 200); relay.delay('pixel7', 200);
-  await Promise.all([H.iphone15.page.locator('#tpspin-btn').tap({ timeout: 2000 }), px.locator('#tpspin-btn').tap({ timeout: 2000 })]);
-  await warte(1500);
+  // 600 ms Leitung bei beiden: keiner sieht den Dreh des anderen, bevor er selbst drueckt
+  // (200 ms reichten unter Last nicht, dann kam der zweite Finger schon zu spaet).
+  relay.delay('iphone15', 600); relay.delay('pixel7', 600);
+  // Wer zu spaet kommt, findet den Knopf schon gesperrt - der Tap darf dann ins Leere gehen.
+  await Promise.all([H.iphone15.page, px].map(p => p.locator('#tpspin-btn').tap({ timeout: 2000 }).catch(() => {})));
+  await warte(3000);
   relay.delay('iphone15', 0); relay.delay('pixel7', 0);
   check('TP: beide Finger haben wirklich gedrueckt (zwei Versuche am Server)', relay.zaehler('tx', 'buzzer/tpspin/by') >= 2, relay.zaehler('tx', 'buzzer/tpspin/by'));
   const dreher = relay.get('buzzer/tpspin/by');

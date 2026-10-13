@@ -198,6 +198,11 @@
   }
   #conn.show{transform:none;}
   #conn.back{background:var(--green-deep);}
+  /* Steht das Banner, rutschen nur Einstellungen/Abmelden darunter - vorher lagen
+     sie unter dem Banner (tools/shots/geraete.js, Bild offline-pixel7). Der
+     Buzzer selbst bleibt stehen. */
+  .topbar{transition:top .25s ease;}
+  body:has(#conn.show) .topbar{top:calc(12px + 2.6rem);}
 
   /* Wer Bewegung reduziert hat, bekommt eine ruhige Fassung - aber nicht auf
      Kosten der Information: der Bereitschaftsring bleibt sichtbar, er steht
@@ -883,8 +888,14 @@
     if (everActive) { showWait(); return; }
     showLobby();
   }
+  /* Duell entschieden: es gibt Buzzes, aber der Host hat den Buzzer wieder
+     zugemacht (Feud nach dem ersten Buzz, feudAutoSetStartTeam). Vorher galt
+     ein Druck in diesem Moment als "zu frueh" - Wackeln, 3 s Sperre und
+     "Zu frueh!", obwohl der Spieler zu SPAET war (tools/shots/geraete.js,
+     iPhone unter Last). Jetzt: Knopf aus, ehrliche Statuszeile. */
+  function entschieden(){ return !armed && results.length > 0 && !buzzedThisRound; }
   function refreshBuzz(){
-    buzz.disabled = !(online && live && !buzzedThisRound && !locked() && !amExcluded());
+    buzz.disabled = !(online && live && !buzzedThisRound && !locked() && !amExcluded() && !entschieden());
     // Ohne Verbindung landet ein Buzz nirgends. Lieber ehrlich sperren als
     // den Knopf bunt lassen und den Spieler ins Leere drücken lassen.
     if (!online) { status.textContent='Keine Verbindung …'; status.style.color='var(--st-bad)'; }
@@ -893,6 +904,7 @@
     else if (locked()) { status.textContent='Zu früh! Gesperrt '+Math.ceil((lockUntil-Date.now())/1000)+'s'; status.style.color='var(--st-bad)'; }
     else if (buzzedThisRound) { status.textContent='Gebuzzert! ✔'; status.style.color='var(--st-ok)'; }
     else if (armed) { status.textContent='BEREIT — jetzt buzzern!'; status.style.color='var(--accent-text)'; }
+    else if (entschieden()) { status.textContent='Zu spät — schon entschieden'; status.style.color='rgba(var(--fg-rgb),.5)'; }
     else if (live) { status.textContent='Achtung — noch NICHT buzzern!'; status.style.color='var(--st-warn)'; }
     else { status.textContent='Warte auf die Frage…'; status.style.color='rgba(var(--fg-rgb),.5)'; }
     const pos = results.findIndex(b => b.name === myName());

@@ -68,6 +68,9 @@
 
   let bereit; const ready = new Promise(r => { bereit = r; });
   const es = new EventSource(BASIS + '/__fb/events?id=' + ich + '&g=' + encodeURIComponent(GERAET));
+  // Abriss der Ereignis-Verbindung wie bei Firebase: kurz offline, nach dem
+  // Neuaufbau (EventSource verbindet sich selbst neu) kommt der volle Stand.
+  es.onerror = () => { if (online) { online = false; root['.info'].connected = false; melde(['.info/connected']); } };
   es.onmessage = e => {
     const m = JSON.parse(e.data);
     if (m.type === 'stand') {

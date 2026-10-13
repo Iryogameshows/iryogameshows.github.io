@@ -42,6 +42,9 @@
   }
   #conn.show{transform:none;}
   #conn.back{background:var(--green-deep);}
+  /* Steht das Banner, rueckt das Panel darunter - sonst laege der Banner ueber
+     der Kopfzeile mit "Beenden" (tools/shots/geraete.js). */
+  body:has(#conn.show) #gmFrame{top:2.2rem;height:calc(100% - 2.2rem);}
 
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;}

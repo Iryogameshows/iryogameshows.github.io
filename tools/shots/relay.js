@@ -80,13 +80,26 @@ module.exports = function relay() {
   function handle(req, res) {
     const url = new URL(req.url, 'http://x');
     if (!url.pathname.startsWith('/__fb/')) return false;
+    /* CORS offen: WebKit behandelt das srcdoc-iframe des Gamepads gelegentlich
+       als fremden Ursprung und blockte dann die Verbindung ("access control
+       checks", 2 von 10 Laeufen). Echtes Firebase erlaubt das ebenfalls. */
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return true; }
     if (url.pathname === '/__fb/events') {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
       res.write(': hallo\n\n');
       const c = { id: url.searchParams.get('id'), g: url.searchParams.get('g') || '?', res, ondc: new Map() };
       clients.set(c.id, c);
       an(c, { type: 'stand', root: clone(root) });
-      req.on('close', () => { clients.delete(c.id); onDisconnectAusfuehren(c); });
+      /* Baut der Browser die Verbindung neu auf (WebKit unter Last), kommt die
+         neue mit derselben id, bevor die alte 'close' meldet. Frueher loeschte
+         das 'close' der alten dann die NEUE - das Geraet bekam keine Updates
+         mehr (iPhone sah "scharf" nie, 2026-10-13). Nur sich selbst austragen. */
+      req.on('close', () => { if (clients.get(c.id) === c) clients.delete(c.id); onDisconnectAusfuehren(c); });
+      const puls = setInterval(() => { try { res.write(': puls\n\n'); } catch {} }, 10000);
+      req.on('close', () => clearInterval(puls));
       return true;
     }
     if (url.pathname === '/__fb/op' && req.method === 'POST') {

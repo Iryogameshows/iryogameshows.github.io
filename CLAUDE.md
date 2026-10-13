@@ -408,12 +408,34 @@ node shots.js                      # alle Shows x alle Richtungen, 1280x720
 node shots.js --basis              # vor einer Änderung: Studio-Blau merken
 node shots.js --vergleich          # danach: Studio-Blau unverändert?
 node shots.js --reduced            # mit „Bewegung reduzieren“: läuft noch etwas?
-node ablauf.js                     # Host + Handy zusammen: welcher Screen wann (28 Punkte)
+node ablauf.js                     # Host + Handy + Gamepad: welcher Screen wann (48 Punkte)
+node geraete.js                    # echte Geräteprofile, iPhones in WebKit (55–57 Punkte, ~1,5 min)
+npx playwright@1.48.2 install webkit   # einmal pro Gerät, für geraete.js
 ```
 
-`ablauf.js` verbindet Host- und Handy-Tab über eine gemeinsame Ersatz-Datenbank
+`ablauf.js` verbindet Host-, Handy- und Gamepad-Tab über eine gemeinsame Ersatz-Datenbank
 (`fbshared.js`, keine Live-Daten) und spielt fuenf Shows hintereinander durch (Feud, TP, Jeopardy, DDF, PIH).
 Laufen lassen nach Änderungen an Lobby, Buzzer-Logik, Spielstart oder Teams.
+
+`geraete.js` spielt eine Show mit Host (Chrome), iPhone 15/SE (WebKit = Safari-Engine),
+Pixel 7/Galaxy S9+ und Gamepad (iPhone) per Touch: Login, Buzzer-Wettlauf, lange
+Leitung, Netzabriss, Neuladen, Nachzügler, TP-Rad, DDF, PIH. Die Ersatz-Datenbank
+ist hier ein Server im Testprozess (`relay.js` + `fbrelay.js`), weil Chromium und
+WebKit keinen BroadcastChannel teilen. Je Gerät `relay.offline()` / `relay.delay()`.
+Nicht abgedeckt: echtes iOS, Bildschirmsperre, App-Wechsel.
+
+**Automatisch:** `.github/workflows/pruefungen.yml` lässt bei jedem Push auf
+`master` `check.js`, `check.js --types`, `ablauf.js` und `geraete.js` laufen
+(Bilder als Artefakt „pruefbilder“, 7 Tage). Ein roter Lauf hält den Deploy
+nicht auf — nach dem Push mit `gh run list --workflow pruefungen.yml` nachsehen.
+
+**Stand 2026-10-13: noch nicht auf GitHub.** Dateien unter `.github/workflows/`
+lassen sich nur mit einem Token mit `workflow`-Recht pushen; weder das Git-Token
+(Windows-Anmeldeverwaltung) noch `gh` (Rechte `gist, read:org, repo, user`) hat es.
+David einmal: `gh auth refresh -h github.com -s workflow` (Browser-Anmeldung),
+danach kann der Push über `gh` laufen
+(`git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin master`).
+Bis dahin liegt die Datei nur lokal auf dem Rechner, auf dem sie angelegt wurde.
 
 **Pflicht nach jeder Änderung an CSS, Design-Richtungen, GM-Panel oder
 Handy-Seiten**, vor dem Commit. Legt je Show einen Kontaktbogen nach
