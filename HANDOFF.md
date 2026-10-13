@@ -12,6 +12,42 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `2fea83a` Beenden-Knopf + F5 fortgesetzt (Branch `ccr-42a1f1c9-bjm7g8`, noch nicht auf master)
+
+**Gemacht:** `origin/wip/beenden-f5` (`34849f7`) in den Session-Branch gemerged, dann
+die Nächsten Schritte aus dem Abbruch-Eintrag darunter:
+- `js/feud.js` `scheduleBoardMirror`: Durchgang auslassen, solange
+  `boardWin.document.body` fehlt (Beamerfenster lädt neu). Danach meldet sich die Seite
+  ohnehin per `boardPageReady()` (mainscreen/index.html Z. 56) und spiegelt neu.
+- `tools/shots/ablauf.js`: Prüfung 1 heißt jetzt „Beenden-Knopf da (Hostseite oder
+  GM-Panel)“ — sichtbarer Hostknopf ODER offenes Panel mit `.gm-quit`.
+- `ablauf.js` und `shots.js`: `firebase-app-compat.js` wird erst echt geholt, schlägt das
+  fehl, kommt ein Minimal-Firebase (`apps`, `initializeApp`). Grund: in der Cloud-Umgebung
+  ist gstatic gesperrt, ohne das lief kein Test (`firebase is not defined`). Mit Netz
+  ändert sich nichts.
+
+**Warum so:** Absichern statt Ursache umbauen — der Spiegel ist ein reines Nachziehen,
+ein ausgelassener Frame wird beim nächsten Mutationsereignis bzw. beim `boardPageReady`
+nachgeholt. Branch statt master: die Cloud-Session darf nur auf ihren Branch pushen.
+
+**Geprüft:** `node tools/shots/ablauf.js` 38 OK, 0 FEHL, 0 JS-Fehler in beiden Tabs.
+`node check.js` und `node check.js --types` (15 Dateien, keine Meldung) sauber.
+`node shots.js --shows gm,feud,buzzer`: keine Befunde; Kontaktbogen GM angesehen —
+„■ Beenden“ oben rechts in allen 19 Richtungen, überdeckt nichts. Headless-Browser:
+`CHROME=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell`.
+
+**Offen / ungeprüft:**
+- Der `nodeType`-Fehler ließ sich **nicht** reproduzieren: ohne Fix lief `ablauf.js` hier
+  ebenfalls 38/38. Timing-Fall; der Fix ist begründet, aber nicht durch einen roten Lauf
+  belegt.
+- Google Fonts und cdnjs (QRCode) sind in der Cloud gesperrt — die Screenshots zeigen
+  Ersatzschriften.
+- Gamepad (`gamepad/index.html`) auf echtem Handy: Knopf, `confirm` im iframe — ungeprüft.
+- Merge auf master + Deploy, Löschen von `wip/beenden-f5` — steht aus.
+
+**Fallstricke:** `/opt/pw-browsers/chromium` startet mit `headless: true` (old headless)
+nicht mehr, dafür die `headless_shell` nehmen.
+
 ## 2026-10-13 — ABGEBROCHEN: Beenden-Knopf + F5 fortsetzen — Stand auf Branch `wip/beenden-f5` (`34849f7`)
 
 **Abgebrochen auf Davids Anweisung.** Nichts davon ist auf `master` oder live. Der
