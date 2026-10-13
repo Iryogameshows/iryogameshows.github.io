@@ -408,7 +408,12 @@ node shots.js                      # alle Shows x alle Richtungen, 1280x720
 node shots.js --basis              # vor einer Änderung: Studio-Blau merken
 node shots.js --vergleich          # danach: Studio-Blau unverändert?
 node shots.js --reduced            # mit „Bewegung reduzieren“: läuft noch etwas?
+node ablauf.js                     # Host + Handy zusammen: welcher Screen wann (13 Punkte)
 ```
+
+`ablauf.js` verbindet Host- und Handy-Tab über eine gemeinsame Ersatz-Datenbank
+(`fbshared.js`, keine Live-Daten) und spielt zwei Shows hintereinander durch.
+Laufen lassen nach Änderungen an Lobby, Buzzer-Logik, Spielstart oder Teams.
 
 **Pflicht nach jeder Änderung an CSS, Design-Richtungen, GM-Panel oder
 Handy-Seiten**, vor dem Commit. Legt je Show einen Kontaktbogen nach

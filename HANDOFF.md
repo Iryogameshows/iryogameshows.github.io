@@ -12,6 +12,39 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `1ed09e3` „zuletzt da“ in der Spielerübersicht; Durchlauf-Test Host+Handy
+
+**Gemacht:**
+- `js/core.js`: `cleanPlayerAccount` übernimmt `seen`; `playerSeenText` zeigt bei
+  Offline-Spielern „zuletzt vor X h / Tagen“, mit Team und < 12 h bis zum
+  48-h-Ablauf zusätzlich „(Team noch N h)“.
+- `tools/shots/ablauf.js` + `tools/shots/fbshared.js`: Host- und Handy-Tab im
+  selben Browser-Kontext teilen eine Ersatz-Datenbank (BroadcastChannel). Spielt
+  Feud, dann TP in derselben Host-Sitzung durch und prüft die Handy-Screens.
+- `CLAUDE.md`: `node ablauf.js` bei der Screenshot-Prüfung eingetragen (eigener
+  kleiner Commit nach diesem Eintrag).
+
+**Warum:** David: „mach das selber so weit wie's geht“ zu den offenen Punkten aus
+`a0468d9`. Der Durchlauf ersetzt die Show-Probe für das, was sich automatisch
+prüfen lässt. Die Auslegung der 48 h („ab letzter Teilnahme“) bleibt Davids
+Entscheidung und ist unverändert. `fbstub.js` reichte nicht: jeder Tab hatte
+eine eigene, leere Datenbank, Host und Handy sahen sich nicht.
+
+**Geprüft:** `node tools/shots/ablauf.js` 13/13 — Lobby nach Login, `seen`
+gestempelt, 49-h-Team weg, Lobby im Feud-Intro, Buzzer ab erster Frage, scharf
+nach dem Aufdecken, Buzzer zwischen den Fragen, Lobby bei der zweiten
+Einrichtung, Lobby im TP-Intro, Rad nach dem Intro, „zuletzt vor 2 Tagen“,
+0 JS-Fehler in beiden Tabs. Übersicht im Screenshot angesehen. `check.js` und
+`--types` ohne Meldung.
+
+**Offen:**
+- Nicht auf echten Geräten. Die Intros wurden übersprungen (Overlays entfernt),
+  nicht durchgeklickt.
+- `ablauf.js` deckt nur Feud und TP ab, nicht Jeopardy, DDF und PIH.
+
+**Fallstricke:** Im Ersatz müssen `get`/`once` auf den Abgleich zwischen den Tabs
+warten. Sonst findet das Auto-Login im Handy-Tab den Account nicht und meldet ab.
+
 ## 2026-10-13 — `a0468d9` Teams/Lobby verfallen nach 48 h; Buzzer erst nach den Intros
 
 **Gemacht:**
