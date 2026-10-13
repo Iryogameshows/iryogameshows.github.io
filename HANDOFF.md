@@ -12,6 +12,32 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `5460017` Gamepad im automatischen Durchlauf (`tools/shots/ablauf.js`)
+
+**Gemacht (David: „kannst du was bauen, dass du auch das Handy-Zeug testen kannst?“):**
+Handy-Buzzer war schon drin, das Gamepad nicht. Jetzt öffnet `ablauf.js` einen dritten
+Tab `gamepad/` (390×844) an derselben Ersatz-Datenbank und prüft vom Handy aus:
+Zwischensequenz-Panel mit „Weiter“, „Weiter“ führt den Host bis ins Feud-Tutorial,
+„Tutorial überspringen“ ist da und wirkt, danach weg; Spielpanel mit Beenden in der
+Kopfzeile; „Strike“ kommt beim Host an; „Beenden“ (Rückfrage bestätigt) → Host im Menü,
+Buzzer-Handy in der Lobby; keine JS-Fehler im Gamepad. Bild: `out/ablauf-gamepad.png`.
+
+`fbshared.js` dafür erweitert:
+- `on('child_added')` (erst vorhandene, dann neue Kinder) und `snap.ref` — sonst kam
+  kein Gamepad-Befehl (`gmremote/commands`) beim Host an.
+- Antwort auf `hallo` heißt jetzt `stand` und gilt nur dem fragenden Tab, nur einmal.
+  Vorher ging sie als `set ''` an alle: jedes Neuladen des Gamepad-iframes (das
+  eigene Firebase-Skript fragt mit `hallo`) löste beim Gamepad ein Update aus →
+  `fullLoad` → iframe lädt neu → `hallo` … Endlosschleife, iframe blieb auf
+  `readyState: loading`. **Nur ein Test-Artefakt**, echtes Firebase verhält sich nicht so.
+
+**Geprüft:** `node tools/shots/ablauf.js` zweimal hintereinander 48 OK / 0 FEHL
+(vorher 38). Gamepad-Bild angesehen: Kopfzeile „GAMEMASTER … ■ Beenden“, Strike
+gezählt (1 rotes X bei Team Rot). `node check.js` sauber.
+
+**Grenzen:** Ersetzt nicht das echte Handy: Touch, echtes Firebase mit Latenz,
+Bildschirmsperre, iOS-`confirm` im iframe sind nicht abgedeckt.
+
 ## 2026-10-13 — `3835b52` GM-Panel: Beenden in der Kopfzeile, „Tutorial überspringen“ repariert
 
 **Gemacht (David: „Knopf passt da oben nicht“, „Tutorial überspringen geht nicht“):**
