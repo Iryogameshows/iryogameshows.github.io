@@ -1213,8 +1213,16 @@
   // ── Presence (per Account) + Team (aus dem Account) ──
   function registerPresence(){
     presenceRef.onDisconnect().remove();
-    if (nameAllowed()) presenceRef.set({ name: acc.name, account: acc.key, avatar: acc.avatar, color: acc.color, team: myTeam, ts: TS });
+    if (!nameAllowed()) return;
+    presenceRef.set({ name: acc.name, account: acc.key, avatar: acc.avatar, color: acc.color, team: myTeam, ts: TS });
+    // Teilnahme-Stempel: Team und Lobby-Eintrag verfallen 48 h nach dem
+    // letzten (expireStalePlayers in js/buzzer.js).
+    db.ref('buzzer/players/' + acc.key + '/seen').set(TS).catch(()=>{});
   }
+  // Solange die Seite offen und verbunden ist, alle 15 Minuten erneuern -
+  // sonst saehe ein Handy, das zwei Tage durchgehend verbunden war, fuer den
+  // Host aus wie eins, das seit zwei Tagen weg ist.
+  setInterval(() => { if (online && acc && presenceRef) registerPresence(); }, 15 * 60 * 1000);
   function startPresence(){
     presenceRef = db.ref('buzzer/presence/' + acc.key);
     if (online) registerPresence();

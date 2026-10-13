@@ -62,7 +62,10 @@ function currentBuzzer(){ return activeBuzzerContext === 'jeopardy' ? jeopardyBu
 function lockBuzzerJoins(buzzer){
   if (!buzzer.fbRef) return;
   const names = buzzer.presence.map(p => p.name);
-  buzzer.fbRef.update({ joinLocked: true, lockedNames: names, ...RUNDEN_ZU }).catch(()=>{});
+  // lobbyReset auch hier: wer ohne Einrichtung startet (Turnier, Fortsetzen),
+  // steht sonst mit dem Merker der vorigen Show schon im Intro am Buzzer.
+  buzzer.fbRef.update({ joinLocked: true, lockedNames: names, ...RUNDEN_ZU,
+    lobbyReset: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
 }
 
 /* Ein offener Runden-Zweig aus einer frueheren Show haelt die Handys fest:
@@ -83,6 +86,53 @@ const RUNDEN_ZU = { 'tpspin/active': false, 'ddfvote/active': false, 'estimate/a
    Listener auf lobbyReset). */
 function lobbyFrisch(){
   return { joinLocked: false, lockedNames: null, ...RUNDEN_ZU, lobbyReset: firebase.database.ServerValue.TIMESTAMP };
+}
+
+/* Beim Betreten jeder Show-Einrichtung (showScreen in core.js), nicht nur der
+   ersten der Sitzung. Davor gab es lobbyReset nur beim ersten Verbinden - ab
+   der zweiten Show eines Abends blieb der Merker "Show laeuft" auf den Handys
+   stehen, und sie zeigten den Buzzer schon waehrend der Intros (David,
+   2026-10-13: "den Buzzer sehen sie erst, wenn die Show gestartet ist, also
+   immer nach den Intros"). Mit dem Reset stehen sie in der Lobby, bis der
+   Host nach dem Intro die erste Frage vorbereitet (live). */
+function lobbyNeueShow(){
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    firebase.database().ref('buzzer').update({ ...RUNDEN_ZU, lobbyReset: firebase.database.ServerValue.TIMESTAMP }).catch(()=>{});
+  } catch { return; }
+  expireStalePlayers();
+}
+
+/* Teamzuteilung und Lobby-Eintrag halten 48 Stunden ab der letzten Teilnahme
+   (Anweisung David, 2026-10-13). Danach: raus aus Team und Lobby, der Account
+   und das Login auf dem Handy bleiben.
+   "Teilnahme" schreibt das Handy selbst: players/<key>/seen und presence/<key>/ts
+   beim Verbinden und alle 15 Minuten, solange die Seite offen ist (buzzer/index.html,
+   registerPresence). Accounts von vor dieser Regel haben kein seen - sie werden
+   nicht abgeraeumt, sondern bekommen jetzt einen Stempel; die 48 h laufen ab heute,
+   statt Teams zu loeschen, deren letzte Teilnahme niemand kennt. */
+const TEAM_HALTEDAUER_MS = 48 * 3600 * 1000;
+function expireStalePlayers(){
+  try {
+    const db = firebase.database();
+    Promise.all([db.ref('buzzer/players').once('value'), db.ref('buzzer/presence').once('value')]).then(([ps, pr]) => {
+      const players = ps.val() || {}, presence = pr.val() || {};
+      const grenze = Date.now() - TEAM_HALTEDAUER_MS;
+      /** @type {Record<string, any>} */
+      const up = {};
+      Object.keys(presence).forEach(k => {
+        const ts = presence[k] && typeof presence[k].ts === 'number' ? presence[k].ts : 0;
+        if (ts < grenze) up['presence/' + k] = null;
+      });
+      Object.keys(players).forEach(k => {
+        const p = players[k];
+        if (!p || typeof p !== 'object') return;
+        if (typeof p.seen !== 'number') { up['players/' + k + '/seen'] = firebase.database.ServerValue.TIMESTAMP; return; }
+        if (p.seen < grenze && cleanTeamIdx(p.team) !== null) up['players/' + k + '/team'] = null;
+      });
+      if (Object.keys(up).length) db.ref('buzzer').update(up).catch(()=>{});
+    }).catch(()=>{});
+  } catch {}
 }
 
 function buzzerBroadcastTeams(names){

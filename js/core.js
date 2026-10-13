@@ -954,6 +954,11 @@ function showScreen(id) {
       + (finaleQuestions.length ? '' : ' — ohne Finalfragen endet das Spiel ohne Finale'));
   }
   if (id === 'jeopardy-setup-screen') ensureJeopardyLobbyConnected();
+  // Jede Show-Einrichtung (nicht nur die erste der Sitzung) holt die Handys in
+  // die Lobby und raeumt Teams nach 48 h ohne Teilnahme ab - lobbyNeueShow in
+  // buzzer.js. Nur beim Betreten, nicht bei jedem erneuten showScreen.
+  if (/(^|-)setup-screen$/.test(id) && id !== 'wwm-setup-screen' && (!leaving || leaving.id !== id)
+      && typeof lobbyNeueShow === 'function') lobbyNeueShow();
   if (id === 'reaction-board-screen') renderReactionBoard();
   if (id === 'players-screen') { ensurePlayersConnected(); setPlayersTab(playersTab); }
   if (id === 'tournament-screen') { renderTournament(); updateGamemaster(); }
