@@ -12,6 +12,35 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `3835b52` GM-Panel: Beenden in der Kopfzeile, „Tutorial überspringen“ repariert
+
+**Gemacht (David: „Knopf passt da oben nicht“, „Tutorial überspringen geht nicht“):**
+- `js/core.js` `startGmPoller`: Zustand ist jetzt Overlay da/weg **plus** Tutorial
+  läuft/läuft nicht. Vorher wurde das GM-Panel nur beim Wechsel Overlay da/weg neu gebaut.
+  Im Feud-Intro folgen Willkommen → Tutorial → schwarze Pause ohne Lücke, deshalb fehlte
+  der Knopf während des Tutorials und stand danach wirkungslos da.
+- `js/buzzer.js` `gmInsertQuit` (aus `commitGamemasterHtml`): Beenden-Knopf wird im
+  geparsten Dokument rechts in `.gm-header` gesetzt, zusammen mit einem vorhandenen Chip
+  in `.gm-head-right`. Panels ohne Kopfzeile (Zwischensequenz) bekommen `.gm-quit.fix`
+  (fest oben rechts wie bisher). Schrift erbt die Richtung (`font:inherit`).
+  Das HTML für Firebase/Gamepad wird danach aus dem Dokument serialisiert.
+- Farbe des Knopfs in GM-Panel und `.host-quit` (styles.css):
+  `light-dark(#B42318, #FF8A80)` — helle Richtungen setzen `color-scheme: light`.
+
+**Warum so:** Vorher schwebte der Knopf mit `position:fixed` über der Kopfzeile, nicht
+auf ihrer Linie, und hätte in Jeopardy den Verbindungs-Chip (`connChip`) verdeckt.
+Einsetzen im DOM statt per String-Ersetzung, weil das Dokument ohnehin geparst wird.
+
+**Geprüft:** Im Browser nachgestellt (Feud-Intro bis Tutorial): vorher Panel ohne
+„Tutorial überspringen“, nach dem Fix vorhanden, Klick beendet das Tutorial, danach ist
+der Knopf weg. Kopfzeile bei 1280 und 390 px Breite angesehen. `gmInsertQuit` mit
+Jeopardy-artiger Kopfzeile: Chip und Knopf rechts in einer Gruppe. `node check.js`,
+`node check.js --types` sauber. `node tools/shots/ablauf.js` 38 OK / 0 FEHL.
+`shots.js --shows gm,feud,buzzer` keine Befunde, Bögen angesehen (gm-C, feud-Q).
+
+**Offen:** Echtes Jeopardy-GM-Panel nicht im Bild geprüft (nur die Funktion mit
+nachgebauter Kopfzeile). Gamepad am echten Handy weiter ungeprüft.
+
 ## 2026-10-13 — Am PC: Branches aufgeräumt, Screenshots mit echten Schriften (kein Code geändert)
 
 **Gemacht:** Nächste Schritte 1 und 4 aus dem Pause-Eintrag darunter.
