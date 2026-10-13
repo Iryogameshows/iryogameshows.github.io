@@ -437,11 +437,11 @@ starten.
 Push auf `master` → GitHub Action (`.github/workflows/pages.yml`) → live auf
 https://iryogameshows.github.io/
 
-## Commit und Push — automatisch, außer bei großen Änderungen
+## Commit und Push — automatisch, ohne Rückfrage
 
-Seit 2026-10-08 (Anweisung von David): **Commit und Push passieren ohne
-Rückfrage**, sobald ein Arbeitsschritt fertig ist. Vorher fragen nur bei
-großen Änderungen.
+Anweisung von David (2026-10-08, bekräftigt 2026-10-13): **Commit und Push
+passieren ohne Rückfrage und ohne Davids Eingreifen**, sobald ein
+Arbeitsschritt fertig ist. Nicht fragen „soll ich committen" — einfach machen.
 
 **Ablauf, jedes Mal:**
 
@@ -454,22 +454,11 @@ großen Änderungen.
 4. Nach dem Push den Lauf der Deploy-Action prüfen (`gh run list`) und den
    Ausgang melden. Schlägt sie fehl, ist der Arbeitsschritt nicht fertig.
 
-**Groß — hier weiter erst fragen:**
-
-- neue Show, neue Seite oder größerer Umbau der Struktur (Dateien verschieben,
-  aufteilen, zusammenlegen)
-- Dateien oder Daten löschen
-- Änderungen an `.github/workflows/`, Firebase-Regeln oder -Daten,
-  Passwort-Sperre
-- Änderungen an `.claude/` (Hooks, Rechte, Agents), `CLAUDE.md` selbst
-- alles, was Verlauf umschreibt: `--force`, `reset --hard`, `rebase`,
-  Branches löschen
-- Diff über etwa 10 Dateien oder mehrere hundert Zeilen
-- `check.js` meldet Fehler, oder die Änderung ist ungeprüft in einem Bereich,
-  der während einer Show benutzt wird
-
-Die Grenze für „groß“ ist eine Festlegung der Session, nicht Davids Wortlaut:
-bei Zweifel fragen, bei Bedarf hier anpassen.
+Das gilt auch für Änderungen an `CLAUDE.md`, `.claude/` und den übrigen früher
+als „groß — erst fragen" geführten Fällen: David will kein Nachfragen mehr.
+Ausgenommen bleibt nur, was Verlauf umschreibt (`--force`, `reset --hard`,
+`rebase`, Branches löschen) und das Löschen von Dateien/Daten — da vorher kurz
+Bescheid geben.
 
 Die Regel hebt **nicht** auf: den Repo-Stand vorher prüfen, `check.js`, den
 HANDOFF-Eintrag und das Melden von Ungeprüftem. Sie gilt für `master` in diesem
