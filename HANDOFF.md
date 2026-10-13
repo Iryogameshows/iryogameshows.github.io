@@ -12,6 +12,25 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `703b381` lobbyReset: „nie gesehen“ zählt als Änderung
+
+**Gemacht:** Im `lobbyReset`-Listener des Handy-Buzzers löscht jetzt
+`alt !== jetzt` den Merker, auch bei `alt === null`.
+
+**Warum:** David sah nach `43f702b` weiterhin nur den Buzzer. Live war alles zu,
+`lobbyReset` gesetzt. Das Handy hatte den neuen Code **nach** dem Reset des Hosts
+geladen: kein gespeicherter Wert, also galt es als „keine Änderung“, und der
+Merker aus dem TP-Rad blieb. Ein fehlender Wert kann nur ein neuer Tab sein, dort
+ist `everActive` aus, oder ein Rest von vor diesem Listener. Löschen ist in beiden
+Fällen richtig. Zusätzlich hält GitHub Pages die Seite bis zu 10 min im Cache
+(`Cache-Control: max-age=600`); ein Handy kann also kurz noch den alten Stand haben.
+
+**Geprüft:** Handy-Test 4/4 (neu: alter Merker, Wert nie gesehen → Lobby; der
+fünfte Punkt im Test ist der bekannte Stub-Fehler mit `.get()`). `check.js`
+fehlerfrei.
+
+**Offen:** Auf dem echten Handy von David noch nicht bestätigt.
+
 ## 2026-10-13 — `43f702b` Handy: Lobby nach hängender Runde, Ring über Statuszeile
 
 **Gemacht:**
