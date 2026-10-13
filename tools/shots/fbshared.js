@@ -29,6 +29,7 @@
   function snap(p){
     const v = get(p);
     return { val: () => v, exists: () => v != null, key: P(p).pop() || null,
+      get ref(){ return ref(p); },
       child: c => snap(p + '/' + c),
       forEach(fn){ if (v && typeof v === 'object') for (const k of Object.keys(v)) if (fn(snap(p + '/' + k)) === true) return true; return false; } };
   }
@@ -44,13 +45,20 @@
     apply(op); ch.postMessage(op);
     return Promise.resolve();
   }
+  /* Ein neuer Tab fragt mit 'hallo' nach dem Stand; die Antwort ('stand') gilt
+     nur ihm und nur die erste. Frueher ging sie als set '' an ALLE: jedes
+     Neuladen des Gamepad-iframes loeste beim Gamepad ein Update aus, das das
+     iframe wieder neu lud - eine Endlosschleife, die es nur im Test gab. */
+  const ich = Math.random().toString(36).slice(2);
+  let standDa = false;
   ch.onmessage = e => {
     const m = e.data;
-    if (m.type === 'hallo') { ch.postMessage({ type: 'set', path: '', value: clone(Object.fromEntries(Object.entries(root).filter(([k]) => k !== '.info'))) }); return; }
-    apply(m); if (m.type === 'set' && m.path === '') bereit();
+    if (m.type === 'hallo') { ch.postMessage({ type: 'stand', an: m.von, value: clone(Object.fromEntries(Object.entries(root).filter(([k]) => k !== '.info'))) }); return; }
+    if (m.type === 'stand') { if (m.an === ich && !standDa) { standDa = true; apply({ type: 'set', path: '', value: m.value }); bereit(); } return; }
+    apply(m);
   };
   let bereit; const ready = new Promise(r => { bereit = r; setTimeout(r, 400); });
-  ch.postMessage({ type: 'hallo' });
+  ch.postMessage({ type: 'hallo', von: ich });
   function ref(path){
     const r = {
       key: P(path).pop() || null,
@@ -60,8 +68,19 @@
       remove: () => write('set', path, null),
       push(v){ const k = 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); const c = ref(path + '/' + k); const pr = v === undefined ? Promise.resolve() : c.set(v); return Object.assign(pr, { key: k }); },
       transaction(fn, done){ const cur = get(path); const n = fn(cur); const ok = n !== undefined; const pr = ok ? write('set', path, n) : Promise.resolve(); pr.then(() => done && done(null, ok, snap(path))); return pr; },
-      on(ev, cb){ if (ev === 'value') { const s = { path, cb }; subs.push(s); setTimeout(() => cb(snap(path)), 0); } return cb; },
-      off(ev, cb){ for (let i = subs.length - 1; i >= 0; i--) if (subs[i].path === path && (!cb || subs[i].cb === cb)) subs.splice(i, 1); },
+      on(ev, cb){
+        if (ev === 'value') { const s = { path, cb }; subs.push(s); setTimeout(() => cb(snap(path)), 0); }
+        /* child_added wie bei Firebase: erst fuer alle vorhandenen Kinder, danach fuer jedes
+           neue. Braucht der Host fuer die Befehle vom Gamepad (gmremote/commands). */
+        if (ev === 'child_added') {
+          const seen = new Set();
+          const melde = sn => { const v = sn.val(); if (!v || typeof v !== 'object') return;
+            for (const k of Object.keys(v)) if (!seen.has(k)) { seen.add(k); cb(snap(path + '/' + k)); } };
+          subs.push({ path, cb: melde, orig: cb }); setTimeout(() => melde(snap(path)), 0);
+        }
+        return cb;
+      },
+      off(ev, cb){ for (let i = subs.length - 1; i >= 0; i--) if (subs[i].path === path && (!cb || subs[i].cb === cb || subs[i].orig === cb)) subs.splice(i, 1); },
       once: () => ready.then(() => snap(path)),
       get: () => ready.then(() => snap(path)),
       onDisconnect: () => ({ remove: () => Promise.resolve(), cancel: () => Promise.resolve(), set: () => Promise.resolve(), update: () => Promise.resolve() }),

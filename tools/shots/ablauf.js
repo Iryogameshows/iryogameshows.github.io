@@ -8,7 +8,9 @@
 // Pursuit, Jeopardy, Der Duemmste fliegt, Der Preis ist heiss: je Einrichtung
 // und Intro Lobby, danach Buzzer, Rad, Eingabefeld oder Abstimmung; Stimme und
 // Gebot gehen vom Handy zum Host; 48-h-Ablauf von Teams; Spieleruebersicht
-// "zuletzt". Zwischen zwei Fragen/Runden: Pause-Screen (screen-wait). Entstanden 2026-10-13 (HANDOFF a0468d9 und folgende).
+// "zuletzt". Zwischen zwei Fragen/Runden: Pause-Screen (screen-wait).
+// Gamepad (gamepad/, 390 px): Intro per "Weiter", "Tutorial ueberspringen",
+// Strike und Beenden vom Handy aus; Bild nach out/ablauf-gamepad.png. Entstanden 2026-10-13 (HANDOFF a0468d9 und folgende).
 // Endet mit Code 1, wenn ein Punkt fehlschlaegt.
 'use strict';
 const REPO = require('path').resolve(__dirname, '..', '..');
@@ -37,7 +39,7 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
     try { await r.fulfill({ response: await r.fetch() }); }
     catch { await r.fulfill({ contentType: 'application/javascript', body: 'window.firebase={apps:[],initializeApp(c){const a={options:c};this.apps.push(a);return a;}};' }); }
   });
-  const errors = { host: [], handy: [] };
+  const errors = { host: [], handy: [], gamepad: [] };
 
   const host = await ctx.newPage(); await host.setViewportSize({ width: 1280, height: 720 });
   host.on('pageerror', e => errors.host.push(String(e.stack || e).split('\n').slice(0, 4).join(' | '))); host.on('dialog', d => d.accept());
@@ -234,6 +236,44 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   check('Beenden im Intro: Menue, keine Overlays', await host.evaluate(() => resumeCurrentShow() === '' && screenActive('menu-screen')
     && !document.querySelector('.intro-overlay,.black-backdrop,.welcome-overlay,.tut-overlay')));
 
+  // ── Gamepad: GM-Panel auf dem Handy, Befehle zurueck an den Host ──
+  // Das Panel kommt per gmremote/html, steckt im iframe #gmFrame und schickt
+  // opener.xxx() ueber gmremote/commands zurueck (js/buzzer.js, gmRemoteBridgeScript).
+  const pad = await ctx.newPage(); await pad.setViewportSize({ width: 390, height: 844 });
+  pad.on('pageerror', e => errors.gamepad.push(String(e))); pad.on('dialog', d => d.accept());
+  await pad.goto(base + '/gamepad/', { waitUntil: 'domcontentloaded' });
+  const gp = pad.frameLocator('#gmFrame');
+  const gpKnopf = text => gp.locator('button', { hasText: text });
+  // Laedt das Gamepad das iframe gerade neu (srcdoc), wirft count() - kurz warten, nochmal.
+  const zaehle = async loc => { for (let i = 0; ; i++) { try { return await loc.count(); } catch (e) { if (i > 4) throw e; await warte(300); } } };
+  await host.evaluate(() => { showScreen('menu-screen'); showScreen('setup-screen'); });
+  await start('startGameActual');
+  await warte(1500);
+  check('Gamepad im Intro: Zwischensequenz mit Weiter', (await zaehle(gpKnopf('Weiter'))) > 0);
+  for (let i = 0; i < 8 && !(await host.evaluate(() => !!activeTutorialSkip)); i++) {
+    await gpKnopf('Weiter').first().click(); await warte(2500);
+  }
+  check('Gamepad Weiter fuehrt den Host bis ins Tutorial', await host.evaluate(() => !!activeTutorialSkip));
+  await warte(600);
+  check('Gamepad: "Tutorial überspringen" da, solange das Tutorial laeuft', (await zaehle(gpKnopf('Tutorial überspringen'))) > 0);
+  await gpKnopf('Tutorial überspringen').first().click();
+  await warte(1200);
+  check('Gamepad: Tutorial uebersprungen', await host.evaluate(() => !activeTutorialSkip));
+  check('Gamepad: Knopf danach weg', (await zaehle(gpKnopf('Tutorial überspringen'))) === 0);
+  await weg();
+  await host.evaluate(() => { showScreen('game-screen'); loadRound(); updateGamemaster(); });
+  await warte(800);
+  check('Gamepad: Spielpanel mit Beenden in der Kopfzeile', (await zaehle(gp.locator('.gm-header .gm-quit'))) === 1);
+  const strikeVor = await host.evaluate(() => state.teamStrikes[state.currentTeam]);
+  await gpKnopf('Strike').first().click();
+  await warte(800);
+  check('Gamepad: Strike kommt beim Host an', await host.evaluate(n => state.teamStrikes[state.currentTeam] === n + 1, strikeVor));
+  await pad.screenshot({ path: OUT + '/ablauf-gamepad.png' });
+  await gp.locator('.gm-quit').click();
+  await warte(900);
+  check('Gamepad Beenden: Host im Menue, keine Show', await host.evaluate(() => resumeCurrentShow() === '' && screenActive('menu-screen')));
+  check('Gamepad Beenden: Handy zurueck in der Lobby', (await screen()) === 'screen-lobby', await screen());
+
   // ── Spieleruebersicht ──
   await host.evaluate(() => { openPlayersScreen('menu-screen'); });
   await warte(400);
@@ -243,6 +283,7 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
 
   check('Keine JS-Fehler Host', errors.host.length === 0, errors.host);
   check('Keine JS-Fehler Handy', errors.handy.length === 0, errors.handy);
+  check('Keine JS-Fehler Gamepad', errors.gamepad.length === 0, errors.gamepad);
   await browser.close(); srv.close();
   console.log(`\n${ok} OK, ${fail} FEHL`); process.exit(fail ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });
