@@ -38,8 +38,12 @@ Jeopardy-artiger Kopfzeile: Chip und Knopf rechts in einer Gruppe. `node check.j
 `node check.js --types` sauber. `node tools/shots/ablauf.js` 38 OK / 0 FEHL.
 `shots.js --shows gm,feud,buzzer` keine Befunde, Bögen angesehen (gm-C, feud-Q).
 
-**Offen:** Echtes Jeopardy-GM-Panel nicht im Bild geprüft (nur die Funktion mit
-nachgebauter Kopfzeile). Gamepad am echten Handy weiter ungeprüft.
+**Nachgeprüft (gleicher Tag):** Echtes Jeopardy-GM-Panel im Browser
+(`startJeopardyActual`, Board 1/2): Kopfzeile „JEOPARDY · ● Server verbunden ·
+■ Beenden“ in einer Linie, bei 1280 und 390 px Breite, Knopf ganz drin
+(390 px: Knopf x 280–374), kein JS-Fehler.
+
+**Offen:** Gamepad am echten Handy weiter ungeprüft.
 
 ## 2026-10-13 — Am PC: Branches aufgeräumt, Screenshots mit echten Schriften (kein Code geändert)
 
