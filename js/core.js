@@ -1739,6 +1739,8 @@ function cleanPlayerAccount(key, p){
     name: String(o.name == null ? '' : o.name),
     team: cleanTeamIdx(o.team),
     color: safeColor(o.color),
+    // Letzte Teilnahme (Handy stempelt sie, expireStalePlayers in buzzer.js).
+    seen: (typeof o.seen === 'number' && isFinite(o.seen)) ? o.seen : null,
     stats: {
       ...st,
       buzzes: cleanNum(st.buzzes), wins: cleanNum(st.wins), games: cleanNum(st.games),
@@ -1795,6 +1797,18 @@ function currentTeamNames(){
 function currentTeamLabel(i){
   return currentTeamNames()[i] || ('Team ' + (i+1));
 }
+/* "zuletzt vor 5 h" fuer die Spieleruebersicht. Mit Team und weniger als
+   12 h bis zum Ablauf (48 h, expireStalePlayers) steht die Restzeit dabei -
+   so sieht der Host vor der Show, wessen Zuteilung gleich verfaellt.
+   @param {{seen:number|null, team:number|null}} p @returns {string} */
+function playerSeenText(p){
+  if (p.seen === null) return 'zuletzt: unbekannt';
+  const h = Math.max(0, (Date.now() - p.seen) / 3600000);
+  const wann = h < 1 ? 'vor <1 h' : h < 48 ? `vor ${Math.floor(h)} h` : `vor ${Math.floor(h / 24)} Tagen`;
+  const rest = 48 - h;
+  const ablauf = (p.team !== null && rest > 0 && rest < 12) ? ` (Team noch ${Math.ceil(rest)} h)` : '';
+  return 'zuletzt ' + wann + ablauf;
+}
 function renderPlayersList(){
   const el = document.getElementById('players-content');
   if (!allPlayers.length){
@@ -1820,7 +1834,7 @@ function renderPlayersList(){
     const onlineDot = online ? `<span class="online-dot" title="Online"></span>` : `<span class="online-dot offline" title="Offline"></span>`;
     return `<div class="q-list-item player-row">
       <span class="q-label">${onlineDot}${playerAvatarHtml(p)}<b>${escapeHtml(p.name)}</b>${teamTag}
-        <span class="player-stats">🔔${cleanNum(s.buzzes)} · 🏆${cleanNum(s.wins)}/${cleanNum(s.games)}${typeof s.bestBuzz === 'number' ? ' · ⚡'+s.bestBuzz.toFixed(2)+'s':''}</span>
+        <span class="player-stats">🔔${cleanNum(s.buzzes)} · 🏆${cleanNum(s.wins)}/${cleanNum(s.games)}${typeof s.bestBuzz === 'number' ? ' · ⚡'+s.bestBuzz.toFixed(2)+'s':''}${online ? '' : ' · ' + escapeHtml(playerSeenText(p))}</span>
       </span>
       <div class="q-btns">
         <span class="player-team-btns">${playerTeamButtonsHtml(p, teamNames, '')}</span>
