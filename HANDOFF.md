@@ -12,6 +12,49 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `45d0f4e` Buzzer „Zu spät“ statt Strafe, Offline-Banner frei, Geräte-Test stabil, Action vorbereitet
+
+**Auftrag (David):** die drei offenen Punkte aus `e2d5fd0` — Wackler finden, Prüfungen
+als GitHub Action bei jedem Push, Offline-Banner über den Knöpfen.
+
+**Gemacht:**
+1. **Wackler in `geraete.js`** — mit Diagnose statt Raten (10 Einzel- + 4 Doppelläufe je
+   Runde, auf einer Kopie im Scratchpad, damit parallel gearbeitet werden konnte). Ursachen:
+   - Testwerkzeug: WebKit baut die SSE-Verbindung unter Last neu auf; das `close` der
+     alten löschte in `relay.js` den NEUEN Client → Gerät bekam keine Updates mehr.
+     Jetzt nur sich selbst austragen, 10-s-Puls; `fbrelay.js` meldet beim Abriss
+     `.info/connected = false` und holt nach dem Neuaufbau den vollen Stand (wie Firebase).
+   - Testwerkzeug: `tap()` auf den pulsierenden Buzzer wartete in WebKit auf „stabil“ →
+     `force: true` (ein Finger wartet auch nicht), Tap bis zu 3× bis das Handy bestätigt.
+   - Testwerkzeug: WebKit meldet abgebrochene SSE im Gamepad-iframe als „access control
+     checks“ → CORS-Kopfzeilen im Relay, Meldung im Fehlerfänger ausgenommen.
+   - **App (`buzzer/index.html`): Druck nach entschiedenem Duell wurde bestraft.** Feud
+     macht nach dem ersten Buzz zu, wenn das Team wechselt (`feudAutoSetStartTeam`). Wer
+     danach drückte, bekam „Zu früh! Gesperrt 3s“ mit Wackeln — obwohl er zu SPÄT war.
+     Neu: `entschieden()` (nicht scharf, es gibt Buzzes, ich habe nicht gebuzzert) → Knopf
+     aus, Statuszeile „Zu spät — schon entschieden“. Bild: `out/geraete-zuspaet-iphoneSE.png`.
+   - Testannahmen: „scharf“ wurde als „Knopf an“ geprüft (der ist auch vor dem Scharfmachen
+     an); „Lange Leitung“ setzte 150 ms Vorsprung voraus, den der WebKit-Tap nicht immer hat.
+2. **GitHub Action** `.github/workflows/pruefungen.yml` geschrieben (check.js, --types,
+   ablauf.js, geraete.js; Bilder als Artefakt; hält den Deploy nicht auf). **Nicht gepusht:**
+   GitHub lehnt Workflow-Dateien ohne `workflow`-Token-Recht ab („refusing to allow an OAuth
+   App to create or update workflow … without `workflow` scope“). Weder Git-Token noch `gh`
+   (`gist, read:org, repo, user`) hat es. Die Datei liegt **nur lokal** (untracked) auf
+   Davids PC. Anleitung in CLAUDE.md, Abschnitt Screenshot-Prüfung.
+3. **Offline-Banner:** Handy — `.topbar` rutscht unter das Banner (`body:has(#conn.show)`),
+   der Buzzer bleibt stehen. Gamepad — das Panel-iframe rückt um 2,2rem nach unten.
+   Geprüft per Rechteck: Banner-Unterkante 33 ≤ Knöpfe 53,6 (Pixel); 30 ≤ Panel 35,2 (Gamepad).
+
+**Geprüft:** letzte Runde `geraete.js` 8 Einzel- + 4 Doppelläufe = **16/16 grün** (55–57
+Punkte je nach Wettlauf-Ausgang). `ablauf.js` 48/0. `check.js` sauber. `shots.js --shows
+buzzer` keine Befunde, Bogen angesehen (unverändert). Bilder angesehen: Offline Pixel und
+Gamepad, „Zu spät“ iPhone SE.
+
+**Offen:** Action aktivieren (David: `gh auth refresh -h github.com -s workflow`, dann
+pushen). Ob das echte Firebase-SDK den Buzz-Fall aus `e2d5fd0` je auslöste, weiter ungeprüft.
+WebKit unter Windows lädt die Google-Fonts im Gamepad-iframe nicht (Ersatzschrift im Bild) —
+nur Testumgebung, vermutlich.
+
 ## 2026-10-13 — `e2d5fd0` Geräte-Simulation (`tools/shots/geraete.js`) + Buzzer-Fix Rundenwechsel
 
 **Auftrag (David):** „simulier so viel wie möglich“, auch iOS, „am liebsten komplett autonom“.
