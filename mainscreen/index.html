@@ -57,6 +57,16 @@
       window.opener.boardPageReady();
     }
   } catch (e) {}
+
+  /* Laedt der HOST neu (F5), bleibt dieses Fenster offen, aber das neue
+     Hauptfenster kennt es nicht mehr - ein neues duerfte es ohne Klick nicht
+     oeffnen. Deshalb meldet es sich selbst wieder an (boardReattach in
+     js/feud.js); das Hauptfenster setzt den Spiegel dann neu auf. */
+  setInterval(() => {
+    try {
+      if (window.opener && typeof window.opener.boardReattach === 'function') window.opener.boardReattach(window);
+    } catch (e) {}
+  }, 1500);
 </script>
 </body>
 </html>
