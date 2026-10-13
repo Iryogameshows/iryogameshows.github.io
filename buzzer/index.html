@@ -1141,7 +1141,12 @@
     const jetzt = String(s.val() || '');
     let alt = null;
     try { alt = sessionStorage.getItem('buzzerReset'); } catch {}
-    if (alt !== null && alt !== jetzt) clearActive();
+    // alt === null zaehlt mit: ein Tab, der den Wert noch nie gesehen hat, hat
+    // auch keinen Grund fuer einen Merker - ausser einem Rest von vor diesem
+    // Listener (so am 2026-10-13: Merker aus dem TP-Rad, Seite danach neu
+    // geladen, und der Buzzer blieb stehen). Im neuen Tab ist everActive
+    // ohnehin aus; beim Neuladen mitten in der Show steht alt === jetzt.
+    if (alt !== jetzt) clearActive();
     try { sessionStorage.setItem('buzzerReset', jetzt); } catch {}
     refreshRoot();
   });
