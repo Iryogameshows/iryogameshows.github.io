@@ -12,6 +12,34 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `5ed8e82` Abstimmung und Schätzen/Bieten genauso absichern
+
+**Gemacht:** `TPSPIN_ZU` aus `c1d0f91` heißt jetzt `RUNDEN_ZU` und setzt neben
+`tpspin/active` auch `ddfvote/active` und `estimate/active` auf `false` — an
+denselben drei Stellen (`ensureLobbyConnected`, `ensureRosterConnected`,
+`lockBuzzerJoins`).
+
+**Warum:** gleiches Muster wie das Rad. Der Handy-Buzzer prüft Abstimmung und
+Schätzen vor Lobby und Buzzer; geschlossen werden sie nur von DDF/PIH/Jeopardy
+selbst. Jede Show öffnet ihre Runde nach dem Start ohnehin frisch (`set` mit
+`active:true`), das Schließen vorher schadet also nicht. Resume ruft
+`ensureRosterConnected` nicht auf und `lockBuzzerJoins` nur für Feud, das keinen
+der drei Kanäle nutzt — eine fortgesetzte offene Runde wird also nicht zugemacht.
+
+**Geprüft:** Host-Test (Scratchpad, Firebase-Stub mit Nutzdaten) 8/8, alle drei
+Felder in jedem der drei Updates, TP-Start öffnet danach frisch, 0 JS-Fehler.
+`node check.js` und `--types` (15 Dateien) ohne Meldung. Nicht einzeln geprüft:
+DDF-Abstimmung und PIH-Gebote nach dem Schließen (Code-Reihenfolge wie bei TP:
+Schließen beim Setup/Start, `set` erst bei `ddfBeginVote`/`pihBeginBids`).
+
+**Offen:**
+- **Live steht `buzzer/tpspin` weiter auf `active:true` (Sony).** Direktes Setzen
+  per REST-PUT wurde vom Rechte-System der Session abgelehnt („Modify Shared
+  Resources“). Räumt sich ab, sobald die Hostseite (neuer Stand) eine
+  Show-Einrichtung öffnet — oder David setzt es selbst bzw. gibt die Aktion frei.
+- `jeopardyEstimate.open` (Merker im Host) wird beim Jeopardy-Start nicht
+  zurückgesetzt; harmlos, nächste Frage setzt ihn neu.
+
 ## 2026-10-13 — `c1d0f91` Offenes TP-Rad hielt Team-Handys in jeder Show fest
 
 **Gemacht:** `TPSPIN_ZU = {'tpspin/active': false}` in `js/buzzer.js`, mitgeschickt
