@@ -12,6 +12,25 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `7dd8727` Auto-Commit/Push-Regel wiederhergestellt
+
+**Gemacht:** Abschnitt „Commit und Push" in `CLAUDE.md` wieder auf Auto-Commit
+ohne Rückfrage gestellt (wie 2026-10-08), ausdrücklich auch für `CLAUDE.md` und
+`.claude/`. Ausgenommen bleiben nur History-Umschreiben und Löschen.
+
+**Warum so:** Missverständnis im Verlauf des Tages. David sagte „committe nicht
+alles selbst", was ich erst als „immer fragen", dann als „gar nicht committen"
+umgesetzt habe (Zwischenfassungen nie gepusht). Gemeint war das Gegenteil:
+automatisch pushen ohne sein Eingreifen. Auf Klarstellung zurückgedreht.
+
+**Geprüft:** `node check.js` fehlerfrei („alles in Ordnung"). Betrifft keinen
+js-Code.
+
+**Offen:** keine.
+
+**Fallstricke:** Keine Vermutungen über widersprüchliche Kurz-Anweisungen —
+früher nachfragen hätte drei Fehlfassungen gespart.
+
 ## 2026-10-13 — `49bf9e9` Abbruch-Regel bei knappem Session-Token-Budget
 
 **Gemacht:** Neuer Abschnitt in `CLAUDE.md` („Nutzungskontingent läuft leer —
