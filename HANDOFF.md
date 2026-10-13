@@ -12,6 +12,38 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — PAUSE: Stand nach Beenden-Knopf/F5 (`c571568` live) — hier weitermachen
+
+**Aktueller Stand:** Beenden-Knopf (Hostseite + GM-Panel/Gamepad) und Fortsetzen nach F5
+sind auf master und live. Deploy-Läufe #275 (`0eb6d59`) und #276 (`c571568`): beide
+`success`, per `gh run list` geprüft. Live-Seite selbst nicht im Browser angesehen.
+
+**Stopppunkt:** Branch `wip/beenden-f5` liegt noch auf GitHub (per API-Branchliste
+geprüft). Aus der Cloud-Session nicht löschbar: `git push --delete` meldet „Everything
+up-to-date“ ohne Wirkung, die GitHub-API antwortet 403 („Write access to this GitHub API
+path is not permitted through this proxy“). Sein Stand `34849f7` ist in master enthalten
+(`git merge-base --is-ancestor` geprüft) — Löschen verliert nichts. David hatte gerade
+keinen PC-Zugriff und macht später weiter.
+
+**Kreative Ansätze & Visionen (unverändert aus dem Abbruch-Eintrag):** Beenden-Knopf
+rot-transparent oben rechts, auf Hostseite und im GM-Panel gleich; Rückfrage immer auf
+dem Gerät, auf dem gedrückt wird. Hostknopf „immer da, solange eine Show läuft“ (auch im
+Intro), nicht im Menü — falls David ihn auch im Menü will: Intervall-Bedingung in
+`js/resume.js` lockern. Verworfen: Beamerfenster nach F5 per `window.open('', 'Board')`
+holen (ohne Nutzergeste unzuverlässig), stattdessen meldet sich das Fenster selbst.
+
+**Nächste Schritte:**
+1. Am PC: `git push origin --delete wip/beenden-f5` (oder GitHub → Branches → Mülleimer).
+   Danach ist auch `ccr-42a1f1c9-bjm7g8` erledigt (Stand = master) und kann weg.
+2. Gamepad am echten Handy: „Beenden“ drücken, `confirm` im iframe bestätigen → Host im
+   Menü, Handy in der Lobby. Bisher nur im Code gelesen.
+3. Am echten Aufbau mitten in Feud F5 am Host: Spiel läuft ohne Klick mit Punkten weiter,
+   Beamerfenster hängt sich binnen ~1,5 s wieder an. Dabei die Konsole auf
+   `Cannot read properties of null (reading 'nodeType')` beobachten — der Fix in
+   `scheduleBoardMirror` ist nicht durch einen roten Lauf belegt.
+4. Am PC (mit Netz für Schriften) einmal `node tools/shots/shots.js --shows gm,feud,buzzer`
+   — in der Cloud fehlten Google Fonts, die Bögen dort zeigen Ersatzschriften.
+
 ## 2026-10-13 — `0eb6d59` auf master (Fast-Forward)
 
 David: „Mach weiter“ → `ccr-42a1f1c9-bjm7g8` per Fast-Forward auf master gepusht
