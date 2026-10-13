@@ -62,8 +62,19 @@ function currentBuzzer(){ return activeBuzzerContext === 'jeopardy' ? jeopardyBu
 function lockBuzzerJoins(buzzer){
   if (!buzzer.fbRef) return;
   const names = buzzer.presence.map(p => p.name);
-  buzzer.fbRef.update({ joinLocked: true, lockedNames: names }).catch(()=>{});
+  buzzer.fbRef.update({ joinLocked: true, lockedNames: names, ...TPSPIN_ZU }).catch(()=>{});
 }
+
+/* Ein offener Rad-Zweig (buzzer/tpspin) aus einer frueheren Trivial-Pursuit-
+   Runde haelt jedes Handy des Teams am Zug auf "Ihr seid dran" fest: der
+   Handy-Buzzer prueft das Rad VOR Lobby und Buzzer, auch mitten in Feud.
+   Geschlossen wird er sonst nur von TP selbst (tpSpin, tpQuit) - wird die
+   Hostseite mitten in einer offenen Runde geschlossen oder neu geladen,
+   passiert das nie. Am 2026-10-13 stand er so seit dem 10.10. offen ("Sony
+   hat gedreht", Team Rot kam in keiner Show mehr in die Lobby).
+   Deshalb schliessen ihn das erste Verbinden einer Lobby und jeder
+   Spielstart mit. TP oeffnet danach ohnehin eine frische Runde. */
+const TPSPIN_ZU = { 'tpspin/active': false };
 
 function buzzerBroadcastTeams(names){
   const ref = currentBuzzer().fbRef;
@@ -489,8 +500,9 @@ function ensureLobbyConnected(game){
   const isFresh = !buzzer.fbRef;
   (isJeopardy ? jeopardyBuzzConnect : feudBuzzConnect)();
   // Nur beim ersten Verbinden: eine noch offene Sperre aus der letzten Show
-  // wuerde sonst neue Gaeste aussperren.
-  if (isFresh && buzzer.fbRef) buzzer.fbRef.update({ joinLocked: false, lockedNames: null }).catch(()=>{});
+  // wuerde sonst neue Gaeste aussperren, ein offenes Rad Team-Handys
+  // festhalten (TPSPIN_ZU).
+  if (isFresh && buzzer.fbRef) buzzer.fbRef.update({ joinLocked: false, lockedNames: null, ...TPSPIN_ZU }).catch(()=>{});
   broadcastSetupTeamNames(game);
 }
 function broadcastSetupTeamNames(game){

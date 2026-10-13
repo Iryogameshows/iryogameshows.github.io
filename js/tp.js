@@ -176,6 +176,10 @@ function startTp(){
 
   activeBuzzerContext = 'tp';
   feudBuzzConnect();
+  // Reste einer TP-Runde, die nicht ueber tpQuit endete: tpSpinOpen stuende
+  // sonst noch auf "offen", tpRender machte nie eine neue Dreh-Runde auf, und
+  // der alte Abonnent hinge noch am Zweig.
+  tpCloseSpin();
   buzzerBroadcastTeams(names);
   lockBuzzerJoins(feudBuzzer);
   feudBuzzEndRound();
