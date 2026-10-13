@@ -12,6 +12,48 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `e2d5fd0` Geräte-Simulation (`tools/shots/geraete.js`) + Buzzer-Fix Rundenwechsel
+
+**Auftrag (David):** „simulier so viel wie möglich“, auch iOS, „am liebsten komplett autonom“.
+
+**Gemacht:**
+- `tools/shots/geraete.js`: Host in Chrome (1280×720), vier Spielerhandys mit echten
+  Playwright-Geräteprofilen — iPhone 15 und iPhone SE in **WebKit** (Safari-Engine),
+  Pixel 7 und Galaxy S9+ in Chromium — und das Gamepad auf iPhone 15 Pro Max (WebKit).
+  Bedienung per `tap()` (Touch) und getippter Tastatur. 50 Prüfpunkte, siehe Kopf der
+  Datei. Bilder `out/geraete-<zustand>-<geraet>.png`.
+- `tools/shots/relay.js` (Node) + `fbrelay.js` (Browser): Ersatz-Firebase als Server im
+  Testprozess, weil Chromium und WebKit keinen BroadcastChannel teilen (`fbshared.js`
+  bleibt für `ablauf.js`). Wie echtes Firebase: `TIMESTAMP` beim Eintreffen am Server,
+  `transaction` als Vergleichen-und-Setzen am Server, `onDisconnect` bei Abriss/Neuladen,
+  Schreibvorgänge warten offline und gehen nach der Rückkehr raus. Je Gerät
+  `relay.offline(name, true/false)` und `relay.delay(name, ms)`.
+- **App-Fix `buzzer/index.html`** (round-Listener): beim Rundenwechsel `rawBuzzes = {}`
+  (nicht beim ersten Wert nach dem Laden). Gefunden durch den Test: Feud `nextRound()` →
+  `feudBuzzPrepare()` schreibt neue Runde und `buzzes: null` in einem Update. Feuert
+  `round` vor `buzzes`, fand `recomputeResults` den eigenen Buzz der alten Runde und
+  setzte `buzzedThisRound` wieder → Handy in der neuen Runde auf „Gebuzzert! ✔“
+  gesperrt. Ob das echte Firebase-SDK die Listener in dieser Reihenfolge feuert, ist
+  **nicht geprüft** (Vermutung: es geht alphabetisch, `buzzes` vor `round`, dann trat es
+  live nicht auf). Der Fix macht es reihenfolgeunabhängig.
+
+**Geprüft:** `node geraete.js` 7 Läufe: 6× 50 OK / 0 FEHL, **1× 47 OK / 3 FEHL** — welche
+drei, ist nicht festgehalten (Ausgabe nur gezählt). Gegenprobe: ohne den Buzzer-Fix
+schlägt „Runde 2: auch das iPhone mit Verzögerung ist scharf“ fehl. `ablauf.js` 48/0,
+`check.js` sauber. Bilder angesehen (Buzz iPhone SE, PIH iPhone SE, DDF Galaxy, Offline
+Pixel): nichts abgeschnitten, kein waagerechtes Scrollen.
+
+**Beobachtet, nicht geändert:** Offline-Banner auf dem Handy überdeckt die Knöpfe
+Einstellungen/Abmelden oben rechts, solange es steht.
+
+**Grenzen:** WebKit unter Windows ≠ iOS-Safari (gleiche Engine, andere Plattform).
+Nicht simuliert: Bildschirmsperre, Wake-Lock, App-Wechsel, echte Funkaussetzer.
+Einmal je Gerät: `npx playwright@1.48.2 install webkit` (~60–100 MB, nach
+`%LOCALAPPDATA%\ms-playwright`). Laufzeit ~1,5 min.
+
+**Offen:** die eine wacklige Lauf-Variante finden (bei nächstem FEHL die Zeilen notieren);
+optional als GitHub Action bei jedem Push (Workflow-Änderung → David fragen).
+
 ## 2026-10-13 — `5460017` Gamepad im automatischen Durchlauf (`tools/shots/ablauf.js`)
 
 **Gemacht (David: „kannst du was bauen, dass du auch das Handy-Zeug testen kannst?“):**
