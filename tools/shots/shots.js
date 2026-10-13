@@ -307,6 +307,11 @@ async function kontaktbogen(page, show, bilder) {
   const ctx = await browser.newContext(flag('reduced') ? { reducedMotion: 'reduce' } : {});
   await ctx.route('**/firebase-database-compat.js', r => r.fulfill({ contentType: 'application/javascript', body: STUB }));
   await ctx.route(/firebasedatabase\.app|firebaseio\.com/, r => r.abort());
+  // Ohne Netz (gstatic gesperrt) reicht ein Minimal-Firebase: die Datenbank kommt ohnehin aus dem Stub.
+  await ctx.route('**/firebase-app-compat.js', async r => {
+    try { await r.fulfill({ response: await r.fetch() }); }
+    catch { await r.fulfill({ contentType: 'application/javascript', body: 'window.firebase={apps:[],initializeApp(c){const a={options:c};this.apps.push(a);return a;}};' }); }
+  });
   await ctx.addInitScript(() => { window.alert = () => {}; window.confirm = () => true; window.open = () => null; });
   const page = await ctx.newPage();
   const befunde = [];

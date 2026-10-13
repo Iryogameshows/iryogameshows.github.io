@@ -1090,7 +1090,10 @@ function scheduleBoardMirror() {
   requestAnimationFrame(() => {
     boardMirrorScheduled = false;
     if (!boardWin || boardWin.closed) return;
-    morphMirror(boardWin.document.body, document.body);
+    // Waehrend das Beamerfenster (neu) laedt, gibt es dort noch keinen body.
+    const target = boardWin.document && boardWin.document.body;
+    if (!target) return;
+    morphMirror(target, document.body);
   });
 }
 function startBoardMirror() {

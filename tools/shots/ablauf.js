@@ -32,6 +32,11 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   const browser = await chromium.launch({ executablePath: [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome'].find(p => p && fs.existsSync(p)), headless: true });
   const ctx = await browser.newContext();
   await ctx.route('**/firebase-database-compat.js', r => r.fulfill({ contentType: 'application/javascript', body: STUB }));
+  // Ohne Netz (gstatic gesperrt) reicht ein Minimal-Firebase: die Datenbank kommt ohnehin aus fbshared.js.
+  await ctx.route('**/firebase-app-compat.js', async r => {
+    try { await r.fulfill({ response: await r.fetch() }); }
+    catch { await r.fulfill({ contentType: 'application/javascript', body: 'window.firebase={apps:[],initializeApp(c){const a={options:c};this.apps.push(a);return a;}};' }); }
+  });
   const errors = { host: [], handy: [] };
 
   const host = await ctx.newPage(); await host.setViewportSize({ width: 1280, height: 720 });
@@ -190,7 +195,9 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   await weg();
   await host.evaluate(() => { showScreen('game-screen'); loadRound(); revealQuestion(); state.scores[0] = 77; updateScores(); updateGamemaster(); });
   await warte(900);   // resumeSaveSoon sichert nach 400 ms
-  check('Feud laeuft: Beenden-Knopf auf der Hostseite sichtbar', await host.evaluate(() => getComputedStyle(document.getElementById('host-quit')).display !== 'none'));
+  // Beim Spielstart ist das GM-Panel offen; dann ist der Hostknopf absichtlich aus und das Panel hat einen eigenen.
+  check('Feud laeuft: Beenden-Knopf da (Hostseite oder GM-Panel)', await host.evaluate(() => getComputedStyle(document.getElementById('host-quit')).display !== 'none'
+    || (fieldEl('gm-embed-overlay')?.classList.contains('visible') && !!document.getElementById('gm-embed-frame').contentDocument.querySelector('.gm-quit'))));
   check('Beenden-Knopf im GM-Panel', await host.evaluate(() => !!document.getElementById('gm-embed-frame').contentDocument.querySelector('.gm-quit')));
   await host.reload({ waitUntil: 'load' });
   await host.evaluate(() => { const g = document.getElementById('host-gate'); if (g) g.style.display = 'none'; });
