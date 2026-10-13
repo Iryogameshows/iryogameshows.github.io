@@ -12,6 +12,28 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `9a0eece` ablauf.js: Jeopardy, DDF und PIH
+
+**Gemacht:** `tools/shots/ablauf.js` spielt jetzt fünf Shows in einer Host-Sitzung
+(Feud, TP, Jeopardy, DDF, PIH). Drei Accounts ohne Handy-Tab (Anna, Bert, Carla)
+für die Teilnehmer-Auswahl. Das Handy gibt in DDF wirklich eine Stimme
+(`sendVote`) und in PIH ein Gebot über `#est-input`/`#est-send` ab.
+
+**Warum so:** Ohne echte Stimme bzw. echtes Gebot bricht `ddfEvaluateVote` /
+`pihEvaluate` mit `alert` ab („noch keine Stimme“), und die Runde bleibt offen —
+der erste Lauf meldete das fälschlich als „Handy bleibt in der Abstimmung“.
+Jeopardy-Schätzfrage: ein normales Feld wird im Test per `clue.estimate = true`
+umgestellt, statt auf eine Schätzfrage in den Demodaten zu hoffen.
+
+**Geprüft:** `node tools/shots/ablauf.js` 28/28, 0 JS-Fehler in beiden Tabs.
+`check.js` fehlerfrei.
+
+**Offen — Befund, nicht geändert:** In DDF und PIH zeigt das Handy nach der ersten
+Abstimmung bzw. dem ersten Gebot zwischen den Runden den **gesperrten Buzzer**
+(`everActive` → `showBuzz`), obwohl es dort keinen Buzzer gibt. Davor steht es in
+der Lobby. Ob dort Lobby oder ein eigener Warte-Screen hingehört, ist Davids
+Entscheidung; im Test steht es als INFO-Zeile ohne Soll.
+
 ## 2026-10-13 — `1ed09e3` „zuletzt da“ in der Spielerübersicht; Durchlauf-Test Host+Handy
 
 **Gemacht:**
