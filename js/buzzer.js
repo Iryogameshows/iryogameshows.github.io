@@ -782,12 +782,38 @@ function pushGamemasterHtmlToFirebase(html) {
 /* Der Beenden-Knopf steht in JEDEM GM-Panel und damit auch auf dem Gamepad
    (beide bekommen dieses HTML). Eine Stelle statt eines Knopfes in jeder der
    rund zwanzig Panel-Vorlagen. Die Rueckfrage laeuft im Panel bzw. auf dem
-   Handy, nicht auf dem Host (gmQuitShow in js/resume.js). */
-const GM_QUIT_HTML = `<style>.gm-quit{position:fixed;top:8px;right:8px;z-index:50;padding:6px 12px;border-radius:8px;border:1px solid rgba(232,69,60,.6);background:rgba(232,69,60,.16);color:#FF8A80;font:700 .78rem Inter,system-ui,sans-serif;cursor:pointer;}
-.gm-quit:hover,.gm-quit:focus-visible{background:rgba(232,69,60,.32);outline:2px solid #FF8A80;outline-offset:1px;}</style>
-<button class="gm-quit" onclick="if(confirm('Show beenden und zurück ins Menü?'))opener.gmQuitShow()">⏹ Beenden</button>`;
+   Handy, nicht auf dem Host (gmQuitShow in js/resume.js).
+   Hat das Panel eine .gm-header, sitzt der Knopf rechts IN der Kopfzeile,
+   neben dem Status-Chip (Jeopardy: Verbindung). Bis 2026-10-13 schwebte er
+   fest oben rechts darueber, verdeckte den Chip und sass nicht auf der Linie
+   der Kopfzeile. Nur Panels ohne Kopfzeile (Zwischensequenz) bekommen ihn
+   weiter fest in die Ecke.
+   Farbe ueber light-dark(): helle Richtungen setzen color-scheme:light
+   (themeGmHtml), dort war Hellrot auf Creme kaum lesbar. */
+const GM_QUIT_CSS = `.gm-quit{flex-shrink:0;padding:6px 12px;border-radius:8px;border:1px solid rgba(232,69,60,.6);background:rgba(232,69,60,.16);color:light-dark(#B42318,#FF8A80);font:inherit;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;}
+.gm-quit.fix{position:fixed;top:8px;right:8px;z-index:50;}
+.gm-quit:hover,.gm-quit:focus-visible{background:rgba(232,69,60,.32);outline:2px solid light-dark(#B42318,#FF8A80);outline-offset:1px;}
+.gm-head-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}`;
+const GM_QUIT_ONCLICK = "if(confirm('Show beenden und zurück ins Menü?'))opener.gmQuitShow()";
+/** @param {Document} doc */
+function gmInsertQuit(doc) {
+  const style = doc.createElement('style');
+  style.textContent = GM_QUIT_CSS;
+  doc.head.appendChild(style);
+  const btn = doc.createElement('button');
+  btn.className = 'gm-quit';
+  btn.setAttribute('onclick', GM_QUIT_ONCLICK);
+  btn.textContent = '⏹ Beenden';
+  const header = doc.querySelector('.gm-header');
+  if (!header) { btn.classList.add('fix'); doc.body.appendChild(btn); return; }
+  // Titel bleibt links; alles rechts davon (Chip) kommt mit dem Knopf in eine Gruppe.
+  const right = doc.createElement('div');
+  right.className = 'gm-head-right';
+  while (header.children.length > 1) right.appendChild(header.children[1]);
+  right.appendChild(btn);
+  header.appendChild(right);
+}
 function commitGamemasterHtml(html) {
-  html = html.includes('</body>') ? html.replace('</body>', GM_QUIT_HTML + '</body>') : html + GM_QUIT_HTML;
   // Design-Richtung einsetzen (js/theme.js) - vor dem Anzeigen UND vor dem
   // Verschicken, damit das Gamepad dasselbe Bild zeigt wie das GM-Fenster.
   html = themeGmHtml(html);
@@ -796,6 +822,8 @@ function commitGamemasterHtml(html) {
   // Board-Popout weiter oben). Das lässt z.B. das Notizen-Textfeld beim Tippen
   // in Ruhe, statt es bei jedem GM-Update (Buzz, Punktestand, …) zu resetten.
   const doc = new DOMParser().parseFromString(html, 'text/html');
+  gmInsertQuit(doc);
+  html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
   morphMirror(gamemasterWin.document.head, doc.head);
   morphMirror(gamemasterWin.document.body, doc.body);
   pushGamemasterHtmlToFirebase(html);

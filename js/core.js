@@ -897,17 +897,22 @@ function gmSkipTutorial() {
   if (activeTutorialSkip) activeTutorialSkip();
 }
 let gmPollerStarted = false;
-let gmLastOverlayPresent = false;
+let gmLastOverlayState = '';
 // Overlays erscheinen/verschwinden durch normale DOM-Operationen ohne updateGamemaster()
 // aufzurufen - ein leichter Poller hält das GM-Fenster trotzdem synchron.
+/* Mit im Zustand: ob gerade ein Tutorial läuft. Im Feud-Intro folgen
+   Willkommen -> Tutorial -> schwarze Pause ohne Lücke aufeinander; das GM-Panel
+   wurde nur beim Wechsel "Overlay da/weg" neu gebaut. Der Knopf "Tutorial
+   überspringen" fehlte deshalb während des Tutorials und stand danach noch
+   da, ohne etwas zu tun (2026-10-13 im Browser nachgestellt). */
 function startGmPoller() {
   if (gmPollerStarted) return;
   gmPollerStarted = true;
   setInterval(() => {
     if (!gamemasterWin || gamemasterWin.closed) return;
-    const present = !!gmActiveOverlay();
-    if (present !== gmLastOverlayPresent) {
-      gmLastOverlayPresent = present;
+    const state = (gmActiveOverlay() ? 'o' : '-') + (activeTutorialSkip ? 't' : '-');
+    if (state !== gmLastOverlayState) {
+      gmLastOverlayState = state;
       updateGamemaster();
     }
   }, 250);
