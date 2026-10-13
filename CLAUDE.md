@@ -475,6 +475,31 @@ Die Regel hebt **nicht** auf: den Repo-Stand vorher prüfen, `check.js`, den
 HANDOFF-Eintrag und das Melden von Ungeprüftem. Sie gilt für `master` in diesem
 Repo, nicht für andere Projekte unter `Documents\Coding`.
 
+## Nutzungskontingent läuft leer — kontrolliert abbrechen
+
+Anweisung von David (2026-10-13): Sobald erkennbar wird, dass sein
+Nutzungskontingent zur Neige geht, die laufende Arbeit **abbrechen** statt sie
+unfertig und unprotokolliert liegen zu lassen. Dann:
+
+1. Sofort einen Eintrag in `HANDOFF.md` schreiben — **wo genau** abgebrochen
+   wurde (Datei, Funktion, Zeile, letzter geprüfter Stand) und **was als
+   Nächstes** gemacht worden wäre (konkrete Schritte, nicht „weitermachen").
+   Das ist die Abschluss-Übersicht aus dem HANDOFF-Abschnitt, auch wenn nichts
+   committet wurde.
+2. In der Antwort an David ausdrücklich sagen, dass abgebrochen wurde und dass
+   es in der `HANDOFF.md` steht.
+
+**Was als „läuft leer" gilt:** der **Session-Token-Zähler**, den die Umgebung
+pro Zug als `<total_tokens>` einblendet (nicht Davids Abo-Kontingent — das sehe
+ich nicht). Fällt der Rest unter **~300 000 Token**, gilt die Session als knapp:
+den laufenden Schritt an der nächsten sauberen Stelle beenden, dann Ablauf oben
+(abbrechen → HANDOFF mit Stopppunkt + nächsten Schritten → David sagen). Puffer
+bewusst großzügig, damit der HANDOFF-Eintrag selbst noch reinpasst.
+
+**Vorbehalt:** Der Zähler steht erst im nächsten Zug fest; mitten in einem
+langen Tool-Lauf kann er zwischen zwei Blicken fallen. Sicher ist nur der Blick
+zu Beginn jedes Zuges — da wird geprüft.
+
 ## HANDOFF.md — bei JEDER Änderung, ohne Ausnahme
 
 `HANDOFF.md` im Wurzelverzeichnis wird **mitgeschrieben, nicht nachgepflegt**.
