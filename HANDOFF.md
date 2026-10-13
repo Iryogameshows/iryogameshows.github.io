@@ -12,6 +12,71 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — ABGEBROCHEN: Beenden-Knopf + F5 fortsetzen — Stand auf Branch `wip/beenden-f5` (`34849f7`)
+
+**Abgebrochen auf Davids Anweisung.** Nichts davon ist auf `master` oder live. Der
+unfertige Code liegt auf `origin/wip/beenden-f5`, ein Commit `34849f7` auf `20d93ef`.
+
+**Auftrag (David):** 1. Im Gamepad und im Hostmenü ein Beenden-Knopf, der immer da ist.
+2. Nach F5 soll der Spielstand erhalten bleiben und ohne Klick weiterlaufen.
+
+**Aktueller Stand auf dem Branch:**
+- `js/resume.js`: `gmQuitShow()` beendet jede Show (TP/DDF/PIH über ihre Quit-Funktionen,
+  sonst alle `*.active = false`, Buzzer/Eingabe zu, Overlays weg, `RESUME_KEY` gelöscht,
+  `joinLocked:false`, `lobbyNeueShow()`, Menü). `hostQuitClick()` mit `confirm`.
+  Intervall (700 ms) blendet `#host-quit` ein, solange eine Show oder ein Intro-Overlay
+  läuft. `resumeGame(ohneKlick)`: bei F5 (`performance` navigation type `reload`) und
+  frischem Stand ohne Banner nach `load` fortsetzen, ohne `openBoardPopout`.
+  Feud-Fortsetzen ruft `lockBuzzerJoins` **nicht** mehr auf.
+- `js/buzzer.js`: `GM_QUIT_HTML` wird in `commitGamemasterHtml` vor `</body>` jedes
+  GM-Panels gesetzt (fester Knopf oben rechts, `confirm` im Panel bzw. Gamepad, dann
+  `opener.gmQuitShow()`). `gmQuitShow` steht in `GM_REMOTE_ALLOWED_FNS`.
+- `index.html`: `<button id="host-quit" class="host-quit">` nach `#gm-bar`.
+  `styles.css`: `.host-quit` (z-index 4900, über den Intros, unter der Host-Sperre); aus,
+  wenn `#gm-embed-overlay.visible` (`body:has(...)`), weil das Panel einen eigenen hat.
+- `js/feud.js`: `boardReattach(win)`; `#host-quit` in der Board-Ausblendliste.
+  `mainscreen/index.html`: meldet sich alle 1,5 s per `opener.boardReattach(window)`.
+- `tools/shots/ablauf.js`: neuer Abschnitt „F5 mitten im Spiel, Beamerfenster, Beenden“.
+
+**Stopppunkt:** Letzter Lauf `node tools/shots/ablauf.js`: 36 OK, 2 FEHL.
+1. `Feud laeuft: Beenden-Knopf auf der Hostseite sichtbar` — **Testannahme falsch,
+   kein App-Fehler:** beim Spielstart ist das GM-Panel eingeblendet, dann ist der
+   Hostknopf absichtlich aus. Prüfung ändern auf „Hostknopf sichtbar ODER Panel offen
+   mit `.gm-quit`“.
+2. JS-Fehler Host: `TypeError: Cannot read properties of null (reading 'nodeType')` in
+   `morphMirror` (js/feud.js ~Z. 1051), aufgerufen aus `scheduleBoardMirror`
+   (`morphMirror(boardWin.document.body, document.body)`, ~Z. 1093). Vermutung,
+   ungeprüft: Direkt nach dem Wiederanhängen bzw. während das Beamerfenster neu lädt,
+   ist `boardWin.document.body` noch `null`. Ich war gerade dabei, die Stelle zu lesen.
+Grün waren u. a.: F5 setzt Feud ohne Klick mit Punkten fort, das Beamerfenster hängt sich
+nach F5 wieder an und zeigt das Spiel, Beenden über das GM-Panel → Menü/Stand
+gelöscht/Handy in der Lobby, Beenden mitten im TP-Intro über den Hostknopf.
+
+**Nebenbei gefunden (auf dem Branch behoben, auf master noch offen):** Das Fortsetzen
+per Klick (bestehende Funktion) ruft bei Feud `lockBuzzerJoins` mit noch leerer
+Presence-Liste auf → `lockedNames: []` → **alle Handys gesperrt** („screen-blocked“).
+
+**Ideen/Ansätze, die im Raum standen:**
+- Beenden-Knopf rot-transparent oben rechts, im GM-Panel und auf der Hostseite gleich;
+  Rückfrage immer auf dem Gerät, auf dem gedrückt wird, nie als Dialog auf dem Host.
+- Der Hostknopf ist bewusst „immer da, solange eine Show läuft“ (auch im Intro), nicht
+  im Menü. Falls David ihn auch im Menü will: Intervall-Bedingung lockern.
+- Verworfen: Beamerfenster nach F5 per `window.open('', 'Board')` holen — ohne
+  Nutzergeste unzuverlässig; deshalb meldet sich das Fenster selbst.
+
+**Nächste Schritte:**
+1. `git switch wip/beenden-f5` (oder `git merge --ff-only` nach Prüfung auf master).
+2. In `scheduleBoardMirror` absichern: `if (!boardWin.document || !boardWin.document.body) return;`,
+   den Fehler reproduzieren und prüfen, dass er weg ist.
+3. Die Prüfung 1 in `ablauf.js` korrigieren (s. o.), danach soll `ablauf.js` 38/38 zeigen.
+4. `node check.js --types`, `node tools/shots/shots.js --shows gm,feud,buzzer` (Knopf im
+   GM-Panel in allen Richtungen ansehen — **noch nicht gemacht**).
+5. Gamepad (`gamepad/index.html`) mit echtem Handy prüfen: Knopf sichtbar, `confirm`
+   im iframe geht, Befehl kommt an — **ungeprüft**, nur über den Code gelesen (iframe ohne
+   `sandbox`).
+6. Auf master mergen, HANDOFF-Eintrag mit Hash, push, Deploy prüfen, Branch löschen
+   (Löschen vorher Bescheid geben).
+
 ## 2026-10-13 — `2623227` Pause-Screen zwischen den Fragen (weder Buzzer noch GIF)
 
 **Gemacht:** Im Handy-Buzzer neu `#screen-wait` mit Team-Chip, blasser
