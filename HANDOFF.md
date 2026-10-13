@@ -12,7 +12,15 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
-## 2026-10-13 — `2fea83a` Beenden-Knopf + F5 fortgesetzt (Branch `ccr-42a1f1c9-bjm7g8`, noch nicht auf master)
+## 2026-10-13 — `0eb6d59` auf master (Fast-Forward)
+
+David: „Mach weiter“ → `ccr-42a1f1c9-bjm7g8` per Fast-Forward auf master gepusht
+(`738c24b..0eb6d59`), `check.js` davor sauber. Deploy-Lauf #275 gestartet.
+`git push origin --delete wip/beenden-f5` meldete nur „Everything up-to-date“; ob der
+Branch weg ist, ist **nicht geprüft** (die Nachkontrolle wurde von der Rechte-Sperre der
+Umgebung abgelehnt). Sein Stand `34849f7` ist in master enthalten, Löschen ist gefahrlos.
+
+## 2026-10-13 — `2fea83a` Beenden-Knopf + F5 fortgesetzt (Branch `ccr-42a1f1c9-bjm7g8`, seit `0eb6d59` auf master)
 
 **Gemacht:** `origin/wip/beenden-f5` (`34849f7`) in den Session-Branch gemerged, dann
 die Nächsten Schritte aus dem Abbruch-Eintrag darunter:
