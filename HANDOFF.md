@@ -12,6 +12,52 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `a0468d9` Teams/Lobby verfallen nach 48 h; Buzzer erst nach den Intros
+
+**Gemacht:**
+- Handy: `registerPresence` schreibt `buzzer/players/<key>/seen` (Server-Zeit) und
+  wird alle 15 min wiederholt, solange die Seite offen und verbunden ist.
+- Host: `lobbyNeueShow()` (js/buzzer.js) läuft aus `showScreen` (js/core.js) beim
+  **Betreten** jeder Show-Einrichtung (`*setup-screen` außer `wwm-setup-screen`):
+  `lobbyReset` + offene Runden zu, dann `expireStalePlayers()`.
+- `expireStalePlayers()`: Team weg bei `seen` älter als 48 h; Presence weg bei `ts`
+  älter als 48 h oder ohne `ts`; Accounts ohne `seen` bekommen einen Stempel.
+- `lockBuzzerJoins` schreibt zusätzlich `lobbyReset`.
+
+**Warum so:**
+- Davids Vorgabe: Zuteilung höchstens 48 h, danach raus aus Team und Lobby, Login
+  und Account bleiben (Antwort auf Rückfrage). Ausgelegt als 48 h **ab der letzten
+  Teilnahme**, nicht ab der Zuteilung — beide Antworten zusammen lesen sich so.
+  Falls doch „ab Zuteilung“ gemeint war: ein `teamSince` beim Zuteilen setzen und
+  darauf prüfen.
+- Abgeräumt wird beim Host, weil nur er alle Accounts sieht und ein Handy, das zwei
+  Tage weg war, sich nicht selbst abräumen kann. Zeitpunkt: Einrichtung einer Show —
+  genau dann zählt die Zuteilung. Host-Uhr statt Server-Zeit; bei 48 h egal.
+- Accounts ohne `seen`: Stempeln statt Abräumen. Die letzte Teilnahme ist für sie
+  unbekannt; Abräumen hätte auch die Teams von gestern gelöscht.
+- Buzzer im Intro: `lobbyReset` gab es nur beim ersten Verbinden der Host-Sitzung
+  (`isFresh`). Ab der zweiten Show blieb `everActive` auf den Handys stehen →
+  Buzzer schon im Intro. `live` setzt der Host erst nach dem Intro
+  (`feudBuzzPrepare` usw.), also reicht es, den Merker bei jeder Einrichtung und
+  jedem Start zu löschen. Nicht jedes `ensure*LobbyConnected` genommen, weil das
+  auch aus `oninput` der Teamnamen-Felder läuft (jeder Tastendruck ein Schreiben).
+
+**Geprüft:** Host-Test (Scratchpad, Firebase-Stub mit Nutzdaten) 11/11: 49 h Team
+weg, 47 h bleibt, ohne `seen` Stempel und Team bleibt, ohne Team nichts, Presence
+49 h und ohne `ts` raus, frische bleibt, zweite Einrichtung (TP) setzt erneut
+zurück, gleicher Screen erneut nicht, WWM nicht, Spielstart ja, 0 JS-Fehler.
+Handy-Test: beim Verbinden `set presence/sony` und `set players/sony/seen`.
+`check.js` und `--types` ohne Meldung. Keine Screenshot-Prüfung (nichts Sichtbares
+geändert).
+
+**Offen:**
+- Nicht live durchgespielt: zweite Show am selben Abend → Handys im Intro in der
+  Lobby, nach der ersten Frage am Buzzer.
+- Handys mit altem Code (Cache bis 10 min) stempeln kein `seen` und erneuern die
+  Presence nicht; nach 48 h Dauerverbindung fallen sie aus der Lobby, bis sie neu
+  verbinden.
+- Die Spielerübersicht zeigt `seen` nicht an.
+
 ## 2026-10-13 — `703b381` lobbyReset: „nie gesehen“ zählt als Änderung
 
 **Gemacht:** Im `lobbyReset`-Listener des Handy-Buzzers löscht jetzt
