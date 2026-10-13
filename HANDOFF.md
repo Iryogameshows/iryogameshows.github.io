@@ -12,6 +12,31 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `49bf9e9` Abbruch-Regel bei knappem Session-Token-Budget
+
+**Gemacht:** Neuer Abschnitt in `CLAUDE.md` („Nutzungskontingent läuft leer —
+kontrolliert abbrechen", über dem HANDOFF-Abschnitt). Fällt der pro Zug
+eingeblendete `<total_tokens>`-Rest unter ~300 000, wird der laufende Schritt an
+nächster sauberer Stelle beendet, abgebrochen, ein HANDOFF-Eintrag mit
+Stopppunkt und nächsten Schritten geschrieben und David informiert.
+
+**Warum so:** David will nicht, dass bei leerlaufendem Budget unfertige,
+unprotokollierte Arbeit liegen bleibt. Erste Fassung bezog sich irrtümlich auf
+das Abo-Kontingent (sehe ich nicht); auf Klarstellung umgeschrieben auf den
+Session-Zähler, den die Umgebung pro Zug einblendet. Schwelle 300 000 als
+großzügiger Puffer, damit der HANDOFF-Eintrag selbst noch reinpasst.
+
+**Geprüft:** `node check.js` fehlerfrei (300 IDs, 2465 Klammernpaare, „alles in
+Ordnung"). CLAUDE.md-Änderung berührt keinen js-Code. Kein Screenshot-Lauf
+nötig (kein CSS/Layout).
+
+**Offen:** Vorbehalt in der Regel selbst: Zähler steht erst im nächsten Zug
+fest, mitten in langem Tool-Lauf kann er zwischen zwei Blicken fallen; sicher
+nur der Blick zu Zuganfang.
+
+**Fallstricke:** `CLAUDE.md` selbst steht in der „Groß — erst fragen"-Liste,
+deshalb trotz Auto-Commit-Regel vor dem Commit gefragt.
+
 ## 2026-10-12 — `988961b` graphify-Cache + Manifest eingecheckt
 
 **Gemacht:** `/graphify` (Skill) einmal voll über das ganze Repo laufen
