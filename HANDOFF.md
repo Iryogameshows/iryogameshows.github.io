@@ -12,6 +12,50 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `43f702b` Handy: Lobby nach hängender Runde, Ring über Statuszeile
+
+**Gemacht:**
+1. `lobbyReset` (Server-Zeitstempel) schreibt der Host beim ersten Verbinden
+   einer Lobby mit (`lobbyFrisch()` in `js/buzzer.js`, genutzt in
+   `ensureLobbyConnected` und `ensureRosterConnected` in `js/roster.js`). Der
+   Handy-Buzzer hört darauf, merkt sich den Wert in `sessionStorage`
+   (`buzzerReset`) und löscht `everActive`, sobald er sich ändert.
+2. `#buzz{margin-block:var(--buzz-rand)}` plus je Richtung `--buzz-rand`
+   (A 26, R 28, E 22, C/H/J 16, I/S 13, B/P 12, K/O 8 px).
+
+**Warum:**
+1. Von David gemeldet, nachdem das offene TP-Rad live geschlossen war: Die Handys
+   kamen sofort auf den Buzzer, ohne Lobby. Das Rad hatte `markActive()` ausgelöst,
+   `everActive` liegt in `sessionStorage`. Gelöscht wurde es nur beim **Wechsel**
+   `joinLocked` true → false — `joinLocked` war aber schon `false`, also gab es
+   keinen Wechsel. Ein Wert, der sich bei jedem Einrichten ändert, ist das
+   zuverlässige Signal. Verworfen: `everActive` bei jedem `joinLocked:false`
+   löschen — DDF/PIH sperren nie, das hätte dort zwischen zwei Runden die
+   Lobby gezeigt.
+2. Ebenfalls gemeldet. Die Ringe sind `box-shadow`-Spreads, `outline` oder
+   `::before` und zählen nicht zum Layout. In E und R lagen sie über Team-Chip und
+   „BEREIT …“. **War schon im Kontaktbogen zu `b33680d` sichtbar und wurde dort
+   übersehen** — der Bogen ist klein, Einzelbilder ansehen.
+
+**Geprüft:** Handy-Test (Scratchpad, Firebase-Stub, `lobbyReset` über
+`sessionStorage` als Ersatz für die DB) 4/4: alter Merker → Buzzer; neuer Wert →
+Lobby; Neuladen bei gleichem Wert → Merker bleibt; Neuladen bei neuem Wert →
+Lobby. `tools/shots` für buzzer und buzzer-login: keine Befunde, E/R/P einzeln
+angesehen. `check.js` und `--types` ohne Meldung.
+
+**Offen:**
+- Handys, die schon offen sind, kennen noch keinen `lobbyReset`-Wert. Sie springen
+  erst beim **nächsten** Einrichten einer Show (Host neu laden, Show-Setup öffnen)
+  in die Lobby, oder wenn der Handy-Tab geschlossen und neu geöffnet wird.
+- Die blasse große Kreislinie hinter dem Buzzer (in allen Richtungen) läuft bei
+  einigen weiter durch die Statuszeile. Sie gehört zum Hintergrund, das war vorher
+  auch so. Nicht angefasst.
+- Nicht auf einem echten Handy geprüft, nur bei 390×844.
+
+**Fallstricke:** `fbstub.js` kennt kein `.get()`; das Auto-Login im Handy-Buzzer
+wirft dort `db.ref(...).get(...).then is not a function`. Das ist ein Stub-Fehler,
+kein App-Fehler.
+
 ## 2026-10-13 — `5ed8e82` Abstimmung und Schätzen/Bieten genauso absichern
 
 **Gemacht:** `TPSPIN_ZU` aus `c1d0f91` heißt jetzt `RUNDEN_ZU` und setzt neben
