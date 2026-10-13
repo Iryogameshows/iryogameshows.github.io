@@ -12,6 +12,84 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `b33680d` Lobby als MP4, 10-MB-Dublette weg, Pages-Upload eingegrenzt
+
+**Gemacht:**
+- Handy-Lobby (`buzzer/index.html`): 13 Lobby-GIFs zusätzlich als MP4
+  (`buzzer/images/lobby-gifs/<name>.mp4`), abgespielt als
+  `<video id="lobby-video" muted loop playsinline>`. `LOBBY_GIFS` enthält jetzt
+  Namen ohne Endung. Neue Funktionen `lobbyVideoPlay()` (aus `showLobby`) und
+  `lobbyBild()` (Rückfall aufs GIF); `showScreen` pausiert das Video außerhalb
+  der Lobby.
+- `buzzer/images/freddy-fazbear-fnaf.gif` gelöscht: bytegleich (`cmp`) mit der
+  Kopie in `lobby-gifs/`, einzige Referenz zeigt auf die Kopie.
+- `.github/workflows/pages.yml`: neuer Schritt vor dem Upload entfernt aus der
+  Lauf-Kopie `graphify-out .claude types tools/shots tools/reactbits`, die
+  Wurzel-`*.md`, `check.js jsconfig.json firebase.json database.rules.json
+  .gitignore`; `test -f .nojekyll && test -d designs && test -d tools/intros`
+  bricht ab, falls das je etwas Nötiges trifft.
+
+**Warum so:**
+- Auslöser: Befundliste von David („Bloats"). Davon nur die belegbar sicheren
+  angefasst. Laufzeit-Befunde (Leinwand-MutationObserver, GM-DOMParser,
+  synchrones `resumeSave`), Lazy-Load/Aufteilen der großen Skripte und
+  Per-Datei-Cache-Buster bewusst **nicht** — brauchen erst einen
+  Performance-Trace bzw. sind Umbau mit Show-Risiko.
+- MP4 statt WebM: WebM wäre zusammen nur ~200 KB kleiner (927 gegen 1127 KB),
+  bräuchte aber doppelte Dateien und ist auf iOS unsicher. H.264 läuft überall.
+- GIFs bleiben im Repo als Rückfall: iOS im Stromsparmodus lehnt `play()` ab,
+  ein GIF animiert trotzdem. Deshalb sinkt der Deploy durch die MP4s nicht,
+  wohl aber der Download auf dem Handy (Erwartungswert je Login gerechnet ~1,6 MB → ~100 KB).
+- `play()` erst in `showLobby`, nicht beim Würfeln: ein unsichtbares Video darf
+  iOS ablehnen, und iOS lädt ohnehin erst beim ersten `play()`.
+- `AbortError` löst keinen Rückfall aus — der kommt, wenn die Lobby verlassen
+  wird, bevor das Video lief, und ist kein Abspielproblem.
+- `designs/` bleibt im Deploy, obwohl die Befundliste es „Design-Exporte"
+  nannte: `js/theme.js` öffnet die Galerie und lädt `designs/s/*-Menu.html` als
+  iframe, die Voting-Seite ebenso. `tools/intros/` läuft laut CLAUDE.md bewusst
+  live.
+- Verworfen: GIFs verkleinern (David will die Pixelmaße behalten), GIFs aus dem
+  Pool nehmen.
+
+**Geprüft:**
+- Konvertierung: 13 GIFs, 21 681 KB → 1 127 KB MP4. Frames und Dauer identisch
+  bei 5 Stichproben (freddy 111/5,50 s, nose-fur 30/1,45 s, stich 36/1,75 s,
+  triplet 59/5,80 s, 67 23/2,20 s). Mittel-Frame von freddy und nose-fur
+  nebeneinander angesehen, kein sichtbarer Unterschied. Keins der 13 hat
+  transparente Pixel (alle Frames ausgezählt), MP4 ohne Alpha verliert also nichts.
+- Headless Chrome (installierter Chrome, Firebase durch `tools/shots/fbstub.js`
+  ersetzt, Test im Scratchpad, nicht im Repo): 18/18 OK — Video läuft sichtbar
+  in 498×498, nur MP4 angefragt, kein GIF; außerhalb der Lobby pausiert; zurück
+  läuft weiter; 10× `showLobby` stabil; sofort verlassen ohne Rückfall;
+  `play()` abgelehnt → GIF; MP4 404 → GIF; arna als Bild ohne MP4-Anfrage;
+  Bild → Video umschalten; alle 13 MP4 dekodierbar; 0 JS-Fehler.
+- `node tools/shots/shots.js --shows buzzer,buzzer-login`: 38 Bilder, keine
+  Befunde, Kontaktbogen angesehen. Die Lobby selbst ist **kein** Zustand in
+  `shots.js` — dort also nicht abgedeckt.
+- `node check.js`: alles in Ordnung.
+- Workflow-Schritt lokal an einer `git checkout-index`-Kopie simuliert:
+  27,7 MB/604 Dateien → 26,4 MB/294 Dateien, `.nojekyll`/`designs`/`tools/intros`
+  vorhanden.
+
+**Offen:**
+- **Nicht auf einem echten iPhone geprüft**, auch nicht im Stromsparmodus. Der
+  Rückfall ist nur per nachgebautem `NotAllowedError` getestet.
+- Lobby-Zustand in `tools/shots` aufnehmen, damit er künftig mitgeprüft wird.
+- Die übrigen Befunde der Liste (s. „Warum so") sind unberührt.
+
+**Fallstricke:**
+- `arna-celebration.gif` ist ein animiertes WebP (RIFF-Header), ffmpeg 6.0 kann
+  es nicht dekodieren. Wer neue Lobby-GIFs ergänzt: Header prüfen.
+- H.264 verlangt gerade Kantenlängen; `triplet` (165×302) wird um 1 px
+  beschnitten (164×302).
+- Werkzeug: ffmpeg kam per `npm install ffmpeg-static@5.2.0` in den
+  Scratchpad, nicht ins Repo. Konvertier-Befehl: `-c:v libx264 -preset
+  veryslow -crf 23 -profile:v high -movflags +faststart`, Filter
+  `crop=trunc(iw/2)*2:trunc(ih/2)*2,scale=out_color_matrix=bt709:out_range=tv,format=yuv420p`,
+  dazu `-colorspace/-color_primaries/-color_trc bt709 -color_range tv`.
+- `git checkout-index` in den Scratchpad scheitert ohne
+  `-c core.longpaths=true` an den langen graphify-Cache-Pfaden.
+
 ## 2026-10-13 — `7dd8727` Auto-Commit/Push-Regel wiederhergestellt
 
 **Gemacht:** Abschnitt „Commit und Push" in `CLAUDE.md` wieder auf Auto-Commit
