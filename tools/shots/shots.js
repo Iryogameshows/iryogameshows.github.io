@@ -47,7 +47,7 @@ const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
 // Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
 const HOST_SEITEN = new Set(['gm', 'turnier-host']);
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'buzzer', 'buzzer-login'];
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'buzzer', 'buzzer-pause', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -264,6 +264,15 @@ async function handySeite(page, base, show, t) {
       const b = document.getElementById('buzz'); b.disabled = false; b.classList.add('armed');
       const st = document.getElementById('status'); st.textContent = 'BEREIT — jetzt buzzern!'; st.style.color = 'var(--accent-text)';
       document.getElementById('hint').textContent = 'Platz 2';
+    });
+  }
+  if (show === 'buzzer-pause') {
+    // Zwischen zwei Fragen (screen-wait): Team Rot, Kugel in der Teamfarbe.
+    await page.evaluate(() => {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-wait').classList.add('active');
+      const chip = document.getElementById('wait-team-chip'); chip.style.display = ''; chip.textContent = 'Team Rot'; chip.style.background = '#E8453C';
+      applyBuzzColor(0);
     });
   }
   await page.waitForTimeout(400);

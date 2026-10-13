@@ -127,6 +127,18 @@
   .lobby-gif{width:260px;height:260px;border-radius:16px;object-fit:contain;object-position:center;background:rgba(0,0,0,.25);box-shadow:0 10px 30px rgba(0,0,0,.5);}
   .lobby-gif.in{animation:gifIn .45s var(--ease-out);}
   @keyframes gifIn{from{opacity:0;transform:scale(.94);}}
+  /* Zwischen den Fragen: weder Buzzer noch GIF. Der Knopf zieht sich zu einer
+     ruhigen Kugel in der Teamfarbe zusammen und atmet - man sieht, dass die
+     Show laeuft und gleich weitergeht, ohne etwas Drueckbares vor sich zu
+     haben. Groesse und Verlauf wie der Buzzer, nur blass: so wirkt der
+     Wechsel vom Knopf zur Pause und zurueck wie ein Uebergang, nicht wie ein
+     Seitenwechsel. Farben kommen aus applyBuzzColor (--buzz-*). */
+  #screen-wait{gap:22px;}
+  .wait-orb{width:min(60vw,240px);height:min(60vw,240px);border-radius:50%;
+    background:radial-gradient(circle at 50% 35%,var(--buzz-light,#FF6B5E),var(--buzz-mid,#E8453C) 65%,var(--buzz-dark,#B8241C));
+    opacity:.2;animation:waitEin .5s var(--ease-out),waitAtem 3.6s ease-in-out .5s infinite;}
+  @keyframes waitEin{from{transform:scale(1.3);opacity:.9;}}
+  @keyframes waitAtem{50%{transform:scale(.9);opacity:.1;}}
   .lobby-sub{font-size:.85rem;color:rgba(var(--fg-rgb),.45);text-align:center;max-width:280px;line-height:1.5;}
   .lobby-count{font-size:.72rem;color:rgba(var(--fg-rgb),.3);text-transform:uppercase;letter-spacing:1px;}
   /* Team-Zeile in der Lobby. Mit Team kraeftig in der Teamfarbe, ohne Team
@@ -374,6 +386,14 @@
     <div class="grid" id="prof-color-grid"></div>
     <button class="btn" onclick="saveProfile()">Speichern</button>
     <button class="btn ghost" onclick="closeProfile()">Zurück</button>
+  </div>
+
+  <!-- ZWISCHEN DEN FRAGEN: Show laeuft, gerade keine Frage offen -->
+  <div id="screen-wait" class="screen">
+    <div class="team-chip" id="wait-team-chip">Team</div>
+    <div class="wait-orb" aria-hidden="true"></div>
+    <div class="lobby-title">Gleich geht's weiter</div>
+    <div class="lobby-sub">Lass das Handy offen. Sobald es weitergeht, wechselt der Bildschirm von selbst.</div>
   </div>
 
   <!-- LOBBY -->
@@ -799,6 +819,14 @@
     applyBuzzColor(hasTeam() ? myTeam : null);
     refreshBuzz();
   }
+  // Pause zwischen zwei Fragen bzw. Runden (alle Shows). showScreen nur beim
+  // Wechsel, sonst startete refreshRoot die Einblendung bei jedem Listener neu.
+  function showWait(){
+    if (!screenActive('screen-wait')) showScreen('screen-wait');
+    fillTeamChip(document.getElementById('wait-team-chip'));
+    applyBuzzColor(hasTeam() ? myTeam : null);
+  }
+  function screenActive(id){ const el = document.getElementById(id); return !!el && el.classList.contains('active'); }
 
   // Wartezimmer zwischen den Fragen. joinLocked setzt der Host beim echten
   // Spielstart - das ist hier das verlaesslichste Signal dafuer, dass die Show
@@ -846,9 +874,13 @@
     // Der Buzzer hängt nicht mehr am Team: sobald der Host eine Frage
     // vorbereitet, bekommt ihn jeder - mit Team wie ohne. buzzedThisRound
     // haelt den Screen noch kurz, damit man seinen Platz sieht, wenn der Host
-    // die Frage gleich wieder schliesst. everActive haelt ihn zwischen den
-    // Fragen - siehe oben bei der Deklaration.
-    if (live || armed || buzzedThisRound || everActive) { showBuzz(); return; }
+    // die Frage gleich wieder schliesst.
+    if (live || armed || buzzedThisRound) { showBuzz(); return; }
+    // Show laeuft, aber gerade keine Frage: weder Buzzer noch Lobby-GIF,
+    // sondern die Pause (David, 2026-10-13). Vorher stand hier der Buzzer mit
+    // "Warte auf die Frage…" - in DDF und PIH ein Knopf, den es dort gar nicht
+    // gibt. everActive: siehe oben bei der Deklaration.
+    if (everActive) { showWait(); return; }
     showLobby();
   }
   function refreshBuzz(){

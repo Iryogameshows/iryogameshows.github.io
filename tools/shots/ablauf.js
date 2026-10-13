@@ -8,7 +8,7 @@
 // Pursuit, Jeopardy, Der Duemmste fliegt, Der Preis ist heiss: je Einrichtung
 // und Intro Lobby, danach Buzzer, Rad, Eingabefeld oder Abstimmung; Stimme und
 // Gebot gehen vom Handy zum Host; 48-h-Ablauf von Teams; Spieleruebersicht
-// "zuletzt". Zeilen mit INFO sind Beobachtungen ohne Soll-Wert. Entstanden 2026-10-13 (HANDOFF a0468d9 und folgende).
+// "zuletzt". Zwischen zwei Fragen/Runden: Pause-Screen (screen-wait). Entstanden 2026-10-13 (HANDOFF a0468d9 und folgende).
 // Endet mit Code 1, wenn ein Punkt fehlschlaegt.
 'use strict';
 const REPO = require('path').resolve(__dirname, '..', '..');
@@ -79,7 +79,8 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   check('Frage aufgedeckt: Buzzer scharf', await handy.evaluate(() => !document.getElementById('buzz').disabled));
   await host.evaluate(() => { feudBuzzEndRound(); });
   await warte(300);
-  check('Zwischen zwei Fragen: Handy bleibt am Buzzer', (await screen()) === 'screen-buzz', await screen());
+  check('Zwischen zwei Fragen: Pause (weder Buzzer noch GIF)', (await screen()) === 'screen-wait', await screen());
+  await handy.screenshot({ path: OUT + '/ablauf-pause.png' });
   // Feud verlassen (wie ueber das Menue)
   await host.evaluate(() => { feudBuzzDisconnect(); showScreen('menu-screen'); });
   await warte(300);
@@ -157,8 +158,7 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   check('DDF Stimme vom Handy kommt beim Host an', await host.evaluate(() => Object.keys(ddfState.votes || {}).length === 1), await host.evaluate(() => ddfState.votes));
   await host.evaluate(() => ddfEvaluateVote());
   await warte(400);
-  check('DDF nach der Auswertung: Abstimmung auf dem Handy zu', (await screen()) !== 'screen-vote', await screen());
-  console.log('INFO DDF nach der Abstimmung zeigt das Handy:', await screen());
+  check('DDF nach der Auswertung: Pause (kein Buzzer)', (await screen()) === 'screen-wait', await screen());
   await host.evaluate(() => ddfQuit());
   await warte(300);
 
@@ -180,8 +180,7 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   check('PIH Gebot vom Handy kommt beim Host an', await host.evaluate(() => Object.keys(pihState.bids || {}).length === 1), await host.evaluate(() => pihState.bids));
   await host.evaluate(() => pihEvaluate());
   await warte(400);
-  check('PIH nach der Auswertung: Eingabe auf dem Handy zu', (await screen()) !== 'screen-estimate', await screen());
-  console.log('INFO PIH nach der Auswertung zeigt das Handy:', await screen());
+  check('PIH nach der Auswertung: Pause (kein Buzzer)', (await screen()) === 'screen-wait', await screen());
   await host.evaluate(() => pihQuit());
   await warte(300);
 
