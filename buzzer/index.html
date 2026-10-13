@@ -121,8 +121,9 @@
   /* Lobby-Warteanimation */
   #screen-lobby{gap:14px;}
   .lobby-title{font-family:var(--font-display);font-size:1.3rem;font-weight:900;letter-spacing:1px;color:var(--accent-text);text-align:center;}
-  /* Das GIF bleibt versteckt, bis es geladen ist. Ohne Einblendung klappt es
-     schlagartig ins Bild und reisst das Layout kurz auf. */
+  /* Das GIF bzw. Video bleibt versteckt, bis es laeuft. Ohne Einblendung klappt
+     es schlagartig ins Bild und reisst das Layout kurz auf. Gilt fuer <img> und
+     <video> gleich - sichtbar ist immer nur eins von beiden. */
   .lobby-gif{width:260px;height:260px;border-radius:16px;object-fit:contain;object-position:center;background:rgba(0,0,0,.25);box-shadow:0 10px 30px rgba(0,0,0,.5);}
   .lobby-gif.in{animation:gifIn .45s var(--ease-out);}
   @keyframes gifIn{from{opacity:0;transform:scale(.94);}}
@@ -365,6 +366,8 @@
     <div class="lobby-title" id="lobby-title">Du bist drin! 🎉</div>
     <div class="lobby-badge" id="lobby-badge" style="display:none;">● Spiel läuft — halt dich bereit</div>
     <img class="lobby-gif" id="lobby-gif" alt="" style="visibility:hidden">
+    <video class="lobby-gif" id="lobby-video" muted loop playsinline preload="auto"
+           disablepictureinpicture disableremoteplayback style="visibility:hidden;display:none"></video>
     <div class="me-row"><span class="me-av" id="lobby-av"></span><b id="lobby-name"></b></div>
     <!-- In welchem Team man ist. Steht hier und nicht nur auf dem
          Buzzer-Screen: die Zuteilung passiert, WÄHREND man wartet, und wer
@@ -482,7 +485,15 @@
   let signupChoice = { name:'', avatar:AVATARS[0], color:COLORS[0] };
   let profileChoice = { avatar:AVATARS[0], color:COLORS[0] };
 
-  function showScreen(id){ document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); }
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+    // Die Lobby-Animation ist ein Video. Ausserhalb der Lobby anhalten, sonst
+    // dekodiert das Handy die ganze Show ueber im Verborgenen weiter.
+    if (id !== 'screen-lobby'){
+      const v = document.getElementById('lobby-video');
+      if (v && !v.paused) v.pause();
+    }
+  }
 
   // Eine kurze Animation erneut anstossen: Klasse weg, Layout erzwingen, Klasse
   // wieder hin. Ohne das Auslesen von offsetWidth fasst der Browser beides zu
@@ -629,22 +640,33 @@
   function amExcluded(){ const n=myName(); return !!n && !!excludedSet[n]; }
   function nameAllowed(){ return !joinLocked || lockedNames.includes(myName()); }
 
+  // Je Name liegen <name>.mp4 und <name>.gif in images/lobby-gifs/. Abgespielt
+  // wird das MP4: gleiche Pixel, gleiche Frames, ein Zwanzigstel der Groesse
+  // (alle 13 zusammen 21,2 MB als GIF, 1,1 MB als MP4; freddy allein 9,7 MB
+  // gegen 383 KB; bei 2 Mbit/s gerechnet ~40 s leere Lobby gegen ~1,5 s). Das GIF
+  // springt nur ein, wenn das Handy kein Video von selbst starten darf (iOS im
+  // Stromsparmodus lehnt play() ab) oder das MP4 nicht laedt.
   const LOBBY_GIFS = [
-    'images/lobby-gifs/67-south-park-67.gif',
-    'images/lobby-gifs/ai-dog.gif',
-    'images/lobby-gifs/arna-celebration.gif',
-    'images/lobby-gifs/freddy-fazbear-fnaf.gif',
-    'images/lobby-gifs/higuruma-hiromi-higaruma.gif',
-    'images/lobby-gifs/kingdom-hearts-kingdom-hearts-2.gif',
-    'images/lobby-gifs/nature-vegeta.gif',
-    'images/lobby-gifs/nose-fur.gif',
-    'images/lobby-gifs/on-it-yes-sir.gif',
-    'images/lobby-gifs/stich.gif',
-    'images/lobby-gifs/stunned-wow.gif',
-    'images/lobby-gifs/sweep-spongebob.gif',
-    'images/lobby-gifs/triplet-tung-tung-tung-sahur.gif',
-    'images/lobby-gifs/vaya.gif',
+    '67-south-park-67',
+    'ai-dog',
+    'arna-celebration',
+    'freddy-fazbear-fnaf',
+    'higuruma-hiromi-higaruma',
+    'kingdom-hearts-kingdom-hearts-2',
+    'nature-vegeta',
+    'nose-fur',
+    'on-it-yes-sir',
+    'stich',
+    'stunned-wow',
+    'sweep-spongebob',
+    'triplet-tung-tung-tung-sahur',
+    'vaya',
   ];
+  // arna-celebration ist trotz Endung ein animiertes WebP mit Transparenz.
+  // ffmpeg liest das nicht, ein MP4 gibt es davon nicht - es laeuft als Bild.
+  const LOBBY_NUR_BILD = { 'arna-celebration': true };
+  let lobbyPick = '';        // gewaehlter Name, leer = noch keiner
+  let lobbyAlsBild = false;  // true: GIF statt Video
   // Eigenes Flag statt der CSS-"active"-Klasse: beim Login feuern mehrere
   // unabhängige Firebase-Listener (teamNames/joinLocked/lockedNames/presence/
   // team) knapp nacheinander refreshRoot(), wobei kurzzeitig ein anderer
@@ -654,16 +676,55 @@
   // Das GIF wird EINMAL fest gewählt (beim Login), nicht in refreshRoot -
   // sonst würfeln die vielen kurz nacheinander feuernden Firebase-Listener
   // beim Login mehrfach und man sieht erst ein anderes GIF aufblitzen.
+  // Abgespielt wird erst in lobbyVideoPlay(), wenn die Lobby sichtbar ist: ein
+  // unsichtbares Video darf iOS ablehnen. Android laedt dank preload="auto"
+  // schon jetzt vor, iOS erst beim ersten play().
   function pickRandomLobbyGif(){
-    const pick = LOBBY_GIFS[Math.floor(Math.random() * LOBBY_GIFS.length)];
+    lobbyPick = LOBBY_GIFS[Math.floor(Math.random() * LOBBY_GIFS.length)];
+    if (LOBBY_NUR_BILD[lobbyPick]){ lobbyBild(); return; }
+    lobbyAlsBild = false;
+    const vid = document.getElementById('lobby-video');
+    document.getElementById('lobby-gif').style.display = 'none';
+    vid.style.display = '';
+    vid.style.visibility = 'hidden';
+    vid.muted = true;  // iOS: die Eigenschaft zaehlt, das Attribut allein reicht nicht immer
+    vid.onerror = () => { if (!lobbyAlsBild) lobbyBild(); };
+    vid.src = 'images/lobby-gifs/' + lobbyPick + '.mp4';
+  }
+  // Aus showLobby, also bei jedem refreshRoot in der Lobby. Laeuft das Video
+  // schon, passiert nichts.
+  function lobbyVideoPlay(){
+    const vid = document.getElementById('lobby-video');
+    if (lobbyAlsBild || !lobbyPick || !vid.paused) return;
+    const pick = lobbyPick;
+    vid.play().then(() => {
+      if (pick !== lobbyPick || vid.style.visibility === 'visible') return;
+      vid.style.visibility = 'visible';
+      replay(vid, 'in');
+    }, e => {
+      // AbortError heisst nur: pausiert oder Quelle gewechselt, bevor es lief
+      // (z.B. Lobby gleich wieder verlassen). Kein Grund fuers GIF.
+      if (pick === lobbyPick && !lobbyAlsBild && !(e && e.name === 'AbortError')) lobbyBild();
+    });
+  }
+  // Rueckfall aufs GIF: erst komplett laden, dann einblenden.
+  function lobbyBild(){
+    lobbyAlsBild = true;
+    const vid = document.getElementById('lobby-video');
+    vid.onerror = null;
+    if (vid.getAttribute('src')){ vid.removeAttribute('src'); vid.load(); }  // Download abbrechen
+    vid.style.display = 'none';
+    const pick = lobbyPick, src = 'images/lobby-gifs/' + pick + '.gif';
     const preload = new Image();
     preload.onload = () => {
+      if (pick !== lobbyPick) return;  // inzwischen neu gewuerfelt
       const img = document.getElementById('lobby-gif');
-      img.src = pick;
+      img.src = src;
+      img.style.display = '';
       img.style.visibility = 'visible';
       replay(img, 'in');
     };
-    preload.src = pick;
+    preload.src = src;
   }
   function hasTeam(){ return myTeam !== null && myTeam !== undefined; }
 
@@ -729,6 +790,7 @@
   // laeuft und man sein Handy nicht weglegen sollte.
   function showLobby(){
     showScreen('screen-lobby');
+    lobbyVideoPlay();
     const running = joinLocked;
     document.getElementById('lobby-title').textContent = running ? 'Du bist dabei!' : 'Du bist drin! 🎉';
     document.getElementById('lobby-badge').style.display = running ? '' : 'none';
