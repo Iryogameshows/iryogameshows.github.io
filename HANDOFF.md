@@ -12,6 +12,32 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-13 — `2623227` Pause-Screen zwischen den Fragen (weder Buzzer noch GIF)
+
+**Gemacht:** Im Handy-Buzzer neu `#screen-wait` mit Team-Chip, blasser
+atmender Kugel im Teamverlauf (`.wait-orb`, `--buzz-*` aus `applyBuzzColor`) und
+dem Text „Gleich geht's weiter“. `refreshRoot`: Buzzer nur bei
+`live || armed || buzzedThisRound`, bei `everActive` ohne offene Frage →
+`showWait()`, sonst Lobby. In `tools/shots` neuer Zustand `buzzer-pause`; in
+`ablauf.js` sind die früheren INFO-Zeilen jetzt Soll-Punkte (`screen-wait`).
+
+**Warum so:** David: zwischen den Fragen „weder Buzzer noch GIF“, ein Übergang.
+Er hat damit meinen halb begonnenen Weg abgebrochen, in DDF/PIH die Lobby zu
+zeigen (Flag `ohneBuzzer` — nie geschrieben, nichts davon im Code). Gestaltung:
+Kugel in Größe und Verlauf des Buzzers, nur blass. Beim Wechsel schrumpft sie aus
+1,3-facher Größe (`waitEin`), damit Knopf → Pause wie ein Übergang wirkt und
+nicht wie ein Seitenwechsel. Ein Spinner wurde verworfen, er hätte nach Laden
+ausgesehen. Der Text nennt weder Frage noch Buzzer, damit er auch zu DDF und PIH
+passt.
+
+**Geprüft:** `node tools/shots/ablauf.js` 28/28 (Feud zwischen zwei Fragen, DDF
+nach der Abstimmung und PIH nach der Auswertung → `screen-wait`).
+`node shots.js --shows buzzer,buzzer-pause,buzzer-login`: keine Befunde,
+Kontaktbogen und E einzeln angesehen. `check.js` fehlerfrei.
+
+**Offen:** Nicht auf echtem Handy. Bei „Bewegung reduzieren“ läuft das Atmen nur
+einmal (globale Regel) — `--reduced` nicht eigens laufen lassen.
+
 ## 2026-10-13 — `9a0eece` ablauf.js: Jeopardy, DDF und PIH
 
 **Gemacht:** `tools/shots/ablauf.js` spielt jetzt fünf Shows in einer Host-Sitzung
