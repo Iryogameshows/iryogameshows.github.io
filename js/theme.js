@@ -53,34 +53,40 @@ const DESIGN_THEMES = [
       "--gold-pale": "#F6DFAE",
       "--ink": "#1B1306"
     } },
-  /* Arcade, neu 2026-10-14 ("Automat 1987"): Lila-Schwarz wie das Innere
-     eines Spielautomaten, Bildroehre mit Zeilen, Magenta als Leuchtfarbe
-     (Akzent) und Cyan fuer Linien. Pixelify Sans fuer alles Grosse - gut
-     lesbar, anders als das alte Press Start -, Chakra Petch fuer Text. */
+  /* Arcade, Rework 2026-10-14: zurueck zur Identitaet des Entwurfs
+     (designs/s/B-*.html) - Gelb und Cyan auf Fast-Schwarz, Press Start fuer
+     alles Grosse, Space Grotesk fuer Fliesstext, Zeilen wie auf der Roehre.
+     Die Fassung "Automat 1987" (Magenta-Verlaeufe, 0f4e9e9) ist ersetzt.
+     Material im Block "B · Arcade" in styles.css. */
   { key: "B", name: "Arcade", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500..700&family=Chakra+Petch:wght@400;500;600;700&display=swap",
+    fonts: "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap",
     vars: {
-      "--font-display": "'Pixelify Sans', sans-serif",
-      "--font-body": "'Chakra Petch', sans-serif",
-      "--font-logo": "'Pixelify Sans', sans-serif",
-      "--bg": "#0A0716",
-      "--bg-img": "repeating-linear-gradient(0deg, rgba(0,0,0,.22) 0 1px, transparent 1px 3px), radial-gradient(ellipse 60% 45% at 12% -5%, rgba(255,46,136,.22) 0%, transparent 70%), radial-gradient(ellipse 60% 45% at 88% 105%, rgba(43,228,255,.16) 0%, transparent 70%)",
+      "--font-display": "'Press Start 2P', monospace",
+      "--font-body": "'Space Grotesk', sans-serif",
+      "--font-logo": "'Press Start 2P', monospace",
+      "--bg": "#0B0A12",
+      "--bg-img": "repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0px, rgba(255,255,255,.025) 1px, transparent 1px, transparent 4px)",
       "--bg-size": "auto",
-      "--panel": "#15102A",
-      "--panel-hi": "#1E1838",
-      "--line": "#3A2F66",
-      "--fg": "#F4F0FF",
-      "--fg-rgb": "244,240,255",
-      "--fg-strong": "#FFFFFF",
-      "--muted": "#9C95C4",
-      "--pill-fg": "#D7D0F5",
-      "--accent-line": "#2BE4FF",
-      "--gold-rgb": "255,46,136",
-      "--gold-deep": "#D10F68",
-      "--gold-dark": "#6E0636",
-      "--gold-pale": "#FF8CC0",
-      "--ink": "#14020B"
-    } },
+      "--panel": "#14121F",
+      "--panel-hi": "#1E1A2E",
+      "--line": "#2B2740",
+      "--fg": "#EEEAFE",
+      "--fg-rgb": "238,234,254",
+      "--fg-strong": "#EEEAFE",
+      "--muted": "#9C96B8",
+      "--pill-fg": "#C9C3E6",
+      "--accent-line": "#FFE14D",
+      "--gold-rgb": "255,225,77",
+      "--gold-deep": "#D9BC1F",
+      "--gold-dark": "#8A7400",
+      "--gold-pale": "#FFF0A0",
+      "--ink": "#0B0A12"
+    },
+    /* GM-Fenster und Gamepad: eckig, harte Rahmen, Pixelschrift fuer Zahlen. */
+    gm: ".chip,.round-label,.score-card,.qnote,.answer,.panel,.badge,.pr-team-btn,.buzz-row,.info-card,.gm-btn,.tag,.gm-tab,.order-item,.notes-panel textarea,.score-row,.sr-val{border-radius:0;}"
+      + ".gm-title,.score-val,.sr-val{font-family:'Press Start 2P',monospace;font-size:.85rem;line-height:1.6;}"
+      + ".gm-btn.gold,.gm-btn.gm-gold{background:#FFE14D;color:#0B0A12;box-shadow:3px 3px 0 #8A7400;}"
+      + ".panel,.answer,.score-card{border-width:2px;}.score-card.active{border-color:#FFE14D;}" },
   { key: "C", name: "Pop", hell: true,
     fonts: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;600;700&display=swap",
     vars: {

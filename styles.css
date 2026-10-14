@@ -3698,7 +3698,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 }
 
 :root[data-theme="A"] { --ico-fill:#F2D395; --ico-line:#F2D395; --ico-cut:#090A10; --ico-dim:#2B2F40; --ico-filter:drop-shadow(0 0 8px rgba(232,194,122,.5)); }
-:root[data-theme="B"] { --ico-fill:#FF2E88; --ico-line:#2BE4FF; --ico-cut:#0A0716; --ico-dim:#3A2F66; --ico-filter:drop-shadow(0 0 6px rgba(255,46,136,.7)); }
+:root[data-theme="B"] { --ico-fill:#FFE14D; --ico-line:#45F0FF; --ico-cut:#0B0A12; --ico-dim:#2B2740; --ico-filter:drop-shadow(3px 3px 0 #8A7400); }
 :root[data-theme="C"] { --ico-fill:#FFA3D1; --ico-fstroke:#121212; --ico-fsw:3.5; --ico-line:#121212; --ico-cut:#121212; --ico-dim:#FFF; --ico-filter:drop-shadow(4px 4px 0 #121212); }
 :root[data-theme="D"] { --ico-fill:#FF5B1F; --ico-line:#F2F2F2; --ico-cut:#0E0E0E; --ico-dim:#3A3A3A; }
 :root[data-theme="E"] { --ico-fill:#F6E7CB; --ico-line:#F2B33D; --ico-cut:#2B1810; --ico-dim:#8C3A1A; --ico-filter:drop-shadow(3px 3px 0 #E8622C) drop-shadow(3px 3px 0 #8C3A1A); }
@@ -3851,83 +3851,315 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 }
 @keyframes thAStreif { to { transform: translateX(120%); } }
 
-/* ── B · Arcade (neu 2026-10-14): Automat 1987 ─────────────────────────────
-   Das Brett ist die Bildroehre: dunkles Glas mit Zeilen, dicker Automaten-
-   rahmen, Magenta- und Cyan-Schein von den Seiten. Felder sind Pixelknoepfe
-   mit abgetreppten Ecken (clip-path). Signatur: beim Aufdecken schaltet die
-   Roehre ein - erst ein heller Strich, dann klappt das Bild auf. Alte
-   Fassung (Gelb, Press Start, Blinken) vollstaendig ersetzt. */
+/* ── B · Arcade (Rework 2026-10-14): Automat, Original-Identitaet ──────────
+   Zurueck zum Entwurf designs/s/B-*.html (Gelb und Cyan auf Fast-Schwarz,
+   Press Start, harte Pixelrahmen) - die Fassung "Automat 1987" (0f4e9e9,
+   Magenta-Verlaeufe und Leuchtschein) ist ersetzt, weil sie genau das war,
+   was David bei Late Night als Verlaufs-Einheitsbrei abgelehnt hat.
+   Veredelt wird ueber Ordnung und Details statt Glanz: weisse Doppelrahmen
+   mit Fuge, Platznummern zweistellig (01), Spieleranzeigen 1P/2P/3P,
+   Platzhalter aus Punkten, Auswahlpfeil, harter Pixelversatz statt Schatten,
+   unten der Gitterboden aus dem Jeopardy-Entwurf.
+   Signatur: das Feld blinkt beim Aufdecken hart auf wie eine Punkteanzeige.
+   Teamfarben bleiben (BAUPLAN 4.4) - als Rahmen, nicht als Flaeche. */
 :root[data-theme="B"] {
-  --pix: polygon(0 6px, 6px 6px, 6px 0, calc(100% - 6px) 0, calc(100% - 6px) 6px, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 6px calc(100% - 6px), 0 calc(100% - 6px));
-  --brd-surface: radial-gradient(ellipse 90% 80% at 50% 50%, #120C26 0%, #07050F 100%);
-  --brd-tex: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 4px);
-  --brd-frame: inset 0 0 70px rgba(43,228,255,.07), 0 0 0 10px #1A1430, 0 0 0 12px #3A2F66, 0 0 0 13px #000, 0 0 60px rgba(255,46,136,.22);
-  --brd-well: #07050F;
+  --brd-surface: #14121F;
+  --brd-frame: 0 0 0 4px #FFFFFF, 0 0 0 8px #0B0A12, 0 0 0 11px #2B2740;
+  --brd-well: #0B0A12;
   --brd-inner: transparent;
-  --brd-radius: 22px;
-  --tile: linear-gradient(180deg, #1A1433 0%, #120D24 100%);
-  --tile-hover: linear-gradient(180deg, #241C45 0%, #18122F 100%);
-  --tile-edge: inset 0 0 0 2px #3A2F66, inset 0 2px 0 rgba(43,228,255,.35);
-  --tile-fg: #F4F0FF;
-  --tile-head: #2BE4FF;
-  --tile-head-fg: #07050F;
-  --tile-used: #0B0818;
-  --tile-num: #2BE4FF;
-  --tile-num-glow: 0 0 10px rgba(43,228,255,.7);
-  --tile-dim-fg: #6B6496;
-  --tile-open: linear-gradient(180deg, #FF6AAE 0%, #FF2E88 55%, #E3166F 100%);
-  --tile-open-edge: inset 0 2px 0 rgba(255,255,255,.45), 0 0 24px rgba(255,46,136,.55);
-  --tile-open-fg: #14020B;
-  --tile-open-dim: rgba(20,2,11,.55);
-  --tile-pts-bg: rgba(20,2,11,.12);
-  --tile-pts-rule: rgba(20,2,11,.3);
-  --tile-pick: linear-gradient(180deg, #7DF1FF 0%, #2BE4FF 100%);
-  --tile-pick-fg: #07050F;
-  --tile-right: linear-gradient(180deg, #8DFFAF 0%, #3CFF7A 100%);
-  --tile-right-fg: #03200C;
+  --brd-radius: 0;
+  --tile: #0B0A12;
+  --tile-hover: #1C1930;
+  --tile-edge: inset 0 0 0 2px #2B2740;
+  --tile-fg: #EEEAFE;
+  --tile-head: #45F0FF;
+  --tile-head-fg: #0B0A12;
+  --tile-used: transparent;
+  --tile-num: #FFE14D;
+  --tile-num-glow: none;
+  --tile-dim-fg: #8C86AD;
+  --tile-bar: radial-gradient(circle, #45F0FF 2px, transparent 2.5px) 0 50% / 18px 6px repeat-x;
+  --tile-rule: transparent;
+  --tile-open: #FFE14D;
+  --tile-open-edge: none;
+  --tile-open-fg: #0B0A12;
+  --tile-open-dim: #0B0A12;
+  --tile-pts-bg: transparent;
+  --tile-pts-rule: transparent;
+  --tile-pick: #45F0FF;
+  --tile-pick-fg: #0B0A12;
+  --tile-right: #3CFF7A;
+  --tile-right-fg: #0B0A12;
   --tile-radius: 0;
-  /* Feldtexte in Chakra Petch: Pixelify ist klein schlecht lesbar (B wie G, 5 wie S). */
-  --tile-font: 'Chakra Petch', sans-serif;
-  --tile-reveal: thBRoehre .6s cubic-bezier(.2,.8,.2,1);
+  --tile-font: 'Press Start 2P', monospace;
+  --tile-reveal: thBBlink .45s steps(1, end);
+  --b-px: 'Press Start 2P', monospace;
+  --b-line: #2B2740;
 }
-:root[data-theme="B"] :is(.tile, .jeopardy-cell, .wwm-opt, .wwds-cat) { clip-path: var(--pix); }
-/* Zahlen in Chakra Petch: in Pixelify sieht die 5 aus wie ein S ("S00"). */
-:root[data-theme="B"] :is(.tile-num, .tile-pts, .jeopardy-cell, .t-score, .jt-score, .wwm-rung, .wwm-letter, .wwm-alet, .wwds-money, .tp-team-sub, .pih-price) { font-family: 'Chakra Petch', sans-serif; }
-:root[data-theme="B"] .tile-num { font-weight: 700; font-size: 1.5rem; }
-:root[data-theme="B"] .tile.open .tile-answer { font-weight: 700; font-size: 1.3rem; letter-spacing: .5px; }
-:root[data-theme="B"] .tile.open .tile-pts { color: #14020B; text-shadow: none; font-weight: 700; font-size: 1.6rem; }
-:root[data-theme="B"] .q-text { font-weight: 600; letter-spacing: .3px; }
-:root[data-theme="B"] .jeopardy-board { gap: 6px; padding: 8px; }
-:root[data-theme="B"] .jeopardy-cat { font-weight: 700; font-size: .95rem; letter-spacing: .5px; }
-:root[data-theme="B"] .jeopardy-cell { font-weight: 700; font-size: 2.2rem; color: #FF2E88; text-shadow: 0 0 14px rgba(255,46,136,.6); }
-:root[data-theme="B"] .jeopardy-cell:hover:not(.used) { transform: none; box-shadow: inset 0 0 0 2px #2BE4FF; }
-:root[data-theme="B"] .wwm-opt { font-weight: 600; font-size: 1.3rem; }
-/* Spieler-Anzeigen wie am Automaten (1P/2P): dunkel, Rand und Schein in der
-   Teamfarbe, Punkte leuchten. Teamfarben bleiben (BAUPLAN 4.4). */
-:root[data-theme="B"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team).red   { --tc: 232,69,60; }
-:root[data-theme="B"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team).blue  { --tc: 59,130,246; }
-:root[data-theme="B"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team).green { --tc: 34,197,94; }
-:root[data-theme="B"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team):is(.red, .blue, .green) {
-  background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 4px), linear-gradient(180deg, rgba(var(--tc),.22), rgba(var(--tc),.06)), #0E0A1E;
-  box-shadow: inset 0 0 0 3px rgb(var(--tc)), 0 0 26px rgba(var(--tc),.35);
-  border: 0;
+/* Gitterboden wie unter dem Jeopardy-Brett im Entwurf: Linien, die nach
+   hinten fluchten. Fest am unteren Rand, hinter allem, ohne Leuchten. */
+:root[data-theme="B"] body::before {
+  content: ''; position: fixed; left: -30%; right: -30%; bottom: 0; height: 30vh; z-index: -1; pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(69,240,255,.22) 0 2px, transparent 2px 64px),
+    repeating-linear-gradient(0deg, rgba(69,240,255,.22) 0 2px, transparent 2px 40px);
+  transform: perspective(260px) rotateX(58deg); transform-origin: 50% 100%;
+  -webkit-mask: linear-gradient(0deg, #000 0%, transparent 85%); mask: linear-gradient(0deg, #000 0%, transparent 85%);
 }
-:root[data-theme="B"] :is(.team-panel .t-score, .jeopardy-team .jt-score) { font-weight: 700; color: #FFFFFF; text-shadow: 0 0 14px rgba(var(--tc),.9); }
-:root[data-theme="B"] :is(.team-panel .t-name, .jeopardy-team .jt-name) { color: rgb(var(--tc)); filter: brightness(1.5); }
-:root[data-theme="B"] .team-panel.active-team .t-score { color: #FF2E88; text-shadow: 0 0 18px rgba(255,46,136,.8); }
-:root[data-theme="B"] .tp-team.turn { box-shadow: inset 0 0 0 3px #FF2E88, 0 0 30px rgba(255,46,136,.45); }
+
+/* ── Spieleranzeigen 1P / 2P / 3P ─────────────────────────────────────── */
+:root[data-theme="B"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).red   { --tc: #E8453C; }
+:root[data-theme="B"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).blue  { --tc: #3B82F6; }
+:root[data-theme="B"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).green { --tc: #22C55E; }
+:root[data-theme="B"] :is(.scoreboard, .jeopardy-scores) { gap: 14px; border-radius: 0; box-shadow: none; overflow: visible; counter-reset: bspieler; }
+:root[data-theme="B"] :is(.team-panel, .jeopardy-team, .wwds-team, .team-card):is(.red, .blue, .green) {
+  background: #14121F; border: 0; border-radius: 0; box-shadow: inset 0 0 0 4px var(--tc);
+  counter-increment: bspieler; text-align: right; padding: 14px 18px 12px;
+}
+:root[data-theme="B"] .team-card::before { display: none; }
+:root[data-theme="B"] :is(.team-panel, .jeopardy-team, .wwds-team)::before {
+  content: counter(bspieler) 'P'; position: absolute; left: 16px; top: 13px;
+  font-family: var(--b-px); font-size: .62rem; color: var(--tc);
+}
+:root[data-theme="B"] .wwds-top { counter-reset: bspieler; }
+:root[data-theme="B"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name, .team-card .label) {
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: .72rem; letter-spacing: 2px; color: #9C96B8;
+}
+:root[data-theme="B"] :is(.team-panel .t-score, .jeopardy-team .jt-score, .wwds-team .wt-money) {
+  font-family: var(--b-px); color: #EEEAFE; text-shadow: 3px 3px 0 #2B2740; line-height: 1.2;
+}
+:root[data-theme="B"] .team-panel .t-score { font-size: 2.3rem; margin-top: 6px; }
+:root[data-theme="B"] .jeopardy-team .jt-score { font-size: 1.5rem; margin-top: 4px; }
+:root[data-theme="B"] .wwds-team .wt-money { font-size: 1.3rem; margin-top: 4px; }
+/* Am Zug: gelber Rahmen innen, blinkender Pfeil am Namen - wie "1P READY". */
+:root[data-theme="B"] .team-panel.active-team { padding: 14px 18px 12px; box-shadow: inset 0 0 0 4px var(--tc), inset 0 0 0 7px #0B0A12, inset 0 0 0 9px #FFE14D; }
+:root[data-theme="B"] .wwds-team.on { box-shadow: inset 0 0 0 4px var(--tc), inset 0 0 0 7px #0B0A12, inset 0 0 0 9px #FFE14D; }
+:root[data-theme="B"] .team-panel.active-team::after { content: '▶'; left: auto; right: auto; bottom: auto; top: 11px; left: 44px; width: auto; height: auto; background: none; box-shadow: none; border-radius: 0; color: #FFE14D; font-size: .7rem; animation: thBCursor 1s steps(1, end) infinite; }
+:root[data-theme="B"] :is(.team-panel.active-team .t-score, .wwds-team.on .wt-money) { color: #FFE14D; text-shadow: 3px 3px 0 #8A7400; }
+:root[data-theme="B"] :is(.team-panel.active-team .t-name, .wwds-team.on .wt-name) { color: #FFE14D; }
+:root[data-theme="B"] .wwds-team .wt-meta { color: #6F6A8F; }
+
+/* X wie am Automaten: rote Pixel-X in schwarzen Kaesten. */
+:root[data-theme="B"] .team-strikes { justify-content: flex-end; background: none; border: 0; border-radius: 0; padding: 0; box-shadow: none; transform: none; }
+:root[data-theme="B"] .strike-pip { width: 28px; height: 28px; border-radius: 0; background: #0B0A12; border: 2px solid #2B2740; font-family: var(--b-px); font-size: .7rem; color: #2B2740; }
+:root[data-theme="B"] .strike-pip.lit { background: #0B0A12; border-color: #E8453C; color: #E8453C; box-shadow: none; animation: thBBlink .45s steps(1, end); }
+
+:root[data-theme="B"] .round-bar { font-family: var(--b-px); font-size: .58rem; letter-spacing: 1px; color: #45F0FF; gap: 14px; }
+:root[data-theme="B"] .round-bar .pts { font-family: var(--b-px); font-size: .9rem; color: #FFE14D; text-shadow: 2px 2px 0 #8A7400; }
+
+/* ── Feud ─────────────────────────────────────────────────────────────── */
+:root[data-theme="B"] .board { padding: 18px; }
+:root[data-theme="B"] .q-text {
+  font-family: var(--b-px); font-size: .82rem; line-height: 1.75; font-weight: 400; text-transform: uppercase;
+  text-align: left; justify-content: flex-start; color: #EEEAFE; border-radius: 0;
+  box-shadow: inset 0 0 0 2px #EEEAFE; padding: 12px 16px; margin-bottom: 14px;
+}
+:root[data-theme="B"] .q-text.hidden-q { box-shadow: none; border: 2px dashed #2B2740; justify-content: center; }
+:root[data-theme="B"] .q-text.hidden-q::after { font-family: var(--b-px); font-size: .55rem; letter-spacing: 1px; color: #6F6A8F; animation: thBCursor 1.2s steps(1, end) infinite; }
+:root[data-theme="B"] .answers { counter-reset: bplatz; gap: 4px; }
+:root[data-theme="B"] .tile { counter-increment: bplatz; }
+:root[data-theme="B"] .tile:hover:not(.open) { transform: none; }
+:root[data-theme="B"] .tile-num { width: 52px; font-size: 0; }
+:root[data-theme="B"] .tile-num::before { content: counter(bplatz, decimal-leading-zero); font-family: var(--b-px); font-size: .72rem; }
+:root[data-theme="B"] .tile:not(.open) .tile-center { justify-content: flex-start; padding-left: 8px; }
+:root[data-theme="B"] .tile:not(.open) .tile-center::after { width: 60%; height: 6px; border-radius: 0; background: var(--tile-bar); }
+:root[data-theme="B"] .tile.open .tile-center { padding-left: 8px; }
+:root[data-theme="B"] .tile.open .tile-answer { font-size: .85rem; letter-spacing: 0; line-height: 1.5; font-weight: 400; }
+:root[data-theme="B"] .tile.open .tile-pts { color: #0B0A12; text-shadow: none; font-size: .95rem; font-family: var(--b-px); box-shadow: none; }
+:root[data-theme="B"] .tile.missed .tile-inner { background: #3A0E12 !important; box-shadow: inset 0 0 0 2px #E8453C !important; color: #FFB3AD; }
+
+/* Finale */
+:root[data-theme="B"] :is(.finale-title, .winner-text, .tp-win-title, .wwds-banner, .elim-team) { font-family: var(--b-px); color: #FFE14D; text-shadow: 4px 4px 0 #8A7400; letter-spacing: 2px; text-transform: uppercase; }
+:root[data-theme="B"] .finale-title { font-size: 1.6rem; }
+:root[data-theme="B"] :is(.finale-team-label, .finale-q-info) { font-family: var(--b-px); font-size: .55rem; letter-spacing: 1px; color: #45F0FF; }
+:root[data-theme="B"] :is(.finale-score-card, .finale-reveal-team) { background: #14121F; border: 0; border-radius: 0; box-shadow: inset 0 0 0 3px #2B2740; }
+:root[data-theme="B"] .finale-score-card.active { background: #14121F; box-shadow: inset 0 0 0 3px #FFE14D; }
+:root[data-theme="B"] :is(.finale-score-pts, .finale-reveal-pts, .finale-timer) { font-family: var(--b-px); color: #FFE14D; text-shadow: 3px 3px 0 #8A7400; }
+:root[data-theme="B"] .finale-score-pts { font-size: 1.5rem; margin-top: 6px; }
+:root[data-theme="B"] .finale-reveal-pts { font-size: 1.2rem; }
+:root[data-theme="B"] .finale-timer { font-size: 3.4rem; }
+:root[data-theme="B"] :is(.finale-score-name, .finale-reveal-name) { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: #9C96B8; }
+:root[data-theme="B"] .finale-reveal-answer { font-family: var(--b-px); font-size: .7rem; line-height: 1.6; }
+:root[data-theme="B"] .finale-big-q { font-family: var(--b-px); font-size: 1.8rem; line-height: 1.6; text-shadow: none; }
+
+/* ── Jeopardy: gelb gerahmte Felder, Kategorien in Cyan ───────────────── */
+:root[data-theme="B"] .jeopardy-board { gap: 8px; padding: 10px; border-radius: 0; background: #0B0A12; }
+:root[data-theme="B"] .jeopardy-cat { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: .85rem; letter-spacing: 0; border-radius: 0; }
+:root[data-theme="B"] .jeopardy-cell { font-family: var(--b-px); font-size: 1.15rem; letter-spacing: 0; border-radius: 0; background: #0B0A12; box-shadow: inset 0 0 0 3px #FFE14D; text-shadow: 3px 3px 0 #5C4E00; }
+:root[data-theme="B"] .jeopardy-cell:hover:not(.used) { transform: none; background: #1C1930; box-shadow: inset 0 0 0 3px #FFE14D, inset 0 0 0 6px #0B0A12, inset 0 0 0 8px #45F0FF; }
+:root[data-theme="B"] .jeopardy-cell.used { box-shadow: inset 0 0 0 3px #2B2740; }
+:root[data-theme="B"] .jeopardy-clue-cat { font-family: var(--b-px); font-size: .62rem; letter-spacing: 1px; color: #45F0FF; }
+:root[data-theme="B"] .jeopardy-clue-pts { font-family: var(--b-px); font-size: 2rem; color: #FFE14D; text-shadow: 4px 4px 0 #8A7400; letter-spacing: 0; }
+:root[data-theme="B"] .jeopardy-clue-text { font-family: var(--b-px); line-height: 1.6; }
+:root[data-theme="B"] .jeopardy-clue-img { border-radius: 0; border: 4px solid #FFFFFF; box-shadow: 0 0 0 4px #0B0A12, 0 0 0 7px #2B2740; }
+
+/* ── Wer wird Millionaer: Levelleiste oben, Antworten mit Auswahlpfeil ── */
+:root[data-theme="B"] .wwm-wrap { flex-direction: column; gap: 14px; }
+:root[data-theme="B"] .wwm-ladder { order: -1; width: 100%; flex-direction: row; gap: 3px; padding: 0; background: none; border-radius: 0; box-shadow: none; }
+:root[data-theme="B"] .wwm-rung {
+  flex: 1 1 0; min-width: 0; flex-direction: column; align-items: center; justify-content: flex-start; gap: 5px; padding: 0;
+  border-radius: 0; background: none; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: .62rem; letter-spacing: 0;
+  color: #6F6A8F; white-space: nowrap;
+}
+:root[data-theme="B"] .wwm-rung::before { content: ''; align-self: stretch; height: 14px; background: #14121F; box-shadow: inset 0 0 0 2px #2B2740; }
+:root[data-theme="B"] .wwm-rung .wwm-lvl { display: none; }
+:root[data-theme="B"] .wwm-rung.won { color: #9C96B8; }
+:root[data-theme="B"] .wwm-rung.won::before { background: #45F0FF; box-shadow: none; }
+:root[data-theme="B"] .wwm-rung.safe .wwm-amt { color: #FFE14D; }
+:root[data-theme="B"] .wwm-rung.safe::before { box-shadow: inset 0 0 0 2px #FFE14D; }
+:root[data-theme="B"] .wwm-rung.current { background: none; color: #FFFFFF; }
+:root[data-theme="B"] .wwm-rung.current :is(.wwm-lvl, .wwm-amt) { color: #FFFFFF; }
+:root[data-theme="B"] .wwm-rung.current::before { background: #0B0A12; box-shadow: inset 0 0 0 3px #FFFFFF; animation: thBCursor 1s steps(1, end) infinite; }
+:root[data-theme="B"] .wwm-q { font-family: var(--b-px); font-size: 1.1rem; line-height: 1.75; font-weight: 400; text-align: left; justify-content: flex-start; text-transform: uppercase; }
+:root[data-theme="B"] .wwm-answers { gap: 10px; }
+:root[data-theme="B"] .wwm-opt { font-size: .95rem; line-height: 1.5; font-weight: 400; text-transform: uppercase; box-shadow: inset 0 0 0 3px #2B2740; padding: 16px 18px; }
+:root[data-theme="B"] .wwm-opt .wwm-letter { font-family: var(--b-px); font-size: .95rem; color: #45F0FF; }
+:root[data-theme="B"] .wwm-opt:hover { filter: none; box-shadow: inset 0 0 0 3px #45F0FF; }
+:root[data-theme="B"] .wwm-opt.selected { box-shadow: none; }
+:root[data-theme="B"] .wwm-opt.selected .wwm-letter::before { content: '▶ '; animation: thBCursor 1s steps(1, end) infinite; }
+:root[data-theme="B"] .wwm-opt.correct { box-shadow: none; animation: thBBlink .45s steps(1, end); }
+:root[data-theme="B"] .wwm-opt.wrong { background: #3A0E12; box-shadow: inset 0 0 0 3px #E8453C; color: #FFB3AD; }
+/* Joker als Inventar: ITEMS-Kasten mit drei Woertern, verbrauchte grau gestrichen. */
+:root[data-theme="B"] .wwm-lifelines { gap: 14px; justify-content: flex-end; padding: 8px 14px; box-shadow: inset 0 0 0 2px #2B2740; align-self: flex-end; }
+:root[data-theme="B"] .wwm-lifelines::before { content: 'Items'; font-family: var(--b-px); font-size: .5rem; color: #45F0FF; text-transform: uppercase; align-self: center; margin-right: 4px; }
+:root[data-theme="B"] .wwm-ll { width: auto; height: auto; border: 0; border-radius: 0; background: none; font-size: 0; }
+:root[data-theme="B"] .wwm-ll::before { font-family: var(--b-px); font-size: .6rem; color: #EEEAFE; text-transform: uppercase; }
+:root[data-theme="B"] .wwm-ll:nth-child(1)::before { content: '50:50'; }
+:root[data-theme="B"] .wwm-ll:nth-child(2)::before { content: 'Telefon'; }
+:root[data-theme="B"] .wwm-ll:nth-child(3)::before { content: 'Publikum'; }
+:root[data-theme="B"] .wwm-ll.used { opacity: 1; }
+:root[data-theme="B"] .wwm-ll.used::before { color: #4A4566; text-decoration: line-through; }
+:root[data-theme="B"] :is(.wwm-abar, .wwds-abar) { background: repeating-linear-gradient(0deg, #45F0FF 0 8px, #0B0A12 8px 10px); border-radius: 0; }
+:root[data-theme="B"] :is(.wwm-apct, .wa-pct, .wwm-alet, .wa-let) { font-family: var(--b-px); font-size: .6rem; }
+:root[data-theme="B"] :is(.wwm-apct, .wa-pct) { color: #FFE14D; top: -18px; }
+
+/* ── Wer weiss denn sowas ─────────────────────────────────────────────── */
+:root[data-theme="B"] .wwds-cat { border-radius: 0; }
+:root[data-theme="B"] .wwds-cat:hover:not(.done) { transform: none; filter: none; box-shadow: inset 0 0 0 2px #FFE14D; }
+:root[data-theme="B"] .wwds-cat .wc-num { font-family: var(--b-px); font-size: .6rem; color: #45F0FF; }
+:root[data-theme="B"] .wwds-cat .wc-name { font-family: var(--b-px); font-size: .55rem; line-height: 1.6; letter-spacing: 0; }
+:root[data-theme="B"] .wwds-cat.done { opacity: .3; }
+:root[data-theme="B"] .wwds-q { background: #14121F; border: 0; border-radius: 0; box-shadow: inset 0 0 0 3px #EEEAFE; font-family: var(--b-px); font-size: .8rem; line-height: 1.75; font-weight: 400; text-transform: uppercase; }
+:root[data-theme="B"] .wwds-cat-chip { border-radius: 0; background: #45F0FF; color: #0B0A12; border: 0; font-family: var(--b-px); font-size: .5rem; letter-spacing: 1px; }
+:root[data-theme="B"] .wwds-opt { font-size: .78rem; font-weight: 400; text-transform: uppercase; box-shadow: inset 0 0 0 3px #2B2740; }
+:root[data-theme="B"] .wwds-opt .wo-let { font-family: var(--b-px); font-size: .9rem; color: #45F0FF; }
+:root[data-theme="B"] .wwds-opt.bad { background: #3A0E12; box-shadow: inset 0 0 0 3px #E8453C; color: #FFB3AD; }
+:root[data-theme="B"] .wwds-tag { border-radius: 0; }
+:root[data-theme="B"] .wwds-guess { border-radius: 0; background: #0B0A12; border: 2px solid #2B2740; font-family: var(--b-px); font-size: 1rem; }
+:root[data-theme="B"] .wwds-timer { font-family: var(--b-px); font-size: 2rem; }
+
+/* ── Der Duemmste fliegt: Spielerkacheln mit Buchstabe ────────────────── */
+:root[data-theme="B"] .ddf-player { border: 0; border-radius: 0; background: #14121F; box-shadow: inset 0 0 0 3px #2B2740; }
+:root[data-theme="B"] .ddf-player-name { font-family: var(--b-px); font-size: .7rem; text-transform: uppercase; line-height: 1.6; }
+:root[data-theme="B"] .ddf-player.picked { border: 0; box-shadow: inset 0 0 0 3px #E8453C; animation: thBBlink .45s steps(1, end); }
+:root[data-theme="B"] .ddf-player.out { transform: none; }
+:root[data-theme="B"] .ddf-heart { font-size: 1rem; }
+:root[data-theme="B"] .ddf-heart.full { color: #E8453C; text-shadow: 2px 2px 0 #5A1210; }
+:root[data-theme="B"] .ddf-heart.empty { color: #2B2740; text-shadow: none; }
+:root[data-theme="B"] .ddf-question { font-family: var(--b-px); font-size: clamp(1rem, 2.4vw, 1.8rem); line-height: 1.6; font-weight: 400; text-transform: uppercase; }
+:root[data-theme="B"] .ddf-answer { font-family: var(--b-px); font-size: clamp(.9rem, 1.8vw, 1.3rem); color: #3CFF7A; }
+
+/* ── Der Preis ist heiss: Spielerzeilen P1..P8, Preis im Zaehlwerk ──────── */
+:root[data-theme="B"] .pih-scores { border-bottom: 2px solid #2B2740; }
+:root[data-theme="B"] .pih-score { border-radius: 0; background: #0B0A12; border: 0; box-shadow: inset 0 0 0 2px #2B2740; }
+:root[data-theme="B"] .pih-score.lead { background: #0B0A12; box-shadow: inset 0 0 0 2px #FFE14D; }
+:root[data-theme="B"] .pih-score.picked { box-shadow: inset 0 0 0 2px #45F0FF; transform: none; }
+:root[data-theme="B"] .pih-rank { font-family: var(--b-px); font-size: .5rem; color: #45F0FF; }
+:root[data-theme="B"] .pih-score-name { font-family: var(--b-px); font-size: .55rem; font-weight: 400; text-transform: uppercase; }
+:root[data-theme="B"] .pih-score-pts { font-family: var(--b-px); font-size: .75rem; font-weight: 400; color: #FFE14D; }
+:root[data-theme="B"] .pih-team { border-radius: 0; background: #14121F; box-shadow: inset 0 0 0 3px var(--team); }
+:root[data-theme="B"] .pih-team.lead { box-shadow: inset 0 0 0 3px var(--team), inset 0 0 0 5px #0B0A12, inset 0 0 0 7px #FFE14D; }
+:root[data-theme="B"] .pih-team-pts { font-family: var(--b-px); font-size: 1rem; }
+:root[data-theme="B"] .pih-item { font-family: var(--b-px); font-size: 1.2rem; line-height: 1.6; font-weight: 400; text-transform: uppercase; }
+:root[data-theme="B"] .pih-stage :is(img, video) { border-radius: 0; border: 4px solid #FFFFFF; box-shadow: 0 0 0 4px #0B0A12, 0 0 0 7px #2B2740; }
+:root[data-theme="B"] .pih-price {
+  display: table; margin: 4px auto 2px; padding: 10px 18px; font-family: var(--b-px); font-weight: 400; font-size: 1.9rem;
+  color: #FFE14D; text-shadow: 4px 4px 0 #8A7400; background: #0B0A12; box-shadow: inset 0 0 0 3px #FFE14D;
+}
+:root[data-theme="B"] .pih-bid-row { border: 0; border-radius: 0; box-shadow: inset 0 0 0 2px #2B2740; font-size: .7rem; text-transform: uppercase; }
+:root[data-theme="B"] .pih-bid-row.win { box-shadow: none; }
+:root[data-theme="B"] .pih-bid-diff { font-family: 'Space Grotesk', sans-serif; text-transform: none; }
+
+/* ── Trivial Pursuit ──────────────────────────────────────────────────── */
+:root[data-theme="B"] .tp-top { counter-reset: bspieler; }
+:root[data-theme="B"] .tp-team { border: 0; border-radius: 0; background: #14121F; box-shadow: inset 0 0 0 3px #2B2740; counter-increment: bspieler; }
+:root[data-theme="B"] .tp-team:is(.red, .blue, .green) { box-shadow: inset 0 0 0 3px var(--tc); }
+:root[data-theme="B"] .tp-team.turn { transform: none; background: #14121F; box-shadow: inset 0 0 0 3px var(--tc, #FFE14D), inset 0 0 0 6px #0B0A12, inset 0 0 0 8px #FFE14D; }
+:root[data-theme="B"] .tp-team-name { font-family: var(--b-px); font-size: .62rem; font-weight: 400; text-transform: uppercase; }
+:root[data-theme="B"] .tp-team-sub { font-family: 'Space Grotesk', sans-serif; }
+:root[data-theme="B"] .tp-stage { border: 0; }
+:root[data-theme="B"] .tp-catchip { border-radius: 0; font-family: var(--b-px); font-size: .5rem; font-weight: 400; }
+:root[data-theme="B"] .tp-question { font-size: .95rem; line-height: 1.7; font-weight: 400; text-transform: uppercase; }
+:root[data-theme="B"] .tp-answer { border: 0; border-radius: 0; font-size: .82rem; font-weight: 400; line-height: 1.6; text-transform: uppercase; }
+:root[data-theme="B"] .tp-answer.hidden { border: 2px dashed #2B2740; font-family: var(--b-px); font-size: .5rem; }
+:root[data-theme="B"] .tp-wheel-rotor { box-shadow: 0 0 0 4px #FFFFFF, 0 0 0 8px #0B0A12, 0 0 0 11px #2B2740; }
+:root[data-theme="B"] .tp-wheel-hub { border-radius: 0; background: #0B0A12; border: 3px solid #FFE14D; box-shadow: none; font-family: var(--b-px); font-size: 1.2rem; }
+:root[data-theme="B"] .tp-wheel-pointer { border-top-color: #FFE14D; filter: drop-shadow(3px 3px 0 #8A7400); }
+:root[data-theme="B"] .tp-pie { filter: none; }
+
+/* ── Ergebnis, Turnier ────────────────────────────────────────────────── */
+:root[data-theme="B"] .winner-text { font-size: 1.9rem; line-height: 1.5; }
+:root[data-theme="B"] .result-card { backdrop-filter: none; }
+:root[data-theme="B"] .result-scores strong { font-family: var(--b-px); font-size: 1rem; color: #FFE14D; }
+:root[data-theme="B"] .tour-bar { height: 12px; border-radius: 0; background: #14121F; box-shadow: inset 0 0 0 2px #2B2740; }
+:root[data-theme="B"] .tour-bar-fill { border-radius: 0; background: repeating-linear-gradient(90deg, #FFE14D 0 10px, #0B0A12 10px 12px); }
+:root[data-theme="B"] .tour-total { font-family: var(--b-px); font-size: .9rem; }
+:root[data-theme="B"] .q-list-item { border-radius: 0; box-shadow: inset 0 0 0 2px #2B2740; border: 0; }
+:root[data-theme="B"] .q-list-item.tour-lead { background: #14121F; box-shadow: inset 0 0 0 2px #FFE14D; }
+
+/* ── Host: Menue, Knoepfe, Kaesten, Felder ────────────────────────────── */
+:root[data-theme="B"] .menu-card { border-radius: 0; border: 0; background: #14121F; box-shadow: inset 0 0 0 3px #2B2740; }
+:root[data-theme="B"] .menu-card::before { content: '▶'; left: 10px; right: auto; top: 10px; height: auto; background: none; color: #FFE14D; font-size: .8rem; }
+:root[data-theme="B"] .menu-card:hover { transform: none; border: 0; background: #1C1930; box-shadow: inset 0 0 0 3px #FFE14D; }
+:root[data-theme="B"] .menu-card:hover::before { animation: thBCursor 1s steps(1, end) infinite; }
+:root[data-theme="B"] .menu-card:hover .menu-card-icon svg { transform: none; }
+:root[data-theme="B"] .menu-card-title { font-family: var(--b-px); font-weight: 400; font-size: .62rem; line-height: 1.7; text-transform: uppercase; }
+:root[data-theme="B"] .menu-pill { border-radius: 0; border: 2px solid #2B2740; font-family: var(--b-px); font-weight: 400; font-size: .5rem; text-transform: uppercase; }
+:root[data-theme="B"] :is(.menu-pill:hover, .menu-pill.active) { border-color: #45F0FF; color: #45F0FF; background: none; }
+:root[data-theme="B"] .menu-divider { height: 4px; background: repeating-linear-gradient(90deg, #FFE14D 0 8px, transparent 8px 14px); }
+:root[data-theme="B"] .btn { border-radius: 0; font-family: var(--b-px); font-weight: 400; font-size: .62rem; letter-spacing: 0; line-height: 1.6; }
+:root[data-theme="B"] .btn:hover { transform: none; }
+:root[data-theme="B"] .btn:active { transform: translate(3px, 3px); box-shadow: none; }
+:root[data-theme="B"] .btn-primary { background: #FFE14D; color: #0B0A12; box-shadow: 4px 4px 0 #8A7400; }
+:root[data-theme="B"] .btn-primary:hover { box-shadow: 4px 4px 0 #8A7400; background: #FFEB80; }
+:root[data-theme="B"] .btn-primary::after { display: none; }
+:root[data-theme="B"] .btn-secondary { background: #0B0A12; border: 2px solid #EEEAFE; color: #EEEAFE; backdrop-filter: none; }
+:root[data-theme="B"] .btn-secondary:hover { border-color: #45F0FF; color: #45F0FF; background: #0B0A12; }
+:root[data-theme="B"] .btn-danger { background: #E8453C; color: #0B0A12; box-shadow: 4px 4px 0 #5A1210; }
+:root[data-theme="B"] .btn-accent { background: #45F0FF; color: #0B0A12; box-shadow: 4px 4px 0 #0E6B75; }
+:root[data-theme="B"] :is(.editor-card, .setup-lobby, .resume-banner, .ddf-card, .design-card) { border-radius: 0; background: #14121F; border: 0; box-shadow: inset 0 0 0 3px #2B2740; }
+:root[data-theme="B"] :is(.pr-team-btn, .setup-lobby .badge, .player-team-tag, .pmini-av) { border-radius: 0; }
+:root[data-theme="B"] :is(input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), textarea, select) { border-radius: 0 !important; }
+:root[data-theme="B"] .pih-price:empty { display: none; }
+/* Show-Logos: Press Start fuellt das ganze Geviert, die Zeilen im SVG sind
+   fuer Bebas gerechnet (Versalhoehe ~0,7) - "KELLER" lag sonst im Symbol,
+   zwei gleich grosse Zeilen ineinander. Jede Zeile wird um ihre eigene
+   Grundlinie verkleinert, so passt es fuer alle Show-Logos auf einmal. */
+:root[data-theme="B"] #main-logo .logo-word { transform: scale(.7); transform-box: fill-box; transform-origin: 50% 100%; }
+:root[data-theme="B"] .page-title { font-family: var(--b-px); font-size: 1.1rem; line-height: 1.6; }
+
 /* Feste Zeilenhoehe in allen Richtungen: Bowlby, Bodoni, Permanent Marker
    haben eine viel groessere natuerliche Zeilenhoehe als Bebas (1,31) - die
    15 Stufen wurden dadurch bis zu 80 px hoeher. Studio-Blau bleibt bei normal.
-   (Gilt fuer ALLE Richtungen, stand schon vor dem Rework in diesem Block.) */
+   (Gilt fuer ALLE Richtungen, steht nur historisch in diesem Block.) */
 :root[data-theme] .wwm-rung { line-height: 1.3; }
-/* Bildroehre schaltet ein: heller Strich, der aufklappt. */
-@keyframes thBRoehre {
-  0%   { transform: scale(.7, .04); filter: brightness(3) saturate(0); }
-  35%  { transform: scale(1, .04); filter: brightness(3) saturate(0); }
-  70%  { transform: scale(1, 1.06); filter: brightness(1.4); }
-  100% { transform: none; filter: none; }
+
+/* Arcade-Treffer: das Feld blinkt hart auf, wie eine Punkteanzeige. */
+@keyframes thBBlink {
+  0%   { opacity: 0; }
+  18%  { opacity: 1; filter: invert(1); }
+  36%  { opacity: 0; }
+  54%  { opacity: 1; filter: none; }
+  72%  { opacity: .2; }
+  100% { opacity: 1; }
 }
+/* Auswahlpfeil und "am Zug" blinken wie ein Cursor. */
+@keyframes thBCursor { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="B"] :is(.team-panel.active-team::after, .q-text.hidden-q::after, .wwm-rung.current::before, .wwm-opt.selected .wwm-letter::before, .menu-card:hover::before) { animation: none; }
+  :root[data-theme="B"] :is(.strike-pip.lit, .wwm-opt.correct, .ddf-player.picked) { animation: none; }
+}
+
 
 /* ── C · Pop: Aufkleber - schwarze Kontur, harter Versatzschatten, schief ── */
 :root[data-theme="C"] {

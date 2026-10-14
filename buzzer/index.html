@@ -263,11 +263,20 @@
     background:radial-gradient(ellipse at 50% 30%,rgba(255,255,255,.5),rgba(255,255,255,0) 70%);}
   :root[data-theme="A"] #buzz::after{inset:-16px;border-color:rgba(232,194,122,.85);}
 
-  /* B Arcade (neu 2026-10-14): Automatenknopf in Chromring auf dunklem
-     Blech, Magenta-Schein. */
-  :root[data-theme="B"] #buzz{font-size:2.6rem;letter-spacing:1px;font-weight:700;
-    box-shadow:0 10px 0 var(--buzz-shadow,#7a140e),0 0 0 5px #D9D3F2,0 0 0 7px #8F86B8,0 0 0 12px #1A1430,0 0 44px rgba(255,46,136,.45);}
-  :root[data-theme="B"] #buzz::after{border-color:#2BE4FF;}
+  /* B Arcade (Rework 2026-10-14, wieder nach dem Entwurf): runder
+     Automatenknopf in der Teamfarbe, schwarzer Rand, dunkles Blech, harte
+     Kante statt Schein. Ring in Cyan, Schrift Press Start. */
+  :root[data-theme="B"] #buzz{font-size:1.9rem;letter-spacing:0;font-weight:400;line-height:1.3;
+    background:var(--buzz-mid,#E8453C);
+    box-shadow:inset 0 -10px 0 rgba(0,0,0,.25),0 10px 0 var(--buzz-shadow,#7a140e),0 0 0 4px #0B0A12,0 0 0 12px #1E1A2E,0 0 0 14px #2B2740;}
+  :root[data-theme="B"] #buzz::after{border-color:#45F0FF;}
+  :root[data-theme="B"] :is(input,.btn,.icon-btn,.opt,.lobby-gif,.vote-opt,.me-av){border-radius:0;}
+  :root[data-theme="B"] :is(.lobby-team,.team-chip,.lobby-badge){border-radius:0;box-shadow:none;font-family:'Press Start 2P',monospace;font-weight:400;font-size:.7rem;line-height:1.6;}
+  :root[data-theme="B"] .btn{font-family:'Press Start 2P',monospace;font-weight:400;font-size:.75rem;background:#FFE14D;color:#0B0A12;box-shadow:4px 4px 0 #8A7400;}
+  :root[data-theme="B"] .btn:active{transform:translate(3px,3px);box-shadow:none;}
+  :root[data-theme="B"] .btn.ghost{background:#0B0A12;border:2px solid #EEEAFE;box-shadow:none;}
+  :root[data-theme="B"] .lobby-title{font-family:'Press Start 2P',monospace;font-weight:400;font-size:1rem;line-height:1.6;}
+  :root[data-theme="B"] h1{font-family:'Press Start 2P',monospace;font-weight:400;font-size:.75rem;letter-spacing:1px;}
 
   /* C Pop: Aufkleber mit schwarzer Kontur und hartem Versatz. */
   :root[data-theme="C"] #buzz{border-radius:34px;rotate:-4deg;border:5px solid #121212;font-size:3rem;
