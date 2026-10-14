@@ -860,6 +860,7 @@ function undoLast() {
   // Nichts mehr in dieser Runde? Dann den Rundenwechsel selbst (feud.js).
   if (!actionHistory.length) { feudUndoRound(); return; }
   const prev = actionHistory.pop();
+  feudLogAdd('↩ Rückgängig', 'grau');   // Verlauf im Feud-GM (feud.js)
   state.scores = prev.scores;
   state.revealed = prev.revealed;
   state.roundPoints = prev.roundPoints;

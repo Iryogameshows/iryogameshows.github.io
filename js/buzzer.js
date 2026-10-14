@@ -520,6 +520,8 @@ function feudBuzzConnect(){
   // (feudBuzzPrepare() setzt es dann zurück).
   attachBuzzerGameListeners(feudBuzzer, 'Family Feud', renderFeudBuzzer, (first) => {
     const winnerTeam = first.team;
+    const teamOk = Number.isInteger(winnerTeam) && winnerTeam >= 0 && winnerTeam < state.teamCount;
+    feudLogAdd(`${first.name}${teamOk ? ` (${feudTeamName(winnerTeam)})` : ''} buzzert zuerst · ${first.t.toFixed(2).replace('.', ',')} s`, 'gold');
     if (winnerTeam !== undefined && winnerTeam !== null && winnerTeam >= 0 && winnerTeam < (state.teamNames || []).length) {
       feudAutoSetStartTeam(winnerTeam);
     }
@@ -639,6 +641,7 @@ function feudBuzzToggleHidden(){
 function feudSetStartTeam(i){
   saveSnapshot();
   state.currentTeam = i;
+  feudLogAdd(`${feudTeamName(i)} beginnt (vom Host gewählt)`);
   feudBuzzClose();
   updateActiveTeam();
   updateGamemaster();
@@ -657,6 +660,7 @@ function feudAutoSetStartTeam(i){
   if (state.currentTeam === i) return; // schon gesetzt, z.B. durch GM-Klick
   saveSnapshot();
   state.currentTeam = i;
+  feudLogAdd(`${feudTeamName(i)} beginnt`);
   feudBuzzer.armed = false; // Duell entschieden, keine weiteren Buzzes werten
   if (feudBuzzer.fbRef) feudBuzzer.fbRef.update({ armed: false }).catch(()=>{});
   updateActiveTeam();

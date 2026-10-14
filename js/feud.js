@@ -288,6 +288,7 @@ function revealQuestion() {
   if (!el.classList.contains('hidden-q')) return;
   el.classList.remove('hidden-q');
   state.questionRevealed = true;
+  feudLogAdd('Frage aufgedeckt · Buzzer scharf');
   feudBuzzArm(); // Buzzer-Duell scharf: wer zuerst buzzert, darf antworten
 }
 
@@ -300,6 +301,7 @@ function loadRound() {
   state.questionRevealed = false;
   state.allOut = false;
   actionHistory = [];
+  feudLog = [];
   resetMediaOverlay();
 
   setText('round-info', `Runde ${state.currentRound+1} / ${state.roundQuestions.length}`);
@@ -342,9 +344,11 @@ function revealAnswer(i) {
   const q = state.roundQuestions[state.currentRound];
   state.revealed[i] = true;
   state.roundPoints += Number(q.answers[i].points) || 0;
+  feudLogAdd(`„${q.answers[i].text}“ aufgedeckt`, 'gruen', `+${Number(q.answers[i].points) || 0}`);
   SFX.point();
   updateRoundPts(); renderBoard(); showFlash(); updateGamemaster();
   if (state.revealed.every(Boolean)) {
+    feudLogAdd(`Alle Antworten gefunden – ${feudTeamName(state.currentTeam)} bekommt ${state.roundPoints} Punkte`, 'gold');
     state.scores[state.currentTeam] += state.roundPoints;
     state.roundPoints = 0;
     updateScores(); updateRoundPts();
@@ -361,10 +365,12 @@ function revealAll() {
      restlichen Antworten zeigte, nahm dem Team am Zug damit seine Punkte.
      Bei "alle out" sind roundPoints schon 0 (switchTeam), dort gibt es nichts. */
   if (!state.revealed.every(Boolean) && state.roundPoints) {
+    feudLogAdd(`${feudTeamName(state.currentTeam)} bekommt ${state.roundPoints} Punkte`, 'gold');
     state.scores[state.currentTeam] += state.roundPoints;
     updateScores();
   }
   q.answers.forEach((a,i) => { state.revealed[i] = true; });
+  feudLogAdd('Alle Antworten aufgedeckt', 'grau');
   state.roundPoints = 0;
   updateRoundPts(); renderBoard(); updateGamemaster();
 }
@@ -375,6 +381,7 @@ function addStrike() {
   if (state.teamStrikes[t] >= 3) return;
   saveSnapshot();
   state.teamStrikes[t]++;
+  feudLogAdd(`Strike für ${feudTeamName(t)} (${state.teamStrikes[t]} von 3)`, 'rot');
   SFX.wrong();
   updateStrikes();
   showStrikeOverlay();
@@ -410,11 +417,13 @@ function switchTeam() {
     const next = (state.currentTeam + attempt) % state.teamCount;
     if (state.teamStrikes[next] < 3) {
       state.currentTeam = next;
+      feudLogAdd(`${feudTeamName(next)} ist dran`);
       updateActiveTeam();
       return true;
     }
   }
   // All teams out — reveal board, don't auto-advance
+  feudLogAdd('Alle Teams sind raus – keine Punkte', 'rot');
   state.allOut = true;
   state.roundPoints = 0;
   updateRoundPts();
@@ -447,6 +456,25 @@ function updateScores() {
    Zuruecknehmen hat. Nicht beim letzten Wechsel: danach laeuft das Finale. */
 /** @type {any} */
 let feudRoundUndo = null;
+
+/* Verlauf der laufenden Runde fuer das GM-Fenster (Ansatz 5, von David
+   gewaehlt 2026-10-14): was passiert ist, in der Reihenfolge, in der es
+   passiert ist - Frage, erster Buzz, Antworten, Strikes, Teamwechsel, Undo.
+   Undo nimmt keinen Eintrag weg, sondern schreibt "Rueckgaengig" dazu: der
+   Host soll sehen, dass zurueckgenommen wurde. Text ist roh, escapet wird
+   beim Anzeigen. */
+/** @typedef {{ zeit: string, text: string, art: ''|'gold'|'rot'|'gruen'|'grau', pts: string }} FeudLogEintrag */
+/** @type {FeudLogEintrag[]} */
+let feudLog = [];
+/** @param {string} text
+ *  @param {FeudLogEintrag['art']} [art]
+ *  @param {string} [pts] */
+function feudLogAdd(text, art = '', pts = '') {
+  feudLog.push({ zeit: new Date().toLocaleTimeString('de-DE'), text, art, pts });
+  if (feudLog.length > 80) feudLog.shift();
+}
+/** @param {number} i */
+function feudTeamName(i) { return (state.teamNames && state.teamNames[i]) || `Team ${i + 1}`; }
 function feudUndoRound() {
   const u = feudRoundUndo;
   if (!u) return false;
@@ -456,6 +484,8 @@ function feudUndoRound() {
   state.teamStrikes = u.teamStrikes; state.currentTeam = u.currentTeam; state.allOut = u.allOut;
   state.questionRevealed = u.questionRevealed;
   actionHistory = u.history;
+  feudLog = u.log || [];
+  feudLogAdd('↩ Rundenwechsel rückgängig', 'grau');
   const q = state.roundQuestions[state.currentRound];
   setText('round-info', `Runde ${state.currentRound+1} / ${state.roundQuestions.length}`);
   const qEl = document.getElementById('question-display');
@@ -473,6 +503,7 @@ function nextRound() {
     currentRound: state.currentRound, scores: [...state.scores], revealed: [...state.revealed],
     roundPoints: state.roundPoints, teamStrikes: [...state.teamStrikes], currentTeam: state.currentTeam,
     allOut: state.allOut, questionRevealed: state.questionRevealed, history: actionHistory.slice(),
+    log: feudLog.slice(),
   } : null;
   if (!state.revealed.every(Boolean)) {
     state.scores[state.currentTeam] += state.roundPoints;
@@ -1241,32 +1272,23 @@ function updateGamemaster() {
       <div class="ff-team-row"><span class="score-val">${Number(state.roundPoints) || 0}</span></div>
     </div>`;
 
-  /* "Jetzt"-Karte: sagt dem Host in einem Satz, was gerade dran ist, statt
-     dass er es aus Teams, Strikes und Buzzer-Panel zusammensuchen muss
-     (Skizze 5, von David gewaehlt 2026-10-14). Reihenfolge der Faelle =
-     Ablauf einer Runde. */
-  const teamName = (i) => escapeHtml(state.teamNames[i] || `Team ${i + 1}`);
-  const startBtns = (nur) => state.teamNames.map((n, i) => (nur == null || nur === i)
-    ? `<button class="gm-btn gold sm" onclick="event.stopPropagation();opener.feudSetStartTeam(${i})">→ ${teamName(i)} beginnt</button>` : '').join('');
-  const erster = feudBuzzer.results[0];
-  const ersterTeam = erster && Number.isInteger(erster.team) && erster.team < state.teamCount ? erster.team : null;
-  let jetzt;
-  if (!state.questionRevealed) jetzt = { titel: 'Frage aufdecken', sub: 'Klick hier oder auf die Frage – sie erscheint auf der Leinwand, der Buzzer wird scharf.', klick: 'opener.revealQuestion()' };
-  else if (state.allOut) jetzt = { titel: 'Alle Teams sind raus', sub: 'Restliche Antworten zeigen, dann nächste Runde.' };
-  else if (state.revealed.every(Boolean)) jetzt = { titel: `Runde fertig – Punkte gehen an ${teamName(state.currentTeam)}`, sub: 'Weiter mit „Nächste Runde“.' };
-  else if (erster && !state.revealed.some(Boolean) && state.teamStrikes.every(s => !s)) jetzt = {
-    titel: `${escapeHtml(erster.name)}${ersterTeam != null ? ` (${teamName(ersterTeam)})` : ''} war zuerst · ${erster.t.toFixed(2).replace('.', ',')} s`,
-    sub: ersterTeam != null && ersterTeam !== state.currentTeam ? 'Team übernehmen, dann Antwort anklicken – oder Strike.' : 'Antwort anklicken, wenn sie stimmt – sonst Strike.',
-    knoepfe: ersterTeam != null && ersterTeam !== state.currentTeam ? startBtns(ersterTeam) : '' };
-  else if (feudBuzzer.armed && !feudBuzzer.results.length && !state.revealed.some(Boolean)) jetzt = { titel: 'Buzzer scharf – warte auf den ersten Buzz', sub: 'Oder das Startteam von Hand wählen.', knoepfe: startBtns(null) };
-  else jetzt = { titel: `${teamName(state.currentTeam)} ist dran`, sub: `${state.teamStrikes[state.currentTeam] || 0} von 3 Strikes · Antwort anklicken, wenn sie stimmt – sonst Strike.` };
-  const jetztHtml = `<div class="panel ff-now" ${jetzt.klick ? `onclick="${jetzt.klick}" style="cursor:pointer;"` : ''}>
-    <span class="ff-label">Jetzt</span>
-    <div class="ff-now-title">${jetzt.titel}</div>
-    <div class="ff-now-sub">${jetzt.sub}</div>
-    ${jetzt.knoepfe ? `<div class="panel-row" style="margin-top:10px;">${jetzt.knoepfe}</div>` : ''}
+  /* Verlauf (Ansatz 5, von David gewaehlt 2026-10-14; loest die
+     "Jetzt"-Karte aus 7c113b4 ab): statt zu raten, was als Naechstes dran
+     ist, steht da, was in der Runde passiert ist. Die Liste ist
+     column-reverse und wird umgekehrt ausgegeben: sie liest sich von oben
+     nach unten in Zeitfolge, und beim Ueberlaufen bleibt der neueste
+     Eintrag unten sichtbar, ohne dass jemand scrollen muss. */
+  /** @param {FeudLogEintrag} e */
+  const logZeile = (e) => `<div class="ff-ev ${e.art}"><span class="ff-ev-zeit">${escapeHtml(e.zeit)}</span><span class="ff-ev-text">${escapeHtml(e.text)}</span>${e.pts ? `<span class="ff-ev-pts">${escapeHtml(e.pts)}</span>` : ''}</div>`;
+  const logLeer = `<div class="ff-ev grau"><span class="ff-ev-text">${state.questionRevealed ? 'Noch nichts passiert.' : 'Frage anklicken – sie erscheint auf der Leinwand, der Buzzer wird scharf.'}</span></div>`;
+  const logHtml = `<div class="panel ff-log">
+    <span class="ff-label">Verlauf dieser Runde</span>
+    <div class="ff-log-list">${feudLog.length ? feudLog.slice().reverse().map(logZeile).join('') : logLeer}</div>
   </div>`;
-  const ffRows = Math.max(4, Math.ceil(q.answers.length / 2));
+  const logMiniHtml = `<div class="panel ff-log-mini">
+    <span class="ff-label">Zuletzt</span>
+    ${feudLog.length ? feudLog.slice(-2).map(logZeile).join('') : logLeer}
+  </div>`;
 
   const feudPresenceCount = feudBuzzer.presence.length;
   const feudPresenceRows = feudBuzzer.presence.length
@@ -1328,37 +1350,49 @@ function updateGamemaster() {
   .ff-pip.on{background:radial-gradient(circle, rgba(232,69,60,.35), rgba(198,40,40,.45));border-color:#E8453C;color:#FF6B6B;box-shadow:0 0 10px rgba(232,69,60,.25);}
   .ff-q{cursor:pointer;padding:14px 18px;}
   .ff-label{display:block;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:4px;}
-  /* .panel.ff-now statt .ff-now: themeGmHtml setzt .panel{border-color} je Richtung und kaeme sonst darueber. */
-  .panel.ff-now{padding:14px 18px;border:2px solid #FFD23F;background:rgba(255,210,63,.08);}
-  .ff-now-title{font-size:1.15rem;font-weight:800;color:#FFD23F;line-height:1.25;}
-  .ff-now-sub{font-size:.8rem;color:rgba(255,255,255,.7);margin-top:4px;}
-  .ff-now .gm-btn{flex:0 0 auto;}
-  /* Grosses Fenster: eine Spalte statt Haupt- und Seitenspalte. Die Antworten
-     stehen zweispaltig wie auf dem Board (1-4 links, 5-8 rechts) und fuellen
-     die Hoehe, die Panels liegen als Reihe darunter. Vorher blieb die untere
-     Haelfte leer (08b1425). */
+  /* Verlauf */
+  .ff-log,.ff-log-mini{padding:12px 16px;display:flex;flex-direction:column;}
+  .ff-log-list{display:flex;flex-direction:column-reverse;overflow-y:auto;min-height:0;}
+  .ff-ev{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.85rem;font-weight:600;line-height:1.35;}
+  .ff-ev-zeit{font-family:monospace;font-size:.72rem;color:rgba(255,255,255,.4);flex-shrink:0;}
+  .ff-ev-text{flex:1;min-width:0;}
+  .ff-ev-pts{font-weight:800;color:#4ADE80;}
+  .ff-ev.gold .ff-ev-text{color:#FFD23F;}
+  .ff-ev.rot .ff-ev-text{color:#FF8A80;}
+  .ff-ev.grau .ff-ev-text{color:rgba(255,255,255,.55);}
+  .ff-log{display:none;}
+  /* Ab 760 px: Teamleiste ueber die ganze Breite, links Frage + Antworten,
+     rechts der Verlauf (fuellt die Hoehe), die Panels darunter. Darunter
+     (Gamepad-Handy) steht statt des Verlaufs "Zuletzt" mit zwei Eintraegen
+     ganz oben. */
+  @media (min-width: 760px) {
+    .gm-body.ff-body{grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);grid-template-rows:auto minmax(0,1fr);align-items:stretch;}
+    .ff-body>.ff-teams{grid-column:1/-1;}
+    .ff-log-mini{display:none;}
+    .ff-log{display:flex;flex:1 1 12rem;min-height:12rem;}
+    .ff-body .gm-side{min-height:0;}
+  }
+  /* Grosses Fenster: die Antworten fuellen die Hoehe (vorher blieb die untere
+     Haelfte leer, 08b1425). */
   @media (min-width: 1200px) {
-    .gm-body.ff-body{display:flex;flex-direction:column;align-items:stretch;}
-    .ff-body .gm-main{flex:1 0 auto;}
-    .ff-body .answer-list{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(var(--ff-rows),minmax(3.2rem,1fr));grid-auto-flow:column;}
-    .ff-body .answer{font-size:1.15rem;gap:16px;}
-    .ff-body .gm-side{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:start;}
-    .ff-now-title{font-size:1.6rem;}
-    .ff-now-sub{font-size:.9rem;}
+    .ff-body .gm-main{min-height:0;}
+    .ff-body .answer-list{flex:1;display:grid;grid-auto-rows:minmax(3rem,1fr);}
+    .ff-body .answer{font-size:1.2rem;gap:16px;}
+    .ff-ev{font-size:.95rem;padding:10px 0;}
   }
 </style></head><body>
   ${gmHeaderHtml('Gamemaster', `Family Feud · Runde ${state.currentRound+1} / ${state.roundQuestions.length}`)}
   <div class="gm-body ff-body">
-  <div class="gm-main">
+  ${logMiniHtml}
   <div class="ff-teams">${teamsHtml}</div>
-  ${jetztHtml}
+  <div class="gm-main">
   <div class="panel ff-q" onclick="opener.revealQuestion()">
     <span class="ff-label">Frage ${state.currentRound+1} von ${state.roundQuestions.length}</span>
     <div class="question">${escapeHtml(q.question)}</div>
   </div>
   ${qNoteHtml(q.note)}
   <div class="ff-label">Antworten · anklicken zum Aufdecken</div>
-  <div class="answer-list" style="--ff-rows:${ffRows};">
+  <div class="answer-list">
   ${q.answers.map((a,i) => `<div class="answer ${state.revealed[i]?'shown':'hidden'}" ${!state.revealed[i] ? `onclick="opener.revealAnswer(${i})"` : ''}>
     <span><span class="num">${i+1}.</span> <span class="text">${escapeHtml(a.text)}</span></span>
     <span class="pts">${Number(a.points) || 0}</span>
@@ -1367,6 +1401,7 @@ function updateGamemaster() {
   ${mediaControlButtonsHtml(q.media, 'feudToggleMedia')}
   </div>
   <div class="gm-side">
+  ${logHtml}
   ${feudBuzzPanel}
   ${feudConnectPanel}
   <details class="panel">
