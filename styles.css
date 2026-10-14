@@ -6049,14 +6049,24 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   100% { transform: rotate(0); transform-origin: 50% 0; }
 }
 
-/* ── O · Terminal: gruener Phosphor, Zeilen statt Platten, wird getippt ── */
+/* ── O · Terminal (Rework 2026-10-14): die Show laeuft in der Konsole ──────
+   Identitaet aus designs/s/O-*.html: gruener Phosphor auf Schwarzgruen,
+   Zeilen statt Platten, VT323 fuer alles Grosse, IBM Plex Mono fuer den Rest,
+   Fenster als Rahmen mit Titel in der Kante (┤ ROT ├), invertierte
+   Statuszeile, Eingabeprompt mit Blockcursor.
+   Jetzt auf allen Flaechen: Teams als Fenster mit Titel und Farbstreifen
+   (BAUPLAN 4.4), X als [X], WWM als Radioknoepfe ( )/(*) und Joker als
+   Checkboxen [ ]/[x], DDF als Prozesstabelle (PID, KILLED), Knoepfe als
+   [ BEFEHL ], Menue als nummerierte Liste mit invertierter Auswahl.
+   Leuchten nur als Phosphor-Nachglimmen der Schrift, keine Flaechen.
+   Signatur: die Antwort wird Zeichen fuer Zeichen getippt. */
 :root[data-theme="O"] {
   --brd-surface: #031008;
   --brd-tex: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
-  --brd-frame: 0 0 0 2px #2E7D4A, 0 0 24px rgba(124,255,160,.18), inset 0 0 40px rgba(124,255,160,.08);
+  --brd-frame: 0 0 0 1px #2E7D4A;
   --brd-well: #031008;
   --brd-inner: transparent;
-  --brd-radius: 6px;
+  --brd-radius: 0;
   --brd-fg: #B8FFCD;
   --tile: transparent;
   --tile-hover: rgba(124,255,160,.06);
@@ -6083,31 +6093,256 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   --tile-radius: 0;
   --tile-font: 'VT323', monospace;
   --tile-reveal: thOTippen .7s steps(18, end);
+  --o-gruen: #7CFFA0; --o-hell: #B8FFCD; --o-dunkel: #2E7D4A; --o-grund: #031008;
+  --o-glimm: 0 0 8px rgba(124,255,160,.55);
 }
-:root[data-theme="O"] .q-text { color: #B8FFCD; justify-content: flex-start; text-align: left; font-family: 'VT323', monospace; font-weight: 400; font-size: 2rem; line-height: 1; text-shadow: 0 0 8px rgba(124,255,160,.6); }
+/* Bildschirmrand: die Roehre dunkelt zu den Ecken ab. Liegt ueber allem,
+   faengt aber keine Klicks. */
+:root[data-theme="O"] body::after {
+  content: ''; position: fixed; inset: 0; z-index: 2147483000; pointer-events: none;
+  box-shadow: inset 0 0 140px rgba(0,0,0,.55); border-radius: 18px;
+}
+
+/* ── Teams als Fenster mit Titel in der Kante ─────────────────────────── */
+:root[data-theme="O"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).red   { --tc: #FF6B5E; }
+:root[data-theme="O"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).blue  { --tc: #6EA8FF; }
+:root[data-theme="O"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).green { --tc: #7CFFA0; }
+:root[data-theme="O"] :is(.scoreboard, .jeopardy-scores) { gap: 16px; border-radius: 0; box-shadow: none; overflow: visible; padding-top: 8px; }
+:root[data-theme="O"] :is(.team-panel, .jeopardy-team, .wwds-team, .team-card):is(.red, .blue, .green) {
+  background: #031008; border: 1px solid #2E7D4A; border-radius: 0; box-shadow: inset 0 -8px 0 #031008, inset 0 -18px 0 color-mix(in srgb, var(--tc) 70%, transparent);
+  text-align: right; padding: 16px 16px 26px; overflow: visible;
+}
+:root[data-theme="O"] .team-card { padding-bottom: 28px; text-align: center; }
+:root[data-theme="O"] .team-card::before { display: none; }
+:root[data-theme="O"] .jeopardy-team { padding: 12px 14px 22px; }
+:root[data-theme="O"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name, .team-card .label) {
+  position: absolute; left: 12px; top: -.75em; margin: 0; padding: 0 6px; background: #05140B;
+  font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: .72rem; letter-spacing: 1px; color: var(--tc, #7CFFA0); line-height: 1.4;
+}
+:root[data-theme="O"] .team-card .label { position: static; display: inline-block; margin: -40px 0 14px; }
+:root[data-theme="O"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name, .team-card .label)::before { content: '┤ '; color: #2E7D4A; }
+:root[data-theme="O"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name, .team-card .label)::after { content: ' ├'; color: #2E7D4A; }
+:root[data-theme="O"] :is(.team-panel .t-score, .jeopardy-team .jt-score, .wwds-team .wt-money) {
+  font-family: 'VT323', monospace; color: #B8FFCD; text-shadow: var(--o-glimm); line-height: .9;
+}
+:root[data-theme="O"] .team-panel .t-score { font-size: 3.8rem; }
+:root[data-theme="O"] .jeopardy-team .jt-score { font-size: 2.6rem; }
+:root[data-theme="O"] .team-panel.active-team { padding: 16px 16px 26px; border-color: #7CFFA0; box-shadow: inset 0 0 0 1px #7CFFA0, inset 0 -8px 0 #031008, inset 0 -18px 0 color-mix(in srgb, var(--tc) 70%, transparent); }
+:root[data-theme="O"] .team-panel.active-team::after { content: '> am zug_'; left: 16px; right: auto; bottom: auto; top: 18px; width: auto; height: auto; background: none; box-shadow: none; border-radius: 0; font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: #7CFFA0; }
+:root[data-theme="O"] .wwds-team.on { border-color: #7CFFA0; box-shadow: inset 0 0 0 1px #7CFFA0, inset 0 -8px 0 #031008, inset 0 -18px 0 color-mix(in srgb, var(--tc) 70%, transparent); }
+:root[data-theme="O"] :is(.team-panel.active-team .t-score, .wwds-team.on .wt-money) { color: #D6FFE2; }
+
+/* X als [X] in Rot, frei als [ ]. */
+:root[data-theme="O"] .team-strikes { justify-content: flex-start; background: none; border: 0; border-radius: 0; padding: 0; box-shadow: none; transform: none; gap: 8px; }
+:root[data-theme="O"] .strike-pip { width: auto; height: auto; border: 0; border-radius: 0; background: none; font-size: 0; }
+:root[data-theme="O"] .strike-pip::before { content: '[ ]'; font-family: 'VT323', monospace; font-size: 1.5rem; color: #2E7D4A; }
+:root[data-theme="O"] .strike-pip.lit { background: none; box-shadow: none; animation: none; }
+:root[data-theme="O"] .strike-pip.lit::before { content: '[X]'; color: #FF6B5E; text-shadow: 0 0 8px rgba(255,107,94,.6); }
+
+/* Statuszeile: invertiert, ueber die ganze Breite. */
+:root[data-theme="O"] .round-bar { align-self: stretch; justify-content: space-between; padding: 2px 10px; background: #7CFFA0; color: #031008; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: .7rem; letter-spacing: 1px; }
+:root[data-theme="O"] .round-bar .pts { color: #031008; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: .8rem; }
+
+/* ── Feud ─────────────────────────────────────────────────────────────── */
+:root[data-theme="O"] .q-text { color: #B8FFCD; justify-content: flex-start; text-align: left; font-family: 'VT323', monospace; font-weight: 400; font-size: 2rem; line-height: 1; text-shadow: var(--o-glimm); border-radius: 0; }
 :root[data-theme="O"] .q-text:not(.hidden-q)::before { content: '\276F\00a0'; color: #7CFFA0; }
-:root[data-theme="O"] .q-text.hidden-q { border-color: #2E7D4A; }
-:root[data-theme="O"] .tile-num { font-family: 'VT323', monospace; font-size: 1.6rem; color: #7CFFA0; }
-:root[data-theme="O"] .tile.open .tile-answer { font-weight: 400; font-size: 1.7rem; letter-spacing: 1px; text-shadow: 0 0 8px rgba(124,255,160,.6); }
-/* Punkte durch Pünktchen an die Antwort gebunden, wie in einer Tabelle. */
+:root[data-theme="O"] .q-text:not(.hidden-q)::after { content: ''; display: inline-block; width: .5em; height: .9em; margin-left: .25em; background: #7CFFA0; vertical-align: -.1em; animation: thOCursor 1.1s steps(1, end) infinite; }
+:root[data-theme="O"] .q-text.hidden-q { background: none; border: 1px dashed #2E7D4A; }
+:root[data-theme="O"] .q-text.hidden-q::after { color: #4FB874; font-family: 'IBM Plex Mono', monospace; }
+:root[data-theme="O"] .answers { counter-reset: oplatz; }
+:root[data-theme="O"] .tile { counter-increment: oplatz; }
+:root[data-theme="O"] .tile:hover:not(.open) { transform: none; }
+:root[data-theme="O"] .tile-num { font-family: 'VT323', monospace; font-size: 0; color: #7CFFA0; }
+:root[data-theme="O"] .tile-num::before { content: counter(oplatz, decimal-leading-zero); font-size: 1.6rem; }
+:root[data-theme="O"] .tile.open .tile-answer { font-weight: 400; font-size: 1.7rem; letter-spacing: 1px; text-shadow: var(--o-glimm); }
+/* Punkte durch Puenktchen an die Antwort gebunden, wie in einer Tabelle. */
 :root[data-theme="O"] .tile.open .tile-center { background: radial-gradient(circle, #2E7D4A 1px, transparent 1.5px) 0 60% / 8px 8px repeat-x; }
 :root[data-theme="O"] .tile.open .tile-answer { background: #031008; padding-right: 8px; }
-:root[data-theme="O"] .tile.open .tile-pts { color: #B8FFCD; text-shadow: 0 0 8px rgba(124,255,160,.6); font-family: 'VT323', monospace; font-size: 1.8rem; }
-:root[data-theme="O"] .jeopardy-cat { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: .7rem; letter-spacing: 1px; }
-:root[data-theme="O"] .jeopardy-cell { font-family: 'VT323', monospace; font-size: 2.2rem; letter-spacing: 0; }
+:root[data-theme="O"] .tile.open .tile-pts { color: #B8FFCD; text-shadow: var(--o-glimm); font-family: 'VT323', monospace; font-size: 1.8rem; box-shadow: none; }
+:root[data-theme="O"] .tile.missed .tile-inner { background: transparent !important; box-shadow: none !important; color: #FF6B5E; }
+:root[data-theme="O"] .tile.missed .tile-answer { text-shadow: none; }
+
+/* Finale */
+:root[data-theme="O"] :is(.finale-title, .winner-text, .tp-win-title, .wwds-banner, .elim-team) { font-family: 'VT323', monospace; font-weight: 400; letter-spacing: 2px; color: #B8FFCD; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .finale-title::before, :root[data-theme="O"] .winner-text::before { content: '> '; color: #7CFFA0; }
+:root[data-theme="O"] :is(.finale-team-label, .finale-q-info) { font-family: 'IBM Plex Mono', monospace; letter-spacing: 1px; color: #4FB874; }
+:root[data-theme="O"] :is(.finale-score-card, .finale-reveal-team) { background: #031008; border: 1px solid #2E7D4A; border-radius: 0; box-shadow: none; }
+:root[data-theme="O"] .finale-score-card.active { background: #031008; border-color: #7CFFA0; }
+:root[data-theme="O"] :is(.finale-score-pts, .finale-reveal-pts, .finale-timer) { font-family: 'VT323', monospace; color: #B8FFCD; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] :is(.finale-score-name, .finale-reveal-name) { font-family: 'IBM Plex Mono', monospace; }
+:root[data-theme="O"] .finale-big-q { font-family: 'VT323', monospace; text-shadow: var(--o-glimm); }
+
+/* ── Jeopardy: [100], verbraucht [---] ────────────────────────────────── */
+:root[data-theme="O"] .jeopardy-board { border-radius: 0; gap: 2px; padding: 8px; }
+:root[data-theme="O"] .jeopardy-cat { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: .7rem; letter-spacing: 1px; border-radius: 0; color: #4FB874; }
+:root[data-theme="O"] .jeopardy-cell { font-family: 'VT323', monospace; font-size: 2.2rem; letter-spacing: 0; border-radius: 0; }
 :root[data-theme="O"] .jeopardy-cell:not(.used)::before { content: '['; color: #2E7D4A; }
 :root[data-theme="O"] .jeopardy-cell:not(.used)::after { content: ']'; color: #2E7D4A; }
-:root[data-theme="O"] .jeopardy-cell:hover:not(.used) { background: #7CFFA0; color: #031008; text-shadow: none; transform: none; }
+:root[data-theme="O"] .jeopardy-cell:hover:not(.used) { background: #7CFFA0; color: #031008; text-shadow: none; transform: none; box-shadow: none; }
 :root[data-theme="O"] .jeopardy-cell.used::after { content: '[---]'; color: #1F5A33; font-size: 1.8rem; }
-:root[data-theme="O"] .wwm-q { color: #B8FFCD; text-align: left; justify-content: flex-start; font-family: 'VT323', monospace; font-weight: 400; font-size: 2.1rem; line-height: 1.05; text-shadow: 0 0 8px rgba(124,255,160,.6); }
-:root[data-theme="O"] .wwm-opt { box-shadow: inset 0 0 0 1px #2E7D4A; font-size: 1.6rem; font-weight: 400; }
-:root[data-theme="O"] .wwm-opt .wwm-letter { color: #7CFFA0; font-family: 'VT323', monospace; }
+:root[data-theme="O"] .jeopardy-clue-cat { font-family: 'IBM Plex Mono', monospace; letter-spacing: 2px; color: #4FB874; }
+:root[data-theme="O"] .jeopardy-clue-cat::before { content: '┤ '; } :root[data-theme="O"] .jeopardy-clue-cat::after { content: ' ├'; }
+:root[data-theme="O"] .jeopardy-clue-pts { font-family: 'VT323', monospace; color: #B8FFCD; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .jeopardy-clue-text { font-family: 'VT323', monospace; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .jeopardy-clue-img { border-radius: 0; border: 1px solid #2E7D4A; box-shadow: none; filter: sepia(1) hue-rotate(70deg) saturate(1.6) brightness(.9); }
+
+/* ── WWM: Radioknoepfe, Gewinnstufen-Fenster, Joker als Checkboxen ───── */
+:root[data-theme="O"] .wwm-q { color: #B8FFCD; text-align: left; justify-content: flex-start; font-family: 'VT323', monospace; font-weight: 400; font-size: 2.1rem; line-height: 1.05; text-shadow: var(--o-glimm); box-shadow: none; background: none; }
+:root[data-theme="O"] .wwm-q::before { content: '\276F\00a0'; color: #7CFFA0; }
+:root[data-theme="O"] .wwm-answers { grid-template-columns: 1fr; gap: 2px; padding: 12px 10px 8px; border: 1px solid #2E7D4A; }
+:root[data-theme="O"] .wwm-opt { box-shadow: none; padding: 4px 10px; font-size: 1.7rem; font-weight: 400; }
+:root[data-theme="O"] .wwm-opt:hover { filter: none; background: rgba(124,255,160,.08); }
+:root[data-theme="O"] .wwm-opt .wwm-letter { color: #7CFFA0; font-family: 'VT323', monospace; font-size: 1.7rem; min-width: 0; }
+:root[data-theme="O"] .wwm-opt .wwm-letter::before { content: '( ) '; white-space: pre; }
+:root[data-theme="O"] .wwm-opt.selected .wwm-letter::before { content: '(*) '; }
+:root[data-theme="O"] .wwm-opt.correct .wwm-letter::before { content: '(+) '; }
+:root[data-theme="O"] .wwm-opt.wrong { background: transparent; color: #FF6B5E; }
+:root[data-theme="O"] .wwm-opt.wrong .wwm-letter { color: #FF6B5E; }
+:root[data-theme="O"] .wwm-opt.wrong .wwm-letter::before { content: '(-) '; }
 :root[data-theme="O"] .wwm-opt.selected .wwm-letter,
 :root[data-theme="O"] .wwm-opt.correct .wwm-letter { color: #031008; }
+:root[data-theme="O"] .wwm-ladder { background: transparent; border: 1px solid #2E7D4A; border-radius: 0; }
+:root[data-theme="O"] .wwm-rung { border-radius: 0; font-family: 'VT323', monospace; font-size: 1.15rem; color: #4FB874; }
+:root[data-theme="O"] .wwm-rung .wwm-lvl { color: #2E7D4A; font-family: 'VT323', monospace; }
+:root[data-theme="O"] .wwm-rung.safe .wwm-amt { color: #B8FFCD; }
+:root[data-theme="O"] .wwm-rung.won { color: #7CFFA0; }
+:root[data-theme="O"] .wwm-rung.current .wwm-amt::after { content: ' ◄'; }
+:root[data-theme="O"] .wwm-lifelines { justify-content: flex-start; gap: 20px; }
+:root[data-theme="O"] .wwm-ll { width: auto; height: auto; border: 0; border-radius: 0; background: none; font-size: 0; }
+:root[data-theme="O"] .wwm-ll::before { font-family: 'IBM Plex Mono', monospace; font-size: .85rem; color: #B8FFCD; white-space: pre; }
+:root[data-theme="O"] .wwm-ll:nth-child(1)::before { content: '[ ] 50:50'; }
+:root[data-theme="O"] .wwm-ll:nth-child(2)::before { content: '[ ] Telefon'; }
+:root[data-theme="O"] .wwm-ll:nth-child(3)::before { content: '[ ] Publikum'; }
+:root[data-theme="O"] .wwm-ll.used { opacity: 1; }
+:root[data-theme="O"] .wwm-ll.used:nth-child(1)::before { content: '[x] 50:50'; color: #2E7D4A; }
+:root[data-theme="O"] .wwm-ll.used:nth-child(2)::before { content: '[x] Telefon'; color: #2E7D4A; }
+:root[data-theme="O"] .wwm-ll.used:nth-child(3)::before { content: '[x] Publikum'; color: #2E7D4A; }
+:root[data-theme="O"] :is(.wwm-abar, .wwds-abar) { background: repeating-linear-gradient(0deg, #7CFFA0 0 3px, transparent 3px 5px); border-radius: 0; }
+:root[data-theme="O"] :is(.wwm-apct, .wa-pct, .wwm-alet, .wa-let) { font-family: 'VT323', monospace; font-size: 1.1rem; color: #B8FFCD; }
+
+/* ── WWDS: Kategorien als Liste, Antworten wie ein diff ───────────────── */
+:root[data-theme="O"] .wwds-cat { border-radius: 0; box-shadow: inset 0 0 0 1px #2E7D4A; }
+:root[data-theme="O"] .wwds-cat:hover:not(.done) { transform: none; filter: none; background: #7CFFA0; color: #031008; }
+:root[data-theme="O"] .wwds-cat .wc-num { font-family: 'VT323', monospace; font-size: 1.2rem; color: #4FB874; }
+:root[data-theme="O"] .wwds-cat .wc-name { font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: .75rem; }
+:root[data-theme="O"] .wwds-cat.done .wc-name { text-decoration: line-through; }
+:root[data-theme="O"] .wwds-q { background: none; border: 0; border-radius: 0; text-align: left; font-family: 'VT323', monospace; font-weight: 400; font-size: 1.9rem; line-height: 1.05; color: #B8FFCD; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .wwds-q::before { content: '\276F\00a0'; color: #7CFFA0; }
+:root[data-theme="O"] .wwds-cat-chip { background: none; border: 0; border-radius: 0; padding: 0; font-family: 'IBM Plex Mono', monospace; letter-spacing: 1px; color: #4FB874; }
+:root[data-theme="O"] .wwds-cat-chip::before { content: '┤ '; } :root[data-theme="O"] .wwds-cat-chip::after { content: ' ├'; }
+:root[data-theme="O"] .wwds-opt { border-radius: 0; box-shadow: none; padding: 6px 10px; font-size: 1.5rem; font-weight: 400; }
+:root[data-theme="O"] .wwds-opt .wo-let::before { content: '- '; white-space: pre; }
+:root[data-theme="O"] .wwds-opt.right .wo-let::before { content: '+ '; }
+:root[data-theme="O"] .wwds-opt .wo-let { font-family: 'VT323', monospace; color: #7CFFA0; }
+:root[data-theme="O"] .wwds-opt.bad { background: transparent; color: #FF6B5E; }
+:root[data-theme="O"] .wwds-tag { border-radius: 0; }
+:root[data-theme="O"] .wwds-guess { border-radius: 0; background: #031008; border: 1px solid #2E7D4A; font-family: 'VT323', monospace; }
+:root[data-theme="O"] .wwds-timer { font-family: 'VT323', monospace; text-shadow: var(--o-glimm); }
+
+/* ── DDF als Prozesstabelle: PID, Name, Leben, Status ─────────────────── */
+:root[data-theme="O"] .ddf-players { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; width: 100%; max-width: 1000px; margin-inline: auto; counter-reset: opid 2099; border-top: 1px solid #2E7D4A; }
+:root[data-theme="O"] .ddf-players > :not(.ddf-player) { grid-column: 1 / -1; }
+:root[data-theme="O"] .ddf-player {
+  counter-increment: opid; display: flex; align-items: center; gap: 16px; min-width: 0; padding: 4px 6px; text-align: left;
+  background: transparent; border: 0; border-bottom: 1px solid rgba(46,125,74,.5); border-radius: 0; box-shadow: none;
+}
+:root[data-theme="O"] .ddf-player::before { content: counter(opid); font-family: 'VT323', monospace; font-size: 1.2rem; color: #4FB874; }
+:root[data-theme="O"] .ddf-player::after { content: 'running'; margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: .72rem; color: #4FB874; }
+:root[data-theme="O"] .ddf-player-name { flex: 1; min-width: 0; margin: 0; font-family: 'VT323', monospace; font-weight: 400; font-size: 1.6rem; line-height: 1; color: #B8FFCD; }
+:root[data-theme="O"] .ddf-player.picked { border: 0; border-bottom: 1px solid rgba(46,125,74,.5); box-shadow: none; background: rgba(255,107,94,.1); }
+:root[data-theme="O"] .ddf-player.picked::after { content: 'ZOMBIE?'; color: #FF6B5E; }
+:root[data-theme="O"] .ddf-player.out { transform: none; opacity: .5; }
+:root[data-theme="O"] .ddf-player.out::after { content: 'KILLED'; color: #FF6B5E; }
+:root[data-theme="O"] .ddf-heart.full { color: #FF6B5E; text-shadow: none; }
+:root[data-theme="O"] .ddf-heart.empty { color: #1F5A33; text-shadow: none; }
+:root[data-theme="O"] .ddf-question { font-family: 'VT323', monospace; font-weight: 400; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .ddf-answer { font-family: 'VT323', monospace; color: #B8FFCD; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .ddf-answer::before { content: '= '; color: #7CFFA0; }
+
+/* ── PIH: Gebotsliste wie ein sort-Ergebnis, der Preis riesig ─────────── */
+:root[data-theme="O"] .pih-scores { border-bottom: 1px solid #2E7D4A; }
+:root[data-theme="O"] .pih-score { border-radius: 0; background: transparent; border: 1px solid #2E7D4A; box-shadow: none; }
+:root[data-theme="O"] .pih-score.lead { background: transparent; border-color: #7CFFA0; }
+:root[data-theme="O"] .pih-score-pts { font-family: 'VT323', monospace; font-size: 1.3rem; }
+:root[data-theme="O"] .pih-team { border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px #2E7D4A, inset 0 -4px 0 var(--team); }
+:root[data-theme="O"] .pih-team-pts { font-family: 'VT323', monospace; }
+:root[data-theme="O"] .pih-item { font-family: 'VT323', monospace; font-weight: 400; font-size: 2.3rem; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .pih-stage :is(img, video) { border-radius: 0; border: 1px solid #2E7D4A; filter: sepia(1) hue-rotate(70deg) saturate(1.6) brightness(.9); }
+:root[data-theme="O"] .pih-price { font-family: 'VT323', monospace; font-weight: 400; font-size: 4rem; line-height: 1; color: #B8FFCD; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .pih-bid-row { border-radius: 0; background: transparent; border: 0; border-bottom: 1px solid rgba(46,125,74,.5); box-shadow: none; font-family: 'VT323', monospace; font-size: 1.4rem; }
+:root[data-theme="O"] .pih-bid-row.win { background: rgba(124,255,160,.08); border-bottom-color: #7CFFA0; box-shadow: none; color: #B8FFCD; }
+:root[data-theme="O"] .pih-bid-row.win::after { content: '◄ WINNER'; font-family: 'IBM Plex Mono', monospace; font-size: .7rem; color: #7CFFA0; }
+:root[data-theme="O"] .pih-bid-row.bust .pih-bid-val::after { content: ' überboten'; text-decoration: none; display: inline-block; margin-left: 4px; font-family: 'IBM Plex Mono', monospace; font-size: .6rem; color: #4FB874; }
+
+/* ── Trivial Pursuit ──────────────────────────────────────────────────── */
+:root[data-theme="O"] .tp-team { background: transparent; border: 1px solid #2E7D4A; border-radius: 0; box-shadow: none; }
+:root[data-theme="O"] .tp-team:is(.red, .blue, .green) { box-shadow: inset 0 -4px 0 var(--tc); }
+:root[data-theme="O"] .tp-team.turn { transform: none; background: transparent; border-color: #7CFFA0; box-shadow: inset 0 -4px 0 var(--tc, #7CFFA0); }
+:root[data-theme="O"] .tp-team-name { font-family: 'VT323', monospace; font-weight: 400; font-size: 1.5rem; }
+:root[data-theme="O"] .tp-stage { border: 1px solid #2E7D4A; border-radius: 0; box-shadow: none; }
+:root[data-theme="O"] .tp-catchip { border-radius: 0; font-family: 'IBM Plex Mono', monospace; }
+:root[data-theme="O"] .tp-question { font-family: 'VT323', monospace; font-weight: 400; font-size: 2rem; line-height: 1.05; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .tp-question::before { content: '\276F\00a0'; color: #7CFFA0; }
+:root[data-theme="O"] .tp-answer { border-radius: 0; border: 0; font-size: 1.6rem; font-weight: 400; }
+:root[data-theme="O"] .tp-answer.hidden { background: none; border: 1px dashed #2E7D4A; font-family: 'IBM Plex Mono', monospace; font-size: .75rem; }
+:root[data-theme="O"] .tp-wheel-rotor { box-shadow: 0 0 0 1px #2E7D4A, 0 0 0 8px #031008, 0 0 0 9px #2E7D4A; filter: saturate(.75) brightness(.9); }
+:root[data-theme="O"] .tp-wheel-hub { background: #031008; border: 1px solid #7CFFA0; box-shadow: none; font-family: 'VT323', monospace; color: #7CFFA0; }
+:root[data-theme="O"] .tp-wheel-pointer { border-top-color: #7CFFA0; filter: none; }
+
+/* ── Ergebnis, Turnier ────────────────────────────────────────────────── */
+:root[data-theme="O"] .result-card { background: #031008; border: 1px solid #2E7D4A; border-radius: 0; box-shadow: none; backdrop-filter: none; text-align: left; font-family: 'IBM Plex Mono', monospace; }
+:root[data-theme="O"] .result-scores strong { font-family: 'VT323', monospace; color: #B8FFCD; text-shadow: var(--o-glimm); }
+:root[data-theme="O"] .tour-bar { height: 10px; border-radius: 0; background: repeating-linear-gradient(90deg, #1F5A33 0 6px, transparent 6px 8px); }
+:root[data-theme="O"] .tour-bar-fill { border-radius: 0; background: repeating-linear-gradient(90deg, #7CFFA0 0 6px, transparent 6px 8px); }
+:root[data-theme="O"] .tour-total { font-family: 'VT323', monospace; }
+:root[data-theme="O"] .q-list-item { border-radius: 0; }
+:root[data-theme="O"] .q-list-item.tour-lead { background: rgba(124,255,160,.06); border-color: #7CFFA0; }
+
+/* ── Host: Menue als nummerierte Liste, Knoepfe als [ BEFEHL ] ────────── */
+:root[data-theme="O"] .menu-cards { counter-reset: omenu; gap: 6px; }
+:root[data-theme="O"] .menu-card { counter-increment: omenu; background: #031008; border: 1px solid #2E7D4A; border-radius: 0; box-shadow: none; padding-top: 30px; }
+:root[data-theme="O"] .menu-card::before { content: counter(omenu, decimal-leading-zero); left: 10px; top: 6px; right: auto; height: auto; background: none; opacity: 1; font-family: 'VT323', monospace; font-size: 1.2rem; color: #4FB874; }
+:root[data-theme="O"] .menu-card:hover { transform: none; background: #7CFFA0; border-color: #7CFFA0; box-shadow: none; --fg-strong: #031008; --muted: #0B3A1C; }
+:root[data-theme="O"] .menu-card:hover::before { color: #031008; }
+:root[data-theme="O"] .menu-card:hover .show-icon { --ico-fill: #031008; --ico-line: #031008; --ico-cut: #7CFFA0; --ico-dim: #2E7D4A; --ico-filter: none; }
+:root[data-theme="O"] .menu-card-title { font-family: 'VT323', monospace; font-weight: 400; font-size: 1.5rem; text-transform: uppercase; letter-spacing: 1px; }
+:root[data-theme="O"] .menu-pill { border-radius: 0; border: 0; padding: 4px 6px; font-family: 'IBM Plex Mono', monospace; }
+:root[data-theme="O"] .menu-pill::before { content: '['; color: #2E7D4A; } :root[data-theme="O"] .menu-pill::after { content: ']'; color: #2E7D4A; }
+:root[data-theme="O"] :is(.menu-pill:hover, .menu-pill.active) { background: #7CFFA0; color: #031008; }
+:root[data-theme="O"] .menu-divider { height: 1px; background: repeating-linear-gradient(90deg, #2E7D4A 0 6px, transparent 6px 10px); }
+:root[data-theme="O"] .btn { border-radius: 0; font-family: 'IBM Plex Mono', monospace; font-weight: 600; letter-spacing: 1px; }
+:root[data-theme="O"] .btn:hover { transform: none; }
+:root[data-theme="O"] .btn::before { content: '[ '; } :root[data-theme="O"] .btn::after { content: ' ]'; }
+:root[data-theme="O"] .btn-primary { background: #7CFFA0; color: #031008; box-shadow: none; }
+:root[data-theme="O"] .btn-primary:hover { background: #B8FFCD; box-shadow: none; }
+:root[data-theme="O"] .btn-primary::after { position: static; inset: auto; background: none; transform: none; transition: none; }
+:root[data-theme="O"] .btn-secondary { background: transparent; border: 1px solid #2E7D4A; color: #B8FFCD; backdrop-filter: none; }
+:root[data-theme="O"] .btn-secondary:hover { border-color: #7CFFA0; background: transparent; }
+:root[data-theme="O"] .btn-danger { background: transparent; border: 1px solid #FF6B5E; color: #FF6B5E; box-shadow: none; }
+:root[data-theme="O"] .btn-accent { background: transparent; border: 1px solid #6EA8FF; color: #6EA8FF; box-shadow: none; }
+:root[data-theme="O"] :is(.editor-card, .setup-lobby, .resume-banner, .ddf-card, .design-card) { border-radius: 0; background: #031008; border: 1px solid #2E7D4A; }
+:root[data-theme="O"] :is(.pr-team-btn, .setup-lobby .badge, .player-team-tag, .pmini-av) { border-radius: 0; }
+:root[data-theme="O"] :is(input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), textarea, select) { border-radius: 0 !important; }
+:root[data-theme="O"] .page-title { font-family: 'VT323', monospace; font-weight: 400; }
+
+/* Niedriges Fenster (Beamer 1280x720): WWM lag mit untereinander
+   stehenden Antworten 9 px, PIH mit grossem Preis 14 px unter dem Bild. */
+@media (max-height: 900px) {
+  :root[data-theme="O"] .wwm-answers { grid-template-columns: 1fr 1fr; }
+  :root[data-theme="O"] .wwm-q { font-size: 1.8rem; }
+  :root[data-theme="O"] .pih-price { font-size: 2.8rem; }
+  :root[data-theme="O"] .wwm-rung { font-size: 1rem; }
+  :root[data-theme="O"] .pih-item { font-size: 1.9rem; }
+}
+
 /* Die Antwort wird Zeichen fuer Zeichen getippt. */
 @keyframes thOTippen {
   0%   { clip-path: inset(0 100% 0 0); }
   100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes thOCursor { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="O"] .q-text:not(.hidden-q)::after { animation: none; }
 }
 
 /* ── P · Memphis: Formen mit Muster, schwarze Kontur, Punkteteppich ── */

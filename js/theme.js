@@ -418,7 +418,12 @@ const DESIGN_THEMES = [
       "--gold-dark": "#2E7D4A",
       "--gold-pale": "#D6FFE2",
       "--ink": "#05140B"
-    } },
+    },
+    /* GM-Fenster und Gamepad: eckig, Rahmen statt Flaechen, Statuszeile invertiert. */
+    gm: ".chip,.round-label,.score-card,.qnote,.answer,.panel,.badge,.pr-team-btn,.buzz-row,.info-card,.gm-btn,.tag,.gm-tab,.order-item,.notes-panel textarea,.score-row,.sr-val{border-radius:0;}"
+      + ".gm-title,.score-val,.sr-val{font-family:'VT323',monospace;font-size:1.5rem;}"
+      + ".gm-header{background:#7CFFA0;}.gm-header .gm-title,.gm-header .gm-title small{color:#031008;}"
+      + ".gm-btn.gold,.gm-btn.gm-gold{background:#7CFFA0;color:#031008;box-shadow:none;}" },
   { key: "P", name: "Memphis", hell: true,
     fonts: "https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@500;700&display=swap",
     vars: {

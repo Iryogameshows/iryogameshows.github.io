@@ -196,7 +196,7 @@ function wwdsRenderTeams(){
 
 function wwdsGridHtml(){
   return `<div class="wwds-sub" style="margin-bottom:12px;">
-      <strong style="color:#FFD23F;">${escapeHtml(wwdsState.teamNames[wwdsState.currentTeam])}</strong> wählt eine Kategorie
+      <strong style="color:var(--accent-text);">${escapeHtml(wwdsState.teamNames[wwdsState.currentTeam])}</strong> wählt eine Kategorie
     </div>
     <div class="wwds-grid">` +
     wwdsData.categories.map((c,i) => `

@@ -377,6 +377,15 @@
   :root[data-theme="O"] #buzz{border-radius:0;font-weight:400;font-size:4.4rem;letter-spacing:4px;
     box-shadow:0 0 0 3px #05140B,0 0 0 6px #7CFFA0,0 0 28px rgba(124,255,160,.5);text-shadow:0 0 10px rgba(255,255,255,.6);}
   :root[data-theme="O"] #buzz::after{border-radius:0;}
+  /* Rework 2026-10-14: flache Teamfarbe, Felder und Knoepfe als Konsole.
+     Die Knopfschrift bleibt der Text aus dem JS (Status steht darin). */
+  :root[data-theme="O"] #buzz{background:var(--buzz-mid,#E8453C);}
+  :root[data-theme="O"] .wait-orb{border-radius:0;background:var(--buzz-mid,#E8453C);}
+  :root[data-theme="O"] :is(input,.btn,.icon-btn,.opt,.lobby-gif,.vote-opt,.vote-opt .av,.me-av,.lobby-team,.team-chip,.lobby-badge){border-radius:0;}
+  :root[data-theme="O"] .btn{background:#7CFFA0;color:#031008;box-shadow:none;font-family:'IBM Plex Mono',monospace;font-weight:600;}
+  :root[data-theme="O"] .btn::before{content:'[ ';} :root[data-theme="O"] .btn::after{content:' ]';}
+  :root[data-theme="O"] .btn.ghost{background:transparent;border:1px solid #2E7D4A;color:#B8FFCD;}
+  :root[data-theme="O"] h1::before{content:'$ ';color:#7CFFA0;}
 
   /* P Memphis: dicke Kontur, harter Schatten. */
   :root[data-theme="P"] #buzz{border:6px solid #141414;font-weight:400;font-size:3.2rem;letter-spacing:1px;
