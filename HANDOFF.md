@@ -12,6 +12,22 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `c7e7bb1` Jeopardy-Flug: Zahl landet deckungsgleich (echtes FLIP)
+
+**Gemacht:** Die fliegende Zahl ist eine exakte Kopie der Punktzahl der Frage (gleiche
+Box, berechnete Stile inline) und wird nur per `transform` bewegt; am Ende `transform`
+= null → deckungsgleich. Kein `will-change` auf der Zahl (sonst unscharf im Vollbild).
+
+**Warum:** David sah nach `8116fbf` noch „eine leichte Verschiebung“. Ursache: zwei
+verschieden gesetzte Texte (große eigene Zahl vs. Punktzahl) lassen sich nur
+annähernd zur Deckung rechnen (blieben 2–3 px, davor 9–11 px). Lehre: Bei FLIP immer
+**vom Endzustand aus** bauen, nicht auf den Endzustand zurechnen.
+
+**Geprüft:** Abweichung 0/0/0 px in A und B, Standbilder angesehen, Bildrate
+gegen `8116fbf` gleich/besser (Zahlen im Commit), Flugtest 7/7, `ablauf.js` 49/49.
+
+**Offen:** wie im Eintrag darunter (echter Beamer, BAUPLAN 4.8, Arcade-Entscheidung).
+
 ## 2026-10-14 — `8116fbf` Jeopardy-Flug: Bildrate abgesichert, Ausklang ohne Schnitt
 
 **Gemacht:** Siehe Commit. FLIP (nur `transform`/`opacity`), Start nach zwei Frames,
