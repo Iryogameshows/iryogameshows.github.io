@@ -12,6 +12,41 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `26beddf` Design-Rework: Prototyp Studio (A) — wartet auf Davids Abnahme
+
+**Auftrag (David):** Designs komplett neu machen, nicht umbauen (Layout darf bleiben),
+hochwertiger, mit den vorhandenen Bibliotheken/Plugins. Entscheidungen per Rückfrage:
+- **Weniger, dafür besser.** Bleiben: **A Studio, B Arcade, D Late Night, E 70er,
+  I Salon, K Neon-Bar, L New York, O Terminal.** Wegfallen sollen C, F, H, J, M, N, P, Q,
+  R, S — **noch nichts gelöscht**; erst wenn die acht neuen stehen.
+- Themen bleiben als Vorgabe, die Umsetzung ist neu.
+- Flächen: Beamer/Leinwand, Host-Seite + GM-Panel, Handys (Buzzer + Gamepad).
+  **Studio-Blau (ohne Richtung) bleibt unverändert.**
+- Vorgehen: erst ein Prototyp (Studio), Abnahme, dann die anderen sieben.
+
+**Gemacht (Studio „Primetime-Studio“):** siehe Commit-Text. Kern: Graphit unter zwei
+Scheinwerferkegeln, Champagner `#E8C27A` als Akzent, blaues Kantenlicht `#5AA9FF`,
+Anybody (weit, `font-stretch`) + Hanken Grotesk. Feld-Aufdecken: Licht geht an
+(`thALicht`) + Lichtstreif (`thAStreif`), reines CSS. Teamkarten als Kandidatenpulte
+(Graphit + leuchtendes Band in Teamfarbe). Buzzer in Graphitfassung.
+
+**Warum so / verworfen:**
+- Big Shoulders + Instrument Sans waren die erste Wahl — verworfen, weil D (bleibt) sie
+  schon nutzt. Anybody und Hanken Grotesk nutzt keine andere Richtung.
+- GSAP/React Bits nicht auf dem Beamer (BAUPLAN 4.8); alles Sichtbare fürs Publikum CSS.
+- Antworten in Feud zuerst 125 % breit → „Bus/Bahn verpasst“ brach um; lange Texte
+  (Feld-Antwort, TP-Frage/-Lösung) jetzt 100 %.
+
+**Geprüft:** `shots.js --themes A` alle Zustände ohne Befunde; feud, jeop, wwm, wwds, tp,
+pih, ergebnis, gm, buzzer einzeln angesehen. `check.js`, `--types` sauber.
+
+**Offen / ungeprüft:**
+- **Davids Abnahme des Prototyps steht aus** — erst danach die anderen sieben.
+- Hauptmenü und Einrichtungs-Screens (Host) in Studio nicht angesehen (kein shots-Zustand).
+- Gamepad in Studio nur indirekt (gleiches HTML wie GM-Panel).
+- Galerie `designs/` und Voting-Seite zeigen noch die alten Entwürfe (216 Dateien).
+- Intro-Vorlagen und Show-Logos nicht eigens gestaltet (folgen den Variablen).
+
 ## 2026-10-14 — `c84140b` Prüfpunkt: Beenden-Knopf nie auf dem Beamer
 
 **Gemacht:** David: „Er soll nicht auf den Beamer kommen.“ Im echten Beamerfenster
