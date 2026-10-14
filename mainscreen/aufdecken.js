@@ -74,16 +74,6 @@
       margin: '0', zIndex: '2000', borderRadius: '0', boxShadow: 'none',
       transformOrigin: '0 0', willChange: 'transform, opacity', pointerEvents: 'none'
     });
-    var zahl = document.createElement('div');
-    zahl.setAttribute('data-nur-beamer', '');
-    zahl.textContent = cell.textContent;
-    Object.assign(zahl.style, {
-      position: 'fixed', left: '0', top: '0', width: W + 'px', height: H + 'px', zIndex: '2001',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0',
-      fontFamily: zellStil.fontFamily, fontWeight: zellStil.fontWeight, fontSize: gross + 'px',
-      lineHeight: '1', color: zellStil.color, letterSpacing: zellStil.letterSpacing,
-      transformOrigin: '50% 50%', willChange: 'transform, opacity', pointerEvents: 'none'
-    });
     var schleier = document.createElement('div');
     schleier.setAttribute('data-nur-beamer', '');
     Object.assign(schleier.style, {
@@ -91,49 +81,44 @@
       opacity: '0', willChange: 'opacity', pointerEvents: 'none'
     });
 
-    /* Ziel des Betrags: die Punktzahl in der (noch verdeckten) Frage. Die Zahl
-       gleitet genau dorthin und auf deren Groesse - wenn die Ebenen dann
-       ausblenden, steht darunter dieselbe Zahl am selben Fleck. */
-    /* Die Frage spielt beim Ankommen ihre eigene Einblendung (screenIn,
-       mit Verschiebung). Sie ist hier noch verdeckt - ans Ende spulen, sonst
-       misst man die Punktzahl an der falschen Stelle (lag 9 px zu tief). */
+    /* Die fliegende Zahl ist eine exakte Kopie der Punktzahl in der Frage:
+       gleiche Box, gleiche Schrift, gleiche Groesse, gleiche Lage. Unterwegs
+       wird sie nur per transform verkleinert und verschoben; am Ende ist der
+       transform null und sie liegt deckungsgleich auf dem Original - es kann
+       keine Verschiebung mehr geben. Die Fassungen davor setzten eine eigene,
+       grosse Zahl und rechneten sie an die Punktzahl heran; zwei verschieden
+       gesetzte Texte blieben 2-11 px auseinander (David: "immer noch eine
+       leichte Verschiebung").
+       Die Frage spielt beim Ankommen ihre eigene Einblendung (screenIn, mit
+       Verschiebung); sie ist hier noch verdeckt - vor dem Messen ans Ende. */
     if (ov.getAnimations) ov.getAnimations({ subtree: true }).forEach(function (an) { try { an.finish(); } catch (e) {} });
     var pts = ov.querySelector('.jeopardy-clue-pts');
-    var ziel = pts ? pts.getBoundingClientRect() : null;
-    var zielStil = pts ? getComputedStyle(pts) : null;
-    if (zielStil) {
-      zahl.style.fontFamily = zielStil.fontFamily; zahl.style.fontWeight = zielStil.fontWeight;
-      zahl.style.letterSpacing = zielStil.letterSpacing;
-      // Gleiche Zeilenhoehe wie die Punktzahl: sonst sitzt die Zahl nach der
-      // Landung um die halbe Differenz versetzt und springt beim Ausblenden.
-      // Als Verhaeltnis, nicht in px: die fliegende Zahl hat eine andere Schriftgroesse.
-      var zlh = parseFloat(zielStil.lineHeight), zfs = parseFloat(zielStil.fontSize);
-      zahl.style.lineHeight = (zlh && zfs) ? String(zlh / zfs) : "normal";
+    var zahl = null, zx = 0, zy = 0, zfs = 1, zielFarbe = null;
+    if (pts) {
+      var pr = pts.getBoundingClientRect(), ps = getComputedStyle(pts);
+      zfs = parseFloat(ps.fontSize) || 48;
+      zx = pr.left + pr.width / 2; zy = pr.top + pr.height / 2;
+      zielFarbe = ps.color;
+      zahl = document.createElement('div');
+      zahl.setAttribute('data-nur-beamer', '');
+      zahl.textContent = pts.textContent;
+      Object.assign(zahl.style, {
+        position: 'fixed', left: pr.left + 'px', top: pr.top + 'px',
+        width: pr.width + 'px', height: pr.height + 'px', margin: '0', zIndex: '2001',
+        boxSizing: 'border-box', padding: ps.padding, display: 'block', whiteSpace: 'nowrap',
+        fontFamily: ps.fontFamily, fontSize: ps.fontSize, fontWeight: ps.fontWeight, fontStyle: ps.fontStyle,
+        fontStretch: ps.fontStretch, fontVariantNumeric: ps.fontVariantNumeric, letterSpacing: ps.letterSpacing,
+        lineHeight: ps.lineHeight, textAlign: ps.textAlign, textTransform: ps.textTransform,
+        textShadow: ps.textShadow, color: zellStil.color, transformOrigin: '50% 50%', pointerEvents: 'none'
+      });
     }
-    var zielS = zielStil ? (parseFloat(zielStil.fontSize) || gross) / gross : 0.3;
-    var zielX = ziel ? ziel.left + ziel.width / 2 - W / 2 : 0;
-    var zielY = ziel ? ziel.top + ziel.height / 2 - H / 2 : -H * 0.08;
 
     gsap.set(platte, { x: r.left - PL, y: r.top - PT, scaleX: r.width / PW, scaleY: r.height / PH, force3D: true });
-    document.body.append(schleier, platte, zahl);
-    /* Landepunkt an den echten Buchstaben einmessen statt errechnen: Zahl
-       probeweise aufs Ziel setzen, Textbox mit der der Punktzahl vergleichen,
-       Groesse und Lage korrigieren. Errechnet lag sie 11 px zu tief und
-       5 px versetzt - am Ende stand kurz eine doppelte Zahl. Alles im selben
-       Frame, vor dem ersten Zeichnen. */
-    if (pts) {
-      var textBox = function (el) { var rg = document.createRange(); rg.selectNodeContents(el); return rg.getBoundingClientRect(); };
-      gsap.set(zahl, { x: zielX, y: zielY, scale: zielS });
-      var a = textBox(zahl), c = textBox(pts);
-      if (a.width > 0 && c.width > 0) {
-        zielS *= c.width / a.width;
-        gsap.set(zahl, { scale: zielS });
-        a = textBox(zahl);
-        zielX += (c.left + c.width / 2) - (a.left + a.width / 2);
-        zielY += (c.top + c.height / 2) - (a.top + a.height / 2);
-      }
+    document.body.append(schleier, platte);
+    if (zahl) {
+      document.body.append(zahl);
+      gsap.set(zahl, { x: cx - zx, y: cy - zy, scale: zellFs / zfs });
     }
-    gsap.set(zahl, { x: cx - W / 2, y: cy - H / 2, scale: zellFs / gross, force3D: true });
     html.classList.add('jp-flug');
 
     var w2 = r.width * 1.12, h2 = r.height * 1.12;
@@ -146,10 +131,8 @@
       // Anheben: etwas groesser und ein Stueck nach oben, mit Federn
       .to(platte, { x: cx - w2 / 2 - PL, y: cy - h2 / 2 - 8 - PT, scaleX: w2 / PW, scaleY: h2 / PH,
                     duration: 0.24, ease: 'back.out(2.4)' }, 0)
-      .to(zahl, { y: cy - H / 2 - 8, scale: zellFs / gross * 1.12, duration: 0.24, ease: 'back.out(2.4)' }, 0)
       // Flug ins Vollbild
       .to(platte, { x: 0, y: 0, scaleX: 1, scaleY: 1, duration: 0.58, ease: 'power3.inOut' }, 0.22)
-      .to(zahl, { x: 0, y: 0, scale: 1, duration: 0.58, ease: 'power3.inOut' }, 0.22)
       /* Ausklang ohne harten Schnitt: die Frage liegt schon unter der Flaeche,
          waehrend die Zahl landet, und die Flaeche loest sich ueber 0,6 s in die
          Buehne auf. Vorher blendeten Flaeche, Zahl und Abdunklung zugleich in
@@ -158,8 +141,12 @@
       .add(function () { html.classList.remove('jp-flug'); }, 0.84)
       .to(schleier, { opacity: 0, duration: 0.2 }, 0.8)
       .to(platte, { opacity: 0, duration: 0.6, ease: 'power2.inOut' }, 0.84)
-      .to(zahl, { x: zielX, y: zielY, scale: zielS, duration: 0.5, ease: 'power3.inOut' }, 0.84)
-      .to(zahl, zielStil ? { color: zielStil.color, duration: 0.5 } : { duration: 0 }, 0.84)
+      ;
+    if (zahl) laufend
+      .to(zahl, { y: cy - zy - 8, scale: zellFs / zfs * 1.12, duration: 0.24, ease: 'back.out(2.4)' }, 0)
+      .to(zahl, { x: W / 2 - zx, y: H / 2 - zy, scale: gross / zfs, duration: 0.58, ease: 'power3.inOut' }, 0.22)
+      // Landung: transform zurueck auf null = exakt die Punktzahl der Frage
+      .to(zahl, { x: 0, y: 0, scale: 1, color: zielFarbe, duration: 0.5, ease: 'power3.inOut' }, 0.84)
       .to(zahl, { opacity: 0, duration: 0.16, ease: 'none' }, 1.36);
     var tl = laufend;
     requestAnimationFrame(function () { requestAnimationFrame(function () {
