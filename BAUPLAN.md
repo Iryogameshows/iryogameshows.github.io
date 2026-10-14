@@ -545,6 +545,30 @@ in `js/intro.js`). GSAP bleibt für das, was nur der Host sieht.
 Anlass: der Intro-Umbau vom 2026-10-09. Die Vorgabe war GSAP, die Prüfung des
 Spiegels hat gezeigt, dass es auf der Leinwand nicht flüssig liefe.
 
+**Ausnahme seit 2026-10-14: der Beamer animiert selbst.** GSAP geht auf der
+Leinwand, wenn nicht der Spiegel animiert, sondern das Beamerfenster:
+`mainscreen/index.html` lädt `vendor/gsap.min.js` und ein eigenes Skript
+(Vorbild `mainscreen/aufdecken.js`, Jeopardy-Feld fliegt zur Frage). Regeln:
+
+- **Auslöser ist ein gespiegeltes Element**, kein Funkkanal: das Skript sieht
+  per `MutationObserver`, dass z. B. `#jeopardy-clue-ov` ankommt; was es
+  braucht, steht als `data-*` daran (`data-col`, `data-row`).
+- **Nur eigene Elemente animieren**, mit `data-nur-beamer` — `morphMirror`
+  überspringt sie. Gespiegelte Elemente nie animieren: der nächste Durchlauf
+  setzt ihr `style` zurück. Was verdeckt werden muss, verdeckt eine Klasse am
+  `<html>` (der Spiegel gleicht nur den `<body>` ab).
+- **FLIP vom Endzustand aus:** Elemente stehen auf ihrem Ziel (gleiche Box,
+  berechnete Stile), bewegt wird nur `transform`/`opacity`. Auf das Ziel
+  zurechnen ließ die Zahl 2–11 px daneben landen (`8116fbf` → `c7e7bb1`).
+- **Erst zwei Frames warten, `gsap.ticker.lagSmoothing(80, 16)`:** Haupt- und
+  Beamerfenster teilen sich einen Thread; beim Auslösen arbeitet das
+  Hauptfenster noch.
+- **Ausklang weich**, nie alle Ebenen gleichzeitig kurz ausblenden — das wirkt
+  wie ein harter Schnitt.
+- `prefers-reduced-motion` → keine Animation; Abbruch (Element verschwindet
+  mitten im Lauf) räumt sofort auf. Neues Skript im Deploy-Cache-Buster
+  (`pages.yml`) eintragen.
+
 ---
 
 ## 5 · Abnahme
