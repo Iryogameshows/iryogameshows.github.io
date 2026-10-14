@@ -12,6 +12,23 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `0f4e9e9` Design-Rework B Arcade
+
+**Gemacht:** „Automat 1987“ (Details im Commit). David hat Studio abgenommen
+(„das is krass, mach weiter mit dem rest“). Reihenfolge danach: B, D, E, I, K, L, O.
+Werkzeug: `swap.js` im Scratchpad ersetzt je Richtung Eintrag in `js/theme.js`, Block
+in `styles.css` (`/* ── K · ` bis zum nächsten Kopf) und die Symbol-Zeile.
+
+**Warum / verworfen:** Pixelify Sans für alles verworfen — 5 las sich als S, „Blau“ als
+„Glau“. Pixelify nur noch Logo/Überschriften, Felder und Zahlen Chakra Petch.
+Pixel-Mosaik-Filter der Symbole entfernt (Logo-Symbol war unsichtbar).
+
+**Geprüft:** `shots.js --themes B` ohne Befunde, Feud/Jeopardy/WWM/GM/Buzzer/DDF/TP
+angesehen. `check.js`, `--types` sauber.
+
+**Offen:** SVG-Filter `#ico-pixel`/`#ico-pixel-g` in `index.html` jetzt unbenutzt —
+beim Aufräumen am Ende entfernen. Sonst wie beim Studio-Eintrag darunter.
+
 ## 2026-10-14 — `26beddf` Design-Rework: Prototyp Studio (A) — wartet auf Davids Abnahme
 
 **Auftrag (David):** Designs komplett neu machen, nicht umbauen (Layout darf bleiben),
