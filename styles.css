@@ -5349,7 +5349,17 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   100% { clip-path: inset(0 0 0 0); }
 }
 
-/* ── K · Neon-Bar: Roehren auf dunklem Grund, aufgedeckt flackert es an ── */
+/* ── K · Neon-Bar (Rework 2026-10-14): Bar nach Ladenschluss ───────────────
+   Identitaet aus designs/s/K-*.html: dunkle Ziegelwand, Neonroehren in Pink,
+   Cyan, Bernstein und Gruen, Schreibschrift (Yellowtail) fuer Namen, Sora
+   fuer Zahlen und Versalien. Hier IST das Leuchten das Material - eine
+   Roehre ist eine Linie mit Schein, keine weiche Flaeche: jede Form ist
+   nur Kontur (2 px) plus Lichthof, nie gefuellt.
+   Jetzt auf allen Flaechen: Teamnamen als Leuchtschrift in der Teamfarbe
+   (BAUPLAN 4.4), X als rote Roehren, WWM-Leiter als Balken, die von links
+   nach rechts wachsen, PIH-Gebote auf dem Kassenbon, Menue als schief
+   haengende Leuchtschilder.
+   Signatur: aufgedeckt flackert die Roehre an. Eine Roehre ist ein --nc. */
 :root[data-theme="K"] {
   --brd-surface: rgba(23,13,16,.85);
   --brd-frame: 0 0 0 3px #FF4FA3, 0 0 14px #FF4FA3, 0 0 36px rgba(255,79,163,.45), inset 0 0 22px rgba(255,79,163,.3);
@@ -5381,16 +5391,69 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   --tile-radius: 14px;
   --tile-font: 'Sora', sans-serif;
   --tile-reveal: thKFlacker .9s linear;
+  --nc: #45F0FF;
 }
+/* Eine Roehre: Kontur, Lichthof aussen, Widerschein innen - in --nc.
+   Nur einfache Klassen in der Liste: :is() nimmt die hoechste Spezifitaet
+   seiner Liste an, ein zusammengesetzter Selektor darin wuerde jede
+   spaetere Zustandsregel (.done, .out, :hover) schlagen. */
+:root[data-theme="K"] :is(.wwm-ll, .ddf-player, .tp-team, .tp-stage, .wwds-cat, .wwds-opt, .wwds-q, .menu-card, .finale-score-card, .finale-reveal-team, .result-card, .pih-score, .pih-team, .menu-pill, .btn-secondary, .editor-card, .setup-lobby, .resume-banner, .team-card) {
+  box-shadow: 0 0 0 2px var(--nc), 0 0 12px var(--nc), inset 0 0 12px color-mix(in srgb, var(--nc) 35%, transparent);
+  border: 0; background: rgba(23,13,16,.55);
+}
+
+/* ── Teams als Leuchtschrift in der Teamfarbe, ohne Kasten ────────────── */
+:root[data-theme="K"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).red   { --tc: #FF5A4E; --nc: #FF5A4E; }
+:root[data-theme="K"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).blue  { --tc: #5B9BFF; --nc: #5B9BFF; }
+:root[data-theme="K"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).green { --tc: #7CFF6B; --nc: #7CFF6B; }
+:root[data-theme="K"] :is(.scoreboard, .jeopardy-scores) { gap: 18px; border-radius: 0; box-shadow: none; overflow: visible; }
+:root[data-theme="K"] :is(.team-panel, .jeopardy-team, .wwds-team):is(.red, .blue, .green) { background: transparent; border: 0; box-shadow: none; }
+:root[data-theme="K"] .team-card::before { display: none; }
+:root[data-theme="K"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name) {
+  font-family: 'Yellowtail', cursive; font-size: 1.7rem; letter-spacing: 0; text-transform: none; line-height: 1;
+  color: #FFF8F0; text-shadow: 0 0 6px var(--tc), 0 0 16px var(--tc);
+}
+:root[data-theme="K"] .jeopardy-team .jt-name { font-size: 1.3rem; }
+:root[data-theme="K"] :is(.team-panel .t-score, .jeopardy-team .jt-score, .wwds-team .wt-money) {
+  font-family: 'Sora', sans-serif; font-weight: 700; color: #FFF8F0; text-shadow: 0 0 6px var(--tc), 0 0 18px var(--tc), 0 0 40px var(--tc);
+}
+:root[data-theme="K"] .team-panel .t-score { font-size: 3.6rem; }
+/* Am Zug: der Name bekommt eine Bernsteinroehre darunter. */
+:root[data-theme="K"] .team-panel.active-team::after { left: 30%; right: 30%; height: 3px; border-radius: 3px; background: #FFE9C4; box-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
+:root[data-theme="K"] :is(.team-panel.active-team .t-name, .wwds-team.on .wt-name) { color: #FFF8F0; text-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
+:root[data-theme="K"] :is(.team-panel.active-team .t-score, .wwds-team.on .wt-money) { color: #FFF8F0; }
+:root[data-theme="K"] .wwds-team.on { box-shadow: none; border: 0; }
+:root[data-theme="K"] .wwds-team .wt-meta { color: rgba(255,243,224,.4); }
+
+/* X als Roehren: aus = dunkles Glas, an = rot. */
+:root[data-theme="K"] .team-strikes { background: none; border: 0; box-shadow: none; transform: none; }
+:root[data-theme="K"] .strike-pip { width: 28px; height: 28px; border-radius: 8px; background: transparent; border: 1.5px solid rgba(255,243,224,.12); color: rgba(255,243,224,.12); font-size: 1rem; }
+:root[data-theme="K"] .team-strikes .strike-pip.lit { box-shadow: 0 0 0 2px #FF3B3B, 0 0 12px #FF3B3B, inset 0 0 10px rgba(255,59,59,.35); border: 0; color: #FFF0F0; text-shadow: 0 0 6px #FF3B3B, 0 0 14px #FF3B3B; background: transparent; animation: thKFlacker .9s linear; }
+
+:root[data-theme="K"] .round-bar { font-family: 'Sora', sans-serif; color: rgba(255,243,224,.55); }
+:root[data-theme="K"] .round-bar .pts { color: #FFF8F0; font-size: 1.2rem; text-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
+
+/* ── Feud ─────────────────────────────────────────────────────────────── */
 :root[data-theme="K"] .board { padding: 24px; }
 :root[data-theme="K"] .answers { gap: 10px; }
 :root[data-theme="K"] .answers.split { row-gap: 10px; column-gap: 14px; }
-:root[data-theme="K"] .q-text { color: #FFF8F0; font-weight: 700; font-size: 1.25rem; text-shadow: 0 0 6px rgba(255,79,163,.9), 0 0 18px rgba(255,79,163,.6); }
+:root[data-theme="K"] .q-text { color: #FFF8F0; font-weight: 700; font-size: 1.15rem; letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 6px rgba(255,79,163,.9), 0 0 18px rgba(255,79,163,.6); }
+:root[data-theme="K"] .q-text.hidden-q { background: none; border: 2px dashed rgba(255,79,163,.35); border-radius: 14px; text-shadow: none; }
+:root[data-theme="K"] .tile:hover:not(.open) { transform: none; }
 :root[data-theme="K"] .tile.open .tile-answer { text-shadow: 0 0 6px rgba(69,240,255,.8); letter-spacing: 1.5px; }
-:root[data-theme="K"] .tile.open .tile-pts { color: #FFE14D; text-shadow: 0 0 6px #FFB52E, 0 0 14px rgba(255,181,46,.7); }
+:root[data-theme="K"] .tile.open .tile-pts { color: #FFE14D; text-shadow: 0 0 6px #FFB52E, 0 0 14px rgba(255,181,46,.7); box-shadow: none; }
+:root[data-theme="K"] .tile.missed .tile-inner { background: transparent !important; box-shadow: 0 0 0 2px #FF3B3B, 0 0 12px #FF3B3B, inset 0 0 12px rgba(255,59,59,.3) !important; }
+
+/* Finale */
+:root[data-theme="K"] :is(.finale-title, .winner-text, .tp-win-title, .wwds-banner, .elim-team) { font-family: 'Yellowtail', cursive; font-weight: 400; letter-spacing: 0; text-transform: none; color: #FFF8F0; text-shadow: 0 0 6px #FF4FA3, 0 0 18px #FF4FA3, 0 0 40px #FF4FA3; }
+:root[data-theme="K"] .finale-title { font-size: 2.8rem; }
+:root[data-theme="K"] .finale-score-card.active { --nc: #FFB52E; }
+:root[data-theme="K"] :is(.finale-score-pts, .finale-reveal-pts, .finale-timer) { color: #FFF8F0; font-family: 'Sora', sans-serif; font-weight: 700; text-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
+:root[data-theme="K"] .finale-big-q { font-family: 'Sora', sans-serif; font-weight: 700; text-shadow: 0 0 6px #45F0FF, 0 0 18px #45F0FF; }
+
+/* ── Jeopardy: Kategorien in Schreibschrift, jede Spalte ihre Roehre ──── */
 :root[data-theme="K"] .jeopardy-board { gap: 10px; padding: 16px; border-radius: 26px; }
 :root[data-theme="K"] .jeopardy-cat { font-family: 'Yellowtail', cursive; font-weight: 400; font-size: 1.5rem; letter-spacing: 0; text-transform: none; text-shadow: 0 0 6px #FF4FA3, 0 0 16px #FF4FA3; }
-/* Jede Spalte ihre eigene Roehrenfarbe, reihum wie im Entwurf. */
 :root[data-theme="K"] .jeopardy-cell { font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.9rem; box-shadow: inset 0 0 0 2px rgba(255,243,224,.08); }
 :root[data-theme="K"] .jeopardy-cell:nth-child(4n+1) { text-shadow: 0 0 6px #45F0FF, 0 0 16px #45F0FF; }
 :root[data-theme="K"] .jeopardy-cell:nth-child(4n+2) { text-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
@@ -5398,11 +5461,161 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="K"] .jeopardy-cell:hover:not(.used) { box-shadow: 0 0 0 2px #45F0FF, 0 0 14px #45F0FF; transform: none; }
 /* Verbraucht: die Roehre ist aus, die Zahl bleibt als dunkles Glas stehen. */
 :root[data-theme="K"] .jeopardy-cell.used { color: rgba(255,243,224,.1); text-shadow: none; }
+:root[data-theme="K"] .jeopardy-clue-cat { font-family: 'Yellowtail', cursive; font-size: 1.8rem; letter-spacing: 0; text-transform: none; color: #FFF8F0; text-shadow: 0 0 6px #FF4FA3, 0 0 16px #FF4FA3; }
+:root[data-theme="K"] .jeopardy-clue-pts { color: #FFF8F0; text-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
+:root[data-theme="K"] .jeopardy-clue-text { text-shadow: 0 0 6px rgba(69,240,255,.8), 0 0 18px rgba(69,240,255,.4); }
+:root[data-theme="K"] .jeopardy-clue-img { border-radius: 14px; border: 0; box-shadow: 0 0 0 2px #45F0FF, 0 0 14px #45F0FF; }
+
+/* ── WWM: Balken, die nach rechts wachsen; Antworten als Roehrenpillen ── */
+:root[data-theme="K"] .wwm-wrap { flex-direction: column; gap: 12px; }
+:root[data-theme="K"] .wwm-ladder { order: 2; width: 100%; flex-direction: row; align-items: flex-end; gap: 6px; padding: 0; background: none; border-radius: 0; box-shadow: none; }
+:root[data-theme="K"] .wwm-rung { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 5px; padding: 0; border-radius: 0; background: none; font-family: 'Sora', sans-serif; font-weight: 600; font-size: .56rem; letter-spacing: 0; text-align: center; color: rgba(255,243,224,.35); white-space: nowrap; }
+:root[data-theme="K"] .wwm-rung .wwm-lvl { display: none; }
+:root[data-theme="K"] .wwm-rung::before { content: ''; height: 10px; border-radius: 4px; box-shadow: inset 0 0 0 1.5px rgba(255,243,224,.12); }
+:root[data-theme="K"] .wwm-rung:nth-child(2)::before { height: 14px; }
+:root[data-theme="K"] .wwm-rung:nth-child(3)::before { height: 18px; }
+:root[data-theme="K"] .wwm-rung:nth-child(4)::before { height: 22px; }
+:root[data-theme="K"] .wwm-rung:nth-child(5)::before { height: 26px; }
+:root[data-theme="K"] .wwm-rung:nth-child(6)::before { height: 30px; }
+:root[data-theme="K"] .wwm-rung:nth-child(7)::before { height: 34px; }
+:root[data-theme="K"] .wwm-rung:nth-child(8)::before { height: 38px; }
+:root[data-theme="K"] .wwm-rung:nth-child(9)::before { height: 42px; }
+:root[data-theme="K"] .wwm-rung:nth-child(10)::before { height: 46px; }
+:root[data-theme="K"] .wwm-rung:nth-child(11)::before { height: 50px; }
+:root[data-theme="K"] .wwm-rung:nth-child(12)::before { height: 54px; }
+:root[data-theme="K"] .wwm-rung:nth-child(13)::before { height: 58px; }
+:root[data-theme="K"] .wwm-rung:nth-child(14)::before { height: 62px; }
+:root[data-theme="K"] .wwm-rung:nth-child(15)::before { height: 66px; }
+:root[data-theme="K"] .wwm-rung.won { color: rgba(255,243,224,.75); }
+:root[data-theme="K"] .wwm-rung.won::before { background: #BFFFAF; box-shadow: 0 0 6px #7CFF6B, 0 0 14px #7CFF6B; }
+:root[data-theme="K"] .wwm-rung.safe .wwm-amt { color: #FFF8F0; text-shadow: 0 0 6px #45F0FF; }
+:root[data-theme="K"] .wwm-rung.safe::before { box-shadow: inset 0 0 0 1.5px rgba(69,240,255,.6); }
+:root[data-theme="K"] .wwm-rung.current { background: none; color: #FFF8F0; }
+:root[data-theme="K"] .wwm-rung.current :is(.wwm-lvl, .wwm-amt) { color: #FFF8F0; text-shadow: 0 0 6px #FFB52E; }
+:root[data-theme="K"] .wwm-rung.current::before { background: #FFE9C4; box-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; animation: thKFlacker .9s linear; }
 :root[data-theme="K"] .wwm-q { color: #FFF8F0; font-weight: 700; text-shadow: 0 0 6px rgba(69,240,255,.8), 0 0 16px rgba(69,240,255,.5); }
 :root[data-theme="K"] .wwm-opt { border-radius: 999px; box-shadow: 0 0 0 2px #45F0FF, 0 0 12px rgba(69,240,255,.7), inset 0 0 12px rgba(69,240,255,.25); }
+:root[data-theme="K"] .wwm-opt:nth-child(even) { box-shadow: 0 0 0 2px #FFB52E, 0 0 12px rgba(255,181,46,.7), inset 0 0 12px rgba(255,181,46,.25); }
+:root[data-theme="K"] .wwm-opt:hover { filter: brightness(1.2); }
 :root[data-theme="K"] .wwm-opt .wwm-letter { font-family: 'Yellowtail', cursive; color: #FF4FA3; text-shadow: 0 0 8px #FF4FA3; }
-:root[data-theme="K"] .wwm-opt.selected { box-shadow: 0 0 0 2px #FF9F45, 0 0 14px #FF9F45, inset 0 0 14px rgba(255,159,69,.35); }
+:root[data-theme="K"] .wwm-opt.selected { box-shadow: 0 0 0 2px #FF4FA3, 0 0 16px #FF4FA3, inset 0 0 16px rgba(255,79,163,.4); }
 :root[data-theme="K"] .wwm-opt.correct { box-shadow: 0 0 0 2px #7CFF6B, 0 0 16px #7CFF6B, inset 0 0 16px rgba(124,255,107,.35); }
+:root[data-theme="K"] .wwm-opt.wrong { background: transparent; box-shadow: 0 0 0 2px #FF3B3B, 0 0 16px #FF3B3B; }
+:root[data-theme="K"] .wwm-lifelines { gap: 12px; justify-content: flex-end; }
+:root[data-theme="K"] .wwm-ll { --nc: #FF4FA3; width: auto; height: auto; padding: 5px 14px; border-radius: 999px; font-size: 0; }
+:root[data-theme="K"] .wwm-ll::before { font-family: 'Sora', sans-serif; font-weight: 700; font-size: .78rem; color: #FFF8F0; }
+:root[data-theme="K"] .wwm-ll:nth-child(1)::before { content: '50:50'; }
+:root[data-theme="K"] .wwm-ll:nth-child(2)::before { content: 'Telefon'; }
+:root[data-theme="K"] .wwm-ll:nth-child(3)::before { content: 'Publikum'; }
+:root[data-theme="K"] .wwm-ll.used { opacity: 1; box-shadow: 0 0 0 1.5px rgba(255,243,224,.12); }
+:root[data-theme="K"] .wwm-ll.used::before { color: rgba(255,243,224,.25); }
+:root[data-theme="K"] :is(.wwm-abar, .wwds-abar) { background: transparent; border-radius: 6px 6px 0 0; box-shadow: 0 0 0 2px #45F0FF, 0 0 12px #45F0FF, inset 0 0 12px rgba(69,240,255,.35); }
+:root[data-theme="K"] :is(.wwm-apct, .wa-pct) { color: #FFF8F0; text-shadow: 0 0 6px #45F0FF; }
+
+/* ── Wer weiss denn sowas: Schilder in drei Roehrenfarben ─────────────── */
+:root[data-theme="K"] .wwds-cat { --nc: #FF4FA3; }
+:root[data-theme="K"] .wwds-cat:nth-child(3n+2) { --nc: #45F0FF; }
+:root[data-theme="K"] .wwds-cat:nth-child(3n) { --nc: #FFB52E; }
+:root[data-theme="K"] .wwds-cat:hover:not(.done) { transform: none; filter: brightness(1.2); }
+:root[data-theme="K"] .wwds-cat .wc-num { font-family: 'Yellowtail', cursive; font-size: 1.3rem; color: #FFF8F0; text-shadow: 0 0 6px var(--nc); }
+:root[data-theme="K"] .wwds-cat.done { box-shadow: 0 0 0 1.5px rgba(255,243,224,.1); opacity: .5; }
+:root[data-theme="K"] .wwds-q { --nc: #45F0FF; font-weight: 700; text-shadow: 0 0 6px rgba(69,240,255,.7); }
+:root[data-theme="K"] .wwds-cat-chip { background: none; border: 0; font-family: 'Yellowtail', cursive; font-size: 1.3rem; letter-spacing: 0; text-transform: none; color: #FFF8F0; text-shadow: 0 0 6px #FF4FA3, 0 0 14px #FF4FA3; }
+:root[data-theme="K"] .wwds-opt { --nc: #FF4FA3; border-radius: 999px; }
+:root[data-theme="K"] .wwds-opt:nth-child(2) { --nc: #45F0FF; }
+:root[data-theme="K"] .wwds-opt:nth-child(3) { --nc: #FFB52E; }
+:root[data-theme="K"] .wwds-opt.sel { --nc: #FFE14D; }
+:root[data-theme="K"] .wwds-opt.right { --nc: #7CFF6B; }
+:root[data-theme="K"] .wwds-opt.bad { --nc: #FF3B3B; background: transparent; }
+:root[data-theme="K"] .wwds-opt .wo-let { font-family: 'Yellowtail', cursive; color: #FFF8F0; text-shadow: 0 0 6px var(--nc); }
+:root[data-theme="K"] .wwds-guess { border-radius: 12px; background: transparent; border: 0; box-shadow: 0 0 0 2px #FFB52E, 0 0 12px #FFB52E; }
+:root[data-theme="K"] .wwds-timer { text-shadow: 0 0 6px #45F0FF, 0 0 18px #45F0FF; }
+
+/* ── Der Duemmste fliegt: Kandidaten als runde Roehrenschilder ────────── */
+:root[data-theme="K"] .ddf-player { --nc: #45F0FF; border-radius: 999px; }
+:root[data-theme="K"] .ddf-player:nth-child(3n+2) { --nc: #FF4FA3; }
+:root[data-theme="K"] .ddf-player:nth-child(3n) { --nc: #FFB52E; }
+:root[data-theme="K"] .ddf-player-name { font-family: 'Yellowtail', cursive; font-size: 1.5rem; font-weight: 400; color: #FFF8F0; text-shadow: 0 0 6px var(--nc), 0 0 14px var(--nc); }
+:root[data-theme="K"] .ddf-player.picked { --nc: #FF3B3B; }
+:root[data-theme="K"] .ddf-player.out { --nc: rgba(255,243,224,.15); box-shadow: 0 0 0 1.5px rgba(255,243,224,.12); transform: none; }
+:root[data-theme="K"] .ddf-heart.full { color: #FFE0EE; text-shadow: 0 0 5px #FF4FA3, 0 0 10px #FF4FA3; }
+:root[data-theme="K"] .ddf-heart.empty { color: rgba(255,243,224,.1); }
+:root[data-theme="K"] .ddf-question { font-family: 'Yellowtail', cursive; font-weight: 400; color: #FFF8F0; text-shadow: 0 0 6px #FF4FA3, 0 0 18px #FF4FA3; }
+:root[data-theme="K"] .ddf-answer { color: #F0FFEC; text-shadow: 0 0 6px #7CFF6B, 0 0 16px #7CFF6B; }
+
+/* ── Der Preis ist heiss: Gebote auf dem Kassenbon ────────────────────── */
+:root[data-theme="K"] .pih-scores { border-bottom-color: rgba(255,243,224,.1); }
+:root[data-theme="K"] .pih-score { --nc: rgba(69,240,255,.55); background: transparent; }
+:root[data-theme="K"] .pih-score.lead { --nc: #FFB52E; background: transparent; }
+:root[data-theme="K"] .pih-score-pts { color: #FFF8F0; text-shadow: 0 0 6px #FFB52E; }
+:root[data-theme="K"] .pih-team { background: transparent; --nc: var(--team); }
+:root[data-theme="K"] .pih-item { font-family: 'Yellowtail', cursive; font-weight: 400; font-size: 2.3rem; color: #FFF8F0; text-shadow: 0 0 6px #FF4FA3, 0 0 18px #FF4FA3; }
+:root[data-theme="K"] .pih-stage :is(img, video) { border-radius: 14px; box-shadow: 0 0 0 2px #45F0FF, 0 0 14px #45F0FF; }
+:root[data-theme="K"] .pih-price { font-family: 'Sora', sans-serif; font-weight: 700; color: #FFF8F0; text-shadow: 0 0 6px #FFB52E, 0 0 18px #FFB52E, 0 0 40px #FFB52E; }
+:root[data-theme="K"] .pih-bid-grid:has(.pih-bid-row) {
+  padding: 14px 18px 22px; background: #F4EFE4; color: #2A2420;
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 9px) no-repeat, conic-gradient(from -45deg at 50% 100%, #000 0 90deg, #0000 0) bottom / 18px 9px repeat-x;
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - 9px) no-repeat, conic-gradient(from -45deg at 50% 100%, #000 0 90deg, #0000 0) bottom / 18px 9px repeat-x;
+  box-shadow: 0 10px 30px rgba(0,0,0,.5);
+}
+:root[data-theme="K"] .pih-bid-row { background: transparent; border: 0; border-bottom: 1px dashed rgba(42,36,32,.35); border-radius: 0; box-shadow: none; color: #2A2420; font-family: ui-monospace, Consolas, 'Courier New', monospace; font-size: .95rem; --fg-rgb: 42,36,32; }
+:root[data-theme="K"] .pih-bid-row.win { background: transparent; border-bottom: 1px dashed rgba(42,36,32,.35); box-shadow: none; color: #2A2420; font-weight: 800; }
+:root[data-theme="K"] .pih-bid-row.win .pih-bid-name::before { content: '*** '; }
+
+/* ── Trivial Pursuit ──────────────────────────────────────────────────── */
+:root[data-theme="K"] .tp-team { border-radius: 18px; }
+:root[data-theme="K"] .tp-team.turn { transform: none; box-shadow: 0 0 0 2px var(--nc), 0 0 22px var(--nc), inset 0 0 18px color-mix(in srgb, var(--nc) 45%, transparent); }
+:root[data-theme="K"] .tp-team-name { font-family: 'Yellowtail', cursive; font-weight: 400; font-size: 1.5rem; color: #FFF8F0; text-shadow: 0 0 6px var(--nc), 0 0 14px var(--nc); }
+:root[data-theme="K"] .tp-stage { --nc: #FFB52E; border-radius: 22px; }
+:root[data-theme="K"] .tp-catchip { border-radius: 999px; }
+:root[data-theme="K"] .tp-question { color: #FFF8F0; text-shadow: 0 0 6px rgba(69,240,255,.8), 0 0 16px rgba(69,240,255,.4); }
+:root[data-theme="K"] .tp-answer { background: transparent; border: 0; color: #F0FFEC; box-shadow: 0 0 0 2px #7CFF6B, 0 0 12px #7CFF6B; text-shadow: 0 0 6px #7CFF6B; }
+:root[data-theme="K"] .tp-answer.hidden { box-shadow: none; border: 2px dashed rgba(255,243,224,.15); text-shadow: none; }
+:root[data-theme="K"] .tp-wheel-rotor { box-shadow: 0 0 0 3px #FF4FA3, 0 0 16px #FF4FA3, 0 0 40px rgba(255,79,163,.4); }
+:root[data-theme="K"] .tp-wheel-hub { background: #170D10; border: 2px solid #45F0FF; box-shadow: 0 0 12px #45F0FF; color: #FFF8F0; text-shadow: 0 0 6px #45F0FF; }
+:root[data-theme="K"] .tp-wheel-pointer { border-top-color: #FFE9C4; filter: drop-shadow(0 0 6px #FFB52E); }
+
+/* ── Ergebnis, Turnier ────────────────────────────────────────────────── */
+:root[data-theme="K"] .winner-text { font-size: 3.4rem; }
+:root[data-theme="K"] .result-card { --nc: #45F0FF; backdrop-filter: none; }
+:root[data-theme="K"] .result-scores strong { color: #FFF8F0; text-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
+:root[data-theme="K"] .tour-bar { height: 8px; background: rgba(255,243,224,.06); }
+:root[data-theme="K"] .tour-bar-fill { background: #FFE0EE; box-shadow: 0 0 6px #FF4FA3, 0 0 14px #FF4FA3; }
+:root[data-theme="K"] .tour-total { color: #FFF8F0; text-shadow: 0 0 6px #FF4FA3; }
+:root[data-theme="K"] .q-list-item.tour-lead { background: transparent; box-shadow: 0 0 0 2px #FFB52E, 0 0 12px #FFB52E; }
+
+/* ── Host: Menue als schief haengende Leuchtschilder ──────────────────── */
+:root[data-theme="K"] .menu-card { --nc: #FF4FA3; border-radius: 16px; }
+:root[data-theme="K"] .menu-card:nth-child(4n+2) { --nc: #45F0FF; rotate: 1.5deg; }
+:root[data-theme="K"] .menu-card:nth-child(4n+3) { --nc: #FFB52E; rotate: -1deg; }
+:root[data-theme="K"] .menu-card:nth-child(4n)   { --nc: #7CFF6B; rotate: 2deg; }
+:root[data-theme="K"] .menu-card:nth-child(4n+1) { rotate: -2deg; }
+:root[data-theme="K"] .menu-card::before { display: none; }
+:root[data-theme="K"] .menu-card:hover { transform: translateY(-4px); background: rgba(23,13,16,.55); border: 0; box-shadow: 0 0 0 2px var(--nc), 0 0 24px var(--nc), inset 0 0 18px color-mix(in srgb, var(--nc) 45%, transparent); }
+:root[data-theme="K"] .menu-card-title { font-family: 'Yellowtail', cursive; font-weight: 400; font-size: 1.6rem; color: #FFF8F0; text-shadow: 0 0 6px var(--nc), 0 0 14px var(--nc); }
+:root[data-theme="K"] .menu-pill { --nc: rgba(69,240,255,.6); }
+:root[data-theme="K"] :is(.menu-pill:hover, .menu-pill.active) { --nc: #45F0FF; color: #FFF8F0; background: transparent; }
+:root[data-theme="K"] .menu-divider { height: 2px; background: #FFE0EE; box-shadow: 0 0 6px #FF4FA3, 0 0 14px #FF4FA3; }
+:root[data-theme="K"] .btn { border-radius: 999px; }
+:root[data-theme="K"] .btn:hover { transform: none; }
+:root[data-theme="K"] .btn-primary { background: transparent; color: #FFF8F0; text-shadow: 0 0 6px #FF4FA3; box-shadow: 0 0 0 2px #FF4FA3, 0 0 14px #FF4FA3, inset 0 0 14px rgba(255,79,163,.45); }
+:root[data-theme="K"] .btn-primary:hover { box-shadow: 0 0 0 2px #FF4FA3, 0 0 24px #FF4FA3, inset 0 0 18px rgba(255,79,163,.6); }
+:root[data-theme="K"] .btn-primary::after { display: none; }
+:root[data-theme="K"] .btn-secondary { --nc: rgba(69,240,255,.6); color: #FFF8F0; backdrop-filter: none; }
+:root[data-theme="K"] .btn-danger { background: transparent; color: #FFF0F0; box-shadow: 0 0 0 2px #FF3B3B, 0 0 14px #FF3B3B; }
+:root[data-theme="K"] :is(.editor-card, .setup-lobby, .resume-banner) { --nc: rgba(255,79,163,.45); border-radius: 18px; }
+:root[data-theme="K"] .team-card { border-radius: 18px; }
+:root[data-theme="K"] .page-title { font-family: 'Yellowtail', cursive; font-weight: 400; text-transform: none; text-shadow: 0 0 6px #FF4FA3, 0 0 18px #FF4FA3; }
+
+/* Niedriges Fenster (Beamer 1280x720): Feud mit langer Frage lag 21 px
+   unter dem Bild - Zahlen und Brett etwas flacher. */
+@media (max-height: 900px) {
+  :root[data-theme="K"] .team-panel .t-score { font-size: 2.9rem; }
+  :root[data-theme="K"] .team-panel { padding-block: 10px; }
+  :root[data-theme="K"] .board { padding: 16px 22px; }
+  :root[data-theme="K"] .answers, :root[data-theme="K"] .answers.split { gap: 7px; row-gap: 7px; }
+}
+
 /* Eine Neonroehre zuendet: zweimal Aussetzer, dann steht sie. */
 @keyframes thKFlacker {
   0%, 8%   { opacity: 0; }
@@ -5412,6 +5625,10 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   46%, 50% { opacity: .4; }
   52%, 100% { opacity: 1; }
 }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="K"] :is(.team-strikes .strike-pip.lit, .wwm-rung.current::before) { animation: none; }
+}
+
 
 /* ── L · New York: Zeitungssatz, Kreuzwortraetsel, geschwaerzte Zeilen ── */
 :root[data-theme="L"] {

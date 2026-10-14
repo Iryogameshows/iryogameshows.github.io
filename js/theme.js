@@ -306,7 +306,11 @@ const DESIGN_THEMES = [
       "--gold-dark": "#8A1A50",
       "--gold-pale": "#FF9FCB",
       "--ink": "#170D10"
-    } },
+    },
+    /* GM-Fenster und Gamepad: Roehrenkonturen statt Flaechen. */
+    gm: ".gm-btn,.chip,.badge,.tag,.round-label,.gm-tab{border-radius:999px;}.panel,.answer,.score-card,.score-row,.order-item,.info-card{border-radius:14px;}"
+      + ".gm-title{font-family:'Yellowtail',cursive;font-size:1.6rem;letter-spacing:0;text-shadow:0 0 6px #FF4FA3,0 0 14px #FF4FA3;color:#FFF8F0;}"
+      + ".gm-btn.gold,.gm-btn.gm-gold{background:transparent;color:#FFF8F0;box-shadow:0 0 0 2px #FF4FA3,0 0 12px #FF4FA3,inset 0 0 10px rgba(255,79,163,.4);}" },
   { key: "L", name: "New York", hell: true,
     fonts: "https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap",
     vars: {

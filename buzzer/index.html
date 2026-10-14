@@ -343,6 +343,12 @@
   :root[data-theme="K"] #buzz{font-weight:400;font-size:4rem;letter-spacing:0;text-transform:none;
     text-shadow:0 0 8px #FFF8F0,0 0 18px #FF4FA3;
     box-shadow:0 0 0 4px #FFF8F0,0 0 16px 6px #FF4FA3,0 0 60px #FF4FA3,inset 0 0 24px rgba(255,79,163,.6);}
+  /* Rework 2026-10-14: Knoepfe und Felder als Roehren wie auf der Leinwand. */
+  :root[data-theme="K"] .btn{border-radius:999px;background:transparent;color:#FFF8F0;text-shadow:0 0 6px #FF4FA3;box-shadow:0 0 0 2px #FF4FA3,0 0 14px #FF4FA3,inset 0 0 14px rgba(255,79,163,.45);}
+  :root[data-theme="K"] .btn.ghost{box-shadow:0 0 0 2px rgba(69,240,255,.6),0 0 10px rgba(69,240,255,.5);text-shadow:none;}
+  :root[data-theme="K"] :is(input,.vote-opt){border-radius:999px;border-color:rgba(69,240,255,.45);}
+  :root[data-theme="K"] :is(.lobby-team,.team-chip){font-family:'Yellowtail',cursive;font-weight:400;font-size:1.4rem;}
+  :root[data-theme="K"] .lobby-title,:root[data-theme="K"] h1{font-family:'Yellowtail',cursive;font-weight:400;letter-spacing:0;text-transform:none;font-size:1.8rem;color:#FFF8F0;text-shadow:0 0 6px #FF4FA3,0 0 14px #FF4FA3;}
 
   /* L New York: Satzspiegel - eckig, doppelte Linie. */
   :root[data-theme="L"] #buzz{border-radius:2px;border:7px double #1A1712;font-weight:900;font-size:3rem;letter-spacing:1px;text-transform:none;
