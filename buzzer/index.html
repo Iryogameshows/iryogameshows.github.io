@@ -353,6 +353,15 @@
   /* L New York: Satzspiegel - eckig, doppelte Linie. */
   :root[data-theme="L"] #buzz{border-radius:2px;border:7px double #1A1712;font-weight:900;font-size:3rem;letter-spacing:1px;text-transform:none;
     box-shadow:0 8px 0 #1A1712;}
+  /* Rework 2026-10-14: der Knopf ist ein Stempel - rund, Doppelrand,
+     leicht schief gesetzt, flache Teamfarbe. */
+  :root[data-theme="L"] #buzz{--buzz-rand:10px;border-radius:50%;background:var(--buzz-mid,#E8453C);rotate:-6deg;box-shadow:0 0 0 6px #E6DECA,0 0 0 8px #1A1712;}
+  :root[data-theme="L"] #buzz::after{border-radius:50%;}
+  :root[data-theme="L"] .wait-orb{border-radius:50%;background:var(--buzz-mid,#E8453C);}
+  :root[data-theme="L"] :is(input,.btn,.vote-opt,.lobby-team,.team-chip,.lobby-badge,.icon-btn){border-radius:0;}
+  :root[data-theme="L"] .btn{background:#1A1712;color:#EFE8D6;box-shadow:none;font-family:'Old Standard TT',serif;font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:.9rem;}
+  :root[data-theme="L"] .btn.ghost{background:transparent;border:1px solid #1A1712;color:#1A1712;}
+  :root[data-theme="L"] .lobby-title{font-family:'Playfair Display',serif;font-weight:900;color:#1A1712;font-size:1.8rem;}
 
   /* M Aurora: Glaskugel mit Lichtkante. */
   :root[data-theme="M"] #buzz{font-weight:800;font-size:2.6rem;letter-spacing:3px;

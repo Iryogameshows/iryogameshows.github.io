@@ -311,17 +311,20 @@ const DESIGN_THEMES = [
     gm: ".gm-btn,.chip,.badge,.tag,.round-label,.gm-tab{border-radius:999px;}.panel,.answer,.score-card,.score-row,.order-item,.info-card{border-radius:14px;}"
       + ".gm-title{font-family:'Yellowtail',cursive;font-size:1.6rem;letter-spacing:0;text-shadow:0 0 6px #FF4FA3,0 0 14px #FF4FA3;color:#FFF8F0;}"
       + ".gm-btn.gold,.gm-btn.gm-gold{background:transparent;color:#FFF8F0;box-shadow:0 0 0 2px #FF4FA3,0 0 12px #FF4FA3,inset 0 0 10px rgba(255,79,163,.4);}" },
+  /* New York, Rework 2026-10-14: Zeitungspapier statt mittelbraunem Grund
+     mit Vignette - der Entwurf ist durchgehend Papier. Korn als dunkle
+     Papierfasern; den Falz zeichnet styles.css (body::before). */
   { key: "L", name: "New York", hell: true,
     fonts: "https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap",
     vars: {
       "--font-display": "'Playfair Display', serif",
       "--font-body": "'Old Standard TT', serif",
       "--font-logo": "'UnifrakturMaguntia', serif",
-      "--bg": "#978C73",
-      "--bg-img": "radial-gradient(ellipse 90% 80% at 50% 45%, rgba(255,250,235,.08) 0%, rgba(30,22,10,0) 55%, rgba(20,14,6,.55) 100%)",
-      "--bg-size": "auto",
-      "--panel": "#D2C8B0",
-      "--panel-hi": "#DDD4BE",
+      "--bg": "#E6DECA",
+      "--bg-img": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .08 0 0 0 0 .05 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23p)'/%3E%3C/svg%3E\")",
+      "--bg-size": "200px 200px",
+      "--panel": "#EFE8D6",
+      "--panel-hi": "#F6F1E4",
       "--line": "#1A1712",
       "--fg": "#1A1712",
       "--fg-rgb": "0,0,0",
@@ -337,7 +340,11 @@ const DESIGN_THEMES = [
       "--accent-text": "#1A1712",
       "--accent-text-rgb": "26,23,18",
       "--on-accent": "#E8E0CC"
-    } },
+    },
+    /* GM-Fenster und Gamepad: Satz statt Flaechen - eckig, Linien, Schwarz. */
+    gm: ".chip,.round-label,.score-card,.qnote,.answer,.panel,.badge,.pr-team-btn,.buzz-row,.info-card,.gm-btn,.tag,.gm-tab,.order-item,.notes-panel textarea,.score-row,.sr-val{border-radius:0;}"
+      + ".gm-title,.score-val,.sr-val{font-family:'Playfair Display',serif;font-weight:900;}"
+      + ".gm-btn.gold,.gm-btn.gm-gold{background:#1A1712;color:#EFE8D6;box-shadow:none;}" },
   { key: "M", name: "Aurora", hell: false,
     fonts: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap",
     vars: {

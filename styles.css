@@ -3707,7 +3707,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="I"] { --ico-fill:none; --ico-fstroke:#C9A54C; --ico-fsw:2; --ico-line:#C9A54C; --ico-lw:2; --ico-cut:none; --ico-cutline:#C9A54C; --ico-cutlw:1.5; --ico-dim:none; --ico-dimline:rgba(201,165,76,.4); }
 :root[data-theme="J"] { --ico-fill:none; --ico-fstroke:#EDEDE6; --ico-fsw:3; --ico-line:#EDEDE6; --ico-lw:3; --ico-cut:none; --ico-cutline:#EDEDE6; --ico-cutlw:2.5; --ico-dim:none; --ico-dimline:rgba(237,237,230,.35); --ico-filter:url(#ico-chalk); }
 :root[data-theme="K"] { --ico-fill:none; --ico-fstroke:#FF4FA3; --ico-fsw:3; --ico-line:#45F0FF; --ico-lw:3; --ico-cut:none; --ico-cutline:#FF4FA3; --ico-cutlw:2; --ico-dim:none; --ico-dimline:rgba(255,79,163,.3); --ico-filter:drop-shadow(0 0 3px #FF4FA3) drop-shadow(0 0 8px #FF4FA3); }
-:root[data-theme="L"] { --ico-fill:#1A1712; --ico-line:#1A1712; --ico-cut:#978C73; --ico-dim:rgba(26,23,18,.35); }
+:root[data-theme="L"] { --ico-fill:#1A1712; --ico-line:#1A1712; --ico-cut:#E6DECA; --ico-dim:rgba(26,23,18,.35); }
 :root[data-theme="M"] { --ico-fill:url(#ico-aurora); --ico-line:#B7A6FF; --ico-cut:#070A1A; --ico-dim:rgba(183,166,255,.25); --ico-filter:drop-shadow(0 0 6px rgba(183,166,255,.6)); }
 :root[data-theme="N"] { --ico-fill:#F06A4E; --ico-line:#163936; --ico-cut:#FBF5E8; --ico-dim:#9CCBC0; --ico-filter:drop-shadow(2px 3px 0 rgba(22,57,54,.25)); }
 :root[data-theme="O"] { --ico-fill:url(#ico-scan); --ico-line:#7CFFA0; --ico-cut:#05140B; --ico-dim:#1F5A33; --ico-filter:drop-shadow(0 0 4px rgba(124,255,160,.7)); }
@@ -5630,10 +5630,21 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 }
 
 
-/* ── L · New York: Zeitungssatz, Kreuzwortraetsel, geschwaerzte Zeilen ── */
+/* ── L · New York (Rework 2026-10-14): die Zeitung als Buehne ───────────────
+   Identitaet aus designs/s/L-*.html: Zeitungspapier mit Falz, schwarze
+   Druckfarbe, Playfair 900 fuer Schlagzeilen, Old Standard fuer Spitzmarken
+   in gesperrten Kapitaelchen, Fraktur nur im Kopf. Vorher stand die Show auf
+   mittelbraunem Grund mit Vignette - der Entwurf ist aber durchgehend
+   Papier. Jetzt ist jede Flaeche eine Zeitungsseite:
+   Spielstand-Kasten mit Teamfarb-Quadrat (BAUPLAN 4.4), "Dementis" als
+   schwarze X-Kaesten, Jeopardy als Kreuzwortraetsel mit Feldnummern, WWM als
+   Stimmzettel mit Gewinnstufen-Tabelle, Kleinanzeigen bei PIH (Gewinner
+   eingekreist), ein roter "Ausgeschieden"-Stempel bei DDF, das Menue als
+   Inhaltsverzeichnis. Keine Schatten, keine Rundungen - nur Linien und Satz.
+   Signatur: wie frisch gedruckt. */
 :root[data-theme="L"] {
-  --brd-surface: #EDE6D3;
-  --brd-frame: 0 0 0 1px #1A1712, 0 0 0 5px #EDE6D3, 0 0 0 7px #1A1712, 0 14px 30px rgba(20,14,6,.35);
+  --brd-surface: #EFE8D6;
+  --brd-frame: 0 0 0 1px #1A1712, 0 0 0 5px #EFE8D6, 0 0 0 7px #1A1712;
   --brd-well: #1A1712;
   --brd-inner: transparent;
   --brd-radius: 0;
@@ -5642,7 +5653,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   --tile-hover: rgba(26,23,18,.05);
   --tile-edge: inset 0 -1px 0 rgba(26,23,18,.35);
   --tile-fg: #1A1712;
-  --tile-head: #EDE6D3;
+  --tile-head: #EFE8D6;
   --tile-head-fg: #1A1712;
   --tile-used: #1A1712;
   --tile-num: #1A1712;
@@ -5654,37 +5665,246 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   --tile-open-edge: inset 0 -2px 0 #1A1712;
   --tile-open-fg: #1A1712;
   --tile-open-dim: #1A1712;
-  --tile-pts-bg: #EDE6D3;
+  --tile-pts-bg: #EFE8D6;
   --tile-pts-rule: #1A1712;
   --tile-pick: #1A1712;
-  --tile-pick-fg: #EDE6D3;
-  --tile-right: repeating-linear-gradient(-45deg, rgba(26,23,18,.18) 0 2px, transparent 2px 7px), #EDE6D3;
+  --tile-pick-fg: #EFE8D6;
+  --tile-right: repeating-linear-gradient(-45deg, rgba(26,23,18,.18) 0 2px, transparent 2px 7px), #EFE8D6;
   --tile-right-fg: #1A1712;
   --tile-radius: 0;
   --tile-font: 'Playfair Display', serif;
   --tile-reveal: thLDruck .6s ease-out;
+  --l-ink: #1A1712;
+  --l-paper: #EFE8D6;
+  --l-kap: 'Old Standard TT', serif;
 }
+/* Der Falz in der Mitte der Seite, wie im Entwurf. */
+:root[data-theme="L"] body::before {
+  content: ''; position: fixed; top: 0; bottom: 0; left: 50%; width: 40px; margin-left: -20px; z-index: -1; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(26,23,18,.05) 45%, rgba(255,255,255,.18) 50%, rgba(26,23,18,.04) 55%, transparent);
+}
+
+/* ── Spielstand-Kaesten ───────────────────────────────────────────────── */
+:root[data-theme="L"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).red   { --tc: #B4232F; }
+:root[data-theme="L"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).blue  { --tc: #2453B8; }
+:root[data-theme="L"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).green { --tc: #1E7A42; }
+:root[data-theme="L"] :is(.scoreboard, .jeopardy-scores) { gap: 14px; border-radius: 0; box-shadow: none; overflow: visible; }
+:root[data-theme="L"] :is(.team-panel, .jeopardy-team, .wwds-team, .team-card):is(.red, .blue, .green) {
+  --fg: #1A1712; --fg-rgb: 26,23,18; --muted: #4A443A; --accent-text: #1A1712; --accent-text-rgb: 26,23,18;
+  --field-bg: rgba(255,255,255,.6); --field-line: rgba(26,23,18,.35);
+  color: #1A1712; background: transparent; border: 0; border-radius: 0;
+  box-shadow: inset 0 3px 0 #1A1712, inset 0 -1px 0 #1A1712; text-align: left;
+}
+:root[data-theme="L"] .team-card::before { display: none; }
+/* Der helle Feldgrund muss gegen die Hell-Regel weiter unten gewinnen, die
+   auf Teamkarten dunkle Felder setzt (dort sind die Karten sonst farbig). */
+:root[data-theme="L"][data-theme-hell] :is(.team-card, .team-panel, .jeopardy-team, .wwds-team):is(.red, .blue, .green) { --field-bg: rgba(255,255,255,.6); --field-line: rgba(26,23,18,.35); }
+/* Leise Hinweise (#9a9a9a fest) waren auf Papier kaum lesbar. */
+:root[data-theme="L"] :is(.ddf-note, .pih-note) { color: #4A443A; }
+:root[data-theme="L"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name, .team-card .label) {
+  font-family: var(--l-kap); font-weight: 700; font-size: .7rem; letter-spacing: 2.5px; color: #1A1712;
+}
+:root[data-theme="L"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name, .team-card .label)::before {
+  content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 7px; background: var(--tc); vertical-align: 0;
+}
+:root[data-theme="L"] :is(.team-panel .t-score, .jeopardy-team .jt-score, .wwds-team .wt-money) {
+  font-family: 'Playfair Display', serif; font-weight: 900; color: #1A1712; text-shadow: none; text-align: right; line-height: 1;
+}
+:root[data-theme="L"] .team-panel .t-score { font-size: 3rem; }
+:root[data-theme="L"] .team-panel.active-team { padding: 16px 12px; box-shadow: inset 0 3px 0 #1A1712, inset 0 -5px 0 #1A1712; }
+:root[data-theme="L"] .team-panel.active-team::after { display: none; }
+:root[data-theme="L"] .wwds-team.on { border: 0; box-shadow: inset 0 3px 0 #1A1712, inset 0 -5px 0 #1A1712; }
+:root[data-theme="L"] :is(.team-panel.active-team .t-score, .wwds-team.on .wt-money) { color: #1A1712; text-shadow: none; }
+:root[data-theme="L"] :is(.team-panel.active-team .t-name, .wwds-team.on .wt-name)::after { content: '  · am Zug'; font-style: italic; letter-spacing: .5px; text-transform: none; white-space: pre; }
+
+/* "Dementis": schwarze Kaesten mit X. */
+:root[data-theme="L"] .team-strikes { justify-content: flex-start; background: none; border: 0; border-radius: 0; padding: 0; box-shadow: none; transform: none; }
+:root[data-theme="L"] .strike-pip { width: 26px; height: 26px; border-radius: 0; background: transparent; border: 1px solid #1A1712; color: rgba(26,23,18,.25); font-family: 'Playfair Display', serif; font-weight: 900; font-size: .9rem; }
+:root[data-theme="L"] .strike-pip.lit { background: #1A1712; border-color: #1A1712; color: #EFE8D6; box-shadow: none; }
+
+/* Folio-Zeile wie oben auf jeder Zeitungsseite. */
+:root[data-theme="L"] .round-bar { align-self: stretch; padding: 4px 0; border-top: 1px solid #1A1712; border-bottom: 1px solid #1A1712; font-family: var(--l-kap); font-weight: 700; letter-spacing: 2.5px; color: #1A1712; font-size: .66rem; }
+:root[data-theme="L"] .round-bar .pts { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.1rem; letter-spacing: 0; color: #1A1712; }
+
+/* ── Feud: Umfrage mit geschwaerzten und schraffierten Zeilen ─────────── */
 :root[data-theme="L"] .q-text { color: #1A1712; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.7rem; line-height: 1.1; justify-content: flex-start; text-align: left; border-bottom: 1px solid #1A1712; border-radius: 0; margin-bottom: 8px; }
-:root[data-theme="L"] .q-text.hidden-q { justify-content: center; }
+:root[data-theme="L"] .q-text::before { content: 'Umfrage: '; font-style: italic; font-weight: 700; margin-right: .3em; }
+:root[data-theme="L"] .q-text.hidden-q { justify-content: center; background: none; border: 0; border-bottom: 1px solid #1A1712; }
+:root[data-theme="L"] .q-text.hidden-q::before { display: none; }
+:root[data-theme="L"] .q-text.hidden-q::after { color: #1A1712; font-family: var(--l-kap); }
+:root[data-theme="L"] .tile:hover:not(.open) { transform: none; }
 :root[data-theme="L"] .tile-num { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.15rem; }
+:root[data-theme="L"] .tile-num::after { content: '.'; }
 /* Verdeckt: eine geschwaerzte Zeile, wie zensiert. */
 :root[data-theme="L"] .tile:not(.open) .tile-center { justify-content: flex-start; padding-left: 14px; }
 :root[data-theme="L"] .tile:not(.open) .tile-center::after { height: 12px; border-radius: 0; width: 46%; }
 :root[data-theme="L"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 1.3rem; }
-:root[data-theme="L"] .tile.open .tile-pts { color: #1A1712; text-shadow: none; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.6rem; }
-/* Jeopardy als Kreuzwortraetsel: 1px-Gitter, verbrauchte Felder schwarz. */
-:root[data-theme="L"] .jeopardy-board { gap: 1px; padding: 1px; }
-:root[data-theme="L"] .jeopardy-cat { font-family: 'Old Standard TT', serif; font-weight: 700; font-size: .75rem; letter-spacing: 1.5px; }
-:root[data-theme="L"] .jeopardy-cell { background: #FBF8F0; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.8rem; letter-spacing: 0; }
+:root[data-theme="L"] .tile.open .tile-pts { color: #1A1712; text-shadow: none; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.6rem; box-shadow: none; }
+:root[data-theme="L"] .tile.missed .tile-inner { background: transparent !important; box-shadow: inset 0 -1px 0 rgba(26,23,18,.35) !important; color: #6E6556; font-style: italic; }
+
+/* Finale */
+:root[data-theme="L"] :is(.finale-title, .winner-text, .tp-win-title, .wwds-banner) { font-family: 'Playfair Display', serif; font-weight: 900; letter-spacing: 0; text-transform: none; color: #1A1712; text-shadow: none; }
+:root[data-theme="L"] .elim-team { font-family: 'Playfair Display', serif; font-weight: 900; text-shadow: none; }
+:root[data-theme="L"] :is(.finale-team-label, .finale-q-info) { font-family: var(--l-kap); letter-spacing: 2.5px; color: #1A1712; }
+:root[data-theme="L"] :is(.finale-score-card, .finale-reveal-team) { background: transparent; border: 0; border-radius: 0; box-shadow: inset 0 0 0 1px #1A1712; }
+:root[data-theme="L"] .finale-score-card.active { background: transparent; box-shadow: inset 0 0 0 1px #1A1712, inset 0 -5px 0 #1A1712; }
+:root[data-theme="L"] :is(.finale-score-pts, .finale-reveal-pts, .finale-timer) { font-family: 'Playfair Display', serif; font-weight: 900; color: #1A1712; }
+:root[data-theme="L"] .finale-big-q { font-family: 'Playfair Display', serif; font-weight: 900; text-shadow: none; }
+
+/* ── Jeopardy als Kreuzwortraetsel, Felder nummeriert ─────────────────── */
+:root[data-theme="L"] .jeopardy-board { gap: 1px; padding: 1px; border-radius: 0; counter-reset: lfeld; }
+:root[data-theme="L"] .jeopardy-cat { font-family: var(--l-kap); font-weight: 700; font-size: .75rem; letter-spacing: 1.5px; border-radius: 0; }
+:root[data-theme="L"] .jeopardy-cell { position: relative; counter-increment: lfeld; background: #FBF8F0; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.8rem; letter-spacing: 0; border-radius: 0; text-shadow: none; }
+:root[data-theme="L"] .jeopardy-cell::before { content: counter(lfeld); position: absolute; left: 4px; top: 2px; font-family: var(--l-kap); font-size: .6rem; font-weight: 400; line-height: 1; color: #1A1712; }
 :root[data-theme="L"] .jeopardy-cell.used { background: #1A1712; }
+:root[data-theme="L"] .jeopardy-cell.used::before { display: none; }
 :root[data-theme="L"] .jeopardy-cell:hover:not(.used) { background: #FFFFFF; transform: none; box-shadow: inset 0 0 0 2px #1A1712; }
+:root[data-theme="L"] .jeopardy-clue-cat { font-family: var(--l-kap); letter-spacing: 3px; color: #1A1712; }
+:root[data-theme="L"] .jeopardy-clue-pts { font-family: 'Playfair Display', serif; font-weight: 900; color: #1A1712; letter-spacing: 0; }
+:root[data-theme="L"] .jeopardy-clue-text { font-family: 'Playfair Display', serif; font-weight: 900; line-height: 1.1; }
+:root[data-theme="L"] .jeopardy-clue-img { border-radius: 0; border: 1px solid #1A1712; box-shadow: 0 0 0 4px #EFE8D6, 0 0 0 5px #1A1712; filter: grayscale(.3) contrast(1.05); }
+
+/* ── WWM als Stimmzettel mit Gewinnstufen-Tabelle ─────────────────────── */
 :root[data-theme="L"] .wwm-q { color: #1A1712; text-align: left; justify-content: flex-start; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 2rem; line-height: 1.1; }
-/* WWM als Stimmzettel: der Buchstabe sitzt in einem Kaestchen. */
+:root[data-theme="L"] .wwm-answers { padding: 10px 14px; box-shadow: inset 0 0 0 1px #1A1712; }
 :root[data-theme="L"] .wwm-opt { background: transparent; box-shadow: inset 0 -1px 0 #1A1712; font-size: 1.4rem; font-weight: 700; }
+:root[data-theme="L"] .wwm-opt:hover { filter: none; background: rgba(26,23,18,.04); }
 :root[data-theme="L"] .wwm-opt .wwm-letter { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; min-width: 30px; border: 2px solid #1A1712; color: #1A1712; font-family: 'Playfair Display', serif; font-size: 1rem; }
-:root[data-theme="L"] .wwm-opt.selected .wwm-letter { background: #1A1712; color: #EDE6D3; }
+:root[data-theme="L"] .wwm-opt.selected .wwm-letter { background: #1A1712; color: #EFE8D6; }
 :root[data-theme="L"] .wwm-opt.selected { background: transparent; color: #1A1712; }
 :root[data-theme="L"] .wwm-opt.correct { box-shadow: inset 0 -4px 0 #1A1712; }
+:root[data-theme="L"] .wwm-opt.wrong { background: transparent; color: #8A2018; text-decoration: line-through; }
+:root[data-theme="L"] .wwm-ladder { background: transparent !important; box-shadow: inset 0 0 0 1px #1A1712, inset 0 0 0 4px #EFE8D6, inset 0 0 0 5px #1A1712 !important; border-radius: 0; padding: 10px 12px; }
+:root[data-theme="L"] .wwm-rung { border-radius: 0; font-family: var(--l-kap); font-size: .9rem; letter-spacing: .5px; color: #1A1712; padding-inline: 6px; }
+:root[data-theme="L"] .wwm-rung .wwm-lvl { font-family: var(--l-kap); color: #4A443A; }
+:root[data-theme="L"] .wwm-rung.safe { font-weight: 700; }
+:root[data-theme="L"] .wwm-rung.safe .wwm-amt { color: #1A1712; text-decoration: underline; }
+:root[data-theme="L"] .wwm-rung.won { color: #6E6556; }
+:root[data-theme="L"] .wwm-rung.current { background: #1A1712; color: #EFE8D6; }
+:root[data-theme="L"] .wwm-rung.current :is(.wwm-lvl, .wwm-amt) { color: #EFE8D6; }
+/* Joker als Ankreuzfelder: ☐ frei, ☒ verbraucht. */
+:root[data-theme="L"] .wwm-lifelines { justify-content: flex-start; gap: 18px; }
+:root[data-theme="L"] .wwm-ll { width: auto; height: auto; border: 0; border-radius: 0; background: none; font-size: 0; }
+:root[data-theme="L"] .wwm-ll::before { font-family: var(--l-kap); font-size: .9rem; font-weight: 400; color: #1A1712; }
+:root[data-theme="L"] .wwm-ll:nth-child(1)::before { content: '☐ 50:50'; }
+:root[data-theme="L"] .wwm-ll:nth-child(2)::before { content: '☐ Telefon'; }
+:root[data-theme="L"] .wwm-ll:nth-child(3)::before { content: '☐ Publikum'; }
+:root[data-theme="L"] .wwm-ll.used { opacity: 1; }
+:root[data-theme="L"] .wwm-ll.used:nth-child(1)::before { content: '☒ 50:50'; color: #6E6556; text-decoration: line-through; }
+:root[data-theme="L"] .wwm-ll.used:nth-child(2)::before { content: '☒ Telefon'; color: #6E6556; text-decoration: line-through; }
+:root[data-theme="L"] .wwm-ll.used:nth-child(3)::before { content: '☒ Publikum'; color: #6E6556; text-decoration: line-through; }
+:root[data-theme="L"] :is(.wwm-abar, .wwds-abar) { background: repeating-linear-gradient(-45deg, #1A1712 0 2px, transparent 2px 6px); border-radius: 0; box-shadow: inset 0 0 0 1px #1A1712; }
+:root[data-theme="L"] :is(.wwm-apct, .wa-pct) { color: #1A1712; font-family: 'Playfair Display', serif; font-weight: 900; }
+
+/* ── WWDS: Stimmzettel mit Kreisen ────────────────────────────────────── */
+:root[data-theme="L"] .wwds-cat { border-radius: 0; box-shadow: inset 0 0 0 1px #1A1712; background: #FBF8F0; }
+:root[data-theme="L"] .wwds-cat:hover:not(.done) { transform: none; filter: none; box-shadow: inset 0 0 0 2px #1A1712; }
+:root[data-theme="L"] .wwds-cat .wc-num { font-family: var(--l-kap); color: #1A1712; font-size: .8rem; }
+:root[data-theme="L"] .wwds-cat .wc-name { font-family: 'Playfair Display', serif; font-weight: 900; text-transform: none; letter-spacing: 0; font-size: 1rem; }
+:root[data-theme="L"] .wwds-cat.done { background: #1A1712; color: #EFE8D6; opacity: 1; }
+:root[data-theme="L"] .wwds-q { background: transparent !important; border: 0 !important; border-radius: 0; text-align: left; font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.8rem; line-height: 1.1; padding-inline: 0; }
+:root[data-theme="L"] .wwds-cat-chip { background: none; border: 0; border-radius: 0; padding: 0; font-family: var(--l-kap); letter-spacing: 2.5px; color: #1A1712; }
+:root[data-theme="L"] .wwds-opt { background: transparent; box-shadow: inset 0 -1px 0 #1A1712; border-radius: 0; font-size: 1.3rem; }
+:root[data-theme="L"] .wwds-opt .wo-let { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; min-width: 34px; border: 2px solid #1A1712; border-radius: 50%; color: #1A1712; font-family: 'Playfair Display', serif; font-size: 1rem; }
+:root[data-theme="L"] .wwds-opt.sel { background: transparent; color: #1A1712; }
+:root[data-theme="L"] .wwds-opt.sel .wo-let { background: #1A1712; color: #EFE8D6; }
+:root[data-theme="L"] .wwds-opt.right { box-shadow: inset 0 -4px 0 #1A1712; }
+:root[data-theme="L"] .wwds-opt.bad { background: transparent; color: #8A2018; text-decoration: line-through; }
+:root[data-theme="L"] .wwds-tag { border-radius: 0; }
+:root[data-theme="L"] .wwds-guess { border-radius: 0; background: #FBF8F0; border: 1px solid #1A1712; color: #1A1712; font-family: 'Playfair Display', serif; font-weight: 900; }
+
+/* ── DDF: Portraets mit Stempel ───────────────────────────────────────── */
+:root[data-theme="L"] .ddf-player { position: relative; background: #FBF8F0; border: 0; border-radius: 0; box-shadow: inset 0 0 0 1px #1A1712; text-align: left; }
+:root[data-theme="L"] .ddf-player-name { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.15rem; }
+:root[data-theme="L"] .ddf-player.picked { border: 0; box-shadow: inset 0 0 0 1px #1A1712, inset 0 -5px 0 #1A1712; }
+:root[data-theme="L"] .ddf-player.out { opacity: 1; transform: none; color: #6E6556; }
+:root[data-theme="L"] .ddf-player.out::after {
+  content: 'Ausgeschieden'; position: absolute; left: 50%; top: 50%; translate: -50% -50%; rotate: -12deg;
+  padding: 2px 8px; border: 2px solid #B4232F; color: #B4232F; font-family: var(--l-kap); font-weight: 700; font-size: .7rem; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; background: rgba(251,248,240,.6);
+}
+:root[data-theme="L"] .ddf-heart { font-size: 0; margin-right: 3px; vertical-align: middle; }
+:root[data-theme="L"] .ddf-heart::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #1A1712; }
+:root[data-theme="L"] .ddf-heart.empty::before { background: transparent; box-shadow: inset 0 0 0 1px #1A1712; }
+:root[data-theme="L"] .ddf-question { font-family: 'Playfair Display', serif; font-weight: 900; }
+:root[data-theme="L"] .ddf-answer { color: #1A1712 !important; font-family: 'Playfair Display', serif; font-style: italic; }
+
+/* ── PIH: Kleinanzeigen, der Gewinner eingekreist ─────────────────────── */
+:root[data-theme="L"] .pih-scores { border-bottom: 1px solid #1A1712; }
+:root[data-theme="L"] .pih-score { border-radius: 0; background: transparent; border: 1px solid #1A1712; box-shadow: none; }
+:root[data-theme="L"] .pih-score.lead { background: transparent; border-width: 2px; }
+:root[data-theme="L"] .pih-score-pts { font-family: 'Playfair Display', serif; color: #1A1712; }
+:root[data-theme="L"] .pih-team { border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px #1A1712, inset 4px 0 0 var(--team); opacity: .75; }
+:root[data-theme="L"] .pih-team.lead { opacity: 1; box-shadow: inset 0 0 0 2px #1A1712, inset 6px 0 0 var(--team); }
+:root[data-theme="L"] .pih-team-pts { font-family: 'Playfair Display', serif; font-weight: 900; color: #1A1712; }
+:root[data-theme="L"] .pih-item { font-family: 'Playfair Display', serif; font-weight: 900; }
+:root[data-theme="L"] .pih-stage :is(img, video) { border-radius: 0; border: 1px solid #1A1712; filter: grayscale(.3) contrast(1.05); }
+:root[data-theme="L"] .pih-price { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 3rem; color: #1A1712; text-shadow: none; }
+:root[data-theme="L"] .pih-bid-row { position: relative; background: #FBF8F0; border: 1px solid #1A1712; border-radius: 0; box-shadow: none; }
+:root[data-theme="L"] .pih-bid-row.win { background: #FBF8F0; border: 1px solid #1A1712; box-shadow: none; color: #1A1712; }
+:root[data-theme="L"] .pih-bid-row.win::after { content: ''; position: absolute; inset: -7px -12px; border: 2px solid #1A1712; border-radius: 50%; rotate: -2deg; pointer-events: none; }
+:root[data-theme="L"] .pih-bid-val { font-family: 'Playfair Display', serif; font-weight: 900; }
+
+/* ── Trivial Pursuit ──────────────────────────────────────────────────── */
+:root[data-theme="L"] .tp-team { background: transparent; border: 0; border-radius: 0; box-shadow: inset 0 0 0 1px #1A1712; }
+:root[data-theme="L"] .tp-team:is(.red, .blue, .green) { box-shadow: inset 0 0 0 1px #1A1712, inset 0 4px 0 var(--tc); }
+:root[data-theme="L"] .tp-team.turn { transform: none; background: transparent; box-shadow: inset 0 0 0 2px #1A1712, inset 0 -5px 0 #1A1712; }
+:root[data-theme="L"] .tp-team-name { font-family: 'Playfair Display', serif; font-weight: 900; }
+:root[data-theme="L"] .tp-stage { background: transparent; border: 0; border-top: 3px solid #1A1712; border-bottom: 1px solid #1A1712; border-radius: 0; box-shadow: none; }
+:root[data-theme="L"] .tp-catchip { border-radius: 0; font-family: var(--l-kap); letter-spacing: 2px; }
+:root[data-theme="L"] .tp-question { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.9rem; line-height: 1.1; }
+:root[data-theme="L"] .tp-answer { border-radius: 0; border: 1px solid #1A1712; }
+:root[data-theme="L"] .tp-answer.hidden { background: transparent; border: 1px dashed #1A1712; color: #4A443A; }
+:root[data-theme="L"] .tp-wheel-rotor { box-shadow: 0 0 0 2px #1A1712, 0 0 0 6px #EFE8D6, 0 0 0 7px #1A1712; }
+:root[data-theme="L"] .tp-wheel-hub { background: #EFE8D6; border: 2px solid #1A1712; box-shadow: none; color: #1A1712; font-family: 'Playfair Display', serif; font-weight: 900; }
+:root[data-theme="L"] .tp-wheel-pointer { border-top-color: #1A1712; filter: none; }
+:root[data-theme="L"] .tp-pie { filter: none; }
+
+/* ── Ergebnis, Turnier ────────────────────────────────────────────────── */
+:root[data-theme="L"] .result-card { background: #FBF8F0; border: 0; border-radius: 0; box-shadow: inset 0 0 0 1px #1A1712, inset 0 0 0 4px #FBF8F0, inset 0 0 0 5px #1A1712; backdrop-filter: none; }
+:root[data-theme="L"] .result-scores strong { font-family: 'Playfair Display', serif; font-weight: 900; color: #1A1712; }
+:root[data-theme="L"] .tour-bar { height: 10px; border-radius: 0; background: transparent; box-shadow: inset 0 0 0 1px #1A1712; }
+:root[data-theme="L"] .tour-bar-fill { border-radius: 0; background: repeating-linear-gradient(-45deg, #1A1712 0 2px, transparent 2px 5px); }
+:root[data-theme="L"] .tour-total { font-family: 'Playfair Display', serif; font-weight: 900; color: #1A1712; }
+:root[data-theme="L"] .q-list-item { border-radius: 0; background: transparent; border: 0; border-bottom: 1px solid rgba(26,23,18,.4); }
+:root[data-theme="L"] .q-list-item.tour-lead { background: transparent; border-bottom: 3px solid #1A1712; }
+
+/* ── Host: Menue als Inhaltsverzeichnis, Knoepfe in Druckschwarz ──────── */
+:root[data-theme="L"] .menu-cards { gap: 0; counter-reset: lseite; border-top: 3px solid #1A1712; border-bottom: 1px solid #1A1712; }
+:root[data-theme="L"] .menu-card {
+  counter-increment: lseite; background: transparent; border: 0; border-radius: 0; box-shadow: inset -1px 0 0 rgba(26,23,18,.5);
+  text-align: left; align-items: flex-start; padding: 26px 14px 16px;
+}
+:root[data-theme="L"] .menu-card::before { content: 'Seite ' counter(lseite); left: 14px; top: 9px; right: auto; height: auto; background: none; opacity: 1; font-family: var(--l-kap); font-size: .62rem; letter-spacing: 2px; text-transform: uppercase; color: #1A1712; }
+:root[data-theme="L"] .menu-card:hover { transform: none; background: rgba(26,23,18,.04); border: 0; box-shadow: inset -1px 0 0 rgba(26,23,18,.5), inset 0 -4px 0 #1A1712; }
+:root[data-theme="L"] .menu-card-icon { justify-content: flex-start; }
+:root[data-theme="L"] .menu-card-icon svg { filter: none; }
+:root[data-theme="L"] .menu-card-title { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 1.2rem; line-height: 1.1; color: #1A1712; }
+:root[data-theme="L"] .menu-card-sub { font-style: italic; color: #4A443A; }
+:root[data-theme="L"] .menu-pill { border-radius: 0; border: 1px solid #1A1712; font-family: var(--l-kap); letter-spacing: 1.5px; color: #1A1712; }
+:root[data-theme="L"] :is(.menu-pill:hover, .menu-pill.active) { background: #1A1712; color: #EFE8D6; border-color: #1A1712; }
+:root[data-theme="L"] .menu-divider { height: 4px; border-top: 1px solid #1A1712; border-bottom: 1px solid #1A1712; background: none; width: 260px; }
+:root[data-theme="L"] .btn { border-radius: 0; font-family: var(--l-kap); font-weight: 700; letter-spacing: 2.5px; }
+:root[data-theme="L"] .btn:hover { transform: none; }
+:root[data-theme="L"] .btn-primary { background: #1A1712; color: #EFE8D6; box-shadow: none; }
+:root[data-theme="L"] .btn-primary:hover { background: #000; box-shadow: none; }
+:root[data-theme="L"] .btn-primary::after { display: none; }
+:root[data-theme="L"] .btn-secondary { background: transparent; border: 1px solid #1A1712; color: #1A1712; backdrop-filter: none; }
+:root[data-theme="L"] .btn-secondary:hover { background: rgba(26,23,18,.06); color: #1A1712; }
+:root[data-theme="L"] .btn-danger { background: #8A2018; color: #EFE8D6; box-shadow: none; }
+:root[data-theme="L"] .btn-accent { background: #2453B8; color: #EFE8D6; box-shadow: none; }
+:root[data-theme="L"] :is(.editor-card, .setup-lobby, .resume-banner, .ddf-card, .design-card) { border-radius: 0; background: rgba(251,248,240,.6); border: 1px solid #1A1712; }
+:root[data-theme="L"] :is(.pr-team-btn, .setup-lobby .badge, .player-team-tag, .pmini-av) { border-radius: 0; }
+:root[data-theme="L"] :is(input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), textarea, select) { border-radius: 0 !important; }
+:root[data-theme="L"] .page-title { font-family: 'Playfair Display', serif; font-weight: 900; }
+
+/* Niedriges Fenster (Beamer 1280x720): Feud mit langer Frage lag 7 px
+   unter dem Bild. */
+@media (max-height: 900px) {
+  :root[data-theme="L"] .q-text { font-size: 1.45rem; margin-bottom: 4px; }
+  :root[data-theme="L"] .team-panel { padding-block: 10px; }
+  :root[data-theme="L"] .team-panel.active-team { padding-block: 10px; }
+}
+
 /* Wie frisch gedruckt: unscharf und dunkel, dann setzt die Farbe. */
 @keyframes thLDruck {
   0%   { opacity: 0; filter: blur(5px) contrast(2); transform: scale(1.04); }
