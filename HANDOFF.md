@@ -12,6 +12,36 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `8116fbf` Jeopardy-Flug: Bildrate abgesichert, Ausklang ohne Schnitt
+
+**Gemacht:** Siehe Commit. FLIP (nur `transform`/`opacity`), Start nach zwei Frames,
+`lagSmoothing(80,16)`, weicher Ausklang (Frage liegt ab Landung darunter, Fläche
+löst sich über 0,6 s auf), Zahl landet eingemessen auf der Punktzahl.
+
+**Warum / Fallstricke:**
+- David hat die Erstfassung live gesehen und mochte sie („das gefällt mir“), aber
+  den harten Schnitt am Ende bemängelt.
+- **Messungen schwanken stark mit der Rechnerlast.** Ein früher Lauf zeigte 0 Hänger,
+  ein späterer derselben Fassung deutlich schlechter. Belastbar nur abwechselnd
+  alt/neu unmittelbar hintereinander.
+- Haupt- und Beamerfenster laufen im **selben Thread** (gleicher Ursprung, Popup).
+  Was das Hauptfenster beim Öffnen tut, bremst den Beamer — daher der verzögerte Start.
+- Testwerkzeug: `evaluate(() => tl.pause())` hängt, weil Playwright die GSAP-Zeitleiste
+  serialisieren will — Rückgabewert verwerfen. Zeitleiste ist für Tests als
+  `window.__flugTl` erreichbar.
+- Landung: `screenIn` der verdeckten Frage verschiebt die Punktzahl beim Messen —
+  vorher `getAnimations({subtree:true}).finish()`.
+
+**Geprüft:** Zahlen im Commit. Scratchpad-Tests `fpstest.js` (Bildrate, CDP-Bremse),
+`flugtest.js` (7/7 A und B), `ausklang.js` (Standbilder 0,8–1,5 s, Landeabweichung).
+
+**Offen:**
+- Am echten Beamer ungeprüft, ebenso mit Hauptfenster im Hintergrund.
+- Lange Frames beim Öffnen kommen aus dem Hauptfenster (Spiegel, GM-Panel, Sichern),
+  nicht aus der Animation — die Arbeit selbst wäre der nächste Hebel.
+- Die Prüfskripte liegen nur im Scratchpad; bei Bedarf nach `tools/shots/` übernehmen.
+- BAUPLAN 4.8 anpassen (Beamer animiert selbst), wenn David das Muster abnimmt.
+
 ## 2026-10-14 — `d890f20` GSAP auf dem Beamer: Jeopardy-Feld fliegt zur Frage
 
 **Gemacht:** Siehe Commit. Kern: das **Beamerfenster spielt Animationen selbst**
