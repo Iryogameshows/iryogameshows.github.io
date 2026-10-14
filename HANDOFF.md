@@ -12,6 +12,40 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `10faac8` Feud-GM: Verlauf der Runde (Ansatz 5) statt Jetzt-Karte
+
+**Gemacht:** Rundenprotokoll `feudLog` + `feudLogAdd(text, art, pts)` + `feudTeamName(i)` in `js/feud.js` (Typ
+`FeudLogEintrag`). Einträge an: `revealQuestion`, `revealAnswer` (+Punkte; bei letzter Antwort Punktvergabe),
+`revealAll` (Punktvergabe, „Alle Antworten aufgedeckt“), `addStrike`, `switchTeam` („X ist dran“ / „Alle Teams sind
+raus“), `undoLast` in `js/core.js` („↩ Rückgängig“), Erstbuzz-Callback, `feudSetStartTeam` und `feudAutoSetStartTeam` in
+`js/buzzer.js`. Geleert in `loadRound`; `nextRound` merkt den Verlauf in `feudRoundUndo.log`, `feudUndoRound` stellt ihn
+wieder her. GM-Fenster: Jetzt-Karte aus `7c113b4` entfernt. Ab 760 px Teamleiste über die volle Breite, links Frage +
+Antworten (ab 1200 px höhenfüllend, einspaltig), rechts `.ff-log` (füllt die Höhe), darunter Buzzer/Verbunden/Reihenfolge/
+Notizen. Unter 760 px (Gamepad) `.ff-log-mini` „Zuletzt“ mit den zwei neuesten Einträgen ganz oben.
+
+**Warum so:** David mochte Skizze 5 (`7c113b4`) im Ergebnis nicht; nach zehn Kastenvarianten habe ich fünf grundsätzlich
+andere Ansätze als Bilder gebaut (Board-Spiegel, ein großer Knopf, Kachel-Pult, Team-Hälften, Verlauf — Prototyp nur im
+Scratchpad, Bilder in `tools/shots/out/gm-ansaetze/`, ignoriert). Er hat „am ehesten“ 5 gewählt. Undo löscht keinen
+Eintrag, damit sichtbar bleibt, dass zurückgenommen wurde. Die Liste ist `column-reverse` und umgekehrt ausgegeben: liest
+sich chronologisch, der neueste Eintrag bleibt beim Überlaufen unten sichtbar.
+
+**Geprüft:** Sieben Zustände (verdeckt, scharf, Buzz anderes Team, läuft mit Strike + Undo, alle raus, fertig, langer
+Verlauf) bei 1707×951 und 390×844 in Studio und L angesehen, keine JS-Fehler. `shots.js --shows gm,feud` in
+A,B,D,E,I,K,L,O,Studio bei 1707×951 und `--shows gm` A,L,O,Studio bei 1000×700: keine Befunde, Bögen angesehen.
+`ablauf.js` 49 OK / 0 FEHL. `check.js`, `check.js --types` sauber.
+
+**Offen:**
+- Echtes Buzzern über Firebase nicht ausprobiert (Erstbuzz-Eintrag nur im Skript nachgestellt).
+- 3 Teams, Finale, Gleichstand-Auswahl nicht angesehen; das Finale hat kein Protokoll.
+- „Team wechseln“ per Knopf legt keinen Undo-Schritt an (war schon vorher so), schreibt aber jetzt „X ist dran“.
+- Zeitstempel kommen aus der Uhr des Host-Rechners.
+- Davids Urteil steht aus („am ehesten“, nicht „gefällt“). Übertrag auf andere Shows erst danach.
+- `setGmFeudTab`/`gmFeudTab` weiter ungenutzt.
+
+**Fallstricke:** `undoLast` (core.js) ruft `feudLogAdd` — es wird nur aus Feud aufgerufen; wer es für eine andere Show
+nutzt, bekommt Einträge im Feud-Verlauf. Python-Heredocs, die Dateien schreiben, scheitern in dieser Umgebung mit
+`Bad file descriptor` — Edit-Werkzeug nehmen.
+
 ## 2026-10-14 — `7c113b4` Feud-GM: Skizze 5 „Nächster Schritt“ gebaut
 
 **Gemacht:** In `updateGamemaster` (`js/feud.js`) eine „Jetzt“-Karte (`.ff-now`) unter der Teamleiste. Sie leitet aus
