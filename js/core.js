@@ -1287,6 +1287,24 @@ const GM_SHARED_CSS = `
     .gm-actions{padding-left:20px;justify-content:flex-end;}
     .gm-actions .gm-btn{flex:0 0 auto;}
   }
+  /* Grosses Fenster (GM am zweiten Monitor, maximiert): vorher blieb alles
+     auf Handy-Groesse - 14px-Schrift auf 1700px Breite, die untere Haelfte
+     leer. Fast alles hier haengt an rem, also waechst die Grundschrift mit
+     der Breite; Antworten, Knoepfe und Abstaende bekommen mehr Luft. Das
+     Gamepad-Handy liegt weit darunter und bleibt unveraendert. */
+  @media (min-width: 1200px) {
+    html{font-size:clamp(16px,1.15vw,22px);}
+    .gm-header{padding:16px 32px 14px;}
+    .gm-body{padding:24px 32px;gap:28px;}
+    .gm-main,.gm-side{gap:16px;}
+    .answer-list{gap:8px;}
+    .answer{padding:14px 20px;font-size:1.05rem;}
+    .question{font-size:1.25rem;}
+    .panel{padding:14px 16px;}
+    .panel-head{font-size:.68rem;color:rgba(255,255,255,.62);}
+    .gm-actions{padding:14px 32px;gap:10px;}
+    .gm-btn{padding:12px 22px;font-size:.85rem;}
+  }
   .chip{font-size:.62rem;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:99px;white-space:nowrap;}
   .chip-ok{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.35);}
   .chip-bad{background:rgba(232,69,60,.15);color:#FF8A80;border:1px solid rgba(232,69,60,.35);}

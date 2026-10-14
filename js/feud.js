@@ -1226,9 +1226,9 @@ function updateGamemaster() {
   if (!q) return;
 
   const strikesHtml = state.teamNames.map((name, i) => {
-    const dots = [0,1,2].map(j => `<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:.7rem;font-weight:900;transition:all .25s ease;${j < state.teamStrikes[i] ? 'background:radial-gradient(circle, rgba(232,69,60,.35), rgba(198,40,40,.45));border:2px solid #E8453C;color:#FF6B6B;box-shadow:0 0 10px rgba(232,69,60,.25);' : 'background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);color:rgba(255,255,255,.1);'}">✕</span>`).join('');
+    const dots = [0,1,2].map(j => `<span style="display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:50%;font-size:.7rem;font-weight:900;transition:all .25s ease;${j < state.teamStrikes[i] ? 'background:radial-gradient(circle, rgba(232,69,60,.35), rgba(198,40,40,.45));border:2px solid #E8453C;color:#FF6B6B;box-shadow:0 0 10px rgba(232,69,60,.25);' : 'background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);color:rgba(255,255,255,.1);'}">✕</span>`).join('');
     return `<div style="display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:10px;${state.currentTeam===i?'background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);':'border:1px solid rgba(255,255,255,.06);'}">
-      <span style="font-size:.6rem;font-weight:700;letter-spacing:2px;color:${state.currentTeam===i?'#FFD23F':'rgba(255,255,255,.3)'};text-transform:uppercase;">${escapeHtml(name)}</span>
+      <span style="font-size:.6rem;font-weight:700;letter-spacing:2px;color:${state.currentTeam===i?'#FFD23F':'rgba(255,255,255,.5)'};text-transform:uppercase;">${escapeHtml(name)}</span>
       <div style="display:flex;gap:6px;">${dots}</div>
     </div>`;
   }).join('');
