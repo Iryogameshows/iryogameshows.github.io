@@ -12,6 +12,36 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `215485a` Design-Rework D Late Night: ganzes Grafikdesign
+
+**Gemacht:** David: „mach alles davon fertig“ (Plan aus der Vorsession: D über alle
+Flächen, B entscheiden, dann E, I, K, L, O). D trägt jetzt die Entwurfs-Identität
+überall: Korn + Studiolicht + Skyline (`body::before`), Teamtafeln mit Teamfarb-Strich,
+„On Air“-Kopf, Feud-Headline mit Kicker, Kontur-Ziffern, WWM-Leiter als Balkenleiste
+oben, Papierkarten, Joker als Wörter, DDF-Leben als Punkte, PIH-Gebote als
+Preisschilder, nummeriertes Menü, eckige Knöpfe, GM-Fenster, Handy-Buzzer flach.
+Neu: optionales Feld `gm` je Richtung in `js/theme.js` (CSS fürs GM-Fenster/Gamepad,
+`themeGmHtml` hängt es an). Neu in `tools/shots`: Zustände `menu` und `setup`
+(Host-Seiten, ohne Höhenprüfung).
+
+**Warum so / verworfen:**
+- Alles CSS (BAUPLAN 4.8), Layout-Eingriffe nur per CSS (`order`, `flex-direction`):
+  WWM-Leiter oben statt rechts ist eine reine CSS-Umstellung.
+- Korn zuerst mit `background-blend-mode: soft-light` — auf dem Handy und im GM-Fenster
+  greift die Regel nicht (eigene `<body>`-Stile), dort wurde der Grund grau. Jetzt Korn
+  mit Alpha .06 ohne Blend-Mode, überall gleich.
+- Skyline zuerst 46vw breit: Fenster lagen als orange Punkte zwischen den
+  Jeopardy-Feldern. Jetzt 30vw, nur in der Ecke.
+- Joker-Wörter über `font-size:0` + `::before` je `nth-child` (Markup hat Emojis).
+
+**Geprüft:** `shots.js --themes D` 20 Zustände ohne Befunde (vorher WWM-Joker 19 px,
+Ergebnis 10 px zu hoch → `@media (max-height:900px)` und kleinere Siegerzeile).
+Alle Kontaktbögen angesehen. `check.js`, `--types` sauber.
+
+**Offen:** Echtes Beamerfenster mit D nicht eigens geprüft (Spiegel nutzt dieselbe
+`styles.css`). Jeopardy-Flug (`aufdecken.js`) mit D-Punktzahl ungeprüft — er kopiert
+berechnete Stile, sollte also passen. Gamepad nur über GM-Bild geprüft.
+
 ## 2026-10-14 — Auftrag präzisiert: Rework = gesamtes Grafikdesign, nicht nur Übergänge
 
 **David (wörtlich):** „Das Rework soll nicht nur mit diesen Übergängen zu sehen sein.
