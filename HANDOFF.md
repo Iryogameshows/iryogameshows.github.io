@@ -12,6 +12,17 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `921be17` BAUPLAN 4.8: „Beamer animiert selbst“ als erlaubter Weg
+
+**Gemacht:** David hat den Jeopardy-Flug am Beamer abgenommen („jetzt is er clean“).
+BAUPLAN 4.8 um die Ausnahme ergänzt, mit den Regeln aus `d890f20`/`8116fbf`/`c7e7bb1`
+(Auslöser gespiegeltes Element, nur `data-nur-beamer` animieren, FLIP vom Endzustand,
+zwei Frames warten + `lagSmoothing`, weicher Ausklang, reduced motion, Cache-Buster).
+Kein Code geändert.
+
+**Offen:** nächster Leinwand-Moment nach diesem Muster (Davids Wahl); Arcade
+behalten oder zurück; Veredelung der Original-Richtungen.
+
 ## 2026-10-14 — `c7e7bb1` Jeopardy-Flug: Zahl landet deckungsgleich (echtes FLIP)
 
 **Gemacht:** Die fliegende Zahl ist eine exakte Kopie der Punktzahl der Frage (gleiche
