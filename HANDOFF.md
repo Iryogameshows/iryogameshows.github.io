@@ -12,6 +12,18 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `c84140b` Prüfpunkt: Beenden-Knopf nie auf dem Beamer
+
+**Gemacht:** David: „Er soll nicht auf den Beamer kommen.“ Im echten Beamerfenster
+(headless Chrome, `openBoardPopout`, Ersatz-DB) geprüft, im Intro und im Spiel:
+`#host-quit` wird mitgespiegelt, steht dort aber auf `display: none` (Ausblendliste in
+`js/feud.js`); `.gm-quit` kommt gar nicht aufs Beamerbild. Screenshot angesehen, kein
+Knopf. Neu als fester Punkt in `tools/shots/ablauf.js` („auf der Hostseite ja, auf dem
+Beamer nicht“). Kein App-Code geändert.
+
+**Geprüft:** `node tools/shots/ablauf.js` 49 OK / 0 FEHL. Erster Lauf brach ab, weil die
+neue Prüfung das GM-Panel ausblendete und nicht wieder einblendete — Testfehler, behoben.
+
 ## 2026-10-14 — Branches aufgeräumt (kein Code geändert)
 
 **Gemacht:** Auf Davids Anweisung gelöscht: lokal `wip/beenden-f5`,
