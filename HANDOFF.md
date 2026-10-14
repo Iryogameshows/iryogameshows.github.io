@@ -12,6 +12,55 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `08b1425` Feud-GM neu geordnet (Abbruch: David muss weg)
+
+**Gemacht:** `updateGamemaster` für Feud (`js/feud.js`, `teamsHtml` + gmHtml): oben ist jetzt eine Teamleiste. Jede
+Teamkarte (`score-card ff-team`) zeigt Name, Stand, 3 Strike-Kreise (`.ff-pip`) und ein „Am Zug“-Schild, daneben steht eine
+Karte mit den Rundenpunkten (`ff-pot`, gestrichelt). Die Frage hat eine eigene Karte mit „Frage x von y“, Klick ruft weiter
+`revealQuestion`. Über der Liste steht „Antworten · anklicken zum Aufdecken“. Die Tabs „Aktuelle Frage/Reihenfolge“ sind weg,
+die Reihenfolge ist ein `<details>` in der Seitenspalte. Neue Reihenfolge der Seitenspalte: Buzzer, Verbunden, Reihenfolge,
+Notizen.
+
+**Warum so:** David fand das Panel unübersichtlich: „Am Zug“, die Strikes und die Frage waren verstreut, der Punktestand
+fehlte ganz. Die Klassen `score-card`/`score-val`/`score-name` wurden wiederverwendet, damit `themeGmHtml` und die
+`gm`-Regeln je Richtung (Radius, Schrift) greifen. Die neuen `.ff-*`-Regeln stehen im Feud-Template und nutzen nur Literale,
+die `themeGmHtml` umschreibt (`rgba(255,255,255,`, `#FFD23F`, `#fff`).
+
+**Geprüft:** `check.js` meldet „alles in Ordnung“, `shots.js --shows gm --themes E,A` bei 1707×951 ohne Befunde, das E-Bild
+habe ich angesehen.
+
+**Stopppunkt / Offen:**
+- Nicht angesehen: Gamepad-Handy (schmale Spalte, die Teamleiste bricht dort per `auto-fit` um), die Richtungen B/D/I/K/L/O,
+  3 Teams, der Zustand „alle out“.
+- `setGmFeudTab`/`gmFeudTab` (`js/core.js:885`, Erlaubnisliste in `js/buzzer.js:698`) wird nicht mehr benutzt, ist aber noch
+  da. Aufräumen wäre möglich, die Gamepad-Liste dann mitziehen.
+- Die untere Hälfte bleibt bei 5 Antworten weiter leer. Denkbar wäre, die Antworten bei ≥1200 px zweispaltig wie das Board
+  zu zeigen (1–4 links, 5–8 rechts), oder Buzzer-Ergebnisse groß unter die Antworten zu holen.
+- Die anderen GM-Fenster (Jeopardy, WWM, WWDS, DDF, PIH, TP) haben nur die mitwachsende Schrift aus `fdebea9` bekommen,
+  keinen neuen Aufbau.
+
+**Nächste Schritte:** 1. Gamepad und `ablauf.js` prüfen. 2. Davids Urteil zum neuen Aufbau abholen. 3. Bei Zustimmung
+denselben Aufbau (Lageleiste → Aufgabe → Aktionen) auf die anderen GM-Fenster übertragen.
+
+## 2026-10-14 — `fdebea9` GM-Fenster wächst im großen Fenster mit
+
+**Gemacht:** In `GM_SHARED_CSS` (`js/core.js`) gilt ab 1200 px ein neuer Block: `html{font-size:clamp(16px,1.15vw,22px)}`,
+dazu mehr Innenabstand bei Kopfzeile, Inhalt, Antworten, Panels und Knöpfen, die Frage ist größer, die Panel-Köpfe sind kräftiger.
+In der Feud-GM-Ansicht (`js/feud.js`, strikesHtml) sind die Strike-Kästchen jetzt `1.5rem` groß statt `24px`, das inaktive Team
+hat `.5` statt `.3` Deckkraft.
+
+**Warum so:** David hat einen Screenshot vom maximierten GM-Fenster (1707×951, Richtung E) geschickt: Schrift rund 14 px, untere
+Hälfte leer. Fast alles im GM-CSS hängt an `rem`, deshalb wächst mit der Grundschrift alles gemeinsam. Ein Umbau einzelner
+Templates war nicht nötig. Die Schwelle 1200 px lässt Gamepad-Handy und schmale Fenster unverändert.
+
+**Geprüft:** `shots.js --shows gm --themes E,A` bei 1707×951 und E bei 1280×720 ohne Befunde, die Bilder habe ich angesehen.
+`check.js` meldet „alles in Ordnung“.
+
+**Offen:** Die GM-Fenster von Jeopardy, WWM, WWDS, DDF, PIH und TP sind nicht angesehen, Studio-Blau habe ich nicht gegen die
+Basis verglichen (gm ändert sich dort gewollt). Die untere Hälfte bleibt bei Feud mit 5 Antworten weiterhin teils leer.
+
+**Fallstricke:** Inline-`px` in den Templates wächst nicht mit, nur `rem`.
+
 ## 2026-10-14 — Abschluss Grafik-Rework aller acht Richtungen (Übersicht)
 
 **Aktueller Stand:** Alle acht verbleibenden Richtungen tragen ihre Entwurfs-
