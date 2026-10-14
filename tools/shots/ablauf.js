@@ -216,6 +216,16 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   const beamer = await host.evaluate(() => ({ dran: !!boardWin && !boardWin.closed,
     spiel: !!boardWin && !!boardWin.document.querySelector('#game-screen.active') }));
   check('F5: Beamerfenster wieder angehaengt und zeigt das Spiel', beamer.dran && beamer.spiel, beamer);
+  // Beenden-Knoepfe sind nur fuer den Host - auf dem Beamer nie sichtbar (David, 2026-10-14).
+  const beamerKnopf = await host.evaluate(() => {
+    const ov = document.getElementById('gm-embed-overlay'), war = ov.classList.contains('visible');
+    ov.classList.remove('visible');   // Hostknopf steht nur, wenn das Panel zu ist
+    const hostDa = getComputedStyle(document.getElementById('host-quit')).display !== 'none';
+    if (war) ov.classList.add('visible');
+    const d = boardWin.document, e = d.getElementById('host-quit'), g = d.querySelector('.gm-quit');
+    return { hostDa, beamerHost: !!e && e.getBoundingClientRect().width > 0, beamerGm: !!g && g.getBoundingClientRect().width > 0 };
+  });
+  check('Beenden-Knopf: auf der Hostseite ja, auf dem Beamer nicht', beamerKnopf.hostDa && !beamerKnopf.beamerHost && !beamerKnopf.beamerGm, beamerKnopf);
   // Beenden ueber das GM-Panel (Rueckfrage wird bestaetigt).
   await host.evaluate(() => { if (typeof showGamemasterEmbed === 'function') showGamemasterEmbed(); updateGamemaster(); });
   await host.frameLocator('#gm-embed-frame').locator('.gm-quit').click({ force: true });
