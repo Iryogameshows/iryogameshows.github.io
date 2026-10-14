@@ -326,6 +326,14 @@
   /* I Salon: Goldfassung, zweifach. */
   :root[data-theme="I"] #buzz{font-style:italic;font-weight:700;font-size:3.6rem;letter-spacing:0;text-transform:none;
     box-shadow:0 10px 0 var(--buzz-shadow,#7a140e),0 0 0 6px #C9A54C,0 0 0 11px #13392C,0 0 0 13px #C9A54C;}
+  /* Rework 2026-10-14: der Knopf ist ein Jeton - flache Teamfarbe mit
+     gestricheltem Cremerand, dann die Goldfassung. */
+  :root[data-theme="I"] #buzz{background:var(--buzz-mid,#E8453C);border:12px dashed rgba(244,238,223,.92);}
+  :root[data-theme="I"] .wait-orb{background:var(--buzz-mid,#E8453C);border:10px dashed rgba(244,238,223,.9);}
+  :root[data-theme="I"] .btn{border-radius:999px;background:#C9A54C;color:#1B1A17;box-shadow:inset 0 0 0 2px #C9A54C,inset 0 0 0 4px #F6F0E1,0 4px 0 #6E5520;font-family:'Jost',sans-serif;font-weight:500;letter-spacing:2px;}
+  :root[data-theme="I"] .btn.ghost{background:transparent;border:1px solid #C9A54C;color:#E6CF8B;box-shadow:none;}
+  :root[data-theme="I"] :is(input,.vote-opt){border-radius:999px;}
+  :root[data-theme="I"] :is(.lobby-team,.team-chip){font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:700;}
 
   /* J Kreide: mit Kreide umrandet. */
   :root[data-theme="J"] #buzz{font-weight:400;font-size:3.2rem;letter-spacing:0;text-transform:none;rotate:-2deg;

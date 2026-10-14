@@ -4998,16 +4998,25 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   100% { clip-path: circle(150% at 0 50%); }
 }
 
-/* ── I · Salon: Spieltisch aus Filz, Karten werden umgedreht ── */
+/* ── I · Salon (Rework 2026-10-14): Spieltisch im Casino-Salon ─────────────
+   Identitaet aus designs/s/I-*.html: gruener Filz mit Goldkante, Spielkarten
+   (Creme, Eckzeichen, rote Rueckseite mit Rautenmuster), Jetons mit
+   gestricheltem Rand, Cormorant kursiv, Jost in gesperrten Versalien.
+   Jetzt auf allen Flaechen: Teams als Plaetze am Tisch mit Jeton in der
+   Teamfarbe (BAUPLAN 4.4), X als rote Jetons, der Topf als Goldjeton, die
+   WWM-Leiter als Jetonstapel, Jeopardy-Karten mit Farbzeichen, das Menue
+   als gefaecherte Hand. Material statt Leuchten: Filzkorn, Papier, Gold.
+   Signatur: die Karte wird umgedreht. */
 :root[data-theme="I"] {
   --brd-surface: radial-gradient(ellipse 90% 80% at 50% 40%, #1E5A42 0%, #13392C 60%, #0B261C 100%);
   --brd-frame: 0 0 0 3px #C9A54C, 0 0 0 12px #4A2E14, 0 0 0 14px rgba(201,165,76,.6), 0 20px 50px rgba(0,0,0,.55), inset 0 0 60px rgba(0,0,0,.45);
+  --brd-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .8 0 0 0 0 1 0 0 0 0 .85 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23f)'/%3E%3C/svg%3E");
   --brd-well: transparent;
   --brd-inner: rgba(201,165,76,.35);
   --brd-radius: 40px;
   --brd-fg: #F4EEDF;
-  --tile: repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, rgba(255,255,255,.07) 0 1px, transparent 1px 8px), radial-gradient(ellipse at 50% 40%, #A82339 0%, #8E1B2C 55%, #5F0F1D 100%);
-  --tile-hover: repeating-linear-gradient(45deg, rgba(255,255,255,.1) 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, rgba(255,255,255,.1) 0 1px, transparent 1px 8px), radial-gradient(ellipse at 50% 40%, #BC2A42 0%, #9E2033 55%, #6A1222 100%);
+  --tile: repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, rgba(255,255,255,.07) 0 1px, transparent 1px 8px), #8E1B2C;
+  --tile-hover: repeating-linear-gradient(45deg, rgba(255,255,255,.1) 0 1px, transparent 1px 8px), repeating-linear-gradient(-45deg, rgba(255,255,255,.1) 0 1px, transparent 1px 8px), #9E2033;
   --tile-edge: inset 0 0 0 4px #F1E9D2, inset 0 0 0 5px rgba(0,0,0,.35), 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35);
   --tile-fg: #F4EEDF;
   --tile-head: transparent;
@@ -5018,40 +5027,250 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   --tile-dim-fg: #F1E9D2;
   --tile-bar: transparent;
   --tile-rule: transparent;
-  --tile-open: linear-gradient(180deg, #FBF6E9, #F1E9D2);
+  --tile-open: #F6F0E1;
   --tile-open-edge: inset 0 0 0 1px rgba(0,0,0,.08), 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35);
   --tile-open-fg: #2A1A12;
   --tile-open-dim: #8E1B2C;
   --tile-pts-bg: transparent;
   --tile-pts-rule: rgba(142,27,44,.25);
-  --tile-pick: linear-gradient(180deg, #FBF6E9, #F1E9D2);
+  --tile-pick: #F6F0E1;
   --tile-pick-fg: #2A1A12;
-  --tile-right: linear-gradient(180deg, #E9CF8F, #C9A54C);
+  --tile-right: #E2C77E;
   --tile-right-fg: #2A1A12;
   --tile-radius: 10px;
   --tile-font: 'Cormorant Garamond', serif;
   --tile-reveal: thIKarte .7s cubic-bezier(.3,.7,.3,1.1);
+  /* Jeton: Flaeche, gestrichelter Cremerand innen, dunkle Kante aussen. */
+  --i-jeton: inset 0 0 0 3px rgba(0,0,0,.25);
+  --i-karte: 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35);
 }
+
+/* ── Plaetze am Tisch: Filz mit Goldkante, Jeton in der Teamfarbe ─────── */
+:root[data-theme="I"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).red   { --tc: #B4232F; }
+:root[data-theme="I"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).blue  { --tc: #2453B8; }
+:root[data-theme="I"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).green { --tc: #1E8A4C; }
+:root[data-theme="I"] :is(.scoreboard, .jeopardy-scores) { gap: 18px; border-radius: 0; box-shadow: none; overflow: visible; }
+:root[data-theme="I"] :is(.team-panel, .jeopardy-team, .wwds-team, .team-card):is(.red, .blue, .green) {
+  background: #0F3326; border: 0; border-radius: 60px;
+  box-shadow: inset 0 0 0 1px #C9A54C, inset 0 0 30px rgba(0,0,0,.35);
+  padding-left: 84px;
+}
+:root[data-theme="I"] .team-card { padding-left: 24px; border-radius: 28px; }
+:root[data-theme="I"] .team-card::before { display: none; }
+/* Der Jeton: Teamfarbe, gestrichelter Rand wie die Kante eines Spielchips. */
+:root[data-theme="I"] :is(.team-panel, .jeopardy-team, .wwds-team)::before {
+  content: ''; position: absolute; left: 18px; top: 50%; width: 50px; height: 50px; margin-top: -25px; border-radius: 50%;
+  background: var(--tc); border: 5px dashed #F4EEDF; box-shadow: 0 0 0 2px var(--tc), 0 4px 0 2px rgba(0,0,0,.35);
+}
+:root[data-theme="I"] .jeopardy-team::before { width: 36px; height: 36px; margin-top: -18px; border-width: 4px; left: 16px; }
+:root[data-theme="I"] .jeopardy-team { padding-left: 66px; }
+:root[data-theme="I"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name, .team-card .label) {
+  font-family: 'Jost', sans-serif; font-weight: 500; font-size: .66rem; letter-spacing: 4px; color: #C9A54C;
+}
+:root[data-theme="I"] :is(.team-panel .t-score, .jeopardy-team .jt-score, .wwds-team .wt-money) {
+  font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; color: #F4EEDF; text-shadow: none;
+}
+:root[data-theme="I"] .team-panel .t-score { font-size: 3.2rem; line-height: 1; }
+:root[data-theme="I"] .team-panel.active-team { padding: 16px 12px 16px 84px; box-shadow: inset 0 0 0 2px #E6CF8B, inset 0 0 30px rgba(0,0,0,.35); }
+:root[data-theme="I"] .team-panel.active-team::after { left: 30%; right: 30%; height: 2px; background: #E6CF8B; box-shadow: none; }
+:root[data-theme="I"] .wwds-team.on { box-shadow: inset 0 0 0 2px #E6CF8B, inset 0 0 30px rgba(0,0,0,.35); }
+:root[data-theme="I"] :is(.team-panel.active-team .t-score, .wwds-team.on .wt-money) { color: #E6CF8B; text-shadow: none; }
+
+/* X als rote Jetons. */
+:root[data-theme="I"] .team-strikes { background: none; border: 0; box-shadow: none; transform: none; }
+:root[data-theme="I"] .strike-pip { width: 28px; height: 28px; background: transparent; border: 2px dashed rgba(244,238,223,.35); color: rgba(244,238,223,.35); font-size: .8rem; }
+:root[data-theme="I"] .strike-pip.lit { background: #8E1B2C; border: 3px dashed #F4EEDF; color: #F4EEDF; box-shadow: 0 0 0 2px #8E1B2C, 0 3px 0 2px rgba(0,0,0,.35); }
+
+/* Topf als Goldjeton. */
+:root[data-theme="I"] .round-bar { font-family: 'Jost', sans-serif; font-weight: 500; letter-spacing: 4px; color: #C9A54C; font-size: .68rem; }
+:root[data-theme="I"] .round-bar .pts {
+  display: inline-flex; align-items: center; justify-content: center; min-width: 46px; height: 46px; padding: 0 12px; border-radius: 999px;
+  background: #C9A54C; border: 3px dashed #F6F0E1; box-shadow: 0 0 0 2px #C9A54C, 0 3px 0 2px rgba(0,0,0,.35);
+  font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.2rem; letter-spacing: 0; color: #2A1A12;
+}
+
+/* ── Feud: Kartenreihe auf dem Filz ───────────────────────────────────── */
 :root[data-theme="I"] .board { padding: 28px 30px; }
 :root[data-theme="I"] .answers { gap: 10px; }
 :root[data-theme="I"] .answers.split { row-gap: 10px; column-gap: 16px; }
-:root[data-theme="I"] .q-text { color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.7rem; }
+:root[data-theme="I"] .q-text { color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.7rem; line-height: 1.2; }
+:root[data-theme="I"] .q-text.hidden-q { background: none; border: 1px dashed rgba(201,165,76,.5); border-radius: 40px; }
+:root[data-theme="I"] .q-text.hidden-q::after { font-family: 'Jost', sans-serif; color: #C9A54C; letter-spacing: 4px; }
 :root[data-theme="I"] .tile { min-height: clamp(38px, 7vh - 8px, 56px); }
+:root[data-theme="I"] .tile:hover:not(.open) { transform: translateY(-2px); }
 :root[data-theme="I"] .tile-num { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.5rem; }
-:root[data-theme="I"] .tile:not(.open) .tile-num { opacity: .0; }
+/* Rueckseite: in der Mitte ein kleines Goldwappen statt der Platznummer. */
+:root[data-theme="I"] .tile:not(.open) .tile-num { opacity: 0; }
+:root[data-theme="I"] .tile:not(.open) .tile-center::after { content: '♦'; width: auto; height: auto; background: none; color: rgba(241,233,210,.55); font-size: 1.1rem; }
+:root[data-theme="I"] .tile.open .tile-num { font-size: 1.15rem; align-items: flex-start; padding-top: 4px; }
 :root[data-theme="I"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 1.45rem; }
-:root[data-theme="I"] .tile.open .tile-pts { color: #8E1B2C; text-shadow: none; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.7rem; }
-:root[data-theme="I"] .jeopardy-board { gap: 10px; padding: 16px; border-radius: 30px; background: radial-gradient(ellipse 90% 80% at 50% 40%, #1E5A42 0%, #13392C 60%, #0B261C 100%); }
+:root[data-theme="I"] .tile.open .tile-pts { color: #8E1B2C; text-shadow: none; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.7rem; box-shadow: none; }
+:root[data-theme="I"] .tile.missed .tile-inner { background: #F6F0E1 !important; box-shadow: var(--i-karte) !important; color: #8A7D6A; }
+
+/* Finale */
+:root[data-theme="I"] :is(.finale-title, .winner-text, .tp-win-title, .wwds-banner, .elim-team) { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; letter-spacing: 0; color: #F4EEDF; text-shadow: none; }
+:root[data-theme="I"] :is(.finale-team-label, .finale-q-info) { font-family: 'Jost', sans-serif; font-weight: 500; letter-spacing: 4px; color: #C9A54C; }
+:root[data-theme="I"] :is(.finale-score-card, .finale-reveal-team) { background: #F6F0E1; color: #2A1A12; border: 0; border-radius: 10px; box-shadow: var(--i-karte); --fg-rgb: 42,26,18; }
+:root[data-theme="I"] .finale-score-card.active { background: #F6F0E1; box-shadow: 0 0 0 3px #C9A54C, var(--i-karte); }
+:root[data-theme="I"] :is(.finale-score-pts, .finale-reveal-pts) { font-family: 'Cormorant Garamond', serif; font-weight: 700; color: #8E1B2C; }
+:root[data-theme="I"] .finale-timer { font-family: 'Cormorant Garamond', serif; font-style: italic; }
+:root[data-theme="I"] :is(.finale-score-name, .finale-reveal-name) { font-family: 'Jost', sans-serif; letter-spacing: 3px; }
+:root[data-theme="I"] .finale-reveal-answer.hit { color: #1E6B3A; }
+:root[data-theme="I"] .finale-reveal-answer.miss { color: #8E1B2C; }
+:root[data-theme="I"] .finale-big-q { font-family: 'Cormorant Garamond', serif; font-style: italic; text-shadow: none; }
+
+/* ── Jeopardy: Karten mit Farbzeichen in der Ecke ─────────────────────── */
+:root[data-theme="I"] .jeopardy-board { gap: 10px; padding: 16px; border-radius: 30px; background: var(--brd-tex), radial-gradient(ellipse 90% 80% at 50% 40%, #1E5A42 0%, #13392C 60%, #0B261C 100%); }
 :root[data-theme="I"] .jeopardy-cat { font-family: 'Jost', sans-serif; font-weight: 500; font-size: .75rem; letter-spacing: 3px; }
-:root[data-theme="I"] .jeopardy-cell { background: linear-gradient(180deg, #FBF6E9, #F1E9D2); box-shadow: 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35); font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 2rem; }
+:root[data-theme="I"] .jeopardy-cell { position: relative; background: #F6F0E1; box-shadow: var(--i-karte); font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 2rem; letter-spacing: 0; text-shadow: none; }
+:root[data-theme="I"] .jeopardy-cell::after { position: absolute; right: 9px; top: 5px; font-family: 'Cormorant Garamond', serif; font-size: .95rem; line-height: 1; }
+:root[data-theme="I"] .jeopardy-cell:nth-child(4n+1)::after { content: '♦'; color: #8E1B2C; }
+:root[data-theme="I"] .jeopardy-cell:nth-child(4n+2)::after { content: '♠'; color: #2A1A12; }
+:root[data-theme="I"] .jeopardy-cell:nth-child(4n+3)::after { content: '♥'; color: #8E1B2C; }
+:root[data-theme="I"] .jeopardy-cell:nth-child(4n)::after   { content: '♣'; color: #2A1A12; }
+:root[data-theme="I"] .jeopardy-cell:nth-child(even) { color: #2A1A12; }
 :root[data-theme="I"] .jeopardy-cell:hover:not(.used) { background: #FFFFFF; transform: translateY(-3px) rotate(-1deg); }
 :root[data-theme="I"] .jeopardy-cell.used { background: transparent; box-shadow: inset 0 0 0 1px rgba(201,165,76,.3); }
-:root[data-theme="I"] .wwm-q { color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.9rem; line-height: 1.2; }
-:root[data-theme="I"] .wwm-opt { background: linear-gradient(180deg, #FBF6E9, #F1E9D2); color: #2A1A12; box-shadow: 0 4px 6px rgba(0,0,0,.28), 0 10px 20px rgba(0,0,0,.35); font-size: 1.4rem; }
-:root[data-theme="I"] .wwm-opt.correct { background: linear-gradient(180deg, #E9CF8F, #C9A54C); }
-:root[data-theme="I"] .wwm-opt.selected { box-shadow: 0 0 0 3px #C9A54C, 0 0 24px rgba(201,165,76,.55); }
-:root[data-theme="I"] .wwds-opt .wo-let { color: #C9A54C; }
-:root[data-theme="I"] .wwm-opt .wwm-letter { color: #8E1B2C; font-family: 'Cormorant Garamond', serif; font-weight: 700; }
+:root[data-theme="I"] .jeopardy-cell.used::after { display: none; }
+:root[data-theme="I"] .jeopardy-clue-cat { font-family: 'Jost', sans-serif; font-weight: 500; letter-spacing: 5px; color: #C9A54C; }
+:root[data-theme="I"] .jeopardy-clue-pts { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; color: #E6CF8B; letter-spacing: 0; }
+:root[data-theme="I"] .jeopardy-clue-text { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; line-height: 1.2; }
+:root[data-theme="I"] .jeopardy-clue-img { border-radius: 10px; border: 6px solid #F6F0E1; box-shadow: var(--i-karte); }
+
+/* ── Wer wird Millionaer: Jetonstapel als Leiter, Antworten als Karten ── */
+:root[data-theme="I"] .wwm-ladder { background: none; border-radius: 0; padding: 4px 0; }
+:root[data-theme="I"] .wwm-rung { justify-content: flex-start; gap: 12px; padding-block: 0; border-radius: 0; background: none; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1rem; letter-spacing: 0; color: rgba(244,238,223,.5); }
+:root[data-theme="I"] .wwm-rung::before { content: ''; flex: none; width: 34px; height: 11px; border-radius: 50%; border: 1.5px dashed rgba(244,238,223,.35); background: #0F3326; }
+:root[data-theme="I"] .wwm-rung .wwm-lvl { display: none; }
+:root[data-theme="I"] .wwm-rung.won { color: rgba(244,238,223,.75); }
+:root[data-theme="I"] .wwm-rung.won::before { background: #8E1B2C; border-color: #F4EEDF; }
+:root[data-theme="I"] .wwm-rung.safe::before { border-style: solid; border-color: #C9A54C; }
+:root[data-theme="I"] .wwm-rung.safe .wwm-amt { color: #E6CF8B; }
+:root[data-theme="I"] .wwm-rung.current { background: none; color: #E6CF8B; font-size: 1.15rem; }
+:root[data-theme="I"] .wwm-rung.current :is(.wwm-lvl, .wwm-amt) { color: #E6CF8B; }
+:root[data-theme="I"] .wwm-rung.current::before { width: 42px; height: 14px; background: #C9A54C; border: 2px dashed #F6F0E1; }
+:root[data-theme="I"] .wwm-q { background: none; box-shadow: none; color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.9rem; line-height: 1.2; }
+:root[data-theme="I"] .wwm-answers { gap: 14px; }
+:root[data-theme="I"] .wwm-opt { position: relative; flex-direction: column; justify-content: center; gap: 2px; min-height: 84px; background: #F6F0E1; color: #2A1A12; box-shadow: var(--i-karte); font-size: 1.45rem; }
+:root[data-theme="I"] .wwm-opt:nth-child(odd) { rotate: -.8deg; }
+:root[data-theme="I"] .wwm-opt:nth-child(even) { rotate: .6deg; }
+:root[data-theme="I"] .wwm-opt:hover { filter: none; transform: translateY(-3px); }
+:root[data-theme="I"] .wwm-opt .wwm-letter { position: absolute; left: 10px; top: 4px; color: #8E1B2C; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.05rem; }
+:root[data-theme="I"] .wwm-opt.selected { background: #F6F0E1; box-shadow: 0 0 0 3px #C9A54C, var(--i-karte); }
+:root[data-theme="I"] .wwm-opt.selected .wwm-letter { color: #8E1B2C; }
+:root[data-theme="I"] .wwm-opt.correct { background: #E2C77E; }
+:root[data-theme="I"] .wwm-opt.correct .wwm-letter { color: #2A1A12; }
+:root[data-theme="I"] .wwm-opt.wrong { background: #8E1B2C; color: #F4EEDF; }
+:root[data-theme="I"] .wwm-opt.wrong .wwm-letter { color: #F4EEDF; }
+/* Joker als Goldjetons mit Wort daneben. */
+:root[data-theme="I"] .wwm-lifelines { gap: 22px; }
+:root[data-theme="I"] .wwm-ll { width: auto; height: auto; display: flex; align-items: center; gap: 8px; border: 0; border-radius: 0; background: none; font-size: 0; }
+:root[data-theme="I"] .wwm-ll::before { content: ''; width: 24px; height: 24px; border-radius: 50%; background: #C9A54C; border: 2px dashed #F6F0E1; box-shadow: 0 0 0 1px #C9A54C; }
+:root[data-theme="I"] .wwm-ll::after { font-family: 'Jost', sans-serif; font-weight: 500; font-size: .78rem; letter-spacing: 1px; color: #F4EEDF; }
+:root[data-theme="I"] .wwm-ll:nth-child(1)::after { content: '50:50'; }
+:root[data-theme="I"] .wwm-ll:nth-child(2)::after { content: 'Telefon'; }
+:root[data-theme="I"] .wwm-ll:nth-child(3)::after { content: 'Publikum'; }
+:root[data-theme="I"] .wwm-ll.used { opacity: .45; }
+:root[data-theme="I"] .wwm-ll.used::before { background: #4A2E14; box-shadow: 0 0 0 1px #4A2E14; }
+:root[data-theme="I"] .wwm-ll.used::after { text-decoration: line-through; }
+:root[data-theme="I"] :is(.wwm-abar, .wwds-abar) { background: #F6F0E1; border-radius: 4px 4px 0 0; box-shadow: var(--i-karte); }
+:root[data-theme="I"] :is(.wwm-apct, .wa-pct) { color: #E6CF8B; font-family: 'Cormorant Garamond', serif; font-size: 1rem; }
+
+/* ── Wer weiss denn sowas: Karten ─────────────────────────────────────── */
+:root[data-theme="I"] .wwds-cat { background: #F6F0E1; color: #2A1A12; box-shadow: var(--i-karte); }
+:root[data-theme="I"] .wwds-cat:hover:not(.done) { transform: translateY(-3px) rotate(-1deg); filter: none; }
+:root[data-theme="I"] .wwds-cat .wc-num { font-family: 'Cormorant Garamond', serif; color: #8E1B2C; font-weight: 700; }
+:root[data-theme="I"] .wwds-cat .wc-name { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.05rem; text-transform: none; letter-spacing: 0; }
+:root[data-theme="I"] .wwds-cat.done { background: var(--tile); color: transparent; opacity: .6; box-shadow: var(--tile-edge); }
+:root[data-theme="I"] .wwds-q { background: none; border: 0; color: #F4EEDF; font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.75rem; line-height: 1.2; }
+:root[data-theme="I"] .wwds-cat-chip { background: none; border: 0; border-radius: 0; font-family: 'Jost', sans-serif; font-weight: 500; letter-spacing: 5px; color: #C9A54C; }
+:root[data-theme="I"] .wwds-opt { background: #F6F0E1; color: #2A1A12; box-shadow: var(--i-karte); font-size: 1.3rem; }
+:root[data-theme="I"] .wwds-opt .wo-let { color: #8E1B2C; font-family: 'Cormorant Garamond', serif; font-weight: 700; }
+:root[data-theme="I"] .wwds-opt.bad { background: #8E1B2C; color: #F4EEDF; }
+:root[data-theme="I"] .wwds-guess { border-radius: 10px; background: #F6F0E1; color: #2A1A12; border: 0; font-family: 'Cormorant Garamond', serif; font-weight: 700; }
+:root[data-theme="I"] .wwds-timer { font-family: 'Cormorant Garamond', serif; font-style: italic; }
+
+/* ── Der Duemmste fliegt: Kandidaten als Karten, Leben als Herzen ─────── */
+:root[data-theme="I"] .ddf-player { position: relative; background: #F6F0E1; color: #2A1A12; border: 0; box-shadow: var(--i-karte); padding-top: 18px; }
+:root[data-theme="I"] .ddf-player-name { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.2rem; }
+:root[data-theme="I"] .ddf-player.picked { border: 0; box-shadow: 0 0 0 3px #C9A54C, var(--i-karte); transform: translateY(-4px); }
+:root[data-theme="I"] .ddf-player.out { background: var(--tile); color: transparent; box-shadow: var(--tile-edge); }
+:root[data-theme="I"] .ddf-heart.full { color: #8E1B2C; text-shadow: none; }
+:root[data-theme="I"] .ddf-heart.empty { color: #D9CDB0; text-shadow: none; }
+:root[data-theme="I"] .ddf-question { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; }
+:root[data-theme="I"] .ddf-answer { color: #E6CF8B; font-family: 'Cormorant Garamond', serif; font-style: italic; }
+
+/* ── Der Preis ist heiss: Jetons und der Preis in Kursiv ──────────────── */
+:root[data-theme="I"] .pih-scores { border-bottom-color: rgba(201,165,76,.3); }
+:root[data-theme="I"] .pih-score { background: #0F3326; border: 1px solid rgba(201,165,76,.5); }
+:root[data-theme="I"] .pih-score.lead { background: #0F3326; border-color: #E6CF8B; box-shadow: inset 0 0 0 1px #E6CF8B; }
+:root[data-theme="I"] .pih-rank { font-family: 'Cormorant Garamond', serif; font-weight: 700; color: #C9A54C; }
+:root[data-theme="I"] .pih-score-pts { font-family: 'Cormorant Garamond', serif; font-weight: 700; color: #E6CF8B; }
+:root[data-theme="I"] .pih-team { border-radius: 60px; background: #0F3326; box-shadow: inset 0 0 0 1px #C9A54C, inset 0 -3px 0 var(--team); }
+:root[data-theme="I"] .pih-team.lead { box-shadow: inset 0 0 0 2px #E6CF8B, inset 0 -3px 0 var(--team); }
+:root[data-theme="I"] .pih-team-pts { font-family: 'Cormorant Garamond', serif; font-style: italic; }
+:root[data-theme="I"] .pih-item { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; }
+:root[data-theme="I"] .pih-stage :is(img, video) { border-radius: 6px; border: 6px solid #F6F0E1; box-shadow: var(--i-karte); }
+:root[data-theme="I"] .pih-price { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 3rem; color: #F4EEDF; text-shadow: none; }
+:root[data-theme="I"] .pih-bid-row { background: #F6F0E1; color: #2A1A12; border: 0; box-shadow: var(--i-karte); font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; --fg-rgb: 42,26,18; }
+:root[data-theme="I"] .pih-bid-row.win { background: #E2C77E; box-shadow: 0 0 0 3px #F6F0E1, var(--i-karte); }
+:root[data-theme="I"] .pih-bid-val { font-weight: 700; }
+
+/* ── Trivial Pursuit ──────────────────────────────────────────────────── */
+:root[data-theme="I"] .tp-team { background: #0F3326; border: 0; border-radius: 30px; box-shadow: inset 0 0 0 1px #C9A54C; }
+:root[data-theme="I"] .tp-team:is(.red, .blue, .green) { box-shadow: inset 0 0 0 1px #C9A54C, inset 0 -4px 0 var(--tc); }
+:root[data-theme="I"] .tp-team.turn { transform: translateY(-4px); background: #0F3326; box-shadow: inset 0 0 0 2px #E6CF8B, inset 0 -4px 0 var(--tc, #C9A54C); }
+:root[data-theme="I"] .tp-team-name { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.2rem; }
+:root[data-theme="I"] .tp-team-sub { font-family: 'Jost', sans-serif; letter-spacing: 3px; }
+:root[data-theme="I"] .tp-stage { background: #F6F0E1; color: #2A1A12; border: 0; border-radius: 8px; box-shadow: var(--i-karte); --fg-rgb: 42,26,18; }
+:root[data-theme="I"] .tp-catchip { font-family: 'Jost', sans-serif; font-weight: 500; letter-spacing: 3px; text-transform: uppercase; font-size: .7rem; }
+:root[data-theme="I"] .tp-question { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; font-size: 1.7rem; line-height: 1.2; }
+:root[data-theme="I"] .tp-answer { border: 0; border-radius: 6px; font-size: 1.3rem; }
+:root[data-theme="I"] .tp-answer.hidden { background: none; border: 1px dashed rgba(42,26,18,.3); font-family: 'Jost', sans-serif; }
+:root[data-theme="I"] .tp-wheel-rotor { box-shadow: 0 0 0 4px #C9A54C, 0 0 0 12px #4A2E14, 0 0 0 13px rgba(201,165,76,.6), 0 18px 30px rgba(0,0,0,.45); }
+:root[data-theme="I"] .tp-wheel-hub { background: #0F3326; border: 3px dashed #C9A54C; box-shadow: 0 0 0 3px #0F3326; font-family: 'Cormorant Garamond', serif; font-style: italic; }
+:root[data-theme="I"] .tp-wheel-pointer { border-top-color: #E6CF8B; }
+
+/* ── Ergebnis, Turnier ────────────────────────────────────────────────── */
+:root[data-theme="I"] .result-card { background: #F6F0E1; color: #2A1A12; border: 0; border-radius: 10px; box-shadow: var(--i-karte); backdrop-filter: none; --fg-rgb: 42,26,18; }
+:root[data-theme="I"] .result-scores strong { font-family: 'Cormorant Garamond', serif; font-weight: 700; color: #8E1B2C; }
+:root[data-theme="I"] .tour-bar { height: 6px; background: rgba(0,0,0,.3); }
+:root[data-theme="I"] .tour-bar-fill { background: #C9A54C; }
+:root[data-theme="I"] .tour-total { font-family: 'Cormorant Garamond', serif; font-weight: 700; }
+:root[data-theme="I"] .q-list-item { border-radius: 30px; }
+:root[data-theme="I"] .q-list-item.tour-lead { background: rgba(201,165,76,.1); box-shadow: inset 0 0 0 1px #C9A54C; }
+
+/* ── Host: Menue als gefaecherte Hand, Knoepfe wie Jetons ─────────────── */
+:root[data-theme="I"] .menu-cards { counter-reset: ikarte; }
+:root[data-theme="I"] .menu-card { counter-increment: ikarte; background: #F6F0E1; color: #2A1A12; border: 0; border-radius: 10px; box-shadow: var(--i-karte); --fg-strong: #2A1A12; --muted: #6E5F4C; }
+:root[data-theme="I"] .menu-card:nth-child(4n+1) { rotate: -2deg; }
+:root[data-theme="I"] .menu-card:nth-child(4n+2) { rotate: -.7deg; }
+:root[data-theme="I"] .menu-card:nth-child(4n+3) { rotate: .7deg; }
+:root[data-theme="I"] .menu-card:nth-child(4n)   { rotate: 2deg; }
+:root[data-theme="I"] .menu-card::before { content: counter(ikarte); left: 10px; top: 6px; right: auto; height: auto; background: none; opacity: 1; font-family: 'Cormorant Garamond', serif; font-weight: 700; color: #8E1B2C; font-size: 1rem; }
+:root[data-theme="I"] .menu-card:hover { transform: translateY(-8px); background: #FFFFFF; border: 0; box-shadow: 0 0 0 2px #C9A54C, 0 14px 30px rgba(0,0,0,.4); }
+:root[data-theme="I"] .menu-card-title { font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.25rem; }
+:root[data-theme="I"] .menu-card-icon svg { filter: none; }
+:root[data-theme="I"] .menu-card .show-icon { --ico-fstroke: #8E1B2C; --ico-line: #8E1B2C; --ico-cutline: #8E1B2C; --ico-dimline: rgba(142,27,44,.35); }
+:root[data-theme="I"] .menu-pill { border-color: rgba(201,165,76,.5); font-family: 'Jost', sans-serif; letter-spacing: 2px; text-transform: uppercase; font-size: .7rem; }
+:root[data-theme="I"] .menu-divider { width: 120px; background: #C9A54C; }
+:root[data-theme="I"] .btn { border-radius: 999px; font-family: 'Jost', sans-serif; font-weight: 500; letter-spacing: 3px; }
+:root[data-theme="I"] .btn-primary { background: #C9A54C; color: #1B1A17; box-shadow: inset 0 0 0 2px #C9A54C, inset 0 0 0 4px #F6F0E1, 0 4px 10px rgba(0,0,0,.35); }
+:root[data-theme="I"] .btn-primary:hover { box-shadow: inset 0 0 0 2px #C9A54C, inset 0 0 0 4px #F6F0E1, 0 6px 14px rgba(0,0,0,.4); }
+:root[data-theme="I"] .btn-primary::after { display: none; }
+:root[data-theme="I"] .btn-secondary { background: transparent; border: 1px solid #C9A54C; color: #E6CF8B; backdrop-filter: none; }
+:root[data-theme="I"] .btn-danger { background: #8E1B2C; box-shadow: none; }
+:root[data-theme="I"] :is(.editor-card, .setup-lobby, .resume-banner, .ddf-card, .design-card) { border-radius: 26px; background: rgba(11,38,28,.75); border: 1px solid rgba(201,165,76,.4); }
+:root[data-theme="I"] .page-title { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600; }
+
+/* Niedriges Fenster (Beamer 1280x720): Feud mit Frage ueber zwei Zeilen lag
+   13 px unter dem Bild - Frage kleiner, Kartenabstand enger. */
+@media (max-height: 900px) {
+  :root[data-theme="I"] .q-text { font-size: 1.45rem; padding-bottom: 10px; }
+  :root[data-theme="I"] .answers { gap: 7px; }
+  :root[data-theme="I"] .answers.split { row-gap: 7px; }
+}
+
 /* Die Karte wird umgedreht: erst hochkant weg, dann mit der Vorderseite. */
 @keyframes thIKarte {
   0%   { transform: perspective(900px) rotateY(-180deg) scale(1.04); filter: brightness(.6); }

@@ -229,6 +229,8 @@ const DESIGN_THEMES = [
       "--accent-text": "#D7372B",
       "--accent-text-rgb": "215,55,43"
     } },
+  /* Salon, Rework 2026-10-14: Filz bekommt ein feines Korn (wie Tuch),
+     das Licht ueber dem Tisch bleibt wie im Entwurf. */
   { key: "I", name: "Salon", hell: false,
     fonts: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Jost:wght@400;500&display=swap",
     vars: {
@@ -236,8 +238,8 @@ const DESIGN_THEMES = [
       "--font-body": "'Jost', sans-serif",
       "--font-logo": "'Cormorant Garamond', serif",
       "--bg": "#0C2A20",
-      "--bg-img": "radial-gradient(ellipse 80% 70% at 50% 35%, #13392C 0%, #0C2A20 55%, #06170F 100%)",
-      "--bg-size": "auto",
+      "--bg-img": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .8 0 0 0 0 1 0 0 0 0 .85 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23f)'/%3E%3C/svg%3E\"), radial-gradient(ellipse 80% 70% at 50% 35%, #13392C 0%, #0C2A20 55%, #06170F 100%)",
+      "--bg-size": "160px 160px, auto",
       "--panel": "#13392C",
       "--panel-hi": "#174535",
       "--line": "#2F5547",
@@ -252,7 +254,11 @@ const DESIGN_THEMES = [
       "--gold-dark": "#6E5520",
       "--gold-pale": "#E6CF8B",
       "--ink": "#1B1A17"
-    } },
+    },
+    /* GM-Fenster und Gamepad: Jeton-runde Knoepfe, Kursiv fuer Zahlen. */
+    gm: ".gm-btn,.chip,.badge,.tag,.round-label,.gm-tab{border-radius:999px;}.panel,.answer,.score-card,.score-row,.order-item,.info-card{border-radius:14px;}"
+      + ".gm-title,.score-val,.sr-val{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:700;}"
+      + ".gm-btn.gold,.gm-btn.gm-gold{background:#C9A54C;color:#1B1A17;box-shadow:inset 0 0 0 2px #C9A54C,inset 0 0 0 3px #F6F0E1;}" },
   { key: "J", name: "Kreide", hell: false,
     fonts: "https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Patrick+Hand&display=swap",
     vars: {
