@@ -12,6 +12,25 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `f23015f` Design-Rework O Terminal
+
+**Gemacht:** Konsolen-Identität auf allen Flächen: Fenster mit Titel in der Kante,
+invertierte Statuszeile, Prompt + Blockcursor, Radioknöpfe/Checkboxen bei WWM,
+diff-Stil bei WWDS, Prozesstabelle bei DDF, „◄ WINNER“ bei PIH, nummeriertes
+Menü, `[ BEFEHL ]`-Knöpfe, GM-Kopf als Statuszeile. Dazu `js/wwds.js`: Teamname
+im Kategorie-Hinweis von fest `#FFD23F` auf `var(--accent-text)` (Studio-Blau
+gleicher Wert; behebt den gelben Text auf Papier in L).
+
+**Warum so:** Glühen nur als Nachglimmen der Schrift (Phosphor), keine Flächen.
+Handy-Buzzer: Text im Knopf erst durch `[ BUZZ ]` ersetzt — verworfen, weil das JS
+dort auch Zustände schreibt; der Knopftext bleibt.
+
+**Geprüft:** `shots.js --themes O` 20 Zustände, WWM 9 px / PIH 14 px → behoben,
+danach ohne Befunde; Kontaktbögen angesehen. `check.js`, `--types` sauber.
+
+**Offen:** Röhren-Vignette (`body::after`, z-index ganz oben, ohne Klicks) liegt
+auch über Overlays/Intros — gewollt, aber nicht mit Intro angesehen.
+
 ## 2026-10-14 — `b852653` Design-Rework L New York
 
 **Gemacht:** Zeitungs-Identität auf allen Flächen; **Grund jetzt Papier**
