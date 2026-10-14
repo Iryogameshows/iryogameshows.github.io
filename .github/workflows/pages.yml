@@ -37,6 +37,8 @@ jobs:
           V="${GITHUB_SHA::8}"
           sed -i -E "s#(src=\"js/[A-Za-z0-9._-]+\.js)\"#\1?v=$V\"#g" index.html
           sed -i -E "s#(href=\"styles\.css)\"#\1?v=$V\"#g" index.html
+          # Beamerfenster: seine eigenen Skripte (GSAP-Aufdecken) ebenso.
+          sed -i -E "s#(src=\"aufdecken\.js)\"#\1?v=$V\"#g" mainscreen/index.html
           echo "Version $V gesetzt:"
           grep -o "?v=[0-9a-f]*" index.html | sort -u
       # Nur hochladen, was eine Seite tatsaechlich laedt. Notizen, Pruef- und

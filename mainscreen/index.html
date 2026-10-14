@@ -36,7 +36,15 @@
   }
   #ms-warten b{font-size:1.4rem;font-weight:800;letter-spacing:1px;color:rgba(255,255,255,.75);}
   #ms-warten span{font-size:.95rem;line-height:1.6;color:rgba(255,255,255,.4);max-width:420px;}
+  /* Waehrend das Jeopardy-Feld zur Frage fliegt (aufdecken.js), ist die
+     gespiegelte Frage noch verdeckt - sie erscheint unter der Karte. */
+  html.jp-flug #jeopardy-clue-ov{visibility:hidden;}
 </style>
+<!-- Animationen, die das Beamerfenster selbst abspielt (BAUPLAN 4.8: ueber
+     den Spiegel liefe GSAP nicht). Im <head>, weil der Spiegel den <body>
+     auf den Stand des Hauptfensters bringt. -->
+<script src="../vendor/gsap.min.js" defer></script>
+<script src="aufdecken.js" defer></script>
 </head>
 <body>
   <div id="ms-warten">

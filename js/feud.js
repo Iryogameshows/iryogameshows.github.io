@@ -1059,9 +1059,14 @@ function morphMirror(target, source) {
       if (target.getAttribute(attr.name) !== attr.value) target.setAttribute(attr.name, attr.value);
     }
   }
+  /* Knoten mit data-nur-beamer legt das Beamerfenster selbst an (GSAP-
+     Aufdecken, mainscreen/aufdecken.js) - im Hauptfenster gibt es sie nicht.
+     Der Spiegel ueberspringt sie, statt sie als "zu viel" zu entfernen. */
+  const nurBeamer = (/** @type {ChildNode|null} */ n) => !!n && n.nodeType === 1 && /** @type {Element} */ (n).hasAttribute('data-nur-beamer');
   let tChild = target.firstChild;
   let sChild = source.firstChild;
   while (sChild) {
+    while (nurBeamer(tChild)) tChild = tChild && tChild.nextSibling;
     if (!tChild) {
       target.appendChild(sChild.cloneNode(true));
       sChild = sChild.nextSibling;
@@ -1080,7 +1085,7 @@ function morphMirror(target, source) {
   }
   while (tChild) {
     const next = tChild.nextSibling;
-    target.removeChild(tChild);
+    if (!nurBeamer(tChild)) target.removeChild(tChild);
     tChild = next;
   }
 }

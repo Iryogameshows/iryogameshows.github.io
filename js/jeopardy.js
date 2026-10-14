@@ -674,6 +674,10 @@ function renderJeopardyClueOverlay() {
     ov.id = 'jeopardy-clue-ov';
     document.body.appendChild(ov);
   }
+  /* Welches Feld es war: das Beamerfenster laesst genau dieses Feld aus dem
+     Raster zur Frage fliegen (GSAP, mainscreen/aufdecken.js). */
+  ov.dataset.col = String(col);
+  ov.dataset.row = String(row);
   ov.innerHTML = `
     ${jeopardyState.currentIsDaily ? `<div class="jeopardy-dd-banner">★ DAILY DOUBLE ★</div>` : ''}
     <div class="jeopardy-clue-cat">${jeopardyCatHeadHtml(cat, 'jeopardy-clue-cat-img')}</div>
