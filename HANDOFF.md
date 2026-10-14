@@ -12,6 +12,16 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — Branches aufgeräumt (kein Code geändert)
+
+**Gemacht:** Auf Davids Anweisung gelöscht: lokal `wip/beenden-f5`,
+`claude/game-buzzer-fixes-90cyjz`, `claude/merge-symbole`, `claude/tooling-setup`; auf
+origin `claude/game-buzzer-fixes-90cyjz` und `claude/tooling-setup`. Vorher geprüft: je
+0 Commits außerhalb master (`git rev-list --count master..<b>` bzw. gegen `origin/master`),
+lokal mit `git branch -d` (verweigert Ungemergtes). Danach `git fetch --prune`: lokal und
+origin nur noch `master`. Damit ist der erste „Offen“-Punkt im Eintrag „Am PC: Branches
+aufgeräumt“ unten erledigt.
+
 ## 2026-10-13 — `45d0f4e` Buzzer „Zu spät“ statt Strafe, Offline-Banner frei, Geräte-Test stabil, Action vorbereitet
 
 **Auftrag (David):** die drei offenen Punkte aus `e2d5fd0` — Wackler finden, Prüfungen
