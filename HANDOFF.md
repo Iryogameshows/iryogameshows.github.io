@@ -12,6 +12,26 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `e25b4f0` Late Night zurück aufs Original; Kurs des Reworks geändert
+
+**Gemacht:** `94b61cb` (Late Night neu: Walnuss, Bernstein, Stadtlichter) per
+`git revert` zurückgenommen — D ist wieder das Original (Haarlinien, große Ziffern,
+Orange, Bauchbinden-Wisch). Der Space-Age-Ersatz für die 70er und eine
+„Veredelung“ der 70er mit Emaille-Verläufen wurden **nie committet** und verworfen.
+
+**Warum:** David: Late Night habe „komplett seinen Look verloren“ — „hör auf mit diesem AI
+Slop gradient scheiß, dafür hab ich dir nicht die Mittel gegeben“. Davor zu den 70ern:
+„das Original-Design ist besser, es soll nur hochwertiger sein“.
+**Neuer Kurs:** Identität jeder Original-Richtung behalten und veredeln — über
+Typografie, Raster, Präzision, Details, gezielte Bewegung —, keine weichen Verläufe,
+Glows, Glasbänder als Ersatz für Gestaltung. Als Memory gespeichert.
+
+**Stand der Richtungen:** A Studio neu (abgenommen, bleibt). B Arcade neu (`0f4e9e9`,
+live) — **offen, ob David das behalten will**; nach seiner Kritik fraglich, weil
+ebenfalls verlaufslastig. D, E, I, K, L, O: Original, noch nicht veredelt.
+
+**Offen:** Entscheidung zu B; Plan je Richtung vor dem Bauen zeigen.
+
 ## 2026-10-14 — `0f4e9e9` Design-Rework B Arcade
 
 **Gemacht:** „Automat 1987“ (Details im Commit). David hat Studio abgenommen
