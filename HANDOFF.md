@@ -12,6 +12,31 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `d890f20` GSAP auf dem Beamer: Jeopardy-Feld fliegt zur Frage
+
+**Gemacht:** Siehe Commit. Kern: das **Beamerfenster spielt Animationen selbst**
+(`mainscreen/aufdecken.js` + `vendor/gsap.min.js`), ausgelöst dadurch, dass ein
+gespiegeltes Element ankommt (`#jeopardy-clue-ov` mit `data-col/-row`). Eigene Knoten
+tragen `data-nur-beamer`, `morphMirror` lässt sie stehen.
+
+**Warum so:** David fragte, warum GSAP nicht auf dem Beamer geht. Antwort: über den
+Spiegel nicht (je Frame ein Spiegel-Durchlauf, im Hintergrund gedrosselt). Erlaubt
+ist es, wenn das Beamerfenster selbst animiert — das ist dieser Versuch. Verworfen:
+GSAP im Hauptfenster + Spiegel; Overlay-Stil auf dem Beamer animieren (der Spiegel
+würde `style` beim nächsten Durchlauf zurücksetzen) — deshalb eigene Karte.
+
+**Geprüft:** Flugtest im echten Beamerfenster (Scratchpad `flugtest.js`) 7/7 in A und B,
+Bilder je Phase angesehen. `ablauf.js` 49/49, `check.js`/`--types` sauber.
+
+**Offen / ungeprüft:**
+- **BAUPLAN 4.8 anpassen**, sobald David das Muster abnimmt: „Beamer animiert selbst“
+  als erlaubter Weg.
+- Mit echtem Beamer und Hauptfenster im Hintergrund nicht geprüft (headless hat
+  kein echtes Hintergrund-Drosseln).
+- Landung des Betrags ~15 px tiefer als die Punktzahl (Schriftmetrik), beim
+  Überblenden kaum sichtbar.
+- Host-Fenster selbst zeigt die Frage weiterhin sofort, ohne Flug.
+
 ## 2026-10-14 — `e25b4f0` Late Night zurück aufs Original; Kurs des Reworks geändert
 
 **Gemacht:** `94b61cb` (Late Night neu: Walnuss, Bernstein, Stadtlichter) per
