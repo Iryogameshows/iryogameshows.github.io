@@ -1295,7 +1295,7 @@ function updateGamemaster() {
   .ff-team .score-val{color:#fff;}
   .ff-team.active .score-val,.ff-pot .score-val{color:#FFD23F;}
   .ff-team.active .score-name{color:#FFD23F;}
-  .ff-turn{font-size:.58rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:#FFD23F;color:#1a1200;white-space:nowrap;}
+  .ff-turn{font-size:.58rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:#FFD23F;color:var(--on-accent,#1a1200);white-space:nowrap;}
   .ff-pips{display:flex;gap:5px;}
   .ff-pip{display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:50%;font-size:.7rem;font-weight:900;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.12);color:rgba(255,255,255,.15);transition:all .25s ease;}
   .ff-pip.on{background:radial-gradient(circle, rgba(232,69,60,.35), rgba(198,40,40,.45));border-color:#E8453C;color:#FF6B6B;box-shadow:0 0 10px rgba(232,69,60,.25);}
