@@ -12,6 +12,24 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `5ae0b61` Design-Rework E 70er
+
+**Gemacht:** 70er-Identität (Kakaobraun, Senf/Orange/Rost, Shrikhand, runde Formen)
+auf allen Flächen; Sonnenstrahlen-Muster, Team-Plaketten mit Ring, Pillen-Balken,
+WWM-Punktbogen, Ringschild-Preis, gestrichelte Gebote, GM-Feld, flacher Handy-Buzzer.
+
+**Warum so / verworfen:** Davids Vorgabe „Original, nur hochwertiger“ (Emaille-
+Verläufe abgelehnt) → alle Flächen flach, Tiefe nur über harte Unterkanten. Der
+alte Leuchtschein (`--bg-img` radial) ist raus. Der Punktbogen der WWM-Leiter
+ist per `margin-top` je `nth-child` gebaut (keine Geometrie im Markup nötig).
+
+**Geprüft:** `shots.js --themes E`: erster Lauf 5 Befunde (Höhe bei 1280×720:
+Feud/Feud-lang 23, PIH 36, Ergebnis 16, WWM-Joker 10 px) → eigene
+`@media (max-height:900px)`-Regeln, danach ohne Befunde. Kontaktbögen angesehen.
+`check.js`, `--types` sauber.
+
+**Offen:** nichts Eigenes; Gesamtlauf aller Richtungen folgt am Ende.
+
 ## 2026-10-14 — `ad935ea` Design-Rework B Arcade: zurück zum Original, veredelt
 
 **Gemacht:** B wieder aus `designs/s/B-*.html` (Gelb/Cyan, Press Start, Pixelrahmen),
