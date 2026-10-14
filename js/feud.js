@@ -1241,6 +1241,33 @@ function updateGamemaster() {
       <div class="ff-team-row"><span class="score-val">${Number(state.roundPoints) || 0}</span></div>
     </div>`;
 
+  /* "Jetzt"-Karte: sagt dem Host in einem Satz, was gerade dran ist, statt
+     dass er es aus Teams, Strikes und Buzzer-Panel zusammensuchen muss
+     (Skizze 5, von David gewaehlt 2026-10-14). Reihenfolge der Faelle =
+     Ablauf einer Runde. */
+  const teamName = (i) => escapeHtml(state.teamNames[i] || `Team ${i + 1}`);
+  const startBtns = (nur) => state.teamNames.map((n, i) => (nur == null || nur === i)
+    ? `<button class="gm-btn gold sm" onclick="event.stopPropagation();opener.feudSetStartTeam(${i})">→ ${teamName(i)} beginnt</button>` : '').join('');
+  const erster = feudBuzzer.results[0];
+  const ersterTeam = erster && Number.isInteger(erster.team) && erster.team < state.teamCount ? erster.team : null;
+  let jetzt;
+  if (!state.questionRevealed) jetzt = { titel: 'Frage aufdecken', sub: 'Klick hier oder auf die Frage – sie erscheint auf der Leinwand, der Buzzer wird scharf.', klick: 'opener.revealQuestion()' };
+  else if (state.allOut) jetzt = { titel: 'Alle Teams sind raus', sub: 'Restliche Antworten zeigen, dann nächste Runde.' };
+  else if (state.revealed.every(Boolean)) jetzt = { titel: `Runde fertig – Punkte gehen an ${teamName(state.currentTeam)}`, sub: 'Weiter mit „Nächste Runde“.' };
+  else if (erster && !state.revealed.some(Boolean) && state.teamStrikes.every(s => !s)) jetzt = {
+    titel: `${escapeHtml(erster.name)}${ersterTeam != null ? ` (${teamName(ersterTeam)})` : ''} war zuerst · ${erster.t.toFixed(2).replace('.', ',')} s`,
+    sub: ersterTeam != null && ersterTeam !== state.currentTeam ? 'Team übernehmen, dann Antwort anklicken – oder Strike.' : 'Antwort anklicken, wenn sie stimmt – sonst Strike.',
+    knoepfe: ersterTeam != null && ersterTeam !== state.currentTeam ? startBtns(ersterTeam) : '' };
+  else if (feudBuzzer.armed && !feudBuzzer.results.length && !state.revealed.some(Boolean)) jetzt = { titel: 'Buzzer scharf – warte auf den ersten Buzz', sub: 'Oder das Startteam von Hand wählen.', knoepfe: startBtns(null) };
+  else jetzt = { titel: `${teamName(state.currentTeam)} ist dran`, sub: `${state.teamStrikes[state.currentTeam] || 0} von 3 Strikes · Antwort anklicken, wenn sie stimmt – sonst Strike.` };
+  const jetztHtml = `<div class="panel ff-now" ${jetzt.klick ? `onclick="${jetzt.klick}" style="cursor:pointer;"` : ''}>
+    <span class="ff-label">Jetzt</span>
+    <div class="ff-now-title">${jetzt.titel}</div>
+    <div class="ff-now-sub">${jetzt.sub}</div>
+    ${jetzt.knoepfe ? `<div class="panel-row" style="margin-top:10px;">${jetzt.knoepfe}</div>` : ''}
+  </div>`;
+  const ffRows = Math.max(4, Math.ceil(q.answers.length / 2));
+
   const feudPresenceCount = feudBuzzer.presence.length;
   const feudPresenceRows = feudBuzzer.presence.length
     ? feudBuzzer.presence.map(p => `<div class="pr-row" style="flex-wrap:wrap;gap:6px;"><span class="pr-dot"></span>${playerAvatarHtml(p)}<span style="flex:1;">${escapeHtml(p.name)}</span>${playerTeamButtonsHtml(p, state.teamNames, 'opener.')}</div>`).join('')
@@ -1301,19 +1328,37 @@ function updateGamemaster() {
   .ff-pip.on{background:radial-gradient(circle, rgba(232,69,60,.35), rgba(198,40,40,.45));border-color:#E8453C;color:#FF6B6B;box-shadow:0 0 10px rgba(232,69,60,.25);}
   .ff-q{cursor:pointer;padding:14px 18px;}
   .ff-label{display:block;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:4px;}
+  /* .panel.ff-now statt .ff-now: themeGmHtml setzt .panel{border-color} je Richtung und kaeme sonst darueber. */
+  .panel.ff-now{padding:14px 18px;border:2px solid #FFD23F;background:rgba(255,210,63,.08);}
+  .ff-now-title{font-size:1.15rem;font-weight:800;color:#FFD23F;line-height:1.25;}
+  .ff-now-sub{font-size:.8rem;color:rgba(255,255,255,.7);margin-top:4px;}
+  .ff-now .gm-btn{flex:0 0 auto;}
+  /* Grosses Fenster: eine Spalte statt Haupt- und Seitenspalte. Die Antworten
+     stehen zweispaltig wie auf dem Board (1-4 links, 5-8 rechts) und fuellen
+     die Hoehe, die Panels liegen als Reihe darunter. Vorher blieb die untere
+     Haelfte leer (08b1425). */
+  @media (min-width: 1200px) {
+    .gm-body.ff-body{display:flex;flex-direction:column;align-items:stretch;}
+    .ff-body .gm-main{flex:1 0 auto;}
+    .ff-body .answer-list{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(var(--ff-rows),minmax(3.2rem,1fr));grid-auto-flow:column;}
+    .ff-body .answer{font-size:1.15rem;gap:16px;}
+    .ff-body .gm-side{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:start;}
+    .ff-now-title{font-size:1.6rem;}
+    .ff-now-sub{font-size:.9rem;}
+  }
 </style></head><body>
   ${gmHeaderHtml('Gamemaster', `Family Feud · Runde ${state.currentRound+1} / ${state.roundQuestions.length}`)}
-  <div class="gm-body">
+  <div class="gm-body ff-body">
   <div class="gm-main">
   <div class="ff-teams">${teamsHtml}</div>
-  ${state.allOut ? '<div class="round-label warn">⚠ Alle Teams out</div>' : ''}
+  ${jetztHtml}
   <div class="panel ff-q" onclick="opener.revealQuestion()">
     <span class="ff-label">Frage ${state.currentRound+1} von ${state.roundQuestions.length}</span>
     <div class="question">${escapeHtml(q.question)}</div>
   </div>
   ${qNoteHtml(q.note)}
   <div class="ff-label">Antworten · anklicken zum Aufdecken</div>
-  <div class="answer-list">
+  <div class="answer-list" style="--ff-rows:${ffRows};">
   ${q.answers.map((a,i) => `<div class="answer ${state.revealed[i]?'shown':'hidden'}" ${!state.revealed[i] ? `onclick="opener.revealAnswer(${i})"` : ''}>
     <span><span class="num">${i+1}.</span> <span class="text">${escapeHtml(a.text)}</span></span>
     <span class="pts">${Number(a.points) || 0}</span>
