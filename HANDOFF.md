@@ -12,6 +12,34 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `ad935ea` Design-Rework B Arcade: zurück zum Original, veredelt
+
+**Gemacht:** B wieder aus `designs/s/B-*.html` (Gelb/Cyan, Press Start, Pixelrahmen),
+auf allen Flächen ausgebaut: 1P/2P-Anzeigen, Plätze „01“ per CSS-Zähler,
+Punkte-Platzhalter, Levelleiste oben, Auswahlpfeil, ITEMS-Joker, Zählwerk-Preis,
+Segmentbalken, Gitterboden, Menü mit Pfeil, Knöpfe mit hartem Versatz, GM-Fenster,
+Automatenknopf am Handy. Details im Commit.
+
+**Warum so / verworfen:**
+- Davids offene Frage „Arcade behalten oder zurück“ habe ich entschieden (er hat
+  „mach alles davon fertig“ gesagt, ohne zu wählen): zurück zur Identität, weil
+  „Automat 1987“ Magenta-Verläufe + Glow war — das, was er bei D abgelehnt hat.
+  **Davids Bestätigung steht aus.** Rückweg: `0f4e9e9` steht in der History.
+- `git revert 0f4e9e9` wurde vom Auto-Modus blockiert → Block über `swapblock.js`
+  (Scratchpad) neu geschrieben, alte Werte aus `git show 0f4e9e9^:…` übernommen.
+- Show-Logos: erst `font-size` je Zeile gesetzt — brach WWDS/DDF (Zeilen
+  ineinander). Jetzt `transform: scale(.7)` um die eigene Grundlinie
+  (`transform-box: fill-box`), passt für alle Logos.
+- Pixelify (Vorsession) blieb verworfen; Press Start liest sich ab ~.6rem sauber,
+  5 ≠ S.
+
+**Geprüft:** `shots.js --themes B` 20 Zustände ohne Befunde; Kontaktbögen und
+Logo-Ausschnitte aller Shows angesehen. `check.js`, `--types` sauber.
+
+**Offen:** `--reduced` für B nicht eigens gelaufen (Blink-Animationen sind in
+`@media (prefers-reduced-motion)` abgeschaltet, ungeprüft). SVG-Filter
+`#ico-pixel` in `index.html` weiter unbenutzt.
+
 ## 2026-10-14 — `215485a` Design-Rework D Late Night: ganzes Grafikdesign
 
 **Gemacht:** David: „mach alles davon fertig“ (Plan aus der Vorsession: D über alle
