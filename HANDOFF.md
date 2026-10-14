@@ -12,6 +12,27 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `7ae63d8` Feud-GM: Prüfung nach dem Umbau, „Am Zug“ in L lesbar
+
+**Gemacht:** Nächste Schritte aus `08b1425` abgearbeitet. Einziger Befund: in Richtung L war das „Am Zug“-Schild
+unlesbar (Schrift `#1a1200` auf dem dunklen Gold-Ersatz von L). Jetzt `color:var(--on-accent,#1a1200)` in `js/feud.js`.
+
+**Warum so:** `--on-accent` ist das Paar zum Gold-Hintergrund, das auch `.gm-btn.gold` nutzt. Der Rückfall greift in
+Studio-Blau, wo `themeGmHtml` keine Variablen setzt.
+
+**Geprüft:** `shots.js --shows gm` bei 1707×951 (B,D,I,K,L,O,Studio) und 390×844 (E,A,B,D,I,K,L,O,Studio): keine Befunde,
+Kontaktbögen angesehen. Nach dem Fix L/E/Studio bei 390×844 erneut angesehen. `ablauf.js`: 49 OK, 0 FEHL. `check.js`: in Ordnung.
+
+**Offen:**
+- Auf Handy-Breite steht die Karte „Rundenpunkte“ allein in der zweiten Zeile (auto-fit). Funktioniert, wirkt etwas leer;
+  bewusst nicht geändert, bis David den Aufbau abgenommen hat.
+- Nicht angesehen: 3 Teams, Zustand „alle out“, echtes Gamepad-Gerät.
+- `setGmFeudTab`/`gmFeudTab` weiter ungenutzt vorhanden.
+- Davids Urteil zum neuen Aufbau steht aus; danach Übertrag auf die anderen GM-Fenster.
+
+**Fallstricke:** Feste Farben im GM-Template, die `themeGmHtml` nicht umschreibt, brechen in abweichenden Richtungen —
+auf `#FFD23F`-Hintergrund immer `var(--on-accent)` nehmen.
+
 ## 2026-10-14 — `08b1425` Feud-GM neu geordnet (Abbruch: David muss weg)
 
 **Gemacht:** `updateGamemaster` für Feud (`js/feud.js`, `teamsHtml` + gmHtml): oben ist jetzt eine Teamleiste. Jede
