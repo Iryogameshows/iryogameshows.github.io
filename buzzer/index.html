@@ -234,7 +234,7 @@
 
   /* Der Bereitschaftsring folgt der Form des Knopfes. */
   :root[data-theme="C"] #buzz::after{border-radius:40px;}
-  :root[data-theme="D"] #buzz::after,:root[data-theme="L"] #buzz::after{border-radius:6px;}
+  :root[data-theme="L"] #buzz::after{border-radius:6px;}
   :root[data-theme="N"] #buzz::after{border-radius:34px;}
   :root[data-theme="E"] #buzz::after{inset:-30px;}
 
@@ -247,6 +247,7 @@
   :root[data-theme="A"] #buzz{--buzz-rand:16px;}
   :root[data-theme="B"] #buzz,:root[data-theme="P"] #buzz{--buzz-rand:12px;}
   :root[data-theme="C"] #buzz{--buzz-rand:16px;}
+  :root[data-theme="D"] #buzz{--buzz-rand:12px;}
   :root[data-theme="E"] #buzz{--buzz-rand:22px;}
   :root[data-theme="H"] #buzz,:root[data-theme="J"] #buzz{--buzz-rand:16px;}
   :root[data-theme="I"] #buzz,:root[data-theme="S"] #buzz{--buzz-rand:13px;}
@@ -272,9 +273,11 @@
   :root[data-theme="C"] #buzz{border-radius:34px;rotate:-4deg;border:5px solid #121212;font-size:3rem;
     box-shadow:12px 14px 0 #121212;}
 
-  /* D Late Night: eine grosse Flaeche, kein Kreis. */
-  :root[data-theme="D"] #buzz{border-radius:4px;font-size:4.4rem;font-weight:900;letter-spacing:0;
-    box-shadow:0 10px 0 var(--buzz-shadow,#7a140e);}
+  /* D Late Night (neu 2026-10-14): Knopf in einer Walnussfassung, warmes
+     Lampenlicht rundherum. */
+  :root[data-theme="D"] #buzz{font-size:2.8rem;font-weight:800;letter-spacing:0;text-transform:none;
+    box-shadow:0 10px 0 var(--buzz-shadow,#7a140e),0 0 0 9px #3A2417,0 0 0 11px #6B4428,0 0 0 12px #120A06,0 0 46px rgba(255,181,71,.32);}
+  :root[data-theme="D"] #buzz::after{border-color:#FFB547;}
 
   /* E 70er: Polster mit Cremerand, Shrikhand, kleingeschrieben wie im Entwurf. */
   :root[data-theme="E"] #buzz{border-radius:46% 46% 44% 44%/50% 50% 40% 40%;border:6px solid #F6E7CB;
