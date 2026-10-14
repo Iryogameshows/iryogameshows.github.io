@@ -12,6 +12,36 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `7c113b4` Feud-GM: Skizze 5 „Nächster Schritt“ gebaut
+
+**Gemacht:** In `updateGamemaster` (`js/feud.js`) eine „Jetzt“-Karte (`.ff-now`) unter der Teamleiste. Sie leitet aus
+dem Zustand ab, was dran ist, in Ablauf-Reihenfolge: Frage verdeckt („Frage aufdecken“, Karte klickbar) → alle raus →
+alles aufgedeckt („Runde fertig – Punkte gehen an …“) → erster Buzz vor der ersten Antwort/dem ersten Strike („Bert (Team
+Blau) war zuerst · 0,31 s“, mit „→ Team beginnt“-Knopf, wenn das Team nicht schon dran ist) → Buzzer scharf ohne Buzz (beide
+Startteam-Knöpfe) → sonst „Team X ist dran · n von 3 Strikes“. Die alte Zeile „⚠ Alle Teams out“ ist durch die Karte ersetzt.
+Ab 1200 px (`.ff-body`): eine Spalte statt Haupt-/Seitenspalte, Antworten zweispaltig wie auf dem Board (1–4 links, 5–8
+rechts, `--ff-rows`), füllen die Höhe; Buzzer/Verbunden/Reihenfolge/Notizen als Viererreihe darunter.
+
+**Warum so:** David fand den vorigen Stand nur „größer gemacht“ (`fdebea9`) — die untere Hälfte blieb leer. Aus 10
+Skizzen (Wireframes, dann echtes GM-Markup in Studio-Blau, Prototyp-Skript nur im Scratchpad) hat er Skizze 5 gewählt.
+Abweichung von der Skizze: statt eines Chips „6 verbunden · Notizen ▸“ oben stehen die Panels als Reihe unten, weil Buzzer-
+Panel (Startteam-Knöpfe), QR und Spieler-Teamwahl dort erreichbar bleiben müssen.
+
+**Geprüft:** Sechs Zustände (verdeckt, scharf, Buzz anderes Team, läuft mit Strike, alle raus, fertig) bei 1707×951 und
+390×844 in Studio, L und O angesehen, keine JS-Fehler. `shots.js --shows gm,feud` in A,B,D,E,I,K,L,O,Studio bei 1707×951:
+keine Befunde, Bogen angesehen. `ablauf.js` 49 OK / 0 FEHL. `check.js` und `check.js --types` sauber.
+
+**Offen:**
+- 3 Teams, Fragen mit 6–8 Antworten, echtes Gamepad-Gerät und echtes Buzzern nicht angesehen.
+- Auf dem Handy schiebt die Karte die Antworten weiter nach unten (dort scrollt die Mitte wie vorher).
+- Ein offenes Panel in der unteren Reihe macht die Mitte scrollbar; bewusst so gelassen.
+- `setGmFeudTab`/`gmFeudTab` weiter ungenutzt.
+- Übertrag auf die anderen GM-Fenster steht aus.
+
+**Fallstricke:** Der 760-px-Block in `GM_SHARED_CSS` setzt `.gm-body{align-items:start}` — in einer Flex-Spalte schrumpft
+dann alles auf Inhaltsbreite, deshalb `align-items:stretch` in `.ff-body`. `themeGmHtml` setzt `.panel{border-color}` je
+Richtung; eigene Rahmenfarben auf Panels brauchen höhere Spezifität (`.panel.ff-now`).
+
 ## 2026-10-14 — `7ae63d8` Feud-GM: Prüfung nach dem Umbau, „Am Zug“ in L lesbar
 
 **Gemacht:** Nächste Schritte aus `08b1425` abgearbeitet. Einziger Befund: in Richtung L war das „Am Zug“-Schild
