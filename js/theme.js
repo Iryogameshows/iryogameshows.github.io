@@ -147,6 +147,8 @@ const DESIGN_THEMES = [
       + ".gm-title,.score-val,.sr-val{font-family:'Big Shoulders Display',sans-serif;font-weight:900;}"
       + ".gm-btn{letter-spacing:2px;box-shadow:none;}.gm-btn.gold,.gm-btn.gm-gold{background:#FF5B1F;color:#0E0E0E;}"
       + ".score-card.active{box-shadow:inset 0 -3px 0 #FF5B1F;}" },
+  /* 70er, Rework 2026-10-14: flache Flaechen statt Leuchten - die
+     Sonnenstrahlen zeichnet styles.css (body::before), --bg-img bleibt leer. */
   { key: "E", name: "70er", hell: false,
     fonts: "https://fonts.googleapis.com/css2?family=Shrikhand&family=DM+Sans:wght@500;700&display=swap",
     vars: {
@@ -154,7 +156,7 @@ const DESIGN_THEMES = [
       "--font-body": "'DM Sans', sans-serif",
       "--font-logo": "'Shrikhand', serif",
       "--bg": "#2B1810",
-      "--bg-img": "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(242,179,61,.18) 0%, transparent 70%)",
+      "--bg-img": "none",
       "--bg-size": "auto",
       "--panel": "#3D2417",
       "--panel-hi": "#4A2C1B",
@@ -170,7 +172,11 @@ const DESIGN_THEMES = [
       "--gold-dark": "#8C3A1A",
       "--gold-pale": "#F8D58A",
       "--ink": "#2B1810"
-    } },
+    },
+    /* GM-Fenster und Gamepad: runde Knoepfe, Shrikhand fuer Zahlen. */
+    gm: ".gm-btn,.chip,.badge,.tag,.round-label,.gm-tab{border-radius:999px;}.panel,.answer,.score-card,.score-row,.order-item,.info-card{border-radius:18px;}"
+      + ".gm-title,.score-val,.sr-val{font-family:'Shrikhand',serif;font-weight:400;}"
+      + ".gm-btn.gold,.gm-btn.gm-gold{background:#F2B33D;color:#2B1810;box-shadow:0 3px 0 #8C3A1A;}" },
   { key: "F", name: "Comic", hell: true,
     fonts: "https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;800&display=swap",
     vars: {

@@ -302,6 +302,13 @@
   :root[data-theme="E"] #buzz{border-radius:46% 46% 44% 44%/50% 50% 40% 40%;border:6px solid #F6E7CB;
     font-weight:400;font-size:3.2rem;letter-spacing:0;text-transform:none;
     box-shadow:0 10px 0 #682c14,0 0 0 10px #2B1810,0 0 0 16px #E8622C,0 0 0 22px #F2B33D;}
+  /* Rework 2026-10-14: flach statt Verlauf, wie die Leinwand. */
+  :root[data-theme="E"] #buzz{background:var(--buzz-mid,#E8453C);}
+  :root[data-theme="E"] .wait-orb{background:var(--buzz-mid,#E8453C);}
+  :root[data-theme="E"] .btn{border-radius:999px;background:#F2B33D;color:#2B1810;box-shadow:0 4px 0 #8C3A1A;}
+  :root[data-theme="E"] .btn.ghost{background:transparent;border:2px solid #F6E7CB;color:#F6E7CB;box-shadow:none;}
+  :root[data-theme="E"] :is(input,.vote-opt){border-radius:999px;}
+  :root[data-theme="E"] :is(.lobby-team,.team-chip,.lobby-badge){font-family:'Shrikhand',serif;font-weight:400;}
 
   /* F Comic: Sternblitz. clip-path schneidet Schatten und Ring ab - deshalb
      drop-shadow als Schatten und ein Pulsieren statt des Rings. */

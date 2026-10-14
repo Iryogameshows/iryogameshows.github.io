@@ -4559,18 +4559,26 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   100% { clip-path: inset(0 0 0 0); }
 }
 
-/* ── E · 70er: Balken in Senf und Orange, Regenbogenstreifen, Shrikhand ──
-   Fehlte bis 2026-10-10: die Scheibe "F-J" begann bei F, E blieb dabei
-   ohne Material und zeigte das Studio-Blau auf braunem Grund. */
+/* ── E · 70er (Rework 2026-10-14): Samstagabend 1976 ────────────────────────
+   Identitaet aus designs/s/E-*.html: Kakaobraun, Senf - Orange - Rost als
+   Dreiklang, Creme fuer Schrift, Shrikhand kursiv fuer alles Laute, DM Sans
+   fuer den Rest. Formen sind rund: Pillen, Kreise, Boegen. Hinter allem
+   Sonnenstrahlen aus dem Entwurf (Muster, kein Leuchten).
+   Veredelt wird ueber Flaechen statt Verlaeufe (David 2026-10-14: "das
+   Original ist besser, es soll nur hochwertiger sein" - Emaille-Verlaeufe
+   abgelehnt): jede Farbe flach, Tiefe nur durch eine harte dunkle Unterkante
+   wie bei lackiertem Holz. Teamanzeigen als runde Plaketten mit Ring in der
+   Teamfarbe (BAUPLAN 4.4), WWM-Leiter als Punktbogen, Preis im Ringschild.
+   Signatur: der Balken rollt herunter wie eine Jalousie und federt nach. */
 :root[data-theme="E"] {
-  --brd-surface: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(242,179,61,.10), transparent 70%), linear-gradient(180deg, #2E1A10, #23140B);
-  --brd-frame: inset 0 0 0 5px #F2B33D, inset 0 0 0 10px #E8622C, inset 0 0 0 15px #8C3A1A, 0 18px 36px rgba(0,0,0,.5);
+  --brd-surface: #2E1A10;
+  --brd-frame: inset 0 0 0 5px #F2B33D, inset 0 0 0 10px #E8622C, inset 0 0 0 15px #8C3A1A, 0 18px 36px rgba(0,0,0,.45);
   --brd-well: #23140B;
   --brd-inner: transparent;
-  --brd-radius: 22px;
-  --tile: linear-gradient(180deg, #43281A, #341F13);
-  --tile-hover: linear-gradient(180deg, #52311F, #3D2417);
-  --tile-edge: inset 0 2px 0 rgba(255,255,255,.05), inset 0 -3px 6px rgba(0,0,0,.3);
+  --brd-radius: 26px;
+  --tile: #3D2417;
+  --tile-hover: #4A2C1B;
+  --tile-edge: inset 0 -3px 0 rgba(0,0,0,.28);
   --tile-fg: #F6E7CB;
   --tile-head: transparent;
   --tile-head-fg: #F6E7CB;
@@ -4580,49 +4588,261 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   --tile-dim-fg: #8C5A3A;
   --tile-bar: rgba(246,231,203,.08);
   --tile-rule: rgba(0,0,0,.18);
-  --tile-open: linear-gradient(180deg, #FFCB5E 0%, #F2B33D 55%, #D99A1F 100%);
-  --tile-open-edge: inset 0 3px 0 rgba(255,255,255,.4), inset 0 -4px 0 rgba(0,0,0,.18), 0 5px 0 rgba(0,0,0,.3), 0 12px 18px rgba(0,0,0,.35);
+  --tile-open: #F2B33D;
+  --tile-open-edge: inset 0 -4px 0 rgba(0,0,0,.2), 0 4px 0 rgba(0,0,0,.28);
   --tile-open-fg: #2B1810;
   --tile-open-dim: rgba(43,24,16,.6);
   --tile-pts-bg: transparent;
   --tile-pts-rule: rgba(43,24,16,.25);
-  --tile-pick: linear-gradient(180deg, #FFCB5E 0%, #F2B33D 55%, #D99A1F 100%);
+  --tile-pick: #F2B33D;
   --tile-pick-fg: #2B1810;
   /* Richtig in Avocado - das Gruen der Zeit, nicht das Studio-Gruen. */
-  --tile-right: linear-gradient(180deg, #B5C95A 0%, #8FA63A 55%, #6B8424 100%);
+  --tile-right: #8FA63A;
   --tile-right-fg: #1C2208;
-  --tile-radius: 12px;
+  --tile-radius: 999px;
   --tile-font: 'DM Sans', sans-serif;
   --tile-reveal: thERollo .6s cubic-bezier(.3,1.5,.5,1);
+  --e-senf: #F2B33D; --e-orange: #E8622C; --e-rost: #8C3A1A; --e-creme: #F6E7CB; --e-dunkel: #2B1810;
+  --e-ringe: 0 0 0 4px #F2B33D, 0 0 0 8px #E8622C, 0 0 0 12px #8C3A1A;
 }
+/* Sonnenstrahlen vom unteren Rand, wie unter TP und WWDS im Entwurf. */
+:root[data-theme="E"] body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: repeating-conic-gradient(from -90deg at 50% 118%, rgba(242,179,61,.045) 0deg 6deg, transparent 6deg 12deg);
+  -webkit-mask: linear-gradient(0deg, #000 10%, transparent 75%); mask: linear-gradient(0deg, #000 10%, transparent 75%);
+}
+
+/* ── Teamanzeigen: runde Plaketten mit Ring in der Teamfarbe ───────────── */
+:root[data-theme="E"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).red   { --tc: #E8453C; }
+:root[data-theme="E"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).blue  { --tc: #3B82F6; }
+:root[data-theme="E"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).green { --tc: #22C55E; }
+:root[data-theme="E"] :is(.scoreboard, .jeopardy-scores) { gap: 22px; border-radius: 0; box-shadow: none; overflow: visible; padding: 6px; }
+:root[data-theme="E"] :is(.team-panel, .jeopardy-team, .wwds-team, .team-card):is(.red, .blue, .green) {
+  background: #2E1A10; border: 0; border-radius: 999px;
+  box-shadow: inset 0 0 0 5px var(--tc), inset 0 -6px 0 5px rgba(0,0,0,.18), 0 5px 0 rgba(0,0,0,.3);
+}
+:root[data-theme="E"] .team-card { border-radius: 36px; }
+:root[data-theme="E"] .team-card::before { display: none; }
+:root[data-theme="E"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name, .team-card .label) {
+  font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: .78rem; letter-spacing: .5px; text-transform: none; color: #CDB898;
+}
+:root[data-theme="E"] :is(.team-panel .t-score, .jeopardy-team .jt-score, .wwds-team .wt-money) {
+  font-family: 'Shrikhand', serif; color: #F6E7CB; text-shadow: 3px 3px 0 #8C3A1A; line-height: 1.1;
+}
+:root[data-theme="E"] .team-panel .t-score { font-size: 3.2rem; }
+:root[data-theme="E"] .team-panel.active-team { padding: 16px 12px; box-shadow: inset 0 0 0 5px var(--tc), inset 0 0 0 9px #2E1A10, inset 0 0 0 13px #F2B33D, 0 5px 0 rgba(0,0,0,.3); }
+:root[data-theme="E"] .wwds-team.on { box-shadow: inset 0 0 0 5px var(--tc), inset 0 0 0 9px #2E1A10, inset 0 0 0 13px #F2B33D; }
+:root[data-theme="E"] .team-panel.active-team::after { display: none; }
+:root[data-theme="E"] :is(.team-panel.active-team .t-score, .wwds-team.on .wt-money) { color: #F2B33D; text-shadow: 3px 3px 0 #E8622C, 6px 6px 0 #8C3A1A; }
+:root[data-theme="E"] :is(.team-panel.active-team .t-name, .wwds-team.on .wt-name) { color: #F2B33D; }
+
+/* X in runden Knoepfen, wie oben rechts im Entwurf. */
+:root[data-theme="E"] .team-strikes { background: none; border: 0; box-shadow: none; transform: none; }
+:root[data-theme="E"] .strike-pip { width: 28px; height: 28px; background: #3D2417; border: 2px solid #5A3622; color: #5A3622; font-size: .85rem; }
+:root[data-theme="E"] .strike-pip.lit { background: #E8622C; border-color: #F6E7CB; color: #F6E7CB; box-shadow: 0 3px 0 #8C3A1A; }
+
+:root[data-theme="E"] .round-bar { font-family: 'DM Sans', sans-serif; text-transform: none; letter-spacing: .5px; font-size: .85rem; color: #CDB898; }
+:root[data-theme="E"] .round-bar .pts { font-family: 'Shrikhand', serif; font-size: 1.5rem; color: #F2B33D; text-shadow: 2px 2px 0 #8C3A1A; }
+
+/* ── Feud: Balken in Senf und Orange ──────────────────────────────────── */
 :root[data-theme="E"] .board { padding: 30px; }
-:root[data-theme="E"] .q-text { color: #F2B33D; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.6rem; line-height: 1.15; }
+:root[data-theme="E"] .q-text { color: #F2B33D; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.6rem; line-height: 1.15; text-shadow: 2px 2px 0 #8C3A1A; }
+:root[data-theme="E"] .q-text.hidden-q { border: 2px dashed rgba(242,179,61,.4); border-radius: 999px; background: none; text-shadow: none; }
 :root[data-theme="E"] .tile { min-height: clamp(38px, 7vh - 8px, 54px); }
-:root[data-theme="E"] .tile-num { font-family: 'Shrikhand', serif; font-size: 1.35rem; }
+:root[data-theme="E"] .tile:hover:not(.open) { transform: none; }
+:root[data-theme="E"] .tile-num { font-family: 'Shrikhand', serif; font-size: 1.35rem; width: 54px; }
 :root[data-theme="E"] .tile:not(.open) .tile-num { color: #8C5A3A; }
+:root[data-theme="E"] .tile:not(.open) .tile-center::after { height: 6px; }
 :root[data-theme="E"] .tile.open .tile-answer { text-transform: none; letter-spacing: 0; font-weight: 700; font-size: 1.35rem; }
-:root[data-theme="E"] .tile.open .tile-pts { color: #2B1810; text-shadow: none; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.6rem; }
+:root[data-theme="E"] .tile.open .tile-pts { color: #2B1810; text-shadow: none; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.6rem; box-shadow: none; padding-right: 24px; }
 /* Wie im Entwurf: die Balken wechseln reihum zwischen Senf und Orange. */
-:root[data-theme="E"] .answers .tile:nth-child(even).open .tile-inner { background: linear-gradient(180deg, #FF8148 0%, #E8622C 55%, #C24A1B 100%); }
-:root[data-theme="E"] .jeopardy-board { gap: 6px; padding: 21px; }
-:root[data-theme="E"] .jeopardy-cat { border-bottom: 4px solid #E8622C; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; letter-spacing: 0; text-transform: none; }
-/* Jeopardy als Sonnenstrahlen-Faecher: je Spalte eine Farbe aus dem Bogen. */
-:root[data-theme="E"] .jeopardy-cell { font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.8rem; color: #2B1810; text-shadow: none; box-shadow: inset 0 3px 0 rgba(255,255,255,.3), inset 0 -4px 0 rgba(0,0,0,.18), 0 5px 0 rgba(0,0,0,.3); }
-:root[data-theme="E"] .jeopardy-cell:nth-child(5n+1) { background: linear-gradient(180deg, #FFCB5E, #F2B33D 55%, #D99A1F); }
-:root[data-theme="E"] .jeopardy-cell:nth-child(5n+2) { background: linear-gradient(180deg, #FF8148, #E8622C 55%, #C24A1B); }
-:root[data-theme="E"] .jeopardy-cell:nth-child(5n+3) { background: linear-gradient(180deg, #A84A24, #8C3A1A 55%, #6E2C12); color: #F6E7CB; }
-:root[data-theme="E"] .jeopardy-cell:nth-child(5n+4) { background: linear-gradient(180deg, #FFF3DC, #F6E7CB 55%, #E2CDA6); }
-:root[data-theme="E"] .jeopardy-cell:nth-child(5n)   { background: linear-gradient(180deg, #FF8148, #E8622C 55%, #C24A1B); }
+:root[data-theme="E"] .answers .tile:nth-child(even).open .tile-inner { background: #E8622C; }
+:root[data-theme="E"] .tile.missed .tile-inner { background: #6E2C12 !important; box-shadow: inset 0 -4px 0 rgba(0,0,0,.25) !important; color: #F6E7CB; }
+
+/* Finale */
+:root[data-theme="E"] :is(.finale-title, .winner-text, .tp-win-title, .wwds-banner, .elim-team) { font-family: 'Shrikhand', serif; font-weight: 400; color: #F6E7CB; letter-spacing: 0; text-shadow: 4px 4px 0 #E8622C, 8px 8px 0 #8C3A1A; }
+:root[data-theme="E"] :is(.finale-team-label, .finale-q-info) { font-family: 'DM Sans', sans-serif; letter-spacing: .5px; text-transform: none; color: #F2B33D; }
+:root[data-theme="E"] :is(.finale-score-card, .finale-reveal-team) { background: #2E1A10; border: 0; border-radius: 28px; box-shadow: inset 0 0 0 3px #5A3622; }
+:root[data-theme="E"] .finale-score-card.active { background: #2E1A10; box-shadow: inset 0 0 0 4px #F2B33D; }
+:root[data-theme="E"] :is(.finale-score-pts, .finale-reveal-pts, .finale-timer) { font-family: 'Shrikhand', serif; color: #F2B33D; text-shadow: 3px 3px 0 #8C3A1A; }
+:root[data-theme="E"] :is(.finale-score-name, .finale-reveal-name) { font-family: 'DM Sans', sans-serif; font-weight: 700; letter-spacing: .5px; text-transform: none; }
+:root[data-theme="E"] .finale-big-q { font-family: 'Shrikhand', serif; text-shadow: 3px 3px 0 #8C3A1A; }
+
+/* ── Jeopardy: Faecher in den drei Farben, flach ──────────────────────── */
+:root[data-theme="E"] .jeopardy-board { gap: 8px; padding: 22px; border-radius: 26px; }
+:root[data-theme="E"] .jeopardy-cat { border-bottom: 4px solid #E8622C; border-radius: 0; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.05rem; letter-spacing: 0; text-transform: none; color: #F6E7CB; }
+:root[data-theme="E"] .jeopardy-cell { border-radius: 14px; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.8rem; color: #2B1810; text-shadow: none; box-shadow: inset 0 -4px 0 rgba(0,0,0,.2), 0 4px 0 rgba(0,0,0,.3); }
+:root[data-theme="E"] .jeopardy-cell:nth-child(5n+1) { background: #F2B33D; }
+:root[data-theme="E"] .jeopardy-cell:nth-child(5n+2) { background: #E8622C; }
+:root[data-theme="E"] .jeopardy-cell:nth-child(5n+3) { background: #8C3A1A; color: #F6E7CB; }
+:root[data-theme="E"] .jeopardy-cell:nth-child(5n+4) { background: #F6E7CB; }
+:root[data-theme="E"] .jeopardy-cell:nth-child(5n)   { background: #E8622C; }
 :root[data-theme="E"] .jeopardy-cell:hover:not(.used) { transform: translateY(-3px); }
-:root[data-theme="E"] .jeopardy-cell.used { background: #2A170D; color: transparent; box-shadow: inset 0 2px 6px rgba(0,0,0,.4); }
-:root[data-theme="E"] .wwm-q { color: #F6E7CB; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.9rem; line-height: 1.15; }
-/* WWM als Pillen mit Senfrand, wie im Entwurf. */
-:root[data-theme="E"] .wwm-opt { border-radius: 999px; background: linear-gradient(180deg, #4B2D1C 0%, #3D2417 50%, #321D12 100%); box-shadow: inset 0 0 0 4px #F2B33D, inset 0 -10px 18px rgba(0,0,0,.22), 0 7px 0 rgba(0,0,0,.28), 0 16px 24px rgba(0,0,0,.4); color: #F6E7CB; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.3rem; }
-:root[data-theme="E"] .wwm-opt .wwm-letter { color: #E8622C; font-family: 'Shrikhand', serif; }
-:root[data-theme="E"] .wwm-opt.selected { background: linear-gradient(180deg, #FFCB5E, #F2B33D 55%, #D99A1F); color: #2B1810; }
-:root[data-theme="E"] .wwm-opt.selected .wwm-letter { color: #2B1810; }
-:root[data-theme="E"] .wwm-opt.correct { background: linear-gradient(180deg, #B5C95A 0%, #8FA63A 55%, #6B8424 100%); color: #1C2208; box-shadow: inset 0 0 0 4px #F6E7CB, 0 7px 0 rgba(0,0,0,.28), 0 16px 24px rgba(0,0,0,.4); }
+:root[data-theme="E"] .jeopardy-cell.used { background: #2A170D; color: transparent; box-shadow: inset 0 3px 0 rgba(0,0,0,.35); }
+:root[data-theme="E"] .jeopardy-clue-cat { font-family: 'DM Sans', sans-serif; letter-spacing: 1px; text-transform: none; color: #F2B33D; font-size: .95rem; }
+:root[data-theme="E"] .jeopardy-clue-pts { font-family: 'Shrikhand', serif; color: #F2B33D; text-shadow: 4px 4px 0 #E8622C, 8px 8px 0 #8C3A1A; letter-spacing: 0; }
+:root[data-theme="E"] .jeopardy-clue-text { font-family: 'Shrikhand', serif; line-height: 1.2; }
+:root[data-theme="E"] .jeopardy-clue-img { border-radius: 26px; border: 0; box-shadow: var(--e-ringe); }
+
+/* ── Wer wird Millionaer: Punktbogen oben, Pillen mit Senfrand ────────── */
+:root[data-theme="E"] .wwm-wrap { flex-direction: column; gap: 10px; }
+:root[data-theme="E"] .wwm-ladder { order: -1; width: 100%; flex-direction: row; align-items: flex-start; gap: 0; padding: 0; background: none; border-radius: 0; box-shadow: none; }
+:root[data-theme="E"] .wwm-rung {
+  flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: flex-start; align-items: center; gap: 4px;
+  padding: 0; border-radius: 0; background: none; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: .62rem; letter-spacing: 0;
+  color: #8C5A3A; white-space: nowrap;
+}
+:root[data-theme="E"] .wwm-rung::before { content: ''; width: 16px; height: 16px; border-radius: 50%; background: #3D2417; box-shadow: inset 0 0 0 2px #5A3622; }
+:root[data-theme="E"] .wwm-rung .wwm-lvl { display: none; }
+/* Der Bogen: Mitte oben, Enden unten - wie die Punkte im Entwurf. */
+:root[data-theme="E"] .wwm-rung:nth-child(1), :root[data-theme="E"] .wwm-rung:nth-child(15) { margin-top: 30px; }
+:root[data-theme="E"] .wwm-rung:nth-child(2), :root[data-theme="E"] .wwm-rung:nth-child(14) { margin-top: 22px; }
+:root[data-theme="E"] .wwm-rung:nth-child(3), :root[data-theme="E"] .wwm-rung:nth-child(13) { margin-top: 15px; }
+:root[data-theme="E"] .wwm-rung:nth-child(4), :root[data-theme="E"] .wwm-rung:nth-child(12) { margin-top: 10px; }
+:root[data-theme="E"] .wwm-rung:nth-child(5), :root[data-theme="E"] .wwm-rung:nth-child(11) { margin-top: 5px; }
+:root[data-theme="E"] .wwm-rung:nth-child(6), :root[data-theme="E"] .wwm-rung:nth-child(10) { margin-top: 2px; }
+:root[data-theme="E"] .wwm-rung.won { color: #CDB898; }
+:root[data-theme="E"] .wwm-rung.won::before { background: #E8622C; box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); }
+:root[data-theme="E"] .wwm-rung.safe::before { box-shadow: inset 0 0 0 2px #F6E7CB; }
+:root[data-theme="E"] .wwm-rung.safe .wwm-amt { color: #F6E7CB; }
+:root[data-theme="E"] .wwm-rung.current { background: none; color: #F2B33D; font-size: .75rem; }
+:root[data-theme="E"] .wwm-rung.current :is(.wwm-lvl, .wwm-amt) { color: #F2B33D; }
+:root[data-theme="E"] .wwm-rung.current::before { width: 24px; height: 24px; margin-top: -4px; background: #F2B33D; box-shadow: 0 0 0 3px #2B1810, 0 0 0 5px #E8622C; }
+:root[data-theme="E"] .wwm-q { color: #F6E7CB; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.9rem; line-height: 1.15; text-shadow: 3px 3px 0 #8C3A1A; }
+:root[data-theme="E"] .wwm-answers { gap: 14px; }
+:root[data-theme="E"] .wwm-opt { justify-content: center; flex-direction: column; gap: 0; padding: 10px 18px; min-height: 64px; background: #3D2417; box-shadow: inset 0 0 0 4px #F2B33D, inset 0 -6px 0 rgba(0,0,0,.2), 0 6px 0 rgba(0,0,0,.28); color: #F6E7CB; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.3rem; line-height: 1.15; }
+:root[data-theme="E"] .wwm-opt:hover { filter: none; background: #4A2C1B; }
+:root[data-theme="E"] .wwm-opt .wwm-letter { color: #E8622C; font-family: 'Shrikhand', serif; font-size: 1.15rem; min-width: 0; }
+:root[data-theme="E"] .wwm-opt.selected { background: #F2B33D; color: #2B1810; }
+:root[data-theme="E"] .wwm-opt.selected .wwm-letter { color: #8C3A1A; }
+:root[data-theme="E"] .wwm-opt.correct { background: #8FA63A; color: #1C2208; box-shadow: inset 0 0 0 4px #F6E7CB, inset 0 -6px 0 rgba(0,0,0,.2), 0 6px 0 rgba(0,0,0,.28); }
 :root[data-theme="E"] .wwm-opt.correct .wwm-letter { color: #1C2208; }
+:root[data-theme="E"] .wwm-opt.wrong { background: #8C3A1A; color: #F6E7CB; }
+/* Joker als Pillen mit Wort, verbrauchte durchgestrichen. */
+:root[data-theme="E"] .wwm-lifelines { gap: 10px; }
+:root[data-theme="E"] .wwm-ll { width: auto; height: auto; padding: 5px 14px; border-radius: 999px; border: 2px solid #F2B33D; background: none; font-size: 0; }
+:root[data-theme="E"] .wwm-ll::before { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: .82rem; color: #F6E7CB; }
+:root[data-theme="E"] .wwm-ll:nth-child(1)::before { content: '50:50'; }
+:root[data-theme="E"] .wwm-ll:nth-child(2)::before { content: 'Telefon'; }
+:root[data-theme="E"] .wwm-ll:nth-child(3)::before { content: 'Publikum'; }
+:root[data-theme="E"] .wwm-ll.used { opacity: .45; border-color: #5A3622; }
+:root[data-theme="E"] .wwm-ll.used::before { text-decoration: line-through; }
+:root[data-theme="E"] :is(.wwm-abar, .wwds-abar) { background: #E8622C; border-radius: 999px 999px 0 0; box-shadow: inset 6px 0 0 #F2B33D; }
+:root[data-theme="E"] :is(.wwm-apct, .wa-pct) { color: #F2B33D; font-family: 'Shrikhand', serif; font-weight: 400; }
+
+/* ── Wer weiss denn sowas ─────────────────────────────────────────────── */
+:root[data-theme="E"] .wwds-cat { border-radius: 22px; }
+:root[data-theme="E"] .wwds-cat:hover:not(.done) { transform: translateY(-3px); filter: none; }
+:root[data-theme="E"] .wwds-cat .wc-num { font-family: 'Shrikhand', serif; color: #E8622C; }
+:root[data-theme="E"] .wwds-cat .wc-name { font-family: 'DM Sans', sans-serif; font-weight: 700; text-transform: none; font-size: .95rem; letter-spacing: 0; }
+:root[data-theme="E"] .wwds-q { background: #2E1A10; border: 0; border-radius: 28px; box-shadow: inset 0 0 0 4px #F2B33D; font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.5rem; line-height: 1.2; }
+:root[data-theme="E"] .wwds-cat-chip { border-radius: 999px; background: #F2B33D; color: #2B1810; border: 0; font-family: 'DM Sans', sans-serif; letter-spacing: .5px; text-transform: none; font-size: .8rem; }
+:root[data-theme="E"] .wwds-opt { background: #3D2417; box-shadow: inset 0 0 0 4px #F2B33D, 0 5px 0 rgba(0,0,0,.28); font-size: 1.15rem; }
+:root[data-theme="E"] .wwds-opt .wo-let { font-family: 'Shrikhand', serif; color: #E8622C; }
+:root[data-theme="E"] .wwds-opt.bad { background: #8C3A1A; color: #F6E7CB; }
+:root[data-theme="E"] .wwds-guess { border-radius: 999px; background: #2E1A10; border: 2px dashed #F2B33D; font-family: 'Shrikhand', serif; }
+:root[data-theme="E"] .wwds-timer { font-family: 'Shrikhand', serif; text-shadow: 3px 3px 0 #8C3A1A; }
+
+/* ── Der Duemmste fliegt: Karten mit Orangerand, Leben als Punkte ─────── */
+:root[data-theme="E"] .ddf-player { border-radius: 22px; border: 0; background: #2E1A10; box-shadow: inset 0 0 0 3px #E8622C, 0 5px 0 rgba(0,0,0,.28); }
+:root[data-theme="E"] .ddf-player-name { font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.15rem; }
+:root[data-theme="E"] .ddf-player.picked { border: 0; background: #F2B33D; color: #2B1810; box-shadow: inset 0 0 0 3px #F6E7CB, 0 5px 0 rgba(0,0,0,.28); }
+:root[data-theme="E"] .ddf-heart { font-size: 0; margin-right: 5px; vertical-align: middle; }
+:root[data-theme="E"] .ddf-heart::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #F2B33D; }
+:root[data-theme="E"] .ddf-player.picked .ddf-heart::before { background: #8C3A1A; }
+:root[data-theme="E"] .ddf-heart.empty::before { background: #5A3622; }
+:root[data-theme="E"] .ddf-question { font-family: 'Shrikhand', serif; font-weight: 400; text-shadow: 3px 3px 0 #8C3A1A; }
+:root[data-theme="E"] .ddf-answer { color: #B5C95A; font-family: 'Shrikhand', serif; font-weight: 400; }
+
+/* ── Der Preis ist heiss: Preis im Ringschild, Gebote gestrichelt ─────── */
+:root[data-theme="E"] .pih-scores { border-bottom-color: #5A3622; }
+:root[data-theme="E"] .pih-score { background: #2E1A10; border: 2px dashed #F2B33D; box-shadow: none; }
+:root[data-theme="E"] .pih-score.lead { background: #F2B33D; border-style: solid; color: #2B1810; --accent-text: #8C3A1A; }
+:root[data-theme="E"] .pih-score.lead .pih-rank { color: #8C3A1A; }
+:root[data-theme="E"] .pih-score.picked { box-shadow: 0 0 0 3px #E8622C; }
+:root[data-theme="E"] .pih-score-pts { font-family: 'Shrikhand', serif; font-weight: 400; }
+:root[data-theme="E"] .pih-team { border-radius: 999px; }
+:root[data-theme="E"] .pih-team-pts { font-family: 'Shrikhand', serif; }
+:root[data-theme="E"] .pih-item { font-family: 'Shrikhand', serif; font-weight: 400; color: #F2B33D; text-shadow: 2px 2px 0 #8C3A1A; }
+:root[data-theme="E"] .pih-stage :is(img, video) { border-radius: 22px; box-shadow: 0 0 0 4px #F2B33D; }
+:root[data-theme="E"] .pih-price {
+  display: table; margin: 12px auto 8px; padding: 6px 30px; border-radius: 999px; background: #2B1810;
+  font-family: 'Shrikhand', serif; font-weight: 400; color: #F6E7CB; text-shadow: 3px 3px 0 #E8622C; box-shadow: var(--e-ringe);
+}
+:root[data-theme="E"] .pih-price:empty { display: none; }
+:root[data-theme="E"] .pih-bid-row { border-radius: 999px; background: #2E1A10; border: 2px dashed #F2B33D; box-shadow: none; padding-inline: 18px; }
+:root[data-theme="E"] .pih-bid-row.win { background: #F2B33D; border-style: solid; color: #2B1810; }
+:root[data-theme="E"] .pih-bid-val { font-family: 'Shrikhand', serif; font-weight: 400; }
+
+/* ── Trivial Pursuit ──────────────────────────────────────────────────── */
+:root[data-theme="E"] .tp-team { border: 0; border-radius: 28px; background: #2E1A10; box-shadow: inset 0 0 0 3px #5A3622; }
+:root[data-theme="E"] .tp-team:is(.red, .blue, .green) { box-shadow: inset 0 0 0 4px var(--tc); }
+:root[data-theme="E"] .tp-team.turn { transform: translateY(-4px); background: #2E1A10; box-shadow: inset 0 0 0 4px var(--tc, #F2B33D), inset 0 0 0 8px #2E1A10, inset 0 0 0 11px #F2B33D; }
+:root[data-theme="E"] .tp-team-name { font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.15rem; }
+:root[data-theme="E"] .tp-team-sub { text-transform: none; letter-spacing: .5px; }
+:root[data-theme="E"] .tp-stage { border: 0; border-radius: 30px; box-shadow: inset 0 0 0 4px #F2B33D; background: #2E1A10; }
+:root[data-theme="E"] .tp-catchip { font-family: 'DM Sans', sans-serif; font-weight: 700; }
+:root[data-theme="E"] .tp-question { font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.55rem; line-height: 1.2; }
+:root[data-theme="E"] .tp-answer { border: 0; border-radius: 999px; padding-inline: 20px; }
+:root[data-theme="E"] .tp-answer.hidden { border: 2px dashed rgba(242,179,61,.45); background: none; }
+:root[data-theme="E"] .tp-wheel-rotor { box-shadow: var(--e-ringe), 0 18px 30px rgba(0,0,0,.45); }
+:root[data-theme="E"] .tp-wheel-hub { background: #2B1810; border: 4px solid #F2B33D; box-shadow: none; font-family: 'Shrikhand', serif; }
+:root[data-theme="E"] .tp-wheel-pointer { border-top-color: #F6E7CB; filter: drop-shadow(0 3px 0 #8C3A1A); }
+
+/* ── Ergebnis, Turnier ────────────────────────────────────────────────── */
+:root[data-theme="E"] .winner-text { font-size: 3rem; }
+:root[data-theme="E"] .result-card { border: 0; border-radius: 34px; background: #2E1A10; box-shadow: var(--e-ringe); backdrop-filter: none; margin: 12px; }
+:root[data-theme="E"] .result-scores strong { font-family: 'Shrikhand', serif; color: #F2B33D; }
+:root[data-theme="E"] .tour-bar { height: 12px; background: #2E1A10; box-shadow: inset 0 0 0 2px #5A3622; }
+:root[data-theme="E"] .tour-bar-fill { background: #F2B33D; box-shadow: inset 0 -3px 0 #E8622C; }
+:root[data-theme="E"] .tour-total { font-family: 'Shrikhand', serif; }
+:root[data-theme="E"] .q-list-item { border-radius: 999px; }
+:root[data-theme="E"] .q-list-item.tour-lead { background: rgba(242,179,61,.12); box-shadow: inset 0 0 0 2px #F2B33D; }
+
+/* ── Host: Menue, Knoepfe, Kaesten ────────────────────────────────────── */
+:root[data-theme="E"] .menu-card { border-radius: 24px; border: 0; background: #2E1A10; box-shadow: inset 0 0 0 3px #F2B33D, 0 5px 0 rgba(0,0,0,.3); }
+:root[data-theme="E"] .menu-card::before { display: none; }
+:root[data-theme="E"] .menu-card:hover { transform: translateY(-4px); border: 0; background: #3D2417; box-shadow: inset 0 0 0 3px #F2B33D, inset 0 0 0 7px #2E1A10, inset 0 0 0 10px #E8622C, 0 8px 0 rgba(0,0,0,.3); }
+:root[data-theme="E"] .menu-card-title { font-family: 'Shrikhand', serif; font-weight: 400; font-size: 1.1rem; color: #F2B33D; letter-spacing: 0; }
+:root[data-theme="E"] .menu-pill { border: 2px solid #F2B33D; color: #F6E7CB; }
+:root[data-theme="E"] :is(.menu-pill:hover, .menu-pill.active) { background: #F2B33D; color: #2B1810; border-color: #F2B33D; }
+:root[data-theme="E"] .menu-divider { width: 120px; height: 12px; background: linear-gradient(#F2B33D 0 4px, #E8622C 4px 8px, #8C3A1A 8px 12px); border-radius: 6px; }
+:root[data-theme="E"] .btn { border-radius: 999px; text-transform: none; letter-spacing: .5px; font-size: .95rem; }
+:root[data-theme="E"] .btn:hover { transform: translateY(-2px); }
+:root[data-theme="E"] .btn-primary { background: #F2B33D; color: #2B1810; box-shadow: 0 4px 0 #8C3A1A; }
+:root[data-theme="E"] .btn-primary:hover { box-shadow: 0 6px 0 #8C3A1A; }
+:root[data-theme="E"] .btn-primary::after { display: none; }
+:root[data-theme="E"] .btn-secondary { background: transparent; border: 2px solid #F6E7CB; color: #F6E7CB; backdrop-filter: none; }
+:root[data-theme="E"] .btn-danger { background: #E8622C; color: #2B1810; box-shadow: 0 4px 0 #8C3A1A; }
+:root[data-theme="E"] .btn-accent { background: #3B82F6; box-shadow: 0 4px 0 #1E3A8A; }
+:root[data-theme="E"] :is(.editor-card, .setup-lobby, .resume-banner, .ddf-card, .design-card) { border-radius: 24px; background: #2E1A10; border: 2px solid #5A3622; }
+:root[data-theme="E"] .pr-team-btn { border-radius: 999px; }
+:root[data-theme="E"] .page-title { font-family: 'Shrikhand', serif; font-weight: 400; text-shadow: 3px 3px 0 #8C3A1A; }
+
+/* Niedriges Fenster (Beamer 1280x720): Plaketten, Bogen und Ringschild
+   flacher - sonst lagen Feud mit langer Frage 23 px, PIH 36 px, Ergebnis
+   16 px und WWM mit Publikum 10 px unter dem Bild. */
+@media (max-height: 900px) {
+  :root[data-theme="E"] :is(.scoreboard, .jeopardy-scores) { padding: 2px 6px; }
+  :root[data-theme="E"] .team-panel { padding-block: 10px; }
+  :root[data-theme="E"] .team-panel.active-team { padding-block: 10px; }
+  :root[data-theme="E"] .team-panel .t-score { font-size: 2.5rem; }
+  :root[data-theme="E"] .board { padding: 22px 26px; }
+  :root[data-theme="E"] .q-text { font-size: 1.4rem; padding-bottom: 12px; }
+  :root[data-theme="E"] .wwm-rung:nth-child(1), :root[data-theme="E"] .wwm-rung:nth-child(15) { margin-top: 16px; }
+  :root[data-theme="E"] .wwm-rung:nth-child(2), :root[data-theme="E"] .wwm-rung:nth-child(14) { margin-top: 12px; }
+  :root[data-theme="E"] .wwm-rung:nth-child(3), :root[data-theme="E"] .wwm-rung:nth-child(13) { margin-top: 8px; }
+  :root[data-theme="E"] .wwm-rung:nth-child(4), :root[data-theme="E"] .wwm-rung:nth-child(12) { margin-top: 5px; }
+  :root[data-theme="E"] .wwm-rung:nth-child(5), :root[data-theme="E"] .wwm-rung:nth-child(11) { margin-top: 3px; }
+  :root[data-theme="E"] .wwm-rung:nth-child(6), :root[data-theme="E"] .wwm-rung:nth-child(10) { margin-top: 1px; }
+  :root[data-theme="E"] .wwm-q { font-size: 1.6rem; }
+  :root[data-theme="E"] .pih-price { margin: 4px auto 2px; padding: 0 26px; font-size: 1.9rem; }
+  :root[data-theme="E"] .pih-score { padding-block: 3px; }
+  :root[data-theme="E"] .pih-bid-row { padding-block: 3px; }
+  :root[data-theme="E"] .result-card { margin: 4px; padding: 18px 36px; }
+  :root[data-theme="E"] .winner-text { font-size: 2.5rem; }
+}
+
 /* Der Balken rollt herunter wie eine Jalousie und federt nach. */
 @keyframes thERollo {
   0%   { transform: scaleY(.08); filter: brightness(1.7) saturate(1.3); }
