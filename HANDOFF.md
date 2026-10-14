@@ -12,6 +12,27 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — Auftrag präzisiert: Rework = gesamtes Grafikdesign, nicht nur Übergänge
+
+**David (wörtlich):** „Das Rework soll nicht nur mit diesen Übergängen zu sehen sein.
+Alles, auch das Grafikdesign selber soll reworked werden.“
+
+**Was das heißt (Stand aller Aussagen von heute):**
+- Jede der acht Richtungen (A, B, D, E, I, K, L, O) bekommt ein **überarbeitetes
+  Grafikdesign** auf allen Flächen (Beamer, Host-Seite/GM-Panel, Handys) — Bretter,
+  Teamanzeigen, Typografie, Raster, Symbole, Details. Die GSAP-Momente kommen
+  **zusätzlich** dazu, sie ersetzen das Grafik-Rework nicht.
+- **Identität behalten:** Look und Grundidee des Originals bleiben erkennbar
+  (Late Night und 70er hat David in „neu erfunden“ abgelehnt). Studio (A) als
+  komplett neu ist abgenommen.
+- **Kein Verlaufs-/Glow-Einheitsbrei** („AI Slop gradient scheiß“) — Qualität über
+  echte Gestaltung (siehe Memory „design-rework-kein-verlaufs-slop“).
+- Offen: Arcade (B) neu behalten oder aufs Original zurück.
+- Vorgehen: je Richtung Original-Entwurf (`designs/s/<K>-*.html`) und Ist-Stand
+  prüfen, kurzen Plan zeigen, nach OK bauen.
+
+Kein Code geändert.
+
 ## 2026-10-14 — `921be17` BAUPLAN 4.8: „Beamer animiert selbst“ als erlaubter Weg
 
 **Gemacht:** David hat den Jeopardy-Flug am Beamer abgenommen („jetzt is er clean“).
