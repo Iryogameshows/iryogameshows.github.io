@@ -12,6 +12,26 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `1550927` Design-Rework K Neon-Bar
+
+**Gemacht:** Röhren-Identität auf allen Flächen (gemeinsame Röhrenregel über
+`--nc`), Teams als Leuchtschrift, wachsende Balken-Leiter, Kassenbon-Gebote,
+schiefe Leuchtschilder im Menü, GM-Feld, Handy. Details im Commit.
+
+**Warum so:** Bei K ist Glühen keine Dekoration, sondern das Material — darum
+bleibt es, aber nur als Kontur + Lichthof, nie als gefüllte Leuchtfläche.
+
+**Fallstricke:** `:is()` übernimmt die höchste Spezifität seiner Liste — ein
+zusammengesetzter Selektor in der Sammelregel hätte alle Zustandsregeln
+geschlagen. `height: calc(10px + var(--k-h)*4px)` an `::before` griff im
+Screenshot nicht (Ursache nicht weiter untersucht) → Höhen explizit je `nth-child`.
+
+**Geprüft:** `shots.js --themes K` 20 Zustände, Feud-lang 21 px → behoben, danach
+ohne Befunde; Kontaktbögen und Leiter-Ausschnitt angesehen. `check.js`, `--types` sauber.
+
+**Offen:** nichts Eigenes.
+
+
 ## 2026-10-14 — `d575580` Design-Rework I Salon
 
 **Gemacht:** Spieltisch-Identität auf allen Flächen: Team-Plätze mit Jeton,
