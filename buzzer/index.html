@@ -244,7 +244,7 @@
      --buzz-rand haelt oben und unten so viel frei, wie es ueber den Knopf
      hinausragt - Werte aus den box-shadows unten abgelesen. */
   #buzz{margin-block:var(--buzz-rand,0px);}
-  :root[data-theme="A"] #buzz{--buzz-rand:26px;}
+  :root[data-theme="A"] #buzz{--buzz-rand:16px;}
   :root[data-theme="B"] #buzz,:root[data-theme="P"] #buzz{--buzz-rand:12px;}
   :root[data-theme="C"] #buzz{--buzz-rand:16px;}
   :root[data-theme="E"] #buzz{--buzz-rand:22px;}
@@ -253,14 +253,14 @@
   :root[data-theme="K"] #buzz,:root[data-theme="O"] #buzz{--buzz-rand:8px;}
   :root[data-theme="R"] #buzz{--buzz-rand:28px;}
 
-  /* A Studio: Gluehbirnenring um den Knopf, funkelt solange scharf. */
-  :root[data-theme="A"] #buzz{font-weight:400;font-size:3.6rem;letter-spacing:4px;}
-  :root[data-theme="A"] #buzz::before{content:"";position:absolute;inset:-26px;border-radius:50%;pointer-events:none;
-    background:radial-gradient(circle,#FFF3C4 0,#FFD45A 2.6px,rgba(255,201,60,.35) 4px,rgba(255,201,60,0) 6px) 0 0/20px 20px;
-    -webkit-mask:radial-gradient(closest-side,transparent calc(100% - 16px),#000 calc(100% - 15px));
-    mask:radial-gradient(closest-side,transparent calc(100% - 16px),#000 calc(100% - 15px));}
-  :root[data-theme="A"] #buzz.armed::before{animation:buzzBirnen 1.2s steps(1,end) infinite;}
-  @keyframes buzzBirnen{50%{background-position:10px 10px;}}
+  /* A Studio (neu 2026-10-14): der Knopf in einer Graphitfassung mit
+     blauer Lichtkante, darueber ein Glanzlicht wie auf Acrylglas. Scharf
+     zieht ein Lichtkranz in Champagner um die Fassung. */
+  :root[data-theme="A"] #buzz{font-weight:900;font-size:2.6rem;letter-spacing:2px;font-stretch:125%;
+    box-shadow:0 10px 0 var(--buzz-shadow,#7a140e),0 0 0 3px rgba(150,200,255,.55),0 0 0 11px #0D0F17,0 0 0 12px rgba(255,255,255,.14),0 24px 50px rgba(0,0,0,.6);}
+  :root[data-theme="A"] #buzz::before{content:"";position:absolute;left:16%;top:7%;width:68%;height:34%;border-radius:50%;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 30%,rgba(255,255,255,.5),rgba(255,255,255,0) 70%);}
+  :root[data-theme="A"] #buzz::after{inset:-16px;border-color:rgba(232,194,122,.85);}
 
   /* B Arcade: Automatenknopf mit Pixelrand. */
   :root[data-theme="B"] #buzz{font-size:1.7rem;letter-spacing:0;font-weight:400;

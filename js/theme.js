@@ -24,29 +24,34 @@
 
 /** @type {DesignTheme[]} */
 const DESIGN_THEMES = [
+  /* Studio, neu 2026-10-14 ("Primetime-Studio"): Graphit unter zwei
+     Scheinwerferkegeln, warmes Champagner-Fuehrungslicht (Akzent) und kuehles
+     blaues Kantenlicht (Linien). Anybody weit gezogen - die Breite setzt
+     styles.css (font-stretch), Hanken Grotesk hat keine Breitenachse und
+     bleibt davon unberuehrt. Material im Block "A · Studio" in styles.css. */
   { key: "A", name: "Studio", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@500;600;700;800&display=swap",
+    fonts: "https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@100..150,600..900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap",
     vars: {
-      "--font-display": "'Bebas Neue', sans-serif",
-      "--font-body": "'Manrope', sans-serif",
-      "--font-logo": "'Bebas Neue', sans-serif",
-      "--bg": "#070818",
-      "--bg-img": "radial-gradient(ellipse 70% 55% at 50% -5%, rgba(120,140,255,.28) 0%, transparent 70%), radial-gradient(ellipse 90% 40% at 50% 105%, rgba(255,201,60,.14) 0%, transparent 70%)",
+      "--font-display": "'Anybody', sans-serif",
+      "--font-body": "'Hanken Grotesk', sans-serif",
+      "--font-logo": "'Anybody', sans-serif",
+      "--bg": "#07080D",
+      "--bg-img": "conic-gradient(from 160deg at 16% -12%, transparent 0deg, rgba(255,236,204,.085) 9deg, rgba(255,236,204,.03) 17deg, transparent 24deg), conic-gradient(from 176deg at 84% -12%, transparent 0deg, rgba(255,236,204,.03) 7deg, rgba(255,236,204,.085) 15deg, transparent 24deg), radial-gradient(ellipse 70% 32% at 50% 104%, rgba(90,169,255,.16) 0%, transparent 70%), radial-gradient(ellipse 60% 40% at 50% -6%, rgba(232,194,122,.12) 0%, transparent 70%)",
       "--bg-size": "auto",
-      "--panel": "#171A45",
-      "--panel-hi": "#1D2160",
-      "--line": "#2A2E66",
-      "--fg": "#F4F1E8",
-      "--fg-rgb": "244,241,232",
-      "--fg-strong": "#F4F1E8",
-      "--muted": "#ABA9C8",
-      "--pill-fg": "#D9D7EA",
-      "--accent-line": "#FFC93C",
-      "--gold-rgb": "255,201,60",
-      "--gold-deep": "#E9A90A",
-      "--gold-dark": "#8A5E00",
-      "--gold-pale": "#FFE48A",
-      "--ink": "#1A1200"
+      "--panel": "#12141D",
+      "--panel-hi": "#1A1D29",
+      "--line": "#2B2F40",
+      "--fg": "#FFF6E5",
+      "--fg-rgb": "255,246,229",
+      "--fg-strong": "#FFFFFF",
+      "--muted": "#A3A6B6",
+      "--pill-fg": "#D6D7E0",
+      "--accent-line": "#5AA9FF",
+      "--gold-rgb": "232,194,122",
+      "--gold-deep": "#C9993E",
+      "--gold-dark": "#6B4A12",
+      "--gold-pale": "#F6DFAE",
+      "--ink": "#1B1306"
     } },
   { key: "B", name: "Arcade", hell: false,
     fonts: "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap",

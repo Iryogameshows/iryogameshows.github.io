@@ -3660,28 +3660,29 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
      --ico-dim       gedimmte Flaeche     --ico-dimline  deren Umriss
      --ico-filter / --ico-blend           Schatten, Pixel, Kreide, Leuchten
    :where() nimmt der Waechter-Bedingung die Spezifitaet, damit die
-   Richtungs-Regeln (Umriss-Stile, Bauhaus, Memphis) sie schlagen. A (Studio)
-   behaelt das Gold und bekommt nur Aussparung, Dimmung und Schein. */
-:where(:root[data-theme]:not([data-theme="A"])) .show-icon [fill^="url"]:not([stroke]) {
+   Richtungs-Regeln (Umriss-Stile, Bauhaus, Memphis) sie schlagen. Seit dem
+   Studio-Rework (2026-10-14) laeuft auch A ueber die Variablen (Champagner
+   statt des alten Goldverlaufs). */
+:where(:root[data-theme]) .show-icon [fill^="url"]:not([stroke]) {
   fill: var(--ico-fill); stroke: var(--ico-fstroke, none); stroke-width: var(--ico-fsw, 0);
   paint-order: stroke; stroke-linejoin: round;
 }
 /* Mit eigenem Rand (Karte im Wer-weiss-denn-sowas-Pult): ohne Kontur bleibt
    die dunkle Fuge zur Flaeche dahinter. */
-:where(:root[data-theme]:not([data-theme="A"])) .show-icon [fill^="url"][stroke] {
+:where(:root[data-theme]) .show-icon [fill^="url"][stroke] {
   fill: var(--ico-fill); stroke: var(--ico-fstroke, var(--ico-cut)); stroke-width: var(--ico-fsw, 1.4);
   paint-order: stroke; stroke-linejoin: round;
 }
-:where(:root[data-theme]:not([data-theme="A"])) .show-icon [stroke^="url"] {
+:where(:root[data-theme]) .show-icon [stroke^="url"] {
   stroke: var(--ico-line, var(--ico-fill));
 }
 :where(:root[data-theme]) .show-icon [fill="#0b0e2c"] { fill: var(--ico-cut); }
-:where(:root[data-theme]:not([data-theme="A"])) .show-icon [fill="#0b0e2c"]:not([stroke]) {
+:where(:root[data-theme]) .show-icon [fill="#0b0e2c"]:not([stroke]) {
   stroke: var(--ico-cutline, none); stroke-width: var(--ico-cutlw, 1);
 }
 :where(:root[data-theme]) .show-icon [stroke="#0b0e2c"]:not([fill^="url"]) { stroke: var(--ico-cut); }
 :where(:root[data-theme]) .show-icon [fill="#3a3f6b"] { fill: var(--ico-dim); }
-:where(:root[data-theme]:not([data-theme="A"])) .show-icon [fill="#3a3f6b"] {
+:where(:root[data-theme]) .show-icon [fill="#3a3f6b"] {
   stroke: var(--ico-dimline, var(--ico-fstroke, none)); stroke-width: var(--ico-fsw, 0); stroke-linejoin: round;
 }
 /* Umriss-Stile: Linien so dick wie die Konturen, nicht in den festen 3-5 Einheiten. */
@@ -3696,7 +3697,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   filter: var(--ico-filter-root, var(--ico-filter, none)); mix-blend-mode: var(--ico-blend, normal);
 }
 
-:root[data-theme="A"] { --ico-cut:#0A0C26; --ico-dim:#2A2E66; --ico-filter:drop-shadow(0 0 6px rgba(255,201,60,.6)); }
+:root[data-theme="A"] { --ico-fill:#F2D395; --ico-line:#F2D395; --ico-cut:#090A10; --ico-dim:#2B2F40; --ico-filter:drop-shadow(0 0 8px rgba(232,194,122,.5)); }
 :root[data-theme="B"] { --ico-fill:#FFE14D; --ico-cut:#0B0A12; --ico-dim:#2B2740; --ico-filter:url(#ico-pixel-g); --ico-filter-root:url(#ico-pixel) drop-shadow(3px 3px 0 #8A7400); }
 /* B: das Mosaik nur dort, wo das Symbol ruhig steht und gross genug ist (Menuekarte,
    Intro, Logo-Kopf). In Tutorial (dreht sich), Titel-Schild (blendet ein) und
@@ -3767,67 +3768,96 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
    Rot fuer "falsch" und die Teamfarben bleiben in jeder Richtung gleich
    (BAUPLAN 4.4). */
 
-/* ── A · Studio: Navy-Platten mit Goldring, Goldbalken, Gluehbirnenrahmen ── */
+/* ── A · Studio (neu 2026-10-14): Primetime-Studio ─────────────────────────
+   Graphitglas unter zwei Scheinwerferkegeln (--bg-img in js/theme.js), warmes
+   Champagner-Fuehrungslicht fuer alles Aufgedeckte, kuehles blaues
+   Kantenlicht oben an jedem Glas. Schrift Anybody, weit gezogen.
+   Signatur: beim Aufdecken geht ueber dem Feld das Licht an - es zieht aus
+   dem Dunkeln hoch, ein Lichtstreif faehrt einmal ueber das Glas, dann
+   glueht es champagner. Unter dem Brett liegt die Bodenspiegelung.
+   Die alte Studio-Fassung (Navy, Goldbalken, Gluehbirnenrahmen) ist
+   vollstaendig ersetzt, nicht umgebaut. */
 :root[data-theme="A"] {
-  --brd-surface: linear-gradient(180deg, rgba(255,255,255,.075) 0%, rgba(255,255,255,0) 44%), linear-gradient(180deg, #121540 0%, #0A0C26 100%);
-  --brd-frame: inset 0 0 0 1px rgba(255,201,60,.35), 0 0 40px rgba(255,201,60,.25);
-  --brd-well: #070818;
+  font-stretch: 118%;
+  --brd-surface: linear-gradient(180deg, rgba(90,169,255,.08) 0%, rgba(90,169,255,0) 20%), linear-gradient(180deg, #11131C 0%, #090A10 100%);
+  --brd-frame: inset 0 1px 0 rgba(150,200,255,.4), inset 0 0 0 1px rgba(255,255,255,.06), 0 0 0 1px #000, 0 40px 70px -30px rgba(0,0,0,.9);
+  --brd-well: #05060A;
   --brd-inner: transparent;
-  --tile: linear-gradient(180deg, rgba(255,255,255,.075) 0%, rgba(255,255,255,0) 44%), linear-gradient(180deg, #1A1E52 0%, #10133A 100%);
-  --tile-hover: linear-gradient(180deg, rgba(255,255,255,.11) 0%, rgba(255,255,255,0) 44%), linear-gradient(180deg, #232870 0%, #151948 100%);
-  --tile-edge: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,201,60,.3), 0 1px 0 rgba(0,0,0,.7), 0 8px 16px rgba(0,0,0,.38);
-  --tile-head: #15173B;
-  --tile-used: linear-gradient(180deg, #0B0D26, #12153A);
-  --tile-num: #FFC93C;
-  --tile-num-glow: 0 3px 0 #8A5E00;
-  --tile-dim-fg: #FFC93C;
-  --tile-open: linear-gradient(180deg, #FFE48A 0%, #FFC93C 48%, #E9A90A 100%);
-  --tile-open-edge: inset 0 2px 0 rgba(255,255,255,.55), inset 0 -2px 0 rgba(110,74,0,.35), 0 6px 14px rgba(0,0,0,.4);
-  --tile-open-fg: #1A1200;
-  --tile-open-dim: rgba(26,18,0,.55);
-  --tile-pts-bg: rgba(110,74,0,.18);
-  --tile-pts-rule: rgba(110,74,0,.35);
-  --tile-pick: linear-gradient(180deg, #FFE48A 0%, #FFC93C 48%, #E9A90A 100%);
-  --tile-pick-fg: #1A1200;
-  --tile-right: linear-gradient(180deg, #5BE38C 0%, #22C55E 50%, #15803D 100%);
-  --tile-right-fg: #04210F;
-  --tile-radius: 10px;
-  --tile-font: 'Bebas Neue', sans-serif;
-  --tile-reveal: thAKlapp .7s cubic-bezier(.2,.9,.3,1.15);
+  --brd-radius: 16px;
+  --tile: linear-gradient(180deg, rgba(255,255,255,.065) 0%, rgba(255,255,255,.012) 52%, rgba(0,0,0,.18) 100%), #151824;
+  --tile-hover: linear-gradient(180deg, rgba(255,255,255,.1) 0%, rgba(255,255,255,.02) 52%, rgba(0,0,0,.14) 100%), #1C2030;
+  --tile-edge: inset 0 1px 0 rgba(140,195,255,.5), inset 0 0 0 1px rgba(255,255,255,.05), 0 12px 22px -10px rgba(0,0,0,.8);
+  --tile-fg: #FFF6E5;
+  --tile-head: linear-gradient(180deg, #171A26, #0E1018);
+  --tile-head-fg: #F6DFAE;
+  --tile-used: #0A0B11;
+  --tile-num: #8EC5FF;
+  --tile-num-glow: 0 0 14px rgba(90,169,255,.6);
+  --tile-dim-fg: #6F7488;
+  --tile-open: radial-gradient(130% 160% at 0% 0%, #FFF4DA 0%, #F2D395 40%, #D9AB5B 100%);
+  --tile-open-edge: inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 0 rgba(90,60,10,.35), 0 0 30px rgba(232,194,122,.42), 0 14px 26px -12px rgba(0,0,0,.7);
+  --tile-open-fg: #1B1306;
+  --tile-open-dim: rgba(27,19,6,.5);
+  --tile-pts-bg: rgba(27,19,6,.07);
+  --tile-pts-rule: rgba(27,19,6,.2);
+  --tile-pick: radial-gradient(130% 160% at 0% 0%, #FFF4DA 0%, #F2D395 40%, #D9AB5B 100%);
+  --tile-pick-fg: #1B1306;
+  --tile-right: radial-gradient(130% 160% at 0% 0%, #D6FFE2 0%, #4ADE80 45%, #15803D 100%);
+  --tile-right-fg: #03230E;
+  --tile-radius: 6px;
+  --tile-font: 'Anybody', sans-serif;
+  --tile-reveal: thALicht .75s cubic-bezier(.2,.8,.2,1);
 }
-/* Rahmen aus Gluehbirnen wie im Entwurf: ein Rand aus Punkten, der langsam
-   funkelt. Die Birnen sind ein radial-gradient im Rand (border-box), die
-   Flaeche sitzt in der padding-box. */
-:root[data-theme="A"] .board {
-  border: 12px solid transparent;
+/* Bodenspiegelung: ein warmer Lichtfleck unter dem Brett, wie der Glanz
+   eines Studiobodens unter den Scheinwerfern. */
+:root[data-theme="A"] .board::after {
+  content: ''; position: absolute; left: 8%; right: 8%; bottom: -34px; height: 34px; pointer-events: none;
+  background: radial-gradient(ellipse 50% 100% at 50% 0%, rgba(232,194,122,.24), transparent 72%);
+}
+/* Kandidatenpulte statt Farbflaechen: Graphitglas, oben ein leuchtendes
+   Band in der Teamfarbe, das von oben in die Flaeche strahlt. Die Teamfarbe
+   bleibt so eindeutig (BAUPLAN 4.4), aber Teil des Studios. Am Zug: das
+   Pult bekommt Champagner-Licht von unten. */
+:root[data-theme="A"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team).red   { --tc: 232,69,60; }
+:root[data-theme="A"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team).blue  { --tc: 59,130,246; }
+:root[data-theme="A"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team).green { --tc: 34,197,94; }
+:root[data-theme="A"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team):is(.red, .blue, .green) {
   background:
-    var(--brd-surface) padding-box,
-    radial-gradient(circle, #FFF3C4 0, #FFD45A 2.6px, rgba(255,201,60,.35) 4px, rgba(255,201,60,0) 6.5px) 0 0 / 20px 20px border-box,
-    #2A2108 border-box;
-  animation: thABirnen 2.4s steps(1, end) infinite;
+    linear-gradient(180deg, rgb(var(--tc)) 0, rgb(var(--tc)) 4px, rgba(var(--tc),.34) 4px, rgba(var(--tc),.08) 60%, rgba(var(--tc),.03) 100%),
+    linear-gradient(180deg, #161926, #0C0E15);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), inset 0 4px 22px -6px rgba(var(--tc),.7);
+  border: 0;
 }
-:root[data-theme="A"] .tile.open .tile-answer { font-size: 1.35rem; letter-spacing: 1.5px; font-weight: 400; }
-:root[data-theme="A"] .tile.open .tile-pts { color: #1A1200; text-shadow: none; font-size: 1.7rem; }
-:root[data-theme="A"] .tile-num { font-size: 1.5rem; }
-:root[data-theme="A"] .jeopardy-cat { border-bottom: 4px solid #FFC93C; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 1.15rem; letter-spacing: 1px; }
-:root[data-theme="A"] .jeopardy-cell { font-size: 2.3rem; }
-:root[data-theme="A"] .wwm-opt { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 1.5rem; letter-spacing: 1px; }
-/* Glanz ueber den frisch aufgedeckten Goldbalken - einmal, dann Ruhe. */
+:root[data-theme="A"] .team-panel .t-score,
+:root[data-theme="A"] .jeopardy-team .jt-score { font-weight: 900; color: #FFF6E5; }
+:root[data-theme="A"] .team-panel .t-name,
+:root[data-theme="A"] .jeopardy-team .jt-name { color: rgba(var(--tc),1); filter: brightness(1.45); }
+:root[data-theme="A"] .team-panel.active-team .t-score { color: #F2D395; text-shadow: 0 0 24px rgba(232,194,122,.4); }
+:root[data-theme="A"] .team-panel.active-team { box-shadow: inset 0 0 0 1px rgba(232,194,122,.35), inset 0 4px 22px -6px rgba(var(--tc),.7), inset 0 -18px 30px -18px rgba(232,194,122,.45); }
+/* TP: am Zug zusaetzlich gehoben und mit Champagner-Kante (wie die Pulte). */
+:root[data-theme="A"] .tp-team.turn { box-shadow: inset 0 0 0 1px rgba(232,194,122,.45), inset 0 4px 22px -6px rgba(var(--tc),.7), 0 0 30px rgba(232,194,122,.22); }
+/* Lange Texte (TP-Frage und -Loesung) nicht geweitet - sonst Umbruch nach drei Woertern. */
+:root[data-theme="A"] :is(.tp-question, .tp-answer) { font-stretch: 100%; }
+:root[data-theme="A"] .q-text { font-family: 'Hanken Grotesk', sans-serif; font-weight: 600; letter-spacing: .2px; }
+:root[data-theme="A"] .tile-num { font-weight: 800; font-size: 1.4rem; }
+/* Antworten nur leicht geweitet: voll gezogen brach "Bus/Bahn verpasst" um. */
+:root[data-theme="A"] .tile.open .tile-answer { font-weight: 800; font-size: 1.2rem; letter-spacing: .3px; font-stretch: 100%; }
+:root[data-theme="A"] .tile.open .tile-pts { color: #1B1306; text-shadow: none; font-weight: 900; font-size: 1.6rem; }
+:root[data-theme="A"] .jeopardy-cat { border-bottom: 2px solid #5AA9FF; font-weight: 800; font-size: 1.05rem; letter-spacing: .5px; }
+:root[data-theme="A"] .jeopardy-cell { font-weight: 900; font-size: 2.2rem; color: #F2D395; text-shadow: none; }
+:root[data-theme="A"] .wwm-opt { font-weight: 700; font-size: 1.35rem; font-stretch: 108%; }
+/* Lichtstreif ueber dem frisch aufgedeckten Feld - einmal, dann Ruhe. */
 :root[data-theme="A"] .tile.open .tile-inner::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.75) 48%, transparent 66%);
-  transform: translateX(-120%); animation: thAGlanz .9s .45s ease-out forwards;
+  background: linear-gradient(100deg, transparent 32%, rgba(255,255,255,.85) 50%, transparent 68%);
+  transform: translateX(-120%); animation: thAStreif .8s .25s cubic-bezier(.3,.7,.2,1) forwards;
 }
-@keyframes thAKlapp {
-  0%   { transform: perspective(700px) rotateX(-95deg); filter: brightness(2.2); }
-  55%  { transform: perspective(700px) rotateX(12deg); filter: brightness(1.4); }
-  80%  { transform: perspective(700px) rotateX(-4deg); }
-  100% { transform: perspective(700px) rotateX(0); filter: none; }
+@keyframes thALicht {
+  0%   { filter: brightness(.25) saturate(0); }
+  40%  { filter: brightness(1.7) saturate(1.1); }
+  100% { filter: none; }
 }
-@keyframes thAGlanz { to { transform: translateX(120%); } }
-/* Die Birnen springen um eine halbe Teilung: so wirkt es, als gingen sie
-   abwechselnd an und aus. */
-@keyframes thABirnen { 50% { background-position: 0 0, 10px 10px, 0 0; } }
+@keyframes thAStreif { to { transform: translateX(120%); } }
 
 /* ── B · Arcade: Pixelkanten, Gelb auf Fast-Schwarz, Press Start ── */
 :root[data-theme="B"] {
