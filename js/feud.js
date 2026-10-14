@@ -1225,13 +1225,21 @@ function updateGamemaster() {
   const q = state.roundQuestions[state.currentRound];
   if (!q) return;
 
-  const strikesHtml = state.teamNames.map((name, i) => {
-    const dots = [0,1,2].map(j => `<span style="display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:50%;font-size:.7rem;font-weight:900;transition:all .25s ease;${j < state.teamStrikes[i] ? 'background:radial-gradient(circle, rgba(232,69,60,.35), rgba(198,40,40,.45));border:2px solid #E8453C;color:#FF6B6B;box-shadow:0 0 10px rgba(232,69,60,.25);' : 'background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);color:rgba(255,255,255,.1);'}">✕</span>`).join('');
-    return `<div style="display:flex;flex-direction:column;gap:6px;padding:8px 10px;border-radius:10px;${state.currentTeam===i?'background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);':'border:1px solid rgba(255,255,255,.06);'}">
-      <span style="font-size:.6rem;font-weight:700;letter-spacing:2px;color:${state.currentTeam===i?'#FFD23F':'rgba(255,255,255,.5)'};text-transform:uppercase;">${escapeHtml(name)}</span>
-      <div style="display:flex;gap:6px;">${dots}</div>
+  /* Lage auf einen Blick: je Team Name, Stand und Strikes in einer Karte,
+     das Team am Zug hervorgehoben, daneben der Rundentopf. Vorher standen
+     "Am Zug", die Strike-Kaestchen und der Stand an drei Stellen verteilt,
+     der Stand fehlte ganz. */
+  const teamsHtml = state.teamNames.map((name, i) => {
+    const am = !state.allOut && state.currentTeam === i;
+    const dots = [0,1,2].map(j => `<span class="ff-pip ${j < state.teamStrikes[i] ? 'on' : ''}">✕</span>`).join('');
+    return `<div class="score-card ff-team ${am ? 'active' : ''}">
+      <div class="ff-team-head"><span class="score-name">${escapeHtml(name)}</span>${am ? '<span class="ff-turn">Am Zug</span>' : ''}</div>
+      <div class="ff-team-row"><span class="score-val">${Number(state.scores[i]) || 0}</span><span class="ff-pips">${dots}</span></div>
     </div>`;
-  }).join('');
+  }).join('') + `<div class="score-card ff-pot">
+      <div class="ff-team-head"><span class="score-name">Rundenpunkte</span></div>
+      <div class="ff-team-row"><span class="score-val">${Number(state.roundPoints) || 0}</span></div>
+    </div>`;
 
   const feudPresenceCount = feudBuzzer.presence.length;
   const feudPresenceRows = feudBuzzer.presence.length
@@ -1278,25 +1286,33 @@ function updateGamemaster() {
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
-<style>${GM_SHARED_CSS}</style></head><body>
+<style>${GM_SHARED_CSS}
+  .ff-teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+  .ff-team,.ff-pot{display:flex;flex-direction:column;gap:6px;padding:10px 14px;}
+  .ff-pot{border-style:dashed;}
+  .ff-team-head{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:1.2rem;}
+  .ff-team-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .ff-team .score-val{color:#fff;}
+  .ff-team.active .score-val,.ff-pot .score-val{color:#FFD23F;}
+  .ff-team.active .score-name{color:#FFD23F;}
+  .ff-turn{font-size:.58rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:#FFD23F;color:#1a1200;white-space:nowrap;}
+  .ff-pips{display:flex;gap:5px;}
+  .ff-pip{display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;border-radius:50%;font-size:.7rem;font-weight:900;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.12);color:rgba(255,255,255,.15);transition:all .25s ease;}
+  .ff-pip.on{background:radial-gradient(circle, rgba(232,69,60,.35), rgba(198,40,40,.45));border-color:#E8453C;color:#FF6B6B;box-shadow:0 0 10px rgba(232,69,60,.25);}
+  .ff-q{cursor:pointer;padding:14px 18px;}
+  .ff-label{display:block;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:4px;}
+</style></head><body>
   ${gmHeaderHtml('Gamemaster', `Family Feud · Runde ${state.currentRound+1} / ${state.roundQuestions.length}`)}
   <div class="gm-body">
   <div class="gm-main">
-  <div class="gm-tabs">
-    <button class="gm-tab ${gmFeudTab==='question'?'active':''}" onclick="opener.setGmFeudTab('question')">Aktuelle Frage</button>
-    <button class="gm-tab ${gmFeudTab==='order'?'active':''}" onclick="opener.setGmFeudTab('order')">Reihenfolge</button>
+  <div class="ff-teams">${teamsHtml}</div>
+  ${state.allOut ? '<div class="round-label warn">⚠ Alle Teams out</div>' : ''}
+  <div class="panel ff-q" onclick="opener.revealQuestion()">
+    <span class="ff-label">Frage ${state.currentRound+1} von ${state.roundQuestions.length}</span>
+    <div class="question">${escapeHtml(q.question)}</div>
   </div>
-  ${gmFeudTab === 'order' ? `
-  <div class="order-list">
-    ${state.roundQuestions.map((rq,i) => `<div class="order-item ${i===state.currentRound?'current':(i<state.currentRound?'done':'')}">
-      <span class="order-num">${i+1}.</span> <span>${escapeHtml(rq.question)}</span>
-    </div>`).join('')}
-  </div>
-  ` : `
-  <div class="active-team-label">${state.allOut ? '⚠ Alle Teams out' : 'Am Zug: ' + escapeHtml(state.teamNames[state.currentTeam])}</div>
-  <div class="strikes-section">${strikesHtml}</div>
-  <div class="question" onclick="opener.revealQuestion()" style="cursor:pointer;">${escapeHtml(q.question)}</div>
   ${qNoteHtml(q.note)}
+  <div class="ff-label">Antworten · anklicken zum Aufdecken</div>
   <div class="answer-list">
   ${q.answers.map((a,i) => `<div class="answer ${state.revealed[i]?'shown':'hidden'}" ${!state.revealed[i] ? `onclick="opener.revealAnswer(${i})"` : ''}>
     <span><span class="num">${i+1}.</span> <span class="text">${escapeHtml(a.text)}</span></span>
@@ -1304,12 +1320,19 @@ function updateGamemaster() {
   </div>`).join('')}
   </div>
   ${mediaControlButtonsHtml(q.media, 'feudToggleMedia')}
-  `}
   </div>
   <div class="gm-side">
-  ${gmNotesPanelHtml()}
   ${feudBuzzPanel}
   ${feudConnectPanel}
+  <details class="panel">
+    <summary class="panel-head"><span>📜 Reihenfolge</span><span class="car">▸</span></summary>
+    <div class="order-list">
+    ${state.roundQuestions.map((rq,i) => `<div class="order-item ${i===state.currentRound?'current':(i<state.currentRound?'done':'')}">
+      <span class="order-num">${i+1}.</span> <span>${escapeHtml(rq.question)}</span>
+    </div>`).join('')}
+    </div>
+  </details>
+  ${gmNotesPanelHtml()}
   </div>
   </div>
   <div class="gm-actions">${controlsHtml}</div>
