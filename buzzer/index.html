@@ -262,9 +262,11 @@
     background:radial-gradient(ellipse at 50% 30%,rgba(255,255,255,.5),rgba(255,255,255,0) 70%);}
   :root[data-theme="A"] #buzz::after{inset:-16px;border-color:rgba(232,194,122,.85);}
 
-  /* B Arcade: Automatenknopf mit Pixelrand. */
-  :root[data-theme="B"] #buzz{font-size:1.7rem;letter-spacing:0;font-weight:400;
-    box-shadow:0 12px 0 var(--buzz-shadow,#7a140e),0 0 0 8px #0B0A12,0 0 0 12px #45F0FF;}
+  /* B Arcade (neu 2026-10-14): Automatenknopf in Chromring auf dunklem
+     Blech, Magenta-Schein. */
+  :root[data-theme="B"] #buzz{font-size:2.6rem;letter-spacing:1px;font-weight:700;
+    box-shadow:0 10px 0 var(--buzz-shadow,#7a140e),0 0 0 5px #D9D3F2,0 0 0 7px #8F86B8,0 0 0 12px #1A1430,0 0 44px rgba(255,46,136,.45);}
+  :root[data-theme="B"] #buzz::after{border-color:#2BE4FF;}
 
   /* C Pop: Aufkleber mit schwarzer Kontur und hartem Versatz. */
   :root[data-theme="C"] #buzz{border-radius:34px;rotate:-4deg;border:5px solid #121212;font-size:3rem;
