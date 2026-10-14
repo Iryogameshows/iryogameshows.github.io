@@ -12,6 +12,26 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `b852653` Design-Rework L New York
+
+**Gemacht:** Zeitungs-Identität auf allen Flächen; **Grund jetzt Papier**
+(`--bg #E6DECA` + Faserkorn, Falz per `body::before`) statt Mittelbraun mit Vignette.
+Spielstand-Kästen, Dementis, Kreuzworträtsel mit Nummern, Stimmzettel, Stempel,
+Kleinanzeigen, Inhaltsverzeichnis-Menü, Stempel-Buzzer. Details im Commit.
+
+**Warum so:** Der Entwurf ist durchgehend Papier; das Braun war eine Abweichung.
+
+**Fallstricke:** Die Hell-Regel weiter unten setzt auf Teamkarten dunkle Felder
+(`--field-bg`) — gewinnt wegen Reihenfolge; L braucht dort `[data-theme-hell]`
+zusätzlich im Selektor. WWM-Frage ist Flexbox: `::before`/`::after`-Anführungszeichen
+wurden eigene Flex-Elemente → entfernt.
+
+**Geprüft:** `shots.js --themes L` 20 Zustände, Feud-lang 7 px → behoben, ohne
+Befunde; Kontaktbögen angesehen. `check.js`, `--types` sauber.
+
+**Offen:** WWDS-Hinweis „Team Rot wählt eine Kategorie“ steht gelb auf Papier
+(Farbe kommt aus dem JS, schon vor dem Rework so) — ungeprüft, welche Stelle.
+
 ## 2026-10-14 — `1550927` Design-Rework K Neon-Bar
 
 **Gemacht:** Röhren-Identität auf allen Flächen (gemeinsame Röhrenregel über
