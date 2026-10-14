@@ -12,6 +12,23 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — `d575580` Design-Rework I Salon
+
+**Gemacht:** Spieltisch-Identität auf allen Flächen: Team-Plätze mit Jeton,
+Jeton-X, Gold-Topf, Karten mit Eckzeichen/Farbzeichen, Jetonstapel-Leiter,
+gefächertes Menü, Jeton-Buzzer, GM-Feld. Details im Commit.
+
+**Warum so:** Original hatte Jetons und Karten als Kern; vorher kamen nur die
+Bretter davon an. Kartenflächen flach statt Verlauf; Tisch-Lichtkegel bleibt,
+weil er im Entwurf steht.
+
+**Geprüft:** `shots.js --themes I` 20 Zustände, ein Befund (Feud-lang 13 px)
+behoben, danach ohne Befunde; Kontaktbögen angesehen. Fallstrick: `.round-bar
+.pts` trägt bei TP/WWDS Text („TEAM ROT“), nicht nur Zahlen — als Kreis war es
+ein Ei, jetzt Pille. `check.js`, `--types` sauber.
+
+**Offen:** nichts Eigenes.
+
 ## 2026-10-14 — `5ae0b61` Design-Rework E 70er
 
 **Gemacht:** 70er-Identität (Kakaobraun, Senf/Orange/Rost, Shrikhand, runde Formen)
