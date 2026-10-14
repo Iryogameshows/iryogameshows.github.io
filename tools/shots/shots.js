@@ -46,8 +46,8 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
 // Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
-const HOST_SEITEN = new Set(['gm', 'turnier-host']);
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'buzzer', 'buzzer-pause', 'buzzer-login'];
+const HOST_SEITEN = new Set(['gm', 'turnier-host', 'menu', 'setup']);
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -92,6 +92,10 @@ function browserPfad() {
 // Math.random steht beim Start auf 0, damit Startteam und Reihenfolge der
 // Fragen in jedem Lauf gleich sind (fuer --vergleich).
 const AUFBAU = {
+  // Host-Seiten seit dem Design-Rework 2026-10-14: Menue und Feud-Setup
+  // (Teamkarten, Lobby, Knoepfe) - vorher in keiner Richtung angesehen.
+  menu: () => { showScreen('menu-screen'); },
+  setup: () => { showScreen('setup-screen'); },
   feud: () => {
     const mr = Math.random; Math.random = () => 0; startGameActual(); Math.random = mr;
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());

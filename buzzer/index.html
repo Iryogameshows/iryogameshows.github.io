@@ -234,7 +234,8 @@
 
   /* Der Bereitschaftsring folgt der Form des Knopfes. */
   :root[data-theme="C"] #buzz::after{border-radius:40px;}
-  :root[data-theme="D"] #buzz::after,:root[data-theme="L"] #buzz::after{border-radius:6px;}
+  :root[data-theme="L"] #buzz::after{border-radius:6px;}
+  :root[data-theme="D"] #buzz::after{border-radius:0;}
   :root[data-theme="N"] #buzz::after{border-radius:34px;}
   :root[data-theme="E"] #buzz::after{inset:-30px;}
 
@@ -272,9 +273,21 @@
   :root[data-theme="C"] #buzz{border-radius:34px;rotate:-4deg;border:5px solid #121212;font-size:3rem;
     box-shadow:12px 14px 0 #121212;}
 
-  /* D Late Night: eine grosse Flaeche, kein Kreis. */
-  :root[data-theme="D"] #buzz{border-radius:4px;font-size:4.4rem;font-weight:900;letter-spacing:0;
-    box-shadow:0 10px 0 var(--buzz-shadow,#7a140e);}
+  /* D Late Night (Rework 2026-10-14): eine grosse flache Flaeche in der
+     Teamfarbe, kein Kreis, kein Glanz; Schrift schwarz und riesig wie im
+     Entwurf. Drumherum eckig und mit Haarlinien. */
+  :root[data-theme="D"] #buzz{border-radius:0;font-size:4.6rem;font-weight:900;letter-spacing:0;color:#0E0E0E;
+    background:var(--buzz-mid,#E8453C);box-shadow:0 8px 0 var(--buzz-shadow,#7a140e);}
+  :root[data-theme="D"] #buzz:disabled{box-shadow:0 8px 0 #222;}
+  :root[data-theme="D"] #buzz.done:disabled{background:var(--green);}
+  :root[data-theme="D"] .wait-orb{border-radius:0;background:var(--buzz-mid,#E8453C);}
+  :root[data-theme="D"] :is(input,.btn,.icon-btn,.opt,.lobby-gif,.vote-opt,.vote-opt .av,.me-av){border-radius:0;}
+  :root[data-theme="D"] :is(.lobby-team,.team-chip,.lobby-badge){border-radius:0;box-shadow:none;}
+  :root[data-theme="D"] .btn{background:#FF5B1F;color:#0E0E0E;box-shadow:none;letter-spacing:2px;text-transform:uppercase;font-size:.9rem;}
+  :root[data-theme="D"] .btn:active{box-shadow:none;}
+  :root[data-theme="D"] .btn.ghost{background:transparent;border:1px solid #3A3A3A;}
+  :root[data-theme="D"] :is(h1,.label,.lobby-count){font-family:'Instrument Sans',sans-serif;font-weight:600;letter-spacing:3px;}
+  :root[data-theme="D"] .lobby-title{font-weight:900;font-size:2.4rem;line-height:.95;text-transform:uppercase;color:#F2F2F2;}
 
   /* E 70er: Polster mit Cremerand, Shrikhand, kleingeschrieben wie im Entwurf. */
   :root[data-theme="E"] #buzz{border-radius:46% 46% 44% 44%/50% 50% 40% 40%;border:6px solid #F6E7CB;

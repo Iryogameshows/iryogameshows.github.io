@@ -3994,7 +3994,17 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   100% { transform: scale(1) rotate(0); opacity: 1; }
 }
 
-/* ── D · Late Night: Haarlinien statt Platten, grosse Ziffern, Orange ── */
+/* ── D · Late Night (Rework 2026-10-14): Sendestudio nach Mitternacht ──────
+   Identitaet aus designs/s/D-*.html, jetzt auf ALLEN Flaechen statt nur auf
+   den Brettern: fast schwarz mit Filmkorn, ein einziges warmes Orange,
+   Haarlinien statt Platten, grosse schmale Versalien (Big Shoulders) gegen
+   kleine gesperrte Zeilen (Instrument Sans). Keine Rundungen, kein Glanz,
+   keine Verlaeufe als Flaechenfuellung - nur Linie, Schrift und Orange.
+   Unten rechts steht die Stadt (Skyline mit ein paar Fenstern), oben links
+   faellt das Studiolicht ein - beides aus dem Entwurf.
+   Signatur: aufgedeckt wird wie eine Bauchbinde, von links gewischt.
+   Teamfarben bleiben (BAUPLAN 4.4) - als Strich und Schrift, nicht als
+   Flaeche. */
 :root[data-theme="D"] {
   --brd-surface: transparent;
   --brd-frame: none;
@@ -4010,7 +4020,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   --tile-num: #F2F2F2;
   --tile-num-glow: none;
   --tile-dim-fg: #3A3A3A;
-  --tile-bar: transparent;
+  --tile-bar: #262626;
   --tile-rule: transparent;
   --tile-open: transparent;
   --tile-open-edge: inset 0 -1px 0 #3A3A3A;
@@ -4025,23 +4035,292 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   --tile-radius: 0;
   --tile-font: 'Big Shoulders Display', sans-serif;
   --tile-reveal: thDWisch .55s cubic-bezier(.7,0,.2,1);
+  --d-line: #2A2A2A;
+  --d-line-hi: #3A3A3A;
+  --d-dim: #8A8A8A;
 }
-:root[data-theme="D"] .board { padding: 8px 0; }
+/* Die Stadt: steht fest unten rechts hinter allem, wie im Entwurf. */
+:root[data-theme="D"] body::before {
+  content: ''; position: fixed; right: 0; bottom: 0; z-index: -1; pointer-events: none;
+  width: min(400px, 30vw); aspect-ratio: 620 / 230; opacity: .9;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 620 230'%3E%3Cg fill='%23141414'%3E%3Crect x='0' y='120' width='70' height='110'/%3E%3Crect x='70' y='50' width='54' height='180'/%3E%3Crect x='124' y='92' width='80' height='138'/%3E%3Crect x='204' y='18' width='46' height='212'/%3E%3Crect x='250' y='130' width='64' height='100'/%3E%3Crect x='314' y='70' width='72' height='160'/%3E%3Crect x='386' y='108' width='58' height='122'/%3E%3Crect x='444' y='34' width='60' height='196'/%3E%3Crect x='504' y='96' width='52' height='134'/%3E%3Crect x='556' y='60' width='64' height='170'/%3E%3C/g%3E%3Cg fill='%231C1C1C'%3E%3Crect x='70' y='50' width='54' height='1'/%3E%3Crect x='204' y='18' width='46' height='1'/%3E%3Crect x='314' y='70' width='72' height='1'/%3E%3Crect x='444' y='34' width='60' height='1'/%3E%3Crect x='556' y='60' width='64' height='1'/%3E%3C/g%3E%3Cg fill='%23FF5B1F'%3E%3Crect x='86' y='76' width='8' height='6' opacity='.7'/%3E%3Crect x='218' y='58' width='8' height='6' opacity='.55'/%3E%3Crect x='232' y='142' width='8' height='6' opacity='.4'/%3E%3Crect x='340' y='104' width='8' height='6' opacity='.65'/%3E%3Crect x='462' y='70' width='8' height='6' opacity='.5'/%3E%3Crect x='480' y='160' width='8' height='6' opacity='.7'/%3E%3Crect x='572' y='96' width='8' height='6' opacity='.45'/%3E%3Crect x='150' y='124' width='8' height='6' opacity='.35'/%3E%3C/g%3E%3Cg fill='%233A2A1A' opacity='.6'%3E%3Crect x='100' y='120' width='8' height='6'/%3E%3Crect x='262' y='160' width='8' height='6'/%3E%3Crect x='402' y='136' width='8' height='6'/%3E%3Crect x='590' y='150' width='8' height='6'/%3E%3C/g%3E%3C/svg%3E") right bottom / 100% 100% no-repeat;
+}
+
+/* ── Teamanzeigen: Tafeln mit Strich in der Teamfarbe ─────────────────── */
+:root[data-theme="D"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).red   { --tc: 232,69,60; }
+:root[data-theme="D"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).blue  { --tc: 59,130,246; }
+:root[data-theme="D"] :is(.team-panel, .jeopardy-team, .wwds-team, .tp-team, .team-card).green { --tc: 34,197,94; }
+:root[data-theme="D"] :is(.scoreboard, .jeopardy-scores) { gap: 12px; border-radius: 0; box-shadow: none; overflow: visible; }
+:root[data-theme="D"] :is(.team-panel, .jeopardy-team, .wwds-team, .team-card):is(.red, .blue, .green) {
+  background: #151515; border: 0; border-radius: 0;
+  box-shadow: inset 0 4px 0 rgb(var(--tc)), inset 0 0 0 1px var(--d-line);
+  text-align: left; padding: 14px 18px 12px;
+}
+:root[data-theme="D"] .team-card::before { display: none; }
+:root[data-theme="D"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name, .team-card .label) {
+  font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .7rem; letter-spacing: 3px;
+  color: #BDBDBD;
+}
+:root[data-theme="D"] :is(.team-panel .t-score, .jeopardy-team .jt-score, .wwds-team .wt-money) {
+  font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; color: #F2F2F2; text-shadow: none; line-height: .95;
+}
+:root[data-theme="D"] .team-panel .t-score { font-size: 3.6rem; }
+:root[data-theme="D"] .jeopardy-team .jt-score { font-size: 2.4rem; }
+/* Am Zug: Punkte in Orange, darunter ein voller Strich - keine Leuchtkante. */
+:root[data-theme="D"] .team-panel.active-team { padding: 14px 18px 12px; box-shadow: inset 0 4px 0 rgb(var(--tc)), inset 0 0 0 1px var(--d-line), inset 0 -3px 0 #FF5B1F; }
+:root[data-theme="D"] .team-panel.active-team::after { display: none; }
+:root[data-theme="D"] :is(.team-panel.active-team .t-score, .wwds-team.on .wt-money) { color: #FF5B1F; text-shadow: none; }
+:root[data-theme="D"] :is(.team-panel.active-team .t-name, .wwds-team.on .wt-name) { color: #FF5B1F; }
+:root[data-theme="D"] .wwds-team.on { box-shadow: inset 0 4px 0 rgb(var(--tc)), inset 0 0 0 1px var(--d-line), inset 0 -3px 0 #FF5B1F; }
+
+/* X wie im Entwurf: eckige Kaesten, gezaehlt wird in Rot. */
+:root[data-theme="D"] .team-strikes { justify-content: flex-start; background: none; border: 0; border-radius: 0; padding: 0; margin-top: 10px; box-shadow: none; transform: none; }
+:root[data-theme="D"] .strike-pip {
+  width: 30px; height: 30px; border-radius: 0; background: transparent; border: 1px solid var(--d-line-hi);
+  font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 1.05rem; color: #333;
+}
+:root[data-theme="D"] .strike-pip.lit { background: rgba(232,69,60,.16); border-color: #E8453C; color: #FF6B5E; box-shadow: none; }
+
+/* Kopfzeile: "ON AIR" wie im Entwurf, dahinter Runde und Topf. */
+:root[data-theme="D"] .round-bar { font-family: 'Instrument Sans', sans-serif; font-weight: 600; letter-spacing: 3px; color: var(--d-dim); font-size: .72rem; }
+:root[data-theme="D"] .round-bar::before {
+  content: 'On Air'; display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px;
+  border: 1px solid #FF5B1F; color: #FF5B1F; font-weight: 600; letter-spacing: 3px;
+  background: radial-gradient(circle, #FF5B1F 3.5px, transparent 4px) 9px 50% / 8px 8px no-repeat; padding-left: 22px;
+}
+:root[data-theme="D"] .round-bar .pts { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 1.5rem; letter-spacing: 0; color: #FF5B1F; }
+
+/* ── Feud ─────────────────────────────────────────────────────────────── */
+:root[data-theme="D"] .board { padding: 4px 0 8px; }
+:root[data-theme="D"] .q-text {
+  flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; gap: 4px;
+  font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.75rem; line-height: 1.02;
+  text-transform: uppercase; color: #F2F2F2; padding: 6px 0 12px; border-radius: 0;
+}
+:root[data-theme="D"] .q-text::before {
+  content: 'Heute in der Show · Die Frage'; font-family: 'Instrument Sans', sans-serif; font-weight: 600;
+  font-size: .7rem; letter-spacing: 3px; color: #FF5B1F; line-height: 1.4;
+}
+:root[data-theme="D"] .q-text.hidden-q { background: none; border: 0; border-bottom: 1px dashed var(--d-line-hi); }
+:root[data-theme="D"] .q-text.hidden-q::after { color: var(--d-dim); font-family: 'Instrument Sans', sans-serif; font-weight: 600; letter-spacing: 3px; }
 :root[data-theme="D"] .tile { min-height: clamp(38px, 7vh - 8px, 56px); }
-:root[data-theme="D"] .tile-num { width: 56px; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 2.4rem; }
-:root[data-theme="D"] .tile.open .tile-answer { font-weight: 800; font-size: 1.6rem; letter-spacing: .5px; }
-:root[data-theme="D"] .tile.open .tile-pts { color: #F2F2F2; text-shadow: none; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.6rem; }
-/* Die Nummer 1 ist das Ereignis: orange wie im Entwurf. */
+:root[data-theme="D"] .tile:hover:not(.open) { transform: none; }
+/* Verdeckte Plaetze: Ziffer nur als Kontur, eine Haarlinie, ein Fragezeichen. */
+:root[data-theme="D"] .tile-num { width: 56px; justify-content: flex-start; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 2.4rem; }
+:root[data-theme="D"] .tile:not(.open) .tile-num { color: transparent; -webkit-text-stroke: 1px #4A4A4A; }
+:root[data-theme="D"] .tile:not(.open) .tile-center { justify-content: flex-start; padding-left: 24px; gap: 18px; }
+:root[data-theme="D"] .tile:not(.open) .tile-center::after { width: auto; flex: 1; height: 1px; border-radius: 0; }
+:root[data-theme="D"] .tile:not(.open) .tile-inner::after { content: '?'; align-self: center; padding: 0 4px 0 22px; font-family: 'Instrument Sans', sans-serif; font-size: .8rem; color: #555; }
+:root[data-theme="D"] .tile.open .tile-num { color: transparent; -webkit-text-stroke: 1.2px #FF5B1F; }
+:root[data-theme="D"] .tile.open .tile-center { padding: 0 0 0 24px; }
+:root[data-theme="D"] .tile.open .tile-answer { font-weight: 800; font-size: 1.7rem; letter-spacing: .5px; }
+:root[data-theme="D"] .tile.open .tile-pts { color: #F2F2F2; text-shadow: none; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.7rem; padding: 0 2px 0 18px; box-shadow: none; justify-content: flex-end; }
+/* Die Nummer 1 ist das Ereignis: voll in Orange. */
 :root[data-theme="D"] .answers .tile:first-child.open :is(.tile-answer, .tile-pts) { color: #FF5B1F; }
-:root[data-theme="D"] .jeopardy-board { gap: 0; padding: 0; }
-:root[data-theme="D"] .jeopardy-cat { border-bottom: 1px solid #3A3A3A; font-family: 'Big Shoulders Display', sans-serif; font-size: 1.05rem; font-weight: 800; letter-spacing: .5px; }
-:root[data-theme="D"] .jeopardy-cell { border-bottom: 1px solid #2A2A2A; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 2rem; }
-:root[data-theme="D"] .jeopardy-cell:hover:not(.used) { transform: none; color: #FF5B1F; }
-:root[data-theme="D"] .wwm-q { text-align: left; justify-content: flex-start; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 2.2rem; line-height: 1.05; text-transform: uppercase; padding: 8px 0; }
-:root[data-theme="D"] .wwm-opt { background: #EDE6D6; color: #141414; box-shadow: none; border-radius: 2px; min-height: 92px; align-items: flex-end; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.3rem; text-transform: uppercase; }
-:root[data-theme="D"] .wwm-opt .wwm-letter { color: #141414; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 1.7rem; }
-:root[data-theme="D"] .wwm-opt.selected { background: #FF5B1F; }
-:root[data-theme="D"] .wwm-opt.correct { background: #F2F2F2; box-shadow: inset 0 0 0 4px #FF5B1F; }
+:root[data-theme="D"] .answers .tile:first-child.open .tile-num { color: #FF5B1F; -webkit-text-stroke: 0; }
+:root[data-theme="D"] .tile.missed .tile-inner { background: rgba(232,69,60,.08) !important; box-shadow: inset 0 -1px 0 #5A1C18 !important; }
+:root[data-theme="D"] .tile.missed .tile-answer { color: #9A9A9A; }
+
+/* Finale */
+:root[data-theme="D"] :is(.finale-title, .winner-text, .tp-win-title, .wwds-banner) { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: #F2F2F2; text-shadow: none; }
+:root[data-theme="D"] :is(.finale-team-label, .finale-q-info) { font-family: 'Instrument Sans', sans-serif; font-weight: 600; letter-spacing: 3px; color: #FF5B1F; }
+:root[data-theme="D"] :is(.finale-score-card, .finale-reveal-team) { background: #151515; border: 0; border-radius: 0; box-shadow: inset 0 0 0 1px var(--d-line); text-align: left; }
+:root[data-theme="D"] .finale-score-card.active { background: #151515; box-shadow: inset 0 0 0 1px var(--d-line), inset 0 -3px 0 #FF5B1F; }
+:root[data-theme="D"] :is(.finale-score-pts, .finale-reveal-pts) { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; color: #F2F2F2; }
+:root[data-theme="D"] :is(.finale-score-name, .finale-reveal-name) { font-family: 'Instrument Sans', sans-serif; font-weight: 600; letter-spacing: 3px; color: var(--d-dim); }
+:root[data-theme="D"] .finale-timer { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; }
+:root[data-theme="D"] .finale-big-q { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; text-transform: uppercase; line-height: 1; text-shadow: none; }
+:root[data-theme="D"] .elim-team { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; text-shadow: none; }
+
+/* ── Jeopardy: Tabelle aus Haarlinien, verbrauchte Felder als Strich ──── */
+:root[data-theme="D"] .jeopardy-board { gap: 0; padding: 0; border-radius: 0; box-shadow: none; }
+:root[data-theme="D"] .jeopardy-cat { border-bottom: 1px solid var(--d-line-hi); font-family: 'Big Shoulders Display', sans-serif; font-size: 1.15rem; font-weight: 800; letter-spacing: .5px; border-radius: 0; }
+:root[data-theme="D"] .jeopardy-cell { border-bottom: 1px solid var(--d-line); font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 2.2rem; letter-spacing: 0; border-radius: 0; }
+:root[data-theme="D"] .jeopardy-cell:hover:not(.used) { transform: none; color: #FF5B1F; background: transparent; box-shadow: inset 0 -1px 0 #FF5B1F; }
+:root[data-theme="D"] .jeopardy-cell.used::after { content: ''; width: 26px; height: 3px; background: #2C2C2C; }
+:root[data-theme="D"] .jeopardy-clue-cat { font-family: 'Instrument Sans', sans-serif; font-weight: 600; letter-spacing: 4px; color: #FF5B1F; }
+:root[data-theme="D"] .jeopardy-clue-pts { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; letter-spacing: 0; color: #F2F2F2; }
+:root[data-theme="D"] .jeopardy-clue-text { font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; text-transform: uppercase; line-height: 1.02; }
+:root[data-theme="D"] .jeopardy-clue-img { border-radius: 0; border: 1px solid var(--d-line-hi); box-shadow: none; }
+
+/* ── Wer wird Millionaer: Leiste oben, Antworten als Karten ───────────── */
+:root[data-theme="D"] .wwm-wrap { flex-direction: column; gap: 14px; }
+:root[data-theme="D"] .wwm-ladder {
+  order: -1; width: 100%; flex-direction: row; gap: 4px; padding: 0; background: none; border-radius: 0; box-shadow: none;
+}
+:root[data-theme="D"] .wwm-rung {
+  flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: flex-start; align-items: center; gap: 4px;
+  padding: 8px 0 0; border-radius: 0; background: none; border-top: 4px solid #2A2A2A;
+  font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: .74rem; letter-spacing: 0; line-height: 1.1;
+  color: #4A4A4A; white-space: nowrap;
+}
+:root[data-theme="D"] .wwm-rung .wwm-lvl { display: none; }
+:root[data-theme="D"] .wwm-rung.won { border-top-color: #8A8A8A; color: #8A8A8A; }
+:root[data-theme="D"] .wwm-rung.safe .wwm-amt { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+:root[data-theme="D"] .wwm-rung.current { background: none; border-top: 8px solid #FF5B1F; margin-top: -4px; color: #FF5B1F; font-size: 1rem; }
+:root[data-theme="D"] .wwm-rung.current :is(.wwm-lvl, .wwm-amt) { color: #FF5B1F; }
+:root[data-theme="D"] .wwm-q { text-align: left; justify-content: flex-start; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 2.6rem; line-height: 1; text-transform: uppercase; padding: 8px 0; }
+:root[data-theme="D"] .wwm-answers { gap: 14px; }
+/* Karten aus Papier, minimal schief gelegt - wie im Entwurf. */
+:root[data-theme="D"] .wwm-opt {
+  position: relative; background: #EDE6D6; color: #141414; box-shadow: 0 10px 24px rgba(0,0,0,.45); border-radius: 1px;
+  min-height: 96px; align-items: flex-end; padding: 26px 18px 12px;
+  font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.5rem; text-transform: uppercase; line-height: 1;
+}
+:root[data-theme="D"] .wwm-opt:nth-child(1) { rotate: -.7deg; }
+:root[data-theme="D"] .wwm-opt:nth-child(2) { rotate: .5deg; }
+:root[data-theme="D"] .wwm-opt:nth-child(3) { rotate: .4deg; }
+:root[data-theme="D"] .wwm-opt:nth-child(4) { rotate: -.6deg; }
+:root[data-theme="D"] .wwm-opt::before { content: 'Antwort'; position: absolute; left: 18px; top: 11px; font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .62rem; letter-spacing: 3px; text-transform: uppercase; color: inherit; opacity: .75; }
+:root[data-theme="D"] .wwm-opt .wwm-letter { color: inherit; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 2.2rem; min-width: 30px; }
+:root[data-theme="D"] .wwm-opt:hover { filter: none; }
+:root[data-theme="D"] .wwm-opt.selected { background: #FF5B1F; color: #0E0E0E; }
+:root[data-theme="D"] .wwm-opt.selected::after { content: 'Eingeloggt'; position: absolute; right: 18px; top: 11px; font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .62rem; letter-spacing: 3px; text-transform: uppercase; }
+:root[data-theme="D"] .wwm-opt.correct { background: #F2F2F2; color: #0E0E0E; box-shadow: inset 0 0 0 4px #FF5B1F, 0 10px 24px rgba(0,0,0,.45); }
+:root[data-theme="D"] .wwm-opt.wrong { background: #3A1512; color: #F2F2F2; }
+/* Joker als Wort statt Kreis: 50:50 · Telefon · Publikum, verbrauchte gestrichen. */
+:root[data-theme="D"] .wwm-lifelines { justify-content: flex-end; gap: 18px; }
+:root[data-theme="D"] .wwm-ll { width: auto; height: auto; border: 0; border-radius: 0; background: none; font-size: 0; }
+:root[data-theme="D"] .wwm-ll::before { font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .78rem; letter-spacing: 3px; text-transform: uppercase; color: #F2F2F2; }
+:root[data-theme="D"] .wwm-ll:nth-child(1)::before { content: '50:50'; }
+:root[data-theme="D"] .wwm-ll:nth-child(2)::before { content: 'Telefon'; }
+:root[data-theme="D"] .wwm-ll:nth-child(3)::before { content: 'Publikum'; }
+:root[data-theme="D"] .wwm-ll.used { opacity: 1; }
+:root[data-theme="D"] .wwm-ll.used::before { color: #555; text-decoration: line-through; }
+:root[data-theme="D"] :is(.wwm-abar, .wwds-abar) { background: #3A3A3A; border-radius: 0; }
+:root[data-theme="D"] :is(.wwm-abar, .wwds-abar):has(> :is(.wwm-apct, .wa-pct)) { background: #3A3A3A; }
+:root[data-theme="D"] :is(.wwm-apct, .wa-pct) { color: #FF5B1F; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1rem; }
+:root[data-theme="D"] :is(.wwm-alet, .wa-let) { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; }
+
+/* ── Wer weiss denn sowas ─────────────────────────────────────────────── */
+:root[data-theme="D"] .wwds-grid { gap: 0 18px; }
+:root[data-theme="D"] .wwds-cat { border-radius: 0; min-height: 64px; align-items: flex-start; text-align: left; padding: 8px 0; box-shadow: inset 0 -1px 0 var(--d-line); }
+:root[data-theme="D"] .wwds-cat:hover:not(.done) { transform: none; filter: none; box-shadow: inset 0 -1px 0 #FF5B1F; }
+:root[data-theme="D"] .wwds-cat .wc-num { font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .7rem; letter-spacing: 2px; color: #FF5B1F; }
+:root[data-theme="D"] .wwds-cat .wc-name { font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.25rem; letter-spacing: .3px; }
+:root[data-theme="D"] .wwds-cat.done { background: transparent; opacity: .35; }
+:root[data-theme="D"] .wwds-q { background: none; border: 0; border-radius: 0; text-align: left; font-weight: 800; font-size: 2rem; line-height: 1.05; text-transform: uppercase; padding: 8px 0; }
+:root[data-theme="D"] .wwds-cat-chip { background: none; border: 0; border-radius: 0; padding: 0 0 0 18px; color: #FF5B1F; font-family: 'Instrument Sans', sans-serif; font-weight: 600; letter-spacing: 3px;
+  background: linear-gradient(#FF5B1F, #FF5B1F) 0 50% / 10px 10px no-repeat; }
+:root[data-theme="D"] .wwds-opt { box-shadow: inset 0 -1px 0 var(--d-line); font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.4rem; text-transform: uppercase; padding: 10px 0; }
+:root[data-theme="D"] .wwds-opt .wo-let { font-weight: 900; font-size: 1.8rem; }
+:root[data-theme="D"] .wwds-opt.sel { padding-inline: 14px; }
+:root[data-theme="D"] .wwds-opt.right { padding-inline: 14px; }
+:root[data-theme="D"] .wwds-opt.bad { background: #3A1512; color: #F2F2F2; padding-inline: 14px; }
+:root[data-theme="D"] .wwds-tag { border-radius: 0; }
+:root[data-theme="D"] .wwds-guess { border-radius: 0; background: none; border: 0; border-bottom: 1px solid var(--d-line-hi); font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 1.8rem; }
+:root[data-theme="D"] .wwds-timer { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; }
+:root[data-theme="D"] .wwds-team .wt-meta { font-family: 'Instrument Sans', sans-serif; letter-spacing: 1px; color: #6A6A6A; }
+
+/* ── Der Duemmste fliegt: Kandidaten als Tafeln, Leben als Punkte ─────── */
+:root[data-theme="D"] .ddf-players { gap: 0; justify-content: stretch; border-top: 1px solid var(--d-line); }
+:root[data-theme="D"] .ddf-player {
+  flex: 1 1 140px; background: transparent; border: 0; border-radius: 0; box-shadow: inset -1px 0 0 var(--d-line), inset 0 -1px 0 var(--d-line);
+  text-align: left; padding: 10px 14px;
+}
+:root[data-theme="D"] .ddf-player-name { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 1.5rem; line-height: 1; text-transform: uppercase; margin-bottom: 8px; }
+:root[data-theme="D"] .ddf-player.picked { border: 0; box-shadow: inset 0 -3px 0 #FF5B1F, inset -1px 0 0 var(--d-line); }
+:root[data-theme="D"] .ddf-player.picked .ddf-player-name { color: #FF5B1F; }
+:root[data-theme="D"] .ddf-player.out { transform: none; opacity: .4; }
+:root[data-theme="D"] .ddf-heart { font-size: 0; margin-right: 6px; vertical-align: middle; }
+:root[data-theme="D"] .ddf-heart::before { content: ''; display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: #FF5B1F; }
+:root[data-theme="D"] .ddf-heart.empty::before { background: #2A2A2A; }
+:root[data-theme="D"] .ddf-question { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; text-transform: uppercase; line-height: 1; }
+:root[data-theme="D"] .ddf-answer { color: #F2F2F2; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; text-transform: uppercase; }
+:root[data-theme="D"] .ddf-answer::before { content: 'Lösung  '; font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .75rem; letter-spacing: 3px; color: #FF5B1F; vertical-align: middle; white-space: pre; }
+
+/* ── Der Preis ist heiss: Preisschilder ───────────────────────────────── */
+:root[data-theme="D"] .pih-scores { border-bottom-color: var(--d-line); }
+:root[data-theme="D"] .pih-score { border-radius: 0; background: #151515; border: 0; box-shadow: inset 0 0 0 1px var(--d-line); }
+:root[data-theme="D"] .pih-score.lead { background: #151515; box-shadow: inset 0 0 0 1px var(--d-line), inset 0 -3px 0 #FF5B1F; }
+:root[data-theme="D"] .pih-score.picked { box-shadow: inset 0 0 0 1px #FF5B1F; transform: none; }
+:root[data-theme="D"] .pih-score-name { font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.05rem; text-transform: uppercase; }
+:root[data-theme="D"] .pih-score-pts { font-family: 'Big Shoulders Display', sans-serif; font-size: 1.3rem; color: #FF5B1F; }
+:root[data-theme="D"] .pih-item { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 2.6rem; line-height: 1; text-transform: uppercase; }
+:root[data-theme="D"] .pih-stage :is(img, video) { border-radius: 0; }
+:root[data-theme="D"] .pih-price { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 3.4rem; color: #FF5B1F; text-shadow: none; }
+/* Gebote als Schild mit Spitze links, wie am Euro-o-Meter des Entwurfs. */
+:root[data-theme="D"] .pih-bid-row {
+  border: 0; border-radius: 0; background: #1E1E1E; box-shadow: none; padding-left: 26px;
+  clip-path: polygon(14px 0, 100% 0, 100% 100%, 14px 100%, 0 50%);
+  font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1.2rem; text-transform: uppercase;
+}
+:root[data-theme="D"] .pih-bid-row.win { background: #FF5B1F; color: #0E0E0E; border: 0; }
+:root[data-theme="D"] .pih-bid-diff { font-family: 'Instrument Sans', sans-serif; letter-spacing: 1px; text-transform: none; }
+:root[data-theme="D"] .pih-team { border-radius: 0; background: #151515; box-shadow: inset 0 3px 0 var(--team), inset 0 0 0 1px var(--d-line); opacity: .7; }
+:root[data-theme="D"] .pih-team.lead { opacity: 1; box-shadow: inset 0 3px 0 var(--team), inset 0 0 0 1px var(--d-line), inset 0 -3px 0 #FF5B1F; }
+:root[data-theme="D"] .pih-team-pts { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; color: #F2F2F2; }
+:root[data-theme="D"] .pih-team-name { font-weight: 600; letter-spacing: 3px; font-size: .7rem; }
+
+/* ── Trivial Pursuit ──────────────────────────────────────────────────── */
+:root[data-theme="D"] .tp-team { background: #151515; border: 0; border-radius: 0; box-shadow: inset 0 0 0 1px var(--d-line); }
+:root[data-theme="D"] .tp-team:is(.red, .blue, .green) { box-shadow: inset 0 4px 0 rgb(var(--tc)), inset 0 0 0 1px var(--d-line); }
+:root[data-theme="D"] .tp-team.turn { transform: none; background: #151515; box-shadow: inset 0 4px 0 rgb(var(--tc, 255,91,31)), inset 0 0 0 1px var(--d-line), inset 0 -3px 0 #FF5B1F; }
+:root[data-theme="D"] .tp-team-name { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 1.3rem; text-transform: uppercase; }
+:root[data-theme="D"] .tp-team-sub { font-family: 'Instrument Sans', sans-serif; letter-spacing: 2px; }
+:root[data-theme="D"] .tp-stage { border: 0; border-top: 1px solid var(--d-line); border-bottom: 1px solid var(--d-line); border-radius: 0; padding-inline: 0; }
+:root[data-theme="D"] .tp-catchip { border-radius: 0; font-family: 'Instrument Sans', sans-serif; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; font-size: .72rem; }
+:root[data-theme="D"] .tp-question { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 2.1rem; line-height: 1.02; text-transform: uppercase; }
+:root[data-theme="D"] .tp-answer { border-radius: 0; border: 0; text-transform: uppercase; font-size: 1.5rem; }
+:root[data-theme="D"] .tp-answer.hidden { background: none; border: 0; border-bottom: 1px dashed var(--d-line-hi); font-family: 'Instrument Sans', sans-serif; font-size: .75rem; letter-spacing: 3px; }
+:root[data-theme="D"] .tp-wheel-rotor { box-shadow: 0 0 0 1px #3A3A3A, 0 0 0 7px #0E0E0E, 0 0 0 8px #2A2A2A; }
+:root[data-theme="D"] .tp-wheel-hub { background: #0E0E0E; border: 2px solid #FF5B1F; box-shadow: none; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; }
+:root[data-theme="D"] .tp-wheel-pointer { border-top-color: #FF5B1F; filter: none; }
+:root[data-theme="D"] .tp-pie { filter: none; }
+
+/* ── Ergebnis, Turnier ────────────────────────────────────────────────── */
+:root[data-theme="D"] .winner-text { font-size: 3rem; line-height: 1; }
+:root[data-theme="D"] .result-card { border: 0; border-top: 1px solid var(--d-line); border-bottom: 1px solid var(--d-line); border-radius: 0; backdrop-filter: none; }
+:root[data-theme="D"] .result-scores { font-family: 'Instrument Sans', sans-serif; letter-spacing: 1px; color: var(--d-dim); }
+:root[data-theme="D"] .result-scores strong { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 2rem; color: #F2F2F2; }
+:root[data-theme="D"] .tour-bar { height: 4px; border-radius: 0; background: #222; }
+:root[data-theme="D"] .tour-bar-fill { background: #FF5B1F; border-radius: 0; }
+:root[data-theme="D"] .tour-total { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 1.8rem; }
+:root[data-theme="D"] .q-list-item { border-radius: 0; background: transparent; border: 0; border-bottom: 1px solid var(--d-line); }
+:root[data-theme="D"] .q-list-item:hover { background: rgba(255,91,31,.05); }
+:root[data-theme="D"] .q-list-item.tour-lead { background: transparent; box-shadow: inset 3px 0 0 #FF5B1F; }
+
+/* ── Host: Menue, Knoepfe, Kaesten, Felder ────────────────────────────── */
+:root[data-theme="D"] .menu-cards { counter-reset: dshow; gap: 0; border-top: 1px solid var(--d-line); }
+:root[data-theme="D"] .menu-card {
+  counter-increment: dshow; background: transparent; border: 0; border-radius: 0;
+  box-shadow: inset 0 -1px 0 var(--d-line), inset -1px 0 0 var(--d-line); padding: 34px 16px 18px; text-align: left; align-items: flex-start;
+}
+:root[data-theme="D"] .menu-card::before {
+  content: counter(dshow, decimal-leading-zero); position: absolute; left: 16px; top: 12px; right: auto; height: auto;
+  background: none; opacity: 1; font-family: 'Big Shoulders Display', sans-serif; font-weight: 800; font-size: 1rem; color: #4A4A4A;
+}
+:root[data-theme="D"] .menu-card:hover { transform: none; background: rgba(255,91,31,.04); box-shadow: inset 0 -3px 0 #FF5B1F, inset -1px 0 0 var(--d-line); }
+:root[data-theme="D"] .menu-card:hover::before { color: #FF5B1F; }
+:root[data-theme="D"] .menu-card-icon { justify-content: flex-start; }
+:root[data-theme="D"] .menu-card-title { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; font-size: 1.45rem; text-transform: uppercase; line-height: 1; letter-spacing: .3px; }
+:root[data-theme="D"] .menu-card:hover .menu-card-title { color: #FF5B1F; }
+:root[data-theme="D"] .menu-card-sub { letter-spacing: .3px; }
+:root[data-theme="D"] .menu-pill { border-radius: 0; border: 0; border-bottom: 1px solid var(--d-line-hi); padding: 8px 4px; letter-spacing: 2px; text-transform: uppercase; font-size: .72rem; }
+:root[data-theme="D"] :is(.menu-pill:hover, .menu-pill.active) { background: none; color: #FF5B1F; border-color: #FF5B1F; }
+:root[data-theme="D"] .menu-divider { background: #FF5B1F; width: 48px; height: 3px; }
+:root[data-theme="D"] .btn { border-radius: 0; letter-spacing: 2.5px; font-weight: 600; }
+:root[data-theme="D"] .btn:hover { transform: none; }
+:root[data-theme="D"] .btn-primary { background: #FF5B1F; color: #0E0E0E; box-shadow: none; }
+:root[data-theme="D"] .btn-primary:hover { background: #FF7A45; box-shadow: none; }
+:root[data-theme="D"] .btn-primary::after { display: none; }
+:root[data-theme="D"] .btn-secondary { background: transparent; border: 1px solid var(--d-line-hi); color: #D0D0D0; backdrop-filter: none; }
+:root[data-theme="D"] .btn-secondary:hover { border-color: #F2F2F2; background: transparent; }
+:root[data-theme="D"] .btn-danger { background: #B8241C; box-shadow: none; }
+:root[data-theme="D"] .btn-accent { background: #1E40AF; box-shadow: none; }
+:root[data-theme="D"] :is(.editor-card, .setup-lobby, .resume-banner, .ddf-card, .design-card) { border-radius: 0; background: #131313; border: 1px solid var(--d-line); }
+:root[data-theme="D"] :is(.pr-team-btn, .setup-lobby .badge, .player-team-tag, .pmini-av) { border-radius: 0; }
+:root[data-theme="D"] :is(input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), textarea, select) { border-radius: 0 !important; }
+:root[data-theme="D"] .page-title { font-family: 'Big Shoulders Display', sans-serif; font-weight: 900; text-transform: uppercase; letter-spacing: .5px; }
+
+/* Niedriges Fenster (Beamer 1280x720): Frage und Karten flacher, sonst
+   stand WWM mit Publikumsjoker 19 px unter dem Bild. */
+@media (max-height: 900px) {
+  :root[data-theme="D"] .wwm-q { font-size: 2.15rem; padding: 2px 0; }
+  :root[data-theme="D"] .wwm-opt { min-height: 78px; padding-top: 24px; }
+  :root[data-theme="D"] .wwm-answers { gap: 10px 14px; }
+}
+
 /* Late Night deckt auf wie eine Bauchbinde: von links aufgezogen. */
 @keyframes thDWisch {
   0%   { clip-path: inset(0 100% 0 0); }

@@ -20,7 +20,7 @@
    Was core.js braucht (setHtml, escapeHtml, showScreen), laeuft erst auf
    Klick. */
 
-/** @typedef {{key:string, name:string, hell:boolean, fonts:string, vars:Object<string,string>}} DesignTheme */
+/** @typedef {{key:string, name:string, hell:boolean, fonts:string, vars:Object<string,string>, gm?:string}} DesignTheme */
 
 /** @type {DesignTheme[]} */
 const DESIGN_THEMES = [
@@ -107,6 +107,11 @@ const DESIGN_THEMES = [
       "--accent-text": "#8A6400",
       "--accent-text-rgb": "138,100,0"
     } },
+  /* Late Night, Rework 2026-10-14: Identitaet des Entwurfs (Haarlinien,
+     grosse Ziffern, Orange) auf allen Flaechen. Hintergrund: Filmkorn ueber
+     einem warmen Studiolicht oben links, beides aus designs/s/D-*.html. Das
+     Korn ist schwach deckend statt per Blend-Mode gemischt - so sieht es im
+     GM-Fenster und auf dem Handy genauso aus (die haben eigene <body>-Stile). */
   { key: "D", name: "Late Night", hell: false,
     fonts: "https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@400;500;600&display=swap",
     vars: {
@@ -114,8 +119,8 @@ const DESIGN_THEMES = [
       "--font-body": "'Instrument Sans', sans-serif",
       "--font-logo": "'Big Shoulders Display', sans-serif",
       "--bg": "#0E0E0E",
-      "--bg-img": "none",
-      "--bg-size": "auto",
+      "--bg-img": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E\"), radial-gradient(ellipse 75% 60% at 12% -8%, rgba(255,91,31,.11) 0%, rgba(255,91,31,0) 62%)",
+      "--bg-size": "220px 220px, auto",
       "--panel": "#161616",
       "--panel-hi": "#1E1E1E",
       "--line": "#2A2A2A",
@@ -130,7 +135,12 @@ const DESIGN_THEMES = [
       "--gold-dark": "#8A2A08",
       "--gold-pale": "#FF9A70",
       "--ink": "#0E0E0E"
-    } },
+    },
+    /* GM-Fenster und Gamepad: eckig, flach, Haarlinien wie auf der Leinwand. */
+    gm: ".chip,.round-label,.score-card,.qnote,.answer,.panel,.badge,.pr-team-btn,.buzz-row,.info-card,.gm-btn,.tag,.gm-tab,.order-item,.notes-panel textarea,.score-row,.sr-val{border-radius:0;}"
+      + ".gm-title,.score-val,.sr-val{font-family:'Big Shoulders Display',sans-serif;font-weight:900;}"
+      + ".gm-btn{letter-spacing:2px;box-shadow:none;}.gm-btn.gold,.gm-btn.gm-gold{background:#FF5B1F;color:#0E0E0E;}"
+      + ".score-card.active{box-shadow:inset 0 -3px 0 #FF5B1F;}" },
   { key: "E", name: "70er", hell: false,
     fonts: "https://fonts.googleapis.com/css2?family=Shrikhand&family=DM+Sans:wght@500;700&display=swap",
     vars: {
@@ -681,7 +691,8 @@ body{background:var(--bg);background-image:var(--bg-img);background-size:var(--b
 ${t.hell ? `.gm-btn{box-shadow:0 2px 0 rgba(var(--fg-rgb),.25);}
 .chip-ok,.badge,.hint-ok,.answer.shown .text,.round-label.green{color:#15803D;}
 .chip-bad,.excl-tag,.round-label.warn,.sr-btn.minus,.gm-btn.danger-outline{color:#B42318;}
-.tag-blue{color:#1D4ED8;}.tag-green{color:#15803D;}.tag-purple{color:#6D28D9;}` : ''}`;
+.tag-blue{color:#1D4ED8;}.tag-green{color:#15803D;}.tag-purple{color:#6D28D9;}` : ''}
+${t.gm || ''}`;
   const fonts = `<link id="gm-theme-fonts" href="${t.fonts}" rel="stylesheet">`;
   return h.replace('</head>', `${fonts}<style id="gm-theme">${css}</style></head>`);
 }
