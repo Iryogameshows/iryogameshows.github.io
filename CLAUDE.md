@@ -455,7 +455,8 @@ BAUPLAN 5.
 WWDS, DDF, Preis ist heiß (Auflösung und Bietphase, mit Produktfoto), TP,
 Ergebnis, Turnierstand, Turnier-Host-Seite, GM-Panel, Handy-Buzzer und
 -Login, je in allen Richtungen. GM-Panel und Turnier-Host-Seite ohne
-Höhenprüfung (`HOST_SEITEN`), sie kommen nicht auf den Beamer. Neue Befunde gehören also zur Änderung, die gerade gemacht
+Höhenprüfung (`HOST_SEITEN`; seit 2026-10-14 auch die neuen Zustände `menu` und
+`setup` — Hauptmenü und Feud-Setup), sie kommen nicht auf den Beamer. Neue Befunde gehören also zur Änderung, die gerade gemacht
 wurde. Ein voller Lauf dauert gut 6 Minuten je Größe — im Hintergrund
 starten.
 

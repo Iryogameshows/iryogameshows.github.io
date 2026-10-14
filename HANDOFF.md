@@ -12,6 +12,41 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-14 — Abschluss Grafik-Rework aller acht Richtungen (Übersicht)
+
+**Aktueller Stand:** Alle acht verbleibenden Richtungen tragen ihre Entwurfs-
+Identität jetzt auf **allen** Flächen (Beamer, Host/Menü/Setup, GM-Fenster/Gamepad,
+Handy), nicht nur auf den Brettern: A Studio (Vorsession), D `215485a`, B `ad935ea`,
+E `5ae0b61`, I `d575580`, K `1550927`, L `b852653`, O `f23015f`. Neu: Feld `gm` je
+Richtung in `js/theme.js`, `tools/shots`-Zustände `menu`/`setup`.
+
+**Gesamtprüfung (nach `f23015f`):**
+- `shots.js --themes A,B,D,E,I,K,L,O`: 20 Zustände × 8 = 160 Bilder, **keine Befunde**.
+- `shots.js --reduced` für B,D,E,I,K,L,O: **keine Befunde** (nichts läuft endlos).
+- Studio-Blau: alte Basis vom 2026-10-10 war veraltet (40 Abweichungen, alle aus
+  Änderungen anderer Sessions an GM/Feud/WWM seit dem 10.). Neue Basis am Stand
+  **vor** dem Rework (`600af2c`, Worktree, danach entfernt) → Vergleich: **18 von 18
+  Zuständen unverändert**. Basis für `menu`/`setup` neu angelegt (`out/`, ignoriert).
+- `ablauf.js`: **49 OK, 0 FEHL**.
+- Deploy-Actions aller Pushes: success (zuletzt Lauf 38602524447).
+
+**Stopppunkt / Offen:**
+- **Davids Abnahme steht für alle aus**, besonders B (zurück aufs Original statt
+  „Automat 1987“ — von mir entschieden, er hatte nicht gewählt) und L (Grund jetzt
+  Papier statt Braun).
+- Nicht angesehen: echte Beamer-Ausgabe, Intros/Overlays über der O-Vignette,
+  Editor-Screens (nur Menü/Setup als Host-Seiten im Prüflauf), Gamepad direkt.
+- Aufräumen nach Abnahme: Richtungen C, F, H, J, M, N, P, Q, R, S löschen (Plan aus
+  `26beddf`), SVG-Filter `#ico-pixel*` in `index.html`, Galerie `designs/`.
+- `.github/workflows/pruefungen.yml` weiter nicht auf GitHub (Token, siehe CLAUDE.md).
+
+**Kreative Linien je Richtung (für spätere Feinarbeit):** D Sendestudio/Skyline/
+Papierkarten; B 1P/2P, Pixelrahmen, Gitterboden; E Plaketten, Punktbogen, Sonnen-
+strahlen; I Jetons, Karten, gefächerte Hand; K Röhren als Kontur, Kassenbon; L
+Zeitung, Kreuzworträtsel, Stempel; O Fenster, Statuszeile, Prozesstabelle.
+GSAP-Momente (wie der Jeopardy-Flug) kämen **zusätzlich** obendrauf — noch keiner
+pro Richtung gebaut.
+
 ## 2026-10-14 — `f23015f` Design-Rework O Terminal
 
 **Gemacht:** Konsolen-Identität auf allen Flächen: Fenster mit Titel in der Kante,
