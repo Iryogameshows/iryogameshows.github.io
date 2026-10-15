@@ -47,7 +47,7 @@ const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
 // Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
 const HOST_SEITEN = new Set(['gm', 'turnier-host', 'menu', 'setup']);
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'wwds-frage', 'wwds-joker', 'wwds-master', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'wwds-frage', 'wwds-joker', 'wwds-master', 'ddf', 'ddf-ergebnis', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -198,6 +198,20 @@ const AUFBAU = {
     const mr = Math.random; Math.random = () => 0; startDdf(); Math.random = mr;
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
     showScreen('ddf-screen'); ddfReveal(); ddfBeginVote();
+  },
+  // DDF nach der Abstimmung, spaeter im Spiel: Hugo ist raus, Gina auf dem
+  // letzten Herz, Dieter verliert gerade eins (2026-10-15, vorher nur die
+  // laufende Abstimmung gemessen).
+  'ddf-ergebnis': () => {
+    allPlayers = ['Anna', 'Bert', 'Carla', 'Dieter', 'Eva', 'Frank', 'Gina', 'Hugo'].map((name, i) => ({ key: 'p' + i, name, avatar: '🦊', color: '#E8453C' }));
+    Object.assign(roster('ddf'), { selected: new Set(allPlayers.map(p => p.key)), guests: [], seeded: true });
+    const mr = Math.random; Math.random = () => 0; startDdf(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    showScreen('ddf-screen'); ddfReveal(); ddfBeginVote();
+    const pl = ddfState.players;
+    pl[7].lives = 0; pl[7].out = true; pl[6].lives = 1;
+    ddfState.lastCounts = { [pl[3].uid]: 4, [pl[1].uid]: 2, [pl[0].uid]: 1 };
+    ddfVoteOut(pl[3].uid);
   },
   pih: () => {
     allPlayers = ['Anna', 'Bert', 'Carla', 'Dieter', 'Eva', 'Frank', 'Gina', 'Hugo'].map((name, i) => ({ key: 'p' + i, name, avatar: '🦊', color: '#E8453C' }));

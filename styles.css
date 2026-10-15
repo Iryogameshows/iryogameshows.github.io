@@ -4932,6 +4932,82 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="D"] #wwds-screen .wwds-opt { min-height: clamp(54px, 10vh, 84px); font-size: clamp(1.5rem, 3.6vh, 2.1rem); gap: 18px; }
 :root[data-theme="D"] #wwds-screen .wwds-opt .wo-let { font-size: clamp(2rem, 5vh, 2.8rem); min-width: 34px; }
 
+/* ── DDF: Frage als Schlagzeile links, Kandidaten als Liste rechts ──
+   Vorher: Spielerkacheln quer ueber dem Bild in zwei Reihen, darunter alles
+   mittig. Jetzt wie Feud/WWDS: links Kicker (On Air, "8 noch dabei", Uhr),
+   Frage, Loesung als Bauchbinde, Abstimmung; rechts die Kandidaten
+   untereinander, Name links, Herzen rechts. Laut ist die Frage - im
+   Ergebnis der Kandidat, der ein Herz verliert (orange Zeile).
+   Der innere Wrapper und die Zeilen der Abstimmung tragen Inline-Styles
+   (index.html, js/ddf.js) - daher dort !important. */
+:root[data-theme="D"] #ddf-screen.active { max-width: var(--d-breit); padding-top: 0; }
+:root[data-theme="D"] #ddf-screen > div {
+  display: grid !important; height: auto !important;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  grid-template-areas: "kick spieler" "frage spieler" "antwort spieler" "note spieler" "media spieler" "vote spieler";
+  grid-template-rows: auto auto auto auto auto 1fr; column-gap: 56px; align-items: start;
+}
+:root[data-theme="D"] #ddf-screen .ddf-alive {
+  grid-area: kick; justify-self: start; display: inline-flex; align-items: center; gap: 14px; margin: 0;
+  font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .72rem; letter-spacing: 3px; color: var(--d-dim);
+}
+:root[data-theme="D"] #ddf-screen .ddf-alive::before {
+  content: 'On Air'; padding: 5px 11px 5px 24px; color: #0E0E0E; font-weight: 700;
+  background: radial-gradient(circle, #0E0E0E 3px, transparent 3.5px) 10px 50% / 8px 8px no-repeat, #FF5B1F;
+}
+:root[data-theme="D"] #ddf-timer {
+  grid-area: kick; justify-self: end; font-family: 'Big Shoulders Display', sans-serif; font-weight: 900 !important;
+  font-size: 2.2rem !important; line-height: 1; color: transparent; -webkit-text-stroke: 1.2px #FF5B1F;
+}
+:root[data-theme="D"] #ddf-screen .ddf-question {
+  grid-area: frage; display: block; flex: none; max-width: none; margin: 0; padding: 14px 0 18px;
+  text-align: left; font-size: clamp(2.4rem, 3.8vw + 1vh, 4.6rem); line-height: .92; letter-spacing: -.2px;
+  text-wrap: balance; border-bottom: 1px solid var(--d-line-hi);
+}
+:root[data-theme="D"] #ddf-screen .ddf-answer { grid-area: antwort; text-align: left; padding: 16px 0 4px; font-size: clamp(2rem, 5.4vh, 3.2rem); line-height: 1; }
+:root[data-theme="D"] #ddf-screen .ddf-note { grid-area: note; text-align: left; padding: 4px 0 10px; color: var(--d-dim); }
+:root[data-theme="D"] #ddf-screen .ddf-media-bar { grid-area: media; justify-content: flex-start; }
+:root[data-theme="D"] #ddf-screen .ddf-vote-grid { grid-area: vote; justify-content: flex-start; padding: 10px 0 0; }
+:root[data-theme="D"] #ddf-vote-grid > div { justify-content: flex-start !important; text-align: left !important; }
+:root[data-theme="D"] #ddf-vote-grid > div > div { justify-content: flex-start !important; }
+/* Ergebnis-Zeilen (Name, Stimmen) in der Schrift der Sendung; die rote
+   Zeile des Verlierers setzt js/ddf.js. */
+:root[data-theme="D"] #ddf-vote-grid > div > div {
+  font-family: 'Big Shoulders Display', sans-serif; font-size: clamp(1.4rem, 3.4vh, 1.9rem) !important; text-transform: uppercase; line-height: 1.15;
+}
+:root[data-theme="D"] #ddf-vote-grid > div > div > span { text-align: left !important; }
+:root[data-theme="D"] #ddf-vote-grid > div > div > span:first-child { min-width: 180px !important; }
+/* Stimmen-Zaehler der laufenden Abstimmung */
+:root[data-theme="D"] #ddf-vote-grid > div:has(> span) {
+  font-family: 'Big Shoulders Display', sans-serif; font-weight: 900 !important; font-size: clamp(2.6rem, 7vh, 3.8rem) !important; line-height: 1; color: #FF5B1F;
+}
+:root[data-theme="D"] #ddf-vote-grid > div:has(> span) > span { font-family: 'Instrument Sans', sans-serif; letter-spacing: 3px; text-transform: uppercase; font-size: .72rem !important; }
+
+/* Kandidaten-Spalte */
+:root[data-theme="D"] #ddf-screen .ddf-players {
+  grid-area: spieler; grid-row: 1 / -1; display: flex; flex-direction: column; flex-wrap: nowrap; gap: 0;
+  max-width: none; margin: 0; padding: 0; border: 0;
+}
+:root[data-theme="D"] #ddf-screen .ddf-players::before {
+  content: 'Kandidaten'; padding-bottom: 10px; font-family: 'Instrument Sans', sans-serif; font-weight: 600;
+  font-size: .72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--d-dim);
+}
+:root[data-theme="D"] #ddf-screen .ddf-player {
+  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0;
+  padding: clamp(6px, 1.3vh, 12px) 0; background: none; border: 0; border-radius: 0;
+  box-shadow: inset 0 1px 0 var(--d-line); text-align: left; transform: none;
+}
+:root[data-theme="D"] #ddf-screen .ddf-player-name { display: flex; align-items: center; gap: 10px; margin: 0; font-size: clamp(1.3rem, 3.2vh, 1.7rem); }
+:root[data-theme="D"] #ddf-screen .ddf-player-name > :first-child:not(:only-child) { width: 26px; height: 26px; font-size: .9rem; flex: none; }
+:root[data-theme="D"] #ddf-screen .ddf-player.last { box-shadow: inset 0 1px 0 var(--d-line), inset 4px 0 0 #E8453C; padding-left: 14px; }
+:root[data-theme="D"] #ddf-screen .ddf-player.last .ddf-player-name { color: #F2F2F2; }
+:root[data-theme="D"] #ddf-screen .ddf-player.out { opacity: .35; }
+:root[data-theme="D"] #ddf-screen .ddf-player.picked { background: #FF5B1F; box-shadow: none; padding-inline: 12px; }
+:root[data-theme="D"] #ddf-screen .ddf-player.picked .ddf-player-name { color: #0E0E0E; }
+:root[data-theme="D"] #ddf-screen .ddf-player.picked .ddf-heart.full::before { background: #0E0E0E; }
+:root[data-theme="D"] #ddf-screen .ddf-player.picked .ddf-heart.empty::before { background: rgba(14,14,14,.3); }
+:root[data-theme="D"] #ddf-screen .ddf-heart { margin: 0 0 0 6px; }
+
 /* Late Night deckt auf wie eine Bauchbinde: von links aufgezogen. */
 @keyframes thDWisch {
   0%   { clip-path: inset(0 100% 0 0); }
