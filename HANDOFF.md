@@ -12,6 +12,31 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — Nachprüfung zu `16031e3` (Jeopardy-Aufdecken), kein Code geändert
+
+**David:** „aus der Handoff weitermachen bitte“. Schritte 1 und 2 aus dem Eintrag darunter.
+
+**Geprüft:**
+- Studio-Blau: Basis mit `shots.js --basis` am Stand `1416d52` (Worktree im Scratchpad, `node_modules` per
+  Junction), dann `--vergleich` am aktuellen Stand: `jeop` 40 Elemente, `jeop-frage` 4, `jeop-antwort` 4,
+  jeweils 0 abweichend. **Schwach bei Frage/Antwort:** der Stil-Schnappschuss liest nur `.screen.active`,
+  das Overlay hängt aber an `body` – verglichen werden dort nur 4 Elemente, das Overlay selbst nicht.
+- Bild für Bild (Animationen per `getAnimations()` angehalten, `currentTime` angefahren), Studio, E, K, B:
+  Frage 0–1800 ms – Lichtstoß, Wörter klappen gestaffelt auf, Lichtkante, Endbild ruhig. Antwort 0–900 ms –
+  Stempel groß/gesperrt → scharf, grüner Stoß, Endbild ruhig. Keine Seitenfehler.
+- Reduced Motion: `shots.js --reduced --shows jeop-frage,jeop-antwort` alle 19 Richtungen ohne Befunde;
+  zusätzlich direkt nach dem Aufdecken gezählt (shots wartet 1,4 s, da wären die Animationen ohnehin
+  vorbei): 0 laufende Animationen in Studio, E, K, B.
+- `isolation: isolate`: keine Richtung setzt eigene `::before`/`::after` am Overlay (grep), Störung entfällt.
+
+**Ungeprüft:** Beamer-Popout (Spiegel des Aufdeckens), echte Bildrate auf dem Beamer-Rechner, übrige
+14 Richtungen nur im Standbild.
+
+**Offen / Nächste Schritte:**
+1. Davids Blick auf das Aufdecken (Strg+F5 in Haupt- und Beamerfenster).
+2. `STIL_SCHNAPPSCHUSS` in `tools/shots/shots.js` auch `#jeopardy-clue-ov` einbeziehen lassen.
+3. D-Komposition je Screen: WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy (siehe Eintrag darunter).
+
 ## 2026-10-15 — `16031e3` Jeopardy-Aufdecken für alle Richtungen (ABBRUCH, David muss weg)
 
 **David:** „bitte mach bei Jeopardy die Frage aufdecken Funktion schöner, das ploppt nur so auf“.
