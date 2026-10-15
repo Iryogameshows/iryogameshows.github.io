@@ -43,12 +43,24 @@
      Zahl genau auf ihr liegt (aufdecken.js). */
   html.jp-landung #jeopardy-clue-ov .jeopardy-clue-pts{visibility:hidden;}
   [data-fliegt]{color:transparent !important;text-shadow:none !important;-webkit-text-stroke:0 !important;}
+  /* Laeuft die lebende Stadt (buehne.js), ersetzt sie die feste Skyline. */
+  html.bn-stadt-an body::before{display:none !important;}
+  /* Mit Design-Richtung traegt das <html> den Grund, der <body> ist
+     durchsichtig. Sonst malt der body-Hintergrund ueber alles mit
+     z-index:-1 - die Skyline (D), der Gitterboden (B), die Sonnenstrahlen
+     (E), der Falz (L) und die lebende Stadt waren am Beamer nie zu sehen,
+     weil oben html{background} gesetzt ist (gefunden 2026-10-15). */
+  html[data-theme]{background-color:var(--bg);background-image:var(--bg-img);background-size:var(--bg-size);}
+  html[data-theme] body{background:transparent !important;}
 </style>
 <!-- Animationen, die das Beamerfenster selbst abspielt (BAUPLAN 4.8: ueber
      den Spiegel liefe GSAP nicht). Im <head>, weil der Spiegel den <body>
      auf den Stand des Hauptfensters bringt. -->
 <script src="../vendor/gsap.min.js" defer></script>
 <script src="aufdecken.js" defer></script>
+<!-- Grosse Momente je Design-Richtung (Antwort, X, Runde, Punkte) und die
+     lebende Stadt in Late Night - ebenfalls vom Beamer selbst gespielt. -->
+<script src="buehne.js" defer></script>
 </head>
 <body>
   <div id="ms-warten">

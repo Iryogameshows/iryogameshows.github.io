@@ -228,6 +228,9 @@ js/
 buzzer/index.html   Handy-Buzzer
 gamepad/index.html  Handy-Gamepad
 mainscreen/index.html  Zuschauerfenster (bekommt den DOM gespiegelt, führt selbst nichts aus)
+  aufdecken.js  Jeopardy-Flug, vom Beamer selbst gespielt (GSAP, BAUPLAN 4.8)
+  buehne.js     grosse Momente je Richtung (Antwort, X, Runde, Punkte) + lebende
+                Stadt in Late Night - ebenfalls vom Beamer selbst
 tools/
   intros/       Intro-Labor: 18 Intro-Prototypen, NICHT Teil der Show
   reactbits/    Bauwerkzeug für vendor/reactbits.js
