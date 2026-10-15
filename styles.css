@@ -5191,6 +5191,30 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="D"] #result-screen .result-btns { justify-content: flex-start; }
 :root[data-theme="D"] #result-screen #result-leaderboard { margin-left: 0 !important; }
 
+/* ── Menue: Programmheft statt Kachelblock in der Mitte ──
+   Vorher: grosses Logo mittig, darunter ein 720 px schmaler Kachelblock.
+   Jetzt linksbuendig auf der Kante aller Show-Screens: Senderlogo oben
+   links, Kicker "Heute im Programm", die acht Sendungen als breites Raster
+   ueber die volle Breite, die Werkzeuge als Leiste darunter. Hostseite,
+   kommt nicht auf den Beamer. */
+:root[data-theme="D"] body:has(#menu-screen.active) .logo {
+  align-self: flex-start; margin: 26px 0 10px calc((100vw - var(--d-breit)) / 2); text-align: left;
+}
+:root[data-theme="D"] body:has(#menu-screen.active) .logo svg { width: clamp(220px, 24vw, 320px); }
+:root[data-theme="D"] #menu-screen.active { max-width: var(--d-breit); width: 100%; padding-top: 0; align-items: stretch; }
+:root[data-theme="D"] #menu-screen .menu-divider { display: none; }
+:root[data-theme="D"] #menu-screen .menu-cards { grid-template-columns: repeat(4, 1fr); max-width: none; margin: 0; border-top: 1px solid var(--d-line-hi); }
+:root[data-theme="D"] #menu-screen .menu-cards::before {
+  content: 'Heute im Programm'; grid-column: 1 / -1; order: -1; padding: 0 0 12px; margin-top: -30px;
+  font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--d-dim);
+}
+:root[data-theme="D"] #menu-screen .menu-cards { margin-top: 46px; }
+:root[data-theme="D"] #menu-screen .menu-card { padding: 38px 18px 20px; }
+:root[data-theme="D"] #menu-screen .menu-card-icon { height: 44px; margin-bottom: 14px; }
+:root[data-theme="D"] #menu-screen .menu-card-icon svg { max-height: 44px; width: auto; }
+:root[data-theme="D"] #menu-screen .menu-card-title { font-size: clamp(1.45rem, 1.6vw + .5vh, 2rem); }
+:root[data-theme="D"] #menu-screen .menu-pills { justify-content: flex-start; gap: 6px 18px; }
+
 /* Late Night deckt auf wie eine Bauchbinde: von links aufgezogen. */
 @keyframes thDWisch {
   0%   { clip-path: inset(0 100% 0 0); }
