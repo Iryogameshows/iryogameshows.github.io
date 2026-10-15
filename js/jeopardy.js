@@ -678,6 +678,16 @@ function renderJeopardyClueOverlay() {
      Raster zur Frage fliegen (GSAP, mainscreen/aufdecken.js). */
   ov.dataset.col = String(col);
   ov.dataset.row = String(row);
+  /* Was ist gerade NEU dazugekommen? innerHTML baut bei jedem Aufruf alles
+     neu - haengt die Einblend-Animation einfach an der Frage, liefe sie bei
+     jedem Neuzeichnen wieder (Antwort zeigen, Bild aufdecken ...). Deshalb
+     merkt sich das Overlay seinen Stand, und nur der Schritt verdeckt->Frage
+     bzw. ->Antwort setzt data-neu. styles.css haengt die Animationen daran.
+     Vorher ploppte die Frage einfach ins Bild (David 2026-10-15: "sieht billig aus"). */
+  const stand = !revealed ? 'verdeckt' : jeopardyState.answerShown ? 'antwort' : 'frage';
+  const vorher = ov.dataset.stand || '';
+  ov.dataset.neu = stand === vorher ? '' : stand === 'antwort' ? (vorher === 'frage' ? 'antwort' : 'frage antwort') : stand;
+  ov.dataset.stand = stand;
   ov.innerHTML = `
     ${jeopardyState.currentIsDaily ? `<div class="jeopardy-dd-banner">★ DAILY DOUBLE ★</div>` : ''}
     <div class="jeopardy-clue-cat">${jeopardyCatHeadHtml(cat, 'jeopardy-clue-cat-img')}</div>

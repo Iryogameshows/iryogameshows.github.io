@@ -39,6 +39,10 @@
   /* Waehrend das Jeopardy-Feld zur Frage fliegt (aufdecken.js), ist die
      gespiegelte Frage noch verdeckt - sie erscheint unter der Karte. */
   html.jp-flug #jeopardy-clue-ov{visibility:hidden;}
+  /* Beim Landen: die Punktzahl der Frage erst zeigen, wenn die fliegende
+     Zahl genau auf ihr liegt (aufdecken.js). */
+  html.jp-landung #jeopardy-clue-ov .jeopardy-clue-pts{visibility:hidden;}
+  [data-fliegt]{color:transparent !important;text-shadow:none !important;-webkit-text-stroke:0 !important;}
 </style>
 <!-- Animationen, die das Beamerfenster selbst abspielt (BAUPLAN 4.8: ueber
      den Spiegel liefe GSAP nicht). Im <head>, weil der Spiegel den <body>

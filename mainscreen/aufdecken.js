@@ -32,7 +32,8 @@
 
   function aufraeumen() {
     document.querySelectorAll('[data-nur-beamer]').forEach(function (n) { n.remove(); });
-    html.classList.remove('jp-flug');
+    html.classList.remove('jp-flug', 'jp-landung');
+    document.querySelectorAll('[data-fliegt]').forEach(function (n) { n.removeAttribute('data-fliegt'); });
     laufend = null;
   }
 
@@ -63,7 +64,12 @@
     var gross = Math.min(W * 0.16, 230);
     var zellStil = getComputedStyle(cell);
     var zellFs = parseFloat(zellStil.fontSize) || 32;
-    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    /* Startpunkt der Zahl ist die Zahl selbst, nicht die Mitte des Felds:
+       in Richtungen mit linksbuendigen Feldern (Late Night) startete sie
+       sonst ein Stueck neben ihrer Ziffer. */
+    var tr = r;
+    try { var rg = document.createRange(); rg.selectNodeContents(cell); var rr = rg.getBoundingClientRect(); if (rr.width && rr.height) tr = rr; } catch (e) {}
+    var cx = tr.left + tr.width / 2, cy = tr.top + tr.height / 2;
 
     var platte = cell.cloneNode(false);
     platte.setAttribute('data-nur-beamer', '');
@@ -109,7 +115,11 @@
         fontFamily: ps.fontFamily, fontSize: ps.fontSize, fontWeight: ps.fontWeight, fontStyle: ps.fontStyle,
         fontStretch: ps.fontStretch, fontVariantNumeric: ps.fontVariantNumeric, letterSpacing: ps.letterSpacing,
         lineHeight: ps.lineHeight, textAlign: ps.textAlign, textTransform: ps.textTransform,
-        textShadow: ps.textShadow, color: zellStil.color, transformOrigin: '50% 50%', pointerEvents: 'none'
+        textShadow: ps.textShadow, color: zellStil.color, transformOrigin: '50% 50%', pointerEvents: 'none',
+        /* Konturschrift (Late Night zeigt den Betrag nur als Umriss): ohne
+           die Kontur wuerde die Zahl beim Landen auf "transparent" einfach
+           verschwinden. */
+        webkitTextStrokeWidth: ps.webkitTextStrokeWidth, webkitTextStrokeColor: ps.webkitTextStrokeColor
       });
     }
 
@@ -120,6 +130,9 @@
       gsap.set(zahl, { x: cx - zx, y: cy - zy, scale: zellFs / zfs });
     }
     html.classList.add('jp-flug');
+    /* Die Ziffer im Feld selbst ausblenden, solange ihre Kopie fliegt -
+       sonst stehen beim Abheben zwei leicht versetzte Zahlen uebereinander. */
+    cell.setAttribute('data-fliegt', '');
 
     var w2 = r.width * 1.12, h2 = r.height * 1.12;
     /* Erst zwei Frames abwarten: beim Oeffnen der Frage arbeitet das
@@ -138,7 +151,11 @@
          Buehne auf. Vorher blendeten Flaeche, Zahl und Abdunklung zugleich in
          0,3 s mit Beschleunigung aus - der meiste Wechsel lag in den letzten
          ~100 ms und wirkte wie ein Schnitt (David, 2026-10-14). */
-      .add(function () { html.classList.remove('jp-flug'); }, 0.84)
+      /* Ab hier liegt die Frage schon unter der Flaeche. Ihre eigene
+         Punktzahl bleibt aber verdeckt, bis die fliegende Zahl gelandet ist -
+         sonst standen beide zugleich und versetzt im Bild ("30300"). */
+      .add(function () { html.classList.add('jp-landung'); html.classList.remove('jp-flug'); }, 0.84)
+      .add(function () { html.classList.remove('jp-landung'); }, 1.34)
       .to(schleier, { opacity: 0, duration: 0.2 }, 0.8)
       .to(platte, { opacity: 0, duration: 0.6, ease: 'power2.inOut' }, 0.84)
       ;

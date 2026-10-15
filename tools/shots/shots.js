@@ -47,7 +47,7 @@ const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
 // Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
 const HOST_SEITEN = new Set(['gm', 'turnier-host', 'menu', 'setup']);
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -107,6 +107,23 @@ const AUFBAU = {
     showScreen('jeopardy-screen');
     jeopardyState.used[0][0] = true; jeopardyState.used[2][1] = true;
     renderJeopardyScores(); renderJeopardyBoard();
+  },
+  // Jeopardy-Frage offen und aufgedeckt, bzw. mit Antwort (2026-10-15: das
+  // Aufdecken war in keinem Zustand zu sehen). Ein Daily Double wird
+  // uebersprungen, damit es ein normales Feld ist.
+  'jeop-frage': () => {
+    const mr = Math.random; Math.random = () => 0; startJeopardyActual(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    showScreen('jeopardy-screen');
+    let c = 3; while (c > 0 && jeopardyIsDaily(c, 2)) c--;
+    openJeopardyClue(c, 2); jeopardyRevealQuestion();
+  },
+  'jeop-antwort': () => {
+    const mr = Math.random; Math.random = () => 0; startJeopardyActual(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    showScreen('jeopardy-screen');
+    let c = 3; while (c > 0 && jeopardyIsDaily(c, 2)) c--;
+    openJeopardyClue(c, 2); jeopardyRevealQuestion(); jeopardyToggleAnswer();
   },
   wwm: () => {
     startWwmActual();
