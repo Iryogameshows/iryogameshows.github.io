@@ -12,6 +12,37 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `ceed206` WWDS-Masterfrage passt bei 1280×720 in allen Richtungen
+
+**David:** „Leg den shots-Zustand wwds-master an und miss ihn in allen Richtungen.“
+
+**Gemacht:** `tools/shots/shots.js`: neuer Zustand `wwds-master`. Beide Teams haben 1500 €, Rot tippt B,
+Blau C, die Masterfrage ist aufgelöst und der Timer angehalten. Das ist der höchste Fall dieser Phase:
+Tipp-Marken in den Teamkarten, Team-Etiketten an den Antworten, Statuszeile darunter.
+`styles.css` im `max-height: 900px`-Block der WWDS-Bühne (nach `@keyframes wwdsTick`), alle Richtungen
+außer D. Solange eine `.wt-lock` steht (Einsatz, Masterfrage, Stichfrage), entfallen `.wt-meta`
+(„Joker frei · 6 Fragen“, gilt nur für die Hauptrunde) und die `.round-bar`. Die zeigt in diesen
+Phasen nur „Masterfrage · Am Zug: —“, und der Chip in der Bühne sagt dasselbe. Die Marke ist kompakter
+(1,3 rem, line-height 1), die Statuszeile hat nur noch 6 px Abstand.
+
+**Befund vorher:** Bei 1280×720 standen 14 von 19 Richtungen über, bis 48 px (E). Ohne Befund waren
+B, D, F, H, N, O und P.
+
+**Verworfen:** Die Marke absolut in die rechte obere Ecke der Karte zu setzen. Das passte rechnerisch
+überall, überdeckte aber in B den Teamnamen und in O das €-Zeichen (Ausschnitt angesehen). Jede
+Richtung legt die Teamkarte anders an, deshalb gibt es keine Ecke, die überall frei ist.
+
+**Geprüft:** `wwds`, `wwds-frage`, `wwds-joker` und `wwds-master` in allen 19 Richtungen ohne Befund, bei
+1280×720, 1280×800 und 1920×1080. `wwds-master --reduced` ohne Befund. Bogen angesehen.
+`check.js` sauber.
+
+**Ungeprüft:** Einsatz-Phase und Stichfrage haben keinen eigenen shots-Zustand. Die Regeln greifen dort
+mit, weil auch dort Marken stehen, gemessen ist das aber nicht. Beamer ebenfalls ungeprüft.
+
+**Nächste Schritte:**
+1. Optional: Zustände `wwds-einsatz` und `wwds-stich` anlegen und messen.
+2. D weiter: DDF, PIH, TP, Finale, Ergebnis, Menü, Handy.
+
 ## 2026-10-15 — `485ef60` WWDS-Frage passt bei 1280×720 in allen Richtungen
 
 **David:** „Behebe zuerst den Überlauf von 38 px bei wwds-frage in Studio-Blau und lass wwds-frage in
