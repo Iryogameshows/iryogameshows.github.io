@@ -646,6 +646,16 @@ function jeopardySeriesHtml(clue){
 // Updates an already-open overlay in place instead of destroying and
 // recreating it, so the entrance animation doesn't restart and flash
 // the board underneath on every reveal/toggle.
+/** Frage Wort fuer Wort in <span class="jw" style="--i:n">: damit kann eine
+ *  Richtung die Frage gestaffelt aufbauen (styles.css, Aufdecken). Ohne
+ *  Richtungsregel sind die Spans unsichtbar fuer das Layout.
+ *  @param {string} text
+ *  @returns {string} */
+function jeopardyWoerter(text) {
+  let i = 0;
+  return String(text).split(/(\s+)/).map(t => /^\s*$/.test(t) ? t : `<span class="jw" style="--i:${i++}">${escapeHtml(t)}</span>`).join('');
+}
+
 function renderJeopardyClueOverlay() {
   if (!jeopardyState.currentClue) { closeJeopardyClue(); return; }
   if (jeopardyState.ddPending) { closeJeopardyClue(); return; } // warning phase — nothing on the main screen yet
@@ -662,7 +672,7 @@ function renderJeopardyClueOverlay() {
 
   const revealed = jeopardyState.questionRevealed;
   const questionArea = revealed
-    ? `${clue.q ? `<div class="jeopardy-clue-text">${escapeHtml(clue.q)}</div>` : ''}
+    ? `${clue.q ? `<div class="jeopardy-clue-text">${jeopardyWoerter(clue.q)}</div>` : ''}
        ${steps ? jeopardyStepsHtml(clue) : ''}
        ${series ? jeopardySeriesHtml(clue) : staged ? jeopardyStageHtml(clue) : qImgHtml}`
     : `<div class="jeopardy-clue-blank">Frage verdeckt</div>`;
