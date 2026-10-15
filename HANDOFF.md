@@ -12,6 +12,35 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `4dd7e29` Late Night: DDF neu komponiert
+
+**David:** „Mach mit D weiter, als Nächstes DDF.“
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem WWDS-Block. Der innere Wrapper von
+`#ddf-screen` (Inline-`display:flex` in `index.html`) wird ein Grid wie Feud/WWDS. Links stehen
+Kicker (On-Air-Schild vor „8 noch dabei“, Uhr als Konturziffer rechts in derselben Zeile), Frage als
+Schlagzeile, Lösung als Bauchbinde, Notiz und Abstimmung. Rechts steht „Kandidaten“ als Liste
+untereinander, Name links, Herzen rechts. Das letzte Herz bekommt einen roten Strich links, Ausgeschiedene
+sind gedimmt, der Verlierer der Abstimmung (`.picked`) ist eine orange Zeile. Der Stimmenzähler
+„0 / 8“ ist groß und orange, die Ergebnis-Zeilen stehen linksbündig in der Sendungsschrift.
+`tools/shots/shots.js`: neuer Zustand `ddf-ergebnis`. Hugo ist raus, Gina hat das letzte Herz,
+Dieter verliert eins (Stimmen 4/2/1).
+
+**Fallstricke:** Die alte D-Regel `.ddf-player { flex: 1 1 140px }` (Kachelreihe) wirkt in der Spalte
+als Höhe. Jede Zeile war 140 px hoch, der Screen 532 px zu hoch, daher `flex: none`. Die Zeilen der
+Abstimmung kommen mit Inline-Styles aus `ddfRenderVoteGrid` (`js/ddf.js`), deshalb dort `!important`.
+Der Zähler wird über `> div:has(> span)` gefunden, nicht über die Position: Mit Gästen ohne Handy
+kommen weitere Zeilen dazu.
+
+**Geprüft:** `ddf` und `ddf-ergebnis` in allen 19 Richtungen bei 1280×720 ohne Befund (nur D geändert,
+der neue Zustand ist aber überall gemessen). D zusätzlich bei 1280×800 und 1920×1080 und `--reduced`
+ohne Befund. Bilder angesehen. `check.js` sauber.
+
+**Ungeprüft:** Gäste ohne Handy (Eingabezeilen in der Abstimmung), Stichwahl/Gleichstand, Siegbild
+(`ddfFinish`), Uhr im laufenden Zustand. Beamer ebenfalls ungeprüft.
+
+**Nächste Schritte:** D weiter mit PIH, TP, Finale, Ergebnis, Menü, Handy.
+
 ## 2026-10-15 — `ceed206` WWDS-Masterfrage passt bei 1280×720 in allen Richtungen
 
 **David:** „Leg den shots-Zustand wwds-master an und miss ihn in allen Richtungen.“
