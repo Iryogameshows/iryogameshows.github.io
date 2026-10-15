@@ -12,6 +12,44 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `afa1045` Late Night neu komponiert, Jeopardy-Aufdecken neu
+
+**Davids Kritik:** Die Richtungen „sehen kaum anders aus — als hättest du es leicht
+umgebaut“; beim Jeopardy „ploppt die Frage einfach auf, das sieht billig aus“.
+Rückfrage beantwortet: **Designs ähnlich lassen, aber viel hochwertiger; erst eine
+Richtung**, dann die anderen.
+
+**Gemacht:** D (Late Night) als Prototyp der neuen Stufe. Kern: nicht mehr Farbe
+über dem mittig gestapelten Standard-Layout, sondern die **Komposition des Entwurfs**
+per CSS-Grid (Markup unverändert): Marke klein oben links; Feud mit Schlagzeile +
+Liste links, Topf als einzige große Zahl + Teams-Spalte rechts; Jeopardy
+linksbündig mit Teams-Zeile; Jeopardy-Frage als Sendegrafik (Kicker, Kontur-Betrag,
+Schlagzeile, Antwort-Bauchbinde). Aufdecken: `data-neu`/`data-stand` am Overlay
+(`js/jeopardy.js`), D spielt einen orangen Balken über die Zeile, dahinter die Frage;
+Beamer-Flug startet an der Ziffer, blendet das Original aus, Konturschrift kopiert,
+Punktzahl erst nach Landung (kein „30300“ mehr).
+
+**Warum so / verworfen:** Erster Balken per `clip-path` am Text — schnitt den Balken
+(`::after`) mit ab, war nie sichtbar → Schrift `color: transparent` bis der Balken
+deckt. Bildschirmfotos in Echtzeit taugen für Animationen nicht (Screenshot dauert
+länger als die Zeitschritte) → Animationen angehalten und per `currentTime` bzw.
+GSAP-`progress` angefahren (Scratchpad `frames.js`, `flug.js`; Flug-Test braucht
+das Popout VOR dem Brett und eine abgefangene `gsap.timeline`).
+
+**Geprüft:** `shots.js --themes D` 22 Zustände ohne Befunde (neu: `jeop-frage`,
+`jeop-antwort`), `--reduced` ohne Befunde, Studio-Blau-Vergleich (feud, jeop, wwm,
+ddf, pih, tp) unverändert, `ablauf.js` 49/49, `check.js`/`--types` sauber.
+
+**Offen:**
+- **Davids Abnahme von D** — danach dieselbe Stufe (Komposition des Entwurfs +
+  eigenes Aufdecken) für B, E, I, K, L, O.
+- Bei allen anderen Richtungen ploppt die Jeopardy-Frage noch (nur D hat die neue
+  Choreografie; `data-neu` steht aber schon für alle bereit).
+- D noch nicht neu komponiert: WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy
+  (nur Feud, Jeopardy, WWM).
+- Echter Beamer nicht geprüft; Netz war zeitweise weg (`git fetch` „Connection was
+  reset“, kam nach Wiederholung durch).
+
 ## 2026-10-14 — `10faac8` Feud-GM: Verlauf der Runde (Ansatz 5) statt Jetzt-Karte
 
 **Gemacht:** Rundenprotokoll `feudLog` + `feudLogAdd(text, art, pts)` + `feudTeamName(i)` in `js/feud.js` (Typ
