@@ -12,6 +12,45 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — ABBRUCH der Sitzung (Stand `6d8c88f`)
+
+Kein Code offen, alles committet und gepusht. Dieser Eintrag ist die Abschluss-Übersicht, damit die
+nächste Sitzung ohne Suchen weitermachen kann.
+
+**Aktueller Stand:** Richtung D (Late Night) ist auf der neuen Stufe fertig — alle elf Screens:
+Feud, Jeopardy (Brett und Frage-Aufdecken), WWM, WWDS, DDF, PIH, TP, Feud-Finale, Ergebnis, Menü,
+Handy. Dazu kam in dieser Sitzung das Frage-Aufdecken bei Jeopardy für alle übrigen Richtungen
+(`16031e3`) und zwei Überlauf-Behebungen bei WWDS, die alle Richtungen betrafen (`485ef60`, `ceed206`).
+Neue Prüfzustände in `tools/shots/shots.js`: `wwds-frage`, `wwds-joker`, `wwds-master`,
+`ddf-ergebnis`, `feud-finale-frage`.
+
+**Stopppunkt:** Nach dem Push von `6d8c88f` (HANDOFF zu Menü und Handy). Davids Antwort auf die Frage,
+welche Richtung als Nächstes drankommt, steht noch aus. Es wurde nichts angefangen.
+
+**Kreative Ansätze und Vorstellungen, die im Raum stehen:**
+- Das Muster, nach dem D gebaut ist, trägt für die anderen Richtungen: je Screen genau EIN lautes Ding
+  (Schlagzeile oder Zahl), alles andere Haarlinie und kleine Schrift; die Marke klein oben links;
+  links die Schlagzeile mit der Liste, rechts eine schmale Spalte mit Stand/Teams; die Akzentfarbe nur
+  dort, wo gerade etwas passiert. Dieses Gerüst lässt sich für B, E, I, K, L und O übernehmen —
+  die Komposition bleibt, Farbe, Schrift und Material wechseln.
+- Davids Vorgabe von `afa1045`: Designs ähnlich lassen, aber viel hochwertiger; „geisteskrank
+  übertreiben“ gilt auch für Assets, nicht nur Animationen.
+- Noch nicht umgesetzt: eigene Aufdeck-Choreografien je Richtung (außerhalb von D und der
+  gemeinsamen Fassung aus `16031e3`), Show-Logos in D sind noch das allgemeine Symbol plus Schrift,
+  und für die großen Momente am Beamer (`mainscreen/buehne.js`) gibt es bisher nur `REGIE.D`.
+
+**Nächste Schritte:**
+1. Davids Wahl der nächsten Richtung abwarten, dann dieselben elf Screens durchgehen wie bei D.
+   Reihenfolge, die sich bewährt hat: Feud, Jeopardy, WWM, WWDS, DDF, PIH, TP, Finale, Ergebnis,
+   Menü, Handy — je Screen ein Commit plus HANDOFF-Eintrag.
+2. Offene Sonderfälle aus den Einzeleinträgen: Gäste ohne Handy (DDF, PIH), DDF-Stichwahl und
+   -Siegbild, PIH-Superpreis-Finale, TP-Drehphase/Nachfassen/Siegbild, WWDS-Einsatz- und
+   Stichfrage-Phase. Je ein shots-Zustand, dann messen.
+3. `gamepad/index.html` und das Feud-Setup (`setup`) sind in D nie angesehen worden.
+4. Der echte Beamer ist in dieser ganzen Sitzung nicht geprüft worden — nur das Popout im Test.
+5. `.github/workflows/pruefungen.yml` liegt weiter nur lokal (Token ohne `workflow`-Recht, siehe
+   CLAUDE.md, Abschnitt Screenshot-Prüfung).
+
 ## 2026-10-15 — `e18f94d` + `a3777b4` Late Night: Menü und Handy — D ist fertig
 
 **Menü (`e18f94d`):** `styles.css`, nach dem Ergebnis-Block. Das Senderlogo steht oben links
