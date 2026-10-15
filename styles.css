@@ -4998,7 +4998,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   box-shadow: inset 0 1px 0 var(--d-line); text-align: left; transform: none;
 }
 :root[data-theme="D"] #ddf-screen .ddf-player-name { display: flex; align-items: center; gap: 10px; margin: 0; font-size: clamp(1.3rem, 3.2vh, 1.7rem); }
-:root[data-theme="D"] #ddf-screen .ddf-player-name > :first-child:not(:only-child) { width: 26px; height: 26px; font-size: .9rem; flex: none; }
+:root[data-theme="D"] #ddf-screen .ddf-player-name .pmini-av { width: 26px; height: 26px; font-size: .9rem; flex: none; }
 :root[data-theme="D"] #ddf-screen .ddf-player.last { box-shadow: inset 0 1px 0 var(--d-line), inset 4px 0 0 #E8453C; padding-left: 14px; }
 :root[data-theme="D"] #ddf-screen .ddf-player.last .ddf-player-name { color: #F2F2F2; }
 :root[data-theme="D"] #ddf-screen .ddf-player.out { opacity: .35; }
@@ -5007,6 +5007,77 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="D"] #ddf-screen .ddf-player.picked .ddf-heart.full::before { background: #0E0E0E; }
 :root[data-theme="D"] #ddf-screen .ddf-player.picked .ddf-heart.empty::before { background: rgba(14,14,14,.3); }
 :root[data-theme="D"] #ddf-screen .ddf-heart { margin: 0 0 0 6px; }
+
+/* ── PIH: Artikel als Schlagzeile, Foto + Preis, rechts der Stand ──
+   Vorher: Teamleiste und acht Ranglisten-Pillen quer oben, darunter alles
+   mittig gestapelt. Jetzt links On-Air-Kicker und Artikel, darunter das
+   Foto mit dem aufgeloesten Preis als einziger grosser Zahl daneben, die
+   Gebote zweispaltig; rechts Teamstand und Rangliste untereinander.
+   Wrapper, Hinweise und Zaehler der Gebote tragen Inline-Styles
+   (index.html, js/pih.js) - daher dort !important. */
+:root[data-theme="D"] #pih-screen.active { max-width: var(--d-breit); padding-top: 0; }
+:root[data-theme="D"] #pih-screen > div {
+  display: grid !important; height: auto !important;
+  width: 100%; grid-template-columns: auto minmax(0, 1fr) 346px;
+  grid-template-areas: "uhr uhr ." "artikel artikel ." "bild preis ." "bild note ." "media media ." "gebote gebote .";
+  grid-template-rows: auto auto auto auto auto 1fr; column-gap: 0; align-items: start;
+}
+:root[data-theme="D"] #pih-teams { grid-column: 3; grid-row: 1 / 3; margin-left: 56px; }
+:root[data-theme="D"] #pih-screen .pih-scores { grid-column: 3; grid-row: 3 / -1; margin: 0 0 0 56px; }
+:root[data-theme="D"] #pih-timer {
+  grid-area: uhr; justify-self: start; padding-bottom: 6px; font-family: 'Instrument Sans', sans-serif;
+  font-size: .8rem !important; font-weight: 700 !important; letter-spacing: 3px !important; color: #FF5B1F;
+}
+:root[data-theme="D"] #pih-screen .pih-item {
+  grid-area: artikel; justify-self: stretch; text-align: left; padding: 0 0 18px; margin-bottom: 20px;
+  font-size: clamp(2.4rem, 3.8vw + 1vh, 4.4rem); line-height: .92; letter-spacing: -.2px; text-wrap: balance;
+  border-bottom: 1px solid var(--d-line-hi);
+}
+:root[data-theme="D"] #pih-screen .pih-item::before {
+  content: 'On Air'; display: block; width: fit-content; margin-bottom: 14px; padding: 5px 11px 5px 24px;
+  font-family: 'Instrument Sans', sans-serif; font-weight: 700; font-size: .72rem; letter-spacing: 3px; line-height: 1.2; color: #0E0E0E;
+  background: radial-gradient(circle, #0E0E0E 3px, transparent 3.5px) 10px 50% / 8px 8px no-repeat, #FF5B1F;
+}
+:root[data-theme="D"] #pih-screen .pih-stage { grid-area: bild; text-align: left; }
+:root[data-theme="D"] #pih-screen .pih-stage :is(img, video) { display: block; max-width: min(460px, 36vw); max-height: 30vh; }
+:root[data-theme="D"] #pih-screen .pih-price { grid-area: preis; align-self: end; text-align: left; padding: 0 0 0 36px; font-size: clamp(4rem, 13vh, 7.5rem); line-height: .82; }
+:root[data-theme="D"] #pih-screen .pih-price:not(:empty)::before {
+  content: 'Der Preis'; display: block; margin-bottom: 10px; font-family: 'Instrument Sans', sans-serif; font-weight: 600;
+  font-size: .72rem; letter-spacing: 3px; text-transform: uppercase; line-height: 1; color: var(--d-dim);
+}
+:root[data-theme="D"] #pih-screen .pih-note { grid-area: note; text-align: left; padding: 10px 0 0 36px; color: var(--d-dim); }
+:root[data-theme="D"] #pih-screen .pih-media-bar { grid-area: media; justify-content: flex-start; }
+:root[data-theme="D"] #pih-screen .pih-bid-grid {
+  grid-area: gebote; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 22px; padding: 18px 0 0;
+}
+:root[data-theme="D"] #pih-bid-grid > :not(.pih-bid-row) { grid-column: 1 / -1; text-align: left !important; justify-content: flex-start !important; }
+:root[data-theme="D"] #pih-bid-progress {
+  font-family: 'Big Shoulders Display', sans-serif; font-weight: 900 !important; font-size: clamp(2.6rem, 7vh, 3.8rem) !important; line-height: 1; color: #FF5B1F;
+}
+:root[data-theme="D"] #pih-bid-progress span { font-family: 'Instrument Sans', sans-serif; letter-spacing: 3px; text-transform: uppercase; font-size: .72rem !important; }
+:root[data-theme="D"] #pih-screen .pih-bid-row { max-width: none; margin: 0; }
+
+/* Stand rechts: Teams, darunter die Rangliste wie die DDF-Kandidaten. */
+:root[data-theme="D"] #pih-screen .pih-teamrow { flex-direction: column; gap: 12px; max-width: none; margin: 0 0 10px; }
+:root[data-theme="D"] #pih-screen .pih-team { padding: 10px 0 8px; background: none; box-shadow: inset 0 3px 0 var(--team); }
+:root[data-theme="D"] #pih-screen .pih-team.lead { box-shadow: inset 0 3px 0 var(--team), inset 0 -3px 0 #FF5B1F; }
+:root[data-theme="D"] #pih-screen .pih-team-pts { font-size: 2.4rem; }
+:root[data-theme="D"] #pih-screen .pih-team-hint { text-align: left; margin: 0 0 6px; color: var(--d-dim); }
+:root[data-theme="D"] #pih-screen .pih-scores {
+  flex-direction: column; flex-wrap: nowrap; gap: 0; max-width: none; padding: 0; border: 0; align-items: stretch;
+}
+:root[data-theme="D"] #pih-screen .pih-scores::before {
+  content: 'Rangliste'; padding: 6px 0 10px; font-family: 'Instrument Sans', sans-serif; font-weight: 600;
+  font-size: .72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--d-dim);
+}
+:root[data-theme="D"] #pih-screen .pih-score {
+  flex: none; gap: 10px; padding: clamp(4px, 1vh, 9px) 0; background: none; box-shadow: inset 0 1px 0 var(--d-line); transform: none;
+}
+:root[data-theme="D"] #pih-screen .pih-score-name { flex: 1; display: flex; align-items: center; gap: 8px; font-size: clamp(1.1rem, 2.8vh, 1.45rem); }
+:root[data-theme="D"] #pih-screen .pih-score-name .pmini-av { width: 24px; height: 24px; font-size: .85rem; flex: none; }
+:root[data-theme="D"] #pih-screen .pih-score.leer .pih-score-pts { color: #4A4A4A; }
+:root[data-theme="D"] #pih-screen .pih-score.picked { background: #FF5B1F; box-shadow: none; padding-inline: 10px; }
+:root[data-theme="D"] #pih-screen .pih-score.picked :is(.pih-score-name, .pih-score-pts, .pih-rank) { color: #0E0E0E; }
 
 /* Late Night deckt auf wie eine Bauchbinde: von links aufgezogen. */
 @keyframes thDWisch {
