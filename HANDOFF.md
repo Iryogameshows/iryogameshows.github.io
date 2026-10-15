@@ -12,6 +12,30 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `99c9c3b` Late Night: Feud-Finale neu komponiert
+
+**David:** „Mach mit D weiter, als Nächstes das Feud-Finale.“ Dazwischen kam: „warum fragst du auf einmal
+die ganze Zeit nach“. Ab hier wird die D-Liste ohne Rückfrage je Screen abgearbeitet (Memory
+`keine-zwischenfragen-bei-liste`).
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem TP-Block. `#finale-screen` wird ein Grid
+mit den Bereichen kopf/uhr | board/stand | board/vergleich. Links: Kicker mit orangem „Finale“-Schild,
+wer spielt und Frage x/y, die Frage als Schlagzeile (in der Antwortphase `.finale-big-q` noch größer),
+in der Auflösung die Liste darunter. Rechts: Uhr als Konturziffer oben, Stand beider Teams als große
+weiße Zahlen, darunter „Diese Frage“ mit Team, Antwort (Fehlgriff grau durchgestrichen) und Punkten.
+`tools/shots/shots.js`: neuer Zustand `feud-finale-frage` (Antwortphase per `startFinale()`, Uhr
+sichtbar auf 20).
+
+**Geprüft:** `feud-finale` und `feud-finale-frage` in allen 19 Richtungen bei 1280×720 ohne Befund. D bei
+1280×800 und 1920×1080 ohne Befund, `--reduced` ohne Befund. Bilder angesehen. `check.js` sauber.
+
+**Bekannt, nicht angefasst:** In der Auflösung steht im Kicker „Auflösung“ doppelt (`finale-team-label`
+und `finale-q-info` aus `js/feud.js`). Das ist in allen Richtungen so.
+
+**Ungeprüft:** Teamwechsel-Overlay, „urgent“-Uhr und Beamer.
+
+**Nächste Schritte:** D weiter mit Ergebnis, Menü, Handy.
+
 ## 2026-10-15 — `b628323` Late Night: TP neu komponiert
 
 **David:** „Mach mit D weiter, als Nächstes TP.“
