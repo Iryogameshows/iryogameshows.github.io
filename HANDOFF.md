@@ -12,6 +12,38 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `16031e3` Jeopardy-Aufdecken für alle Richtungen (ABBRUCH, David muss weg)
+
+**David:** „bitte mach bei Jeopardy die Frage aufdecken Funktion schöner, das ploppt nur so auf“.
+Davor: „Mach D fertig: WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü und Handy auf die neue Stufe bringen.“
+
+**Gemacht:** `styles.css` direkt nach `.jeopardy-answer-img.visible` (~Zeile 1342): Choreografie für alle
+Richtungen außer D (`:root:not([data-theme="D"])`), hängt an `data-neu` aus `renderJeopardyClueOverlay`
+(`js/jeopardy.js:697`). Frage: Lichtstoß in `--gold-rgb` (`overlay::after`), Lichtkante unter der Frage,
+Wörter `.jw` klappen gestaffelt aus der Tiefe (`jqWort`, 55 ms je Wort, Verzögerung gedeckelt bei 1,3 s),
+Betrag-Schlag, Bilder steigen nach. Antwort: Stempel (`jqStempel`) + grüner Stoß. Alle Endzustände `none`.
+`prefers-reduced-motion` schaltet alles ab.
+
+**Geprüft:** `check.js` sauber. `shots.js --shows jeop --themes Studio,E,K` ohne Befunde (Standbild).
+**Ungeprüft:** die Animation selbst Bild für Bild (Methode: Scratchpad-Ansatz aus `afa1045`, Animationen per
+`currentTime` anfahren), der Beamer, `--reduced`, Studio-Vergleich (Basis `basis-jeop-1280x720.json` fehlte
+auf diesem Rechner). `isolation: isolate` am Overlay ist neu — könnte bei Richtungen mit eigenen
+`::after`/z-index am Overlay stören (nicht nachgesehen).
+
+**Stopppunkt:** D-Fertigbau (WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy) NICHT begonnen. Stand
+von D: `styles.css` Abschnitt „D · Komposition (2026-10-15)“ (~Zeile 4640 ff.) hat nur Feud, Jeopardy,
+Jeopardy-Frage, WWM; die übrigen D-Regeln (~4520–4610) sind nur Farbe/Schrift auf Standard-Layout.
+
+**Kreative Ansätze:** Grundsatz aus D-Komposition: je Screen genau EIN lautes Ding, Rest Haarlinie und
+kleine Schrift, Orange nur wo etwas passiert; Marke klein oben links; Schlagzeile links, schmale Spalte
+rechts (Topf/Teams). Davids Vorgabe: „geisteskrank übertreiben“, auch Assets hochwertiger.
+
+**Nächste Schritte:**
+1. Aufdecken im Browser Bild für Bild ansehen (Studio, E, K, B), Beamer-Popout mit Strg+F5.
+2. Basis anlegen und vergleichen: `node shots.js --basis` am Stand vor `16031e3`, dann `--vergleich`.
+3. D-Komposition je Screen per Grid: WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy; danach
+   `shots.js --themes D`, `--reduced`, `ablauf.js`.
+
 ## 2026-10-15 — `77fd44a` Late Night am Beamer: lebende Stadt, große Momente
 
 **David:** „bei den Intros hab ich damals gesagt du sollst geisteskrank übertreiben,
