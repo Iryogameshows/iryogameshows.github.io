@@ -5162,6 +5162,35 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="D"] #finale-reveal-comparison .finale-reveal-answer.miss { color: #6A6A6A; text-decoration: line-through; }
 :root[data-theme="D"] #finale-reveal-comparison .finale-reveal-pts { grid-area: pts; font-size: 2.2rem; line-height: 1; }
 
+/* ── Ergebnis: Abspann-Karte statt Pokal in der Mitte ──
+   Vorher: grosses Logo, Pokal-Emoji, Text mittig, Stand als Fliesstext.
+   Jetzt wie die anderen Screens: Marke klein oben links, Kicker "Endstand",
+   der Sieger als die eine riesige Schlagzeile, der Stand darunter als
+   Zeilen mit grossen Zahlen, Knoepfe linksbuendig. Das Emoji passt nicht zur
+   Sendegrafik und entfaellt. Der Stand kommt als Text mit <br> aus den
+   Spieldateien (feud.js, jeopardy-ui.js, wwds.js, tournament.js) - daher nur
+   Schrift und Zeilenabstand, keine Zeilen-Elemente. */
+:root[data-theme="D"] body:has(#result-screen.active) .logo {
+  align-self: flex-start; margin: 22px 0 6px calc((100vw - var(--d-breit)) / 2); text-align: left;
+}
+:root[data-theme="D"] body:has(#result-screen.active) .logo svg { width: 150px; max-height: 64px; }
+:root[data-theme="D"] #result-screen.active { max-width: var(--d-breit); width: 100%; margin-top: 0; gap: 0; align-items: flex-start; text-align: left; }
+:root[data-theme="D"] #result-screen .result-icon { display: none; }
+:root[data-theme="D"] #result-screen .winner-text {
+  font-size: clamp(3.6rem, 7vw + 2vh, 8.4rem); line-height: .86; letter-spacing: -.5px; text-wrap: balance;
+  padding-bottom: 26px; border-bottom: 1px solid var(--d-line-hi); width: 100%;
+}
+:root[data-theme="D"] #result-screen .winner-text::before {
+  content: 'Endstand'; display: block; width: fit-content; margin: 18px 0 18px; padding: 5px 11px 5px 24px;
+  font-family: 'Instrument Sans', sans-serif; font-weight: 700; font-size: .72rem; letter-spacing: 3px; line-height: 1.2; color: #0E0E0E;
+  background: radial-gradient(circle, #0E0E0E 3px, transparent 3.5px) 10px 50% / 8px 8px no-repeat, #FF5B1F;
+}
+:root[data-theme="D"] #result-screen .result-card { width: 100%; max-width: none; margin: 0; padding: 18px 0 22px; border: 0; background: none; text-align: left; }
+:root[data-theme="D"] #result-screen .result-scores { font-size: 1rem; line-height: 1.15; letter-spacing: 3px; text-transform: uppercase; }
+:root[data-theme="D"] #result-screen .result-scores strong { display: inline-block; margin: 0 6px 10px 10px; font-size: clamp(2.6rem, 7vh, 3.8rem); line-height: 1; letter-spacing: 0; vertical-align: -.12em; }
+:root[data-theme="D"] #result-screen .result-btns { justify-content: flex-start; }
+:root[data-theme="D"] #result-screen #result-leaderboard { margin-left: 0 !important; }
+
 /* Late Night deckt auf wie eine Bauchbinde: von links aufgezogen. */
 @keyframes thDWisch {
   0%   { clip-path: inset(0 100% 0 0); }
