@@ -12,6 +12,32 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `e18f94d` + `a3777b4` Late Night: Menü und Handy — D ist fertig
+
+**Menü (`e18f94d`):** `styles.css`, nach dem Ergebnis-Block. Das Senderlogo steht oben links
+(`body:has(#menu-screen.active) .logo`, vorher groß und mittig), darunter Kicker „Heute im Programm“
+als `::before` des Rasters, die acht Sendungen vierspaltig über die volle Breite statt im 720-px-Block,
+die Werkzeuge als linksbündige Leiste. Hostseite, kommt nicht auf den Beamer (`HOST_SEITEN`).
+
+**Handy (`a3777b4`):** `buzzer/index.html`, D-Block. Die Screens sind linksbündig
+(`.screen{align-items:stretch;text-align:left}`), das Team ist ein kleines Schild oben links statt
+einer zentrierten Pille, der Buzzer füllt die Breite (`min(86vw, 48vh)` statt 340-px-Quadrat), die
+Statuszeile ist eine Schlagzeile in der Sendungsschrift. In der Pause steht statt des großen Quadrats
+ein 12-px-Balken in der Teamfarbe („Sendepause“). Der Bereitschaftsring (`#buzz::after`) rückt von
+−10 px auf −6 px, sonst schnitt er bei voller Breite in das Team-Schild.
+
+**Geprüft:** `menu` in allen 19 Richtungen ohne Befund, D zusätzlich bei 1280×800 und 1920×1080.
+`buzzer`, `buzzer-pause`, `buzzer-login` in allen 19 Richtungen ohne Befund (390×844). `ablauf.js`
+49/49 OK. Bilder angesehen. `check.js` sauber.
+
+**Damit ist die D-Liste abgearbeitet:** Feud, Jeopardy, WWM, WWDS, DDF, PIH, TP, Finale, Ergebnis,
+Menü, Handy. Offen aus den Einzeleinträgen: Sonderfälle je Show (Gäste ohne Handy, Stichwahl,
+Superpreis-Finale, TP-Drehphase und -Siegbild), das Gamepad (`gamepad/index.html`, nie in D
+angesehen), das Feud-Setup (`setup`) und der echte Beamer.
+
+**Nächster großer Schritt:** dieselbe Stufe für die übrigen Richtungen (B, E, I, K, L, O), siehe
+Eintrag zu `afa1045`.
+
 ## 2026-10-15 — `62d42db` Late Night: Ergebnis als Abspann-Karte
 
 **Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem Finale-Block. Auf `#result-screen` steht
