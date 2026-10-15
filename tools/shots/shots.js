@@ -47,7 +47,7 @@ const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
 // Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
 const HOST_SEITEN = new Set(['gm', 'turnier-host', 'menu', 'setup']);
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'wwds-frage', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -133,6 +133,13 @@ const AUFBAU = {
   wwds: () => {
     const mr = Math.random; Math.random = () => 0; startWwdsActual(); Math.random = mr;
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+  },
+  // WWDS mit offener Frage und eingeloggter Antwort (2026-10-15: bis dahin
+  // war nur die Kategorie-Auswahl im Bild).
+  'wwds-frage': () => {
+    const mr = Math.random; Math.random = () => 0; startWwdsActual(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    wwdsPick(0); wwdsSelect(1); wwdsStopTimer();
   },
   // Die drei Zustaende, die bis 73803b1 nicht gemessen waren (HANDOFF dort).
   // Jeweils der hoechste Fall: die Runde mit den meisten Antworten, eine
