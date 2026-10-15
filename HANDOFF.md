@@ -12,6 +12,34 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `fd47efb` Late Night: PIH neu komponiert
+
+**David:** „Mach mit D weiter, als Nächstes PIH.“
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem DDF-Block. Der innere Wrapper von
+`#pih-screen` wird ein Grid mit den Spalten Bild | Rest | Stand (346 px inkl. 56 px Abstand). Links:
+Uhr als kleine orange Zeile, Artikel als Schlagzeile mit On-Air-Schild davor (`.pih-item::before`),
+darunter das Foto (max. 36vw × 30vh). Daneben steht der aufgelöste Preis als einzige große Zahl, mit
+Kicker „Der Preis“ (nur wenn `.pih-price` nicht leer ist) und der Notiz darunter. Die Gebote laufen
+zweispaltig, der Gebotszähler ist groß und orange. Rechts: beide Teams untereinander (Strich in
+Teamfarbe, Führender mit orangem Strich unten), darunter „Rangliste“ wie die DDF-Kandidaten. Wer den
+Punkt holt (`.picked`), ist eine orange Zeile. Nebenbei in DDF: Die Avatar-Verkleinerung griff nicht
+(`> :first-child:not(:only-child)`, der Avatar ist das einzige Kind-Element). Jetzt über `.pmini-av`.
+
+**Fallstricke:** `.pih-scores` hat in der Grundregel `margin: 0 auto`. Im Grid schrumpft die Liste
+dadurch auf Inhaltsbreite, daher `margin: 0 0 0 56px`. Der innere Wrapper braucht `width: 100%`,
+sonst sitzt das Grid mittig und schmal. Die Zeile mit dem Gebotsraster ist die `1fr`-Zeile. Lag die
+auf der Notiz, klaffte zwischen Foto und Geboten eine Lücke.
+
+**Geprüft:** `pih` und `pih-gebot` in allen 19 Richtungen bei 1280×720 ohne Befund. D mit `pih`,
+`pih-gebot`, `ddf` und `ddf-ergebnis` bei 1280×800 und 1920×1080 ohne Befund, `--reduced` ohne Befund.
+Bilder angesehen. `check.js` sauber.
+
+**Ungeprüft:** Finale um den Superpreis, Gäste ohne Handy (Eingabezeilen), Artikel ohne Foto, sehr
+lange Artikelnamen und Beamer.
+
+**Nächste Schritte:** D weiter mit TP, Finale (Feud), Ergebnis, Menü, Handy.
+
 ## 2026-10-15 — `4dd7e29` Late Night: DDF neu komponiert
 
 **David:** „Mach mit D weiter, als Nächstes DDF.“
