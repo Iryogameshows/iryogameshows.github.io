@@ -12,6 +12,40 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `485ef60` WWDS-Frage passt bei 1280×720 in allen Richtungen
+
+**David:** „Behebe zuerst den Überlauf von 38 px bei wwds-frage in Studio-Blau und lass wwds-frage in
+allen Richtungen laufen.“
+
+**Befund vorher:** Nicht nur Studio. `wwds-frage` lief bei 1280×720 in 15 von 19 Richtungen über, von 9 px (N)
+bis 74 px (E). Ohne Überlauf waren nur B, D, H und O. Mit Publikumsjoker (neuer Zustand `wwds-joker`)
+waren es 18 von 19, bis 186 px (E). Nur D passte.
+
+**Gemacht:** `styles.css` nach `@keyframes wwdsTick`, gilt für alle Richtungen außer D: Die Frage-Bühne
+(`#wwds-stage:has(> .wwds-opts)`) wird ein Raster a | b | c. Kategorie-Chip und Countdown teilen sich
+eine Zeile, vorher waren es zwei. Der Publikumsjoker steht in Spalte c rechts neben den Antworten,
+vorher 110 px darunter. Unter `max-height: 900px` kommen flachere Abstände dazu (Screen-Gap 10,
+Frage-Padding 10, Antwort-Padding 10). Gilt auch für die Masterfrage, die dieselben Bausteine hat.
+`shots.js`: Zustand `wwds-joker`.
+
+**Warum so:** Nur zu verkleinern hätte für die Frage gereicht, für den Joker (186 px) nicht. Die Balken
+daneben nutzen den leeren Platz rechts der Antworten. D ausgenommen (`:root:not([data-theme="D"])`),
+weil D eine eigene Komposition hat und Zeile/Spalte dort anders belegt sind.
+
+**Geprüft:** `wwds-frage` und `wwds-joker` in allen 19 Richtungen ohne Befund, bei 1280×720, 1280×800 und
+1920×1080 (dort zusätzlich `wwds`). `--reduced` ohne Befund. Bogen `wwds-joker` angesehen: Balken
+sitzen in allen Richtungen rechts neben den Antworten. `check.js` sauber.
+
+**Bewusst geändert:** Studio-Blau sieht anders aus, weil Chip und Countdown jetzt nebeneinander stehen.
+Ein Basis-Vergleich lief deshalb nicht.
+
+**Ungeprüft:** Masterfrage, Einsatz- und Stichfrage-Phase in allen Richtungen (kein shots-Zustand).
+Beamer. Der Joker in D steht weiterhin unter den Antworten, ohne eigene Gestaltung.
+
+**Nächste Schritte:**
+1. shots-Zustand für die Masterfrage (`wwds-master`) anlegen und messen.
+2. D weiter: DDF, PIH, TP, Finale, Ergebnis, Menü, Handy.
+
 ## 2026-10-15 — `8375328` Late Night: WWDS neu komponiert
 
 **David:** „weiter bitte“ – Schritt 3 aus dem Eintrag zu `16031e3` (D-Fertigbau), erster Screen WWDS.
