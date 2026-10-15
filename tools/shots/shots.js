@@ -47,7 +47,7 @@ const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
 // Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
 const HOST_SEITEN = new Set(['gm', 'turnier-host', 'menu', 'setup']);
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'wwds-frage', 'wwds-joker', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'wwds-frage', 'wwds-joker', 'wwds-master', 'ddf', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -147,6 +147,15 @@ const AUFBAU = {
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
     wwdsPick(0); wwdsStopTimer();
     const mr2 = Math.random; Math.random = () => 0.5; wwdsAudience(); Math.random = mr2;
+  },
+  // Masterfrage aufgeloest: beide Teams haben getippt, Team-Marken an den
+  // Antworten und die Zeile darunter - der hoechste Fall dieser Phase.
+  'wwds-master': () => {
+    const mr = Math.random; Math.random = () => 0; startWwdsActual(); Math.random = mr;
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    wwdsState.scores = wwdsState.scores.map(() => 1500);
+    wwdsToBetting(); wwdsStartMaster();
+    wwdsMasterSet(0, 1); wwdsMasterSet(1, 2); wwdsRevealMaster(); wwdsStopTimer();
   },
   // Die drei Zustaende, die bis 73803b1 nicht gemessen waren (HANDOFF dort).
   // Jeweils der hoechste Fall: die Runde mit den meisten Antworten, eine

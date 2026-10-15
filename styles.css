@@ -2866,6 +2866,18 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   :root:not([data-theme="D"]) #wwds-stage .wwds-q { padding: 10px 18px; margin-bottom: 10px !important; }
   :root:not([data-theme="D"]) #wwds-stage .wwds-opts { gap: 7px; }
   :root:not([data-theme="D"]) #wwds-stage .wwds-opt { padding-block: 10px; }
+  /* Masterfrage (shots.js wwds-master): die Tipp-Marke der Teams (.wt-lock)
+     brachte eine Zeile mehr je Teamkarte, dazu die Statuszeile unter den
+     Antworten - bis 48 px zu hoch. Solange Marken stehen (Einsatz,
+     Masterfrage, Stichfrage): "Joker frei · 6 Fragen" gilt fuer die
+     Hauptrunde und entfaellt; die Rundenzeile sagt dann nur "Masterfrage ·
+     Am Zug: —", was der Chip in der Buehne schon sagt. Verworfen: die Marke
+     absolut in eine Kartenecke - ueberdeckte in B den Teamnamen und in O
+     das Euro-Zeichen, jede Richtung legt die Karte anders an. */
+  :root:not([data-theme="D"]) #wwds-screen .wwds-team:has(.wt-lock) .wt-meta { display: none; }
+  :root:not([data-theme="D"]) #wwds-screen:has(.wt-lock) > .round-bar { display: none; }
+  :root:not([data-theme="D"]) #wwds-screen .wwds-team .wt-lock { margin-top: 2px; font-size: 1.3rem; line-height: 1; }
+  :root:not([data-theme="D"]) #wwds-stage > .wwds-sub:last-child { margin-top: 6px !important; }
 }
 
 .wwds-aud{display:flex;gap:14px;align-items:flex-end;justify-content:center;height:110px;margin-top:2px;}
