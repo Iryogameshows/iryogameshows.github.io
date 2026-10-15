@@ -2842,6 +2842,32 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 .wwds-timer.done{color:rgba(var(--fg-rgb),.25);}
 @keyframes wwdsTick{0%,100%{transform:scale(1);}50%{transform:scale(1.09);}}
 
+/* Frage-Buehne kompakter (2026-10-15): bei 1280x720 stand die offene Frage
+   in 15 von 19 Richtungen bis zu 74 px unter dem Fenster, mit
+   Publikumsjoker bis zu 186 px (shots.js wwds-frage / wwds-joker).
+   Kategorie und Countdown teilen sich eine Zeile statt zwei, der
+   Publikumsjoker steht rechts neben den Antworten statt darunter.
+   Raster: Spalten a | b | c - a/b tragen Kategorie und Countdown, die
+   Antworten laufen ueber a+b, c ist nur mit Joker breiter als 0.
+   Die Wrapper um Chip und Timer haben Inline-Styles (js/wwds.js), daher
+   !important. D hat eine eigene Komposition weiter unten. */
+:root:not([data-theme="D"]) #wwds-stage:has(> .wwds-opts) {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center;
+}
+:root:not([data-theme="D"]) #wwds-stage > div:has(> .wwds-cat-chip) { grid-area: 1 / 1; text-align: right !important; }
+:root:not([data-theme="D"]) #wwds-stage > div:has(> .wwds-cat-chip) .wwds-cat-chip { margin: 0; }
+:root:not([data-theme="D"]) #wwds-stage > div:has(> .wwds-timer) { grid-area: 1 / 2; justify-content: flex-start !important; margin: 0 0 10px 16px !important; }
+:root:not([data-theme="D"]) #wwds-stage > .wwds-q { grid-area: 2 / 1 / 3 / -1; }
+:root:not([data-theme="D"]) #wwds-stage > .wwds-opts { grid-area: 3 / 1 / 4 / 3; }
+:root:not([data-theme="D"]) #wwds-stage > .wwds-aud { grid-area: 3 / 3; align-self: stretch; height: auto; min-height: 120px; margin: 0 0 0 18px; }
+:root:not([data-theme="D"]) #wwds-stage > .wwds-sub { grid-column: 1 / -1; }
+@media (max-height: 900px) {
+  :root:not([data-theme="D"]) #wwds-screen { gap: 10px; }
+  :root:not([data-theme="D"]) #wwds-stage .wwds-q { padding: 10px 18px; margin-bottom: 10px !important; }
+  :root:not([data-theme="D"]) #wwds-stage .wwds-opts { gap: 7px; }
+  :root:not([data-theme="D"]) #wwds-stage .wwds-opt { padding-block: 10px; }
+}
+
 .wwds-aud{display:flex;gap:14px;align-items:flex-end;justify-content:center;height:110px;margin-top:2px;}
 /* Wie bei WWM: neu erzeugtes Element, Hoehe inline - siehe abarGrow oben. */
 .wwds-abar{width:46px;background:linear-gradient(180deg,var(--blue),var(--blue-deep));border-radius:6px 6px 0 0;position:relative;animation:abarGrow .5s var(--ease-out);}
