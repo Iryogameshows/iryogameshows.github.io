@@ -12,6 +12,36 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `8375328` Late Night: WWDS neu komponiert
+
+**David:** „weiter bitte“ – Schritt 3 aus dem Eintrag zu `16031e3` (D-Fertigbau), erster Screen WWDS.
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem WWM-Block: `#wwds-screen` als Grid wie
+Feud – Kicker-Zeile (On Air, Runde, Am Zug klein) und Bühne links, Teams als Spalte rechts (Strich in
+Teamfarbe oben, Geld groß, Am Zug mit orangem Strich unten). Auswahl: `.wwds-sub` wird zur Schlagzeile
+„TEAM ROT / WÄHLT EINE KATEGORIE“, Kategorien dreispaltig mit hohen Zeilen. Frage: Kategorie als
+Kicker, Frage als Schlagzeile, Countdown als Konturziffer rechts daneben (wie Betrag bei der
+Jeopardy-Frage), Antworten als Liste über die volle Breite. `tools/shots/shots.js`: neuer Zustand
+`wwds-frage` (Kategorie 1 offen, B eingeloggt, Timer angehalten).
+
+**Warum so:** Chip- und Timer-Wrapper tragen Inline-Styles aus `js/wwds.js` (`text-align:center`,
+`justify-content:center`, `margin-bottom`) – Markup nicht angefasst, deshalb dort `!important`.
+Das Bühnen-Grid hängt an `#wwds-stage:has(> div > .wwds-timer)`, greift also nur in Frage und
+Masterfrage; Einsatz- und Stichfrage-Phase bleiben im alten D-Layout.
+
+**Geprüft:** `check.js` sauber; `shots.js --themes D --shows wwds,wwds-frage` bei 1280×720 und
+1920×1080 ohne Befunde, `--reduced` ohne Befunde, Bilder angesehen. Alle neuen Regeln hängen an
+`:root[data-theme="D"]` – Studio-Vergleich nicht gelaufen (keine Basis `basis-wwds-*` auf diesem Rechner).
+
+**Fund (nicht behoben):** `wwds-frage` in **Studio-Blau** steht 38 px unter dem Fenster (1280×720).
+War vorher nicht messbar, weil es den Zustand nicht gab. Übrige Richtungen bei `wwds-frage` nicht gelaufen.
+
+**Ungeprüft:** Masterfrage, Einsätze, Stichfrage und Publikumsjoker in D; Beamer.
+
+**Nächste Schritte:**
+1. Studio-Überlauf `wwds-frage` beheben, `wwds-frage` in allen Richtungen laufen lassen.
+2. D weiter: DDF, PIH, TP, Finale, Ergebnis, Menü, Handy.
+
 ## 2026-10-15 — Nachprüfung zu `16031e3` (Jeopardy-Aufdecken), kein Code geändert
 
 **David:** „aus der Handoff weitermachen bitte“. Schritte 1 und 2 aus dem Eintrag darunter.
