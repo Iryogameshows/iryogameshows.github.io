@@ -12,6 +12,25 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `b628323` Late Night: TP neu komponiert
+
+**David:** „Mach mit D weiter, als Nächstes TP.“
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem PIH-Block. `#tp-screen` wird ein Grid
+wie Feud: Kicker (On Air, „Runde läuft · Am Zug“) oben links, darunter das Rad
+(`clamp(220px, 40vh, 300px)`, vorher 260 px fest) neben der Frage als Schlagzeile, die Antwort als weiße
+Bauchbinde. Rechts stehen die Teams untereinander: Torte klein (64 px) links, Name groß und „0 von 6“
+daneben, Strich in Teamfarbe oben. Am Zug: Name orange und orangem Strich unten.
+Markup und `js/tp.js` sind nicht angefasst.
+
+**Geprüft:** `tp` in allen 19 Richtungen bei 1280×720 ohne Befund. D bei 1280×800 und 1920×1080 ohne
+Befund, `--reduced` ohne Befund. Bild angesehen. `check.js` sauber.
+
+**Ungeprüft:** Drehphase (Hinweis statt Frage), Nachfassen (`.tp-steal`), Siegbild (`.tp-win` mit
+großer Torte), drei Teams und Beamer (Rad-Drehung im Spiegel).
+
+**Nächste Schritte:** D weiter mit Finale (Feud), Ergebnis, Menü, Handy.
+
 ## 2026-10-15 — `fd47efb` Late Night: PIH neu komponiert
 
 **David:** „Mach mit D weiter, als Nächstes PIH.“
