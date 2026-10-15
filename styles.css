@@ -1339,6 +1339,81 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 .jeopardy-clue-img { max-width: min(70vw, 620px); max-height: 42vh; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.5); border: 2px solid rgba(var(--fg-rgb),.1); }
 .jeopardy-answer-img { max-width: min(60vw, 520px); max-height: 40vh; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.5); border: 2px solid rgba(var(--green-rgb),.35); margin-top: 4px; display: none; }
 .jeopardy-answer-img.visible { display: block; animation: ddPop .4s ease; }
+/* Aufdecken der Frage, alle Richtungen ausser D (D hat eine eigene
+   Bauchbinden-Choreografie weiter unten). David 2026-10-15: "das ploppt nur
+   so auf" - bisher stand die Frage ohne jede Bewegung im Bild, weil das
+   Overlay schon offen ist und nur sein Inhalt getauscht wird.
+   Nur der Schritt, der gerade dazukommt (data-neu, js/jeopardy.js), spielt:
+   1. ein Lichtstoss in der Akzentfarbe geht vom Zentrum aus,
+   2. eine Lichtkante zieht sich unter der Frage auf,
+   3. die Woerter (span.jw) klappen einzeln aus der Tiefe nach vorn, aus der
+      Unschaerfe, mit kurzem Nachfedern - die Frage baut sich lesbar auf,
+   4. Betrag bekommt einen Schlag, Bilder steigen nach.
+   Die Antwort kommt als Stempel: gross, gesperrt, unscharf -> scharf.
+   Alle Endzustaende sind "none": das Standbild bleibt wie vorher. */
+.jeopardy-clue-text .jw { display: inline-block; }
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu~="frage"]::after,
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu~="antwort"]::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: -1;
+  background: radial-gradient(ellipse 60% 45% at 50% 50%, rgba(var(--gold-rgb),.42), rgba(var(--gold-rgb),.12) 45%, transparent 72%);
+  animation: jqStoss 1.1s cubic-bezier(.2,.7,.2,1) both;
+}
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu="antwort"]::after {
+  background: radial-gradient(ellipse 60% 45% at 50% 62%, rgba(var(--green-rgb),.45), rgba(var(--green-rgb),.12) 45%, transparent 72%);
+}
+:root:not([data-theme="D"]) .jeopardy-clue-overlay { isolation: isolate; }
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu~="frage"] .jeopardy-clue-text { position: relative; perspective: 700px; }
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu~="frage"] .jeopardy-clue-text::after {
+  content: ''; position: absolute; left: 4%; right: 4%; bottom: -10px; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-text), transparent);
+  box-shadow: 0 0 18px rgba(var(--gold-rgb),.9);
+  animation: jqKante 1.6s cubic-bezier(.2,.8,.2,1) both;
+}
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu~="frage"] .jeopardy-clue-text .jw {
+  transform-origin: 50% 100%;
+  animation: jqWort .7s calc(.12s + min(calc(var(--i, 0) * 55ms), 1.3s)) cubic-bezier(.2,.9,.25,1.15) both;
+}
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu~="frage"] .jeopardy-clue-pts { animation: jqSchlag .55s cubic-bezier(.3,1.6,.4,1) both; }
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu~="frage"] :is(.jeopardy-clue-img, .jeopardy-stage, .jeopardy-series, .jeopardy-steps) { animation: jqHoch .8s .3s cubic-bezier(.2,.9,.25,1.1) both; }
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu="verdeckt"] .jeopardy-clue-blank { animation: jqHoch .6s .1s cubic-bezier(.2,.8,.2,1) both; }
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu~="antwort"] .jeopardy-answer-text.visible { animation: jqStempel .75s cubic-bezier(.2,.9,.3,1.2) both; }
+:root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu~="antwort"] .jeopardy-answer-img.visible { animation: jqHoch .7s .25s cubic-bezier(.2,.9,.25,1.1) both; }
+@keyframes jqStoss {
+  0%   { opacity: 0; transform: scale(.3); }
+  25%  { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+@keyframes jqKante {
+  0%   { opacity: 0; transform: scaleX(0); }
+  35%  { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+@keyframes jqWort {
+  0%   { opacity: 0; transform: translateY(.5em) rotateX(-85deg) scale(.85); filter: blur(8px); }
+  55%  { opacity: 1; filter: blur(0); }
+  75%  { transform: translateY(-.05em) rotateX(10deg) scale(1.03); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+@keyframes jqSchlag {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.25); filter: brightness(1.6); }
+  100% { transform: none; filter: none; }
+}
+@keyframes jqHoch {
+  0%   { opacity: 0; transform: translateY(28px) scale(.94); filter: blur(6px); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+@keyframes jqStempel {
+  0%   { opacity: 0; transform: scale(1.9); filter: blur(12px); letter-spacing: .4em; }
+  50%  { opacity: 1; filter: blur(0); }
+  70%  { transform: scale(.96); }
+  100% { opacity: 1; transform: none; filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu]::after,
+  :root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu] .jeopardy-clue-text::after { display: none; }
+  :root:not([data-theme="D"]) .jeopardy-clue-overlay[data-neu] :is(.jw, .jeopardy-clue-pts, .jeopardy-clue-img, .jeopardy-stage, .jeopardy-series, .jeopardy-steps, .jeopardy-clue-blank, .jeopardy-answer-text, .jeopardy-answer-img) { animation: none !important; }
+}
 /* Staged (progressively revealed) image */
 .jeopardy-stage {
   position: relative; border-radius: 12px; overflow: hidden;
