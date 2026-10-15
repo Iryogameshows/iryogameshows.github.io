@@ -5079,6 +5079,38 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="D"] #pih-screen .pih-score.picked { background: #FF5B1F; box-shadow: none; padding-inline: 10px; }
 :root[data-theme="D"] #pih-screen .pih-score.picked :is(.pih-score-name, .pih-score-pts, .pih-rank) { color: #0E0E0E; }
 
+/* ── TP: Rad + Frage links, Teams mit Tortenstuecken als Spalte rechts ──
+   Vorher: zwei hohe Teamkarten mittig ueber dem Bild, Rad und Frage
+   darunter. Jetzt wie Feud: Kicker oben links, Rad und Frage als Buehne,
+   rechts die Teams untereinander - Torte klein links, Name und Stand
+   daneben. Laut ist die Frage. */
+:root[data-theme="D"] #tp-screen.active {
+  display: grid; max-width: var(--d-breit); padding-top: 0;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  grid-template-areas: "kick teams" "board teams"; grid-template-rows: auto 1fr;
+  column-gap: 56px; row-gap: 0; align-items: start;
+}
+:root[data-theme="D"] #tp-screen .round-bar { grid-area: kick; justify-self: start; }
+:root[data-theme="D"] #tp-screen .round-bar::before { content: 'On Air'; }
+:root[data-theme="D"] #tp-screen .round-bar .pts { font-family: 'Instrument Sans', sans-serif; font-weight: 600; font-size: .72rem; letter-spacing: 3px; color: #FF5B1F; }
+:root[data-theme="D"] #tp-screen .tp-board { grid-area: board; justify-content: flex-start; flex-wrap: nowrap; gap: 44px; padding-top: 26px; }
+:root[data-theme="D"] #tp-screen .tp-wheel { width: clamp(220px, 40vh, 300px); height: clamp(220px, 40vh, 300px); flex: none; }
+:root[data-theme="D"] #tp-screen .tp-side { min-width: 0; }
+:root[data-theme="D"] #tp-screen .tp-stage { border-top: 0; padding-top: 0; }
+:root[data-theme="D"] #tp-screen .tp-question { font-size: clamp(2.2rem, 3vw + 1vh, 3.6rem); line-height: .92; letter-spacing: -.2px; text-wrap: balance; }
+:root[data-theme="D"] #tp-screen .tp-answer { font-size: clamp(1.4rem, 3.4vh, 2rem); }
+:root[data-theme="D"] #tp-screen .tp-top { grid-area: teams; flex-direction: column; flex-wrap: nowrap; gap: 22px; margin: 4px 0 0; }
+:root[data-theme="D"] #tp-screen .tp-team:is(.red, .blue, .green) {
+  display: grid; grid-template-columns: auto 1fr; grid-template-areas: "pie name" "pie sub";
+  align-items: center; justify-items: start; column-gap: 16px; row-gap: 2px;
+  padding: 14px 0 10px; background: none; box-shadow: inset 0 3px 0 rgb(var(--tc)); transform: none;
+}
+:root[data-theme="D"] #tp-screen .tp-team.turn { box-shadow: inset 0 3px 0 rgb(var(--tc)), inset 0 -3px 0 #FF5B1F; }
+:root[data-theme="D"] #tp-screen .tp-team .tp-pie { grid-area: pie; width: 64px; height: 64px; }
+:root[data-theme="D"] #tp-screen .tp-team-name { grid-area: name; align-self: end; font-size: clamp(1.6rem, 4vh, 2.2rem); line-height: .95; }
+:root[data-theme="D"] #tp-screen .tp-team.turn .tp-team-name { color: #FF5B1F; }
+:root[data-theme="D"] #tp-screen .tp-team-sub { grid-area: sub; align-self: start; font-size: .7rem; letter-spacing: 3px; color: var(--d-dim); }
+
 /* Late Night deckt auf wie eine Bauchbinde: von links aufgezogen. */
 @keyframes thDWisch {
   0%   { clip-path: inset(0 100% 0 0); }
