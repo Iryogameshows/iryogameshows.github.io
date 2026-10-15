@@ -12,6 +12,33 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `fabf7c1` Late Night: Wort-für-Wort-Aufdecken, bessere Assets
+
+**David:** „D gefällt mir soweit gut, nur das Fragen aufdecken passt wieder nicht —
+ploppt nur auf ohne irgendwas.“ Und: „nicht nur Animationen, sondern auch die
+Assets selbst hochwertiger“.
+
+**Gemacht:** `jeopardyWoerter()` (js/jeopardy.js) setzt die Frage in Wort-Spans mit
+`--i`; D: Balken 0,62 s, dahinter steigen die Wörter gestaffelt aus der Unschärfe
+auf. Assets: `assets/d/skyline.svg` (zwei Häuserreihen, Tanks, Antennen,
+Fensterraster), On-Air als gefülltes Schild, X gezeichnet, „Im Topf“.
+
+**Warum / Fallstricke:** Das „Ploppen“ ließ sich NICHT nachstellen — lokal, auf der
+Live-Seite (headless, `86d157d` ausgeliefert) und im Beamer-Popout liefen
+`thDZeile`/`thDBalken` jedes Mal (per `getAnimations()` nachgesehen). Vermutung:
+Fenster vor dem Deploy geöffnet → alte styles.css. Unabhängig davon war der
+Block-auf-einmal-Effekt zu schwach; jetzt Wort für Wort. Skyline als Datei statt
+Data-URI (26 KB hätten styles.css aufgebläht).
+
+**Geprüft:** `shots.js --themes D` 22 ohne Befunde; Studio-Blau (feud, jeop, wwm)
+unverändert, Basis `jeop-frage`/`jeop-antwort` neu; `ablauf.js` 49/49;
+`check.js`/`--types` sauber.
+
+**Offen:** Davids Blick auf das neue Aufdecken (mit Strg+F5 in Haupt- UND
+Beamerfenster); Show-Logos in D noch das allgemeine Symbol + Schrift; übrige
+D-Screens (WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy) noch nicht neu
+komponiert; andere Richtungen ploppen weiter.
+
 ## 2026-10-15 — `afa1045` Late Night neu komponiert, Jeopardy-Aufdecken neu
 
 **Davids Kritik:** Die Richtungen „sehen kaum anders aus — als hättest du es leicht
