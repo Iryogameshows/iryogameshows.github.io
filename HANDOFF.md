@@ -12,6 +12,26 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `62d42db` Late Night: Ergebnis als Abspann-Karte
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem Finale-Block. Auf `#result-screen` steht
+die Show-Marke jetzt klein oben links wie auf den Spiel-Screens; vorher stand sie dort groß und mittig,
+weil `#result-screen` nicht in der Liste der Logo-Regel ist. Eigene Regel über `body:has(#result-screen.active)`.
+Darunter: Kicker „Endstand“ (orangenes Schild, `.winner-text::before`), der Sieger als riesige
+Schlagzeile, darunter eine Haarlinie und der Stand mit großen Zahlen. Die Knöpfe stehen linksbündig.
+Das Pokal-Emoji (`.result-icon`) ist in D ausgeblendet. Ein Farb-Emoji passt nicht zur Sendegrafik,
+und es wäre neben der Schlagzeile ein zweites lautes Ding.
+
+**Warum nur Schrift beim Stand:** Der Stand kommt als Text mit `<br>` aus vier Dateien (`feud.js`,
+`jeopardy-ui.js`, `wwds.js`, `tournament.js`). Zeilen-Elemente gibt es nicht, Markup und JS sind nicht
+angefasst. Deshalb ist der Sieger nicht farbig hervorgehoben.
+
+**Geprüft:** `ergebnis` in allen 19 Richtungen bei 1280×720 ohne Befund. D bei 1280×800 und 1920×1080
+ohne Befund, `--reduced` ohne Befund. Bild angesehen. `check.js` sauber.
+
+**Ungeprüft:** drei Teams, Turnier-Ergebnis (lange Zeile „gewinnt das Turnier! 🏆“), Buzzer-Bestenliste
+(`#result-leaderboard`) und Konfetti.
+
 ## 2026-10-15 — `99c9c3b` Late Night: Feud-Finale neu komponiert
 
 **David:** „Mach mit D weiter, als Nächstes das Feud-Finale.“ Dazwischen kam: „warum fragst du auf einmal
