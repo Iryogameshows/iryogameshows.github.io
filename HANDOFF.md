@@ -12,6 +12,39 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-15 — `77fd44a` Late Night am Beamer: lebende Stadt, große Momente
+
+**David:** „bei den Intros hab ich damals gesagt du sollst geisteskrank übertreiben,
+das sollst du auch bei den designs jetzt machen“.
+
+**Gemacht:** `mainscreen/buehne.js` — Beamer spielt große Momente selbst (Muster
+von `aufdecken.js`, BAUPLAN 4.8), Regie je Richtung (`REGIE.D`): lebende Stadt
+(Canvas: Fenster an/aus, Antennen, Suchscheinwerfer, Flugzeug), Antwort-Schlag
+(Balken quer, Blitz, Funken, Wackler, Zählwerk, dann FLIP auf die Zeile), X-Schlag,
+Runden-Titelkarte, Punkte-Sprung. Auslöser: Klassen-/Textänderungen im
+gespiegelten DOM (`open`, `lit`, `#round-info`, `.t-score`).
+
+**Fund:** In `mainscreen/index.html` war `html{background}` gesetzt → der
+`body`-Hintergrund malte über alle `z-index:-1`-Ebenen. Skyline (D), Gitterboden (B),
+Sonnenstrahlen (E), Falz (L) waren **am Beamer nie sichtbar**. Jetzt trägt mit
+Richtung das `<html>` den Grund, `<body>` ist durchsichtig.
+
+**Fallstricke beim Testen:** Popout muss offen sein, BEVOR das Brett gebaut wird
+(sonst fehlen die Zellen im Spiegel); `pop.bringToFront()`, sonst läuft im
+Hintergrund-Popup kein `requestAnimationFrame` (Canvas leer); `gsap.timeline`
+abfangen und pausieren, dann `.time(s)` anfahren (Scratchpad `buehne-test.js`).
+GSAP-`fromTo` rendert sofort — Funken brauchen `immediateRender:false`, sonst
+stehen sie schon vor dem Schlag im Bild.
+
+**Geprüft:** Antwort- und X-Schlag Bild für Bild im Popout, Stadt im Ruhebild,
+keine Seitenfehler; `ablauf.js` 49/49; `check.js` sauber (prüft `mainscreen/`
+nicht), `node --check` ok.
+
+**Offen:** Nur am Beamer (Hauptfenster zeigt die CSS-Fassung). Runden-Karte und
+Punkte-Sprung nicht im Bild geprüft. Jeopardy/WWM/andere Shows in D noch ohne
+Bühnen-Momente. Echte Rechnerlast mit Canvas + GSAP am Beamer nicht gemessen.
+Übrige Richtungen: gleiche Stufe offen.
+
 ## 2026-10-15 — `fabf7c1` Late Night: Wort-für-Wort-Aufdecken, bessere Assets
 
 **David:** „D gefällt mir soweit gut, nur das Fragen aufdecken passt wieder nicht —
