@@ -5762,6 +5762,206 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   100% { transform: scaleY(1); filter: none; }
 }
 
+/* ══ E · Komposition (2026-10-16) ══════════════════════════════════════════
+   Bis hierher war E eine 70er-Farbe auf dem mittig gestapelten
+   Standard-Layout: Logo gross in der Mitte, Teamplaketten quer darueber,
+   darunter ein schmales Brett, der Rest Kakaobraun.
+   Der Entwurf ist eine Samstagabend-Buehne: die Buehne fuellt das Bild, und
+   die Mitspieler stehen davor - als runde Plaketten in einer Reihe am
+   unteren Rand, wie Pulte vor der Kulisse. Die Sonnenstrahlen kommen von
+   unten, also stehen die Plaketten genau dort, wo das Licht herkommt.
+   Grundsatz: eine Flaeche, nicht drei Stapel. Laut ist die Frage; die
+   Plaketten sind klein und gleich gross, Senf nur dort, wer am Zug ist.
+   Markup und JavaScript sind nicht angefasst. */
+:root[data-theme="E"] { --e-breit: min(1180px, 94vw); }
+
+/* Der Screen fuellt den Rest des Fensters, damit die Buehne bis zu den
+   Plaketten reicht. `flex: 1 0 auto`: wachsen ja, schrumpfen nie - sonst
+   wuerde ein langer Screen gestaucht und liefe aus dem Beamerbild. */
+:root[data-theme="E"] :is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active {
+  flex: 1 0 auto;
+}
+/* Das Logo ist die Titelkarte: kleiner und dichter ueber der Buehne. */
+:root[data-theme="E"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo {
+  margin: 16px 0 6px; }
+:root[data-theme="E"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo svg {
+  width: 240px; max-height: 76px; }
+
+/* ── Die Plakettenreihe unten: gleich breite runde Schilder ── */
+:root[data-theme="E"] :is(#game-screen, #wwds-screen, #jeopardy-screen, #tp-screen) :is(.scoreboard, .wwds-top, .jeopardy-scores, .tp-top) {
+  width: 100%; max-width: none; margin: 14px 0 0; padding: 6px 0 0; justify-content: center; gap: 26px;
+}
+:root[data-theme="E"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.team-panel, .wwds-team, .jeopardy-team):is(.red, .blue, .green) {
+  flex: 0 1 300px; padding: 10px 20px;
+}
+:root[data-theme="E"] #game-screen .team-panel .t-score { font-size: clamp(1.9rem, 5.2vh, 2.6rem); }
+:root[data-theme="E"] #game-screen .team-strikes { margin-top: 4px; }
+:root[data-theme="E"] #game-screen .strike-pip { width: 22px; height: 22px; font-size: .72rem; }
+
+/* ── Feud: Frage und Liste fuellen die Buehne, Plaketten davor ── */
+:root[data-theme="E"] #game-screen.active {
+  display: grid; width: 100%; max-width: var(--e-breit); padding-top: 0;
+  grid-template-areas: "kick" "board" "teams"; grid-template-rows: auto 1fr auto; row-gap: 0;
+}
+:root[data-theme="E"] #game-screen .round-bar { grid-area: kick; justify-content: center; padding: 2px 0 10px; }
+:root[data-theme="E"] #game-screen .scoreboard { grid-area: teams; }
+:root[data-theme="E"] #game-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; }
+:root[data-theme="E"] #game-screen .answers { flex: 1; align-content: stretch; }
+:root[data-theme="E"] #game-screen .tile { min-height: clamp(42px, 8.5vh, 70px); }
+:root[data-theme="E"] #game-screen .q-text { font-size: clamp(1.3rem, 2.4vw + .4vh, 2.1rem); line-height: 1.15; }
+
+/* ── Jeopardy: das Faecherbrett fuellt die Buehne ── */
+:root[data-theme="E"] #jeopardy-screen.active {
+  display: grid; width: 100%; max-width: var(--e-breit); padding-top: 0;
+  grid-template-areas: "kick" "board" "teams"; grid-template-rows: auto 1fr auto; row-gap: 0;
+}
+:root[data-theme="E"] #jeopardy-screen .round-bar { grid-area: kick; justify-content: center; padding: 2px 0 10px; }
+:root[data-theme="E"] #jeopardy-screen .jeopardy-board { grid-area: board; align-self: stretch; }
+:root[data-theme="E"] #jeopardy-screen .jeopardy-scores { grid-area: teams; }
+:root[data-theme="E"] #jeopardy-screen .jeopardy-cell { font-size: clamp(1.4rem, 4vh, 2rem); }
+
+/* Jeopardy-Frage: Kategorie als Pille oben, Betrag im Ringschild rechts,
+   die Frage in Shrikhand ueber die Buehne - keine Karte in der Mitte. */
+:root[data-theme="E"] .jeopardy-clue-overlay {
+  display: grid; align-content: center; justify-items: stretch;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "cat pts" "frage frage" "antwort antwort";
+  padding: 8vh max(4vw, (100vw - var(--e-breit)) / 2); column-gap: 36px; row-gap: 0;
+}
+:root[data-theme="E"] .jeopardy-clue-overlay > * { grid-column: 1 / -1; }
+:root[data-theme="E"] .jeopardy-clue-cat {
+  grid-area: cat; align-self: center; justify-self: start; padding: 7px 22px; border-radius: 999px;
+  background: #E8622C; color: #F6E7CB;
+}
+:root[data-theme="E"] .jeopardy-clue-pts {
+  grid-area: pts; align-self: center; justify-self: end; padding: 10px 26px; border-radius: 999px;
+  background: #2E1A10; box-shadow: var(--e-ringe);
+}
+:root[data-theme="E"] .jeopardy-clue-text {
+  grid-area: frage; max-width: none; text-align: left; margin-top: 44px;
+  font-size: clamp(2rem, 3.6vw + .8vh, 3.6rem); line-height: 1.1;
+}
+:root[data-theme="E"] .jeopardy-clue-blank { grid-area: frage; justify-self: start; margin-top: 44px; border-radius: 999px; }
+:root[data-theme="E"] .jeopardy-answer-text { grid-area: antwort; justify-self: start; text-align: left; margin-top: 28px; border-radius: 999px; }
+
+/* ── WWM: Punktbogen oben, Frage als Band, Karten fuellen die Buehne ── */
+:root[data-theme="E"] #wwm-screen.active { width: 100%; max-width: var(--e-breit); padding-top: 0; }
+:root[data-theme="E"] #wwm-screen .wwm-wrap { flex: 1; }
+:root[data-theme="E"] #wwm-screen .wwm-main { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="E"] #wwm-screen .wwm-answers { flex: 1; align-content: stretch; }
+:root[data-theme="E"] #wwm-screen .wwm-opt { min-height: clamp(58px, 11vh, 88px); }
+:root[data-theme="E"] #wwm-screen .wwm-q { font-size: clamp(1.4rem, 2.6vw + .5vh, 2.2rem); }
+
+/* ── WWDS: Buehne fuellt, Plaketten davor ── */
+:root[data-theme="E"] #wwds-screen.active {
+  display: grid; width: 100%; max-width: var(--e-breit); padding-top: 0;
+  grid-template-areas: "kick" "board" "teams"; grid-template-rows: auto 1fr auto; row-gap: 0;
+}
+:root[data-theme="E"] #wwds-screen .round-bar { grid-area: kick; justify-content: center; padding: 2px 0 10px; }
+:root[data-theme="E"] #wwds-screen .wwds-top { grid-area: teams; flex-wrap: nowrap; }
+:root[data-theme="E"] #wwds-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; }
+:root[data-theme="E"] #wwds-screen #wwds-stage { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="E"] #wwds-screen .wwds-grid { flex: 1; align-content: stretch; }
+:root[data-theme="E"] #wwds-screen .wwds-cat { min-height: clamp(48px, 9vh, 80px); }
+:root[data-theme="E"] #wwds-screen .wwds-opts { flex: 1; align-content: stretch; }
+:root[data-theme="E"] #wwds-screen .wwds-opt { min-height: clamp(46px, 8.5vh, 74px); }
+/* Mit Publikumsjoker kommt ein Balkenbild dazu - ohne flachere Antworten
+   stand WWDS 50 px unter dem Beamerbild. */
+:root[data-theme="E"] #wwds-screen:has(.wwds-aud) .wwds-opt { min-height: clamp(38px, 6vh, 52px); }
+:root[data-theme="E"] #wwds-screen .wwds-aud { height: clamp(62px, 11vh, 84px); }
+:root[data-theme="E"] #wwds-screen:has(.wwds-aud) .wwds-q { padding-block: 6px; margin-bottom: 8px !important; }
+:root[data-theme="E"] #wwds-screen:has(.wwds-aud) .wwds-opts { gap: 6px; }
+:root[data-theme="E"] #wwds-screen:has(.wwds-aud) .scoreboard,
+:root[data-theme="E"] #wwds-screen:has(.wwds-aud) .wwds-top { margin-top: 8px; }
+:root[data-theme="E"] #wwds-screen:has(.wwds-aud) .board { padding: 16px 22px; }
+:root[data-theme="E"] #wwds-screen:has(.wwds-aud) .wwds-team { padding-block: 6px; }
+:root[data-theme="E"] #wwds-screen .wwds-team .wt-money { font-size: clamp(1.3rem, 3.6vh, 1.8rem); }
+
+/* ── DDF: Kandidaten als Plakettenreihe unten, Frage auf der Buehne ──
+   Der innere Wrapper traegt inline `height:100%` - zirkulaer, sobald der
+   Screen mit dem Inhalt waechst. Daher `height:auto` plus `flex:1`. */
+:root[data-theme="E"] #ddf-screen.active { width: 100%; max-width: var(--e-breit); padding-top: 0; }
+:root[data-theme="E"] #ddf-screen > div {
+  height: auto !important; flex: 1; display: grid !important;
+  grid-template-areas: "kick" "uhr" "frage" "media" "antwort" "note" "vote" "spieler";
+  grid-template-rows: auto auto 1fr auto auto auto auto auto;
+}
+:root[data-theme="E"] #ddf-screen .ddf-alive { grid-area: kick; margin: 0 0 4px; }
+:root[data-theme="E"] #ddf-timer { grid-area: uhr; font-family: 'Shrikhand', serif; font-weight: 400 !important; color: #F2B33D; }
+:root[data-theme="E"] #ddf-screen .ddf-question { grid-area: frage; display: flex; align-items: center; justify-content: center; }
+:root[data-theme="E"] #ddf-screen .ddf-media-bar { grid-area: media; }
+:root[data-theme="E"] #ddf-screen .ddf-answer { grid-area: antwort; }
+:root[data-theme="E"] #ddf-screen .ddf-note { grid-area: note; }
+:root[data-theme="E"] #ddf-screen .ddf-vote-grid { grid-area: vote; }
+:root[data-theme="E"] #ddf-screen .ddf-players { grid-area: spieler; max-width: none; margin: 14px 0 0; }
+
+/* ── PIH: Rangliste als Plakettenreihe unten, Artikel und Preis auf der Buehne ── */
+:root[data-theme="E"] #pih-screen.active { width: 100%; max-width: var(--e-breit); padding-top: 0; }
+:root[data-theme="E"] #pih-screen > div {
+  height: auto !important; flex: 1; display: grid !important;
+  grid-template-areas: "teams" "uhr" "artikel" "bild" "media" "preis" "note" "gebote" "rang";
+  grid-template-rows: auto auto auto 1fr auto auto auto auto auto;
+}
+:root[data-theme="E"] #pih-teams { grid-area: teams; }
+:root[data-theme="E"] #pih-timer { grid-area: uhr; font-family: 'Shrikhand', serif; font-weight: 400 !important; color: #F2B33D; }
+:root[data-theme="E"] #pih-screen .pih-item { grid-area: artikel; }
+:root[data-theme="E"] #pih-screen .pih-stage { grid-area: bild; display: flex; align-items: center; justify-content: center; min-height: 0; }
+/* Ohne Deckel schiebt das Produktfoto die Rangliste aus dem Beamerbild. */
+:root[data-theme="E"] #pih-screen .pih-stage :is(img, video) { max-height: min(24vh, 200px); width: auto; }
+/* Acht Mitspieler ergeben zwei Reihen Plaketten; ohne diese Straffung stand
+   PIH 49 px unter dem Beamerbild. */
+:root[data-theme="E"] #pih-screen .pih-scores { gap: 6px; }
+:root[data-theme="E"] #pih-screen .pih-score { padding: 3px 12px; gap: 7px; }
+:root[data-theme="E"] #pih-screen .pih-score .pmini-av { width: 22px; height: 22px; font-size: .8rem; }
+:root[data-theme="E"] #pih-screen .pih-bid-row { padding-block: 3px; }
+:root[data-theme="E"] #pih-screen .pih-media-bar { grid-area: media; }
+:root[data-theme="E"] #pih-screen .pih-price { grid-area: preis; }
+:root[data-theme="E"] #pih-screen .pih-note { grid-area: note; }
+:root[data-theme="E"] #pih-screen .pih-bid-grid { grid-area: gebote; }
+:root[data-theme="E"] #pih-screen .pih-scores { grid-area: rang; max-width: none; margin-top: 10px; }
+
+/* ── TP: Rad und Frage auf der Buehne, Teams als Plaketten davor ── */
+:root[data-theme="E"] #tp-screen.active {
+  display: grid; width: 100%; max-width: var(--e-breit); padding-top: 0;
+  grid-template-areas: "kick" "board" "teams"; grid-template-rows: auto 1fr auto; row-gap: 0;
+}
+:root[data-theme="E"] #tp-screen .round-bar { grid-area: kick; justify-content: center; padding: 2px 0 10px; }
+:root[data-theme="E"] #tp-screen .tp-top { grid-area: teams; flex-wrap: nowrap; }
+:root[data-theme="E"] #tp-screen .tp-team:is(.red, .blue, .green) {
+  flex: 0 1 300px; display: flex; flex-direction: row; align-items: center; gap: 16px; padding: 10px 20px;
+}
+:root[data-theme="E"] #tp-screen .tp-team .tp-pie { width: 52px; height: 52px; flex: none; margin: 0; }
+:root[data-theme="E"] #tp-screen .tp-board { grid-area: board; align-self: center; width: 100%; justify-content: center; }
+
+/* ── Feud-Finale: Frage und Liste auf der Buehne, Stand als Plaketten davor ── */
+:root[data-theme="E"] #finale-screen.active {
+  display: grid; width: 100%; max-width: var(--e-breit); padding-top: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "kopf uhr" "board board" "vergleich vergleich" "stand stand";
+  grid-template-rows: auto 1fr auto auto; column-gap: 28px; row-gap: 0;
+}
+:root[data-theme="E"] #finale-screen .finale-header { grid-area: kopf; align-self: center; display: flex; align-items: baseline; gap: 16px; text-align: left; }
+:root[data-theme="E"] #finale-screen .finale-timer { grid-area: uhr; justify-self: end; align-self: center; }
+:root[data-theme="E"] #finale-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; margin-top: 10px; }
+:root[data-theme="E"] #finale-screen .answers { flex: 1; align-content: stretch; }
+:root[data-theme="E"] #finale-screen .finale-big-q { flex: 1; display: flex; align-items: center; justify-content: center; }
+/* Von js/feud.js erzeugt - ohne eigene Flaeche landet es per
+   Auto-Platzierung oben rechts im Raster. */
+:root[data-theme="E"] #finale-reveal-comparison { grid-area: vergleich; justify-content: center; margin-top: 12px; }
+:root[data-theme="E"] #finale-screen .finale-scores { grid-area: stand; justify-content: center; gap: 26px; margin-top: 14px; }
+
+/* ── Ergebnis: Titelkarte im Ringschild ──
+   Mittig bleibt richtig - am Ende der Sendung steht der Sieger in der
+   Bildmitte. Veredelt ueber das Ringschild, nicht ueber Umbau. */
+:root[data-theme="E"] #result-screen.active { width: 100%; max-width: min(860px, 92vw); }
+:root[data-theme="E"] #result-screen .result-card { width: 100%; border-radius: 36px; box-shadow: var(--e-ringe); }
+
+/* ── Menue: Programm des Samstagabends ──
+   Statt eines 720-px-Blocks in der Mitte vier Spalten ueber die volle
+   Breite. Hostseite, kommt nicht auf den Beamer. */
+:root[data-theme="E"] #menu-screen.active { width: 100%; max-width: var(--e-breit); }
+:root[data-theme="E"] #menu-screen .menu-cards { grid-template-columns: repeat(4, 1fr); max-width: none; }
+
 /* ── F · Comic: Panels mit schwarzen Stegen, Rasterpunkte, Sternblitz ── */
 :root[data-theme="F"] {
   --brd-surface: #FFFFFF;
