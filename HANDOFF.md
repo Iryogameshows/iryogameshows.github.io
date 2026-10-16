@@ -12,6 +12,37 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-16 — `0b0110a` Neon-Bar (K): Schilder hängen an der Röhre
+
+**Gemacht:** Neuer Abschnitt „K · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+L-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Kein Kasten mehr:** `.board` und `.jeopardy-board` verlieren Hintergrund, Neonrand und
+  Polsterung. Eine Röhre ist eine Linie, kein Rahmen um alles.
+- **Schilder an der Kante:** Die Teamnamen stehen per Grid-Fläche `teams` ganz oben,
+  `justify-content: space-between`, das erste um −1,2°, das letzte um +1° gedreht.
+- **Die Röhre** darunter ist ein eigenes `::after` (2 px Creme plus zwei Lichthöfe), **nicht**
+  ein `box-shadow` der Teamreihe. Erster Versuch war genau das — ein Schein am Kasten leuchtet
+  rundherum und sah aus wie ein gerahmter Kasten, also das Gegenteil des Ziels. Im Bild
+  `feud-K.png` war das sofort zu sehen.
+- Dasselbe `::after` trägt der Finale-Stand.
+
+**Geprüft:** `node shots.js --themes K` über alle 27 Zustände bei 1280×720: keine Befunde außer
+WWDS mit Joker (siehe unten), nach dessen Behebung ein gezielter Lauf `wwds-joker` → **passt**.
+Feud, Jeopardy, TP und Feud-Finale nach der ::after-Umstellung erneut geschossen und angesehen.
+`node check.js` sauber.
+
+**Zwischenbefund, der Zeit gekostet hat:** WWDS mit Publikumsjoker blieb über drei Anläufe exakt
+5 px zu hoch — kleinere Schrift und flachere Pillen änderten **nichts**. Das Bild zeigte warum:
+`.wwds-opts` hatte `flex: 1` und nahm die ganze Resthöhe, also rutschte das Balkenbild ans untere
+Ende und seine Beschriftung (A B C) stand unter dem Bildrand. Lösung:
+`#wwds-screen:has(.wwds-aud) .wwds-opts { flex: 0 0 auto }`. **Lehre:** wenn eine Maßnahme die
+Zahl nicht bewegt, ist die Ursache eine andere — ins Bild sehen statt weiter zu schrumpfen.
+
+**Ungeprüft:** Studio-Blau nicht mit `--basis`/`--vergleich` gemessen (alle Regeln auf
+`[data-theme="K"]` begrenzt), 1280×800, 1920×1080, `--reduced`, `ablauf.js`, `geraete.js`,
+echter Beamer, Gamepad, Handy-Buzzer.
+
 ## 2026-10-16 — `317f491` Salon (I): der Screen wird der Spieltisch
 
 **Gemacht:** Neuer Abschnitt „I · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
