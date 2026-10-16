@@ -12,6 +12,39 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-16 — Abschluss-Prüfung aller 19 Richtungen (Stand `abd11c8`)
+
+Nach den sechs Kompositions-Commits (B `45f52e7`, E `eb35967`, I `317f491`, K `0b0110a`,
+L `8f312b7`, O `4deaace`) ein **voller Lauf**: `node shots.js` ohne Filter — 19 Richtungen ×
+27 Zustände bei 1280×720, rund 20 Minuten.
+
+**Ergebnis: 1 Befund — `feud F: 78 px höher als das Fenster`.** F (Comic) ist nicht angefasst
+worden. Nachgegangen:
+
+1. Eigener Git-Worktree auf `39bb00e` (Stand vor dieser Sitzung), `--themes F --shows feud`
+   → **passt**.
+2. Derselbe Worktree nacheinander auf alle sechs Kompositions-Commits, je `--themes F --shows
+   feud` → **sechsmal passt**, auch auf `4deaace`.
+3. Im Arbeitsverzeichnis `--themes E,F --shows feud` → passt. `--shows feud` über alle 19
+   Richtungen → passt.
+
+Also **nicht reproduzierbar**: ein Ausreißer im langen Lauf (vermutlich Schrift- oder
+Zeitproblem nach 20 Minuten), kein Fehler im Stand. Kein Fix nötig, aber im Auge behalten: wenn
+`feud F` wieder auffällt, ist es doch echt.
+
+**Studio-Blau:** nicht mit `--basis`/`--vergleich` gemessen — es gab keinen Basis-Stand von vor
+der Sitzung. Belegt ist es anders: ein Skript über die sechs neuen Blöcke hat jede Selektorzeile
+geprüft, **null Selektoren ohne `:root[data-theme="X"]`-Präfix** (die elf Treffer, die es meldet,
+sind Prozentzeilen in den `@keyframes` des D-Blocks von vorgestern). Dazu der Kontaktbogen
+`bogen-feud.png`: Studio und die zehn nicht angefassten Richtungen sehen unverändert aus, die
+sechs neuen fallen sofort auf.
+
+**Weiter ungeprüft (für alle sechs Richtungen):** 1280×800 und 1920×1080, `--reduced`,
+`ablauf.js`, `geraete.js`, der echte Beamer, `gamepad/index.html`, das Feud-Setup und die
+Sonderfälle je Show (TP-Drehphase und -Siegbild, DDF-Stichwahl, PIH-Superpreis-Finale,
+WWDS-Einsatzphase, Turnier-Ergebnis). Der Handy-Buzzer hat nur in B einen Kompositions-Teil
+bekommen.
+
 ## 2026-10-16 — `4deaace` Terminal (O): die Show füllt das Konsolenfenster
 
 **Gemacht:** Neuer Abschnitt „O · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
