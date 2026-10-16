@@ -12,6 +12,36 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-16 — `4deaace` Terminal (O): die Show füllt das Konsolenfenster
+
+**Gemacht:** Neuer Abschnitt „O · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+P-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Der Screen ist das Fenster:** 1 px Rahmen in Phosphorgrün (`box-shadow: 0 0 0 1px`), innen
+  ein Zeichen Luft. Das Brett darin verliert seinen eigenen Rahmen.
+- **Statuszeile unten:** `.round-bar` liegt als Grid-Fläche `status` am unteren Rand, invertiert
+  (Phosphor auf Schwarzgrün), über die volle Fensterbreite. `width: auto` statt
+  `calc(100% + 40px)` — mit `calc` blieb rechts eine Lücke, weil das Rasterfeld die Zeile ohnehin
+  auf Spaltenbreite zieht und die negativen Außenabstände dann zu kurz greifen.
+- **Teamfenster** stehen oben links nebeneinander, linksbündig. Die aktive Tafel bekommt
+  `padding-top: 34px`, weil die Marke „> am zug_" oben links sitzt und sich sonst mit der
+  Punktzahl überlagerte (im Bild `feud-O.png` gesehen).
+- Das Logo wird zur kleinen Kopfzeile links über dem Fenster.
+
+**Geprüft:** `node shots.js --themes O` über alle 27 Zustände bei 1280×720: **keine Befunde**.
+Nach den beiden Korrekturen gezielter Lauf über `feud, ddf, jeop, wwds-joker, tp, feud-finale,
+ergebnis` → keine Befunde. `node check.js` sauber. Bilder angesehen: Feud, Jeopardy, WWDS-Frage,
+DDF, PIH.
+
+**Offen, nicht gelöst:** Bei DDF bleiben die Prozesstabelle und die Frage mittig statt
+linksbündig, obwohl `#ddf-screen .ddf-players { max-width: none; width: 100% }` und
+`#ddf-screen .ddf-question { max-width: none; margin: 0 }` gesetzt sind und die übrigen Regeln
+desselben Blocks greifen (Statuszeile, Teamtafeln). Gemessen: der Tabellenblock ist 762 px breit
+in einem 1176 px breiten Fenster — weder `1000px` (O-Grundregel) noch volle Breite. Die Ursache
+ist **nicht gefunden**. Dass das Bild aktuell ist, ist belegt: md5 vor dem Lauf
+`c226a229…`, danach `5e111721…`. Es sieht nicht kaputt aus, nur nicht wie eine Konsolenausgabe.
+Nächster Schritt dafür: in der Seite mit DevTools nachsehen, welche Regel `width` gewinnt.
+
 ## 2026-10-16 — `8f312b7` New York (L): die Seite wird gesetzt statt gestapelt
 
 **Gemacht:** Neuer Abschnitt „L · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
