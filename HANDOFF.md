@@ -12,6 +12,43 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-16 — `eb35967` 70er (E): Komposition als Samstagabend-Bühne
+
+**Gemacht:** Neuer Abschnitt „E · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+F-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Bühne füllt, Plaketten davor:** Der Screen bekommt `flex: 1 0 auto`, das Brett dehnt sich über
+  die Resthöhe, und `.scoreboard` / `.wwds-top` / `.jeopardy-scores` / `.tp-top` rutschen per
+  Grid-Fläche `teams` an den unteren Rand — zentriert, gleich breite runde Schilder
+  (`flex: 0 1 300px`).
+- **DDF und PIH** bekommen den inneren Wrapper als Grid, damit Kandidatenreihe bzw. Rangliste
+  ebenfalls unten stehen. Dabei `height: auto !important` statt des inline gesetzten
+  `height: 100%` — das ist zirkulär, sobald der Screen mit dem Inhalt wächst.
+- **Jeopardy-Frage:** Kategorie als Orangepille links, Betrag im Ringschild (`--e-ringe`) rechts,
+  die Frage in Shrikhand darunter. Keine Karte in der Bildmitte mehr.
+- **Ergebnis** bleibt mittig (am Ende der Sendung steht der Sieger in der Bildmitte), bekommt aber
+  das Ringschild. **Menü** wird vierspaltig.
+
+**Warum nicht wie D oder B:** D ist eine Sendegrafik mit Schlagzeile links und schmaler Spalte
+rechts, B ein Automat mit HUD oben. E ist eine Varieté-Bühne: eine Fläche, davor die Pulte.
+Übernommen ist nur der Grundsatz — nichts schwebt mittig, genau ein lautes Ding je Bild.
+
+**Geprüft:** `node shots.js --themes E` über alle 27 Zustände bei 1280×720: **keine Befunde**
+(`turnier-host` 1840 px, `setup` 393 px, `menu` 72 px zu hoch sind Hostseiten, `HOST_SEITEN`).
+`node check.js` sauber (4131 Klammernpaare). Bilder angesehen: Feud, PIH, DDF, Jeopardy-Frage,
+WWDS mit Publikumsjoker.
+
+**Zwischenbefunde, die behoben wurden:** PIH war 49 px zu hoch (Produktfoto ohne Deckel plus zwei
+Reihen Ranglistenplaketten — jetzt `max-height: min(24vh,200px)` und straffere Zeilen).
+WWDS mit Publikumsjoker war 50 px zu hoch und brauchte vier Durchgänge (50 → 32 → 12 → 2 → 0 px):
+flachere Antwortpillen, gedeckelte Balkengrafik (`clamp(62px,11vh,84px)`), weniger Abstand um
+Frage und Plakettenreihe. Alles unter `#wwds-screen:has(.wwds-aud)`, greift also nur mit Joker.
+
+**Ungeprüft:** wie bei B — Studio-Blau nicht mit `--basis`/`--vergleich` gemessen (alle Regeln
+sind auf `[data-theme="E"]` begrenzt), ebenso 1280×800, 1920×1080, `--reduced`, `ablauf.js`,
+`geraete.js`, echter Beamer, Gamepad. Der Handy-Buzzer hat in E **keinen** Kompositions-Teil
+bekommen — der runde Polsterknopf des Entwurfs füllt die Seite schon.
+
 ## 2026-10-16 — `45f52e7` Arcade (B): Komposition wie am Automaten
 
 **Auftrag:** David, 2026-10-16: „mach alle nacheinander" — die übrigen Richtungen auf dieselbe Stufe
