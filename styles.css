@@ -7425,6 +7425,251 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   100% { opacity: 1; filter: none; transform: scale(1); }
 }
 
+/* ══ L · Komposition (2026-10-16) ══════════════════════════════════════════
+   Bis hierher war L eine Zeitungsfarbe auf dem mittig gestapelten
+   Standard-Layout: Logo gross in der Mitte, zwei Kaesten quer darueber,
+   darunter ein Block in der Bildmitte - ringsum leeres Papier.
+   Eine Zeitungsseite ist aber gesetzt, nicht gestapelt: oben der
+   Zeitungskopf mit Doppellinie, darunter die Zeile mit Datum und Ressort,
+   dann die Schlagzeile ueber die Breite, darunter der Satzspiegel in
+   Spalten - links der Text, rechts, durch eine Haarlinie getrennt, der
+   Kasten mit dem Stand ("Der Stand" statt "Standings").
+   Deshalb bleibt hier als einziger Richtung das Logo gross und mittig:
+   es ist der Zeitungskopf, kein Sendungslogo.
+   Grundsatz: Linien und Satz, keine Flaechen. Genau eine Schlagzeile je
+   Seite, alles andere ist Brotschrift und Spitzmarke.
+   Markup und JavaScript sind nicht angefasst. */
+:root[data-theme="L"] { --l-breit: min(1220px, 95vw); --l-linie: #1A1712; }
+
+/* Die Seite fuellt den Rest des Fensters. `flex: 1 0 auto`: wachsen ja,
+   schrumpfen nie - sonst wuerde eine lange Seite gestaucht und liefe aus
+   dem Beamerbild. */
+:root[data-theme="L"] :is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active {
+  flex: 1 0 auto; width: 100%; max-width: var(--l-breit); padding-top: 0;
+}
+/* Der Zeitungskopf: Name gross und mittig, Doppellinie darunter. */
+:root[data-theme="L"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo {
+  width: 100%; max-width: var(--l-breit); margin: 14px auto 0; padding-bottom: 10px;
+  border-bottom: 3px solid var(--l-linie);
+}
+:root[data-theme="L"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo svg {
+  width: clamp(240px, 26vw, 340px); max-height: 84px;
+}
+/* Die Zeile unter dem Kopf: Ressort, Ausgabe, Stand - in Kapitaelchen. */
+:root[data-theme="L"] :is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #tp-screen) .round-bar {
+  width: 100%; margin: 0; padding: 7px 0 8px; justify-content: space-between;
+  border-top: 1px solid var(--l-linie); border-bottom: 1px solid var(--l-linie);
+}
+/* Das Brett ist der Satzspiegel, kein Kasten darin. */
+:root[data-theme="L"] :is(#game-screen, #wwds-screen, #finale-screen) .board,
+:root[data-theme="L"] #jeopardy-screen .jeopardy-board {
+  background: none; box-shadow: none; border: 0; border-radius: 0; padding: 0;
+}
+
+/* ── Der Stand als Kasten in der rechten Spalte ── */
+:root[data-theme="L"] :is(#game-screen, #wwds-screen, #tp-screen) :is(.scoreboard, .wwds-top, .tp-top) {
+  flex-direction: column; flex-wrap: nowrap; width: 100%; max-width: none; margin: 0;
+  padding: 0 0 0 22px; gap: 14px; border-left: 1px solid var(--l-linie);
+}
+:root[data-theme="L"] :is(#game-screen, #wwds-screen, #tp-screen) :is(.scoreboard, .wwds-top, .tp-top)::before {
+  content: 'Der Stand'; padding-bottom: 8px; border-bottom: 1px solid var(--l-linie);
+  font-family: 'Old Standard TT', serif; font-size: .74rem; letter-spacing: 3px; text-transform: uppercase;
+}
+:root[data-theme="L"] :is(#game-screen, #wwds-screen) :is(.team-panel, .wwds-team):is(.red, .blue, .green) {
+  width: 100%; text-align: left;
+}
+:root[data-theme="L"] #game-screen .team-panel .t-score { font-size: clamp(2.2rem, 6vh, 3.2rem); }
+
+/* ── Feud: Schlagzeile ueber die Breite, Liste links, Stand rechts ── */
+:root[data-theme="L"] #game-screen.active {
+  display: grid; grid-template-columns: minmax(0, 1fr) 290px;
+  grid-template-areas: "zeile zeile" "frage frage" "board stand";
+  grid-template-rows: auto auto 1fr; column-gap: 26px; row-gap: 0; align-items: start;
+}
+:root[data-theme="L"] #game-screen .round-bar { grid-area: zeile; }
+:root[data-theme="L"] #game-screen .scoreboard { grid-area: stand; }
+:root[data-theme="L"] #game-screen .board { grid-area: board; display: contents; }
+:root[data-theme="L"] #game-screen .q-text {
+  /* Linksbuendig, weil die Spitzmarke "Umfrage:" als ::before davorsteht -
+     zentriert haengt sie schief neben der Schlagzeile. */
+  grid-area: frage; text-align: left; padding: 18px 0 16px; margin: 0 0 14px;
+  border-bottom: 1px solid var(--l-linie);
+  font-size: clamp(1.9rem, 3.4vw + .6vh, 3.2rem); line-height: 1.04; text-wrap: balance;
+}
+:root[data-theme="L"] #game-screen .answers { grid-area: board; align-content: stretch; align-self: stretch; }
+:root[data-theme="L"] #game-screen .tile { min-height: clamp(42px, 8.5vh, 70px); }
+
+/* ── Jeopardy: das Kreuzwortraetsel fuellt die Seite ── */
+:root[data-theme="L"] #jeopardy-screen.active {
+  display: grid; grid-template-areas: "zeile" "board" "stand"; grid-template-rows: auto 1fr auto; row-gap: 0;
+}
+:root[data-theme="L"] #jeopardy-screen .round-bar { grid-area: zeile; }
+:root[data-theme="L"] #jeopardy-screen .jeopardy-board { grid-area: board; align-self: stretch; margin-top: 14px; }
+:root[data-theme="L"] #jeopardy-screen .jeopardy-scores {
+  grid-area: stand; width: 100%; max-width: none; margin: 14px 0 0; padding-top: 10px;
+  justify-content: flex-start; gap: 48px; border-top: 1px solid var(--l-linie);
+}
+
+/* Jeopardy-Frage: die Seite ist der Artikel - Spitzmarke oben, Betrag in
+   der Marginalspalte, die Frage als Schlagzeile darunter. */
+:root[data-theme="L"] .jeopardy-clue-overlay {
+  display: grid; align-content: center; justify-items: stretch;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "cat pts" "frage frage" "antwort antwort";
+  padding: 8vh max(5vw, (100vw - var(--l-breit)) / 2); column-gap: 30px; row-gap: 0;
+}
+:root[data-theme="L"] .jeopardy-clue-overlay > * { grid-column: 1 / -1; }
+:root[data-theme="L"] .jeopardy-clue-cat { grid-area: cat; align-self: end; justify-self: start; padding-bottom: 10px; }
+:root[data-theme="L"] .jeopardy-clue-pts { grid-area: pts; align-self: end; justify-self: end; padding-bottom: 10px; }
+:root[data-theme="L"] :is(.jeopardy-clue-cat, .jeopardy-clue-pts) { border-bottom: 3px solid var(--l-linie); }
+:root[data-theme="L"] .jeopardy-clue-text {
+  grid-area: frage; max-width: none; text-align: left; margin-top: 34px;
+  font-size: clamp(2.2rem, 4.2vw + .8vh, 4.2rem); line-height: 1.02; text-wrap: balance;
+}
+:root[data-theme="L"] .jeopardy-clue-blank { grid-area: frage; justify-self: start; margin-top: 34px; }
+:root[data-theme="L"] .jeopardy-answer-text { grid-area: antwort; justify-self: start; text-align: left; margin-top: 24px; }
+
+/* ── WWM: der Stimmzettel fuellt die Seite ── */
+:root[data-theme="L"] #wwm-screen .wwm-wrap { flex: 1; }
+:root[data-theme="L"] #wwm-screen .wwm-main { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="L"] #wwm-screen .wwm-answers { flex: 1; align-content: stretch; }
+:root[data-theme="L"] #wwm-screen .wwm-opt { min-height: clamp(56px, 10.5vh, 86px); }
+:root[data-theme="L"] #wwm-screen .wwm-q { font-size: clamp(1.6rem, 2.8vw + .5vh, 2.6rem); line-height: 1.06; }
+
+/* ── WWDS: Satzspiegel links, Stand rechts ── */
+:root[data-theme="L"] #wwds-screen.active {
+  display: grid; grid-template-columns: minmax(0, 1fr) 290px;
+  grid-template-areas: "zeile zeile" "board stand";
+  grid-template-rows: auto 1fr; column-gap: 26px; row-gap: 0; align-items: start;
+}
+:root[data-theme="L"] #wwds-screen .round-bar { grid-area: zeile; }
+:root[data-theme="L"] #wwds-screen .wwds-top { grid-area: stand; margin-top: 14px; }
+:root[data-theme="L"] #wwds-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; margin-top: 14px; }
+:root[data-theme="L"] #wwds-screen #wwds-stage { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="L"] #wwds-screen .wwds-grid { flex: 1; align-content: stretch; }
+:root[data-theme="L"] #wwds-screen .wwds-cat { min-height: clamp(46px, 8.5vh, 76px); }
+:root[data-theme="L"] #wwds-screen .wwds-opts { flex: 1; align-content: stretch; }
+:root[data-theme="L"] #wwds-screen .wwds-opt { min-height: clamp(44px, 8vh, 70px); }
+/* Mit Publikumsjoker kommt ein Balkenbild dazu - ohne Deckel laeuft die
+   Seite unten aus dem Beamerbild. */
+/* Mit Joker darf die Antwortliste nicht mehr den Rest der Hoehe nehmen:
+   sonst rutscht das Balkenbild ganz nach unten und seine Beschriftung
+   (A B C) steht unter dem Beamerbild. */
+:root[data-theme="L"] #wwds-screen:has(.wwds-aud) .wwds-opts { flex: 0 0 auto; }
+:root[data-theme="L"] #wwds-screen:has(.wwds-aud) .wwds-opt { min-height: clamp(38px, 6vh, 52px); }
+:root[data-theme="L"] #wwds-screen .wwds-aud { height: clamp(58px, 10vh, 78px); }
+
+/* ── DDF: die Kandidaten sind die Namensliste in der Marginalspalte ──
+   Der innere Wrapper traegt inline `height:100%` - zirkulaer, sobald der
+   Screen mit dem Inhalt waechst. Daher `height:auto` plus `flex:1`. */
+:root[data-theme="L"] #ddf-screen > div {
+  height: auto !important; flex: 1; display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-areas: "zeile spieler" "frage spieler" "media spieler" "antwort spieler" "note spieler" "vote spieler";
+  grid-template-rows: auto auto auto auto auto 1fr; column-gap: 26px; align-items: start;
+}
+:root[data-theme="L"] #ddf-screen .ddf-alive {
+  grid-area: zeile; justify-self: start; margin: 0;
+}
+:root[data-theme="L"] #ddf-timer { grid-area: zeile; justify-self: end; }
+:root[data-theme="L"] #ddf-screen .ddf-question { grid-area: frage; margin-top: 10px; }
+:root[data-theme="L"] #ddf-screen .ddf-media-bar { grid-area: media; justify-content: flex-start; }
+:root[data-theme="L"] #ddf-screen .ddf-answer { grid-area: antwort; }
+:root[data-theme="L"] #ddf-screen .ddf-note { grid-area: note; }
+:root[data-theme="L"] #ddf-screen .ddf-vote-grid { grid-area: vote; }
+:root[data-theme="L"] #ddf-screen .ddf-players {
+  grid-area: spieler; grid-row: 1 / -1; flex-direction: column; flex-wrap: nowrap;
+  max-width: none; margin: 0; padding: 0 0 0 22px; gap: 0; border: 0; border-left: 1px solid var(--l-linie);
+}
+:root[data-theme="L"] #ddf-screen .ddf-players::before {
+  content: 'Kandidaten'; padding-bottom: 8px; border-bottom: 1px solid var(--l-linie);
+  font-family: 'Old Standard TT', serif; font-size: .74rem; letter-spacing: 3px; text-transform: uppercase;
+}
+:root[data-theme="L"] #ddf-screen .ddf-player { width: 100%; text-align: left; }
+
+/* ── PIH: Kleinanzeigen links, Rangliste als Spalte rechts ── */
+:root[data-theme="L"] #pih-screen > div {
+  height: auto !important; flex: 1; display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-areas: "teams rang" "uhr rang" "artikel rang" "bild rang" "media rang" "preis rang" "note rang" "gebote rang";
+  grid-template-rows: auto auto auto auto auto auto auto 1fr; column-gap: 26px; align-items: start;
+}
+:root[data-theme="L"] #pih-teams { grid-area: teams; }
+:root[data-theme="L"] #pih-timer { grid-area: uhr; }
+:root[data-theme="L"] #pih-screen .pih-item { grid-area: artikel; }
+:root[data-theme="L"] #pih-screen .pih-stage { grid-area: bild; display: flex; align-items: center; justify-content: center; min-height: 0; }
+/* Ohne Deckel schiebt das Produktfoto die Gebote aus dem Beamerbild. */
+:root[data-theme="L"] #pih-screen .pih-stage :is(img, video) { max-height: min(26vh, 220px); width: auto; }
+:root[data-theme="L"] #pih-screen .pih-media-bar { grid-area: media; justify-content: flex-start; }
+:root[data-theme="L"] #pih-screen .pih-price { grid-area: preis; }
+:root[data-theme="L"] #pih-screen .pih-note { grid-area: note; }
+:root[data-theme="L"] #pih-screen .pih-bid-grid { grid-area: gebote; }
+:root[data-theme="L"] #pih-screen .pih-scores {
+  grid-area: rang; grid-row: 1 / -1; flex-direction: column; flex-wrap: nowrap; align-items: stretch;
+  max-width: none; margin: 0; padding: 0 0 0 22px; gap: 0; border: 0; border-left: 1px solid var(--l-linie);
+}
+:root[data-theme="L"] #pih-screen .pih-scores::before {
+  content: 'Rangliste'; padding-bottom: 8px; border-bottom: 1px solid var(--l-linie);
+  font-family: 'Old Standard TT', serif; font-size: .74rem; letter-spacing: 3px; text-transform: uppercase;
+}
+:root[data-theme="L"] #pih-screen .pih-score { width: 100%; padding: 5px 0; }
+
+/* ── TP: Rad und Frage im Satzspiegel, Stand in der Marginalspalte ── */
+:root[data-theme="L"] #tp-screen.active {
+  display: grid; grid-template-columns: minmax(0, 1fr) 290px;
+  grid-template-areas: "zeile zeile" "board stand";
+  grid-template-rows: auto 1fr; column-gap: 26px; row-gap: 0; align-items: start;
+}
+:root[data-theme="L"] #tp-screen .round-bar { grid-area: zeile; }
+:root[data-theme="L"] #tp-screen .tp-top { grid-area: stand; margin-top: 14px; }
+:root[data-theme="L"] #tp-screen .tp-team:is(.red, .blue, .green) {
+  width: 100%; display: grid; grid-template-columns: auto 1fr; grid-template-areas: "pie name" "pie sub";
+  align-items: center; column-gap: 14px; transform: none;
+}
+:root[data-theme="L"] #tp-screen .tp-team .tp-pie { grid-area: pie; width: 54px; height: 54px; margin: 0; }
+:root[data-theme="L"] #tp-screen .tp-team-name { grid-area: name; align-self: end; text-align: left; }
+:root[data-theme="L"] #tp-screen .tp-team-sub { grid-area: sub; align-self: start; text-align: left; }
+:root[data-theme="L"] #tp-screen .tp-board { grid-area: board; align-self: center; width: 100%; justify-content: center; margin-top: 14px; }
+
+/* ── Feud-Finale: Schlagzeile und Liste links, Stand rechts ── */
+:root[data-theme="L"] #finale-screen.active {
+  display: grid; grid-template-columns: minmax(0, 1fr) 290px;
+  grid-template-areas: "kopf uhr" "board stand" "board vergleich";
+  grid-template-rows: auto auto 1fr; column-gap: 26px; row-gap: 0; align-items: start;
+}
+:root[data-theme="L"] #finale-screen .finale-header {
+  grid-area: kopf; display: flex; align-items: baseline; gap: 16px; text-align: left;
+  padding: 7px 0 8px; border-top: 1px solid var(--l-linie); border-bottom: 1px solid var(--l-linie);
+}
+:root[data-theme="L"] #finale-screen .finale-timer { grid-area: uhr; justify-self: end; align-self: center; }
+:root[data-theme="L"] #finale-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; margin-top: 14px; }
+:root[data-theme="L"] #finale-screen .answers { flex: 1; align-content: stretch; }
+:root[data-theme="L"] #finale-screen .finale-big-q { flex: 1; display: flex; align-items: center; justify-content: center; }
+:root[data-theme="L"] #finale-screen .finale-scores {
+  grid-area: stand; flex-direction: column; width: 100%; max-width: none; margin: 14px 0 0;
+  padding: 0 0 0 22px; gap: 12px; border-left: 1px solid var(--l-linie);
+}
+/* Von js/feud.js erzeugt - ohne eigene Flaeche landet es per
+   Auto-Platzierung oben rechts im Raster. */
+:root[data-theme="L"] #finale-reveal-comparison {
+  grid-area: vergleich; flex-direction: column; margin: 16px 0 0; padding: 0 0 0 22px; border-left: 1px solid var(--l-linie);
+}
+
+/* ── Ergebnis: die Ausgabe von morgen ──
+   Der Sieger ist die Schlagzeile ueber die Breite, der Stand steht als
+   Zeilen darunter. */
+:root[data-theme="L"] #result-screen.active { width: 100%; max-width: min(900px, 94vw); }
+:root[data-theme="L"] #result-screen .winner-text {
+  width: 100%; padding-bottom: 16px; border-bottom: 3px solid var(--l-linie); text-wrap: balance;
+}
+:root[data-theme="L"] #result-screen .result-card { width: 100%; }
+
+/* ── Menue: das Inhaltsverzeichnis ──
+   Statt eines 720-px-Blocks in der Mitte vier Spalten ueber die volle
+   Breite. Hostseite, kommt nicht auf den Beamer. */
+:root[data-theme="L"] #menu-screen.active { width: 100%; max-width: var(--l-breit); }
+:root[data-theme="L"] #menu-screen .menu-cards { grid-template-columns: repeat(4, 1fr); max-width: none; }
+
 /* ── M · Aurora: Glas auf Nachthimmel, Waben, Aufbluehen ── */
 :root[data-theme="M"] {
   --brd-surface: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
