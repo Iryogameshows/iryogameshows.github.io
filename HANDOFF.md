@@ -12,6 +12,60 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-16 — `45f52e7` Arcade (B): Komposition wie am Automaten
+
+**Auftrag:** David, 2026-10-16: „mach alle nacheinander" — die übrigen Richtungen auf dieselbe Stufe
+wie D. Reihenfolge: B, E, I, K, L, O. Dies ist die erste.
+
+**Gemacht:** Neuer Abschnitt „B · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+C-Block, plus ein Komposition-Teil im B-Block von `buzzer/index.html`. Kein Markup, kein
+JavaScript angefasst.
+
+- **HUD statt Kästen:** `.scoreboard`, `.wwds-top`, `.jeopardy-scores` und `.tp-top` sind eine Zeile
+  über die volle Breite, `justify-content: space-between`, Strich in `--b-line` darunter. Die
+  Teamanzeigen verlieren Hintergrund und Rahmen; die letzte spiegelt sich an den rechten Rand
+  (1P links, 2P rechts). Am Zug: gelber Strich unten statt Rahmen.
+- **Spielfeld füllt:** `:is(#game-screen, …).active { flex: 1 0 auto }`. `body` ist Flex-Spalte mit
+  `min-height:100vh`, der Screen nimmt also den Rest. Bewusst `1 0 auto` und nicht `1 1 auto`:
+  wachsen ja, schrumpfen nie — sonst wird ein langer Screen gestaucht und läuft unten aus dem
+  Beamerbild.
+- **Jeopardy-Frage:** der weiße Doppelrahmen sitzt als `inset`-Schatten am Bildrand statt um eine
+  Karte in der Mitte. Kategorie links, Betrag rechts, cyanfarbene Linie darunter, Frage mittig.
+- **Ergebnis** bleibt mittig (am Automaten steht der Endstand in der Bildmitte), bekommt aber den
+  Kicker „Game Over" und den Rahmen. **Menü** wird vierspaltig mit Kicker „Select Game".
+- **Handy:** Buzzer füllt die Breite (`min(88vw,46vh)` statt 340-px-Quadrat), Statuszeile in Press
+  Start, Pause als Pixelquadrat statt Kreis.
+
+**Warum so und nicht wie D:** D ist eine Sendegrafik (links Schlagzeile, rechts schmale Spalte).
+Das wäre bei B falsch — ein Automat hat eine HUD-Zeile oben und darunter das formatfüllende
+Spielfeld. Übernommen ist nur der Grundsatz: nichts schwebt mittig, genau ein lautes Ding je Bild.
+
+**Verworfen:** Erst standen Kategorie und Betrag der Jeopardy-Frage am oberen Bildrand
+(`align-content: start`) — der Betrag lief unter den „Beenden"-Knopf. Jetzt `align-content` über
+die ganze Höhe mit `7vh` Innenabstand. Zweiter verworfener Weg: `height: 100%` auf den inneren
+Wrappern von DDF und PIH beibehalten — das ist zirkulär, sobald der Screen mit dem Inhalt wächst;
+jetzt `height: auto !important` plus `flex: 1`.
+
+**Geprüft:** `node shots.js --themes B` über alle 27 Zustände bei 1280×720: **keine Befunde**
+(`turnier-host` 1696 px und `setup` 338 px zu hoch sind Hostseiten, `HOST_SEITEN`, und zählen
+nicht). `node check.js` sauber: 15 JS-Dateien, 440 Handler, 301 IDs, 4036 Klammernpaare. Bilder
+angesehen: Feud, Jeopardy-Brett, Jeopardy-Frage, WWM, WWDS, WWDS-Frage, DDF, PIH, TP,
+Feud-Finale, Finale-Frage, Ergebnis, Menü, Buzzer.
+
+**Zwischenbefunde, die behoben wurden:** PIH war 179 px zu hoch (Produktfoto ohne Höhendeckel,
+jetzt `max-height: min(30vh,260px)`), PIH-Gebot 70 px. Das Finale-Vergleichsfeld
+(`#finale-reveal-comparison`, von `js/feud.js` erzeugt) landete per Auto-Platzierung oben rechts
+im Raster und hat jetzt eine eigene Fläche.
+
+**Ungeprüft:** Studio-Blau wurde **nicht** mit `--basis`/`--vergleich` gemessen — es gab keinen
+Basis-Stand von vor der Änderung. Belegt ist nur, dass jede neue Regel auf `[data-theme="B"]`
+bzw. den B-Block der Handy-Seite begrenzt ist. Ebenfalls ungeprüft: 1280×800 und 1920×1080,
+`--reduced`, `ablauf.js`, `geraete.js`, der echte Beamer, das Gamepad und die Sonderfälle je Show
+(TP-Drehphase und -Siegbild, DDF-Stichwahl, PIH-Superpreis-Finale, WWDS-Einsatzphase).
+
+**Fallstrick:** `tools/shots/out` ist ignoriert, ein eigener `--out`-Ordner nicht. Ein Lauf mit
+`--out out-b` hinterlässt also unversionierte Dateien im Arbeitsbaum.
+
 ## 2026-10-15 — ABBRUCH der Sitzung (Stand `6d8c88f`)
 
 Kein Code offen, alles committet und gepusht. Dieser Eintrag ist die Abschluss-Übersicht, damit die
