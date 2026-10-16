@@ -6934,6 +6934,215 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 }
 
 
+/* ══ K · Komposition (2026-10-16) ══════════════════════════════════════════
+   Bis hierher war K eine Neonfarbe auf dem mittig gestapelten
+   Standard-Layout: Logo gross in der Mitte, zwei Namen quer darueber,
+   darunter ein Kasten mit Neonrand in der Bildmitte - und dieser Kasten
+   war das Problem. Eine Roehre ist eine Linie, kein Rahmen um alles.
+   Der Entwurf ist eine Wand nach Ladenschluss: an der oberen Kante haengen
+   die Schilder (die Namen, leicht schief, jedes an seiner Aufhaengung),
+   darunter haengt frei das grosse Schild der Sendung, und die Wand bleibt
+   sonst dunkel. Also: der Rahmen um das Brett faellt weg, die Namen
+   haengen oben an einer Bernsteinroehre, und die Frage ist das eine
+   grosse Schild.
+   Grundsatz: nur Kontur und Schein, keine gefuellten Flaechen, und genau
+   ein Schild leuchtet laut - der Rest ist dunkles Glas.
+   Markup und JavaScript sind nicht angefasst. */
+:root[data-theme="K"] { --k-breit: min(1200px, 94vw); }
+
+/* Der Screen fuellt den Rest des Fensters. `flex: 1 0 auto`: wachsen ja,
+   schrumpfen nie - sonst wuerde ein langer Screen gestaucht und liefe aus
+   dem Beamerbild. */
+:root[data-theme="K"] :is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active {
+  flex: 1 0 auto; width: 100%; max-width: var(--k-breit); padding-top: 0;
+}
+/* Das Brett ist kein Kasten mehr: die Wand traegt die Schilder. */
+:root[data-theme="K"] :is(#game-screen, #wwds-screen, #finale-screen) .board,
+:root[data-theme="K"] #jeopardy-screen .jeopardy-board {
+  background: none; box-shadow: none; border: 0; border-radius: 0; padding: 0;
+}
+:root[data-theme="K"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo {
+  margin: 14px 0 8px; }
+:root[data-theme="K"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo svg {
+  width: 190px; max-height: 60px; }
+
+/* ── Die Namen haengen an der Bernsteinroehre oben ── */
+:root[data-theme="K"] :is(#game-screen, #wwds-screen, #jeopardy-screen, #tp-screen) :is(.scoreboard, .wwds-top, .jeopardy-scores, .tp-top) {
+  position: relative; width: 100%; max-width: none; margin: 0; padding: 0 6px 14px;
+  justify-content: space-between; flex-wrap: nowrap; gap: 24px;
+  border-radius: 0; overflow: visible; box-shadow: none;
+}
+/* Die Roehre, an der die Schilder haengen. Als eigenes Element und nicht
+   als box-shadow der Reihe: ein Schein am Kasten leuchtet rundherum und
+   sah aus wie ein gerahmter Kasten - genau das, was hier weg sollte. */
+:root[data-theme="K"] :is(#game-screen, #wwds-screen, #jeopardy-screen, #tp-screen) :is(.scoreboard, .wwds-top, .jeopardy-scores, .tp-top)::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #FFE9C4;
+  box-shadow: 0 0 8px #FFB52E, 0 0 20px #FFB52E;
+}
+:root[data-theme="K"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.team-panel, .wwds-team, .jeopardy-team):is(.red, .blue, .green) {
+  flex: 0 1 auto; padding: 6px 10px 10px; text-align: left;
+}
+/* Leicht schief wie ein Schild an zwei Ketten - erstes nach links, letztes
+   nach rechts; mehr als 1,5 Grad wirkt kaputt statt gehaengt. */
+:root[data-theme="K"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.team-panel, .wwds-team, .jeopardy-team):first-child { rotate: -1.2deg; }
+:root[data-theme="K"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.team-panel, .wwds-team, .jeopardy-team):last-child { rotate: 1deg; text-align: right; }
+:root[data-theme="K"] #game-screen .team-panel .t-score { font-size: clamp(2.2rem, 6vh, 3.2rem); }
+:root[data-theme="K"] #game-screen .team-strikes { margin-top: 4px; }
+:root[data-theme="K"] #game-screen .team-panel:last-child .team-strikes { justify-content: flex-end; }
+:root[data-theme="K"] #game-screen .strike-pip { width: 24px; height: 24px; font-size: .85rem; }
+
+/* ── Feud: das grosse Schild haengt unter der Roehre ── */
+:root[data-theme="K"] #game-screen.active {
+  display: grid; grid-template-areas: "teams" "kick" "board"; grid-template-rows: auto auto 1fr; row-gap: 0;
+}
+:root[data-theme="K"] #game-screen .scoreboard { grid-area: teams; }
+:root[data-theme="K"] #game-screen .round-bar { grid-area: kick; justify-content: center; padding: 12px 0; }
+:root[data-theme="K"] #game-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; }
+:root[data-theme="K"] #game-screen .answers { flex: 1; align-content: stretch; }
+:root[data-theme="K"] #game-screen .tile { min-height: clamp(42px, 8.5vh, 70px); }
+
+/* ── Jeopardy: die Roehrenspalten fuellen die Wand ── */
+:root[data-theme="K"] #jeopardy-screen.active {
+  display: grid; grid-template-areas: "teams" "kick" "board"; grid-template-rows: auto auto 1fr; row-gap: 0;
+}
+:root[data-theme="K"] #jeopardy-screen .jeopardy-scores { grid-area: teams; }
+:root[data-theme="K"] #jeopardy-screen .round-bar { grid-area: kick; justify-content: center; padding: 12px 0; }
+:root[data-theme="K"] #jeopardy-screen .jeopardy-board { grid-area: board; align-self: stretch; }
+
+/* Jeopardy-Frage: ein Schild an der Wand - Kategorie klein darueber, der
+   Betrag als Bernsteinzahl rechts, die Frage gross in der Mitte. */
+:root[data-theme="K"] .jeopardy-clue-overlay {
+  display: grid; align-content: center; justify-items: stretch;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "cat pts" "frage frage" "antwort antwort";
+  padding: 8vh max(5vw, (100vw - var(--k-breit)) / 2); column-gap: 36px; row-gap: 0;
+}
+:root[data-theme="K"] .jeopardy-clue-overlay > * { grid-column: 1 / -1; }
+:root[data-theme="K"] .jeopardy-clue-cat { grid-area: cat; align-self: end; justify-self: start; padding-bottom: 14px; }
+:root[data-theme="K"] .jeopardy-clue-pts { grid-area: pts; align-self: end; justify-self: end; padding-bottom: 14px; }
+:root[data-theme="K"] :is(.jeopardy-clue-cat, .jeopardy-clue-pts) { border-bottom: 2px solid #FFE9C4; box-shadow: 0 2px 10px rgba(255,181,46,.5); }
+:root[data-theme="K"] .jeopardy-clue-text {
+  grid-area: frage; max-width: none; text-align: left; margin-top: 40px;
+  font-size: clamp(2.2rem, 4vw + .8vh, 4rem); line-height: 1.08;
+}
+:root[data-theme="K"] .jeopardy-clue-blank { grid-area: frage; justify-self: start; margin-top: 40px; }
+:root[data-theme="K"] .jeopardy-answer-text { grid-area: antwort; justify-self: start; text-align: left; margin-top: 26px; }
+
+/* ── WWM: Balkenleiter oben, Antworten als Roehren darunter ── */
+:root[data-theme="K"] #wwm-screen .wwm-wrap { flex: 1; }
+:root[data-theme="K"] #wwm-screen .wwm-main { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="K"] #wwm-screen .wwm-answers { flex: 1; align-content: stretch; }
+:root[data-theme="K"] #wwm-screen .wwm-opt { min-height: clamp(56px, 10.5vh, 86px); }
+
+/* ── WWDS: Schilderwand ── */
+:root[data-theme="K"] #wwds-screen.active {
+  display: grid; grid-template-areas: "teams" "kick" "board"; grid-template-rows: auto auto 1fr; row-gap: 0;
+}
+:root[data-theme="K"] #wwds-screen .wwds-top { grid-area: teams; }
+:root[data-theme="K"] #wwds-screen .round-bar { grid-area: kick; justify-content: center; padding: 12px 0; }
+:root[data-theme="K"] #wwds-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; }
+:root[data-theme="K"] #wwds-screen #wwds-stage { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="K"] #wwds-screen .wwds-grid { flex: 1; align-content: stretch; }
+:root[data-theme="K"] #wwds-screen .wwds-cat { min-height: clamp(46px, 8.5vh, 76px); }
+:root[data-theme="K"] #wwds-screen .wwds-opts { flex: 1; align-content: stretch; }
+:root[data-theme="K"] #wwds-screen .wwds-opt { min-height: clamp(44px, 8vh, 70px); }
+/* Mit Publikumsjoker kommt ein Balkenbild dazu - ohne Deckel laeuft die
+   Seite unten aus dem Beamerbild. */
+:root[data-theme="K"] #wwds-screen:has(.wwds-aud) .wwds-opt { min-height: clamp(36px, 5.6vh, 48px); }
+:root[data-theme="K"] #wwds-screen .wwds-aud { height: clamp(50px, 8.5vh, 66px); }
+:root[data-theme="K"] #wwds-screen:has(.wwds-aud) .round-bar { padding: 6px 0; }
+:root[data-theme="K"] #wwds-screen:has(.wwds-aud) .wwds-top { padding-bottom: 8px; }
+:root[data-theme="K"] #wwds-screen:has(.wwds-aud) .wwds-q { padding-block: 8px; margin-bottom: 8px !important; }
+/* Mit Joker darf die Antwortliste nicht mehr den Rest der Hoehe nehmen:
+   sonst rutscht das Balkenbild ganz nach unten und seine Beschriftung
+   (A B C) steht 5 px unter dem Beamerbild. */
+:root[data-theme="K"] #wwds-screen:has(.wwds-aud) .wwds-opts { gap: 7px; flex: 0 0 auto; }
+
+/* ── DDF: die Mitspieler haengen als kleine Schilder unten ──
+   Der innere Wrapper traegt inline `height:100%` - zirkulaer, sobald der
+   Screen mit dem Inhalt waechst. Daher `height:auto` plus `flex:1`. */
+:root[data-theme="K"] #ddf-screen > div {
+  height: auto !important; flex: 1; display: grid !important;
+  grid-template-areas: "spieler" "kick" "uhr" "frage" "media" "antwort" "note" "vote";
+  grid-template-rows: auto auto auto 1fr auto auto auto auto;
+}
+:root[data-theme="K"] #ddf-screen .ddf-players { grid-area: spieler; max-width: none; margin: 0 0 14px; }
+:root[data-theme="K"] #ddf-screen .ddf-alive { grid-area: kick; margin: 0 0 4px; }
+:root[data-theme="K"] #ddf-timer { grid-area: uhr; color: #FFF8F0; text-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
+:root[data-theme="K"] #ddf-screen .ddf-question { grid-area: frage; display: flex; align-items: center; justify-content: center; }
+:root[data-theme="K"] #ddf-screen .ddf-media-bar { grid-area: media; }
+:root[data-theme="K"] #ddf-screen .ddf-answer { grid-area: antwort; }
+:root[data-theme="K"] #ddf-screen .ddf-note { grid-area: note; }
+:root[data-theme="K"] #ddf-screen .ddf-vote-grid { grid-area: vote; }
+
+/* ── PIH: Kassenbon unten, der Artikel gross an der Wand ── */
+:root[data-theme="K"] #pih-screen > div {
+  height: auto !important; flex: 1; display: grid !important;
+  grid-template-areas: "teams" "rang" "uhr" "artikel" "bild" "media" "preis" "note" "gebote";
+  grid-template-rows: auto auto auto auto 1fr auto auto auto auto;
+}
+:root[data-theme="K"] #pih-teams { grid-area: teams; }
+:root[data-theme="K"] #pih-screen .pih-scores { grid-area: rang; max-width: none; gap: 6px; }
+:root[data-theme="K"] #pih-screen .pih-score { padding: 3px 12px; gap: 7px; }
+:root[data-theme="K"] #pih-screen .pih-score .pmini-av { width: 22px; height: 22px; font-size: .8rem; }
+:root[data-theme="K"] #pih-timer { grid-area: uhr; color: #FFF8F0; text-shadow: 0 0 6px #FFB52E, 0 0 16px #FFB52E; }
+:root[data-theme="K"] #pih-screen .pih-item { grid-area: artikel; }
+:root[data-theme="K"] #pih-screen .pih-stage { grid-area: bild; display: flex; align-items: center; justify-content: center; min-height: 0; }
+/* Ohne Deckel schiebt das Produktfoto die Gebote aus dem Beamerbild. */
+:root[data-theme="K"] #pih-screen .pih-stage :is(img, video) { max-height: min(26vh, 220px); width: auto; }
+:root[data-theme="K"] #pih-screen .pih-media-bar { grid-area: media; }
+:root[data-theme="K"] #pih-screen .pih-price { grid-area: preis; }
+:root[data-theme="K"] #pih-screen .pih-note { grid-area: note; }
+:root[data-theme="K"] #pih-screen .pih-bid-grid { grid-area: gebote; }
+
+/* ── TP: Rad und Frage an der Wand, Namen oben ── */
+:root[data-theme="K"] #tp-screen.active {
+  display: grid; grid-template-areas: "teams" "kick" "board"; grid-template-rows: auto auto 1fr; row-gap: 0;
+}
+:root[data-theme="K"] #tp-screen .tp-top { grid-area: teams; }
+:root[data-theme="K"] #tp-screen .tp-team:is(.red, .blue, .green) {
+  flex: 0 1 auto; display: flex; flex-direction: row; align-items: center; gap: 14px;
+  padding: 6px 12px 10px; background: transparent; box-shadow: none; transform: none;
+}
+:root[data-theme="K"] #tp-screen .tp-team:first-child { rotate: -1.2deg; }
+:root[data-theme="K"] #tp-screen .tp-team:last-child { rotate: 1deg; flex-direction: row-reverse; text-align: right; }
+:root[data-theme="K"] #tp-screen .tp-team .tp-pie { width: 50px; height: 50px; flex: none; margin: 0; }
+:root[data-theme="K"] #tp-screen .round-bar { grid-area: kick; justify-content: center; padding: 12px 0; }
+:root[data-theme="K"] #tp-screen .tp-board { grid-area: board; align-self: center; width: 100%; justify-content: center; }
+
+/* ── Feud-Finale: Stand oben an der Roehre, Frage als Schild darunter ── */
+:root[data-theme="K"] #finale-screen.active {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "stand stand" "kopf uhr" "vergleich vergleich" "board board";
+  grid-template-rows: auto auto auto 1fr; column-gap: 28px; row-gap: 0;
+}
+:root[data-theme="K"] #finale-screen .finale-scores {
+  position: relative; grid-area: stand; width: 100%; max-width: none; margin: 0; padding: 0 6px 14px;
+  justify-content: space-between;
+}
+:root[data-theme="K"] #finale-screen .finale-scores::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: #FFE9C4;
+  box-shadow: 0 0 8px #FFB52E, 0 0 20px #FFB52E;
+}
+:root[data-theme="K"] #finale-screen .finale-header { grid-area: kopf; align-self: center; display: flex; align-items: baseline; gap: 16px; text-align: left; padding-top: 12px; }
+:root[data-theme="K"] #finale-screen .finale-timer { grid-area: uhr; justify-self: end; align-self: center; }
+/* Von js/feud.js erzeugt - ohne eigene Flaeche landet es per
+   Auto-Platzierung oben rechts im Raster. */
+:root[data-theme="K"] #finale-reveal-comparison { grid-area: vergleich; justify-content: center; margin-top: 12px; }
+:root[data-theme="K"] #finale-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; margin-top: 12px; }
+:root[data-theme="K"] #finale-screen .answers { flex: 1; align-content: stretch; }
+:root[data-theme="K"] #finale-screen .finale-big-q { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+/* ── Ergebnis: das letzte Schild der Nacht ── */
+:root[data-theme="K"] #result-screen.active { width: 100%; max-width: min(860px, 92vw); }
+:root[data-theme="K"] #result-screen .result-card { width: 100%; }
+
+/* ── Menue: die Schilderwand ──
+   Statt eines 720-px-Blocks in der Mitte vier Spalten ueber die volle
+   Breite. Hostseite, kommt nicht auf den Beamer. */
+:root[data-theme="K"] #menu-screen.active { width: 100%; max-width: var(--k-breit); }
+:root[data-theme="K"] #menu-screen .menu-cards { grid-template-columns: repeat(4, 1fr); max-width: none; }
+
 /* ── L · New York (Rework 2026-10-14): die Zeitung als Buehne ───────────────
    Identitaet aus designs/s/L-*.html: Zeitungspapier mit Falz, schwarze
    Druckfarbe, Playfair 900 fuer Schlagzeilen, Old Standard fuer Spitzmarken
