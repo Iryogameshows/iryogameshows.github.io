@@ -8103,6 +8103,213 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   :root[data-theme="O"] .q-text:not(.hidden-q)::after { animation: none; }
 }
 
+/* ══ O · Komposition (2026-10-16) ══════════════════════════════════════════
+   Bis hierher war O eine Terminalfarbe auf dem mittig gestapelten
+   Standard-Layout: Logo gross in der Mitte, zwei Fenster quer darueber,
+   darunter ein Kasten in der Bildmitte. Eine Konsole stapelt aber nicht
+   mittig - sie fuellt das Fenster, schreibt von links oben nach unten und
+   haelt unten eine invertierte Statuszeile.
+   Also: der Screen ist das Fenster (1 px Rahmen in Phosphorgruen), die
+   Teamfenster stehen oben links nebeneinander, der Inhalt laeuft
+   linksbuendig darunter, und die Zeile mit Runde und Punkten sitzt als
+   invertierter Balken ganz unten am Rand - wie die Statuszeile in vi.
+   Grundsatz: alles linksbuendig, nichts zentriert, keine Flaechen ausser
+   der invertierten Statuszeile.
+   Markup und JavaScript sind nicht angefasst. */
+:root[data-theme="O"] { --o-breit: min(1220px, 95vw); --o-linie: #2E7D4A; --o-fg: #B8FFCD; }
+
+/* Das Fenster fuellt den Rest des Bildschirms. `flex: 1 0 auto`: wachsen
+   ja, schrumpfen nie - sonst wuerde ein langer Screen gestaucht und liefe
+   aus dem Beamerbild. */
+:root[data-theme="O"] :is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active {
+  flex: 1 0 auto; width: 100%; max-width: var(--o-breit); padding: 0 0 0;
+  box-shadow: 0 0 0 1px var(--o-linie);
+}
+/* Innen ein Zeichen Luft, aussen die Rahmenlinie. */
+:root[data-theme="O"] :is(#game-screen, #jeopardy-screen, #wwds-screen, #tp-screen, #finale-screen).active {
+  padding: 16px 20px 0;
+}
+:root[data-theme="O"] :is(#wwm-screen, #ddf-screen, #pih-screen).active { padding: 16px 20px; }
+/* Das Logo ist die Kopfzeile ueber dem Fenster: klein und links. */
+:root[data-theme="O"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo {
+  width: 100%; max-width: var(--o-breit); margin: 14px auto 8px; text-align: left;
+}
+:root[data-theme="O"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo svg {
+  width: 170px; max-height: 56px;
+}
+/* Das Brett ist kein zweites Fenster im Fenster. */
+:root[data-theme="O"] :is(#game-screen, #wwds-screen, #finale-screen) .board,
+:root[data-theme="O"] #jeopardy-screen .jeopardy-board {
+  background: none; box-shadow: none; border: 0; border-radius: 0; padding: 0;
+}
+
+/* ── Die Statuszeile: invertiert, ganz unten, ueber die volle Breite ── */
+/* `width: auto` statt `calc(100% + 40px)`: als Rasterfeld wird die Zeile
+   ohnehin auf die Spaltenbreite gezogen, und die negativen Aussenabstaende
+   schieben sie bis an die Fensterlinie. Mit calc blieb rechts eine Luecke. */
+:root[data-theme="O"] :is(#game-screen, #jeopardy-screen, #wwds-screen, #tp-screen) .round-bar {
+  width: auto; margin: 14px -20px 0; padding: 6px 20px;
+  justify-content: flex-start; gap: 18px;
+  background: var(--o-fg); color: #031008;
+}
+/* Die Marke "> am zug_" steht oben links im Teamfenster; linksbuendig
+   gesetzt lag die Punktzahl sonst darunter. */
+:root[data-theme="O"] #game-screen .team-panel.active-team { padding-top: 34px; }
+:root[data-theme="O"] :is(#game-screen, #jeopardy-screen, #wwds-screen, #tp-screen) .round-bar .pts { color: #031008; text-shadow: none; }
+
+/* ── Teamfenster: oben links nebeneinander ── */
+:root[data-theme="O"] :is(#game-screen, #wwds-screen, #jeopardy-screen, #tp-screen) :is(.scoreboard, .wwds-top, .jeopardy-scores, .tp-top) {
+  width: 100%; max-width: none; margin: 0 0 14px; padding: 0;
+  justify-content: flex-start; flex-wrap: nowrap; gap: 18px;
+}
+:root[data-theme="O"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.team-panel, .wwds-team, .jeopardy-team):is(.red, .blue, .green) {
+  flex: 0 1 300px; text-align: left;
+}
+:root[data-theme="O"] #game-screen .team-panel .t-score { font-size: clamp(2rem, 5.4vh, 2.8rem); }
+
+/* ── Feud: Fenster oben, Liste darunter, Statuszeile unten ── */
+:root[data-theme="O"] #game-screen.active {
+  display: grid; grid-template-areas: "teams" "board" "status"; grid-template-rows: auto 1fr auto; row-gap: 0;
+}
+:root[data-theme="O"] #game-screen .scoreboard { grid-area: teams; }
+:root[data-theme="O"] #game-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; }
+:root[data-theme="O"] #game-screen .round-bar { grid-area: status; }
+:root[data-theme="O"] #game-screen .answers { flex: 1; align-content: stretch; }
+:root[data-theme="O"] #game-screen .tile { min-height: clamp(40px, 8vh, 66px); }
+:root[data-theme="O"] #game-screen .q-text { text-align: left; justify-content: flex-start; }
+
+/* ── Jeopardy: die Tabelle fuellt das Fenster ── */
+:root[data-theme="O"] #jeopardy-screen.active {
+  display: grid; grid-template-areas: "teams" "board" "status"; grid-template-rows: auto 1fr auto; row-gap: 0;
+}
+:root[data-theme="O"] #jeopardy-screen .jeopardy-scores { grid-area: teams; }
+:root[data-theme="O"] #jeopardy-screen .jeopardy-board { grid-area: board; align-self: stretch; }
+:root[data-theme="O"] #jeopardy-screen .round-bar { grid-area: status; }
+
+/* Jeopardy-Frage: die Ausgabe eines Befehls - Kopfzeile, Leerzeile, Text. */
+:root[data-theme="O"] .jeopardy-clue-overlay {
+  display: grid; align-content: center; justify-items: stretch;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "cat pts" "frage frage" "antwort antwort";
+  padding: 8vh max(5vw, (100vw - var(--o-breit)) / 2); column-gap: 28px; row-gap: 0;
+}
+:root[data-theme="O"] .jeopardy-clue-overlay > * { grid-column: 1 / -1; }
+:root[data-theme="O"] .jeopardy-clue-cat { grid-area: cat; align-self: end; justify-self: start; padding-bottom: 10px; }
+:root[data-theme="O"] .jeopardy-clue-pts { grid-area: pts; align-self: end; justify-self: end; padding-bottom: 10px; }
+:root[data-theme="O"] :is(.jeopardy-clue-cat, .jeopardy-clue-pts) { border-bottom: 1px solid var(--o-linie); }
+:root[data-theme="O"] .jeopardy-clue-text {
+  grid-area: frage; max-width: none; text-align: left; margin-top: 34px;
+  font-size: clamp(2.2rem, 4vw + .8vh, 4rem); line-height: 1.06;
+}
+:root[data-theme="O"] .jeopardy-clue-blank { grid-area: frage; justify-self: start; margin-top: 34px; }
+:root[data-theme="O"] .jeopardy-answer-text { grid-area: antwort; justify-self: start; text-align: left; margin-top: 24px; }
+
+/* ── WWM: Radioknoepfe untereinander, Leiter als Tabelle ── */
+:root[data-theme="O"] #wwm-screen .wwm-wrap { flex: 1; }
+:root[data-theme="O"] #wwm-screen .wwm-main { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="O"] #wwm-screen .wwm-answers { flex: 1; align-content: stretch; }
+:root[data-theme="O"] #wwm-screen .wwm-opt { min-height: clamp(54px, 10vh, 82px); }
+:root[data-theme="O"] #wwm-screen .wwm-q { text-align: left; justify-content: flex-start; }
+
+/* ── WWDS: Fenster oben, Buehne darunter, Statuszeile unten ── */
+:root[data-theme="O"] #wwds-screen.active {
+  display: grid; grid-template-areas: "teams" "board" "status"; grid-template-rows: auto 1fr auto; row-gap: 0;
+}
+:root[data-theme="O"] #wwds-screen .wwds-top { grid-area: teams; }
+:root[data-theme="O"] #wwds-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; }
+:root[data-theme="O"] #wwds-screen .round-bar { grid-area: status; }
+:root[data-theme="O"] #wwds-screen #wwds-stage { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="O"] #wwds-screen .wwds-grid { flex: 1; align-content: stretch; }
+:root[data-theme="O"] #wwds-screen .wwds-cat { min-height: clamp(44px, 8vh, 72px); }
+:root[data-theme="O"] #wwds-screen .wwds-opts { flex: 1; align-content: stretch; }
+:root[data-theme="O"] #wwds-screen .wwds-opt { min-height: clamp(42px, 7.5vh, 66px); }
+/* Mit Publikumsjoker kommt ein Balkenbild dazu - ohne Deckel laeuft die
+   Seite unten aus dem Beamerbild. */
+:root[data-theme="O"] #wwds-screen:has(.wwds-aud) .wwds-opt { min-height: clamp(36px, 5.6vh, 48px); }
+:root[data-theme="O"] #wwds-screen .wwds-aud { height: clamp(50px, 8.5vh, 66px); }
+
+/* ── DDF: die Prozesstabelle steht oben, die Frage darunter ──
+   Der innere Wrapper traegt inline `height:100%` - zirkulaer, sobald der
+   Screen mit dem Inhalt waechst. Daher `height:auto` plus `flex:1`. */
+:root[data-theme="O"] #ddf-screen > div {
+  height: auto !important; flex: 1; display: grid !important;
+  grid-template-areas: "spieler" "kick" "uhr" "frage" "media" "antwort" "note" "vote";
+  grid-template-rows: auto auto auto 1fr auto auto auto auto;
+}
+:root[data-theme="O"] #ddf-screen .ddf-players { grid-area: spieler; max-width: none; width: 100%; margin: 0 0 12px; justify-content: flex-start; }
+:root[data-theme="O"] #ddf-screen .ddf-alive { grid-area: kick; margin: 0 0 4px; text-align: left; }
+:root[data-theme="O"] #ddf-timer { grid-area: uhr; text-align: left !important; }
+/* `max-width: none` und `margin: 0`: die Frage steht sonst in einem
+   zentrierten Satzblock und nicht am linken Rand wie jede Ausgabezeile. */
+:root[data-theme="O"] #ddf-screen .ddf-question { grid-area: frage; display: flex; align-items: center; text-align: left; max-width: none; margin: 0; }
+:root[data-theme="O"] #ddf-screen .ddf-media-bar { grid-area: media; justify-content: flex-start; }
+:root[data-theme="O"] #ddf-screen .ddf-answer { grid-area: antwort; text-align: left; }
+:root[data-theme="O"] #ddf-screen .ddf-note { grid-area: note; text-align: left; }
+:root[data-theme="O"] #ddf-screen .ddf-vote-grid { grid-area: vote; }
+
+/* ── PIH: Artikel und Preis als Ausgabe, Rangliste als Tabelle oben ── */
+:root[data-theme="O"] #pih-screen > div {
+  height: auto !important; flex: 1; display: grid !important;
+  grid-template-areas: "teams" "rang" "uhr" "artikel" "bild" "media" "preis" "note" "gebote";
+  grid-template-rows: auto auto auto auto 1fr auto auto auto auto;
+}
+:root[data-theme="O"] #pih-teams { grid-area: teams; }
+:root[data-theme="O"] #pih-screen .pih-scores { grid-area: rang; max-width: none; gap: 6px; justify-content: flex-start; }
+:root[data-theme="O"] #pih-screen .pih-score { padding: 3px 10px; gap: 7px; }
+:root[data-theme="O"] #pih-screen .pih-score .pmini-av { width: 22px; height: 22px; font-size: .8rem; }
+:root[data-theme="O"] #pih-timer { grid-area: uhr; text-align: left !important; }
+:root[data-theme="O"] #pih-screen .pih-item { grid-area: artikel; text-align: left; }
+:root[data-theme="O"] #pih-screen .pih-stage { grid-area: bild; display: flex; align-items: center; justify-content: flex-start; min-height: 0; }
+/* Ohne Deckel schiebt das Produktfoto die Gebote aus dem Beamerbild. */
+:root[data-theme="O"] #pih-screen .pih-stage :is(img, video) { max-height: min(26vh, 220px); width: auto; }
+:root[data-theme="O"] #pih-screen .pih-media-bar { grid-area: media; justify-content: flex-start; }
+:root[data-theme="O"] #pih-screen .pih-price { grid-area: preis; text-align: left; }
+:root[data-theme="O"] #pih-screen .pih-note { grid-area: note; text-align: left; }
+:root[data-theme="O"] #pih-screen .pih-bid-grid { grid-area: gebote; max-width: none; }
+
+/* ── TP: Rad und Frage im Fenster, Statuszeile unten ── */
+:root[data-theme="O"] #tp-screen.active {
+  display: grid; grid-template-areas: "teams" "board" "status"; grid-template-rows: auto 1fr auto; row-gap: 0;
+}
+:root[data-theme="O"] #tp-screen .tp-top { grid-area: teams; }
+:root[data-theme="O"] #tp-screen .tp-team:is(.red, .blue, .green) {
+  flex: 0 1 300px; display: grid; grid-template-columns: auto 1fr; grid-template-areas: "pie name" "pie sub";
+  align-items: center; column-gap: 14px; text-align: left; transform: none;
+}
+:root[data-theme="O"] #tp-screen .tp-team .tp-pie { grid-area: pie; width: 50px; height: 50px; margin: 0; }
+:root[data-theme="O"] #tp-screen .tp-team-name { grid-area: name; align-self: end; }
+:root[data-theme="O"] #tp-screen .tp-team-sub { grid-area: sub; align-self: start; }
+:root[data-theme="O"] #tp-screen .tp-board { grid-area: board; align-self: center; width: 100%; justify-content: flex-start; gap: 36px; }
+:root[data-theme="O"] #tp-screen .round-bar { grid-area: status; }
+
+/* ── Feud-Finale: Kopf oben, Liste darunter, Stand als Zeile ── */
+:root[data-theme="O"] #finale-screen.active {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "kopf uhr" "stand stand" "board board" "vergleich vergleich";
+  grid-template-rows: auto auto 1fr auto; column-gap: 26px; row-gap: 0; align-items: start;
+}
+:root[data-theme="O"] #finale-screen .finale-header { grid-area: kopf; display: flex; align-items: baseline; gap: 16px; text-align: left; }
+:root[data-theme="O"] #finale-screen .finale-timer { grid-area: uhr; justify-self: end; align-self: center; }
+:root[data-theme="O"] #finale-screen .finale-scores { grid-area: stand; width: 100%; max-width: none; margin: 12px 0 0; justify-content: flex-start; gap: 18px; }
+:root[data-theme="O"] #finale-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; margin-top: 14px; }
+:root[data-theme="O"] #finale-screen .answers { flex: 1; align-content: stretch; }
+:root[data-theme="O"] #finale-screen .finale-big-q { flex: 1; display: flex; align-items: center; text-align: left; }
+/* Von js/feud.js erzeugt - ohne eigene Flaeche landet es per
+   Auto-Platzierung oben rechts im Raster. */
+:root[data-theme="O"] #finale-reveal-comparison { grid-area: vergleich; justify-content: flex-start; margin: 12px 0 16px; }
+
+/* ── Ergebnis: die letzte Ausgabe, linksbuendig ── */
+:root[data-theme="O"] #result-screen.active { width: 100%; max-width: min(900px, 94vw); align-items: flex-start; text-align: left; }
+:root[data-theme="O"] #result-screen .result-icon { display: none; }
+:root[data-theme="O"] #result-screen .result-card { width: 100%; text-align: left; }
+:root[data-theme="O"] #result-screen .result-btns { justify-content: flex-start; }
+
+/* ── Menue: die nummerierte Liste ──
+   Statt eines 720-px-Blocks in der Mitte vier Spalten ueber die volle
+   Breite. Hostseite, kommt nicht auf den Beamer. */
+:root[data-theme="O"] #menu-screen.active { width: 100%; max-width: var(--o-breit); }
+:root[data-theme="O"] #menu-screen .menu-cards { grid-template-columns: repeat(4, 1fr); max-width: none; }
+
 /* ── P · Memphis: Formen mit Muster, schwarze Kontur, Punkteteppich ── */
 :root[data-theme="P"] {
   --brd-surface: #FFFFFF;
