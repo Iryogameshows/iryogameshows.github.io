@@ -4418,7 +4418,11 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
    Screen waechst mit dem Inhalt (flex: 1 0 auto), also waechst der Wrapper
    mit sich selbst. Stattdessen `height:auto` plus `flex:1`: er fuellt den
    Screen, ohne ihn aufzublaehen. */
-:root[data-theme="B"] #ddf-screen > div { height: auto !important; flex: 1; }
+/* `width: 100%`: `.screen.active` ist eine Flex-Spalte mit
+   `align-items: center`, der Wrapper waere sonst nur so breit wie sein
+   Inhalt. In O war die Prozesstabelle dadurch 766 px breit in einem
+   1216 px breiten Fenster (gemessen 2026-10-16). */
+:root[data-theme="B"] #ddf-screen > div { height: auto !important; width: 100%; flex: 1; }
 :root[data-theme="B"] #ddf-screen .ddf-players {
   max-width: none; margin: 0; padding: 0 0 10px; border: 0; border-bottom: 2px solid var(--b-line); gap: 0;
 }
@@ -4430,7 +4434,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 
 /* ── PIH: Stand als HUD oben, Artikel als Marquee, Preis als Punktzahl ── */
 :root[data-theme="B"] #pih-screen.active { width: 100%; max-width: var(--b-breit); padding-top: 0; }
-:root[data-theme="B"] #pih-screen > div { height: auto !important; flex: 1; }
+:root[data-theme="B"] #pih-screen > div { height: auto !important; width: 100%; flex: 1; }
 :root[data-theme="B"] #pih-screen .pih-teamrow { max-width: none; margin: 0 0 8px; }
 :root[data-theme="B"] #pih-screen .pih-scores { max-width: none; margin: 0; padding-bottom: 8px; border-bottom: 2px solid var(--b-line); gap: 6px; }
 :root[data-theme="B"] #pih-screen .pih-score { padding: 5px 9px; gap: 7px; }
@@ -5882,7 +5886,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
    Screen mit dem Inhalt waechst. Daher `height:auto` plus `flex:1`. */
 :root[data-theme="E"] #ddf-screen.active { width: 100%; max-width: var(--e-breit); padding-top: 0; }
 :root[data-theme="E"] #ddf-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-areas: "kick" "uhr" "frage" "media" "antwort" "note" "vote" "spieler";
   grid-template-rows: auto auto 1fr auto auto auto auto auto;
 }
@@ -5898,7 +5902,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 /* ── PIH: Rangliste als Plakettenreihe unten, Artikel und Preis auf der Buehne ── */
 :root[data-theme="E"] #pih-screen.active { width: 100%; max-width: var(--e-breit); padding-top: 0; }
 :root[data-theme="E"] #pih-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-areas: "teams" "uhr" "artikel" "bild" "media" "preis" "note" "gebote" "rang";
   grid-template-rows: auto auto auto 1fr auto auto auto auto auto;
 }
@@ -6507,7 +6511,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
    Der innere Wrapper traegt inline `height:100%` - zirkulaer, sobald der
    Screen mit dem Inhalt waechst. Daher `height:auto` plus `flex:1`. */
 :root[data-theme="I"] #ddf-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-areas: "kick" "uhr" "frage" "media" "antwort" "note" "vote" "spieler";
   grid-template-rows: auto auto 1fr auto auto auto auto auto;
 }
@@ -6522,7 +6526,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 
 /* ── PIH: der Artikel liegt auf dem Tisch, die Rangliste an der Kante ── */
 :root[data-theme="I"] #pih-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-areas: "teams" "uhr" "artikel" "bild" "media" "preis" "note" "gebote" "rang";
   grid-template-rows: auto auto auto 1fr auto auto auto auto auto;
 }
@@ -7062,7 +7066,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
    Der innere Wrapper traegt inline `height:100%` - zirkulaer, sobald der
    Screen mit dem Inhalt waechst. Daher `height:auto` plus `flex:1`. */
 :root[data-theme="K"] #ddf-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-areas: "spieler" "kick" "uhr" "frage" "media" "antwort" "note" "vote";
   grid-template-rows: auto auto auto 1fr auto auto auto auto;
 }
@@ -7077,7 +7081,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 
 /* ── PIH: Kassenbon unten, der Artikel gross an der Wand ── */
 :root[data-theme="K"] #pih-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-areas: "teams" "rang" "uhr" "artikel" "bild" "media" "preis" "note" "gebote";
   grid-template-rows: auto auto auto auto 1fr auto auto auto auto;
 }
@@ -7563,7 +7567,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
    Der innere Wrapper traegt inline `height:100%` - zirkulaer, sobald der
    Screen mit dem Inhalt waechst. Daher `height:auto` plus `flex:1`. */
 :root[data-theme="L"] #ddf-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-columns: minmax(0, 1fr) 280px;
   grid-template-areas: "zeile spieler" "frage spieler" "media spieler" "antwort spieler" "note spieler" "vote spieler";
   grid-template-rows: auto auto auto auto auto 1fr; column-gap: 26px; align-items: start;
@@ -7589,7 +7593,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 
 /* ── PIH: Kleinanzeigen links, Rangliste als Spalte rechts ── */
 :root[data-theme="L"] #pih-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-columns: minmax(0, 1fr) 300px;
   grid-template-areas: "teams rang" "uhr rang" "artikel rang" "bild rang" "media rang" "preis rang" "note rang" "gebote rang";
   grid-template-rows: auto auto auto auto auto auto auto 1fr; column-gap: 26px; align-items: start;
@@ -8232,7 +8236,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
    Der innere Wrapper traegt inline `height:100%` - zirkulaer, sobald der
    Screen mit dem Inhalt waechst. Daher `height:auto` plus `flex:1`. */
 :root[data-theme="O"] #ddf-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-areas: "spieler" "kick" "uhr" "frage" "media" "antwort" "note" "vote";
   grid-template-rows: auto auto auto 1fr auto auto auto auto;
 }
@@ -8249,7 +8253,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 
 /* ── PIH: Artikel und Preis als Ausgabe, Rangliste als Tabelle oben ── */
 :root[data-theme="O"] #pih-screen > div {
-  height: auto !important; flex: 1; display: grid !important;
+  height: auto !important; width: 100%; flex: 1; display: grid !important;
   grid-template-areas: "teams" "rang" "uhr" "artikel" "bild" "media" "preis" "note" "gebote";
   grid-template-rows: auto auto auto auto 1fr auto auto auto auto;
 }

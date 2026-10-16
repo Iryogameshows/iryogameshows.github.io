@@ -428,6 +428,50 @@
   :root[data-theme="S"] #buzz{font-weight:400;font-size:2.6rem;letter-spacing:8px;padding-left:8px;
     box-shadow:0 10px 0 var(--buzz-shadow,#7a140e),0 0 0 6px #D9B66B,0 0 0 11px #0E0C08,0 0 0 13px #D9B66B;}
 
+  /* ── Komposition (2026-10-16): das Handy folgt der Leinwand ──
+     Bisher sass in jeder Richtung derselbe 340-px-Knopf in der Mitte, der
+     Rest der Flaeche blieb leer. Jetzt fuellt der Knopf die Breite und die
+     Ausrichtung ist dieselbe wie auf dem grossen Bild: D, L und O
+     linksbuendig, E, I und K mittig (dort ist auch die Leinwand mittig
+     komponiert). B hat seinen Teil schon in 45f52e7 bekommen. */
+
+  /* E 70er: das Polster fuellt die Breite, Schrift wie auf der Buehne. */
+  :root[data-theme="E"] #buzz{width:min(86vw,46vh);max-width:none;height:min(86vw,46vh);max-height:none;font-size:3.6rem;}
+  :root[data-theme="E"] #status{font-family:'Shrikhand',serif;font-weight:400;font-size:1.5rem;line-height:1.25;}
+  :root[data-theme="E"] .team-chip{padding:7px 18px;font-size:.9rem;}
+
+  /* I Salon: der Knopf ist der Jeton auf dem Filz. */
+  :root[data-theme="I"] #buzz{width:min(84vw,45vh);max-width:none;height:min(84vw,45vh);max-height:none;font-size:4rem;}
+  :root[data-theme="I"] #status{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;font-size:1.7rem;line-height:1.2;}
+  :root[data-theme="I"] .team-chip{padding:6px 18px;letter-spacing:2px;}
+
+  /* K Neon-Bar: eine grosse Roehre statt eines kleinen Knopfs. */
+  :root[data-theme="K"] #buzz{width:min(86vw,46vh);max-width:none;height:min(86vw,46vh);max-height:none;font-size:4.4rem;}
+  :root[data-theme="K"] #status{font-family:'Yellowtail',cursive;font-weight:400;font-size:1.7rem;line-height:1.25;
+    color:#FFF8F0;text-shadow:0 0 6px #FFB52E,0 0 16px #FFB52E;}
+  :root[data-theme="K"] .wait-orb{box-shadow:0 0 0 2px #FF4FA3,0 0 14px #FF4FA3;}
+
+  /* L New York: die Spalte einer Zeitungsseite - linksbuendig, Linien. */
+  :root[data-theme="L"] .screen{align-items:stretch;text-align:left;}
+  :root[data-theme="L"] .team-chip{align-self:flex-start;}
+  :root[data-theme="L"] #buzz{align-self:center;width:min(80vw,42vh);max-width:none;height:min(80vw,42vh);max-height:none;}
+  :root[data-theme="L"] #status{text-align:left;min-height:0;font-family:'Playfair Display',serif;font-weight:900;font-size:1.9rem;line-height:1.05;
+    padding-bottom:10px;border-bottom:1px solid #1A1712;}
+  :root[data-theme="L"] :is(#screen-buzz,#screen-wait,#screen-estimate,#screen-login) .hint,
+  :root[data-theme="L"] .lobby-sub,:root[data-theme="L"] .lobby-title{text-align:left;}
+  :root[data-theme="L"] #screen-login h1,:root[data-theme="L"] #screen-login input{text-align:left;}
+
+  /* O Terminal: Zeilen von links oben, der Knopf ist ein Block. */
+  :root[data-theme="O"] .screen{align-items:stretch;text-align:left;}
+  :root[data-theme="O"] .team-chip{align-self:flex-start;}
+  :root[data-theme="O"] #buzz{width:100%;max-width:none;height:min(84vw,44vh);max-height:none;font-size:4.4rem;}
+  :root[data-theme="O"] #status{text-align:left;min-height:0;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1.1rem;line-height:1.4;}
+  :root[data-theme="O"] #status::before{content:'> ';color:#7CFFA0;}
+  :root[data-theme="O"] :is(#screen-buzz,#screen-wait,#screen-estimate,#screen-login) .hint,
+  :root[data-theme="O"] .lobby-sub,:root[data-theme="O"] .lobby-title{text-align:left;}
+  :root[data-theme="O"] #screen-login h1,:root[data-theme="O"] #screen-login input{text-align:left;}
+  :root[data-theme="O"] .wait-orb{width:100%;height:14px;}
+
   @media (prefers-reduced-motion: reduce){
     *,*::before,*::after{
       animation-duration:.01ms !important;
