@@ -12,6 +12,42 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-16 — `317f491` Salon (I): der Screen wird der Spieltisch
+
+**Gemacht:** Neuer Abschnitt „I · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+J-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Ein Tisch statt zwei:** Bisher lag der Filz als Hintergrund hinter allem **und** nochmal als
+  Kasten in der Bildmitte. Jetzt trägt der Screen selbst `--brd-surface`, `--brd-radius` und
+  `--brd-frame` (Goldkante), und `.board` bzw. `.jeopardy-board` darin verlieren Hintergrund,
+  Schatten und Polsterung.
+- **Plätze gegenüber:** `.scoreboard` & Co. stehen per Grid-Fläche `teams` an der unteren
+  Tischkante, `justify-content: space-between` — zwei Spieler sitzen sich über den Filz hinweg
+  gegenüber. Der Topf bleibt der Goldjeton oben.
+- **Jeopardy-Frage:** Betrag als 96-px-Goldjeton mit gestricheltem Cremerand am rechten Rand,
+  Kategorie als Goldzeile links, Frage in Cormorant darunter.
+- **DDF/PIH:** innerer Wrapper als Grid, Kandidaten bzw. Rangliste an die untere Kante;
+  `height: auto !important` statt des inline gesetzten `height: 100%`.
+
+**Geprüft:** `node shots.js --themes I` über alle 27 Zustände bei 1280×720: **keine Befunde**
+(`setup` 389 px und die übrigen Hostseiten zählen nicht). `node check.js` sauber (4218
+Klammernpaare). Bilder angesehen: Feud, Jeopardy-Brett, Jeopardy-Frage, DDF, PIH, Feud-Finale.
+
+**Fallstrick, der Zeit gekostet hat:** Ein Bild aus dem ersten Lauf (`pih-I.png`) zeigte keine
+der neuen Regeln — kein Tisch, Rangliste an der falschen Stelle. Ursache war **nicht** die CSS:
+der Lauf war gestartet, bevor die Datei auf der Platte lag, und hat PIH noch mit dem alten Stand
+gerendert. Ein zweiter Lauf nur für `pih` zeigte das richtige Bild. **Lehre:** nach einer
+Änderung nicht in einen schon laufenden `shots.js`-Lauf hineinsehen.
+
+**Zwischenbefund, der behoben wurde:** WWDS mit Publikumsjoker war 9 px zu hoch — Balkengrafik
+auf `clamp(58px,10vh,78px)` gedeckelt, Frage und Plätze enger. Greift nur unter
+`#wwds-screen:has(.wwds-aud)`.
+
+**Ungeprüft:** wie bei B und E — Studio-Blau nicht mit `--basis`/`--vergleich` gemessen (alle
+Regeln auf `[data-theme="I"]` begrenzt), 1280×800, 1920×1080, `--reduced`, `ablauf.js`,
+`geraete.js`, echter Beamer, Gamepad. Der Handy-Buzzer hat in I keinen Kompositions-Teil
+bekommen.
+
 ## 2026-10-16 — `eb35967` 70er (E): Komposition als Samstagabend-Bühne
 
 **Gemacht:** Neuer Abschnitt „E · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
