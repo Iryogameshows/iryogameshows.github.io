@@ -12,6 +12,49 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-16 — `b6e9ec6` Handy folgt der Leinwand, Wrapper auf volle Breite
+
+**Gemacht:** Zwei offene Punkte aus den sechs Kompositions-Commits.
+
+1. **`width: 100%` für die inneren Wrapper von DDF und PIH** in B, E, I, K, L, O
+   (`#ddf-screen > div`, `#pih-screen > div`). D bleibt unangetastet, dort ist der Wrapper
+   schon ein Raster mit eigenen Spalten.
+2. **Handy-Buzzer** (`buzzer/index.html`, neuer Abschnitt „Komposition (2026-10-16)") für
+   **E, I, K, L, O** — bisher hatte nur B einen. Der Knopf füllt die Breite
+   (`min(84–86vw, 42–46vh)`) statt als 340-px-Quadrat mittig zu sitzen; die Statuszeile bekommt
+   je Richtung die Schrift der Sendung. **L und O sind linksbündig** (Zeitungsspalte bzw.
+   Konsolenzeilen, in O mit `> ` als `::before` vor dem Status), **E, I, K bleiben mittig**, weil
+   dort auch das große Bild mittig komponiert ist.
+
+**Die Ursache des offenen DDF-Punkts aus dem O-Eintrag ist damit gefunden.** Sie lag nicht an
+Spezifität: ein Playwright-Messskript zeigte `playersMax: "none"`, `playersWidth: "765.766px"`
+und `wrapper: { w: 766, x: 257 }` in einem Screen von 1216 px. Die Regeln griffen also alle — der
+**Wrapper** war zu schmal, weil `.screen.active` `display: flex; flex-direction: column;
+align-items: center` hat und ein Flex-Element in der Querachse nur so breit wird wie sein Inhalt.
+`width: 100%` behebt es. **Lehre:** bei „die Regel greift nicht" erst die Kette der Elternboxen
+messen, nicht die Selektoren zählen.
+
+**Geprüft (alles nach dieser Änderung):**
+
+- `node shots.js --shows ddf,pih,buzzer,buzzer-pause,buzzer-login` über **alle 19 Richtungen**
+  bei 1280×720 → keine Befunde. Kontaktbogen `bogen-buzzer.png` angesehen, `ddf-O.png` ist jetzt
+  über die volle Fensterbreite gesetzt.
+- `node shots.js --themes Studio,B,E,I,K,L,O` je einmal bei **1280×800** und **1920×1080**,
+  alle 27 Zustände → je **keine Befunde**.
+- Derselbe Umfang mit **`--reduced`** → **keine Befunde**, es läuft also nichts weiter, wenn
+  „Bewegung reduzieren" an ist.
+- `node ablauf.js` → **49 OK, 0 FEHL**.
+- `node geraete.js` → **55 OK, 0 FEHL**. Dafür musste einmalig
+  `npx playwright@1.48.2 install webkit` laufen (WebKit 18.0, 48 MiB, nach
+  `C:\Users\david\AppData\Local\ms-playwright\webkit-2083`) — auf diesem Rechner hatte das
+  gefehlt und `geraete.js` brach mit „Please run the following command to download new browsers"
+  ab.
+- `node check.js` sauber.
+
+**Weiter ungeprüft:** der echte Beamer, `gamepad/index.html`, das Feud-Setup und die Sonderfälle
+je Show (TP-Drehphase und -Siegbild, DDF-Stichwahl, PIH-Superpreis-Finale, WWDS-Einsatzphase,
+Turnier-Ergebnis).
+
 ## 2026-10-16 — Abschluss-Prüfung aller 19 Richtungen (Stand `abd11c8`)
 
 Nach den sechs Kompositions-Commits (B `45f52e7`, E `eb35967`, I `317f491`, K `0b0110a`,
