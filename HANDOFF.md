@@ -12,6 +12,37 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-16 — `8f312b7` New York (L): die Seite wird gesetzt statt gestapelt
+
+**Gemacht:** Neuer Abschnitt „L · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+M-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Satzspiegel statt Stapel:** Zeitungskopf oben (Logo, 3-px-Linie darunter), darunter die Zeile
+  mit Runde und Punkten zwischen zwei Haarlinien, dann die Schlagzeile über die Breite, darunter
+  zwei Spalten: links der Text, rechts hinter einer senkrechten Haarlinie ein Kasten mit
+  Spitzmarke — „Der Stand", bei DDF „Kandidaten", bei PIH „Rangliste".
+- **L behält als einzige Richtung das große, mittige Logo**: es ist der Zeitungskopf, kein
+  Sendungslogo.
+- Die Schlagzeile ist linksbündig, weil die Spitzmarke „Umfrage:" als `::before` davorsteht —
+  zentriert hing sie schief daneben (erst so gebaut, im Bild `feud-L.png` gesehen, geändert).
+
+**Geprüft:** `node shots.js --themes L` über alle 27 Zustände bei 1280×720: ein Befund
+(wwds-joker, siehe unten), nach dessen Behebung gezielter Lauf über `wwds-joker, feud, ddf,
+feud-finale, jeop` → **keine Befunde**. `node check.js` sauber. Bilder angesehen: Feud, DDF, PIH.
+
+**Zwischenbefund:** WWDS mit Publikumsjoker 5 px zu hoch — dieselbe Ursache wie bei K
+(`.wwds-opts { flex: 1 }` schiebt das Balkenbild ans untere Ende), dieselbe Lösung
+(`flex: 0 0 auto` unter `:has(.wwds-aud)`).
+
+**Fallstrick, der die meiste Zeit gekostet hat:** `pih-L.png` zeigte zweimal hintereinander das
+alte Layout, auch nach einem gezielten Neu-Lauf, und die Datei hatte beide Male exakt dieselbe
+Größe. Ein eigenes Messskript (Playwright, Computed Styles) belegte, dass die Regeln sehr wohl
+greifen: `maxWidth: 1216px`, `wrapperDisplay: grid`, Grid-Flächen korrekt. Es war also kein
+CSS-Fehler, sondern ein **altes Bild** — erst `rm out/pih-L.png` vor dem Lauf zeigte den neuen
+Stand. **Lehre:** Wenn ein Bild nach einer Änderung unverändert aussieht, erst die Datei löschen
+und neu schießen, bevor man die CSS verdächtigt. Das Messskript lag als `tools/shots/dbg.js` und
+ist wieder gelöscht.
+
 ## 2026-10-16 — `0b0110a` Neon-Bar (K): Schilder hängen an der Röhre
 
 **Gemacht:** Neuer Abschnitt „K · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
