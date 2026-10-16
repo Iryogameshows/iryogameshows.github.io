@@ -4273,6 +4273,256 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   :root[data-theme="B"] :is(.strike-pip.lit, .wwm-opt.correct, .ddf-player.picked) { animation: none; }
 }
 
+/* ══ B · Komposition (2026-10-16) ══════════════════════════════════════════
+   Bis hierher war B eine Arcade-Farbe auf dem mittig gestapelten
+   Standard-Layout: Logo gross in der Mitte, zwei Teamkaesten darunter, das
+   Spielfeld als schmaler Kasten in der Bildmitte, der Rest schwarz.
+   Der Entwurf ist aber ein Automat: oben eine HUD-Zeile ueber die ganze
+   Breite (1P links, 2P rechts, Punktestand in Pixelziffern), darunter eine
+   duenne Statuszeile, und darunter fuellt das Spielfeld den Rest des
+   Bildschirms bis zum Gitterboden.
+   Grundsatz: alles klebt an den Kanten, nichts schwebt mittig. Die Zahl im
+   HUD ist gelb, der Status cyan, das Spielfeld traegt den weissen
+   Doppelrahmen - genau ein Rahmen im Bild, nicht drei.
+   Der Rahmen bleibt, weil er die Identitaet ist (Entwurf designs/s/B-*.html);
+   er umschliesst jetzt das ganze Spielfeld statt eines kleinen Kastens. */
+:root[data-theme="B"] { --b-breit: min(1200px, 95vw); }
+
+/* Der Screen fuellt den Rest des Fensters, damit das Spielfeld bis an den
+   Gitterboden reicht statt in der Bildmitte zu enden. `flex: 1 0 auto`
+   statt `1 1 auto`: wachsen ja, schrumpfen nie - sonst wuerde ein langer
+   Screen gestaucht und liefe unten aus dem Beamerbild. */
+:root[data-theme="B"] :is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active {
+  flex: 1 0 auto;
+}
+
+/* Marquee: das Logo schrumpft auf Schildgroesse und sitzt dicht ueber dem
+   HUD - im Automaten haengt es ueber dem Bild, nicht darin. */
+:root[data-theme="B"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo {
+  margin: 14px 0 6px; }
+:root[data-theme="B"] body:has(:is(#game-screen, #jeopardy-screen, #wwm-screen, #wwds-screen, #ddf-screen, #pih-screen, #tp-screen, #finale-screen).active) .logo svg {
+  width: 150px; max-height: 52px; }
+
+/* ── HUD: Spieleranzeigen ohne Kasten, aussen an den Kanten ── */
+:root[data-theme="B"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.scoreboard, .wwds-top, .jeopardy-scores) {
+  width: 100%; max-width: none; display: flex; flex-wrap: nowrap; justify-content: space-between; align-items: flex-start;
+  gap: 24px; margin: 0; padding: 0 2px 10px; border-bottom: 2px solid var(--b-line);
+}
+:root[data-theme="B"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.team-panel, .wwds-team, .jeopardy-team):is(.red, .blue, .green) {
+  flex: 0 1 auto; min-width: 190px; background: none; box-shadow: none; padding: 15px 0 0; text-align: left;
+}
+:root[data-theme="B"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.team-panel, .wwds-team, .jeopardy-team)::before {
+  left: 0; top: 0;
+}
+/* Die letzte Anzeige spiegelt sich an den rechten Rand - 1P links, 2P
+   rechts, wie an der Scheibe des Automaten. */
+:root[data-theme="B"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.team-panel, .wwds-team, .jeopardy-team):last-child {
+  text-align: right;
+}
+:root[data-theme="B"] :is(#game-screen, #wwds-screen, #jeopardy-screen) :is(.team-panel, .wwds-team, .jeopardy-team):last-child::before {
+  left: auto; right: 0;
+}
+:root[data-theme="B"] :is(#game-screen, #wwds-screen) :is(.team-panel, .wwds-team).active-team,
+:root[data-theme="B"] :is(#game-screen, #wwds-screen) .wwds-team.on {
+  box-shadow: inset 0 -3px 0 #FFE14D; padding-bottom: 6px;
+}
+:root[data-theme="B"] #game-screen .team-panel.active-team::after { top: 0; left: 30px; }
+:root[data-theme="B"] #game-screen .team-panel:last-child.active-team::after { left: auto; right: 30px; }
+:root[data-theme="B"] #game-screen .team-panel .t-score { font-size: clamp(2rem, 5.4vh, 2.8rem); margin-top: 4px; }
+:root[data-theme="B"] #game-screen .team-panel .team-strikes { margin-top: 6px; }
+:root[data-theme="B"] #game-screen .team-panel:not(:last-child) .team-strikes { justify-content: flex-start; }
+
+/* Statuszeile unter dem HUD: duenn, cyan, mittig - wie "ROUND 1" im Spiel. */
+:root[data-theme="B"] :is(#game-screen, #wwds-screen, #jeopardy-screen, #wwm-screen, #tp-screen) .round-bar {
+  justify-content: center; width: 100%; padding: 9px 0 10px; margin: 0;
+}
+
+/* ── Feud: HUD oben, Spielfeld fuellt den Rest ── */
+:root[data-theme="B"] #game-screen.active {
+  display: grid; width: 100%; max-width: var(--b-breit); padding-top: 0;
+  grid-template-areas: "hud" "status" "board"; grid-template-rows: auto auto 1fr; row-gap: 0;
+}
+:root[data-theme="B"] #game-screen .scoreboard { grid-area: hud; }
+:root[data-theme="B"] #game-screen .round-bar { grid-area: status; }
+:root[data-theme="B"] #game-screen .board {
+  grid-area: board; align-self: stretch; display: flex; flex-direction: column; padding: 16px;
+}
+:root[data-theme="B"] #game-screen .q-text { font-size: clamp(.72rem, 1.9vh, .92rem); line-height: 1.7; margin-bottom: 14px; }
+:root[data-theme="B"] #game-screen .answers { flex: 1; align-content: stretch; gap: 6px; }
+:root[data-theme="B"] #game-screen .tile { min-height: clamp(44px, 9.5vh, 76px); }
+:root[data-theme="B"] #game-screen .tile.open .tile-answer { font-size: clamp(.72rem, 1.9vh, .95rem); }
+:root[data-theme="B"] #game-screen .tile.open .tile-pts { font-size: clamp(.8rem, 2.1vh, 1.05rem); }
+:root[data-theme="B"] #game-screen .tile-num::before { font-size: clamp(.64rem, 1.7vh, .82rem); }
+
+/* ── Jeopardy: HUD oben, das Brett fuellt den Rest ── */
+:root[data-theme="B"] #jeopardy-screen.active {
+  display: grid; width: 100%; max-width: var(--b-breit); padding-top: 0;
+  grid-template-areas: "hud" "status" "board"; grid-template-rows: auto auto 1fr; row-gap: 0;
+}
+:root[data-theme="B"] #jeopardy-screen .jeopardy-scores { grid-area: hud; }
+:root[data-theme="B"] #jeopardy-screen .round-bar { grid-area: status; }
+:root[data-theme="B"] #jeopardy-screen .jeopardy-board { grid-area: board; align-self: stretch; }
+:root[data-theme="B"] #jeopardy-screen .jeopardy-team .jt-score { font-size: clamp(1.3rem, 3.6vh, 1.8rem); }
+:root[data-theme="B"] #jeopardy-screen .jeopardy-cell { font-size: clamp(1rem, 3vh, 1.45rem); }
+
+/* Jeopardy-Frage: der Automat zeigt sie formatfuellend, nicht als Karte in
+   der Mitte - Kategorie als HUD-Zeile oben, Betrag gross rechts daneben. */
+:root[data-theme="B"] .jeopardy-clue-overlay {
+  display: grid; justify-items: stretch;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "cat pts" "frage frage" "antwort antwort";
+  grid-template-rows: auto 1fr auto;
+  padding: 7vh clamp(34px, 5vw, 70px); column-gap: 28px; row-gap: 0;
+  /* Die Scheibe des Automaten: der weisse Doppelrahmen sitzt nicht um eine
+     Karte in der Mitte, sondern am Bildrand - die Frage IST das Bild. */
+  box-shadow: inset 0 0 0 4px #FFFFFF, inset 0 0 0 8px #0B0A12, inset 0 0 0 11px #2B2740;
+}
+:root[data-theme="B"] .jeopardy-clue-overlay > * { grid-column: 1 / -1; }
+:root[data-theme="B"] .jeopardy-clue-cat { grid-area: cat; align-self: end; text-align: left; }
+:root[data-theme="B"] .jeopardy-clue-pts { grid-area: pts; justify-self: end; align-self: end; font-size: clamp(1.2rem, 4.5vh, 1.9rem); }
+:root[data-theme="B"] :is(.jeopardy-clue-cat, .jeopardy-clue-pts) { padding-bottom: 14px; border-bottom: 2px solid #45F0FF; }
+:root[data-theme="B"] .jeopardy-clue-text {
+  grid-area: frage; align-self: center; max-width: none; text-align: center;
+  font-size: clamp(.95rem, 1.6vw + .5vh, 1.5rem); line-height: 1.75;
+}
+:root[data-theme="B"] .jeopardy-clue-blank { grid-area: frage; align-self: center; justify-self: center; }
+:root[data-theme="B"] .jeopardy-answer-text { grid-area: antwort; justify-self: center; text-align: center; }
+
+/* ── WWM: Leiter als HUD-Balken, Frage und Karten fuellen den Rest ── */
+:root[data-theme="B"] #wwm-screen.active { width: 100%; max-width: var(--b-breit); padding-top: 0; }
+:root[data-theme="B"] #wwm-screen .wwm-wrap { flex: 1; }
+:root[data-theme="B"] #wwm-screen .wwm-main { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="B"] #wwm-screen .wwm-q { font-size: clamp(.85rem, 2.4vh, 1.15rem); line-height: 1.75; padding: 6px 0; }
+:root[data-theme="B"] #wwm-screen .wwm-answers { flex: 1; align-content: stretch; }
+:root[data-theme="B"] #wwm-screen .wwm-opt { min-height: clamp(62px, 12vh, 92px); font-size: clamp(.78rem, 2.1vh, 1rem); }
+
+/* ── WWDS: HUD oben, Buehne fuellt den Rest ── */
+:root[data-theme="B"] #wwds-screen.active {
+  display: grid; width: 100%; max-width: var(--b-breit); padding-top: 0;
+  grid-template-areas: "hud" "status" "board"; grid-template-rows: auto auto 1fr; row-gap: 0;
+}
+:root[data-theme="B"] #wwds-screen .wwds-top { grid-area: hud; }
+:root[data-theme="B"] #wwds-screen .round-bar { grid-area: status; }
+:root[data-theme="B"] #wwds-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; padding: 16px; }
+:root[data-theme="B"] #wwds-screen #wwds-stage { flex: 1; display: flex; flex-direction: column; }
+:root[data-theme="B"] #wwds-screen .wwds-team .wt-money { font-size: clamp(1.1rem, 3.2vh, 1.5rem); }
+:root[data-theme="B"] #wwds-screen .wwds-grid { flex: 1; align-content: stretch; }
+:root[data-theme="B"] #wwds-screen .wwds-cat { min-height: clamp(52px, 10vh, 86px); }
+:root[data-theme="B"] #wwds-screen .wwds-opts { flex: 1; align-content: stretch; }
+:root[data-theme="B"] #wwds-screen .wwds-opt { min-height: clamp(48px, 9vh, 78px); }
+
+/* ── DDF: Kandidaten als Spielerleiste oben, Frage fuellt den Rest ──
+   Der innere Wrapper traegt Inline-Styles (index.html) - daher !important. */
+:root[data-theme="B"] #ddf-screen.active { width: 100%; max-width: var(--b-breit); padding-top: 0; }
+/* Der Wrapper traegt inline `height:100%`. Das ist hier zirkulaer - der
+   Screen waechst mit dem Inhalt (flex: 1 0 auto), also waechst der Wrapper
+   mit sich selbst. Stattdessen `height:auto` plus `flex:1`: er fuellt den
+   Screen, ohne ihn aufzublaehen. */
+:root[data-theme="B"] #ddf-screen > div { height: auto !important; flex: 1; }
+:root[data-theme="B"] #ddf-screen .ddf-players {
+  max-width: none; margin: 0; padding: 0 0 10px; border: 0; border-bottom: 2px solid var(--b-line); gap: 0;
+}
+:root[data-theme="B"] #ddf-screen .ddf-player { padding: 10px 14px; }
+:root[data-theme="B"] #ddf-screen .ddf-alive { margin: 10px 0 0; font-family: var(--b-px); font-size: .58rem; letter-spacing: 1px; color: #45F0FF; }
+:root[data-theme="B"] #ddf-timer { font-family: var(--b-px); font-size: 1.1rem !important; color: #FFE14D; margin-top: 8px; }
+:root[data-theme="B"] #ddf-screen .ddf-question { flex: 1; display: flex; align-items: center; justify-content: center; font-size: clamp(.95rem, 2.6vh, 1.3rem); line-height: 1.75; }
+:root[data-theme="B"] #ddf-screen .ddf-vote-grid { padding-bottom: 6px; }
+
+/* ── PIH: Stand als HUD oben, Artikel als Marquee, Preis als Punktzahl ── */
+:root[data-theme="B"] #pih-screen.active { width: 100%; max-width: var(--b-breit); padding-top: 0; }
+:root[data-theme="B"] #pih-screen > div { height: auto !important; flex: 1; }
+:root[data-theme="B"] #pih-screen .pih-teamrow { max-width: none; margin: 0 0 8px; }
+:root[data-theme="B"] #pih-screen .pih-scores { max-width: none; margin: 0; padding-bottom: 8px; border-bottom: 2px solid var(--b-line); gap: 6px; }
+:root[data-theme="B"] #pih-screen .pih-score { padding: 5px 9px; gap: 7px; }
+:root[data-theme="B"] #pih-screen .pih-score-name { font-size: .85rem; }
+:root[data-theme="B"] #pih-screen .pih-score .pmini-av { width: 22px; height: 22px; font-size: .8rem; }
+:root[data-theme="B"] #pih-timer { font-family: var(--b-px); font-size: .9rem !important; color: #45F0FF; margin-top: 8px; }
+:root[data-theme="B"] #pih-screen .pih-item { font-family: var(--b-px); font-size: clamp(.85rem, 2.2vh, 1.15rem); line-height: 1.6; text-transform: uppercase; }
+/* Das Produktfoto darf nur so hoch werden, wie unter Artikel und Preis noch
+   Platz ist - ohne Deckel stand PIH 179 px unter dem Beamerbild. */
+:root[data-theme="B"] #pih-screen .pih-stage { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; min-height: 0; }
+:root[data-theme="B"] #pih-screen .pih-stage :is(img, video) { max-height: min(30vh, 260px); width: auto; }
+:root[data-theme="B"] #pih-screen .pih-price { font-family: var(--b-px); font-size: clamp(1.3rem, 4.6vh, 2.1rem); color: #FFE14D; text-shadow: 4px 4px 0 #8A7400; }
+:root[data-theme="B"] #pih-screen .pih-bid-grid { max-width: none; }
+
+/* ── TP: Teams als HUD, Rad und Frage fuellen das Feld ── */
+:root[data-theme="B"] #tp-screen.active {
+  display: grid; width: 100%; max-width: var(--b-breit); padding-top: 0;
+  grid-template-areas: "hud" "status" "board"; grid-template-rows: auto auto 1fr; row-gap: 0;
+}
+:root[data-theme="B"] #tp-screen .tp-top {
+  grid-area: hud; max-width: none; width: 100%; margin: 0; padding: 0 2px 10px;
+  border-bottom: 2px solid var(--b-line); gap: 24px; justify-content: space-between; align-items: flex-start;
+}
+/* Die Teams sind hier Anzeigen, keine Karten: Torte klein links, Name und
+   Stand daneben - dieselbe HUD-Zeile wie bei Feud und WWDS. */
+:root[data-theme="B"] #tp-screen .tp-team:is(.red, .blue, .green) {
+  flex: 0 1 auto; display: flex; flex-direction: row; align-items: center; gap: 12px;
+  background: none; box-shadow: none; padding: 4px 0 0; transform: none;
+}
+:root[data-theme="B"] #tp-screen .tp-team.turn { box-shadow: inset 0 -3px 0 #FFE14D; padding-bottom: 6px; }
+:root[data-theme="B"] #tp-screen .tp-team .tp-pie { width: 44px; height: 44px; flex: none; margin: 0; }
+:root[data-theme="B"] #tp-screen .tp-team-name { font-family: var(--b-px); font-size: .72rem; line-height: 1.4; text-transform: uppercase; }
+:root[data-theme="B"] #tp-screen .tp-team-sub { font-size: .62rem; letter-spacing: 1px; }
+:root[data-theme="B"] #tp-screen .tp-team:last-child { flex-direction: row-reverse; text-align: right; }
+:root[data-theme="B"] #tp-screen .round-bar { grid-area: status; }
+:root[data-theme="B"] #tp-screen .tp-board { grid-area: board; align-self: stretch; align-items: center; width: 100%; justify-content: center; }
+:root[data-theme="B"] #tp-screen .tp-question { font-family: var(--b-px); font-size: clamp(.88rem, 2.4vh, 1.15rem); line-height: 1.75; text-transform: uppercase; }
+
+/* ── Feud-Finale: Kopf als HUD, Frage und Liste fuellen das Feld ── */
+:root[data-theme="B"] #finale-screen.active {
+  display: grid; width: 100%; max-width: var(--b-breit); padding-top: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "stand stand" "kopf uhr" "vergleich vergleich" "board board";
+  grid-template-rows: auto auto auto 1fr; column-gap: 28px; row-gap: 0;
+}
+:root[data-theme="B"] #finale-screen .finale-header { grid-area: kopf; align-self: center; display: flex; align-items: baseline; gap: 16px; text-align: left; }
+:root[data-theme="B"] #finale-screen .finale-timer { grid-area: uhr; justify-self: end; align-self: center; font-size: clamp(1.6rem, 6vh, 2.6rem); }
+/* Der Stand ist die HUD-Zeile: 1P links, 2P rechts, Strich darunter. */
+:root[data-theme="B"] #finale-screen .finale-scores {
+  grid-area: stand; width: 100%; max-width: none; margin: 0; padding: 0 2px 10px;
+  justify-content: space-between; border-bottom: 2px solid var(--b-line);
+}
+:root[data-theme="B"] #finale-screen .finale-score-card { flex: 0 1 auto; background: none; box-shadow: none; padding: 4px 0 0; text-align: left; }
+:root[data-theme="B"] #finale-screen .finale-score-card:last-child { text-align: right; }
+:root[data-theme="B"] #finale-screen .finale-score-card.active { background: none; box-shadow: inset 0 -3px 0 #FFE14D; padding-bottom: 6px; }
+/* "Wer hat was gesagt" wird von js/feud.js erzeugt und landet sonst per
+   Auto-Platzierung oben rechts im Raster - daher eine eigene Flaeche. */
+:root[data-theme="B"] #finale-reveal-comparison { grid-area: vergleich; justify-content: center; gap: 14px; margin: 14px 0 0; }
+:root[data-theme="B"] #finale-screen .board { grid-area: board; align-self: stretch; display: flex; flex-direction: column; padding: 16px; margin-top: 14px; }
+:root[data-theme="B"] #finale-screen .answers { flex: 1; align-content: stretch; }
+:root[data-theme="B"] #finale-screen .q-text { font-size: clamp(.78rem, 2.1vh, 1.05rem); line-height: 1.75; }
+:root[data-theme="B"] #finale-screen .finale-big-q {
+  flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+  font-size: clamp(.95rem, 1.6vw + .5vh, 1.5rem); line-height: 1.75;
+}
+
+/* ── Ergebnis: GAME OVER wie am Automaten ──
+   Mittig bleibt richtig - der Automat zeigt den Endstand in der Bildmitte.
+   Veredelt wird ueber den Rahmen und die Kicker-Zeile, nicht ueber Umbau. */
+:root[data-theme="B"] #result-screen.active { width: 100%; max-width: min(820px, 92vw); }
+:root[data-theme="B"] #result-screen .result-icon { display: none; }
+:root[data-theme="B"] #result-screen .winner-text { font-size: clamp(1.1rem, 3.4vh, 1.7rem); line-height: 1.7; }
+:root[data-theme="B"] #result-screen .winner-text::before {
+  content: 'Game Over'; display: block; margin-bottom: 20px; font-family: var(--b-px); font-size: .7rem;
+  letter-spacing: 2px; color: #45F0FF; text-shadow: none;
+}
+:root[data-theme="B"] #result-screen .result-card {
+  width: 100%; background: #14121F; border: 0; border-radius: 0; box-shadow: inset 0 0 0 3px #2B2740; padding: 22px;
+}
+:root[data-theme="B"] #result-screen .result-scores { font-family: var(--b-px); font-size: .72rem; line-height: 2; color: #EEEAFE; }
+:root[data-theme="B"] #result-screen .result-scores strong { color: #FFE14D; }
+
+/* ── Menue: Spielauswahl wie am Automaten ──
+   Statt eines 720-px-Blocks in der Mitte die volle Breite, Kicker
+   "Select Game" und vier Spalten. Hostseite, kommt nicht auf den Beamer. */
+:root[data-theme="B"] #menu-screen.active { width: 100%; max-width: var(--b-breit); }
+:root[data-theme="B"] #menu-screen .menu-cards { grid-template-columns: repeat(4, 1fr); max-width: none; }
+:root[data-theme="B"] #menu-screen .menu-cards::before {
+  content: 'Select Game'; grid-column: 1 / -1; padding-bottom: 6px;
+  font-family: var(--b-px); font-size: .62rem; letter-spacing: 2px; color: #45F0FF;
+}
+:root[data-theme="B"] #menu-screen .menu-pills { justify-content: center; }
 
 /* ── C · Pop: Aufkleber - schwarze Kontur, harter Versatzschatten, schief ── */
 :root[data-theme="C"] {

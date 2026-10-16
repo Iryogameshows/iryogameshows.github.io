@@ -277,6 +277,16 @@
   :root[data-theme="B"] .btn.ghost{background:#0B0A12;border:2px solid #EEEAFE;box-shadow:none;}
   :root[data-theme="B"] .lobby-title{font-family:'Press Start 2P',monospace;font-weight:400;font-size:1rem;line-height:1.6;}
   :root[data-theme="B"] h1{font-family:'Press Start 2P',monospace;font-weight:400;font-size:.75rem;letter-spacing:1px;}
+  /* B Komposition (2026-10-16), wie auf der Leinwand: der Automat ist mittig
+     und randvoll - das Team steht als Schild oben, der Knopf fuellt die
+     Breite, die Statuszeile steht in Pixelschrift darunter. Vorher sass ein
+     340-px-Knopf in der Mitte und der Rest der Flaeche blieb leer. */
+  :root[data-theme="B"] #buzz{width:min(88vw,46vh);max-width:none;height:min(88vw,46vh);max-height:none;}
+  :root[data-theme="B"] .team-chip{letter-spacing:1px;padding:7px 12px;}
+  :root[data-theme="B"] #status{font-family:'Press Start 2P',monospace;font-weight:400;font-size:.85rem;line-height:1.8;}
+  :root[data-theme="B"] :is(#screen-buzz,#screen-wait,#screen-estimate,#screen-login) .hint{font-size:.72rem;}
+  /* Pause: der Ruhezustand ist ein flaches Pixelquadrat, kein Kreis. */
+  :root[data-theme="B"] .wait-orb{border-radius:0;background:var(--buzz-mid,#E8453C);box-shadow:0 0 0 4px #0B0A12,0 0 0 8px #2B2740;}
 
   /* C Pop: Aufkleber mit schwarzer Kontur und hartem Versatz. */
   :root[data-theme="C"] #buzz{border-radius:34px;rotate:-4deg;border:5px solid #121212;font-size:3rem;
