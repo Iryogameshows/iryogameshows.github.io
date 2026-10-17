@@ -12,6 +12,65 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-17 — `599e464` + `b8f9412` Durchgeh-Seite `tools/durchgang/`
+
+**Gemacht:** Davids Wunsch — eine Seite, auf der er eine Richtung nach der anderen mit allen
+Spielen durchgeht und die Befunde daraus weitergibt.
+
+1. **`599e464`** — die Tabelle `AUFBAU` aus `shots.js` nach **`tools/shots/aufbau.js`**
+   verschoben, Zeile für Zeile unverändert. Sie bedient jetzt Node (`module.exports`) und
+   Browser (`window.AUFBAU`).
+2. **`b8f9412`** — **`tools/durchgang/index.html`**: links die Liste, in der Mitte die echte
+   Hostseite im iframe (**anklickbar**), rechts Urteil und Notiz. 19 Richtungen × 25 Zustände
+   = **475 Schritte**. Tastatur `←` `→` `1` `2`, Stand im `localStorage`, Knopf „Bericht" baut
+   einen Text zum Kopieren. Zwei Reihenfolgen: Richtung für Richtung (Davids Wunsch) oder
+   Zustand für Zustand zum Farbvergleich.
+3. **`index.html`** bekam `?stumm=1`, **`js/core.js`** den roten Balken dazu.
+
+**Warum `?stumm=1` sein musste.** Die Aufbau-Funktionen **starten echte Shows** —
+`startJeopardyActual` ruft `jeopardyBuzzConnect()` und `lockBuzzerJoins()`. Ein Durchgang
+hätte also hunderte Male echte Buzzer-Zustände in die Live-Datenbank geschrieben und
+`joinLocked` geschaltet. Mit dem Parameter lädt `index.html` per `document.write` die
+Ersatz-Datenbank `tools/shots/fbstub.js` statt Firebase — dieselbe, die die Werkzeuge nutzen.
+`document.write` statt eines dynamischen Tags, weil die Ladereihenfolge im `<head>` zählt und
+es keinen Build-Step gibt. **Der Balken ist kein Schmuck:** ohne ihn sieht die Seite normal
+aus, während kein Handy ankommt — in diesem Modus darf nie eine echte Show laufen.
+
+**Warum die Zustände geteilt werden.** Eine zweite Liste in der Durchgeh-Seite wäre
+auseinandergelaufen, und dann prüft die eine Seite etwas anderes als die andere. Wer in
+`aufbau.js` einen Zustand ergänzt, muss ihn aber in `ZUSTAENDE` der Durchgeh-Seite nachtragen
+— die Beschriftung steht dort, nicht in `aufbau.js`.
+
+**Zwei Fallen beim Bauen, beide behoben und im Code vermerkt:**
+
+- Der Zustand stand erst im **Hash** (`#E|jeop-frage`). Ein Fragmentwechsel lädt das iframe
+  **nicht** neu, `load` feuert kein zweites Mal — der Rahmen blieb beim ersten Zustand stehen,
+  während Titel und Liste schon weitergesprungen waren. Jetzt ein Zähler in der Query.
+- **WWM und WWDS öffnen das GM-Panel verzögert.** Ein einmaliges Ausblenden direkt nach dem
+  Aufbau kam zu früh, das Panel ging wieder auf und stand vor dem Bildschirm. `shots.js`
+  wartet dafür 1400 ms; hier wird bei 0, 250, 700 und 1500 ms nachgesetzt.
+- `const AUFBAU` landet in einem klassischen Script **nicht** auf `window` — erst `window.AUFBAU
+  = AUFBAU` machte es für den Rahmen sichtbar. Die erste Fassung meldete „kein Aufbau für menu".
+
+**Geprüft:** alle **25 Zustände in Richtung E** durchlaufen — jeder baut auf, alle mit
+`data-theme="E"`, **keine** Fehlermeldung, GM-Panel nur bei `gm` und `gm-menu`. Urteil, Notiz
+und Bericht ausprobiert, Testdaten wieder entfernt. Danach `check.js` und `--types` sauber,
+`shots.js --shows menu,jeop,gm,gm-menu --themes Studio,E` ohne Befunde, `ablauf.js` **49 OK /
+0 FEHL**, `geraete.js` **55 OK / 0 FEHL** — die `index.html`-Änderung bricht die Werkzeuge
+also nicht.
+
+**Offen / nicht dabei:**
+
+- Die drei **Handy-Zustände** (`buzzer`, `buzzer-pause`, `buzzer-login`). Sie stecken fest in
+  `shots.js` (Funktion `handySeite`, nicht in `AUFBAU`) und bräuchten eine eigene
+  `?stumm=1`-Weiche in `buzzer/index.html`.
+- Nur **Richtung E** ist Zustand für Zustand durchgemessen, nicht alle 19 — die übrigen hat
+  bisher nur `shots.js` gesehen.
+- Die Seite ist nur im **Browser-Pane** gelaufen, nicht in Davids eigenem Browser. Über
+  `file://` geht sie **nicht** (gleiche Herkunft nötig), nur über den lokalen Server.
+- Der **Bericht** zählt Offenes je Richtung zusammen; welcher Zustand genau fehlt, steht nicht
+  drin. Falls das gebraucht wird, ist es eine Zeile mehr.
+
 ## 2026-10-17 — `72f8228` Prüfwerkzeuge liefen nicht mehr: Edge 155 vs. `--headless=old`
 
 **Gemacht:** `playwright-core` von 1.48.2 auf **1.64.1**; neue Datei
