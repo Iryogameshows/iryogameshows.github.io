@@ -1187,6 +1187,42 @@ function updateGamemasterOverlay() {
 </body></html>`;
   commitGamemasterHtml(gmHtml);
 }
+/* Keine Show laeuft: das Panel gehoert dem Menue.
+
+   Ohne diesen Zweig behielt das GM-Fenster nach "Beenden" den Inhalt der
+   gerade beendeten Show - bei Jeopardy also Spielbrett und "Frage aufdecken".
+   Das Overlay wird beim Wechsel auf menu-screen nur unsichtbar geschaltet
+   (core.js, showScreen), das iframe selbst nicht geleert; beim naechsten
+   Oeffnen stand die alte Frage wieder da, und updateGamemaster() fand mit
+   allen Flags aus keinen Zweig mehr, der sie ersetzt haette. Dasselbe gilt
+   fuer das Handy-Gamepad, das dieses HTML ueber Firebase mitliest. */
+function updateGamemasterMenu() {
+  const gmHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<meta name="color-scheme" content="dark">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>${GM_SHARED_CSS}
+  .leer{text-align:center;padding:18px 12px;color:rgba(255,255,255,.55);font-size:.9rem;line-height:1.6;}
+  .leer b{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:rgba(255,255,255,.8);margin-bottom:6px;}
+</style></head><body>
+  ${gmHeaderHtml('Gamemaster', 'Keine Show')}
+  <div class="gm-body">
+  <div class="gm-main">
+    <div class="panel"><div class="leer">
+      <b>Bereit</b>
+      Wähle am Hauptbildschirm die nächste Show. Die Steuerung erscheint hier,
+      sobald sie läuft.
+    </div></div>
+  </div>
+  <div class="gm-side">${gmNotesPanelHtml()}</div>
+  </div>
+  <div class="gm-actions">
+    <button class="gm-btn gray sm" onclick="opener.toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
+    ${tournament ? `<button class="gm-btn gold" onclick="opener.tournamentShowBoard()">📊 Turnierstand anzeigen</button>` : ''}
+  </div>
+</body></html>`;
+  commitGamemasterHtml(gmHtml, true);
+}
 // Solange die Turnierübersicht offen ist, kann der Host geheime Spiele im
 // Spielplan vom GM-Panel aus live für die Zuschauer aufdecken.
 function updateGamemasterTournament() {
@@ -1228,6 +1264,10 @@ function updateGamemaster() {
   updateGMBar();
   if (!gamemasterWin || gamemasterWin.closed) return;
   if (gmActiveOverlay()) return updateGamemasterOverlay();
+  /* Steht das Menue, laeuft keine Show - egal, welche Flags noch gesetzt sind.
+     Muss vor den Spiel-Flags stehen, damit das Panel nach "Beenden" nicht auf
+     der Steuerung der beendeten Show haengen bleibt (updateGamemasterMenu). */
+  if (screenActive('menu-screen')) return updateGamemasterMenu();
   /* Bewusst VOR den Spiel-Flags: der Turnierstand wird zwischen zwei Shows
      gezeigt, und ob das Flag der eben beendeten Show schon zurueckgesetzt ist,
      haengt daran, wie sie geendet hat (regulaer, abgebrochen, per Undo). Steht

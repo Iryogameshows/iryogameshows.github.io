@@ -817,7 +817,11 @@ function gmInsertQuit(doc) {
   right.appendChild(btn);
   header.appendChild(right);
 }
-function commitGamemasterHtml(html) {
+/* ohneQuit: fuer Panels, zu denen kein "Beenden" gehoert, weil gerade keine
+   Show laeuft (updateGamemasterMenu). Ein Beenden-Knopf im Menue-Panel haette
+   nichts zu beenden und wuerde nur die Rueckfrage stellen.
+   @param {string} html @param {boolean} [ohneQuit] */
+function commitGamemasterHtml(html, ohneQuit) {
   // Design-Richtung einsetzen (js/theme.js) - vor dem Anzeigen UND vor dem
   // Verschicken, damit das Gamepad dasselbe Bild zeigt wie das GM-Fenster.
   html = themeGmHtml(html);
@@ -826,7 +830,7 @@ function commitGamemasterHtml(html) {
   // Board-Popout weiter oben). Das lässt z.B. das Notizen-Textfeld beim Tippen
   // in Ruhe, statt es bei jedem GM-Update (Buzz, Punktestand, …) zu resetten.
   const doc = new DOMParser().parseFromString(html, 'text/html');
-  gmInsertQuit(doc);
+  if (!ohneQuit) gmInsertQuit(doc);
   html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
   morphMirror(gamemasterWin.document.head, doc.head);
   morphMirror(gamemasterWin.document.body, doc.body);
