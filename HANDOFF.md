@@ -12,6 +12,70 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-17 — `50e4fe4` + `b470e2f` Durchgang: Auswahl, Speicherschutz, **Beamer**
+
+**Davids zwei Einwände nach dem ersten Wurf**, beide berechtigt:
+
+1. *„nur die neuen, die du korrigiert hast … nicht alles was es gibt"* — alle 25 Zustände sind
+   zu viel. Gefragt ist, ob die **jüngsten Änderungen** in jeder Richtung sitzen.
+2. *„ich will vor allem die neuen Animationen testen und sehen"* — und genau die zeigte die
+   Seite **nicht**.
+
+**`50e4fe4` — Auswahl und Speicherschutz**
+
+- **Vorauswahl** aus der Git-History, je Eintrag steht der Commit als Begründung im Code.
+  Knopf „Auswahl" mit Haken je Zustand, dazu „Nur die Überarbeiteten" und „Alle". Die Wahl
+  bleibt gespeichert und steht im Bericht.
+- **Der Rahmen teilt sich den `localStorage` mit der echten App** — gleiche Herkunft. Ein
+  Durchgang hätte Davids eingestellte Design-Richtung überschrieben (`applyTheme` schreibt
+  direkt, `js/theme.js:634`, nicht über `storeSet`) und seinen gesicherten Spielstand durch die
+  Testshows ersetzt (`resumeSaveSoon` läuft bei fast jedem Spielschritt). Jetzt werden
+  `designTheme` und `liveGame` beim Start gemerkt und nach jedem Schritt zurückgeschrieben;
+  `storeSet`, `storeSetJson` und `storeRemove` sind im Rahmen stillgelegt. **Mit Probewerten
+  geprüft:** `designTheme` blieb auf `K`, der Probe-Spielstand unberührt.
+- Das **Resume-Angebot** stand im Menü vor allem anderen — die Testshows sichern ihren Stand,
+  und beim nächsten Laden bietet die Seite ihn an. `#resume-banner` wird geleert, mehrfach wie
+  das GM-Panel.
+
+**`b470e2f` — der Beamer, und warum das der eigentliche Punkt war**
+
+Jeopardy-Flug (`mainscreen/aufdecken.js`), Bauchbinde und die großen Momente
+(`mainscreen/buehne.js`) spielt **das Zuschauerfenster selbst** — die Hostseite spiegelt nur
+ihren DOM dorthin (BAUPLAN 4.8). Die Seite zeigte nur den Host, und `w.open` war abgeschaltet,
+also konnte das Beamerfenster nicht einmal aufgehen. **Ein Durchgang hätte von den Animationen
+nichts gezeigt und wäre trotzdem als „geprüft" abgehakt worden.**
+
+- Zweiter Rahmen mit `mainscreen/`, oben und größer; die Hostseite darunter. Umschalter
+  „Beamer + Host / nur Beamer / nur Host".
+- Angeheftet **wie das GM-Panel in der App**: `opener` auf das Host-Fenster setzen, dann meldet
+  die Beamer-Seite sich selbst über `boardReattach` (`mainscreen/index.html:91`). Kein
+  Nachbau nötig, das Muster gab es schon.
+- Der Beamer lädt je Schritt neu und ist fertig, **bevor** die Show startet — sonst läuft die
+  Animation ins Leere. Dafür wartet der `load`-Haken des Hosts auf ein Promise.
+- **Je Zustand ein Hinweis, was anzuklicken ist** („Feld anklicken → es fliegt zur Frage").
+  Ohne den sieht man Standbilder und hält den Zustand für geprüft.
+- `feud` in die Vorauswahl: die großen Momente (Antwort, X, Runde) hängen daran. **11 Zustände,
+  209 Schritte** statt 475.
+- **`js/feud.js`**: `#stumm-balken` zu den Elementen in `boardStyleCss`, die der Beamer
+  ausblendet. Die Warnung ist für den Host; gespiegelt verdeckte sie den oberen Rand des
+  Beamerbilds — und die Zuschauer geht sie nichts an.
+
+**Geprüft:** Richtung D, Zustand `jeop` — Feld angeklickt, **450 ms später ein fliegendes
+Element** (`[data-fliegt]`) im Beamer, nach 2 s durch und die Frage steht; GSAP ist dort
+geladen. Beamer trägt `data-theme="D"`, Balken dort `display:none`, auf dem Host sichtbar.
+Vorher Richtung L über `menu`, `jeop`, `gm`, `gm-menu`, `ergebnis`, `pih` — jeder baut auf,
+kein Banner, keine Meldung. `check.js` und `--types` sauber, `ablauf.js` **49 OK / 0 FEHL**.
+
+**Offen:**
+
+- Nur **Richtung D und L** sind mit Beamer durchgespielt, nicht alle 19.
+- Die **Bauchbinde** (Late Night, `jeop-frage` → Antwort aufdecken) und die **großen Momente**
+  in `feud` sind **nicht** ausgelöst worden — nur der Jeopardy-Flug ist gemessen. Die Hinweise
+  dazu stehen in der Seite, geprüft hat sie niemand.
+- Die **lebende Stadt** (Late Night, `menu`) läuft von selbst, ebenfalls ungeprüft.
+- Wer in `aufbau.js` einen Zustand ergänzt, muss ihn in `ZUSTAENDE` der Durchgeh-Seite
+  nachtragen — Beschriftung und Hinweis stehen dort, nicht in `aufbau.js`.
+
 ## 2026-10-17 — `599e464` + `b8f9412` Durchgeh-Seite `tools/durchgang/`
 
 **Gemacht:** Davids Wunsch — eine Seite, auf der er eine Richtung nach der anderen mit allen
