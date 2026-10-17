@@ -12,6 +12,65 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-17 — `f8bb712` Live war die Durchgeh-Seite kaputt: `tools/shots` wird nicht ausgeliefert
+
+**Davids Meldung beim ersten Öffnen:** „tools/shots/aufbau.js nicht gefunden."
+
+**Die Ursache.** `.github/workflows/pages.yml` entfernt vor dem Upload unter anderem
+**`tools/shots`** — bewusst, der Schritt heißt „Nicht ausgelieferte Dateien aus dem Upload
+nehmen" und begründet das mit „nur hochladen, was eine Seite tatsächlich lädt". Meine
+Durchgeh-Seite lud aber genau von dort (`aufbau.js`), und `index.html` bei `?stumm=1` ebenso
+(`fbstub.js`). **Live gemessen:** beide **404**, `tools/intros` und `mainscreen` dagegen 200.
+
+Das war mehr als eine kaputte Prüfseite: `index.html?stumm=1` hätte live **überhaupt keine
+Datenbank** bekommen — weder den Ersatz noch Firebase, weil die Weiche das eine gegen das
+andere tauscht.
+
+**Behoben durch Verschieben, nicht durch Workflow-Änderung:** `aufbau.js` und `fbstub.js`
+liegen jetzt in **`tools/gemeinsam/`**. `tools/` als Ganzes wird nicht gelöscht, nur `shots`
+und `reactbits` — der Ordner geht also automatisch mit. Der andere Weg wäre gewesen, die
+`rm -rf`-Zeile in `pages.yml` anzupassen; das braucht ein Token mit `workflow`-Recht, das laut
+`CLAUDE.md` auf diesen Geräten keiner hat. Das Verschieben ist ohnehin robuster: es gibt keine
+Ausnahmeliste, die jemand beim nächsten Mal vergisst.
+
+`tools/gemeinsam/LIESMICH.md` hält fest, wer die Dateien braucht und wie man nach einem Deploy
+prüft (`curl` auf die Live-URL). **Lehre: im Repo zu liegen heißt nicht, ausgeliefert zu
+werden.**
+
+**Zwei Fehler, die beim Nachprüfen auffielen:**
+
+- Der Zähler für die Rahmen-URL wurde **zweimal** hochgezählt (`const n = ++lauf` und
+  `+ (++lauf)`), Beamer und Host bekamen verschiedene Nummern. Folgenlos, aber falsch.
+- `storeSet`/`storeSetJson` im Rahmen gaben **`false`** zurück. Die App hielt das für einen
+  vollen Speicher und warf bei jedem Schritt den Dialog **„Der Spielstand ist zu groß zum
+  Sichern"** (`resumeSave`, `js/resume.js`). In Davids Browser hätte der bei jedem Schritt
+  gepoppt; im Messbrowser waren Dialoge abgeschaltet, deshalb fiel es erst in der Konsole auf.
+  Jetzt `true`.
+
+**Eine Sackgasse, die keine war — wichtig für das nächste Mal.** Nach dem Verschieben lief der
+Jeopardy-Flug im Messbrowser plötzlich nicht mehr, der Beamer blieb auf 1461 Zeichen
+(Wartebild). Es sah nach einem Folgefehler des Verschiebens aus. Tatsächlich: **die Spiegelung
+hängt an `requestAnimationFrame`** (`scheduleBoardMirror`, `js/feud.js:1129`), und das steht in
+einem **ausgeblendeten Browser-Pane** still. Sobald das Pane sichtbar war, spiegelte es wieder
+(73556 Zeichen) und der Flug lief. In `CLAUDE.md` steht derselbe Effekt schon beim Intro-Labor.
+
+Auf dem Weg dorthin noch ein Irrweg: `hw.jeopardyState` war `undefined`, was wie „Jeopardy
+nicht geladen" aussah. `jeopardyState` ist ein `const` auf Modulebene und landet **nicht** auf
+`window` — dieselbe Falle wie bei `AUFBAU`. Von außen misst man am DOM, nicht an der Variablen.
+
+**Geprüft:** lokal über den Server — `tools/gemeinsam/aufbau.js` und `fbstub.js` **200**,
+`__fbSet` im Rahmen vorhanden, Host und Beamer mit `data-theme="D"`, keine Meldung. Feld
+angeklickt → ein fliegendes Element im Beamer, Frage steht. Vier Zustände (`menu`, `jeop`,
+`feud`, `gm-menu`) durchlaufen. `shots.js --shows jeop,gm-menu --themes Studio,D` ohne Befunde,
+`check.js` sauber.
+
+**Kein Befund, obwohl es danach aussah:** nach `gm-menu` zeigt der Beamer 71207 Zeichen statt
+eines leeren Wartebilds. Die Klasse `board-idle` steht auf Host **und** Beamer, das CSS blendet
+die Screens aus — der gespiegelte DOM bleibt, ist aber unsichtbar. Korrekt so.
+
+**Offen:** der Live-Nachweis steht noch aus — `curl` auf
+`https://iryogameshows.github.io/tools/gemeinsam/aufbau.js` nach dem Deploy dieses Commits.
+
 ## 2026-10-17 — `50e4fe4` + `b470e2f` Durchgang: Auswahl, Speicherschutz, **Beamer**
 
 **Davids zwei Einwände nach dem ersten Wurf**, beide berechtigt:
