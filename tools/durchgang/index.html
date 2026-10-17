@@ -161,6 +161,7 @@
   <h1>Durchgang <small id="modus-text">Richtung für Richtung</small></h1>
   <div class="balken"><i id="balken"></i></div>
   <span class="zaehler" id="zaehler">0 / 0</span>
+  <button id="btn-auswahl">Auswahl …</button>
   <button id="btn-bericht" class="haupt">Bericht</button>
   <button id="btn-leeren">Zurücksetzen</button>
 </header>
@@ -208,6 +209,26 @@
   </div>
 </aside>
 
+<dialog id="dlg-auswahl">
+  <div class="d-kopf">
+    <h2>Welche Zustände?</h2>
+    <span style="font-size:12px;color:var(--text-leise)">× 19 Richtungen</span>
+  </div>
+  <div style="padding:12px 14px;max-height:56vh;overflow-y:auto;">
+    <p style="font-size:12px;color:var(--text-leise);margin-bottom:10px;line-height:1.55;">
+      Angehakt sind die zuletzt neu gebauten oder überarbeiteten Zustände.
+      Der Rest ist abgewählt — alles zusammen wären 475 Schritte.
+    </p>
+    <div id="auswahl-liste" style="display:grid;grid-template-columns:1fr 1fr;gap:3px 16px;"></div>
+  </div>
+  <div class="d-fuss">
+    <button id="aus-neu">Nur die Überarbeiteten</button>
+    <button id="aus-alle">Alle</button>
+    <span class="platz"></span>
+    <button id="aus-ok" class="haupt">Übernehmen</button>
+  </div>
+</dialog>
+
 <dialog id="dlg">
   <div class="d-kopf">
     <h2>Bericht</h2>
@@ -239,32 +260,37 @@ const RICHTUNGEN = [
 /* Die Host-Zustände aus shots.js (ALLE_SHOWS ohne die drei Handy-Seiten),
    gruppiert, damit die Liste lesbar bleibt. Der Schlüssel muss genau so in
    tools/shots/aufbau.js stehen. */
+/* Das dritte Feld markiert die VORAUSWAHL: was zuletzt neu gebaut oder
+   ueberarbeitet wurde. Alles durchzugehen sind 475 Schritte - gefragt ist
+   aber, ob die juengsten Aenderungen in jeder Richtung sitzen. Die Auswahl
+   laesst sich in der Seite aendern (Knopf "Auswahl"), die Begruendung je
+   Eintrag steht hier. Stand 2026-10-17, abgeleitet aus der Git-History. */
 const ZUSTAENDE = [
-  ['menu',             'Hauptmenü'],
-  ['setup',            'Feud-Einrichtung'],
-  ['feud',             'Feud — Frage offen'],
-  ['feud-lang',        'Feud — lange Frage'],
-  ['feud-finale',      'Feud — Finale'],
-  ['feud-finale-frage','Feud — Finale, Frage'],
-  ['jeop',             'Jeopardy — Brett'],
-  ['jeop-frage',       'Jeopardy — Frage'],
-  ['jeop-antwort',     'Jeopardy — Antwort'],
-  ['wwm',              'Millionär'],
-  ['wwm-joker',        'Millionär — Publikum'],
-  ['wwds',             'Sowas — Einsatz'],
-  ['wwds-frage',       'Sowas — Frage'],
-  ['wwds-joker',       'Sowas — Joker'],
-  ['wwds-master',      'Sowas — Master'],
-  ['ddf',              'Dümmste fliegt'],
-  ['ddf-ergebnis',     'Dümmste — Ergebnis'],
-  ['pih',              'Preis ist heiß'],
-  ['pih-gebot',        'Preis — Bietphase'],
-  ['tp',               'Trivial Pursuit'],
-  ['ergebnis',         'Ergebnisseite'],
-  ['turnier',          'Turnierstand'],
-  ['turnier-host',     'Turnier — Hostseite'],
-  ['gm',               'GM-Panel — im Spiel'],
-  ['gm-menu',          'GM-Panel — nach Beenden'],
+  ['menu',             'Hauptmenü',              1], // Design-Rework 2026-10-14, Late Night als Programmheft (e18f94d)
+  ['setup',            'Feud-Einrichtung',       0],
+  ['feud',             'Feud — Frage offen',     0],
+  ['feud-lang',        'Feud — lange Frage',     0],
+  ['feud-finale',      'Feud — Finale',          1], // Late Night neu gebaut (99c9c3b)
+  ['feud-finale-frage','Feud — Finale, Frage',   0],
+  ['jeop',             'Jeopardy — Brett',       1], // Ausgangspunkt fuer den Flug: hier ein Feld ANKLICKEN
+  ['jeop-frage',       'Jeopardy — Frage',       1], // Aufdecken: Flug per GSAP (d890f20), Bauchbinde (afa1045)
+  ['jeop-antwort',     'Jeopardy — Antwort',     1],
+  ['wwm',              'Millionär',              0],
+  ['wwm-joker',        'Millionär — Publikum',   0],
+  ['wwds',             'Sowas — Einsatz',        0],
+  ['wwds-frage',       'Sowas — Frage',          0],
+  ['wwds-joker',       'Sowas — Joker',          0],
+  ['wwds-master',      'Sowas — Master',         0],
+  ['ddf',              'Dümmste fliegt',         1], // Wrapper auf volle Breite (b6e9ec6)
+  ['ddf-ergebnis',     'Dümmste — Ergebnis',     0],
+  ['pih',              'Preis ist heiß',         1], // Wrapper auf volle Breite (b6e9ec6)
+  ['pih-gebot',        'Preis — Bietphase',      0],
+  ['tp',               'Trivial Pursuit',        0],
+  ['ergebnis',         'Ergebnisseite',          1], // Late Night als Abspann-Karte (62d42db)
+  ['turnier',          'Turnierstand',           0],
+  ['turnier-host',     'Turnier — Hostseite',    0],
+  ['gm',               'GM-Panel — im Spiel',    1], // commitGamemasterHtml geaendert (f9c02b4)
+  ['gm-menu',          'GM-Panel — nach Beenden',1], // neu (f9c02b4), mittig und lesbar (7d859d6)
 ];
 
 /* Zustände, die das GM-Panel zeigen (wie GM_SHOWS in shots.js): dort muss das
@@ -293,12 +319,22 @@ function sichern(){
 /* Die Schrittfolge. "Richtung für Richtung" geht eine Richtung komplett durch
    (Davids Wunsch), "Zustand für Zustand" zeigt denselben Bildschirm in allen
    19 Richtungen hintereinander - dafür, wenn man Farben vergleichen will. */
+/* Nur die angehakten Zustaende. Beim ersten Oeffnen ist das die Vorauswahl
+   oben; danach gilt, was gespeichert ist. Leere Auswahl gibt es nicht - dann
+   stuende die Seite vor nichts, also zurueck zur Vorauswahl. */
+function gewaehlt(){
+  const an = stand.aktiv;
+  const liste = ZUSTAENDE.filter(z => (an ? an.includes(z[0]) : z[2]));
+  return liste.length ? liste : ZUSTAENDE.filter(z => z[2]);
+}
+
 function ablauf(){
   const liste = [];
+  const zust = gewaehlt();
   if (modus === 'richtung') {
-    for (const [rk] of RICHTUNGEN) for (const [zk] of ZUSTAENDE) liste.push([rk, zk]);
+    for (const [rk] of RICHTUNGEN) for (const [zk] of zust) liste.push([rk, zk]);
   } else {
-    for (const [zk] of ZUSTAENDE) for (const [rk] of RICHTUNGEN) liste.push([rk, zk]);
+    for (const [zk] of zust) for (const [rk] of RICHTUNGEN) liste.push([rk, zk]);
   }
   return liste;
 }
@@ -348,8 +384,46 @@ rahmen.addEventListener('load', () => {
   d.head.appendChild(s);
 });
 
+/* Der Rahmen teilt sich den localStorage mit der echten App - gleiche
+   Herkunft. Ohne Gegenmassnahme wuerde ein Durchgang Davids eingestellte
+   Design-Richtung ueberschreiben (applyTheme schreibt direkt, js/theme.js:634)
+   und seinen gesicherten Spielstand wegwerfen bzw. durch die Testshows
+   ersetzen (resumeSaveSoon laeuft bei fast jedem Spielschritt).
+   Darum: beim Start merken, nach jedem Aufbau zurueckschreiben. */
+const BEWAHRT = { designTheme: null, liveGame: null };
+try {
+  BEWAHRT.designTheme = localStorage.getItem('designTheme');
+  BEWAHRT.liveGame = localStorage.getItem('liveGame');
+} catch { /* kein Speicher: dann gibt es auch nichts zu retten */ }
+
+function zurueckschreiben(){
+  try {
+    for (const [k, v] of Object.entries(BEWAHRT)) {
+      if (v === null) localStorage.removeItem(k);
+      else localStorage.setItem(k, v);
+    }
+  } catch { /* egal */ }
+}
+
 function aufbauen(w, d, r, z){
   const fehler = [];
+  /* Das Resume-Angebot stand sonst im Menue vor allem anderen: die
+     Aufbau-Funktionen starten echte Shows, die sichern ihren Stand, und beim
+     naechsten Laden bietet die Seite ihn an. */
+  const bannerWeg = () => {
+    try {
+      const banner = d.getElementById('resume-banner');
+      if (banner && banner.innerHTML) banner.innerHTML = '';
+    } catch { /* kein Banner: egal */ }
+  };
+  bannerWeg();
+  for (const ms of [200, 600, 1500]) setTimeout(bannerWeg, ms);
+  // Schreiben stilllegen, damit die Testshows nichts hinterlassen.
+  try {
+    w.storeSet = () => false;
+    w.storeSetJson = () => false;
+    w.storeRemove = () => false;
+  } catch { /* egal */ }
   try {
     if (typeof w.applyTheme === 'function') w.applyTheme(r);
     else fehler.push('applyTheme fehlt');
@@ -391,6 +465,9 @@ function aufbauen(w, d, r, z){
   } catch (e) { fehler.push('Beenden: ' + e.message); }
   gmSetzen();
   for (const ms of [250, 700, 1500]) setTimeout(gmSetzen, ms);
+  // applyTheme hat die Richtung direkt in den Speicher geschrieben - zurueck.
+  zurueckschreiben();
+  for (const ms of [300, 1600]) setTimeout(zurueckschreiben, ms);
 
   laedt.classList.add('weg');
   if (fehler.length) {
@@ -405,10 +482,10 @@ const nav = document.getElementById('nav');
 function zeichneNav(){
   const [rJetzt, zJetzt] = SCHRITTE[i] || ['', ''];
   // Die linke Liste zeigt immer das, was der Modus gerade durchläuft.
-  const gruppen = modus === 'richtung' ? RICHTUNGEN : ZUSTAENDE;
+  const gruppen = modus === 'richtung' ? RICHTUNGEN : gewaehlt();
   const titel   = modus === 'richtung' ? 'Richtungen' : 'Zustände';
   const jetzt   = modus === 'richtung' ? rJetzt : zJetzt;
-  const je      = modus === 'richtung' ? ZUSTAENDE.length : RICHTUNGEN.length;
+  const je      = modus === 'richtung' ? gewaehlt().length : RICHTUNGEN.length;
 
   let html = '<h2>' + titel + '</h2>';
   for (const [k, name] of gruppen) {
@@ -542,7 +619,8 @@ function bericht(){
 
   const z = [];
   z.push('Durchgang ' + new Date().toLocaleString('de-DE'));
-  z.push(RICHTUNGEN.length + ' Richtungen x ' + ZUSTAENDE.length + ' Zustaende = ' + SCHRITTE.length + ' Schritte');
+  z.push(RICHTUNGEN.length + ' Richtungen x ' + gewaehlt().length + ' Zustaende = ' + SCHRITTE.length + ' Schritte');
+  z.push('Zustaende: ' + gewaehlt().map(x => x[1]).join(', '));
   z.push('geprueft ' + geprueft.length + ', passt ' + gut.length + ', Befunde ' + schlecht.length
     + (nurNotiz.length ? ', nur Notiz ' + nurNotiz.length : ''));
   z.push('');
@@ -576,6 +654,38 @@ function bericht(){
   return z.join('\n');
 }
 
+// ── Auswahl der Zustände ───────────────────────────────────────────────────
+const dlgAus = document.getElementById('dlg-auswahl');
+function zeichneAuswahl(an){
+  document.getElementById('auswahl-liste').innerHTML = ZUSTAENDE.map(([k, name]) =>
+    '<label style="display:flex;gap:7px;align-items:center;font-size:13px;padding:3px 0;cursor:pointer">'
+    + '<input type="checkbox" value="' + k + '"' + (an.includes(k) ? ' checked' : '') + '>'
+    + '<span>' + name + '</span></label>'
+  ).join('');
+}
+const auswahlJetzt = () =>
+  [...document.querySelectorAll('#auswahl-liste input:checked')].map(e => e.value);
+
+document.getElementById('btn-auswahl').onclick = () => {
+  zeichneAuswahl(gewaehlt().map(z => z[0]));
+  dlgAus.showModal();
+};
+document.getElementById('aus-neu').onclick = () =>
+  zeichneAuswahl(ZUSTAENDE.filter(z => z[2]).map(z => z[0]));
+document.getElementById('aus-alle').onclick = () =>
+  zeichneAuswahl(ZUSTAENDE.map(z => z[0]));
+document.getElementById('aus-ok').onclick = () => {
+  const neu = auswahlJetzt();
+  if (!neu.length) { alert('Mindestens einen Zustand auswählen.'); return; }
+  const vorher = SCHRITTE[i];
+  stand.aktiv = neu;
+  SCHRITTE = ablauf();
+  // Wenn der Zustand von eben noch dabei ist, dort weitermachen.
+  const n = SCHRITTE.findIndex(s => s[0] === vorher[0] && s[1] === vorher[1]);
+  dlgAus.close();
+  springe(n >= 0 ? n : 0);
+};
+
 const dlg = document.getElementById('dlg');
 document.getElementById('btn-bericht').onclick = () => {
   document.getElementById('dlg-text').value = bericht();
@@ -598,7 +708,8 @@ document.getElementById('dlg-kopieren').onclick = async e => {
 
 document.getElementById('btn-leeren').onclick = () => {
   if (!confirm('Alle Urteile und Notizen dieses Durchgangs löschen?')) return;
-  stand = { urteile: {}, modus, bei: 0 };
+  // Die Auswahl der Zustände bleibt - geleert werden Urteile und Notizen.
+  stand = { urteile: {}, modus, bei: 0, aktiv: stand.aktiv };
   try { localStorage.removeItem(SCHLUESSEL); } catch { /* egal */ }
   springe(0);
 };
