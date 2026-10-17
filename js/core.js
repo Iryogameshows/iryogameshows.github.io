@@ -1973,3 +1973,19 @@ function toggleNoteChecked(i){
 }
 
 // ── TURNIER ── Mehrtägige Gameshow: gleiche Teams, gewichtete Spiele, Gesamtwertung.
+
+/* ── ERSATZ-DATENBANK SICHTBAR MACHEN ──────────────────────────────────────
+   Mit ?stumm=1 laedt index.html tools/shots/fbstub.js statt Firebase (siehe
+   Kommentar dort). Das ist fuer die Durchgeh-Seite gedacht und sonst eine
+   Falle: die Seite sieht normal aus, aber kein Handy kommt an. Deshalb ein
+   Balken, der nicht zu uebersehen ist und nicht weggeklickt werden kann. */
+(function(){
+  if (!new URLSearchParams(location.search).has('stumm')) return;
+  const b = document.createElement('div');
+  b.id = 'stumm-balken';
+  b.textContent = '⚠ Ersatz-Datenbank (?stumm=1) — Handys sind NICHT verbunden. Nur zum Durchsehen.';
+  b.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:99999;background:#B42318;color:#fff;'
+    + 'font:700 13px/1.6 system-ui,sans-serif;text-align:center;padding:5px 10px;letter-spacing:.4px;'
+    + 'pointer-events:none;box-shadow:0 2px 10px rgba(0,0,0,.45);';
+  (document.body || document.documentElement).appendChild(b);
+})();

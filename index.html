@@ -10,7 +10,19 @@
 <title>Iryo's Gameshows</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&family=Bungee&family=Tilt+Neon&family=Press+Start+2P&family=Unbounded:wght@500;900&family=Mr+Dafoe&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<!-- Datenbank: normal Firebase. Mit ?stumm=1 stattdessen die Ersatz-Datenbank
+     aus tools/shots/fbstub.js - nur fuer die Durchgeh-Seite (tools/durchgang/).
+     Ohne das wuerde ein Durchgang durch 19 Richtungen x 27 Zustaende hunderte
+     Male echte Buzzer-Zustaende setzen und joinLocked schalten, weil die
+     Aufbau-Funktionen die Shows wirklich starten. document.write haelt die
+     Ladereihenfolge ein - die Seite hat keinen Build-Step.
+     Der Modus zeigt sich als roter Balken (js/core.js), damit niemand in ihm
+     versehentlich eine echte Show faehrt: die Handys haetten keine Verbindung. -->
+<script>
+document.write(new URLSearchParams(location.search).has('stumm')
+  ? '<scr' + 'ipt src="tools/shots/fbstub.js"><\/scr' + 'ipt>'
+  : '<scr' + 'ipt src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"><\/scr' + 'ipt>');
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link rel="stylesheet" href="styles.css">
 <script src="js/theme.js"></script>

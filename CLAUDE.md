@@ -235,6 +235,8 @@ tools/
   intros/       Intro-Labor: 18 Intro-Prototypen, NICHT Teil der Show
   reactbits/    Bauwerkzeug für vendor/reactbits.js
   shots/        Screenshot-Prüfung aller Design-Richtungen (siehe unten)
+  durchgang/    Durchgeh-Seite: jede Richtung × jeden Zustand anklickbar
+                ansehen, Urteil und Notiz, Bericht zum Kopieren (siehe unten)
 ```
 
 Eine Änderung an einem Spiel geht in die jeweilige `js/`-Datei, nicht in `index.html`.
@@ -462,6 +464,33 @@ Höhenprüfung (`HOST_SEITEN`; seit 2026-10-14 auch die neuen Zustände `menu` u
 `setup` — Hauptmenü und Feud-Setup), sie kommen nicht auf den Beamer. Neue Befunde gehören also zur Änderung, die gerade gemacht
 wurde. Ein voller Lauf dauert gut 6 Minuten je Größe — im Hintergrund
 starten.
+
+## Durchgeh-Seite (`tools/durchgang/`)
+
+Öffnen über den lokalen Server: `http://localhost:3000/tools/durchgang/`.
+Geht **nicht** per `file://` — der Rahmen braucht dieselbe Herkunft.
+
+Jede Richtung mit jedem Zustand der Reihe nach, die **echte Seite im Rahmen
+und anklickbar**. Das ist der Unterschied zu den Kontaktbögen: dort steht ein
+Standbild, hier lässt sich drücken, tippen und aufklappen. Urteil („Passt" /
+„Befund") und Notiz je Schritt, Tastatur `←` `→` `1` `2`, Stand bleibt im
+`localStorage`. Der Knopf **Bericht** baut daraus einen Text zum Kopieren —
+Befunde als eine Zeile je Fund, danach was noch offen ist.
+
+Die Zustände kommen aus **`tools/shots/aufbau.js`** — dieselbe Tabelle, die
+`shots.js` für die Screenshots benutzt. Wer dort einen Zustand ergänzt, muss
+ihn in `ZUSTAENDE` der Durchgeh-Seite nachtragen, sonst fehlt er im Durchgang.
+
+**`?stumm=1`:** Die Seite hängt den Parameter an. `index.html` lädt dann die
+Ersatz-Datenbank aus `tools/shots/fbstub.js` statt Firebase, und ein roter
+Balken sagt das (`js/core.js`). Ohne das würde ein Durchgang hunderte Male
+echte Buzzer-Zustände setzen und `joinLocked` schalten — die Aufbau-Funktionen
+starten die Shows wirklich. **In diesem Modus ist kein Handy verbunden**; für
+eine echte Show nie mit `?stumm=1` arbeiten.
+
+Nicht dabei: die drei Handy-Zustände (`buzzer`, `buzzer-pause`,
+`buzzer-login`). Die stecken fest in `shots.js` und bräuchten eine eigene
+Weiche in `buzzer/index.html`.
 
 ## Deploy
 

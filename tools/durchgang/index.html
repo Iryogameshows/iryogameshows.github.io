@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Durchgang — Richtungen × Zustände</title>
+<!--
+  Durchgeh-Seite: jede Design-Richtung mit jedem Zustand der Reihe nach
+  ansehen, Urteil und Notiz dazuschreiben, am Ende einen Bericht kopieren.
+
+  Warum es das gibt: die Kontaktbögen aus tools/shots zeigen je Zustand ein
+  Standbild. Was man darauf NICHT sieht, ist, ob sich etwas anfassen lässt -
+  ob ein Knopf reagiert, ob ein Overlay aufgeht, ob die Schrift beim Tippen
+  springt. Dafür muss die echte Seite laufen, und genau die steht hier im
+  Rahmen: ../../index.html, anklickbar.
+
+  Die Zustände kommen aus tools/shots/aufbau.js - dieselbe Tabelle, die auch
+  die Screenshots aufbaut. Keine zweite Liste, die auseinanderläuft.
+
+  Die Seite hängt ?stumm=1 an: dann lädt index.html die Ersatz-Datenbank aus
+  tools/shots/fbstub.js statt Firebase. Ohne das würde ein Durchgang hunderte
+  Male echte Buzzer-Zustände setzen und joinLocked schalten, weil die
+  Aufbau-Funktionen die Shows wirklich starten. Im Rahmen steht dann ein roter
+  Balken (js/core.js).
+
+  Nicht dabei: die drei Handy-Zustände (buzzer, buzzer-pause, buzzer-login).
+  Die stecken fest in shots.js und bräuchten eine eigene Weiche in
+  buzzer/index.html - und das Handy sieht man ohnehin besser echt an.
+-->
+<style>
+  :root{
+    --bg:#0E1013; --flaeche:#171A1F; --flaeche-hoch:#1E222A; --linie:#2A2F39;
+    --text:#E8EAED; --text-leise:#9AA1AC; --akzent:#E8B33C; --gut:#3FA96A;
+    --schlecht:#D6504A; --offen:#4B5059;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font:14px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;
+    height:100vh; display:grid; grid-template-columns:230px 1fr 320px;
+    grid-template-rows:auto 1fr; overflow:hidden;
+  }
+  /* ── Kopf ── */
+  header{
+    grid-column:1/-1; display:flex; align-items:center; gap:14px;
+    padding:9px 14px; background:var(--flaeche); border-bottom:1px solid var(--linie);
+  }
+  header h1{font-size:14px; font-weight:700; letter-spacing:.3px; white-space:nowrap;}
+  header h1 small{font-weight:400; color:var(--text-leise); margin-left:6px;}
+  .balken{flex:1; height:6px; background:var(--flaeche-hoch); border-radius:3px; overflow:hidden; min-width:80px;}
+  .balken i{display:block; height:100%; background:var(--akzent); width:0; transition:width .2s;}
+  .zaehler{font-variant-numeric:tabular-nums; color:var(--text-leise); white-space:nowrap;}
+  header button{
+    background:var(--flaeche-hoch); color:var(--text); border:1px solid var(--linie);
+    border-radius:6px; padding:6px 11px; font:inherit; font-size:13px; cursor:pointer;
+  }
+  header button:hover{background:#262B34; border-color:#3A404C;}
+  header button.haupt{background:var(--akzent); color:#1A1403; border-color:transparent; font-weight:700;}
+
+  /* ── Listen links ── */
+  nav{overflow-y:auto; background:var(--flaeche); border-right:1px solid var(--linie); padding:8px 0;}
+  nav h2{
+    font-size:10px; text-transform:uppercase; letter-spacing:1.4px; color:var(--text-leise);
+    padding:10px 12px 5px;
+  }
+  .reihe{
+    display:flex; align-items:center; gap:7px; padding:5px 12px; cursor:pointer;
+    border-left:3px solid transparent; font-size:13px;
+  }
+  .reihe:hover{background:var(--flaeche-hoch);}
+  .reihe.an{background:var(--flaeche-hoch); border-left-color:var(--akzent); font-weight:600;}
+  .reihe .kuerzel{
+    width:20px; text-align:center; font-weight:700; font-size:11px;
+    color:var(--text-leise); flex-shrink:0;
+  }
+  .reihe .name{flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .reihe .stand{font-size:11px; color:var(--text-leise); font-variant-numeric:tabular-nums;}
+  .punkt{width:7px; height:7px; border-radius:50%; background:var(--offen); flex-shrink:0;}
+  .punkt.gut{background:var(--gut);} .punkt.schlecht{background:var(--schlecht);}
+
+  /* ── Rahmen Mitte ── */
+  main{position:relative; background:#000; display:flex; flex-direction:column;}
+  .rahmen-kopf{
+    display:flex; align-items:center; gap:10px; padding:6px 12px;
+    background:var(--flaeche); border-bottom:1px solid var(--linie); font-size:12px;
+  }
+  .rahmen-kopf .wo{color:var(--text-leise);}
+  .rahmen-kopf .wo b{color:var(--text);}
+  .rahmen-kopf select{
+    background:var(--flaeche-hoch); color:var(--text); border:1px solid var(--linie);
+    border-radius:5px; padding:3px 6px; font:inherit; font-size:12px;
+  }
+  .rahmen-huelle{flex:1; overflow:hidden; position:relative; background:#000;}
+  iframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:#000;}
+  .laedt{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:#000; color:var(--text-leise); font-size:13px; z-index:5;
+  }
+  .laedt.weg{display:none;}
+
+  /* ── Urteil rechts ── */
+  aside{
+    overflow-y:auto; background:var(--flaeche); border-left:1px solid var(--linie);
+    padding:12px; display:flex; flex-direction:column; gap:10px;
+  }
+  aside h2{font-size:11px; text-transform:uppercase; letter-spacing:1.4px; color:var(--text-leise);}
+  .urteil{display:flex; gap:7px;}
+  .urteil button{
+    flex:1; padding:11px 6px; border-radius:7px; border:1px solid var(--linie);
+    background:var(--flaeche-hoch); color:var(--text); font:inherit; font-weight:700;
+    font-size:13px; cursor:pointer;
+  }
+  .urteil button:hover{border-color:#4A515E;}
+  .urteil button.an[data-wert="gut"]{background:var(--gut); border-color:transparent; color:#04140A;}
+  .urteil button.an[data-wert="schlecht"]{background:var(--schlecht); border-color:transparent; color:#1B0404;}
+  textarea{
+    width:100%; min-height:120px; resize:vertical; background:var(--bg); color:var(--text);
+    border:1px solid var(--linie); border-radius:7px; padding:9px; font:inherit; font-size:13px;
+  }
+  textarea:focus{outline:2px solid var(--akzent); outline-offset:-1px; border-color:transparent;}
+  .wandern{display:flex; gap:7px;}
+  .wandern button{
+    flex:1; padding:10px; border-radius:7px; border:1px solid var(--linie);
+    background:var(--flaeche-hoch); color:var(--text); font:inherit; font-size:13px; cursor:pointer;
+  }
+  .wandern button.haupt{background:var(--akzent); color:#1A1403; border-color:transparent; font-weight:700;}
+  .wandern button:disabled{opacity:.35; cursor:default;}
+  .tipp{font-size:11.5px; color:var(--text-leise); line-height:1.55;}
+  .tipp kbd{
+    background:var(--flaeche-hoch); border:1px solid var(--linie); border-radius:4px;
+    padding:1px 5px; font:inherit; font-size:11px;
+  }
+  .befunde{border-top:1px solid var(--linie); padding-top:9px; margin-top:auto;}
+  .befunde ul{list-style:none; display:flex; flex-direction:column; gap:4px; max-height:170px; overflow-y:auto;}
+  .befunde li{font-size:11.5px; color:var(--text-leise); cursor:pointer; line-height:1.4;}
+  .befunde li:hover{color:var(--text);}
+  .befunde li b{color:var(--schlecht);}
+
+  /* ── Bericht ── */
+  dialog{
+    background:var(--flaeche); color:var(--text); border:1px solid var(--linie);
+    border-radius:10px; padding:0; width:min(820px,92vw); max-height:86vh;
+  }
+  dialog::backdrop{background:rgba(0,0,0,.72);}
+  .d-kopf{display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--linie);}
+  .d-kopf h2{flex:1; font-size:14px;}
+  dialog textarea{min-height:52vh; border:0; border-radius:0; font-family:ui-monospace,Consolas,monospace; font-size:12px;}
+  .d-fuss{display:flex; gap:8px; padding:11px 14px; border-top:1px solid var(--linie);}
+  .d-fuss button{
+    padding:8px 14px; border-radius:6px; border:1px solid var(--linie);
+    background:var(--flaeche-hoch); color:var(--text); font:inherit; font-size:13px; cursor:pointer;
+  }
+  .d-fuss button.haupt{background:var(--akzent); color:#1A1403; border-color:transparent; font-weight:700;}
+  .d-fuss .platz{flex:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Durchgang <small id="modus-text">Richtung für Richtung</small></h1>
+  <div class="balken"><i id="balken"></i></div>
+  <span class="zaehler" id="zaehler">0 / 0</span>
+  <button id="btn-bericht" class="haupt">Bericht</button>
+  <button id="btn-leeren">Zurücksetzen</button>
+</header>
+
+<nav id="nav"></nav>
+
+<main>
+  <div class="rahmen-kopf">
+    <span class="wo" id="wo"></span>
+    <span style="flex:1"></span>
+    <label class="wo">Reihenfolge
+      <select id="modus">
+        <option value="richtung">Richtung für Richtung</option>
+        <option value="zustand">Zustand für Zustand</option>
+      </select>
+    </label>
+    <button id="btn-neu" style="background:var(--flaeche-hoch);color:var(--text);border:1px solid var(--linie);border-radius:5px;padding:3px 9px;font:inherit;font-size:12px;cursor:pointer;">Neu aufbauen</button>
+  </div>
+  <div class="rahmen-huelle">
+    <div class="laedt" id="laedt">lädt …</div>
+    <iframe id="rahmen" title="Hostseite"></iframe>
+  </div>
+</main>
+
+<aside>
+  <h2>Urteil</h2>
+  <div class="urteil">
+    <button data-wert="gut" id="btn-gut">Passt</button>
+    <button data-wert="schlecht" id="btn-schlecht">Befund</button>
+  </div>
+  <h2>Notiz</h2>
+  <textarea id="notiz" placeholder="Was ist aufgefallen? (wird sofort gespeichert)"></textarea>
+  <div class="wandern">
+    <button id="btn-zurueck">◀ Zurück</button>
+    <button id="btn-weiter" class="haupt">Weiter ▶</button>
+  </div>
+  <p class="tipp">
+    <kbd>←</kbd> <kbd>→</kbd> blättern · <kbd>1</kbd> passt · <kbd>2</kbd> Befund ·
+    <kbd>Enter</kbd> im Notizfeld springt weiter. Der Rahmen ist anklickbar —
+    Knöpfe dort funktionieren wirklich.
+  </p>
+  <div class="befunde">
+    <h2>Befunde <span id="befund-zahl" style="color:var(--schlecht)"></span></h2>
+    <ul id="befund-liste"></ul>
+  </div>
+</aside>
+
+<dialog id="dlg">
+  <div class="d-kopf">
+    <h2>Bericht</h2>
+    <span id="dlg-stand" style="font-size:12px;color:var(--text-leise)"></span>
+  </div>
+  <textarea id="dlg-text" readonly></textarea>
+  <div class="d-fuss">
+    <button id="dlg-kopieren" class="haupt">In die Zwischenablage</button>
+    <span class="platz"></span>
+    <button id="dlg-zu">Schließen</button>
+  </div>
+</dialog>
+
+<script>
+'use strict';
+
+/* ── Was durchgegangen wird ────────────────────────────────────────────────
+   Richtungen wie in tools/shots/shots.js (ALLE_RICHTUNGEN): '' ist
+   Studio-Blau, das Grunddesign ohne data-theme. Die Namen stehen in
+   js/theme.js. */
+const RICHTUNGEN = [
+  ['',  'Studio-Blau'], ['A', 'Studio'],   ['B', 'Arcade'],    ['C', 'Pop'],
+  ['D', 'Late Night'],  ['E', '70er'],     ['F', 'Comic'],     ['H', 'Bauhaus'],
+  ['I', 'Salon'],       ['J', 'Kreide'],   ['K', 'Neon-Bar'],  ['L', 'New York'],
+  ['M', 'Aurora'],      ['N', 'Papier'],   ['O', 'Terminal'],  ['P', 'Memphis'],
+  ['Q', 'Riso'],        ['R', 'Jazzplatte'],['S', 'Art déco'],
+];
+
+/* Die Host-Zustände aus shots.js (ALLE_SHOWS ohne die drei Handy-Seiten),
+   gruppiert, damit die Liste lesbar bleibt. Der Schlüssel muss genau so in
+   tools/shots/aufbau.js stehen. */
+const ZUSTAENDE = [
+  ['menu',             'Hauptmenü'],
+  ['setup',            'Feud-Einrichtung'],
+  ['feud',             'Feud — Frage offen'],
+  ['feud-lang',        'Feud — lange Frage'],
+  ['feud-finale',      'Feud — Finale'],
+  ['feud-finale-frage','Feud — Finale, Frage'],
+  ['jeop',             'Jeopardy — Brett'],
+  ['jeop-frage',       'Jeopardy — Frage'],
+  ['jeop-antwort',     'Jeopardy — Antwort'],
+  ['wwm',              'Millionär'],
+  ['wwm-joker',        'Millionär — Publikum'],
+  ['wwds',             'Sowas — Einsatz'],
+  ['wwds-frage',       'Sowas — Frage'],
+  ['wwds-joker',       'Sowas — Joker'],
+  ['wwds-master',      'Sowas — Master'],
+  ['ddf',              'Dümmste fliegt'],
+  ['ddf-ergebnis',     'Dümmste — Ergebnis'],
+  ['pih',              'Preis ist heiß'],
+  ['pih-gebot',        'Preis — Bietphase'],
+  ['tp',               'Trivial Pursuit'],
+  ['ergebnis',         'Ergebnisseite'],
+  ['turnier',          'Turnierstand'],
+  ['turnier-host',     'Turnier — Hostseite'],
+  ['gm',               'GM-Panel — im Spiel'],
+  ['gm-menu',          'GM-Panel — nach Beenden'],
+];
+
+/* Zustände, die das GM-Panel zeigen (wie GM_SHOWS in shots.js): dort muss das
+   Panel eingeblendet werden, sonst sieht man die Hostseite dahinter. */
+const GM_ZUSTAENDE = new Set(['gm', 'gm-menu']);
+
+const SCHLUESSEL = 'durchgangStand.v1';
+
+// ── Stand ──────────────────────────────────────────────────────────────────
+let stand = laden();
+let i = 0;                 // Schritt im aktuellen Ablauf
+let modus = stand.modus || 'richtung';
+
+function laden(){
+  try {
+    const roh = localStorage.getItem(SCHLUESSEL);
+    if (roh) return JSON.parse(roh);
+  } catch { /* privater Modus, geleerte Daten: dann eben frisch */ }
+  return { urteile: {}, modus: 'richtung', bei: 0 };
+}
+function sichern(){
+  stand.modus = modus; stand.bei = i;
+  try { localStorage.setItem(SCHLUESSEL, JSON.stringify(stand)); } catch { /* voll: Urteile bleiben in der Sitzung */ }
+}
+
+/* Die Schrittfolge. "Richtung für Richtung" geht eine Richtung komplett durch
+   (Davids Wunsch), "Zustand für Zustand" zeigt denselben Bildschirm in allen
+   19 Richtungen hintereinander - dafür, wenn man Farben vergleichen will. */
+function ablauf(){
+  const liste = [];
+  if (modus === 'richtung') {
+    for (const [rk] of RICHTUNGEN) for (const [zk] of ZUSTAENDE) liste.push([rk, zk]);
+  } else {
+    for (const [zk] of ZUSTAENDE) for (const [rk] of RICHTUNGEN) liste.push([rk, zk]);
+  }
+  return liste;
+}
+let SCHRITTE = ablauf();
+
+const id = (r, z) => (r || 'Studio') + '/' + z;
+const richtungName = r => (RICHTUNGEN.find(x => x[0] === r) || ['', r])[1];
+const zustandName  = z => (ZUSTAENDE.find(x => x[0] === z) || ['', z])[1];
+
+// ── Rahmen aufbauen ────────────────────────────────────────────────────────
+const rahmen = document.getElementById('rahmen');
+const laedt  = document.getElementById('laedt');
+let gewuenscht = null;   // [richtung, zustand], auf das der Rahmen gerade wartet
+
+/* Jeder Schritt lädt die Hostseite neu. Das ist langsamer als nur umzuschalten,
+   aber es ist der einzige Weg, der sauber ist: die Aufbau-Funktionen starten
+   echte Shows, und Reste der vorigen (Overlays, laufende Timer, gesetzte
+   Flags) würden sonst in den nächsten Zustand hineinragen. shots.js macht es
+   aus demselben Grund genauso. */
+let lauf = 0;
+function zeige(r, z){
+  gewuenscht = [r, z];
+  laedt.classList.remove('weg');
+  laedt.textContent = 'lädt ' + richtungName(r) + ' · ' + zustandName(z) + ' …';
+  /* Der Zähler muss sein. Erst stand der Zustand im Hash - dann wechselt nur
+     das Fragment, der Browser lädt NICHT neu, und load feuert kein zweites
+     Mal: der Rahmen blieb beim ersten Zustand stehen. Ein Parameter, der sich
+     ändert, erzwingt das echte Laden. */
+  rahmen.src = '../../index.html?stumm=1&n=' + (++lauf);
+}
+
+rahmen.addEventListener('load', () => {
+  if (!gewuenscht) return;
+  const [r, z] = gewuenscht;
+  const w = rahmen.contentWindow;
+  const d = rahmen.contentDocument;
+  if (!w || !d) { laedt.textContent = 'Rahmen nicht lesbar — gleiche Herkunft nötig (über einen Server öffnen).'; return; }
+
+  // aufbau.js in die Hostseite nachladen: dort liegt die Tabelle, die auch
+  // die Screenshots benutzt. Pfad relativ zur Hostseite (Repo-Wurzel).
+  const fertig = () => aufbauen(w, d, r, z);
+  if (w.AUFBAU) { fertig(); return; }
+  const s = d.createElement('script');
+  s.src = 'tools/shots/aufbau.js';
+  s.onload = fertig;
+  s.onerror = () => { laedt.textContent = 'tools/shots/aufbau.js nicht gefunden.'; };
+  d.head.appendChild(s);
+});
+
+function aufbauen(w, d, r, z){
+  const fehler = [];
+  try {
+    if (typeof w.applyTheme === 'function') w.applyTheme(r);
+    else fehler.push('applyTheme fehlt');
+  } catch (e) { fehler.push('applyTheme: ' + e.message); }
+
+  // Ton aus: ein Durchgang mit 450 Schritten soll nicht klingeln.
+  try { if (w.SFX) w.SFX.enabled = false; } catch { /* kein SFX: egal */ }
+  // Keine zweiten Fenster (Beamer-Popout, QR) aus dem Rahmen heraus.
+  try { w.open = () => null; } catch { /* schreibgeschützt in manchen Browsern */ }
+
+  try {
+    const bau = w.AUFBAU && w.AUFBAU[z];
+    if (typeof bau === 'function') bau();
+    else fehler.push('kein Aufbau für "' + z + '"');
+  } catch (e) { fehler.push('Aufbau: ' + e.message); }
+
+  /* GM-Panel, genau wie in shots.js (hostSeite): bei den GM-Zustaenden
+     einblenden, SONST ausblenden. Das Ausblenden ist keine Kosmetik - die
+     Shows oeffnen das Panel beim Start selbst, und dann steht es vor dem
+     Bildschirm, den man eigentlich ansehen will. */
+  /* Mehrfach, nicht einmal: WWM und WWDS oeffnen das GM-Fenster mit
+     Verzoegerung (shots.js wartet dafuer 1400 ms). Ein einziges Ausblenden
+     direkt nach dem Aufbau kommt zu frueh - das Panel ging danach wieder auf
+     und stand vor dem Bildschirm. */
+  const gmSetzen = () => {
+    try {
+      const o = d.getElementById('gm-embed-overlay');
+      if (!o) return;
+      if (GM_ZUSTAENDE.has(z)) {
+        if (typeof w.updateGamemaster === 'function') w.updateGamemaster();
+        o.classList.add('visible');
+      } else {
+        o.classList.remove('visible');
+      }
+    } catch (e) { fehler.push('GM-Panel: ' + e.message); }
+  };
+  try {
+    if (z === 'gm-menu' && typeof w.gmQuitShow === 'function') w.gmQuitShow();
+  } catch (e) { fehler.push('Beenden: ' + e.message); }
+  gmSetzen();
+  for (const ms of [250, 700, 1500]) setTimeout(gmSetzen, ms);
+
+  laedt.classList.add('weg');
+  if (fehler.length) {
+    laedt.classList.remove('weg');
+    laedt.textContent = fehler.join(' · ');
+  }
+}
+
+// ── Zeichnen ───────────────────────────────────────────────────────────────
+const nav = document.getElementById('nav');
+
+function zeichneNav(){
+  const [rJetzt, zJetzt] = SCHRITTE[i] || ['', ''];
+  // Die linke Liste zeigt immer das, was der Modus gerade durchläuft.
+  const gruppen = modus === 'richtung' ? RICHTUNGEN : ZUSTAENDE;
+  const titel   = modus === 'richtung' ? 'Richtungen' : 'Zustände';
+  const jetzt   = modus === 'richtung' ? rJetzt : zJetzt;
+  const je      = modus === 'richtung' ? ZUSTAENDE.length : RICHTUNGEN.length;
+
+  let html = '<h2>' + titel + '</h2>';
+  for (const [k, name] of gruppen) {
+    const meine = SCHRITTE.filter(s => (modus === 'richtung' ? s[0] : s[1]) === k);
+    const fertig = meine.filter(s => stand.urteile[id(s[0], s[1])]).length;
+    const schlecht = meine.some(s => (stand.urteile[id(s[0], s[1])] || {}).wert === 'schlecht');
+    const punkt = fertig === 0 ? '' : (schlecht ? ' schlecht' : (fertig === je ? ' gut' : ''));
+    html += '<div class="reihe' + (k === jetzt ? ' an' : '') + '" data-k="' + k + '">'
+      + '<span class="punkt' + punkt + '"></span>'
+      + (modus === 'richtung' ? '<span class="kuerzel">' + (k || '–') + '</span>' : '')
+      + '<span class="name">' + name + '</span>'
+      + '<span class="stand">' + fertig + '/' + je + '</span></div>';
+  }
+  nav.innerHTML = html;
+  const an = nav.querySelector('.reihe.an');
+  if (an) an.scrollIntoView({ block: 'nearest' });
+}
+
+function zeichne(){
+  const schritt = SCHRITTE[i];
+  if (!schritt) return;
+  const [r, z] = schritt;
+  const u = stand.urteile[id(r, z)] || {};
+
+  document.getElementById('wo').innerHTML =
+    '<b>' + richtungName(r) + '</b>' + (r ? ' (' + r + ')' : '') + ' · <b>' + zustandName(z) + '</b>';
+  document.getElementById('zaehler').textContent = (i + 1) + ' / ' + SCHRITTE.length;
+
+  const fertig = Object.keys(stand.urteile).length;
+  document.getElementById('balken').style.width = (fertig / SCHRITTE.length * 100) + '%';
+
+  for (const b of document.querySelectorAll('.urteil button')) {
+    b.classList.toggle('an', b.dataset.wert === u.wert);
+  }
+  document.getElementById('notiz').value = u.notiz || '';
+  document.getElementById('btn-zurueck').disabled = i === 0;
+  document.getElementById('btn-weiter').disabled = i >= SCHRITTE.length - 1;
+
+  zeichneNav();
+  zeichneBefunde();
+  zeige(r, z);
+  sichern();
+}
+
+function zeichneBefunde(){
+  const liste = SCHRITTE
+    .map((s, n) => [n, s, stand.urteile[id(s[0], s[1])]])
+    .filter(x => x[2] && x[2].wert === 'schlecht');
+  document.getElementById('befund-zahl').textContent = liste.length ? '(' + liste.length + ')' : '';
+  document.getElementById('befund-liste').innerHTML = liste.map(([n, s, u]) =>
+    '<li data-n="' + n + '"><b>' + richtungName(s[0]) + '</b> · ' + zustandName(s[1])
+    + (u.notiz ? ' — ' + u.notiz.replace(/</g, '&lt;').slice(0, 60) : '') + '</li>'
+  ).join('') || '<li style="cursor:default">noch keine</li>';
+}
+
+// ── Bedienen ───────────────────────────────────────────────────────────────
+function urteilen(wert){
+  const [r, z] = SCHRITTE[i];
+  const s = id(r, z);
+  const alt = stand.urteile[s] || {};
+  // Nochmal auf dasselbe: Urteil wieder wegnehmen.
+  if (alt.wert === wert && !alt.notiz) delete stand.urteile[s];
+  else stand.urteile[s] = { wert, notiz: alt.notiz || '' };
+  sichern();
+  zeichne();
+}
+function notieren(text){
+  const [r, z] = SCHRITTE[i];
+  const s = id(r, z);
+  const alt = stand.urteile[s] || {};
+  if (!text && !alt.wert) delete stand.urteile[s];
+  else stand.urteile[s] = { wert: alt.wert || '', notiz: text };
+  sichern();
+  zeichneNav(); zeichneBefunde();
+}
+function springe(n){
+  i = Math.max(0, Math.min(SCHRITTE.length - 1, n));
+  zeichne();
+}
+
+document.getElementById('btn-gut').onclick = () => urteilen('gut');
+document.getElementById('btn-schlecht').onclick = () => urteilen('schlecht');
+document.getElementById('btn-weiter').onclick = () => springe(i + 1);
+document.getElementById('btn-zurueck').onclick = () => springe(i - 1);
+document.getElementById('btn-neu').onclick = () => { const [r, z] = SCHRITTE[i]; zeige(r, z); };
+document.getElementById('notiz').oninput = e => notieren(e.target.value);
+document.getElementById('notiz').onkeydown = e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); springe(i + 1); }
+};
+
+nav.onclick = e => {
+  const reihe = e.target.closest('.reihe');
+  if (!reihe) return;
+  const k = reihe.dataset.k;
+  const n = SCHRITTE.findIndex(s => (modus === 'richtung' ? s[0] : s[1]) === k);
+  if (n >= 0) springe(n);
+};
+document.getElementById('befund-liste').onclick = e => {
+  const li = e.target.closest('li[data-n]');
+  if (li) springe(+li.dataset.n);
+};
+
+document.getElementById('modus').onchange = e => {
+  const [r, z] = SCHRITTE[i];
+  modus = e.target.value;
+  SCHRITTE = ablauf();
+  document.getElementById('modus-text').textContent =
+    modus === 'richtung' ? 'Richtung für Richtung' : 'Zustand für Zustand';
+  // An derselben Stelle weitermachen, nicht wieder bei eins.
+  const n = SCHRITTE.findIndex(s => s[0] === r && s[1] === z);
+  springe(n >= 0 ? n : 0);
+};
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); springe(i + 1); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); springe(i - 1); }
+  if (e.key === '1') urteilen('gut');
+  if (e.key === '2') urteilen('schlecht');
+});
+
+// ── Bericht ────────────────────────────────────────────────────────────────
+/* Als Text, nicht als JSON: David gibt ihn in den Chat weiter, und dort ist
+   eine Zeile je Befund brauchbarer als ein Objektbaum. */
+function bericht(){
+  const alle = SCHRITTE.map(s => [s, stand.urteile[id(s[0], s[1])]]);
+  const geprueft = alle.filter(x => x[1]);
+  const schlecht = alle.filter(x => x[1] && x[1].wert === 'schlecht');
+  const gut      = alle.filter(x => x[1] && x[1].wert === 'gut');
+  const nurNotiz = alle.filter(x => x[1] && !x[1].wert && x[1].notiz);
+
+  const z = [];
+  z.push('Durchgang ' + new Date().toLocaleString('de-DE'));
+  z.push(RICHTUNGEN.length + ' Richtungen x ' + ZUSTAENDE.length + ' Zustaende = ' + SCHRITTE.length + ' Schritte');
+  z.push('geprueft ' + geprueft.length + ', passt ' + gut.length + ', Befunde ' + schlecht.length
+    + (nurNotiz.length ? ', nur Notiz ' + nurNotiz.length : ''));
+  z.push('');
+
+  if (schlecht.length) {
+    z.push('BEFUNDE');
+    for (const [s, u] of schlecht) {
+      z.push('- ' + richtungName(s[0]) + (s[0] ? ' (' + s[0] + ')' : '') + ' | ' + zustandName(s[1])
+        + ' [' + s[1] + ']' + (u.notiz ? ': ' + u.notiz.replace(/\n/g, ' ') : ''));
+    }
+    z.push('');
+  }
+  if (nurNotiz.length) {
+    z.push('NOTIZEN OHNE URTEIL');
+    for (const [s, u] of nurNotiz) {
+      z.push('- ' + richtungName(s[0]) + ' | ' + zustandName(s[1]) + ': ' + u.notiz.replace(/\n/g, ' '));
+    }
+    z.push('');
+  }
+  const offen = alle.filter(x => !x[1]);
+  if (offen.length) {
+    // Nicht alle 400 aufzaehlen - es geht nur darum, was noch fehlt.
+    const jeRichtung = {};
+    for (const [s] of offen) {
+      const k = richtungName(s[0]);
+      jeRichtung[k] = (jeRichtung[k] || 0) + 1;
+    }
+    z.push('NOCH OFFEN (' + offen.length + ')');
+    z.push(Object.entries(jeRichtung).map(([k, n]) => k + ' ' + n).join(', '));
+  }
+  return z.join('\n');
+}
+
+const dlg = document.getElementById('dlg');
+document.getElementById('btn-bericht').onclick = () => {
+  document.getElementById('dlg-text').value = bericht();
+  document.getElementById('dlg-stand').textContent = Object.keys(stand.urteile).length + ' von ' + SCHRITTE.length;
+  dlg.showModal();
+};
+document.getElementById('dlg-zu').onclick = () => dlg.close();
+document.getElementById('dlg-kopieren').onclick = async e => {
+  const t = document.getElementById('dlg-text');
+  try {
+    await navigator.clipboard.writeText(t.value);
+    e.target.textContent = 'Kopiert ✓';
+  } catch {
+    // Ohne Zwischenablage-Recht (http, altes Fenster): wenigstens markieren.
+    t.select();
+    e.target.textContent = 'Markiert — Strg+C';
+  }
+  setTimeout(() => { e.target.textContent = 'In die Zwischenablage'; }, 1800);
+};
+
+document.getElementById('btn-leeren').onclick = () => {
+  if (!confirm('Alle Urteile und Notizen dieses Durchgangs löschen?')) return;
+  stand = { urteile: {}, modus, bei: 0 };
+  try { localStorage.removeItem(SCHLUESSEL); } catch { /* egal */ }
+  springe(0);
+};
+
+// ── Los ────────────────────────────────────────────────────────────────────
+document.getElementById('modus').value = modus;
+document.getElementById('modus-text').textContent =
+  modus === 'richtung' ? 'Richtung für Richtung' : 'Zustand für Zustand';
+springe(stand.bei || 0);
+</script>
+</body>
+</html>
