@@ -91,7 +91,21 @@
     background:var(--flaeche-hoch); color:var(--text); border:1px solid var(--linie);
     border-radius:5px; padding:3px 6px; font:inherit; font-size:12px;
   }
-  .rahmen-huelle{flex:1; overflow:hidden; position:relative; background:#000;}
+  /* Zwei Rahmen: oben der Beamer (dort laufen die Animationen — Jeopardy-Flug,
+     Bauchbinde, grosse Momente aus buehne.js), unten die Hostseite, auf der
+     man sie ausloest. Umschaltbar auf einen von beiden allein. */
+  .rahmen-huelle{flex:1; overflow:hidden; position:relative; background:#000; display:flex; flex-direction:column;}
+  .teil{position:relative; flex:1 1 0; min-height:0; border-top:1px solid var(--linie);}
+  .teil:first-child{border-top:0;}
+  .rahmen-huelle.nur-beamer .teil-host{display:none;}
+  .rahmen-huelle.nur-host .teil-beamer{display:none;}
+  /* Der Beamer bekommt mehr Platz: dort wird hingesehen. */
+  .rahmen-huelle:not(.nur-beamer):not(.nur-host) .teil-beamer{flex:1.45;}
+  .teil-schild{
+    position:absolute; left:0; top:0; z-index:4; pointer-events:none;
+    background:rgba(0,0,0,.62); color:rgba(255,255,255,.62);
+    font-size:10px; letter-spacing:.6px; padding:2px 7px; border-radius:0 0 5px 0;
+  }
   iframe{position:absolute; inset:0; width:100%; height:100%; border:0; background:#000;}
   .laedt{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -126,6 +140,14 @@
   }
   .wandern button.haupt{background:var(--akzent); color:#1A1403; border-color:transparent; font-weight:700;}
   .wandern button:disabled{opacity:.35; cursor:default;}
+  /* Was man tun muss, damit die Animation laeuft. Ohne das sieht man nur
+     Standbilder und haelt den Zustand fuer fertig geprueft. */
+  .hinweis{
+    font-size:12.5px; line-height:1.5; color:var(--text);
+    background:rgba(232,179,60,.11); border:1px solid rgba(232,179,60,.3);
+    border-left:3px solid var(--akzent); border-radius:0 7px 7px 0; padding:8px 10px;
+  }
+  .hinweis:empty{display:none;}
   .tipp{font-size:11.5px; color:var(--text-leise); line-height:1.55;}
   .tipp kbd{
     background:var(--flaeche-hoch); border:1px solid var(--linie); border-radius:4px;
@@ -172,6 +194,13 @@
   <div class="rahmen-kopf">
     <span class="wo" id="wo"></span>
     <span style="flex:1"></span>
+    <label class="wo">Ansicht
+      <select id="ansicht">
+        <option value="beide">Beamer + Host</option>
+        <option value="nur-beamer">nur Beamer</option>
+        <option value="nur-host">nur Host</option>
+      </select>
+    </label>
     <label class="wo">Reihenfolge
       <select id="modus">
         <option value="richtung">Richtung für Richtung</option>
@@ -180,13 +209,21 @@
     </label>
     <button id="btn-neu" style="background:var(--flaeche-hoch);color:var(--text);border:1px solid var(--linie);border-radius:5px;padding:3px 9px;font:inherit;font-size:12px;cursor:pointer;">Neu aufbauen</button>
   </div>
-  <div class="rahmen-huelle">
+  <div class="rahmen-huelle" id="huelle">
     <div class="laedt" id="laedt">lädt …</div>
-    <iframe id="rahmen" title="Hostseite"></iframe>
+    <div class="teil teil-beamer">
+      <span class="teil-schild">Beamer — hier laufen die Animationen</span>
+      <iframe id="beamer" title="Zuschauerfenster"></iframe>
+    </div>
+    <div class="teil teil-host">
+      <span class="teil-schild">Hostseite — hier klicken</span>
+      <iframe id="rahmen" title="Hostseite"></iframe>
+    </div>
   </div>
 </main>
 
 <aside>
+  <p id="hinweis" class="hinweis"></p>
   <h2>Urteil</h2>
   <div class="urteil">
     <button data-wert="gut" id="btn-gut">Passt</button>
@@ -266,14 +303,14 @@ const RICHTUNGEN = [
    laesst sich in der Seite aendern (Knopf "Auswahl"), die Begruendung je
    Eintrag steht hier. Stand 2026-10-17, abgeleitet aus der Git-History. */
 const ZUSTAENDE = [
-  ['menu',             'Hauptmenü',              1], // Design-Rework 2026-10-14, Late Night als Programmheft (e18f94d)
+  ['menu',             'Hauptmenü',              1, 'Late Night: die lebende Stadt läuft von selbst (buehne.js)'],
   ['setup',            'Feud-Einrichtung',       0],
-  ['feud',             'Feud — Frage offen',     0],
+  ['feud',             'Feud — Frage offen',     1, 'Antwort anklicken → großer Moment; Strike → das X (buehne.js)'],
   ['feud-lang',        'Feud — lange Frage',     0],
-  ['feud-finale',      'Feud — Finale',          1], // Late Night neu gebaut (99c9c3b)
+  ['feud-finale',      'Feud — Finale',          1, 'Late Night neu gebaut'],
   ['feud-finale-frage','Feud — Finale, Frage',   0],
-  ['jeop',             'Jeopardy — Brett',       1], // Ausgangspunkt fuer den Flug: hier ein Feld ANKLICKEN
-  ['jeop-frage',       'Jeopardy — Frage',       1], // Aufdecken: Flug per GSAP (d890f20), Bauchbinde (afa1045)
+  ['jeop',             'Jeopardy — Brett',       1, 'Feld anklicken → es fliegt zur Frage (GSAP, aufdecken.js)'],
+  ['jeop-frage',       'Jeopardy — Frage',       1, 'Antwort aufdecken → in Late Night als Bauchbinde'],
   ['jeop-antwort',     'Jeopardy — Antwort',     1],
   ['wwm',              'Millionär',              0],
   ['wwm-joker',        'Millionär — Publikum',   0],
@@ -281,16 +318,16 @@ const ZUSTAENDE = [
   ['wwds-frage',       'Sowas — Frage',          0],
   ['wwds-joker',       'Sowas — Joker',          0],
   ['wwds-master',      'Sowas — Master',         0],
-  ['ddf',              'Dümmste fliegt',         1], // Wrapper auf volle Breite (b6e9ec6)
+  ['ddf',              'Dümmste fliegt',         1, 'Wrapper auf volle Breite (b6e9ec6)'],
   ['ddf-ergebnis',     'Dümmste — Ergebnis',     0],
-  ['pih',              'Preis ist heiß',         1], // Wrapper auf volle Breite (b6e9ec6)
+  ['pih',              'Preis ist heiß',         1, 'Wrapper auf volle Breite (b6e9ec6)'],
   ['pih-gebot',        'Preis — Bietphase',      0],
   ['tp',               'Trivial Pursuit',        0],
-  ['ergebnis',         'Ergebnisseite',          1], // Late Night als Abspann-Karte (62d42db)
+  ['ergebnis',         'Ergebnisseite',          1, 'Late Night als Abspann-Karte'],
   ['turnier',          'Turnierstand',           0],
   ['turnier-host',     'Turnier — Hostseite',    0],
-  ['gm',               'GM-Panel — im Spiel',    1], // commitGamemasterHtml geaendert (f9c02b4)
-  ['gm-menu',          'GM-Panel — nach Beenden',1], // neu (f9c02b4), mittig und lesbar (7d859d6)
+  ['gm',               'GM-Panel — im Spiel',    1, 'nur Hostseite — der Beamer bleibt im Wartebild'],
+  ['gm-menu',          'GM-Panel — nach Beenden',1, 'nur Hostseite — nach „Beenden" darf hier keine Jeopardy-Steuerung mehr stehen'],
 ];
 
 /* Zustände, die das GM-Panel zeigen (wie GM_SHOWS in shots.js): dort muss das
@@ -354,11 +391,25 @@ let gewuenscht = null;   // [richtung, zustand], auf das der Rahmen gerade warte
    echte Shows, und Reste der vorigen (Overlays, laufende Timer, gesetzte
    Flags) würden sonst in den nächsten Zustand hineinragen. shots.js macht es
    aus demselben Grund genauso. */
+const beamer = document.getElementById('beamer');
+let beamerFertig = Promise.resolve();
+
 let lauf = 0;
 function zeige(r, z){
   gewuenscht = [r, z];
   laedt.classList.remove('weg');
   laedt.textContent = 'lädt ' + richtungName(r) + ' · ' + zustandName(z) + ' …';
+  /* Beamer zuerst und mit jedem Schritt neu: er baut sich zwar aus der
+     Spiegelung auf, aber ein frisches Dokument ist der einzige Weg, der
+     sicher keine Reste der vorigen Show enthaelt. Der Host wartet darauf,
+     bevor er die Show startet - sonst laeuft die Animation ins Leere. */
+  const n = ++lauf;
+  beamerFertig = new Promise(fertig => {
+    beamer.onload = () => fertig();
+    beamer.src = '../../mainscreen/?n=' + n;
+    // Faellt der Beamer aus, soll der Durchgang trotzdem weitergehen.
+    setTimeout(fertig, 4000);
+  });
   /* Der Zähler muss sein. Erst stand der Zustand im Hash - dann wechselt nur
      das Fragment, der Browser lädt NICHT neu, und load feuert kein zweites
      Mal: der Rahmen blieb beim ersten Zustand stehen. Ein Parameter, der sich
@@ -366,12 +417,14 @@ function zeige(r, z){
   rahmen.src = '../../index.html?stumm=1&n=' + (++lauf);
 }
 
-rahmen.addEventListener('load', () => {
+rahmen.addEventListener('load', async () => {
   if (!gewuenscht) return;
   const [r, z] = gewuenscht;
   const w = rahmen.contentWindow;
   const d = rahmen.contentDocument;
   if (!w || !d) { laedt.textContent = 'Rahmen nicht lesbar — gleiche Herkunft nötig (über einen Server öffnen).'; return; }
+  await beamerFertig;
+  if (gewuenscht[0] !== r || gewuenscht[1] !== z) return;   // inzwischen weitergeblättert
 
   // aufbau.js in die Hostseite nachladen: dort liegt die Tabelle, die auch
   // die Screenshots benutzt. Pfad relativ zur Hostseite (Repo-Wurzel).
@@ -431,8 +484,22 @@ function aufbauen(w, d, r, z){
 
   // Ton aus: ein Durchgang mit 450 Schritten soll nicht klingeln.
   try { if (w.SFX) w.SFX.enabled = false; } catch { /* kein SFX: egal */ }
-  // Keine zweiten Fenster (Beamer-Popout, QR) aus dem Rahmen heraus.
+  /* Kein echtes Popup aus dem Rahmen heraus - der Beamer steht hier als
+     zweiter iframe. Angeheftet wird er wie das GM-Panel in der App: opener
+     setzen, dann meldet die Seite sich selbst (boardReattach, siehe
+     mainscreen/index.html). Ohne das liefen die Animationen nirgends, denn
+     Jeopardy-Flug, Bauchbinde und die grossen Momente aus buehne.js spielt
+     das Zuschauerfenster selbst, nicht die Hostseite. */
   try { w.open = () => null; } catch { /* schreibgeschützt in manchen Browsern */ }
+  try {
+    const bw = beamer.contentWindow;
+    if (bw && typeof w.boardReattach === 'function') {
+      bw.opener = w;
+      w.boardReattach(bw);
+    } else if (!bw) {
+      fehler.push('Beamer-Rahmen nicht lesbar');
+    }
+  } catch (e) { fehler.push('Beamer: ' + e.message); }
 
   try {
     const bau = w.AUFBAU && w.AUFBAU[z];
@@ -513,6 +580,8 @@ function zeichne(){
   document.getElementById('wo').innerHTML =
     '<b>' + richtungName(r) + '</b>' + (r ? ' (' + r + ')' : '') + ' · <b>' + zustandName(z) + '</b>';
   document.getElementById('zaehler').textContent = (i + 1) + ' / ' + SCHRITTE.length;
+  const eintrag = ZUSTAENDE.find(x => x[0] === z);
+  document.getElementById('hinweis').textContent = (eintrag && eintrag[3]) || '';
 
   const fertig = Object.keys(stand.urteile).length;
   document.getElementById('balken').style.width = (fertig / SCHRITTE.length * 100) + '%';
@@ -587,6 +656,15 @@ document.getElementById('befund-liste').onclick = e => {
   const li = e.target.closest('li[data-n]');
   if (li) springe(+li.dataset.n);
 };
+
+const huelle = document.getElementById('huelle');
+function setzeAnsicht(wert){
+  huelle.classList.remove('nur-beamer', 'nur-host');
+  if (wert !== 'beide') huelle.classList.add(wert);
+  stand.ansicht = wert;
+  sichern();
+}
+document.getElementById('ansicht').onchange = e => setzeAnsicht(e.target.value);
 
 document.getElementById('modus').onchange = e => {
   const [r, z] = SCHRITTE[i];
@@ -715,6 +793,8 @@ document.getElementById('btn-leeren').onclick = () => {
 };
 
 // ── Los ────────────────────────────────────────────────────────────────────
+document.getElementById('ansicht').value = stand.ansicht || 'beide';
+setzeAnsicht(stand.ansicht || 'beide');
 document.getElementById('modus').value = modus;
 document.getElementById('modus-text').textContent =
   modus === 'richtung' ? 'Richtung für Richtung' : 'Zustand für Zustand';

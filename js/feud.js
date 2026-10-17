@@ -952,7 +952,10 @@ function boardStyleCss() {
 body{pointer-events:none;}
 /* Nur die Zuschauer-Screens, alles andere aus. */
 ${boardHiddenScreensCss()}
-#gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay,#ms-warten,#host-quit{display:none!important;}
+/* #stumm-balken gehoert dazu (js/core.js): die Warnung vor der
+   Ersatz-Datenbank ist fuer den Host, nicht fuer die Zuschauer - und auf der
+   Durchgeh-Seite verdeckte sie den oberen Rand des Beamerbilds. */
+#gm-bar,#gm-embed-overlay,#host-gate,#qr-overlay,#ms-warten,#host-quit,#stumm-balken{display:none!important;}
 /* Wartebildschirm: solange kein Spiel-Screen laeuft, steht hier das grosse
    Logo statt einer schwarzen Flaeche. Die Klasse am <body> setzt das
    Hauptfenster (setBoardIdle), der Mirror traegt sie herueber. Das kleine
