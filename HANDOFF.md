@@ -9602,3 +9602,36 @@ DOM-Helfer `showEl`/`setText`/`setHtml`/`setClass`, Design-Tokens in
 `styles.css` und zwei Escaping-Korrekturen. Die Begründungen stehen
 ausführlich in den jeweiligen Commit-Nachrichten — dort nachlesen, hier nicht
 doppeln.
+
+---
+
+# TODO / Offene Punkte
+
+Ganz unten, weil es keine Einträge zu Änderungen sind, sondern Dinge, die noch
+geklärt werden müssen. Neueste oben.
+
+## 2026-10-17 — David unzufrieden mit der Durchgeh-Seite (`tools/durchgang/`)
+
+Nach `f8bb712` wörtlich: **„ich bin nicht zufrieden mit deiner Umsetzung aber
+das passt schon so."** Auf die Rückfrage, was genau: **„zu viel um zu
+erklären."** Die Seite bleibt also, wie sie ist — angefasst wird sie nicht
+ohne Davids Wort.
+
+**Was das heißt:** Die Gründe sind **nicht bekannt**. Was hier steht, sind
+Vermutungen der Session, die es gebaut hat, keine Aussagen von David:
+
+- Aus „kannst du mir so ne kleine seperate seite bauen" wurden vier Commits
+  mit Zustandsauswahl, Speicherschutz, zwei Rahmen und einem Berichtsformat.
+  Möglicherweise war eine schlichte Liste mit Links gemeint.
+- Es hat **drei Anläufe** gebraucht, bis das drinstand, worum es ihm ging:
+  erst alle 25 Zustände statt der überarbeiteten, dann ohne den Beamer — und
+  genau dort laufen die Animationen, die er sehen wollte.
+- Sie ging **zweimal kaputt raus**: einmal live als 404, weil der Deploy
+  `tools/shots` entfernt, und davor mit dem Dialog „Spielstand zu groß zum
+  Sichern" bei jedem Schritt. Beides hätte ein Blick auf die ausgelieferte
+  Seite vor dem Melden gefunden.
+
+**Für die nächste Session:** nicht raten, was ihn gestört hat, und die Seite
+nicht aus eigenem Antrieb umbauen. Wenn das Thema wieder aufkommt, einmal
+konkret fragen — aber nur dann. Beim nächsten „bau mir mal eben" gilt: klein
+anfangen, früh zeigen, erst danach ausbauen.

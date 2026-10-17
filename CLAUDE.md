@@ -661,3 +661,14 @@ Deutsch. Keine Füllwörter, keine gespiegelten Umgangswörter ("yalla", "habibi
 Keine Behauptung ohne Beleg. Was geprüft wurde, wird als geprüft benannt; was
 vermutet wird, als Vermutung. Wenn etwas nicht nachgesehen wurde, wird das gesagt,
 statt es plausibel klingen zu lassen.
+
+## TODO / Offene Punkte
+
+Ganz unten, weil es keine Regeln sind, sondern Ungeklärtes.
+
+- **2026-10-17 — Durchgeh-Seite (`tools/durchgang/`): David unzufrieden.**
+  Wörtlich: „ich bin nicht zufrieden mit deiner Umsetzung aber das passt schon
+  so", auf Nachfrage „zu viel um zu erklären". Die Gründe sind **nicht
+  bekannt**. Die Seite bleibt, wie sie ist — **nicht aus eigenem Antrieb
+  umbauen**, nicht raten. Die Vermutungen der bauenden Session stehen am Ende
+  der `HANDOFF.md` unter „TODO / Offene Punkte".
