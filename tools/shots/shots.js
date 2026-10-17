@@ -43,7 +43,10 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..', '..');
-const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
+// fbstub.js und aufbau.js liegen in tools/gemeinsam/, weil der Deploy
+// tools/shots vom Upload ausnimmt und die Durchgeh-Seite sie per URL laedt -
+// siehe tools/gemeinsam/LIESMICH.md.
+const STUB = fs.readFileSync(path.join(__dirname, '..', 'gemeinsam', 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
 // Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
 const HOST_SEITEN = new Set(['gm', 'gm-menu', 'turnier-host', 'menu', 'setup']);
@@ -81,9 +84,9 @@ function server() {
 // vor dem Systembrowser (siehe Kopf dort: Edge 155 und --headless=old).
 const { chromiumPfad } = require('./browser.js');
 
-// Aufbau je Show steht in aufbau.js - dieselbe Tabelle laedt die
-// Durchgeh-Seite (tools/durchgang/) als Script in die Hostseite.
-const { AUFBAU } = require('./aufbau.js');
+// Aufbau je Show steht in tools/gemeinsam/aufbau.js - dieselbe Tabelle laedt
+// die Durchgeh-Seite (tools/durchgang/) als Script in die Hostseite.
+const { AUFBAU } = require('../gemeinsam/aufbau.js');
 
 async function hostSeite(page, base, show, t) {
   await page.goto(base + '/', { waitUntil: 'domcontentloaded' });

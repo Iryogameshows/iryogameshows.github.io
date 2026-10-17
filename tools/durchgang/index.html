@@ -14,11 +14,11 @@
   springt. Dafür muss die echte Seite laufen, und genau die steht hier im
   Rahmen: ../../index.html, anklickbar.
 
-  Die Zustände kommen aus tools/shots/aufbau.js - dieselbe Tabelle, die auch
+  Die Zustände kommen aus tools/gemeinsam/aufbau.js - dieselbe Tabelle, die auch
   die Screenshots aufbaut. Keine zweite Liste, die auseinanderläuft.
 
   Die Seite hängt ?stumm=1 an: dann lädt index.html die Ersatz-Datenbank aus
-  tools/shots/fbstub.js statt Firebase. Ohne das würde ein Durchgang hunderte
+  tools/gemeinsam/fbstub.js statt Firebase. Ohne das würde ein Durchgang hunderte
   Male echte Buzzer-Zustände setzen und joinLocked schalten, weil die
   Aufbau-Funktionen die Shows wirklich starten. Im Rahmen steht dann ein roter
   Balken (js/core.js).
@@ -296,7 +296,7 @@ const RICHTUNGEN = [
 
 /* Die Host-Zustände aus shots.js (ALLE_SHOWS ohne die drei Handy-Seiten),
    gruppiert, damit die Liste lesbar bleibt. Der Schlüssel muss genau so in
-   tools/shots/aufbau.js stehen. */
+   tools/gemeinsam/aufbau.js stehen. */
 /* Das dritte Feld markiert die VORAUSWAHL: was zuletzt neu gebaut oder
    ueberarbeitet wurde. Alles durchzugehen sind 475 Schritte - gefragt ist
    aber, ob die juengsten Aenderungen in jeder Richtung sitzen. Die Auswahl
@@ -414,7 +414,7 @@ function zeige(r, z){
      das Fragment, der Browser lädt NICHT neu, und load feuert kein zweites
      Mal: der Rahmen blieb beim ersten Zustand stehen. Ein Parameter, der sich
      ändert, erzwingt das echte Laden. */
-  rahmen.src = '../../index.html?stumm=1&n=' + (++lauf);
+  rahmen.src = '../../index.html?stumm=1&n=' + n;
 }
 
 rahmen.addEventListener('load', async () => {
@@ -431,9 +431,9 @@ rahmen.addEventListener('load', async () => {
   const fertig = () => aufbauen(w, d, r, z);
   if (w.AUFBAU) { fertig(); return; }
   const s = d.createElement('script');
-  s.src = 'tools/shots/aufbau.js';
+  s.src = 'tools/gemeinsam/aufbau.js';
   s.onload = fertig;
-  s.onerror = () => { laedt.textContent = 'tools/shots/aufbau.js nicht gefunden.'; };
+  s.onerror = () => { laedt.textContent = 'tools/gemeinsam/aufbau.js nicht gefunden.'; };
   d.head.appendChild(s);
 });
 
@@ -471,11 +471,14 @@ function aufbauen(w, d, r, z){
   };
   bannerWeg();
   for (const ms of [200, 600, 1500]) setTimeout(bannerWeg, ms);
-  // Schreiben stilllegen, damit die Testshows nichts hinterlassen.
+  /* Schreiben stilllegen, damit die Testshows nichts hinterlassen - aber
+     `true` zurueckgeben, nicht `false`. Mit `false` hielt die App das fuer
+     einen vollen Speicher und warf bei jedem Schritt den Dialog "Der
+     Spielstand ist zu gross zum Sichern" (resumeSave in js/resume.js). */
   try {
-    w.storeSet = () => false;
-    w.storeSetJson = () => false;
-    w.storeRemove = () => false;
+    w.storeSet = () => true;
+    w.storeSetJson = () => true;
+    w.storeRemove = () => true;
   } catch { /* egal */ }
   try {
     if (typeof w.applyTheme === 'function') w.applyTheme(r);

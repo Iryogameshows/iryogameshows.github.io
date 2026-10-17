@@ -237,6 +237,9 @@ tools/
   shots/        Screenshot-Prüfung aller Design-Richtungen (siehe unten)
   durchgang/    Durchgeh-Seite: jede Richtung × jeden Zustand anklickbar
                 ansehen, Urteil und Notiz, Bericht zum Kopieren (siehe unten)
+  gemeinsam/    was Werkzeug UND ausgelieferte Seite brauchen (aufbau.js,
+                fbstub.js) — tools/shots wird vom Deploy entfernt, dieser
+                Ordner nicht. Siehe tools/gemeinsam/LIESMICH.md
 ```
 
 Eine Änderung an einem Spiel geht in die jeweilige `js/`-Datei, nicht in `index.html`.
@@ -467,8 +470,30 @@ starten.
 
 ## Durchgeh-Seite (`tools/durchgang/`)
 
-Öffnen über den lokalen Server: `http://localhost:3000/tools/durchgang/`.
-Geht **nicht** per `file://` — der Rahmen braucht dieselbe Herkunft.
+Öffnen über den lokalen Server: `http://localhost:3000/tools/durchgang/`, oder
+live unter https://iryogameshows.github.io/tools/durchgang/. Geht **nicht** per
+`file://` — der Rahmen braucht dieselbe Herkunft.
+
+**Was eine Seite lädt, muss in einem Ordner liegen, den der Deploy behält.**
+`pages.yml` entfernt `tools/shots` und `tools/reactbits` vor dem Upload. Am
+2026-10-17 lagen `aufbau.js` und `fbstub.js` noch in `tools/shots` — live war
+beides 404, die Seite meldete „nicht gefunden" und `index.html?stumm=1` bekam
+gar keine Datenbank. Deshalb `tools/gemeinsam/`. Nach einem Deploy prüfen:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://iryogameshows.github.io/tools/gemeinsam/aufbau.js
+```
+
+Zwei Rahmen: oben das **Zuschauerfenster** (`mainscreen/`), unten die
+Hostseite. Die neuen Animationen — Jeopardy-Flug (`aufdecken.js`), Bauchbinde,
+große Momente (`buehne.js`) — spielt der Beamer selbst, auf der Hostseite sieht
+man sie **nicht**. Angeheftet wird er über `opener` + `boardReattach`, wie das
+GM-Panel.
+
+**Die Spiegelung hängt an `requestAnimationFrame`** (`scheduleBoardMirror`,
+`js/feud.js`). In einem ausgeblendeten Browser-Pane steht sie still, und der
+Beamer bleibt auf dem Wartebild — beim Messen mit Werkzeugen daran denken, das
+ist kein Fehler der Seite.
 
 Jede Richtung mit jedem Zustand der Reihe nach, die **echte Seite im Rahmen
 und anklickbar**. Das ist der Unterschied zu den Kontaktbögen: dort steht ein
@@ -477,12 +502,12 @@ Standbild, hier lässt sich drücken, tippen und aufklappen. Urteil („Passt" /
 `localStorage`. Der Knopf **Bericht** baut daraus einen Text zum Kopieren —
 Befunde als eine Zeile je Fund, danach was noch offen ist.
 
-Die Zustände kommen aus **`tools/shots/aufbau.js`** — dieselbe Tabelle, die
+Die Zustände kommen aus **`tools/gemeinsam/aufbau.js`** — dieselbe Tabelle, die
 `shots.js` für die Screenshots benutzt. Wer dort einen Zustand ergänzt, muss
 ihn in `ZUSTAENDE` der Durchgeh-Seite nachtragen, sonst fehlt er im Durchgang.
 
 **`?stumm=1`:** Die Seite hängt den Parameter an. `index.html` lädt dann die
-Ersatz-Datenbank aus `tools/shots/fbstub.js` statt Firebase, und ein roter
+Ersatz-Datenbank aus `tools/gemeinsam/fbstub.js` statt Firebase, und ein roter
 Balken sagt das (`js/core.js`). Ohne das würde ein Durchgang hunderte Male
 echte Buzzer-Zustände setzen und `joinLocked` schalten — die Aufbau-Funktionen
 starten die Shows wirklich. **In diesem Modus ist kein Handy verbunden**; für

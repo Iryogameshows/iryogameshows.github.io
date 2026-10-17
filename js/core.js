@@ -1975,7 +1975,7 @@ function toggleNoteChecked(i){
 // ── TURNIER ── Mehrtägige Gameshow: gleiche Teams, gewichtete Spiele, Gesamtwertung.
 
 /* ── ERSATZ-DATENBANK SICHTBAR MACHEN ──────────────────────────────────────
-   Mit ?stumm=1 laedt index.html tools/shots/fbstub.js statt Firebase (siehe
+   Mit ?stumm=1 laedt index.html tools/gemeinsam/fbstub.js statt Firebase (siehe
    Kommentar dort). Das ist fuer die Durchgeh-Seite gedacht und sonst eine
    Falle: die Seite sieht normal aus, aber kein Handy kommt an. Deshalb ein
    Balken, der nicht zu uebersehen ist und nicht weggeklickt werden kann. */
