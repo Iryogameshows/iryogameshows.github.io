@@ -12,6 +12,77 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-17 — `f9c02b4` GM-Panel nach „Beenden": Menü statt alter Show-Steuerung
+
+**Gemacht:** Davids Befund — „wenn der Host Spiel beendet, kommt man nicht gleich ins Menü,
+sondern es öffnet sich erst die Frage 1 bei Jeopardy". Drei kleine Änderungen:
+
+1. **`updateGamemasterMenu()`** (`js/feud.js`, neben den anderen GM-Panels): Panel für
+   „keine Show läuft" — Hinweis, Notizen, QR-Knopf, Turnierstand-Knopf wenn `tournament` steht.
+2. **`updateGamemaster()`**: neuer Zweig `if (screenActive('menu-screen')) return
+   updateGamemasterMenu();` **vor** den Spiel-Flags.
+3. **`commitGamemasterHtml(html, ohneQuit)`** (`js/buzzer.js`): zweiter Parameter, mit dem
+   `gmInsertQuit` übersprungen wird. Ein „⏹ Beenden" im Menü-Panel hätte nichts zu beenden.
+
+**Warum so.** Die **erste Vermutung war falsch** und ist widerlegt worden, bevor Code
+entstand: `gmQuitShow()` entfernt die Overlays mit `.remove()`, bricht aber die Timer in
+`closeOverlay`/`fadeOutBackdrop` (`js/core.js`) nicht ab — naheliegend war also ein
+nachlaufender Callback, der `showScreen('jeopardy-screen')` ruft. Ein Messskript über beide
+Phasen (Beenden im Intro, Beenden bei offener Frage) zeigte im Hauptfenster aber **sofort
+`menu-screen`, über 2,5 s stabil, kein Nachlauf**. Die Timer-Theorie ist damit vom Tisch; es
+wurde nichts dafür gebaut.
+
+Das erste Skript lief mit `window.open = () => null` (aus `ablauf.js` übernommen) und sah das
+GM-Panel deshalb nicht. Zweites Skript, diesmal in das **iframe `#gm-embed-frame`** gelesen —
+das Panel ist kein Popup, also messbar. Vor dem Beenden standen dort die Jeopardy-Knöpfe, **nach
+dem Beenden dieselben**, nur `sichtbar: false`. Ursache: `showScreen` (`js/core.js:978`) nimmt
+beim Menü nur die Klasse `visible` weg und leert das iframe nicht, und `updateGamemaster()` hat
+für „alle Flags aus, Menü steht" keinen Zweig — die Kette fällt bis zum Feud-Fallback durch, wo
+`if (!q) return;` wortlos aussteigt und den letzten Inhalt stehen lässt. Der Kommentar über
+`result-screen` beschreibt genau diese Falle für einen anderen Fall; hier fehlte sie noch.
+
+Der Zweig prüft **den Screen, nicht die Flags**: steht `menu-screen`, läuft definitiv keine
+Show, egal welches Flag noch gesetzt ist. Er muss vor die Spiel-Flags, sonst gewinnt ein
+liegengebliebenes `active`. Verworfen: das iframe in `gmQuitShow()` zu leeren — dann wäre das
+Panel beim nächsten Öffnen für einen Moment weiß, und der Weg über `showScreen` (Menü aus dem
+Spiel heraus, ohne Beenden) wäre weiter offen geblieben.
+
+**Mitgenommen:** `commitGamemasterHtml` schickt das HTML per `pushGamemasterHtmlToFirebase`
+auch ans **Handy-Gamepad**. Der alte Inhalt stand also auf beiden Geräten; der neue Zweig
+räumt beide auf.
+
+**Geprüft:**
+
+- Eigenes Messskript (Scratchpad, nicht im Repo), beide Phasen, GM-Panel im iframe gelesen:
+  **vorher** Jeopardy-Knöpfe inkl. „👁 Frage aufdecken" → **nachher** nur noch das Menü-Panel
+  mit „📱 QR-Code".
+- `node check.js` → sauber (442 Handler, 303 IDs, `styles.css` 4495 Klammernpaare).
+- `node check.js --types` → **15 Dateien, keine Meldung.**
+- `node ablauf.js` → **49 OK, 0 FEHL**, darunter „Gamepad Beenden: Host im Menü, keine Show"
+  und „keine JS-Fehler" auf Host, Handy und Gamepad.
+
+**Ungeprüft:** das Aussehen des neuen Panels in den 19 Design-Richtungen (`shots.js` hat
+dafür keinen Zustand — es gibt keinen Screenshot-Fall „Menü-Panel"), der echte Beamer, und ob
+`toggleJeopardyQR()` außerhalb von Jeopardy das Erwartete tut; der Name ist alt, der Knopf
+steht in mehreren Panels, aufgerufen wurde er in dieser Lage nicht.
+
+**Fallstricke.**
+
+- `tools/shots/node_modules` fehlte auf diesem Rechner (nicht eingecheckt). `cd tools/shots &&
+  npm install` holt `playwright-core` 1.48.2 nach — steht so im Kopf von `shots.js`, dauert
+  4 s.
+- Beim Messen von GM-Panels **nicht** `window.open = () => null` setzen und dann glauben, man
+  sähe das Panel. Es ist ein iframe; die Blockade betrifft es nicht, aber sie verdeckte in
+  Lauf 1, dass es überhaupt um das Panel geht.
+
+**Zum Repo-Stand bei Sitzungsbeginn:** lokal 274 Commits zurück, dazu 50 uncommittete Zeilen in
+`styles.css` („Politur je Richtung (Material)", nur Richtung I). Nach dem Vorspulen gab es
+Konflikt. Die Arbeit liegt in `origin/master` längst fertig vor — Block „Material je
+Design-Richtung" ab Zeile 3862, rund 4850 Zeilen, allein 270 Regeln für `data-theme="I"`. Der
+lokale Entwurf war also ein überholter Vorläufer. `styles.css` steht jetzt exakt auf
+`origin/master`; der Entwurf liegt weiter als `stash@{0}` („Politur je Richtung (uncommitted,
+vor ff-merge 274)"), falls doch etwas daraus fehlt.
+
 ## 2026-10-16 — `b6e9ec6` Handy folgt der Leinwand, Wrapper auf volle Breite
 
 **Gemacht:** Zwei offene Punkte aus den sechs Kompositions-Commits.
