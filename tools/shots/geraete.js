@@ -45,7 +45,9 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
 /** Bedingung bis zu ms Millisekunden lang abfragen. */
 async function bis(fn, ms = 4000) { const ende = Date.now() + ms; for (;;) { try { if (await fn()) return true; } catch {} if (Date.now() > ende) return false; await warte(100); } }
 const hashPin = (name, pin) => crypto.createHash('sha256').update('keller:' + name.trim().toLowerCase() + ':' + pin).digest('hex');
-const CHROME = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome'].find(p => p && fs.existsSync(p));
+// Browser-Wahl: siehe browser.js (Playwrights eigener Chromium hat Vorrang).
+// WebKit kommt ohnehin von Playwright - npx playwright@1.48.2 install webkit.
+const CHROME = require('./browser.js').chromiumPfad();
 
 (async () => {
   await new Promise(r => srv.listen(0, '127.0.0.1', r));

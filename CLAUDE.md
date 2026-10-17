@@ -413,7 +413,7 @@ node shots.js --vergleich          # danach: Studio-Blau unverändert?
 node shots.js --reduced            # mit „Bewegung reduzieren“: läuft noch etwas?
 node ablauf.js                     # Host + Handy + Gamepad: welcher Screen wann (48 Punkte)
 node geraete.js                    # echte Geräteprofile, iPhones in WebKit (55–57 Punkte, ~1,5 min)
-npx playwright@1.48.2 install webkit   # einmal pro Gerät, für geraete.js
+npx playwright@1.64.1 install webkit   # einmal pro Gerät, für geraete.js
 ```
 
 `ablauf.js` verbindet Host-, Handy- und Gamepad-Tab über eine gemeinsame Ersatz-Datenbank

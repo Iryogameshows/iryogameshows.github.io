@@ -46,8 +46,10 @@ const ROOT = path.resolve(__dirname, '..', '..');
 const STUB = fs.readFileSync(path.join(__dirname, 'fbstub.js'), 'utf8');
 const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
 // Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
-const HOST_SEITEN = new Set(['gm', 'turnier-host', 'menu', 'setup']);
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'feud-finale-frage', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'wwds-frage', 'wwds-joker', 'wwds-master', 'ddf', 'ddf-ergebnis', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
+const HOST_SEITEN = new Set(['gm', 'gm-menu', 'turnier-host', 'menu', 'setup']);
+// Zustaende, deren Bild aus dem GM-iframe kommt, nicht aus der Seite.
+const GM_SHOWS = new Set(['gm', 'gm-menu']);
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'feud-finale-frage', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'wwds-frage', 'wwds-joker', 'wwds-master', 'ddf', 'ddf-ergebnis', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'gm-menu', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);
@@ -75,17 +77,9 @@ function server() {
   });
 }
 
-function browserPfad() {
-  const kandidaten = [process.env.CHROME,
-    'C:/Program Files/Google/Chrome/Application/chrome.exe',
-    'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
-    'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'];
-  const p = kandidaten.find(k => k && fs.existsSync(k));
-  if (!p) { console.error('Kein Chrome/Edge gefunden. Pfad per Umgebungsvariable CHROME angeben.'); process.exit(2); }
-  return p;
-}
+// Browser-Wahl steht in browser.js - Playwrights eigener Chromium hat Vorrang
+// vor dem Systembrowser (siehe Kopf dort: Edge 155 und --headless=old).
+const { chromiumPfad } = require('./browser.js');
 
 // ── Aufbau je Show, laeuft in der Seite ──
 // Spielstart wie im echten Ablauf, Intro und Overlays danach weggeraeumt.
@@ -295,6 +289,8 @@ const AUFBAU = {
   },
 };
 AUFBAU.gm = AUFBAU.feud;
+// gm-menu baut Jeopardy auf; beendet wird danach in hostSeite().
+AUFBAU['gm-menu'] = AUFBAU.jeop;
 
 async function hostSeite(page, base, show, t) {
   await page.goto(base + '/', { waitUntil: 'domcontentloaded' });
@@ -309,8 +305,13 @@ async function hostSeite(page, base, show, t) {
   // WWM/WWDS oeffnen das GM-Fenster mit Verzoegerung - erst danach ausblenden.
   await page.waitForTimeout(1400);
   await page.evaluate(async () => { await document.fonts.ready; });
-  if (show === 'gm') {
-    await page.evaluate(() => { updateGamemaster(); document.getElementById('gm-embed-overlay').classList.add('visible'); });
+  if (GM_SHOWS.has(show)) {
+    /* gm-menu: die Show erst beenden, nicht updateGamemasterMenu() direkt
+       rufen. Der Fehler aus HANDOFF f9c02b4 lag genau dazwischen - das Panel
+       behielt nach dem Beenden den Inhalt der beendeten Show. Nur der echte
+       Weg zeigt, ob er weg ist. */
+    if (show === 'gm-menu') await page.evaluate(() => gmQuitShow());
+    await page.evaluate(() => { updateGamemaster(); setClass('gm-embed-overlay', 'visible', true); });
     await page.waitForTimeout(500);
   } else {
     await page.evaluate(() => { const o = document.getElementById('gm-embed-overlay'); if (o) o.classList.remove('visible'); });
@@ -372,7 +373,7 @@ async function kontaktbogen(page, show, bilder) {
 (async () => {
   const srv = await server();
   const base = `http://127.0.0.1:${srv.address().port}`;
-  const browser = await chromium.launch({ executablePath: browserPfad(), headless: true });
+  const browser = await chromium.launch({ executablePath: chromiumPfad(), headless: true });
   const ctx = await browser.newContext(flag('reduced') ? { reducedMotion: 'reduce' } : {});
   await ctx.route('**/firebase-database-compat.js', r => r.fulfill({ contentType: 'application/javascript', body: STUB }));
   await ctx.route(/firebasedatabase\.app|firebaseio\.com/, r => r.abort());
@@ -420,12 +421,12 @@ async function kontaktbogen(page, show, bilder) {
         lauf.liste.forEach(x => befunde.push(`${show} ${name}: laeuft trotz Reduced Motion - ${x.wer} ${x.was} (${x.ms} ms, ${x.mal === Infinity ? 'endlos' : x.mal + 'x'})`));
       }
       const datei = path.join(OUT, `${show}-${name}.png`);
-      if (show === 'gm') await page.locator('#gm-embed-frame').screenshot({ path: datei });
+      if (GM_SHOWS.has(show)) await page.locator('#gm-embed-frame').screenshot({ path: datei });
       else await page.screenshot({ path: datei });
       bilder.push([name, datei]);
 
       if (flag('basis') || flag('vergleich')) {
-        const stil = show === 'gm'
+        const stil = GM_SHOWS.has(show)
           ? await (await (await page.$('#gm-embed-frame')).contentFrame()).evaluate(STIL_SCHNAPPSCHUSS)
           : await page.evaluate(STIL_SCHNAPPSCHUSS);
         const f = path.join(OUT, `basis-${show}-${W}x${H}.json`);

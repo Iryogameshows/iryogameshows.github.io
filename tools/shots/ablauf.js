@@ -31,7 +31,7 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   await new Promise(r => srv.listen(0, '127.0.0.1', r));
   const base = 'http://127.0.0.1:' + srv.address().port;
-  const browser = await chromium.launch({ executablePath: [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome'].find(p => p && fs.existsSync(p)), headless: true });
+  const browser = await chromium.launch({ executablePath: require('./browser.js').chromiumPfad(), headless: true });
   const ctx = await browser.newContext();
   await ctx.route('**/firebase-database-compat.js', r => r.fulfill({ contentType: 'application/javascript', body: STUB }));
   // Ohne Netz (gstatic gesperrt) reicht ein Minimal-Firebase: die Datenbank kommt ohnehin aus fbshared.js.
