@@ -12,6 +12,75 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-17 — `72f8228` Prüfwerkzeuge liefen nicht mehr: Edge 155 vs. `--headless=old`
+
+**Gemacht:** `playwright-core` von 1.48.2 auf **1.64.1**; neue Datei
+`tools/shots/browser.js` mit der Browser-Wahl; `shots.js`, `ablauf.js` und `geraete.js`
+nutzen sie; `CLAUDE.md` auf `npx playwright@1.64.1 install webkit`.
+
+**Der Vorgang.** `ablauf.js` lief um 12:30 noch durch (49 OK). Eine halbe Stunde später
+brach **jeder** Start ab: `browserType.launch: Target page, context or browser has been
+closed`, der Edge-Prozess beendete sich sofort mit `exitCode=0`. Dazwischen hat sich **Edge
+im Hintergrund auf 155 aktualisiert**. Playwright 1.48.2 startet mit `--headless=old`, und
+den alten Headless-Modus hat Chromium **ab Version 132 entfernt**. `--disable-component-update`
+in der Startzeile verhindert nur Updates im gestarteten Prozess, nicht den Edge-Updater.
+
+**Verworfen: Playwrights mitgebrachter Chromium.** Naheliegend, weil er zur
+Playwright-Version gehört und keine Updates nachzieht — `npx playwright@1.48.2 install
+chromium` lud ihn (Version 130, `ms-playwright/chromium-1140`). Er **startet auf diesem
+Rechner nicht**: „Diese Anwendung konnte nicht gestartet werden, da die
+Side-by-Side-Konfiguration ungültig ist" — die Visual-C++-Runtime fehlt, die Chrome und Edge
+selbst mitbringen. Deshalb steht er in `browser.js` hinten als Rückfall, und das Problem ist
+über die Playwright-Version gelöst. **Der Download liegt ungenutzt unter
+`%LOCALAPPDATA%\ms-playwright\chromium-1140` (rund 150 MB)** — kann weg, ich habe nichts
+gelöscht.
+
+**Warum `browser.js`.** Die Kandidatenliste stand dreimal im Code (`shots.js:78`,
+`ablauf.js:34`, `geraete.js:48`), jedes Mal etwas anders. Jetzt an einer Stelle, mit diesem
+Vorgang als Kommentar daneben — damit beim nächsten Browser-Update nicht wieder geraten wird.
+
+**Geprüft (alles nach dem Update):**
+
+- `node shots.js --shows gm` über **alle 19 Richtungen** → keine Befunde, Kontaktbogen
+  angesehen.
+- `node ablauf.js` → **49 OK, 0 FEHL** (gleiche Zahl wie unter 1.48.2, keine API-Regression).
+- `node geraete.js` → **55 OK, 0 FEHL**. Dafür einmalig
+  `npx playwright@1.64.1 install webkit`.
+- `node check.js` und `node check.js --types` → sauber.
+
+**Fallstricke.** `tools/shots/node_modules` ist nicht eingecheckt und fehlte hier ganz —
+`cd tools/shots && npm install`. Tritt der Startfehler wieder auf, ist zuerst die
+Browser-Version gegen die Playwright-Version zu prüfen, nicht der Code.
+
+## 2026-10-17 — `7d859d6` Menü-Panel mittig und auf hellen Richtungen lesbar
+
+**Gemacht:** Zwei Befunde aus dem Kontaktbogen zu `f9c02b4`, plus der Zustand **`gm-menu`**
+in `shots.js` (im Commit davor).
+
+1. Das Panel saß im `gm-body`-Raster, das für ein volles Spielpanel gebaut ist — unten blieben
+   **zwei Drittel leer**. Jetzt eine schmale mittige Spalte (`.mitte`, `max-width: 400px`),
+   nach dem Vorbild von `updateGamemasterOverlay`, das ebenfalls ein Zustands- und kein
+   Steuerpanel ist.
+2. `.leer` setzte **festes Weiß**. Die hellen Richtungen setzen `color-scheme: light`
+   (`themeGmHtml`) — dort stand weißer Text auf Creme und war in **C, F, L, N und Q** kaum zu
+   lesen. Jetzt `opacity: .62` statt fester Farbe, die Schriftfarbe der Richtung bleibt.
+
+**`gm-menu`:** baut Jeopardy auf und ruft dann `gmQuitShow()`, statt `updateGamemasterMenu()`
+direkt aufzurufen. Der Fehler aus `f9c02b4` lag genau dazwischen — das Panel behielt nach dem
+Beenden den alten Inhalt. Nur der echte Weg zeigt, ob er weg ist. Dafür wurde aus
+`show === 'gm'` die Menge `GM_SHOWS` (vier Stellen), und `gm-menu` steht in `HOST_SEITEN`:
+das Panel kommt nicht auf den Beamer, die Höhenprüfung gilt dort nicht.
+
+**Geprüft:** `node shots.js --shows gm-menu` über **alle 19 Richtungen** → keine Befunde,
+Kontaktbogen `bogen-gm-menu.png` vor und nach der Änderung angesehen. `node check.js` und
+`--types` sauber, `node ablauf.js` 49 OK / 0 FEHL.
+
+**Offen:** Richtung **L** (Serifen auf Creme) ist lesbar, aber weiter die blasseste — nicht
+nachgemessen, nur angesehen. Das Panel ist nur bei 1280×720 geprüft, nicht bei 1920×1080.
+Der Knopf „Turnierstand" erscheint nur mit laufendem Turnier und war in keinem Bild dabei.
+`toggleJeopardyQR()` außerhalb von Jeopardy ist **nicht ausgelöst** worden — der Name ist alt,
+der Knopf steht in mehreren Panels.
+
 ## 2026-10-17 — `f9c02b4` GM-Panel nach „Beenden": Menü statt alter Show-Steuerung
 
 **Gemacht:** Davids Befund — „wenn der Host Spiel beendet, kommt man nicht gleich ins Menü,
