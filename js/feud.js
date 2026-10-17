@@ -1202,23 +1202,31 @@ function updateGamemasterMenu() {
 <meta name="color-scheme" content="dark">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>${GM_SHARED_CSS}
-  .leer{text-align:center;padding:18px 12px;color:rgba(255,255,255,.55);font-size:.9rem;line-height:1.6;}
-  .leer b{display:block;font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:rgba(255,255,255,.8);margin-bottom:6px;}
+  /* Schmale mittige Spalte statt des gm-body-Rasters: das ist fuer ein volles
+     Spielpanel gebaut, hier blieben zwei Drittel der Flaeche leer (gesehen auf
+     bogen-gm-menu.png). Vorbild ist updateGamemasterOverlay, ebenfalls ein
+     Zustands- und kein Steuerpanel. */
+  .mitte{min-height:calc(100vh - 86px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;}
+  .mitte>*{width:100%;max-width:400px;}
+  /* Farbe ueber opacity, NICHT als festes Weiss: die hellen Richtungen setzen
+     color-scheme:light (themeGmHtml), dort stand weisser Text auf Creme und war
+     kaum zu lesen - C, F, L, N und Q im Kontaktbogen. */
+  .leer{text-align:center;padding:24px 16px;font-size:.9rem;line-height:1.6;}
+  .leer b{display:block;font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;margin-bottom:8px;}
+  .leer span{display:block;opacity:.62;}
+  .mitte .gm-actions{position:static;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;background:none;border:none;padding:0;}
 </style></head><body>
   ${gmHeaderHtml('Gamemaster', 'Keine Show')}
-  <div class="gm-body">
-  <div class="gm-main">
-    <div class="panel"><div class="leer">
+  <div class="mitte">
+    <div class="panel leer">
       <b>Bereit</b>
-      Wähle am Hauptbildschirm die nächste Show. Die Steuerung erscheint hier,
-      sobald sie läuft.
-    </div></div>
-  </div>
-  <div class="gm-side">${gmNotesPanelHtml()}</div>
-  </div>
-  <div class="gm-actions">
-    <button class="gm-btn gray sm" onclick="opener.toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
-    ${tournament ? `<button class="gm-btn gold" onclick="opener.tournamentShowBoard()">📊 Turnierstand anzeigen</button>` : ''}
+      <span>Wähle am Hauptbildschirm die nächste Show. Die Steuerung erscheint hier, sobald sie läuft.</span>
+    </div>
+    ${gmNotesPanelHtml()}
+    <div class="gm-actions">
+      <button class="gm-btn gray sm" onclick="opener.toggleJeopardyQR()">${document.getElementById('qr-overlay') ? '✕ QR schließen' : '📱 QR-Code'}</button>
+      ${tournament ? `<button class="gm-btn gold sm" onclick="opener.tournamentShowBoard()">📊 Turnierstand</button>` : ''}
+    </div>
   </div>
 </body></html>`;
   commitGamemasterHtml(gmHtml, true);
