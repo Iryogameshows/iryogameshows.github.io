@@ -12,6 +12,127 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-18 — `afdac29` Richtung T **neu auf echten Spielgrafiken** + Töne
+
+**Davids Ansage:** „ich möchte ein The binding of isaac themed Design … mit den
+Hintergründen, assetts und sounds aus dem spiel", und zum bisherigen Stand:
+„nein das was bisher drinstehet muss weg das ist scheiße." Auf Rückfrage dann:
+Grafiken **„recherchiert selbst im Internet"**, Töne **mit WebAudio nachgebaut**.
+
+**Gemacht**
+
+- **Boden, Wand und Raumrahmen kommen aus dem Spiel.** Der Rahmen steht als
+  `border-image` rund um das Fenster (`body::before`, `z-index: -1`, damit er
+  hinter den Inhalt gehört): die Show spielt *in* einem Isaac-Raum. Herzen und
+  Münze sind die echten Sprites, nicht mehr gezeichnete SVGs.
+- **Farben gemessen statt geschätzt** — das war der Kern beider Fehlschläge
+  davor. Boden `#734136` (44 % der Fläche), Wandstein `#835140`, Fuge `#492D24`,
+  Münzgold `#C68F3C`, Herzrot `#E80000`, Kontur `#080000`.
+- **`tools/keller/hol.js` + `png.js`**: holt die Vorlagen und schneidet Boden-,
+  Wandkachel, Rahmen und sieben Zeichen. Ein Befehl pro Gerät.
+- **`js/keller-ton.js`**: WebAudio, keine Dateien. Hängt per MutationObserver an
+  dem, was man *sieht* (Herz verliert `lit`, Punktzahl steigt, Screen wird
+  `active`) — deshalb ändert sich in keiner der zehn Spieldateien eine Zeile,
+  und eine neue Show bekommt den Ton geschenkt. Nur in Richtung T, still bei
+  `?stumm=1`, Kontext erst bei der ersten Geste (Autoplay-Sperre).
+
+**Warum so — und was verworfen wurde**
+
+- **Die Spielarchive sind verschlüsselt.** `resources/packed/*.a` bei Repentance:
+  hohe Entropie, kein PNG- und kein Kompressionskopf. Der *Aufbau* ist harmlos
+  (`ARCH000`, Tabelle am Ende, 20 Byte je Eintrag — bei `graphics.a` gehen
+  2300 × 20 = 46 000 Byte exakt auf), die Daten sind es nicht. Entschlüsseln
+  wäre etwas anderes als ihr Werkzeug zu benutzen: **nicht gemacht.**
+- **Korrektur zum Eintrag `99827dc`:** dort steht, der Spielordner habe *keinen*
+  Resource-Extractor. **Falsch.** `tools/ResourceExtractor/ResourceExtractor.exe`
+  liegt dort, samt `filelist.txt` mit 18 789 Pfadnamen — genau die Namensliste,
+  die der Vorsession angeblich fehlte. Er hilft nur nicht: sein Banner nennt
+  „Rebirth/Afterbirth/Afterbirth+", er meldet 4147 × „could not determine
+  filename" und bricht ab (Log endet mitten in einer Zeile = Absturz ohne
+  Flush). Durchprobiert: voller Archivsatz, ohne die `repentance`-Archive, mit
+  Platzhaltern an deren Stelle, aus drei verschiedenen Verzeichnissen, kurzer
+  Pfad gegen die 260-Zeichen-Grenze. Immer dasselbe.
+- **Hash-Funktion der Archive nicht geknackt.** Getestet gegen die echte Tabelle:
+  FNV-1a/FNV-1 64, djb2, sdbm, MurmurHash64A, CRC32 gegen beide 4-Byte-Hälften,
+  je sieben Namensvarianten (mit/ohne `resources/`, Schrägstrich/Backslash,
+  Groß/Klein, Basename). Kein Treffer. Nicht weiterverfolgt — die Daten wären
+  ohnehin verschlüsselt.
+- **Quelle jetzt:** ein offenes GitHub-Repo mit den Rebirth-Assets unter ihren
+  Originalpfaden (steht in `hol.js`). 21 Dateien, 364 KB. **The Spriters
+  Resource ging nicht** — 403, und im Browser eine Bot-Prüfung, die ich nicht
+  umgehe.
+- **Bilder bleiben lokal** (`assets/t/eigene/` in `.gitignore`). Das Repo ist
+  öffentlich, `pages.yml` lädt mit `path: '.'` alles hoch. Folge, bewusst in
+  Kauf genommen: **auf GitHub Pages fehlen sie**, dort greift der gezeichnete
+  SVG-Rückfall. Deshalb bleiben `assets/t/*.svg` und `tools/sprites/` stehen,
+  obwohl das Gezeichnete als Hauptweg weg ist.
+
+**Drei Regeln des alten Blocks zielten ins Leere** (im Bild gesehen, nicht
+vermutet): `.team-name` gibt es nicht (heißt `.t-name`), `.score-val` steht im
+Feud-Scoreboard nicht (heißt `.t-score`), und die Rundung der Teams sitzt an
+`.scoreboard` (`border-radius: 14px; overflow: hidden`), nicht an `.team-panel`
+— solange die steht, bleiben die Teams rund, egal was an den Kindern gesetzt
+wird. Auch der offene Punkt aus `99827dc` ist damit geklärt: die Münze vor
+„Punkte" konnte nie erscheinen, weil `.round-label` zum **GM-Fenster** gehört
+(`GM_SHARED_CSS` in `js/core.js`), und dorthin reicht `styles.css` nicht.
+
+**Zwei eigene Fehler, im Bild gefunden und behoben**
+
+- **Quadrantengrenze.** Das Backdrop-Sheet hält vier Raumvarianten, die erste
+  endet bei y 156. Mein Bodenausschnitt (100,130)+48 lief darüber hinaus und
+  holte die Ketten der Nachbarvariante mit — im Kontaktbogen sah die ganze
+  Fläche aus wie liegende Rohre. Jetzt (80,80).
+- **Fugenabstand.** Die linke Wand hat waagerechte Fugen alle ~83 px; ein
+  42-px-Baustein wiederholt sie doppelt so oft wie das Spiel. Jetzt ein
+  fugenfreies Stück ab y 75, und `border-image-repeat: round` statt `repeat`.
+
+**Geprüft**
+
+- `node check.js`: sauber — 16 js-Dateien, 442 Handler gegen 941 Namen, 303 IDs,
+  4532 Klammernpaare.
+- `node check.js --types`: **16 Dateien, keine Meldung** (keller-ton.js inbegriffen).
+- `tools/shots`: voller Lauf über Richtung T, **26 Zustände, keine Befunde**;
+  danach Vergleich `feud`/`jeop` in Studio-Blau, A und T — keine Befunde, die
+  beiden anderen Richtungen unverändert (im Bild verglichen).
+- **Kontaktbögen angesehen**, nicht nur die Befunde gelesen: Feud, Jeopardy, WWM.
+- `node tools/keller/hol.js` einmal komplett durchlaufen lassen: 9 Dateien
+  geholt, 7 Zeichen + 2 Kacheln + Rahmen gebaut.
+
+**Offen / ungeprüft**
+
+- **Die Töne hat niemand gehört.** Ich kann kein Audio prüfen. Dass sie
+  *klingen*, ist durch den Code plausibel, dass sie **nach Isaac** klingen, ist
+  unbelegt. `KellerTon.muenze()` usw. lassen sich in der Konsole einzeln
+  auslösen, `KellerTon.schalten(false)` schaltet ab.
+- Die Tonauslöser sind **nicht im Spielbetrieb erprobt**, nur über den Code
+  hergeleitet. Ob eine Punktzahl beim Neuaufbau des Scoreboards ungewollt die
+  Münze auslöst, muss ein echter Durchgang zeigen (entprellt ist es).
+- `?stumm=1` schaltet den Ton ab — in `tools/durchgang/` ist er also **nicht**
+  zu hören. Absicht.
+- Die echte **Isaac-Schrift** liegt als BMFont (`font/*.fnt` + PNG) im Netz, ist
+  aber nicht eingebaut: ein Bitmap-Atlas ist kein Webfont. Es bleibt bei
+  Bowlby One / Zilla Slab.
+- Auf **GitHub Pages** sieht die Richtung nüchtern aus (Rückfall). Nicht geprüft,
+  wie das live wirkt.
+- `tools/keller/` wird vom Deploy **nicht** entfernt (anders als `tools/shots`),
+  liegt also öffentlich. Nur Skripte, keine Bilder — aber es ist mir bewusst.
+
+**Fallstricke für die nächste Session**
+
+- `assets/t/eigene/` ist ignoriert: **auf einem neuen Gerät fehlt die ganze
+  Optik**, bis `node tools/keller/hol.js` gelaufen ist. Das ist kein Fehler.
+- Der Rahmen ist `position: fixed` mit `z-index: -1`. Wer ihn auf `0` setzt,
+  legt ihn **über** den Inhalt — ein fixiertes Element mit z-index 0 wird nach
+  dem normalen Fluss gemalt.
+- `image-rendering: pixelated` ist nicht Deko. Ohne das rechnet der Browser die
+  Sprites weich, und aus dem gezeichneten Spiel wird ein verwaschenes Foto.
+- Kachelgrößen sind ganzzahlige Vielfache (72 → 144, 64 → 128). Krumme Werte
+  verteilen die Pixel trotz `pixelated` unsauber.
+- **Nicht aus dem Gedächtnis über die Archive reden.** Der Eintrag davor hat
+  genau das getan und lag falsch.
+
+---
+
 ## 2026-10-18 — `99827dc` Richtung T: **Pixel-Sprites**, Strikes werden Herzen
 
 **Davids Urteil zum zweiten Mal:** „das sieht 0 so aus wie The Binding of isaac." Dazu:
