@@ -3828,6 +3828,9 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="Q"] { --ico-fill:#3255A4; --ico-cut:#F2EEE4; --ico-dim:rgba(50,85,164,.3); --ico-filter:drop-shadow(3px 2px 0 rgba(255,72,176,.85)); --ico-blend:multiply; }
 :root[data-theme="R"] { --ico-fill:#F2A900; --ico-line:#F4F1EA; --ico-cut:#111; --ico-dim:#3A3A3A; }
 :root[data-theme="S"] { --ico-fill:url(#ico-deco); --ico-fstroke:#FBEBC0; --ico-fsw:.8; --ico-line:#D9B66B; --ico-cut:#0B0A08; --ico-dim:rgba(217,182,107,.25); }
+/* Keller: Muenzgold mit hartem Schlagschatten nach unten rechts, wie ein
+   Gegenstand, der im Raum auf dem Boden liegt. */
+:root[data-theme="T"] { --ico-fill:#E0B43C; --ico-line:#17110D; --ico-cut:#17110D; --ico-dim:rgba(224,180,60,.28); --ico-filter:drop-shadow(2px 3px 0 rgba(0,0,0,.6)); }
 
 /* Bauhaus und Memphis: reihum mehrere Farben statt einer. */
 :root[data-theme="H"] .show-icon [fill^="url"]:nth-child(3n+1) { fill: #D7372B; }
@@ -8702,6 +8705,207 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme-hell] :is(input, textarea)::placeholder { color: rgba(var(--fg-rgb),.45) !important; }
 /* Zusatzinfo in Listen (".q-meta", z. B. "5 Antworten"): hell 1,5-1,75. */
 :root[data-theme-hell] .q-meta:not(.tour-weight) { color: rgba(var(--fg-rgb),.5); }
+
+/* ══ T · Keller ═══════════════════════════════════════════════════════════
+   Der Keller aus "The Binding of Isaac". Eine einzige Idee traegt die
+   Richtung: alles steht als BLOCK auf dem Boden. Harte Lichtkante oben,
+   harter Schatten unten, kaum Rundung - so sieht in dem Spiel jeder Stein,
+   jede Truhe und jedes Podest aus.
+
+   Was bewusst NICHT vorkommt: Blut als Flaeche. Rot gehoert den Teams
+   (BAUPLAN 4.4); haette der Grund auch Rot, waere der Hinweis "Team Rot ist
+   am Zug" keiner mehr. Der Akzent ist deshalb die Muenze. */
+
+:root[data-theme="T"] {
+  /* DIE Isaac-Eigenschaft: jedes Ding hat eine dicke schwarze Kontur und
+     eine flache Fuellung. Der erste Versuch arbeitete mit weichen Verlaeufen
+     und Lichtkanten - David dazu: "das sieht 0 so aus wie isaac". Er hatte
+     recht, das war ein Dungeon, kein gezeichnetes Spiel. */
+  --stein-auf: 0 0 0 3px #000;
+  --stein-ab: 0 0 0 3px #000, 0 5px 0 rgba(0,0,0,.55);
+
+  /* Brett und Felder. Ohne diese Variablen bleibt das Jeopardy-Brett blau:
+     die Grundregel (.jeopardy-cell) hat ein blaues Fallback eingebaut, und
+     eine Richtung, die sie nicht setzt, erbt es. Beim ersten Bild hier war
+     genau das zu sehen - Isaac-Braun ringsum, mitten drin ein blaues Brett. */
+  --brd-surface: #241B15;
+  --brd-frame: 0 0 0 2px #17110D, 0 0 0 5px #4A3A2C;
+  --brd-well: #1B1410;
+  --brd-inner: transparent;
+  --brd-radius: 4px;
+  /* Flache Fuellung, schwarze Kontur - keine Verlaeufe. */
+  --tile: #6B5A49;
+  --tile-hover: #7E6B57;
+  --tile-edge: 0 0 0 3px #000;
+  --tile-fg: #F5EDE0;
+  --tile-head: #2E251D;
+  --tile-head-fg: #FFD93D;
+  --tile-used: #241D17;
+  --tile-num: #FFD93D;
+  --tile-num-glow: none;
+  --tile-dim-fg: #9C8A75;
+  --tile-bar: #3D3127;
+  --tile-rule: #000;
+  /* Aufgedeckt ist das Feld aufgebrochen: dunkles Loch mit Kontur. */
+  --tile-open: #241D17;
+  --tile-open-edge: 0 0 0 3px #000;
+  --tile-open-fg: #F5EDE0;
+  --tile-open-dim: #B5A28C;
+  --tile-pts-bg: #FFD93D;
+  --tile-pts-rule: #000;
+  --tile-pick: #FFD93D;
+  --tile-pick-fg: #120D09;
+  --tile-right: #7CB342;
+  --tile-right-fg: #120D09;
+  --tile-radius: 3px;
+  --tile-font: 'Zilla Slab', serif;
+}
+/* Nur eine leichte Abdunklung zum Rand. Vorher .62 - damit war der ganze
+   Boden wieder schwarz und die Fliesen verschwanden. */
+:root[data-theme="T"] body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(ellipse 88% 80% at 50% 46%, transparent 62%, rgba(0,0,0,.34) 100%);
+}
+:root[data-theme="T"] .panel,
+:root[data-theme="T"] .menu-card,
+:root[data-theme="T"] .score-card,
+:root[data-theme="T"] .info-card {
+  border-radius: 3px; border-width: 2px;
+  box-shadow: var(--stein-auf), var(--stein-ab);
+}
+:root[data-theme="T"] .menu-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--stein-auf), 0 6px 0 rgba(0,0,0,.5), 0 10px 20px rgba(0,0,0,.4);
+}
+/* Knoepfe sind Bloecke: beim Druecken sinken sie auf den Boden, statt zu
+   verblassen. Der Weg nach unten ist genau so hoch wie der Schatten. */
+:root[data-theme="T"] .btn,
+:root[data-theme="T"] .menu-pill {
+  border-radius: 3px;
+  box-shadow: inset 0 2px 0 rgba(255,236,200,.12), 0 3px 0 rgba(0,0,0,.5);
+  transition: transform .07s ease-out, box-shadow .07s ease-out, filter .1s;
+}
+:root[data-theme="T"] .btn:active,
+:root[data-theme="T"] .menu-pill:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 2px 0 rgba(255,236,200,.08), 0 0 0 rgba(0,0,0,.5);
+}
+:root[data-theme="T"] .btn-primary {
+  background: linear-gradient(180deg, #F0C95A 0%, #E0B43C 46%, #B0872A 100%);
+  color: #17110D; text-shadow: none;
+  box-shadow: inset 0 2px 0 rgba(255,246,222,.5), 0 4px 0 #6E5216;
+}
+:root[data-theme="T"] .btn-primary:active { box-shadow: inset 0 2px 0 rgba(255,246,222,.4), 0 1px 0 #6E5216; }
+/* Schrift bekommt dieselbe Kontur wie alles andere. Das ist der Punkt, an
+   dem es aufhoert, ein Keller zu sein, und anfaengt, gezeichnet auszusehen:
+   im Spiel ist jede Zahl im HUD schwarz umrandet. paint-order sorgt dafuer,
+   dass die Kontur HINTER der Fuellung liegt und die Form nicht auffrisst. */
+:root[data-theme="T"] .screen-title,
+:root[data-theme="T"] .menu-card h3,
+:root[data-theme="T"] .jeopardy-cell,
+:root[data-theme="T"] .jeopardy-cat,
+:root[data-theme="T"] .tile-num,
+:root[data-theme="T"] .tile-pts,
+:root[data-theme="T"] .tile-answer,
+:root[data-theme="T"] .score-val,
+:root[data-theme="T"] .wwm-q,
+:root[data-theme="T"] .q-text,
+:root[data-theme="T"] .round-label,
+:root[data-theme="T"] .logo-wort {
+  -webkit-text-stroke: 3px #000;
+  paint-order: stroke fill;
+  text-shadow: 0 3px 0 rgba(0,0,0,.4);
+  letter-spacing: .5px;
+}
+/* Kleine Schrift vertraegt keine 3px - sonst laufen die Buchstaben zu. */
+:root[data-theme="T"] .jeopardy-cat,
+:root[data-theme="T"] .round-label { -webkit-text-stroke-width: 2px; }
+
+/* Spielflaechen: das Brett ist der Raum, die Felder sind die Steine darin. */
+:root[data-theme="T"] .board,
+:root[data-theme="T"] .jeopardy-board {
+  border-radius: 4px; border: 2px solid #4A3A2C;
+  background: #241B15;
+  box-shadow: inset 0 0 0 2px rgba(0,0,0,.45), inset 0 3px 0 rgba(255,236,200,.08), 0 6px 0 rgba(0,0,0,.45);
+}
+/* Kontur statt Lichtkante. Diese Regel ueberschrieb vorher --tile-edge und
+   nahm den Feldern genau das Merkmal, um das es geht. */
+:root[data-theme="T"] .tile,
+:root[data-theme="T"] .jeopardy-cell {
+  border-radius: 3px;
+  box-shadow: 0 0 0 3px #000, 0 5px 0 rgba(0,0,0,.5);
+}
+:root[data-theme="T"] .tile.open,
+:root[data-theme="T"] .jeopardy-cell.used {
+  box-shadow: 0 0 0 3px #000, inset 0 3px 8px rgba(0,0,0,.7);
+  transform: translateY(2px);
+}
+:root[data-theme="T"] .jeopardy-cell:hover:not(.used) {
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px #000, 0 7px 0 rgba(0,0,0,.5);
+}
+:root[data-theme="T"] .jeopardy-cell { font-family: 'Zilla Slab', serif; font-weight: 700; color: #E0B43C; }
+/* Teamflaechen stehen als Block wie alles andere. Die FARBE bleibt, wie sie
+   ist (BAUPLAN 4.4: Team-Rot und -Blau sind fest) - nur Kante und Schatten
+   kommen dazu. Ohne das lagen zwei glatte Farbflaechen mitten im Stein. */
+/* Flach statt Verlauf - aber die Farbe muss mit. "background-image: none"
+   allein nahm sie weg: Rot und Blau kommen hier als Gradient, darunter liegt
+   nichts. Zwei durchsichtige Leisten waren die Folge, und damit war nicht
+   mehr zu sehen, wer am Zug ist (BAUPLAN 4.4). */
+:root[data-theme="T"] .team-panel,
+:root[data-theme="T"] .jeopardy-team {
+  border-radius: 3px;
+  background-image: none;
+  box-shadow: 0 0 0 3px #000, 0 5px 0 rgba(0,0,0,.5);
+}
+:root[data-theme="T"] .team-panel.red,
+:root[data-theme="T"] .jeopardy-team.red    { background-color: #B9271F; }
+:root[data-theme="T"] .team-panel.blue,
+:root[data-theme="T"] .jeopardy-team.blue   { background-color: #2B5FC4; }
+:root[data-theme="T"] .team-panel.green,
+:root[data-theme="T"] .jeopardy-team.green  { background-color: #3C9440; }
+:root[data-theme="T"] .team-panel .team-name,
+:root[data-theme="T"] .jeopardy-team .jt-name {
+  font-family: 'Fredericka the Great', serif; letter-spacing: 1px;
+}
+:root[data-theme="T"] .jeopardy-cat { font-family: 'Fredericka the Great', serif; letter-spacing: .5px; }
+:root[data-theme="T"] .tile-num { font-family: 'Zilla Slab', serif; font-weight: 700; }
+:root[data-theme="T"] .tile-pts { font-family: 'Zilla Slab', serif; font-weight: 700; color: #E0B43C; }
+/* Die Frage steht auf einer Tafel im Raum, nicht im Nichts. */
+:root[data-theme="T"] .q-text,
+:root[data-theme="T"] .wwm-q,
+:root[data-theme="T"] .jeopardy-clue-text {
+  font-family: 'Zilla Slab', serif; font-weight: 600;
+  text-shadow: 0 2px 0 rgba(0,0,0,.5);
+}
+:root[data-theme="T"] .wwm-opt {
+  border-radius: 3px;
+  box-shadow: inset 0 2px 0 rgba(255,236,200,.1), 0 3px 0 rgba(0,0,0,.5);
+}
+:root[data-theme="T"] .wwm-opt .wwm-letter { color: #E0B43C; font-family: 'Fredericka the Great', serif; }
+/* Der Lichtkegel ueber der offenen Frage - im Spiel liegt jedes Item unter
+   einem. Reines CSS, damit es auf der Leinwand laeuft (BAUPLAN 4.8).
+   Er muss bis UNTER den Text reichen: im ersten Versuch endete er darueber,
+   und die Frage stand im Dunkeln neben einem Dreieck. */
+:root[data-theme="T"] .jeopardy-clue-overlay::before {
+  content: ''; position: absolute; left: 50%; top: -6%; width: 58%; height: 86%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(224,180,60,.2) 0%, rgba(224,180,60,.1) 46%, transparent 92%);
+  clip-path: polygon(34% 0, 66% 0, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+/* Das Podest, auf dem die Frage liegt: eine flache Steinscheibe im Licht. */
+:root[data-theme="T"] .jeopardy-clue-overlay::after {
+  content: ''; position: absolute; left: 50%; top: 72%; width: 38%; height: 14px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse 50% 50% at 50% 40%, rgba(224,180,60,.3), transparent 72%);
+  border-top: 2px solid rgba(224,180,60,.32);
+  border-radius: 50%;
+  pointer-events: none;
+}
+:root[data-theme="T"] .jeopardy-clue-cat,
+:root[data-theme="T"] .jeopardy-clue-pts,
+:root[data-theme="T"] .jeopardy-clue-text { position: relative; z-index: 1; }
 
 /* Reduzierte Bewegung: Signatur-Momente und Dauerlaeufer aus. Steht am Ende
    des Blocks, damit es jede Richtung oben drueber schlaegt. */

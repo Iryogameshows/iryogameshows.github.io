@@ -47,7 +47,7 @@ const ROOT = path.resolve(__dirname, '..', '..');
 // tools/shots vom Upload ausnimmt und die Durchgeh-Seite sie per URL laedt -
 // siehe tools/gemeinsam/LIESMICH.md.
 const STUB = fs.readFileSync(path.join(__dirname, '..', 'gemeinsam', 'fbstub.js'), 'utf8');
-const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S'];
+const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'];
 // Host-Seiten duerfen hoeher sein als das Fenster, sie kommen nicht auf den Beamer.
 const HOST_SEITEN = new Set(['gm', 'gm-menu', 'turnier-host', 'menu', 'setup']);
 // Zustaende, deren Bild aus dem GM-iframe kommt, nicht aus der Seite.

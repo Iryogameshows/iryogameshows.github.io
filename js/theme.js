@@ -523,7 +523,58 @@ const DESIGN_THEMES = [
       "--gold-dark": "#6E5520",
       "--gold-pale": "#F6E2AE",
       "--ink": "#0B0A08"
-    } }
+    } },
+
+  /* T Keller, neu 2026-10-18 fuer Davids Isaac-Gameshow: der Keller aus
+     "The Binding of Isaac". Kein Neon auf Schwarz - der Grund ist warmes
+     Erdbraun, wie Steinboden im Lampenlicht, und die Flaechen sind Bloecke
+     mit hartem Licht oben und Schatten unten. Die Akzentfarbe ist die
+     Muenze (#E0B43C), nicht Blut: Rot gehoert im Spiel dem Schaden und hier
+     den Teams (BAUPLAN 4.4), ein drittes Rot haette beide entwertet.
+     Der Boden mit seinen Fugen steht im Block "T · Keller" in styles.css. */
+  { key: "T", name: "Keller", hell: false,
+    fonts: "https://fonts.googleapis.com/css2?family=Bowlby+One&family=Zilla+Slab:wght@500;700&display=swap",
+    vars: {
+      /* Dick und gerundet, nicht duenn und schraffiert. Erster Versuch war
+         "Fredericka the Great" - Davids Urteil dazu: sieht null nach Isaac
+         aus. Stimmt: das Logo des Spiels ist fett und schwarz umrandet,
+         nicht gekritzelt. Die Kontur macht styles.css (-webkit-text-stroke). */
+      "--font-display": "'Bowlby One', sans-serif",
+      "--font-body": "'Zilla Slab', serif",
+      "--font-logo": "'Bowlby One', sans-serif",
+      /* Der Raum ist BELEUCHTET. Zweiter Fehler des ersten Versuchs: alles
+         fast schwarz. Isaacs Keller ist mittleres Graubraun, die Tiefe
+         kommt aus den schwarzen Konturen, nicht aus Dunkelheit. */
+      "--bg": "#4A3E33",
+      /* Bodenfliesen: dicke schwarze Fuge, darunter eine helle Kante - so
+         sieht eine gelegte Platte mit Outline aus, wie im Spiel gezeichnet. */
+      "--bg-img": "repeating-linear-gradient(0deg, rgba(0,0,0,.55) 0 3px, rgba(255,240,215,.07) 3px 5px, transparent 5px 68px), repeating-linear-gradient(90deg, rgba(0,0,0,.55) 0 3px, rgba(255,240,215,.07) 3px 5px, transparent 5px 68px)",
+      "--bg-size": "auto",
+      "--panel": "#2E251D",
+      "--panel-hi": "#3D3127",
+      /* Die Linie ist echtes Schwarz: in Isaac hat jedes Ding eine Kontur. */
+      "--line": "#000000",
+      "--fg": "#F5EDE0",
+      "--fg-rgb": "245,237,224",
+      "--fg-strong": "#FFFFFF",
+      "--muted": "#B5A28C",
+      "--pill-fg": "#E6D6BC",
+      "--accent-line": "#FFD93D",
+      "--gold-rgb": "255,217,61",
+      "--gold-deep": "#D9A818",
+      "--gold-dark": "#000000",
+      "--gold-pale": "#FFF0A8",
+      "--ink": "#120D09"
+    },
+    /* GM-Fenster und Gamepad: Steinbloecke statt Karten - kaum Rundung,
+       zwei Pixel Rahmen, der Schatten sitzt hart unten wie bei einem Block,
+       der auf dem Boden steht. */
+    gm: ".panel,.score-card,.answer,.info-card,.gm-btn,.chip,.badge,.tag,.pr-team-btn,.order-item,.buzz-row{border-radius:3px;}"
+      + ".panel,.score-card,.answer,.info-card{border-width:2px;box-shadow:0 3px 0 rgba(0,0,0,.45);}"
+      + ".gm-title{font-family:'Fredericka the Great',serif;letter-spacing:1px;}"
+      + ".score-val,.sr-val{font-family:'Zilla Slab',serif;font-weight:700;}"
+      + ".gm-btn.gold,.gm-btn.gm-gold{background:#E0B43C;color:#17110D;box-shadow:0 3px 0 #6E5216;}"
+      + ".score-card.active{border-color:#E0B43C;}" }
 ];
 
 /* ── Logo je Richtung ─────────────────────────────────────────────────────
