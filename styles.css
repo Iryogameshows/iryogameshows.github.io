@@ -8707,70 +8707,115 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme-hell] .q-meta:not(.tour-weight) { color: rgba(var(--fg-rgb),.5); }
 
 /* ══ T · Keller ═══════════════════════════════════════════════════════════
-   Der Keller aus "The Binding of Isaac". Eine einzige Idee traegt die
-   Richtung: alles steht als BLOCK auf dem Boden. Harte Lichtkante oben,
-   harter Schatten unten, kaum Rundung - so sieht in dem Spiel jeder Stein,
-   jede Truhe und jedes Podest aus.
+   "The Binding of Isaac", mit den Bildern AUS dem Spiel statt mit
+   nachgebauten Flaechen. Zwei Versuche davor waren reines CSS - Verlaeufe,
+   Kanten, gezeichnete SVG-Sprites - und Davids Urteil beide Male: "das
+   sieht 0 so aus wie The Binding of Isaac." Der Grund ist einfach: ein
+   gezeichnetes Spiel besteht aus gemalten Pixeln, und die kann man nicht
+   aus Farbwerten zusammenrechnen.
 
-   Was bewusst NICHT vorkommt: Blut als Flaeche. Rot gehoert den Teams
-   (BAUPLAN 4.4); haette der Grund auch Rot, waere der Hinweis "Team Rot ist
-   am Zug" keiner mehr. Der Akzent ist deshalb die Muenze. */
+   Die Richtung in einem Satz: die Show spielt IN einem Raum. Unten liegt
+   sein Boden, ringsum steht die gemauerte Wand, und jedes Ding darin -
+   Block, Herz, Muenze - hat die schwarze Kontur, die im Spiel alles hat.
+
+   Die Dateien liegen in assets/t/eigene/ und stehen in .gitignore; warum,
+   steht ausfuehrlich in js/theme.js beim Eintrag "T". Fehlt der Ordner
+   (auf GitHub Pages), bleiben Farbe und Kontur stehen - die Seite wird
+   nicht kaputt, nur nuechtern. Jede Regel hier ist deshalb so gebaut,
+   dass ein fehlendes Bild nichts mitreisst. */
 
 :root[data-theme="T"] {
-  /* DIE Isaac-Eigenschaft: jedes Ding hat eine dicke schwarze Kontur und
-     eine flache Fuellung. Der erste Versuch arbeitete mit weichen Verlaeufen
-     und Lichtkanten - David dazu: "das sieht 0 so aus wie isaac". Er hatte
-     recht, das war ein Dungeon, kein gezeichnetes Spiel. */
+  /* DIE Isaac-Eigenschaft: dicke schwarze Kontur, flache Fuellung. */
   --stein-auf: 0 0 0 3px #000;
   --stein-ab: 0 0 0 3px #000, 0 5px 0 rgba(0,0,0,.55);
+  /* Wandstein als Flaeche, abgedunkelt, damit Text darauf ruhig steht.
+     Ohne die Abdunklung flimmert jede Zeile ueber den Fugen. */
+  --wand: linear-gradient(rgba(0,0,0,.46), rgba(0,0,0,.46)), url('assets/t/eigene/wand.png');
+  --wand-size: 128px 128px;
 
   /* Brett und Felder. Ohne diese Variablen bleibt das Jeopardy-Brett blau:
      die Grundregel (.jeopardy-cell) hat ein blaues Fallback eingebaut, und
-     eine Richtung, die sie nicht setzt, erbt es. Beim ersten Bild hier war
-     genau das zu sehen - Isaac-Braun ringsum, mitten drin ein blaues Brett. */
-  --brd-surface: #241B15;
-  --brd-frame: 0 0 0 2px #17110D, 0 0 0 5px #4A3A2C;
-  --brd-well: #1B1410;
+     eine Richtung, die sie nicht setzt, erbt es. */
+  --brd-surface: #3A2219;
+  --brd-frame: 0 0 0 3px #000, 0 0 0 6px #5B392C;
+  --brd-well: #2B1A15;
   --brd-inner: transparent;
-  --brd-radius: 4px;
-  /* Flache Fuellung, schwarze Kontur - keine Verlaeufe. */
-  --tile: #6B5A49;
-  --tile-hover: #7E6B57;
+  --brd-radius: 3px;
+  --tile: #704536;
+  --tile-hover: #835140;
   --tile-edge: 0 0 0 3px #000;
   --tile-fg: #F5EDE0;
-  --tile-head: #2E251D;
-  --tile-head-fg: #FFD93D;
-  --tile-used: #241D17;
-  --tile-num: #FFD93D;
+  --tile-head: #3A2219;
+  --tile-head-fg: #C68F3C;
+  --tile-used: #2B1A15;
+  --tile-num: #C68F3C;
   --tile-num-glow: none;
-  --tile-dim-fg: #9C8A75;
-  --tile-bar: #3D3127;
+  --tile-dim-fg: #A68A74;
+  --tile-bar: #492D24;
   --tile-rule: #000;
   /* Aufgedeckt ist das Feld aufgebrochen: dunkles Loch mit Kontur. */
-  --tile-open: #241D17;
+  --tile-open: #2B1A15;
   --tile-open-edge: 0 0 0 3px #000;
   --tile-open-fg: #F5EDE0;
-  --tile-open-dim: #B5A28C;
-  --tile-pts-bg: #FFD93D;
+  --tile-open-dim: #C0A48F;
+  --tile-pts-bg: #C68F3C;
   --tile-pts-rule: #000;
-  --tile-pick: #FFD93D;
-  --tile-pick-fg: #120D09;
-  --tile-right: #7CB342;
-  --tile-right-fg: #120D09;
+  --tile-pick: #C68F3C;
+  --tile-pick-fg: #080000;
+  --tile-right: #6FA82E;
+  --tile-right-fg: #080000;
   --tile-radius: 3px;
   --tile-font: 'Zilla Slab', serif;
 }
-/* Nur eine leichte Abdunklung zum Rand. Vorher .62 - damit war der ganze
-   Boden wieder schwarz und die Fliesen verschwanden. */
+
+/* Pixel bleiben Pixel. Ohne das rechnet der Browser die Vorlagen weich und
+   aus dem gezeichneten Spiel wird ein verwaschenes Foto - der sichtbarste
+   Einzelfehler, den man mit echten Sprites machen kann. */
+:root[data-theme="T"] body,
+:root[data-theme="T"] body::before,
+:root[data-theme="T"] .panel,
+:root[data-theme="T"] .menu-card,
+:root[data-theme="T"] .score-card,
+:root[data-theme="T"] .info-card,
+:root[data-theme="T"] .strike-pip,
+:root[data-theme="T"] .board,
+:root[data-theme="T"] .jeopardy-board { image-rendering: pixelated; }
+
+/* ── Der Raum ─────────────────────────────────────────────────────────────
+   Die gemauerte Wand steht als border-image rund um das Fenster: ein Bild
+   mit neun Feldern (assets/t/eigene/rahmen.png, aus dem Backdrop des
+   Spiels geschnitten und gespiegelt), 42 px je Feld, doppelt gezeigt.
+
+   z-index: -1 ist Absicht. Der Rahmen gehoert HINTER den Inhalt, sonst
+   liegt er ueber den Knoepfen am Rand; ein fixiertes Element mit z-index 0
+   wuerde nach dem Inhalt gemalt. Mit -1 liegt er zwischen Bodenkachel und
+   Seite - genau da, wo eine Wand hingehoert. */
+:root[data-theme="T"] body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  border: 64px solid transparent;
+  border-image-source: url('assets/t/eigene/rahmen.png');
+  border-image-slice: 42;
+  /* round, nicht repeat: die Kantenstuecke werden so gestaucht, dass sie
+     ganzzahlig aufgehen. Mit repeat endete die Wand mitten im Stein. */
+  border-image-repeat: round;
+}
+/* Leichte Abdunklung zum Rand, wie das Licht im Spiel. Nicht mehr: bei .62
+   war der ganze Boden schwarz und die Textur verschwand. */
 :root[data-theme="T"] body::after {
   content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background: radial-gradient(ellipse 88% 80% at 50% 46%, transparent 62%, rgba(0,0,0,.34) 100%);
+  background: radial-gradient(ellipse 88% 80% at 50% 46%, transparent 58%, rgba(0,0,0,.42) 100%);
 }
+
+/* ── Flaechen sind Wandstein ──────────────────────────────────────────────
+   Vorher waren es Farbfelder mit Kontur. Der Unterschied zum Spiel lag
+   genau hier: dort ist nichts einfarbig, jede Flaeche hat Steinstruktur. */
 :root[data-theme="T"] .panel,
 :root[data-theme="T"] .menu-card,
 :root[data-theme="T"] .score-card,
 :root[data-theme="T"] .info-card {
   border-radius: 3px; border-width: 2px;
+  background-image: var(--wand);
+  background-size: var(--wand-size);
   box-shadow: var(--stein-auf), var(--stein-ab);
 }
 :root[data-theme="T"] .menu-card:hover {
@@ -8790,16 +8835,18 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   transform: translateY(3px);
   box-shadow: inset 0 2px 0 rgba(255,236,200,.08), 0 0 0 rgba(0,0,0,.5);
 }
+/* Der Hauptknopf ist eine Muenze: die drei Goldtoene sind aus dem Sprite
+   gemessen (#C68F3C hell, #9E712E mitte, #775422 Schatten). */
 :root[data-theme="T"] .btn-primary {
-  background: linear-gradient(180deg, #F0C95A 0%, #E0B43C 46%, #B0872A 100%);
-  color: #17110D; text-shadow: none;
-  box-shadow: inset 0 2px 0 rgba(255,246,222,.5), 0 4px 0 #6E5216;
+  background: linear-gradient(180deg, #E8C77A 0%, #C68F3C 44%, #9E712E 100%);
+  color: #080000; text-shadow: none;
+  box-shadow: inset 0 2px 0 rgba(255,246,222,.5), 0 4px 0 #775422;
 }
-:root[data-theme="T"] .btn-primary:active { box-shadow: inset 0 2px 0 rgba(255,246,222,.4), 0 1px 0 #6E5216; }
-/* Schrift bekommt dieselbe Kontur wie alles andere. Das ist der Punkt, an
-   dem es aufhoert, ein Keller zu sein, und anfaengt, gezeichnet auszusehen:
-   im Spiel ist jede Zahl im HUD schwarz umrandet. paint-order sorgt dafuer,
-   dass die Kontur HINTER der Fuellung liegt und die Form nicht auffrisst. */
+:root[data-theme="T"] .btn-primary:active { box-shadow: inset 0 2px 0 rgba(255,246,222,.4), 0 1px 0 #775422; }
+
+/* Schrift bekommt dieselbe Kontur wie alles andere - im Spiel ist jede
+   Zahl im HUD schwarz umrandet. paint-order legt die Kontur HINTER die
+   Fuellung, sonst frisst sie die Form auf. */
 :root[data-theme="T"] .screen-title,
 :root[data-theme="T"] .menu-card h3,
 :root[data-theme="T"] .jeopardy-cell,
@@ -8810,7 +8857,6 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="T"] .score-val,
 :root[data-theme="T"] .wwm-q,
 :root[data-theme="T"] .q-text,
-:root[data-theme="T"] .round-label,
 :root[data-theme="T"] .logo-wort {
   -webkit-text-stroke: 3px #000;
   paint-order: stroke fill;
@@ -8818,51 +8864,41 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   letter-spacing: .5px;
 }
 /* Kleine Schrift vertraegt keine 3px - sonst laufen die Buchstaben zu. */
-:root[data-theme="T"] .jeopardy-cat,
-:root[data-theme="T"] .round-label { -webkit-text-stroke-width: 2px; }
+:root[data-theme="T"] .jeopardy-cat { -webkit-text-stroke-width: 2px; }
 
 /* ── Herzen statt Kreuze ──────────────────────────────────────────────────
-   In Isaac HAT man Herzen und verliert sie. Deshalb ist die Logik hier
-   umgedreht: drei volle Herzen stehen da, und jeder Strike nimmt eins weg.
-   Das ist nicht nur Schmuck - es liest sich schneller als drei Kreuze, von
-   denen manche "an" sind, weil man das Bild aus dem Spiel schon kennt.
+   In Isaac HAT man Herzen und verliert sie. Die Logik ist deshalb
+   umgedreht: drei volle Herzen stehen da, jeder Strike nimmt eins weg.
+   Das liest sich schneller als drei Kreuze, von denen manche "an" sind.
 
-   Die Sprites liegen in assets/t/ und sind gezeichnet, nicht entnommen
-   (tools/sprites/bau.js). Wer die echten einlegen will: assets/t/LIESMICH.md. */
+   Die Sprites sind jetzt die echten aus ui_hearts.png (16x16-Raster:
+   voll bei 0,0 - leer bei 32,0), zugeschnitten nach assets/t/eigene/icon/.
+   Fehlt der Ordner, nimmt der Browser das gezeichnete SVG dahinter: in
+   einer background-image-Liste gilt die erste Quelle, die laedt. */
 :root[data-theme="T"] .strike-pip {
-  width: 34px; height: 34px;
-  border: 0; border-radius: 0; background: none;
+  width: 36px; height: 34px;
+  border: 0; border-radius: 0; background-color: transparent;
   color: transparent; font-size: 0;
-  /* Zuerst die eigene Datei, dann die gezeichnete. Ein Browser nimmt in
-     einer background-image-Liste die ERSTE, die er laden kann - fehlt
-     assets/t/eigene/, faellt er still auf das SVG zurueck. So sieht es am
-     Showrechner echt aus, ohne dass im oeffentlichen Repo etwas liegt. */
-  background-image: url('assets/t/eigene/herz.png'), url('assets/t/herz.svg');
+  background-image: url('assets/t/eigene/icon/herz.png'), url('assets/t/herz.svg');
   background-size: contain; background-repeat: no-repeat; background-position: center;
-  image-rendering: pixelated;
   filter: drop-shadow(0 2px 0 rgba(0,0,0,.45));
   transition: transform .12s ease-out;
 }
 :root[data-theme="T"] .strike-pip.lit {
-  background-image: url('assets/t/eigene/herz-leer.png'), url('assets/t/herz-leer.svg');
+  background-image: url('assets/t/eigene/icon/herz-leer.png'), url('assets/t/herz-leer.svg');
   border: 0; background-color: transparent; color: transparent;
-  transform: scale(.88);
-}
-/* Punkte sind Muenzen: das Zeichen steht vor der Zahl, nicht statt ihrer. */
-:root[data-theme="T"] .round-label::before {
-  content: ''; display: inline-block; vertical-align: -3px;
-  width: 18px; height: 17px; margin-right: 7px;
-  background-image: url('assets/t/eigene/muenze.png'), url('assets/t/muenze.svg');
-  background-size: contain; background-repeat: no-repeat; background-position: center;
-  image-rendering: pixelated;
+  transform: scale(.9);
 }
 
-/* Spielflaechen: das Brett ist der Raum, die Felder sind die Steine darin. */
+/* ── Spielflaechen ────────────────────────────────────────────────────────
+   Das Brett ist der Raum, die Felder sind die Steine darin. */
 :root[data-theme="T"] .board,
 :root[data-theme="T"] .jeopardy-board {
-  border-radius: 4px; border: 2px solid #4A3A2C;
-  background: #241B15;
-  box-shadow: inset 0 0 0 2px rgba(0,0,0,.45), inset 0 3px 0 rgba(255,236,200,.08), 0 6px 0 rgba(0,0,0,.45);
+  border-radius: 3px; border: 3px solid #000;
+  background-color: #3A2219;
+  background-image: var(--wand);
+  background-size: var(--wand-size);
+  box-shadow: 0 0 0 3px #5B392C, 0 6px 0 rgba(0,0,0,.45);
 }
 /* Kontur statt Lichtkante. Diese Regel ueberschrieb vorher --tile-edge und
    nahm den Feldern genau das Merkmal, um das es geht. */
@@ -8880,33 +8916,60 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   transform: translateY(-2px);
   box-shadow: 0 0 0 3px #000, 0 7px 0 rgba(0,0,0,.5);
 }
-:root[data-theme="T"] .jeopardy-cell { font-family: 'Zilla Slab', serif; font-weight: 700; color: #E0B43C; }
+:root[data-theme="T"] .jeopardy-cell { font-family: 'Zilla Slab', serif; font-weight: 700; color: #C68F3C; }
+
 /* Teamflaechen stehen als Block wie alles andere. Die FARBE bleibt, wie sie
    ist (BAUPLAN 4.4: Team-Rot und -Blau sind fest) - nur Kante und Schatten
-   kommen dazu. Ohne das lagen zwei glatte Farbflaechen mitten im Stein. */
-/* Flach statt Verlauf - aber die Farbe muss mit. "background-image: none"
-   allein nahm sie weg: Rot und Blau kommen hier als Gradient, darunter liegt
-   nichts. Zwei durchsichtige Leisten waren die Folge, und damit war nicht
-   mehr zu sehen, wer am Zug ist (BAUPLAN 4.4). */
-:root[data-theme="T"] .team-panel,
-:root[data-theme="T"] .jeopardy-team {
-  border-radius: 3px;
-  background-image: none;
+   kommen dazu. "background-image: none" allein nahm sie weg: Rot und Blau
+   kommen als Gradient, darunter liegt nichts; zwei durchsichtige Leisten
+   waren die Folge, und damit war nicht mehr zu sehen, wer am Zug ist. */
+/* Die Form der Punktetafel entsteht nicht an ".team-panel" - das Element
+   hat weder Rundung noch Schatten. Beides sitzt an ".scoreboard"
+   (border-radius: 14px, overflow: hidden), und solange das steht, bleiben
+   die Teams rund, egal was hier an den Kindern gesetzt wird. Die schwarze
+   Fuge zwischen den Teams ist die Luecke (gap) auf schwarzem Grund. */
+:root[data-theme="T"] .scoreboard {
+  border-radius: 3px; gap: 3px; background: #000;
   box-shadow: 0 0 0 3px #000, 0 5px 0 rgba(0,0,0,.5);
 }
+:root[data-theme="T"] .team-panel,
+:root[data-theme="T"] .jeopardy-team {
+  border-radius: 0;
+  background-image: none;
+}
+:root[data-theme="T"] .jeopardy-team { box-shadow: 0 0 0 3px #000, 0 5px 0 rgba(0,0,0,.5); }
 :root[data-theme="T"] .team-panel.red,
 :root[data-theme="T"] .jeopardy-team.red    { background-color: #B9271F; }
 :root[data-theme="T"] .team-panel.blue,
 :root[data-theme="T"] .jeopardy-team.blue   { background-color: #2B5FC4; }
 :root[data-theme="T"] .team-panel.green,
 :root[data-theme="T"] .jeopardy-team.green  { background-color: #3C9440; }
-:root[data-theme="T"] .team-panel .team-name,
+/* ".team-name" gibt es im Markup nicht - der Name steht in ".t-name"
+   (js/feud.js, buildScoreboard). Die Regel lief vorher ins Leere. */
+:root[data-theme="T"] .team-panel .t-name,
 :root[data-theme="T"] .jeopardy-team .jt-name {
-  font-family: 'Fredericka the Great', serif; letter-spacing: 1px;
+  font-family: 'Bowlby One', sans-serif; letter-spacing: 1px;
 }
-:root[data-theme="T"] .jeopardy-cat { font-family: 'Fredericka the Great', serif; letter-spacing: .5px; }
+:root[data-theme="T"] .jeopardy-cat { font-family: 'Bowlby One', sans-serif; letter-spacing: .5px; }
 :root[data-theme="T"] .tile-num { font-family: 'Zilla Slab', serif; font-weight: 700; }
-:root[data-theme="T"] .tile-pts { font-family: 'Zilla Slab', serif; font-weight: 700; color: #E0B43C; }
+:root[data-theme="T"] .tile-pts { font-family: 'Zilla Slab', serif; font-weight: 700; color: #C68F3C; }
+
+/* Punktzahlen bekommen die Muenze davor - im Spiel steht sie genauso im
+   HUD vor der Zahl. Bewusst ::before am Wert und nicht an ".round-label":
+   die Klasse gehoert zum GM-Fenster (GM_SHARED_CSS in js/core.js), dorthin
+   reicht styles.css gar nicht. Genau daran scheiterte der Versuch davor. */
+:root[data-theme="T"] .t-score::before,
+:root[data-theme="T"] .score-val::before,
+:root[data-theme="T"] .jt-score::before {
+  /* Das Sprite ist 18x13; hier anderthalbfach, damit die Muenze neben einer
+     3,2-rem-Zahl nicht zum Krümel wird. Seitenverhaeltnis bleibt. */
+  content: ''; display: inline-block; vertical-align: .08em;
+  width: 27px; height: 20px; margin-right: 10px;
+  background-image: url('assets/t/eigene/icon/muenze.png'), url('assets/t/muenze.svg');
+  background-size: contain; background-repeat: no-repeat; background-position: center;
+  image-rendering: pixelated;
+}
+
 /* Die Frage steht auf einer Tafel im Raum, nicht im Nichts. */
 :root[data-theme="T"] .q-text,
 :root[data-theme="T"] .wwm-q,
@@ -8918,15 +8981,15 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   border-radius: 3px;
   box-shadow: inset 0 2px 0 rgba(255,236,200,.1), 0 3px 0 rgba(0,0,0,.5);
 }
-:root[data-theme="T"] .wwm-opt .wwm-letter { color: #E0B43C; font-family: 'Fredericka the Great', serif; }
+:root[data-theme="T"] .wwm-opt .wwm-letter { color: #C68F3C; font-family: 'Bowlby One', sans-serif; }
 /* Der Lichtkegel ueber der offenen Frage - im Spiel liegt jedes Item unter
-   einem. Reines CSS, damit es auf der Leinwand laeuft (BAUPLAN 4.8).
-   Er muss bis UNTER den Text reichen: im ersten Versuch endete er darueber,
+   einem. Reines CSS, damit es auf der Leinwand laeuft (BAUPLAN 4.8). Er
+   muss bis UNTER den Text reichen: im ersten Versuch endete er darueber,
    und die Frage stand im Dunkeln neben einem Dreieck. */
 :root[data-theme="T"] .jeopardy-clue-overlay::before {
   content: ''; position: absolute; left: 50%; top: -6%; width: 58%; height: 86%;
   transform: translateX(-50%);
-  background: linear-gradient(180deg, rgba(224,180,60,.2) 0%, rgba(224,180,60,.1) 46%, transparent 92%);
+  background: linear-gradient(180deg, rgba(198,143,60,.2) 0%, rgba(198,143,60,.1) 46%, transparent 92%);
   clip-path: polygon(34% 0, 66% 0, 100% 100%, 0 100%);
   pointer-events: none;
 }
@@ -8934,15 +8997,14 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="T"] .jeopardy-clue-overlay::after {
   content: ''; position: absolute; left: 50%; top: 72%; width: 38%; height: 14px;
   transform: translateX(-50%);
-  background: radial-gradient(ellipse 50% 50% at 50% 40%, rgba(224,180,60,.3), transparent 72%);
-  border-top: 2px solid rgba(224,180,60,.32);
+  background: radial-gradient(ellipse 50% 50% at 50% 40%, rgba(198,143,60,.3), transparent 72%);
+  border-top: 2px solid rgba(198,143,60,.32);
   border-radius: 50%;
   pointer-events: none;
 }
 :root[data-theme="T"] .jeopardy-clue-cat,
 :root[data-theme="T"] .jeopardy-clue-pts,
 :root[data-theme="T"] .jeopardy-clue-text { position: relative; z-index: 1; }
-
 /* Reduzierte Bewegung: Signatur-Momente und Dauerlaeufer aus. Steht am Ende
    des Blocks, damit es jede Richtung oben drueber schlaegt. */
 @media (prefers-reduced-motion: reduce) {
