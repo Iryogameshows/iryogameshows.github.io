@@ -12,6 +12,59 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-18 — `99827dc` Richtung T: **Pixel-Sprites**, Strikes werden Herzen
+
+**Davids Urteil zum zweiten Mal:** „das sieht 0 so aus wie The Binding of isaac." Dazu:
+*„bedien dich auch den den assets vom Game, ich benutz das ja nur für mich."*
+
+**Warum es beim zweiten Mal nicht reichte.** Farben und Konturen stimmten inzwischen — aber
+es fehlten **Sprites**. Isaac ist Pixelgrafik: dunkle Kontur, wenige Farben, ein Glanzpunkt
+oben links. Meine Flächen waren glatte CSS-Formen. Zur Prüfung habe ich echte Sprites auf dem
+Rechner **angesehen** (Mod-Grafiken im Spielordner unter `D:\SteamLibrary\…\mods`, nur
+gelesen) — vorher hatte ich aus dem Gedächtnis gearbeitet, und genau das ging zweimal daneben.
+
+**Gebaut:**
+
+- **`tools/sprites/bau.js`** — baut SVG-Sprites aus **lesbaren Pixelmatrizen**. Wer eine Form
+  ändert, ändert ein Zeichen in der Matrix statt in 200 `<rect>`. Gleiche Farben in einer Zeile
+  werden zu einem Rechteck zusammengefasst: ein Herz sind 30 statt 170 Rechtecke.
+- **`assets/t/`** — `herz`, `herz-leer`, `muenze`, `bombe`. Gezeichnet, nicht entnommen.
+- **Strikes sind Herzen**, und die Logik ist **umgedreht**: drei volle Herzen stehen da, jeder
+  Strike nimmt eins weg. So ist es im Spiel, und es liest sich schneller als drei Kreuze, von
+  denen manche „an" sind.
+
+**Zur Asset-Frage — warum nicht einfach die echten.** Das Repo ist **öffentlich**, und
+`pages.yml` lädt mit `path: '.'` das ganze Verzeichnis hoch. Eingecheckte Spielgrafiken wären
+damit veröffentlicht, egal wofür sie gedacht waren. Gelöst ohne Davids Wunsch abzulehnen:
+
+- **`assets/t/eigene/` steht in `.gitignore`** — dort können die echten liegen, ohne je mit
+  einem Push rauszugehen.
+- Jede Regel listet **zuerst die eigene Datei, dann das gezeichnete SVG**. Ein fehlendes
+  Hintergrundbild wird übersprungen, das darunter bleibt sichtbar — am Showrechner echt, auf
+  Pages der Rückfall. Kein JavaScript, keine Fallunterscheidung.
+- `assets/t/LIESMICH.md` erklärt es samt Dateinamen und sagt, wo die gepackten Originale
+  liegen (`resources/packed/graphics.a`).
+
+**Zum Extrahieren selbst:** Der Spielordner hat **keinen** Resource-Extractor (`tools/` enthält
+nur Animations- und ItemPool-Editor plus LuaDocs). Das `.a`-Format ist lesbar — Header
+`ARCH000`, Tabellenoffset, 2300 Einträge à 20 Byte —, aber die Tabelle enthält **nur Hashes,
+keine Dateinamen**, und die Daten sind komprimiert. Ein eigener Extractor liefert ohne
+Namensliste unbenannte Blobs; deshalb nicht weiterverfolgt.
+
+**Zwei eigene Fehler beim Zeichnen**, im Bild gesehen und behoben: das leere Herz war eine
+**gepunktete Linie** (ein Regex über die volle Matrix hatte auch die Kontur durchlöchert), die
+Münze unten ein **Sechseck** statt rund.
+
+**Geprüft:** `check.js` sauber, `shots.js --themes T` über `feud` und `jeop` ohne Befunde,
+Sprites einzeln in einer Vorschauseite angesehen (Datei danach aus dem Repo-Wurzelverzeichnis
+**entfernt** — sie hätte als Punktdatei mitgedeployt, `include-hidden-files: true`), Feud-Bild
+nach dem Einbau angesehen: drei Herzen je Team.
+
+**Offen:** Die Münze vor „Punkte" ist im Bild **nicht zu sehen** — `.round-label::before`
+greift offenbar nicht, die Zeile ist vermutlich ein anderes Element. Nicht nachgegangen.
+Das Intro fehlt weiter. Und ob die Richtung jetzt trifft, steht noch aus — der Stand ist David
+geschickt.
+
 ## 2026-10-18 — `9b56f6f` Neue Richtung **T „Keller"** (The Binding of Isaac), erster Stand
 
 **Anlass:** David macht eine Isaac-Gameshow und will eine eigene Richtung dafür, dazu ein
