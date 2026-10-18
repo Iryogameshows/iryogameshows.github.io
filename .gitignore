@@ -12,3 +12,8 @@ tools/shots/out/
 graphify-out/*
 !graphify-out/cache/
 !graphify-out/manifest.json
+
+# Eigene Isaac-Sprites: bleiben lokal. Das Repo ist oeffentlich (Pages laedt
+# das ganze Verzeichnis hoch) - Spielgrafiken gehoeren nicht hinein.
+# styles.css nimmt sie vorrangig, wenn sie da sind. Siehe assets/t/LIESMICH.md.
+assets/t/eigene/

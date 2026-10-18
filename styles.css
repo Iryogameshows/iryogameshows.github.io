@@ -8821,6 +8821,42 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="T"] .jeopardy-cat,
 :root[data-theme="T"] .round-label { -webkit-text-stroke-width: 2px; }
 
+/* ── Herzen statt Kreuze ──────────────────────────────────────────────────
+   In Isaac HAT man Herzen und verliert sie. Deshalb ist die Logik hier
+   umgedreht: drei volle Herzen stehen da, und jeder Strike nimmt eins weg.
+   Das ist nicht nur Schmuck - es liest sich schneller als drei Kreuze, von
+   denen manche "an" sind, weil man das Bild aus dem Spiel schon kennt.
+
+   Die Sprites liegen in assets/t/ und sind gezeichnet, nicht entnommen
+   (tools/sprites/bau.js). Wer die echten einlegen will: assets/t/LIESMICH.md. */
+:root[data-theme="T"] .strike-pip {
+  width: 34px; height: 34px;
+  border: 0; border-radius: 0; background: none;
+  color: transparent; font-size: 0;
+  /* Zuerst die eigene Datei, dann die gezeichnete. Ein Browser nimmt in
+     einer background-image-Liste die ERSTE, die er laden kann - fehlt
+     assets/t/eigene/, faellt er still auf das SVG zurueck. So sieht es am
+     Showrechner echt aus, ohne dass im oeffentlichen Repo etwas liegt. */
+  background-image: url('assets/t/eigene/herz.png'), url('assets/t/herz.svg');
+  background-size: contain; background-repeat: no-repeat; background-position: center;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.45));
+  transition: transform .12s ease-out;
+}
+:root[data-theme="T"] .strike-pip.lit {
+  background-image: url('assets/t/eigene/herz-leer.png'), url('assets/t/herz-leer.svg');
+  border: 0; background-color: transparent; color: transparent;
+  transform: scale(.88);
+}
+/* Punkte sind Muenzen: das Zeichen steht vor der Zahl, nicht statt ihrer. */
+:root[data-theme="T"] .round-label::before {
+  content: ''; display: inline-block; vertical-align: -3px;
+  width: 18px; height: 17px; margin-right: 7px;
+  background-image: url('assets/t/eigene/muenze.png'), url('assets/t/muenze.svg');
+  background-size: contain; background-repeat: no-repeat; background-position: center;
+  image-rendering: pixelated;
+}
+
 /* Spielflaechen: das Brett ist der Raum, die Felder sind die Steine darin. */
 :root[data-theme="T"] .board,
 :root[data-theme="T"] .jeopardy-board {
