@@ -12,6 +12,55 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-18 — `9b56f6f` Neue Richtung **T „Keller"** (The Binding of Isaac), erster Stand
+
+**Anlass:** David macht eine Isaac-Gameshow und will eine eigene Richtung dafür, dazu ein
+eigenes Intro. Das Intro steht noch aus.
+
+**Angemeldet** (die Stellen, die eine neue Richtung braucht): `js/theme.js` (DESIGN_THEMES),
+`styles.css` zweimal — Icon-Variablen (~Z. 3831) und ein eigener Material-Block —,
+`buzzer/index.html`, `ALLE_RICHTUNGEN` in `shots.js`, `RICHTUNGEN` in der Durchgeh-Seite.
+`gamepad/index.html` hat keine Regeln je Richtung, dort war nichts zu tun.
+
+**Der erste Entwurf war falsch und ist verworfen.** Er hatte weiche Verläufe, Lichtkanten,
+die dünne Kritzelschrift „Fredericka the Great" und einen fast schwarzen Grund (`#241B14`,
+Vignette `.62`). Davids Urteil wörtlich: **„das sieht 0 so aus wie isaac"**. Das stimmte — es
+war ein generischer Dungeon. Was dem Spiel sein Aussehen gibt und komplett fehlte:
+
+- **Dicke schwarze Konturen auf allem**, Flächen wie Schrift. Das ist das Kernmerkmal, nicht
+  die Farbe: `box-shadow: 0 0 0 3px #000` und `-webkit-text-stroke: 3px #000` mit
+  `paint-order: stroke fill`, damit die Kontur hinter der Füllung liegt.
+- **Flache Füllungen** statt Verläufe.
+- **Ein beleuchteter Raum.** `--bg` auf `#4A3E33`, Vignette auf `.34`. Vorher verschwanden die
+  Bodenfliesen im Schwarz — die Tiefe kommt in Isaac aus den Konturen, nicht aus Dunkelheit.
+- **Fette Schrift**: Bowlby One. Das Logo des Spiels ist fett und umrandet, nicht gekritzelt.
+- Münzgelb `#FFD93D` als Akzent, Punktekästen gelb mit Kontur.
+
+**Zwei eigene Fehler, beim Ansehen der Bilder gefunden:**
+
+- **Das Jeopardy-Brett blieb blau**, mitten im braunen Rest. Die Grundregel `.jeopardy-cell`
+  hat ein blaues Fallback eingebaut (`var(--tile, linear-gradient(…#1a2a8a…))`); eine Richtung,
+  die `--tile` und die `--brd-*` nicht setzt, erbt es. **Für die nächste neue Richtung: diesen
+  Variablensatz nicht vergessen**, sonst sieht man es erst im Bild.
+- `background-image: none` an den Teamleisten **nahm ihnen die Farbe**: Rot und Blau kommen
+  dort als Gradient, darunter liegt nichts. Zwei durchsichtige Leisten, und damit war nicht
+  mehr zu sehen, wer am Zug ist. Jetzt flache Teamfarben, BAUPLAN 4.4 bleibt gewahrt.
+
+**Geprüft:** `node check.js` sauber (4517 Klammernpaare). `shots.js --themes T` über `menu`,
+`feud`, `jeop`, `jeop-frage`, `wwm`, `buzzer` — keine Befunde, **jedes Bild angesehen**.
+Danach `shots.js --shows jeop` über **alle 20 Richtungen** → keine Befunde, die neue Richtung
+bricht also keine andere.
+
+**Ungeprüft:** der Handy-Buzzer in T nur als Screenshot, nicht auf einem Gerät. Die
+Sonderfälle je Show (DDF, PIH, TP, WWDS, Turnier, Ergebnis) sind in T noch nicht einzeln
+angesehen — der Material-Block deckt bisher die gemeinsamen Flächen, Feud, Jeopardy und WWM ab.
+
+**Offen:** das **Intro** (noch nicht gebaut — es soll auf dieser Richtung aufbauen, deshalb
+erst Davids Urteil zur Richtung abwarten). Idee, die im Raum stand: Falltür öffnet sich von
+oben, Kamera fällt in den Keller, der Showtitel steht auf dem Item-Podest im Lichtkegel,
+Herzschlag als Taktgeber — reines CSS plus WebAudio, wie die bestehenden Film-Intros in
+`INTRO_FILME`.
+
 ## 2026-10-17 — `f8bb712` Live war die Durchgeh-Seite kaputt: `tools/shots` wird nicht ausgeliefert
 
 **Davids Meldung beim ersten Öffnen:** „tools/shots/aufbau.js nicht gefunden."
