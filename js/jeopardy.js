@@ -24,8 +24,10 @@ const JEOPARDY_BOARDS = 2;
  *  @property {string} a            Antwort
  *  @property {string} [note]       Notiz, die nur der Spielleiter sieht
  *  @property {number} [pts]        eigener Punktwert statt des Zeilenwerts
- *  @property {string} [qImg]       Bild zur Frage (Data-URL)
- *  @property {string} [aImg]       Bild zur Antwort (Data-URL)
+ *  @property {string} [qImg]       Bild ODER Video zur Frage (Data-URL; ein
+ *                                  Video erkennt man an data:video/, siehe
+ *                                  jeopardyIstVideo)
+ *  @property {string} [aImg]       Bild ODER Video zur Antwort (Data-URL)
  *  @property {boolean} [estimate]  Schaetzfrage: keine Buzzer, alle Handys tippen
  *                                  eine ZAHL ein, der Host sieht sie sortiert
  *  @property {boolean} [single]    Einzelantwort: keine Buzzer, auf jedem Handy
@@ -656,6 +658,25 @@ function jeopardyWoerter(text) {
   return String(text).split(/(\s+)/).map(t => /^\s*$/.test(t) ? t : `<span class="jw" style="--i:${i++}">${escapeHtml(t)}</span>`).join('');
 }
 
+/* Frage und Lösung können ein Bild ODER ein Video sein. Beides liegt im
+   selben Feld (qImg/aImg) - sonst müsste jede Stelle, die heute "hat die
+   Frage ein Bild?" fragt (Editor, Kacheln, Turnier, Notizen, der Spiegel),
+   ein zweites Feld mitprüfen. Unterschieden wird an der Data-URL.
+   @param {string} [src] @returns {boolean} */
+function jeopardyIstVideo(src) { return /^data:video\//i.test(String(src || '')); }
+/* Das Video läuft stumm und in Schleife: so startet es im Hauptfenster UND
+   im gespiegelten Beamerfenster von allein (Autoplay mit Ton sperren die
+   Browser ohne Klick, und der Beamer bekommt keinen). Ton zur Frage kommt
+   weiter über das Feld "Sound". Mit controls kann der Host in seinem Fenster
+   spulen, ohne dass es die Leinwand stört.
+   @param {string} [src] @param {string} cls @returns {string} */
+function jeopardyMedienTag(src, cls) {
+  if (!src) return '';
+  return jeopardyIstVideo(src)
+    ? `<video class="${cls}" src="${safeSrc(src)}" autoplay muted loop playsinline controls></video>`
+    : `<img class="${cls}" src="${safeSrc(src)}" alt="">`;
+}
+
 function renderJeopardyClueOverlay() {
   if (!jeopardyState.currentClue) { closeJeopardyClue(); return; }
   if (jeopardyState.ddPending) { closeJeopardyClue(); return; } // warning phase — nothing on the main screen yet
@@ -667,8 +688,8 @@ function renderJeopardyClueOverlay() {
   const series = clue.series && jeopardySeriesImgs(clue).length > 0;
   const steps = clue.steps && jeopardyStepItems(clue).length > 0;
 
-  const qImgHtml = clue.qImg ? `<img class="jeopardy-clue-img" src="${safeSrc(clue.qImg)}" alt="">` : '';
-  const aImgHtml = clue.aImg ? `<img class="jeopardy-answer-img ${jeopardyState.answerShown?'visible':''}" src="${safeSrc(clue.aImg)}" alt="">` : '';
+  const qImgHtml = jeopardyMedienTag(clue.qImg, 'jeopardy-clue-img');
+  const aImgHtml = jeopardyMedienTag(clue.aImg, 'jeopardy-answer-img' + (jeopardyState.answerShown ? ' visible' : ''));
 
   const revealed = jeopardyState.questionRevealed;
   const questionArea = revealed

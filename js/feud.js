@@ -1705,11 +1705,11 @@ function updateGamemasterJeopardy() {
           `<div style="opacity:${i < jeopardyState.stepsRevealed ? '1' : '.45'};">${i+1}. ${it.text ? escapeHtml(it.text) : ''}${it.img ? ' 🖼' : ''}</div>`).join('')}</div>`
       : '';
     const media = [
-      clue.qImg ? '<span class="tag tag-blue">🖼 Frage-Bild</span>' : '',
+      clue.qImg ? `<span class="tag tag-blue">${jeopardyIstVideo(clue.qImg) ? '🎬 Frage-Video' : '🖼 Frage-Bild'}</span>` : '',
       steps ? `<span class="tag tag-gold">📜 Nacheinander (${jeopardyStepItems(clue).length})</span>` : '',
       staged ? '<span class="tag tag-gold">🧩 Staffel-Bild</span>' : '',
       series ? `<span class="tag tag-gold">🎴 Bilder-Reihe (${jeopardySeriesImgs(clue).length})</span>` : '',
-      clue.aImg ? '<span class="tag tag-green">🖼 Lösungs-Bild</span>' : '',
+      clue.aImg ? `<span class="tag tag-green">${jeopardyIstVideo(clue.aImg) ? '🎬 Lösungs-Video' : '🖼 Lösungs-Bild'}</span>` : '',
       clue.sound ? '<span class="tag tag-purple">🔊 Sound</span>' : '',
     ].filter(Boolean).join(' ');
     const soundBtn = clue.sound
