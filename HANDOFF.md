@@ -12,6 +12,52 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-18 — `8716ec1` Jeopardy: Video als Frage und als Lösung
+
+**David:** „bau schnell ein, dass ich auch Videos als Lösung und Frage machen kann“.
+
+**Gemacht:** Die Felder `qImg` und `aImg` einer Jeopardy-Frage nehmen jetzt auch ein Video.
+`js/jeopardy.js`: `jeopardyIstVideo(src)` (Treffer bei `data:video/`) und `jeopardyMedienTag(src, cls)`
+bauen `<img>` oder `<video>`; `renderJeopardyClueOverlay` benutzt nur noch den Helfer.
+`js/jeopardy-ui.js`: Datei-Auswahl `accept="image/*,video/*"`, Beschriftung „Frage-Bild/Video“ bzw.
+„Lösungs-Bild/Video“, das Vorschaubild im Editor ist bei einem Video ein stummes `<video>`
+(`preload="metadata"`, zeigt den ersten Frame), und die Board-Kachel bekommt 🎬 statt 🖼.
+`js/feud.js`: die Medien-Marken im GM-Panel heißen bei einem Video „🎬 Frage-Video“ /
+„🎬 Lösungs-Video“.
+
+**Warum dasselbe Feld statt eines neuen:** An `qImg`/`aImg` hängen sieben Stellen, die „hat die Frage
+ein Bild?“ fragen — Editor-Kacheln, GM-Panel, Turnier-Zählung (`js/tournament.js:138`), die
+Gültigkeitsprüfung (`js/jeopardy.js:142`), der Spiegel. Ein zweites Feld hätte jede davon geändert.
+Unterschieden wird an der Data-URL; `safeSrc` ließ `data:video/` ohnehin schon durch.
+
+**Warum stumm und in Schleife:** `autoplay muted loop playsinline controls`. Mit Ton startet kein
+Browser ein Video ohne Klick — und das Beamerfenster bekommt nie einen, es ist nur ein gespiegelter
+DOM. Stumm startet es in beiden Fenstern von allein, ohne Versatz. `controls` ist für den Host, in
+seinem Fenster; auf der Leinwand sieht man die Leiste nur bei Mauszeiger darüber (der ist dort nie).
+**Ton zur Frage läuft weiter über das Feld „Sound“** — ein Video mit wichtigem Ton braucht also die
+Tonspur zusätzlich dort, und dann ist es nicht synchron. Wenn das stört, wäre der nächste Schritt,
+das Beamerfenster das Video selbst abspielen zu lassen (Muster `mainscreen/aufdecken.js`, BAUPLAN 4.8).
+
+**Geprüft** (Scratchpad `video.js`, echtes WebM im Browser per MediaRecorder aufgenommen, 40 KB,
+Chrome mit `--autoplay-policy=document-user-activation-required`, also der strengen Einstellung):
+- Frage-Video im Hauptfenster nach 1,2 s bei `currentTime` 0,92 s, `paused: false`, `videoWidth` 320.
+- Lösungs-Video nach `jeopardyToggleAnswer()` sichtbar (`display: block`), `currentTime` 0,89 s, läuft.
+- **Beamer-Popout:** dasselbe Frage-Video bei 0,73 s, `paused: false` — das gespiegelte `<video>`
+  spielt dort wirklich, nicht nur das Standbild. Bildschirmfoto zeigt beide Videos im selben Frame.
+- Editor: zwei `<video class="jimg-thumb">`, Kachel mit `title="Video"`. Keine Seitenfehler.
+- `check.js` sauber, `check.js --types` 16 Dateien ohne Meldung,
+  `shots.js --shows jeop,jeop-frage,jeop-antwort --themes Studio,D,B` ohne Befunde.
+
+**Fallstrick, nicht behoben:** Ein Video als Data-URL ist groß. Die Boards selbst liegen in einer
+Importdatei, da stört es nicht — aber `js/resume.js` schreibt `jeopardyData` komplett in den
+localStorage (`resumeSave`, Grenze rund 5 MB). Mit einem längeren Clip schlägt das Sichern fehl, und
+es kommt der Dialog „Der Spielstand ist zu groß zum Sichern“. Bilder werden vor dem Ablegen
+verkleinert (`shrinkImageToDataUrl`, `js/core.js`), Videos **nicht** — dafür bräuchte es eine echte
+Umkodierung. Kurze Clips nehmen.
+
+**Ungeprüft:** echter Beamer (nur das Popout im Messbrowser), großes/langes Video, die Richtungen
+außer Studio, D und B (nur Standbild geprüft), und das Zusammenspiel mit `sound` auf derselben Frage.
+
 ## 2026-10-18 — `afdac29` Richtung T **neu auf echten Spielgrafiken** + Töne
 
 **Davids Ansage:** „ich möchte ein The binding of isaac themed Design … mit den
