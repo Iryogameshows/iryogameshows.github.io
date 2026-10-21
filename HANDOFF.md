@@ -12,6 +12,54 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — UNTERBRECHUNG der Sitzung (Stand `e84e1c0`)
+
+Kein Code offen, alles committet und gepusht, Deploy grün. Dieser Eintrag ist die
+Abschluss-Übersicht für die nächste Sitzung.
+
+**Entscheidung von David, ab jetzt gültig:** „Firebase offen stört nicht.“ Die Datenbank bleibt auf
+`.read/.write: true`, die Fernsteuerung (`gmremote/commands`) prüft weiter keinen Absender. Das war
+Befund 1 im Audit (`e5f1082`). **Nicht wieder vorschlagen**, solange sich an der Lage nichts
+ändert (z. B. die Adresse öffentlich auftaucht oder fremde Eingriffe passieren).
+
+**Aktueller Stand — was in dieser Sitzung passiert ist** (2026-10-18 bis 2026-10-22):
+- Jeopardy kann Videos als Frage und Lösung (`8716ec1`), das Frage-Video läuft beim Aufdecken
+  weiter, zu große Clips (> 2 MB) werden abgewiesen (`0f5512d`), Auswahl nur mp4/webm (bleibt so).
+- ponytail installiert (nur auf diesem Gerät, Benutzer-Ebene); Regelung ponytail × CLAUDE.md in
+  `CLAUDE.md` (`471543f`). Der Eintrag in `.claude/settings.json` fehlt weiter — die Umgebung lässt
+  ihn mich nicht setzen, David müsste ihn selbst eintragen, wenn es auf die anderen Geräte soll.
+- Zwei „vibecoded“-Checklisten gegen das Repo geprüft: Favicon + eigene 404-Seite (`9383543`),
+  Link-Vorschau für WhatsApp/Discord (`469d34a`). Fast alles andere war schon da oder passt nicht zu
+  einer Seite, die nicht gefunden werden soll. `styles.css` bewusst **nicht** aufgeteilt (gemessen:
+  Buzzer 677 ms, lädt sie gar nicht).
+- Audit des ganzen Repos (`e5f1082`): sechs Shows verloren Editor-Daten still, wenn der
+  Browserspeicher voll war — jetzt warnen alle über `storeSaveData`; Warnung nach Erholung wieder
+  scharf (`ecff8bd`). Eine tote Funktion entfernt.
+
+**Stopppunkt:** Nach `e84e1c0`. Offen war nur noch die Firebase-Frage — jetzt entschieden (s. o.).
+Nichts angefangen, nichts halb.
+
+**Kreative Ansätze & Ideen, die im Raum standen (auch verworfene):**
+- Video mit **Ton** auf der Leinwand: heute stumm, weil das Beamerfenster keinen Klick bekommt.
+  Idee: das Beamerfenster spielt das Video selbst ab (Muster `mainscreen/aufdecken.js`, BAUPLAN
+  4.8) — dann ginge Ton, synchron. Nur angedacht.
+- Eigene Domain (`CNAME`) für eine abtippbare Buzzer-Adresse — braucht einen Domainkauf durch David,
+  lohnt nur, wenn Gäste tippen statt scannen.
+- Die 44 `alert()`-Aufrufe durch Meldungen in der Seite ersetzen — verworfen als Komplettumbau;
+  wenn, dann einzeln für Meldungen, die David nerven.
+- `styles.css` aufteilen/minifizieren — verworfen nach Messung.
+- Firebase-Anmeldung (anonym + Host-Geheimnis) — verworfen durch Davids Entscheidung oben.
+
+**Nächste Schritte** (in der vorgeschlagenen Reihenfolge):
+1. `js/resume.js` prüfen — daran hängt die Absturzsicherung während einer Show; im Audit nicht im
+   Detail gelesen.
+2. Danach die übrigen nicht gelesenen Teile: TP-Radlogik (`js/tp.js`), `js/intro.js`,
+   `mainscreen/aufdecken.js` und `buehne.js`.
+3. Optional den Agenten `import-auditor` über alle rund 230 HTML-Vorlagen laufen lassen (im Audit nur
+   die Fundstellen mit Namen geprüft).
+4. Ein Jeopardy-Video von David im echten Ablauf mit Beamer ausprobieren — Video bisher nur mit einem
+   aufgenommenen Testclip im Messbrowser geprüft.
+
 ## 2026-10-22 — `ecff8bd` Speicher-Warnung nach Erholung wieder scharf
 
 **David:** `/ponytail-review` auf `e5f1082`, danach „weiter“.
