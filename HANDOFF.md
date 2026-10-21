@@ -12,6 +12,31 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `ecff8bd` Speicher-Warnung nach Erholung wieder scharf
+
+**David:** `/ponytail-review` auf `e5f1082`, danach „weiter“.
+
+**Befund aus dem Review:** `storeSaveData` merkte sich in `storeVollGewarnt`, für welche Show schon
+gewarnt wurde — und gab den Merker nie wieder frei. Ablauf, in dem das zuschlägt: Warnung bei DDF,
+großes Video entfernt, Speichern klappt wieder, später ein Handyfoto eingefügt — Speichern scheitert
+erneut, **ohne** Hinweis. Genau der stille Verlust, den `e5f1082` beheben sollte. Das Muster stammte
+aus dem alten `wwmSave` (`wwmSaveWarned`, ebenfalls nie zurückgesetzt) und wurde beim
+Zusammenführen mitgenommen.
+
+**Gemacht:** eine Zeile in `storeSaveData` (`js/core.js`): `if (ok) storeVollGewarnt.delete(key);`.
+Ein erfolgreiches Speichern gibt den Merker frei; innerhalb einer Fehlschlag-Strecke bleibt es bei
+einem Hinweis.
+
+**Geprüft** (Scratchpad `speicher2.js`, echte Seite, Speicher künstlich gefüllt und geleert):
+voll → 1 Meldung; voll, noch zweimal gespeichert → 0; wieder frei → speichert, 0 Meldungen; erneut
+voll → **1 Meldung** (vorher 0). `check.js` und `--types` sauber.
+
+**Zweiter Befund aus dem Review — offen, braucht David:** Seit `e5f1082` nimmt die Jeopardy-Auswahl
+nur `video/mp4,video/webm`. iPhone-Videos (`.MOV`, `video/quicktime`) sind damit im Dateidialog
+standardmäßig ausgeblendet (über „Alle Dateien“ weiter wählbar). Ob Chrome unter Windows sie
+abspielt, hängt an der Kamera-Einstellung (H.264 eher ja, HEVC nein) — nicht ausprobiert. Erst
+klären, woher Davids Clips kommen.
+
 ## 2026-10-21 — `e5f1082` Ganzes Repo geprüft (`/ponytail-audit`), drei Punkte behoben
 
 **David:** `/ponytail-audit`, dazu „überprüfe einmal den ganzen Code. optimiere ihn bis ans
