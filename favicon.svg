@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Das Hub-Logo (renderIryoHubLogo, js/core.js) in klein: goldenes
+       Achteck-Schild, blaues Feld, ein Funke. Schrift geht bei 16 px nicht -
+       die Form und die zwei Farben muessen es tragen. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FBE6A6"/>
+      <stop offset=".5" stop-color="#E9C25A"/>
+      <stop offset="1" stop-color="#C79A34"/>
+    </linearGradient>
+  </defs>
+  <path d="M9 1h14l8 8v14l-8 8H9l-8-8V9z" fill="url(#g)"/>
+  <path d="M10 4h12l6 6v12l-6 6H10l-6-6V10z" fill="#1c4a8f"/>
+  <path d="M11 6h10l5 5v10l-5 5H11l-5-5V11z" fill="#0f1b3a"/>
+  <path d="M16 8.5l1.7 4.8 4.8 1.7-4.8 1.7L16 21.5l-1.7-4.8-4.8-1.7 4.8-1.7z" fill="#FFF3C8"/>
+</svg>

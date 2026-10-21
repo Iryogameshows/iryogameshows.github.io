@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Falsche Adresse · Iryo Gameshow</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- GitHub Pages liefert diese Datei bei jeder unbekannten Adresse aus. Ohne
+     sie steht dort die Octocat-Seite von GitHub - mitten in einem Spieleabend
+     weiss ein Gast dann nicht, wohin.
+
+     Bewusst OHNE styles.css: die ist 642 KB (19 Design-Richtungen) und wuerde
+     fuer eine Seite mit drei Zeilen Text geladen. Die paar Regeln hier sind
+     aus der Klassik-Richtung abgeschrieben, damit es nicht fremd aussieht. -->
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center;
+    background: radial-gradient(ellipse at 50% 0%, #22345f, #0f1b3a 70%);
+    color: #F2F2F2; font-family: 'Inter', system-ui, sans-serif;
+  }
+  img { width: 86px; height: 86px; }
+  h1 { margin: 0; font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.4rem, 9vw, 4rem); letter-spacing: 2px; color: #E9C25A; }
+  p { margin: 0; max-width: 34ch; line-height: 1.5; color: rgba(242,242,242,.7); }
+  .btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  a {
+    padding: 12px 22px; border-radius: 10px; text-decoration: none; font-weight: 700;
+    background: linear-gradient(180deg, #FBE6A6, #C79A34); color: #0f1b3a;
+  }
+  a.zweit { background: none; border: 1px solid rgba(242,242,242,.25); color: #F2F2F2; }
+</style>
+</head>
+<body>
+  <img src="favicon.svg" alt="">
+  <h1>Falsche Adresse</h1>
+  <p>Diese Seite gibt es nicht. Vertippt? Der Buzzer liegt unter <strong>/buzzer/</strong>.</p>
+  <div class="btns">
+    <a href="/buzzer/">Zum Buzzer</a>
+    <a class="zweit" href="/">Zur Show</a>
+  </div>
+</body>
+</html>
