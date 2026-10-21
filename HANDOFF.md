@@ -12,6 +12,27 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `c930e2e` ponytail in den Projekt-Settings
+
+**David** hat auf Anleitung `.claude/settings.json` selbst erweitert: `"ponytail@ponytail": true`
+in `enabledPlugins` und den Marketplace `DietrichGebert/ponytail` in `extraKnownMarketplaces` —
+genauso eingebunden wie caveman. Damit kommt ponytail per Git auf alle Geräte; beim ersten Öffnen
+fragt Claude Code, ob dem Marketplace vertraut wird.
+
+**Warum David und nicht Claude:** Zweimal hat die Umgebung das Eintragen abgelehnt
+(„Untrusted Code Integration“, dann „Self-Modification“). Bei caveman am 2026-10-09 (`a1c67cf`)
+ging es noch durch — warum heute nicht, ist nicht bekannt. Umgangen über einen Shell-Befehl wurde es
+bewusst nicht. **Für jedes weitere Plugin gleich David die zwei Stellen nennen.**
+
+**Gemacht von Claude:** geprüft, dass die Datei gültiges JSON ist, beide Einträge stimmen und die
+Hooks (`PreToolUse`, `SessionStart`) unverändert sind (+7 Zeilen, nichts sonst). In `CLAUDE.md` die
+Zeile „nur auf diesem Gerät“ ersetzt, samt Hinweis, wer solche Einträge macht.
+
+**Geprüft:** `JSON.parse` der Datei ohne Fehler; `check.js` sauber.
+
+**Ungeprüft:** ob die Installation auf einem anderen Gerät wirklich anläuft — dort fragt Claude Code
+beim ersten Öffnen, und erst dann zeigt sich, ob der Marketplace erreichbar ist.
+
 ## 2026-10-22 — UNTERBRECHUNG der Sitzung (Stand `e84e1c0`)
 
 Kein Code offen, alles committet und gepusht, Deploy grün. Dieser Eintrag ist die
