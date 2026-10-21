@@ -31,11 +31,12 @@ einem Hinweis.
 voll → 1 Meldung; voll, noch zweimal gespeichert → 0; wieder frei → speichert, 0 Meldungen; erneut
 voll → **1 Meldung** (vorher 0). `check.js` und `--types` sauber.
 
-**Zweiter Befund aus dem Review — offen, braucht David:** Seit `e5f1082` nimmt die Jeopardy-Auswahl
-nur `video/mp4,video/webm`. iPhone-Videos (`.MOV`, `video/quicktime`) sind damit im Dateidialog
-standardmäßig ausgeblendet (über „Alle Dateien“ weiter wählbar). Ob Chrome unter Windows sie
-abspielt, hängt an der Kamera-Einstellung (H.264 eher ja, HEVC nein) — nicht ausprobiert. Erst
-klären, woher Davids Clips kommen.
+**Zweiter Befund aus dem Review — entschieden: bleibt so.** Seit `e5f1082` nimmt die
+Jeopardy-Auswahl nur `video/mp4,video/webm`; iPhone-Videos (`.MOV`) sind im Dateidialog
+standardmäßig ausgeblendet. David am 2026-10-22: „Meine Clips sind schon MP4 (über WhatsApp,
+Schnitt oder Download) — lass die Auswahl so.“ **Nicht wieder aufmachen**, solange sich daran nichts
+ändert. Falls doch einmal `.MOV` gebraucht wird: über „Alle Dateien“ im Dialog wählbar; ob Chrome
+unter Windows es abspielt, hängt an der Kamera-Einstellung (H.264 eher ja, HEVC nein), nie probiert.
 
 ## 2026-10-21 — `e5f1082` Ganzes Repo geprüft (`/ponytail-audit`), drei Punkte behoben
 
