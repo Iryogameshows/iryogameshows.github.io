@@ -12,6 +12,74 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-21 — `e5f1082` Ganzes Repo geprüft (`/ponytail-audit`), drei Punkte behoben
+
+**David:** `/ponytail-audit`, dazu „überprüfe einmal den ganzen Code. optimiere ihn bis ans
+äußerste“. Angenommene Last: ein Host, ein Beamer, 5–15 Handys gleichzeitig an einem Abend,
+eine öffentliche Adresse, eine gemeinsame Firebase-Datenbank.
+
+**Gelesen, mit Schwerpunkt dort, wo ein Fehler am meisten kostet:** Datenbankregeln, Anmeldung der
+Handys (`doLogin`, `hashPin`), Buzzer-Reihenfolge, die Fernsteuerung (`startGmRemoteCommandListener`,
+`GM_REMOTE_ALLOWED_FNS`), Stellen, an denen Namen von Handys oder aus Importen als HTML landen, alle
+Speicherfunktionen der Shows. Dazu ein Skript, das jede `function` in `js/` gegen alle Seiten und
+Skripte prüft (auch Zeichenketten in `onclick`).
+
+**Befunde und was damit passiert ist:**
+
+1. **Datenbank offen für jeden — nicht behoben, braucht David.** `database.rules.json` steht auf
+   `.read/.write: true`, die Adresse steht im Klartext in `js/buzzer.js:14`. Das ist dokumentiert
+   und bewusst (`FIREBASE-ANLEITUNG.md`: „die Shows laufen privat“). **Konkrete Folge, die dort nicht
+   steht:** die Fernsteuerung prüft zwar, *welche* Funktion aufgerufen wird, aber nicht, *wer* den
+   Befehl schickt. Auf der Erlaubt-Liste stehen u. a. `gmQuitShow`, `ddfQuit`, `pihQuit`, `tpQuit`,
+   `jeopardyScore`, `jeopardyDeduct`, `saveHostNotesRemote`. Mit einer einzigen Zeile an
+   `gmremote/commands` kann also jeder, der die Seite kennt, mitten in der Show Punkte vergeben,
+   abziehen oder die Show beenden. Ebenso `buzzer/players` komplett löschen (Accounts, Statistik).
+   Die strengeren Regeln aus `641a008` helfen dagegen **nicht** — Löschen läuft an `.validate`
+   vorbei, und `gmremote/commands` ist dort ebenfalls `.write: true`. Echter Schutz bräuchte
+   Firebase-Anmeldung (anonym + Host-Geheimnis). Das ist ein eigenes Vorhaben; deployen kann es nur
+   David (`npx firebase-tools login`). Seit dieser Sitzung wird die Adresse zudem per
+   WhatsApp-Vorschau geteilt (`469d34a`) — die Voraussetzung „privat“ wird schwächer.
+2. **Stilles Speicherversagen in sechs Shows — behoben.** Alle Shows teilen sich rund 5 MB
+   `localStorage`. `setMediaSlot` verkleinert nicht; ein einziges Handyfoto oder Video in einem
+   Medienfeld reicht, dass `storeSetJson` scheitert und `false` liefert. Ausgewertet hat das nur
+   `wwmSave` (Warnung seit `2026-10-10`). Bei `ddfSave`, `tpSave`, `wwdsSave`, `introSave`,
+   `saveToStorage` (Feud) und den meisten Aufrufen von `pihSave` standen die Änderungen im Editor,
+   waren nach dem Neuladen aber **still weg**. Jetzt laufen alle sieben über `storeSaveData`
+   (`js/core.js`, direkt unter `storeRemove`): einmal je Schlüssel und Sitzung ein Hinweis, weil der
+   Editor bei jedem Tastendruck speichert. `wwmSave` nutzt denselben Helfer, seine eigene Kopie ist
+   weg.
+3. **Tote Funktion — entfernt.** `themeFontsHref` (`js/theme.js`) und die nur dort benutzte Konstante
+   `THEME_DEFAULT_FONTS`. Das Prüfskript fand **genau diese eine** in ganz `js/` — der Bestand ist
+   ungewöhnlich sauber.
+4. **Aus dem Video-Review (`8716ec1`) nachgezogen:** Befund 3 — `accept` jetzt
+   `image/*,video/mp4,video/webm` (`.mkv`/`.avi` spielt Chrome nicht, es kam ein schwarzer Kasten);
+   Befund 5 — die Kachel zeigt 🎬 **und** 🖼, wenn beides an einer Frage hängt. Befund 4 (`controls`
+   auch auf der Leinwand) bewusst gelassen: ohne geht dem Host das Spulen verloren.
+
+**Geprüft und in Ordnung — kein Befund:**
+- **Buzzer-Reihenfolge:** jeder Buzz trägt `ServerValue.TIMESTAMP`, der Host sortiert danach. Kein
+  Handy kann mit seiner Uhr schummeln, kein Wettlauf zwischen Lesen und Schreiben.
+- **PINs:** SHA-256 mit Name als Salz, nicht im Klartext. Schwach gegen Durchprobieren kurzer PINs —
+  nur relevant zusammen mit Befund 1.
+- **Namen und Importe als HTML:** die Fundstellen mit Namen in Vorlagen (`feudLogAdd`,
+  `tournamentFileInfo`, WWM-Sieger) werden alle beim Ausgeben escaped bzw. per `setText` gesetzt.
+  Nicht jede der rund 230 Vorlagen einzeln gelesen — dafür gibt es den Agenten `import-auditor`.
+- **Fernsteuerung:** Erlaubt-Liste, Argumente nur Zahl/Text/Wahrheitswert, höchstens 6, Texte bis
+  5000 Zeichen, alte Befehle (älter als Start − 5 s) verworfen. Sauber gebaut.
+
+**Bewusst NICHT „bis ans Äußerste optimiert“:** `styles.css` aufteilen, minifizieren, bündeln. Die
+Messung vom selben Tag (`9383543`): Buzzer 677 ms auf gedrosseltem iPhone, er lädt `styles.css`
+gar nicht. Jeder Umbau dort wäre Risiko an der größten Datei ohne messbaren Gewinn.
+
+**Geprüft:** `check.js` und `--types` sauber. Scratchpad `speicher.js` in der echten Seite: freier
+Speicher → `true`, keine Meldung; Speicher künstlich gefüllt → alle sieben Shows melden, `pihSave`
+und `wwmSave` liefern `false`; zweite Runde **0** Meldungen. Kachel Bild+Video → beide Zeichen, nur
+Video → nur 🎬. `ablauf.js` **49/49**, `shots.js --themes Studio,D` über alle Zustände ohne Befunde.
+
+**Nicht gelesen:** `js/intro.js` (Intros, 100 KB), die TP-Radlogik, `js/resume.js` im Detail,
+`mainscreen/aufdecken.js` und `buehne.js`, `styles.css` (keine CSS-Abdeckung gemessen), `tools/`,
+`designs/`, `voting/`.
+
 ## 2026-10-21 — `469d34a` Zweite Checkliste: elf von zwölf Punkten waren schon erledigt
 
 **David** kam mit der nächsten Liste (horizontales Scrollen, kaputte Links, Handy-Menü,
