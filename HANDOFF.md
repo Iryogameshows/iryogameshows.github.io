@@ -12,6 +12,47 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-21 — `469d34a` Zweite Checkliste: elf von zwölf Punkten waren schon erledigt
+
+**David** kam mit der nächsten Liste (horizontales Scrollen, kaputte Links, Handy-Menü,
+Meta-Description, Footer-Links, Bilder komprimieren, kaputte Knöpfe auf dem Handy für den
+Gamemaster, Erfolgs- und Fehlermeldungen, ungenutzte Navigation, Überlauf auf dem Handy, „optimiere
+jede Page für mobile“) und derselben Frage: was geht, was ergibt Sinn. Gemessen statt geschätzt:
+
+| Punkt | Befund |
+|---|---|
+| Waagerechtes Scrollen / Überlauf | **Keiner.** iPhone 15 (393 px): Buzzer-Login, Buzzer-Buzzern, Gamepad, Hostseite mit GM-Panel — überall `scrollWidth == clientWidth`, 0 Elemente ragen heraus. |
+| Kaputte Links | **Keine.** Alle internen `href`/`src` der sechs ausgelieferten Seiten zeigen auf vorhandene Dateien. |
+| Handy-Menü, Footer-Links, ungenutzte Navigation | **Gibt es nicht.** Kein `<nav>`, kein `<footer>` in irgendeiner Seite. Die Hostseite *ist* das Menü. |
+| Bilder komprimieren | **Längst erledigt.** `buzzer/index.html:823` erklärt es: je Lobby-Motiv liegen `.mp4` und `.gif` nebeneinander, abgespielt wird das MP4 — 13 Motive zusammen **1,1 MB statt 21,2 MB**, `freddy` allein 383 KB statt 9,7 MB. Das GIF springt nur ein, wenn das Handy das Video nicht von selbst starten darf. |
+| Tippflächen | Eine einzige unter 32 px: `button.gm-quit`, 94×30. Zwei Pixel. |
+| Erfolgs-/Fehlermeldungen | 44 `alert()`-Aufrufe in `js/`, kein Toast-System. Der Buzzer-Login hat eine eigene Fehlerzeile (`.err`). |
+| „Optimiere jede Page für mobile“ | Die Handy-Seiten sind mobil gebaut. Die Hostseite steuert einen Beamer und gehört nicht aufs Handy. |
+
+**Kaputte Knöpfe im GM-Panel auf dem Handy: nichts gefunden — und dabei fast ein falscher Befund.**
+Die erste Messung sagte, die fünf Antwortzeilen lägen unter der festen Knopfleiste und das Panel
+scrolle nicht (`scrollHeight == clientHeight == 659`). Das war ein Messfehler: Gescrollt wird nicht
+`document.scrollingElement`, sondern `.gm-body` (`GM_SHARED_CSS`, `js/core.js:1277` —
+`flex:1; min-height:0; overflow-y:auto`, der Rahmen ist bewusst fest). Richtig gemessen:
+`scrollHeight` 845 gegen 444 sichtbar, nach dem Scrollen stehen alle fünf Zeilen frei im Bild
+(78–289 px), nichts verdeckt. **Beinahe hätte ich einen Fehler gemeldet, den es nicht gibt** — die
+Lehre: vor dem Melden prüfen, welches Element überhaupt der Scroll-Container ist.
+
+**Gemacht wurde nur ein Punkt:** Meta-Description — aber nicht für Suchmaschinen, sondern als
+**Link-Vorschau**. Wer den Buzzer-Link in WhatsApp oder Discord schickt, hatte bisher die nackte
+Adresse im Chat. Jetzt `description`, `og:title`, `og:description`, `og:image`, `og:type` und
+`twitter:card` auf Hostseite und Buzzer, dazu `share.png` (1200×630, 158 KB, aus dem Hub-Logo
+gebaut; der Bau-Schnipsel lag im Scratchpad, das Bild ist eingecheckt).
+
+**Geprüft:** `check.js` sauber. Messungen wie oben, im Messbrowser mit iPhone-15-Profil.
+
+**Offen / ungeprüft:** Wie die Vorschau in WhatsApp und Discord **wirklich** aussieht, ist nicht
+geprüft — beide holen die Seite mit eigenen Crawlern und cachen das Ergebnis. Relative Pfade in
+`og:image` akzeptieren nicht alle Dienste; falls die Vorschau leer bleibt, muss dort die volle
+Adresse (`https://iryogameshows.github.io/share.png`) stehen. Davids Meldung „kaputte Knöpfe aufm
+Handy fürn Gamemaster“ ist **nicht geklärt** — gemessen ist alles in Ordnung, es fehlt, welcher
+Knopf auf welchem Screen was tut oder nicht tut.
+
 ## 2026-10-21 — `9383543` Favicon, 404-Seite — und die Messung, warum `styles.css` bleibt
 
 **David** kam mit einer Checkliste von zwanzig Punkten („custom domain, sitemap, meta descriptions,
