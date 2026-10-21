@@ -12,6 +12,44 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-21 — `0f5512d` Jeopardy-Video: zwei Befunde aus dem ponytail-Review behoben
+
+**David:** „ja komm mach Befunde 1 und 2“ — aus dem Review von `8716ec1` mit `/ponytail-review`.
+
+**Befund 1 — das Frage-Video sprang zurück.** `renderJeopardyClueOverlay` baut den Inhalt des
+Overlays bei jedem Aufruf per `innerHTML` neu. Ein neu erzeugtes `<video>` startet bei 0, also sprang
+der Clip an den Anfang, sobald die Lösung gezeigt wurde — ebenso bei Staffelbild, Schritt-Frage,
+Bilderreihe, Undo und Wiederaufnahme. Jetzt merkt die Funktion vor dem `innerHTML` die Laufzeit der
+vorhandenen Videos und setzt sie danach zurück. Schlüssel ist „Frage“ bzw. „Antwort“, nicht die
+Klasse: die Antwort bekommt beim Aufdecken `visible` dazu.
+
+**Befund 2 — Hinweisfenster mitten in der Show.** `jeopardyEditImg` legte jede Datei unverändert als
+Data-URL ab. `resumeSave` schreibt `jeopardyData` komplett in den localStorage (Grenze rund 5 MB);
+mit einem großen Clip scheitert das, und `js/resume.js:82-88` wirft „Der Spielstand ist zu groß zum
+Sichern“ — beim ersten Sichern nach dem Spielstart, also vor Publikum. Jetzt weist der Editor Videos
+über 2 MB gleich beim Auswählen ab, mit Größenangabe und dem Hinweis, kürzer zu schneiden oder in
+720p/WebM zu exportieren. Nur Videos: Bilder werden hier ebenfalls nicht verkleinert, sind aber
+selten so groß, und eine Grenze für sie hätte bestehende Boards getroffen.
+
+**Geprüft** (Scratchpad `video2.js`, echtes WebM von 3 Sekunden per MediaRecorder):
+- Frage-Video vor dem Aufdecken bei 1,79 s, danach bei 1,79 s — läuft weiter statt zurückzuspringen.
+- Lösungs-Video startet beim Aufdecken bei 0,00 s, also von vorn. Richtig so.
+- Zweites Neuzeichnen (`renderJeopardyClueOverlay()` direkt): 2,78 s → 2,78 s.
+- 3-MB-Video: Meldung kommt, `qImg` unverändert, `input.value` geleert (damit dieselbe Datei erneut
+  gewählt werden kann).
+- 1,5-MB-Video: kommt an der Sperre vorbei — es erreicht den `FileReader`, der im Test an der
+  Attrappe scheitert. Die Sperre greift also nur oberhalb der Grenze.
+- `check.js` und `check.js --types` sauber, `shots.js --shows jeop,jeop-frage,jeop-antwort
+  --themes Studio,D` ohne Befunde.
+
+**Offen aus demselben Review, bewusst nicht gemacht:** Befund 3 (`accept` lässt `.mkv`/`.avi` durch,
+die Chrome nicht abspielt), Befund 4 (`controls` ist auch auf der Leinwand sichtbar, sobald eine Maus
+darüberfährt), Befund 5 (die Kachel zeigt 🎬 **oder** 🖼, nie beides).
+
+**Ungeprüft:** echter Beamer, ein Clip nahe an der 2-MB-Grenze im echten Spielablauf, und ob die
+Laufzeit auch im gespiegelten Beamerfenster erhalten bleibt — dort baut `morphMirror` das Element
+nicht neu, es dürfte also ohnehin durchlaufen, gemessen ist es nicht.
+
 ## 2026-10-21 — `471543f` ponytail installiert, Verhältnis zu den Projektregeln festgelegt
 
 **David:** „installier das bitte“ (https://github.com/DietrichGebert/ponytail), danach „kannst du nen
