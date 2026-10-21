@@ -111,6 +111,35 @@ Quellen: `anthropics/claude-code` (`plugins/frontend-design`),
   Absatz), Deutsch, Belege mit Zahlen. HANDOFF-Einträge, Commit-Nachrichten
   und `CLAUDE.md` bleiben im normalen, ausführlichen Stil. Caveman kürzt nur
   den Chat-Text.
+- **ponytail** (seit 2026-10-21, `/ponytail`, Stufe `full`): kleinste Änderung,
+  die die Aufgabe ganz löst — kein Vorrat an Abstraktionen, Optionen und
+  Wrappern. Installiert ist es **nur auf diesem Gerät** (Benutzer-Ebene, nicht
+  in `.claude/settings.json`), kommt also nicht per Git mit. Wo es sich mit
+  dieser Datei reibt, gilt die Regelung direkt darunter.
+
+#### ponytail × CLAUDE.md — was gilt
+
+Ponytail ist für den **Code** zuständig, diese Datei für **Prüfen, Melden und
+Protokoll**. Vier Stellen, an denen sich das sonst beißt:
+
+- **Kürzen gilt für den Code, nicht für die Prüfung.** `node check.js` vor
+  jedem Commit, `shots.js` nach jeder Änderung an Aussehen oder Layout,
+  `--types` vor Größerem. Das ist kein Beiwerk, das ist die einzige Zusicherung,
+  die diese Seite hat — sie läuft vor Publikum ohne Netz.
+- **Ponytails „ein kleiner Test dazu" erfüllen hier `check.js` und
+  `tools/shots`.** Kein neues Testwerkzeug einführen; neue Zustände kommen in
+  `tools/gemeinsam/aufbau.js` dazu, wie bisher.
+- **HANDOFF-Eintrag bleibt vollständig.** Er ist kein Code, sondern das, was
+  der nächsten Session die zweite Erarbeitung spart: Gemacht · Warum so ·
+  Geprüft · Offen · Fallstricke. Dasselbe gilt für Commit-Nachrichten und für
+  diese Datei.
+- **Kommentardichte: Haus-Stil schlägt „ein Satz".** Ponytails eigene Regel
+  „die Struktur und Konventionen des Codebestands behalten" gibt das her — in
+  `js/` steht das *Warum* samt verworfener Wege am Code, oft mehrzeilig. Das
+  bleibt so.
+
+Ponytails Abschlusszeile („was übersprungen, welches Risiko") geht in die
+Liste **Offen** am Ende der Antwort, nicht als eigener Absatz daneben.
 
 ### Projekt-Skills, Plugins, Hooks (seit 2026-10-10)
 
