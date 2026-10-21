@@ -719,6 +719,15 @@ function renderJeopardyClueOverlay() {
   const vorher = ov.dataset.stand || '';
   ov.dataset.neu = stand === vorher ? '' : stand === 'antwort' ? (vorher === 'frage' ? 'antwort' : 'frage antwort') : stand;
   ov.dataset.stand = stand;
+  /* Laufende Videos weiterlaufen lassen: innerHTML baut auch das <video> neu,
+     und ein neues Element startet bei 0. Ohne das sprang das Frage-Video an
+     den Anfang, sobald die Loesung gezeigt wurde (oder ein Staffelbild, ein
+     Schritt, ein Undo dazukam). Schluessel ist Frage/Antwort, nicht die
+     Klasse - die Antwort bekommt beim Aufdecken "visible" dazu. */
+  const videoZeit = {};
+  ov.querySelectorAll('video').forEach(v => {
+    videoZeit[v.classList.contains('jeopardy-clue-img') ? 'q' : 'a'] = v.currentTime;
+  });
   ov.innerHTML = `
     ${jeopardyState.currentIsDaily ? `<div class="jeopardy-dd-banner">★ DAILY DOUBLE ★</div>` : ''}
     <div class="jeopardy-clue-cat">${jeopardyCatHeadHtml(cat, 'jeopardy-clue-cat-img')}</div>
@@ -727,6 +736,10 @@ function renderJeopardyClueOverlay() {
     <div class="jeopardy-answer-text ${jeopardyState.answerShown?'visible':''}">${escapeHtml(clue.a || '')}</div>
     ${revealed ? aImgHtml : ''}
   `;
+  ov.querySelectorAll('video').forEach(v => {
+    const t = videoZeit[v.classList.contains('jeopardy-clue-img') ? 'q' : 'a'];
+    if (t) v.currentTime = t;
+  });
 }
 
 // Reveal one more tile of a staged image

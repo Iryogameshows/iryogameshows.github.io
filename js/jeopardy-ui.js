@@ -450,6 +450,16 @@ function jeopardyEditMedia(b,col,row,slot,input){
 }
 function jeopardyEditImg(b,col,row,field,input){
   const f = input.files[0]; if(!f) return;
+  /* Videos werden nicht verkleinert (Bilder auch nicht, die sind aber selten
+     so gross). Der Spielstand geht komplett in den localStorage, der bei rund
+     5 MB endet - mit einem grossen Clip schlaegt resumeSave fehl und wirft
+     MITTEN IN DER SHOW den Hinweis "Spielstand zu gross" (js/resume.js).
+     Lieber hier abweisen, wo die Meldung noch nuetzt. */
+  if (f.type.startsWith('video') && f.size > 2000000) {
+    alert(`Das Video ist ${(f.size / 1048576).toFixed(1)} MB gross - mehr als 2 MB passen nicht in den Spielstand.\n\nKuerzer schneiden oder kleiner exportieren (z. B. 720p, WebM).`);
+    input.value = '';
+    return;
+  }
   const r = new FileReader();
   r.onload = () => {
     const c = jeopardyClue(b,col,row);
