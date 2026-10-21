@@ -12,6 +12,48 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-21 — `9383543` Favicon, 404-Seite — und die Messung, warum `styles.css` bleibt
+
+**David** kam mit einer Checkliste von zwanzig Punkten („custom domain, sitemap, meta descriptions,
+structured data, remove vite + react …“) und der Frage, was davon bei ihm Sinn ergibt. Antwort nach
+Prüfung gegen das Repo: vier Punkte, der Rest ist für Marketing-Seiten gedacht, die gefunden werden
+wollen. Danach: „dann mach die 4 die sich lohnen“.
+
+**Was schon da war** (geprüft, nicht vermutet): eindeutige Titel auf allen fünf echten Seiten;
+`rel="canonical"` in `buzzer.html` (Weiterleitung für alte Netlify-Lesezeichen); `robots: noindex`
+auf `voting/`; **kein React/Vite im Browser** — `vendor/reactbits.js` lädt nur
+`tools/reactbits/demo.html`, und der Ordner fliegt beim Deploy raus (`pages.yml:52`); **null
+Source-Maps**; keine Konsolenfehler (`shots.js` prüft jeden Zustand in 19 Richtungen).
+
+**Gemacht:**
+- `favicon.svg` — das Hub-Logo (`renderIryoHubLogo`) auf 32 px eingedampft: goldenes Achteck, blaues
+  Feld, ein Funke. Die Schrift „IRYO GAMESHOW“ fällt weg, bei 16 px trägt nur die Form.
+  Eingehängt per `<link rel="icon">` in `index.html`, `buzzer/`, `gamepad/`, `mainscreen/`.
+- `404.html` — GitHub Pages liefert sie bei jeder unbekannten Adresse; vorher kam die Octocat-Seite.
+  Zeigt „Falsche Adresse“ und zwei Knöpfe (Buzzer, Show). **Bewusst ohne `styles.css`**: 642 KB für
+  drei Zeilen Text; die paar Regeln stehen inline und sind aus der Klassik-Richtung abgeschrieben.
+
+**Punkt 3 der Liste (`styles.css` aufteilen): gemessen und verworfen.** Roh 642 KB, **gzip 138 KB** —
+und entscheidend: **`buzzer/index.html` lädt sie gar nicht** (sie steht dort nur in einem Kommentar).
+Auf iPhone 15 mit gedrosselten 1,6 Mbit/s: **Buzzer 677 ms** bis `load`, Hostseite 3341 ms. Die
+Gäste sind also längst drin, und der Host lädt einmal zu Beginn des Abends auf seinem eigenen Gerät.
+Die 19 Richtungen aufzutrennen wäre ein großer Umbau an der riskantesten Datei für null spürbaren
+Gewinn. **Nicht machen** — wenn, dann erst wenn eine Messung etwas anderes sagt.
+
+**Punkt 4 (eigene Domain): offen, braucht David.** Eine `CNAME`-Datei im Wurzelverzeichnis ist in
+zwei Minuten angelegt, aber vorher muss die Domain gekauft und beim Anbieter auf
+`iryogameshows.github.io` gezeigt werden (vier A-Records oder ein CNAME auf den Pages-Host). Danach
+in den Repo-Einstellungen „Enforce HTTPS“. Lohnt nur, wenn Gäste die Adresse abtippen statt den
+QR-Code zu scannen.
+
+**Geprüft:** `check.js` sauber. Im Messbrowser: 404-Seite liefert Status **404** mit dem richtigen
+Titel (Bildschirmfoto angesehen), Favicon auf allen vier Seiten verlinkt und mit **200** abrufbar,
+keine Seitenfehler.
+
+**Ungeprüft:** wie das Symbol in einem echten Browser-Tab und auf dem iPhone-Homescreen aussieht
+(nur als Datei und auf der 404-Seite gesehen); ob Safari das SVG-Favicon mag — es kann sein, dass
+dafür noch ein PNG danebengelegt werden muss. Die 404-Seite ist nicht Teil von `shots.js`.
+
 ## 2026-10-21 — `0f5512d` Jeopardy-Video: zwei Befunde aus dem ponytail-Review behoben
 
 **David:** „ja komm mach Befunde 1 und 2“ — aus dem Review von `8716ec1` mit `/ponytail-review`.
