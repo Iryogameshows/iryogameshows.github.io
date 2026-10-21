@@ -40,6 +40,26 @@ function storeSetJson(key, value) {
 }
 function storeRemove(key) { try { localStorage.removeItem(key); } catch {} }
 
+/* Spieldaten aus einem Editor speichern - und laut werden, wenn es nicht
+   geht. Alle Shows teilen sich die rund 5 MB des localStorage; ein einziges
+   Handyfoto oder Video in einem Medienfeld (setMediaSlot verkleinert nicht)
+   reicht, damit das Schreiben scheitert. storeSetJson meldet dann nur false.
+   Bis 2026-10-21 hat das allein wwmSave ausgewertet - bei DDF, TP, WWDS, Feud,
+   Intro und Preis ist heiss standen die Aenderungen im Editor, waren nach dem
+   Neuladen aber still weg. Ein Hinweis je Schluessel und Sitzung reicht: der
+   Editor ruft das bei jedem Tastendruck.
+   @param {string} key @param {any} value @param {string} was  z. B. "Die DDF-Fragen"
+   @returns {boolean} */
+const storeVollGewarnt = new Set();
+function storeSaveData(key, value, was) {
+  const ok = storeSetJson(key, value);
+  if (!ok && !storeVollGewarnt.has(key)) {
+    storeVollGewarnt.add(key);
+    alert(`${was} konnten nicht gespeichert werden - der Speicher ist voll (meist zu große Bilder oder Videos). Nach dem Neuladen wären die Änderungen weg. Tipp: exportieren.`);
+  }
+  return ok;
+}
+
 /* ── Mischen ───────────────────────────────────────────────────────────────
    Fisher-Yates. Der naheliegende Einzeiler sort(() => Math.random() - .5)
    mischt nachweislich schief: Vergleichsfunktionen muessen konsistent sein,
@@ -1616,8 +1636,8 @@ function feudCleanQuestions(list) {
 function importQuestions(e) { importJSON(e, d => { questions = feudCleanQuestions(d); }); }
 function importFinaleQuestions(e) { importJSON(e, d => { finaleQuestions = feudCleanQuestions(d); }); }
 function saveToStorage(){
-  storeSetJson('familyFeudQuestions', questions);
-  storeSetJson('familyFeudFinaleQuestions', finaleQuestions);
+  storeSaveData('familyFeudQuestions', questions, 'Die Feud-Fragen');
+  storeSaveData('familyFeudFinaleQuestions', finaleQuestions, 'Die Feud-Finalfragen');
 }
 function loadFromStorage(){
   const q1 = storeGetJson('familyFeudQuestions', null), q2 = storeGetJson('familyFeudFinaleQuestions', null);

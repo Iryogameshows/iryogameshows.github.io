@@ -764,7 +764,7 @@ function tpBulkAdd(i){
 
 /* ── Speichern ──────────────────────────────────────────────────────────── */
 
-function tpSave(){ storeSetJson('tpData', tpData); }
+function tpSave(){ storeSaveData('tpData', tpData, 'Die Trivial-Pursuit-Fragen'); }
 /* Fragen kommen aus einer Importdatei oder dem localStorage, also von
    ausserhalb. Zeichen und Farbe landen als Markup bzw. in style-Attributen -
    eine Kategorie mit icon:'<img onerror=...>' wuerde sonst Skript ausfuehren.

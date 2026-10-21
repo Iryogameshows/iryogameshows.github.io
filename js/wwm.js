@@ -439,16 +439,9 @@ function wwmNormalize(qs){
    Millionaer-Fragen nur im Arbeitsspeicher: Editor-Aenderungen und Importe
    waren nach dem Neuladen weg. Schlaegt das Speichern fehl (localStorage
    voll, meist wegen grosser Bilder oder Videos), sagt es das einmal - sonst
-   faellt es erst nach dem Neuladen auf. */
-let wwmSaveWarned = false;
-function wwmSave(){
-  const ok = storeSetJson('wwmData', wwmData);
-  if (!ok && !wwmSaveWarned){
-    wwmSaveWarned = true;
-    alert('Die Millionär-Fragen konnten nicht gespeichert werden - der Speicher ist voll (meist zu große Bilder oder Videos). Nach dem Neuladen wären die Änderungen weg. Tipp: exportieren.');
-  }
-  return ok;
-}
+   faellt es erst nach dem Neuladen auf. Die Warnung steckt seit 2026-10-21
+   in storeSaveData (js/core.js) und gilt damit fuer alle Shows. */
+function wwmSave(){ return storeSaveData('wwmData', wwmData, 'Die Millionär-Fragen'); }
 function wwmLoad(){
   const d = storeGetJson('wwmData', null);
   const qs = d && Array.isArray(d.questions) ? wwmNormalize(d.questions) : [];

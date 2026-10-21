@@ -597,11 +597,14 @@ function jeopardySelectClue(b, col, row){ jeopardyEditSel = { b, col, row }; ren
 
 // Kleine Status-Icons einer Frage fürs Board-Gitter.
 function jeopardyCellBadges(clue){
+  // Bild und Video getrennt zaehlen: eine Frage mit Bild zur Frage und Video
+  // zur Loesung zeigte vorher nur 🎬, das Bild war im Raster nicht zu sehen.
+  const istBild = (/** @type {string|undefined} */ s) => !!s && !jeopardyIstVideo(s);
   const hasVid = jeopardyIstVideo(clue.qImg) || jeopardyIstVideo(clue.aImg);
-  const hasImg = clue.qImg || clue.aImg || clue.stageImg || (clue.seriesImgs || []).some(Boolean);
+  const hasImg = istBild(clue.qImg) || istBild(clue.aImg) || clue.stageImg || (clue.seriesImgs || []).some(Boolean);
   let b = '';
   if (hasVid)        b += '<span title="Video">🎬</span>';
-  else if (hasImg)   b += '<span title="Bild">🖼</span>';
+  if (hasImg)        b += '<span title="Bild">🖼</span>';
   if (clue.sound)    b += '<span title="Sound">🔊</span>';
   if (clue.staged)   b += '<span title="Staffeln">🧩</span>';
   if (clue.series)   b += '<span title="Bilder-Reihe">🎴</span>';
@@ -633,9 +636,9 @@ function jeopardyClueEditorHtml(b, col, row){
     <input type="text" placeholder="Frage / Clue" value="${esc(clue.q)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].q=this.value;renderJeopardyEditor()" style="${inp}font-weight:600;margin-bottom:7px;">
     <input type="text" placeholder="Lösung" value="${esc(clue.a)}" onchange="jeopardyData.boards[${b}].categories[${col}].clues[${row}].a=this.value;renderJeopardyEditor()" style="${inp}margin-bottom:9px;">
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-      <label style="${uploadLbl}">🖼 Frage-Bild/Video<input type="file" accept="image/*,video/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'qImg',this)"></label>
+      <label style="${uploadLbl}">🖼 Frage-Bild/Video<input type="file" accept="image/*,video/mp4,video/webm" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'qImg',this)"></label>
       ${jimgThumb(clue,'qImg',b,col,row,'Frage-Bild')}
-      <label style="${uploadLbl}">🖼 Lösungs-Bild/Video<input type="file" accept="image/*,video/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'aImg',this)"></label>
+      <label style="${uploadLbl}">🖼 Lösungs-Bild/Video<input type="file" accept="image/*,video/mp4,video/webm" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'aImg',this)"></label>
       ${jimgThumb(clue,'aImg',b,col,row,'Lösungs-Bild')}
       <label style="${uploadLbl}">🔊 Sound<input type="file" accept="audio/*" style="display:none;" onchange="jeopardyEditImg(${b},${col},${row},'sound',this)"></label>
       ${clue.sound?`<span style="display:inline-flex;align-items:center;gap:5px;font-size:.65rem;color:#22C55E;">🔊 ${escAttr(clue.soundName||'Sound')}<button onclick="jeopardyClearImg(${b},${col},${row},'sound')" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;">✕</button></span>`:''}

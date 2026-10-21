@@ -926,7 +926,7 @@ function importWwds(e){
     renderWwdsEditor(); wwdsSave();
   });
 }
-function wwdsSave(){ storeSetJson('wwdsData', wwdsData); }
+function wwdsSave(){ storeSaveData('wwdsData', wwdsData, 'Die Wer-weiß-denn-sowas-Fragen'); }
 function wwdsLoad(){ wwdsData = storeGetJson('wwdsData', wwdsData); }
 wwdsLoad();
 

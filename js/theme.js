@@ -638,7 +638,6 @@ function themeLogoHtml(key, breite) {
 }
 
 const THEME_STORE_KEY = 'designTheme';
-const THEME_DEFAULT_FONTS = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&display=swap';
 
 /** Gewaehlte Richtung, '' fuer das Studio-Blau. */
 function themeKey() {
@@ -649,13 +648,6 @@ function themeKey() {
  *  @returns {DesignTheme|null} */
 function themeByKey(key) {
   return DESIGN_THEMES.find(t => t.key === key) || null;
-}
-
-/** Schriften-Adresse der Richtung - fuer das eigene Fenster und den Mainscreen.
- *  @param {string} key */
-function themeFontsHref(key) {
-  const t = themeByKey(key);
-  return t ? t.fonts : THEME_DEFAULT_FONTS;
 }
 
 /* Alle Variablen, die irgendeine Richtung setzt. Beim Wechsel wird erst

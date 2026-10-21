@@ -916,7 +916,7 @@ function importPih(e){
 }
 
 /** @returns {boolean} false, wenn der Browser-Speicher voll ist */
-function pihSave(){ return storeSetJson('pihData', pihData); }
+function pihSave(){ return storeSaveData('pihData', pihData, 'Die Artikel (Preis ist heiß)'); }
 function pihLoad(){ pihData = storeGetJson('pihData', pihData); }
 pihLoad();
 

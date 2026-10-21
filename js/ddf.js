@@ -610,7 +610,7 @@ function importDdf(e){
   });
 }
 
-function ddfSave(){ storeSetJson('ddfData', ddfData); }
+function ddfSave(){ storeSaveData('ddfData', ddfData, 'Die Dümmste-fliegt-Fragen'); }
 function ddfLoad(){ ddfData = storeGetJson('ddfData', ddfData); }
 ddfLoad();
 

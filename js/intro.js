@@ -131,7 +131,7 @@ let introData = {
   ],
 };
 
-function introSave(){ storeSetJson('introData', introData); }
+function introSave(){ storeSaveData('introData', introData, 'Die Intros'); }
 /* Importdatei und localStorage sind beide fremde Eingabe: auf die erwartete
    Form bringen (Texte als String, Bühne und Extra aus der Liste, Anzahl
    begrenzt). Erwartet ein Objekt mit einer Liste slides.
