@@ -33,12 +33,19 @@
     ]
   },
   "enabledPlugins": {
+   "ponytail@ponytail": true,
     "caveman@caveman": true,
     "code-review@claude-plugins-official": true,
     "firebase@claude-plugins-official": true,
     "design@knowledge-work-plugins": true
   },
   "extraKnownMarketplaces": {
+     "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    },
     "caveman": {
       "source": {
         "source": "github",

@@ -113,8 +113,13 @@ Quellen: `anthropics/claude-code` (`plugins/frontend-design`),
   den Chat-Text.
 - **ponytail** (seit 2026-10-21, `/ponytail`, Stufe `full`): kleinste Änderung,
   die die Aufgabe ganz löst — kein Vorrat an Abstraktionen, Optionen und
-  Wrappern. Installiert ist es **nur auf diesem Gerät** (Benutzer-Ebene, nicht
-  in `.claude/settings.json`), kommt also nicht per Git mit. Wo es sich mit
+  Wrappern. Seit 2026-10-22 steht es wie caveman in `.claude/settings.json`
+  (`extraKnownMarketplaces` + `enabledPlugins` mit `ponytail@ponytail`) und
+  kommt per Git auf alle Geräte; beim ersten Öffnen fragt Claude Code, ob dem
+  Marketplace vertraut werden soll. **Eingetragen hat das David selbst** — die
+  Umgebung verweigert Claude, die eigene Plugin-Konfiguration zu erweitern
+  („Untrusted Code Integration“ / „Self-Modification“). Bei einem weiteren
+  Plugin also gleich David die zwei Stellen nennen. Wo ponytail sich mit
   dieser Datei reibt, gilt die Regelung direkt darunter.
 
 #### ponytail × CLAUDE.md — was gilt
