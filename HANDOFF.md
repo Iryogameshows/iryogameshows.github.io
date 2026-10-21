@@ -12,6 +12,35 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-21 — `471543f` ponytail installiert, Verhältnis zu den Projektregeln festgelegt
+
+**David:** „installier das bitte“ (https://github.com/DietrichGebert/ponytail), danach „kannst du nen
+Kompromiss finden zwischen ponytail und der md“.
+
+**Zur Installation:** Das Aktivieren über `.claude/settings.json` hat die Sicherheitsprüfung der
+Umgebung abgelehnt („Untrusted Code Integration“) — das Plugin bringt drei Lifecycle-Hooks mit, die
+bei Sessionstart und bei jedem Prompt ein Node-Skript ausführen, und schiebt jeden Zug ein Regelwerk
+in den Kontext. David hat es daraufhin selbst per `/plugin` installiert, **auf Benutzer-Ebene**
+(`~/.claude/plugins/cache/ponytail/ponytail/5.3.2/`). Es steht also **nicht** in
+`.claude/settings.json` und kommt **nicht** per Git auf die anderen Geräte — anders als caveman.
+
+**Gemacht:** In `CLAUDE.md` unter „Wann was benutzen“ ein Eintrag zu ponytail und darunter der
+Abschnitt „ponytail × CLAUDE.md — was gilt“. Kern: ponytail ist für den Code zuständig, diese Datei
+für Prüfen, Melden und Protokoll. Vier Stellen festgeschrieben — `check.js`/`shots.js` bleiben
+Pflicht; ponytails Forderung „ein kleiner Test dazu“ erfüllen genau diese beiden, kein neues
+Testwerkzeug; HANDOFF-Einträge, Commit-Nachrichten und `CLAUDE.md` bleiben ausführlich; die
+Kommentardichte in `js/` bleibt der Haus-Stil (ponytails eigene Regel „Konventionen des
+Codebestands behalten“ deckt das). Ponytails Abschlusszeile geht in die Liste „Offen“.
+
+**Geprüft:** `check.js` sauber. Sonst nichts zu prüfen, es ist eine reine Regeländerung.
+
+**Ungeprüft / Fallstricke:** Was die drei Hook-Skripte (`ponytail-activate.js`,
+`ponytail-subagent.js`, `ponytail-mode-tracker.js`) und `band/register.tsx` tatsächlich tun, ist
+nicht nachgelesen — nur die Hook-Definitionen. Laut `plugin.json` steht `ledger` auf `true`: nach
+jedem Zug wird eine Zeile mit Kosten, Zügen, Tokens und Testergebnis nach
+`~/.config/ponytail/band/<projekt>.csv` geschrieben. `webhookUrl` ist leer, es verlässt also nichts
+das Gerät — ob das so bleibt, ist Davids Einstellung.
+
 ## 2026-10-18 — `8716ec1` Jeopardy: Video als Frage und als Lösung
 
 **David:** „bau schnell ein, dass ich auch Videos als Lösung und Frage machen kann“.
