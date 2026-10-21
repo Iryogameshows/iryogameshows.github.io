@@ -46,14 +46,17 @@ function storeRemove(key) { try { localStorage.removeItem(key); } catch {} }
    reicht, damit das Schreiben scheitert. storeSetJson meldet dann nur false.
    Bis 2026-10-21 hat das allein wwmSave ausgewertet - bei DDF, TP, WWDS, Feud,
    Intro und Preis ist heiss standen die Aenderungen im Editor, waren nach dem
-   Neuladen aber still weg. Ein Hinweis je Schluessel und Sitzung reicht: der
-   Editor ruft das bei jedem Tastendruck.
+   Neuladen aber still weg. Ein Hinweis je Fehlschlag-Strecke reicht: der
+   Editor ruft das bei jedem Tastendruck. Klappt das Speichern wieder (z. B.
+   Video entfernt), wird der Merker frei - sonst bliebe ein spaeteres
+   Scheitern wieder stumm.
    @param {string} key @param {any} value @param {string} was  z. B. "Die DDF-Fragen"
    @returns {boolean} */
 const storeVollGewarnt = new Set();
 function storeSaveData(key, value, was) {
   const ok = storeSetJson(key, value);
-  if (!ok && !storeVollGewarnt.has(key)) {
+  if (ok) storeVollGewarnt.delete(key);
+  else if (!storeVollGewarnt.has(key)) {
     storeVollGewarnt.add(key);
     alert(`${was} konnten nicht gespeichert werden - der Speicher ist voll (meist zu große Bilder oder Videos). Nach dem Neuladen wären die Änderungen weg. Tipp: exportieren.`);
   }
