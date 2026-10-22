@@ -12,6 +12,26 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `86656e8` Struktur-Abschnitt der `CLAUDE.md` angeglichen (erster Codex-Auftrag)
+
+**Gemacht:** Von Codex nach Claudes Prompt, nur lokal; Diff von Claude geprüft und
+committet. `## Struktur` um `js/keller-ton.js`, `js/resume.js`, `tools/keller/`,
+`tools/sprites/` ergänzt; „Alle 14 Dateien in `js/`" → 16.
+
+**Warum so:** Test der neuen Regel „stupide Arbeit an Codex abgeben". Ergebnis: Codex
+blieb im Rahmen — 1 Datei, 5 Zeilen dazu, 1 geändert, keine fremden Abschnitte, nichts
+committet.
+
+**Geprüft (von Claude, nicht nur Codex' Meldung übernommen):** `git diff --stat` 1 Datei;
+die vier Zweckangaben gegen die Dateiköpfe gelesen — stimmen; `node check.js` und
+`node check.js --types` beide „alles in Ordnung", `ls js | wc -l` = 16.
+
+**Offen:** keine.
+
+**Fallstricke:** keine.
+
+---
+
 ## 2026-10-22 — `85f5b67` Codex-Prompt: „nicht committen" als erste Zeile
 
 **David:** „schreib bitte auch immer rein: nicht pushen oder comitten, erst nur lokal."
