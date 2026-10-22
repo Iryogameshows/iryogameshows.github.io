@@ -191,6 +191,9 @@ und ist ohne diese Unterhaltung verständlich:
 - was **nicht** angefasst wird,
 - `node check.js` am Ende, Ergebnis melden,
 - nicht committen und nicht pushen — das prüft und erledigt danach Claude.
+  **Steht als erste Zeile im Prompt**, wörtlich: „Nicht committen, nicht
+  pushen — alles nur lokal." (David, 2026-10-22). Eine Zeile am Ende allein
+  überliest man.
 
 Codex liest `AGENTS.md`, nicht diese Datei. `AGENTS.md` verweist deshalb nur
 hierher, statt eine Kopie zu sein: eine Kopie vom 2026-10-13 lag 9 Tage
