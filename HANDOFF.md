@@ -61,19 +61,33 @@ Dieselbe Einschätzung stand schon im Eintrag zu `471543f`.
 - `installed_plugins.json` enthält `ponytail@ponytail` mit Scope `project` und
   `projectPath` auf dieses Repo.
 - `git status -s` nach dem Commit: nur noch `?? AGENTS.md`.
+- Deploy-Lauf `39728553517` („Deploy static site to GitHub Pages"): `conclusion: success`,
+  `status: completed`. Damit ist der Push live, nicht nur durch.
 
-**Nicht geprüft:** Ob die `/ponytail-*`-Befehle tatsächlich laufen. Die Skill-Liste
-einer Session steht beim Start fest — das neue Plugin erscheint erst in der **nächsten**
-Session. Ebenso ungeprüft, was die Hook-Skripte zur Laufzeit wirklich tun.
+**Korrektur, nachgetragen:** Ich hatte zunächst behauptet, die `/ponytail-*`-Befehle
+erschienen erst in der nächsten Session, weil die Skill-Liste beim Start festgelegt
+wird. **Falsch.** Die Umgebung hat die Liste nach der Installation noch im selben Zug
+neu eingeblendet: `ponytail:ponytail`, `-audit`, `-debt`, `-gain`, `-help`, `-review`
+stehen seitdem zur Verfügung. Die Regel im `CLAUDE.md`-Abschnitt „Geräte-Setup" („Frisch
+installierte Skills erscheinen erst in der nächsten Session") gilt also mindestens für
+Plugins über die CLI nicht mehr durchgehend — sie bleibt ungeändert, bis das zweimal
+bestätigt ist. Im selben Moment wurde auch `plugin:firebase:firebase` nachgeliefert
+(vorher `CONNECT_TIMEOUT` nach 30 000 ms); laut `CLAUDE.md` nur lesend benutzen.
+
+**Nicht geprüft:** Ob ein `/ponytail-*`-Befehl inhaltlich sinnvoll durchläuft — nur die
+Verfügbarkeit in der Liste ist belegt, kein Aufruf gemacht. Ebenso ungeprüft, was die
+Hook-Skripte zur Laufzeit wirklich tun.
 
 **Offen:**
 
-- `/ponytail-*` erst nach Neustart der Session verfügbar.
+- Kein `/ponytail-*`-Befehl tatsächlich aufgerufen.
 - `AGENTS.md` liegt untracked im Wurzelverzeichnis, Herkunft und Zweck unklar — nicht
   von dieser Session angelegt, nicht angefasst.
-- MCP-Server `plugin:firebase:firebase` in dieser Session nicht verbunden
-  (`CONNECT_TIMEOUT` nach 30 000 ms), `plugin:design:asana` ebenfalls nicht
-  („Incompatible auth server: does not support dynamic client registration").
+- MCP-Server `plugin:design:asana` nicht verbunden („Incompatible auth server: does not
+  support dynamic client registration").
+- GitHub-Annotation im Deploy-Lauf: `ubuntu-latest` wandert ab 2026-10-19 auf Ubuntu 26
+  (https://github.com/actions/runner-images/issues/14748). Betrifft
+  `.github/workflows/pages.yml`, bisher ohne Wirkung.
 
 **Fallstricke:** Der Pfad zur gebündelten `claude.exe` enthält Version **und** Hash und
 ändert sich mit jedem Update der Desktop-App — immer per `find` suchen, nie aus einem
