@@ -12,6 +12,35 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `856b25f` Domain `iryo.party` bei GitHub verifiziert, Voll-Token gelöscht
+
+**Gemacht:**
+- David hat das erste Cloudflare-Token (Account-Token mit allen Rechten) selbst gelöscht.
+  Das DNS-Token (`CLOUDFLARE_API_TOKEN`) danach geprüft: `active`.
+- Domain-Verifizierung: David hat in seinem Browser unter github.com/settings/pages
+  (`Iryogameshows`) `iryo.party` hinzugefügt; Claude hat per Cloudflare-API den TXT
+  `_github-pages-challenge-iryogameshows.iryo.party` = `12c0791b0dd23be8af554b1d80896f`
+  angelegt; David hat „Verify" geklickt → verified.
+- `CLAUDE.md` (Deploy): Verifizierung vermerkt, TXT-Eintrag nicht löschen.
+
+**Warum so:** Für die Verifizierung gibt es keine GitHub-API, und das Browser-Pane der App
+hing (Navigation 300 s Timeout, angemeldeter Tab verschwand, Pane ausgeblendet) — deshalb
+der GitHub-Klick-Teil in Davids eigenem Browser. Der TXT-Wert ist kein Geheimnis (steht
+öffentlich im DNS), deshalb hier notiert.
+
+**Geprüft:** `Resolve-DnsName -Type TXT -Server 1.1.1.1` → Wert stimmt.
+`gh api …/pages` → `protected_domain_state=verified`, `cname=iryo.party`,
+`https_enforced=true`. `node check.js` „alles in Ordnung". Aus dem Eintrag zu `f63fb60`
+inzwischen erledigt: `http://iryo.party/` → 301 auf https (nachgeprüft).
+
+**Offen:** Echte Show über die neue Domain nicht gespielt. Graphify-Hinweis in der globalen
+`~/.claude/CLAUDE.md` der anderen Geräte.
+
+**Fallstricke:** Anmeldungen in Davids normalem Browser gelten im Browser-Pane der App
+nicht — es ist ein getrennter Browser.
+
+---
+
 ## 2026-10-22 — `f63fb60` Eigene Domain `iryo.party`
 
 **David:** „ich hab jetzt ne eigene Domain" → `https://iryo.party`, DNS bei Cloudflare.
