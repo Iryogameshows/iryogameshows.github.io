@@ -1422,7 +1422,14 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 }
 .jeopardy-stage img { display: block; width: 100%; height: auto; max-height: 56vh; object-fit: contain; background: var(--brd-well, #05081a); }
 .jeopardy-stage-cover { position: absolute; inset: 0; display: grid; gap: 2px; }
-.jeopardy-stage-tile { background: var(--tile, #0F1B5C); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); transition: opacity .35s ease; }
+/* Die Kachel muss DECKEN. --tile ist in mehreren Richtungen transparent oder
+   halbdurchsichtig (D, J, K, L, M, O, Q - dort kommt das Aussehen der Felder
+   aus Rand oder Pseudo-Elementen), dann lag das ganze Bild offen
+   (David 2026-10-22). Deshalb --bg als deckender Grund, die Kachel-Optik
+   darueber im ::before. Ein zweiter Hintergrund-Layer geht nicht: --tile ist
+   oft eine Farbe, und die darf nur der letzte Layer sein. */
+.jeopardy-stage-tile { position: relative; isolation: isolate; background: var(--bg, #0b0e2c); transition: opacity .35s ease; }
+.jeopardy-stage-tile::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--tile, #0F1B5C); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
 .jeopardy-stage-tile.gone { opacity: 0; }
 /* Bilder-Reihe: mehrere einzelne Bilder nebeneinander, eins nach dem anderen
    aufgedeckt (z.B. 5 Pokémon). Jede Zelle ist erst verdeckt, Klick deckt die
@@ -1441,6 +1448,10 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   transition: opacity .4s ease;
 }
 .jeopardy-series-cell.shown .jeopardy-series-cover { opacity: 0; pointer-events: none; }
+/* Verdecktes Bild gar nicht zeichnen: die Abdeckung hat --tile als Grund, und
+   das ist in mehreren Richtungen transparent - das Bild schien durch (David
+   2026-10-22, Screenshot). Aufgedeckt kommt es ohnehin mit ddPop. */
+.jeopardy-series-cell:not(.shown) img { visibility: hidden; }
 .jeopardy-series-cell.shown img { animation: ddPop .4s ease; }
 /* Schritt-Frage: bis zu 5 Schritte untereinander, die der Host einzeln
    einblendet. Ein Schritt ist eine Zeile, ein Bild oder beides. Noch nicht
