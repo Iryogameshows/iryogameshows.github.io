@@ -273,6 +273,7 @@ js/
                 Geburtstag), Film-Intros Arcade und Primetime (playFilmIntro,
                 reines CSS, Ton per WebAudio), Intro-Editor, Intro-Auswahl
                 je Show (INTRO_SLOTS)
+  keller-ton.js WebAudio-Töne für Design-Richtung T (Keller)
   feud.js       Family Feud
   jeopardy.js   Jeopardy-Logik
   jeopardy-ui.js Jeopardy-Board/Overlays
@@ -284,6 +285,7 @@ js/
   tournament.js Turnier-Modus
   buzzer.js     Firebase-Buzzer, GM-Remote
   roster.js     Teilnehmer-Auswahl (DDF, Preis ist heiß)
+  resume.js     Spielstand sichern und fortsetzen
 buzzer/index.html   Handy-Buzzer
 gamepad/index.html  Handy-Gamepad
 mainscreen/index.html  Zuschauerfenster (bekommt den DOM gespiegelt, führt selbst nichts aus)
@@ -292,8 +294,10 @@ mainscreen/index.html  Zuschauerfenster (bekommt den DOM gespiegelt, führt selb
                 Stadt in Late Night - ebenfalls vom Beamer selbst
 tools/
   intros/       Intro-Labor: 18 Intro-Prototypen, NICHT Teil der Show
+  keller/       Keller-Assets holen und zuschneiden
   reactbits/    Bauwerkzeug für vendor/reactbits.js
   shots/        Screenshot-Prüfung aller Design-Richtungen (siehe unten)
+  sprites/      Pixel-Sprites für Richtung T (Keller) bauen
   durchgang/    Durchgeh-Seite: jede Richtung × jeden Zustand anklickbar
                 ansehen, Urteil und Notiz, Bericht zum Kopieren (siehe unten)
   gemeinsam/    was Werkzeug UND ausgelieferte Seite brauchen (aufbau.js,
@@ -400,7 +404,7 @@ Wichtig: das ist **kein Build-Step**. TypeScript liest nur (`noEmit` in
 werden weiter direkt ausgeliefert. Es gibt nichts zu kompilieren, `git push`
 bleibt der ganze Deploy.
 
-**Alle 14 Dateien in `js/` sind geprüft und melden nichts.** Das ist der
+**Alle 16 Dateien in `js/` sind geprüft und melden nichts.** Das ist der
 Zustand, in dem die Prüfung etwas wert ist: eine neue Meldung gehört dann zur
 Änderung, die gerade gemacht wurde, und niemand muss sie aus einem Rauschen
 von Altlasten heraussuchen.
