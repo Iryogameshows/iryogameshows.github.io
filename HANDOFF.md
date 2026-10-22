@@ -12,6 +12,27 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `9e4d134` localStorage nach Domainwechsel
+
+**Gemacht:** Hinweis in `CLAUDE.md` (Deploy): `localStorage` ist je Domain getrennt; was der
+Host-Browser unter `iryogameshows.github.io` gespeichert hatte, fehlt unter `iryo.party`, und
+github.io leitet sofort um — die alten Daten sind im Browser noch da, aber nicht erreichbar.
+
+**Warum so:** Beim Nachsehen gefunden (Schlüssel u. a. `familyFeudQuestions`, `wwmData`,
+`ddfData`, `pihData`, `tpData`, `wwdsData`, `introData`, `reactionBoard`, `tournamentCache`,
+`liveGame`, `hostNotes`, `designTheme`). David: „Fragen waren keine lokal und Intros gehen
+noch" → keine Rettung nötig. Verworfen: Domain kurz austragen, github.io-Daten sichern,
+wieder eintragen.
+
+**Geprüft:** `node check.js` „alles in Ordnung". Ob es je Show einen Export gibt: nicht
+nachgesehen (nicht mehr nötig).
+
+**Offen:** keine.
+
+**Fallstricke:** Push und Deploy sind unverändert (GitHub Pages); die Domain ist nur DNS.
+
+---
+
 ## 2026-10-22 — `856b25f` Domain `iryo.party` bei GitHub verifiziert, Voll-Token gelöscht
 
 **Gemacht:**
