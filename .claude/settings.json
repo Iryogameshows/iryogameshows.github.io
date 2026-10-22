@@ -33,14 +33,14 @@
     ]
   },
   "enabledPlugins": {
-   "ponytail@ponytail": true,
+    "ponytail@ponytail": true,
     "caveman@caveman": true,
     "code-review@claude-plugins-official": true,
     "firebase@claude-plugins-official": true,
     "design@knowledge-work-plugins": true
   },
   "extraKnownMarketplaces": {
-     "ponytail": {
+    "ponytail": {
       "source": {
         "source": "github",
         "repo": "DietrichGebert/ponytail"
