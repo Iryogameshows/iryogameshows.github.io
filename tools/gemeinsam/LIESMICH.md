@@ -29,7 +29,7 @@ braucht ein Token mit `workflow`-Recht, das hier keiner hat (siehe `CLAUDE.md`).
 Wer hier etwas ablegt, prüft nach dem Deploy, dass es wirklich ankommt:
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://iryogameshows.github.io/tools/gemeinsam/aufbau.js
+curl -s -o /dev/null -w "%{http_code}\n" https://iryo.party/tools/gemeinsam/aufbau.js
 ```
 
 Und wer eine Datei aus `tools/shots/` in einer **Seite** verlinkt, verschiebt

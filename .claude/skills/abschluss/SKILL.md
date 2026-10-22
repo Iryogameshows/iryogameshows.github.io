@@ -38,7 +38,7 @@ ohne HANDOFF-Eintrag und ohne nachgewiesenen Deploy ist nicht fertig.
    `gh run list --limit 1` bzw. `gh run watch`. Ohne `gh`: die Action-API
    `https://api.github.com/repos/Iryogameshows/iryogameshows.github.io/actions/runs?per_page=1`
    (Hash und `conclusion`). Dazu eine Stichprobe der Live-Datei
-   (`curl -s https://iryogameshows.github.io/<datei> | grep -c <marker>`).
+   (`curl -s https://iryo.party/<datei> | grep -c <marker>`).
 3. Schlaegt der Lauf fehl, ist der Schritt nicht fertig: Ursache suchen,
    melden.
 

@@ -224,7 +224,7 @@ Eine Änderung an einem Spiel geht in die jeweilige `js/`-Datei, nicht in `index
 ### Intro-Labor (`tools/intros/`)
 
 Eigenständige Seiten zum Ausprobieren, live unter
-https://iryogameshows.github.io/tools/intros/. Je Intro ein Ordner mit
+https://iryo.party/tools/intros/. Je Intro ein Ordner mit
 `index.html`; gemeinsam nur `lab.js`/`lab.css` (Texte `Lab.SHOW`, Bedienleiste,
 Ton-Baukasten `Lab.Ton` per WebAudio, Explosions-Baustein).
 
@@ -356,14 +356,14 @@ Bis dahin auch `pages.yml` nicht ändern — der Push würde abgelehnt.
 ## Durchgeh-Seite (`tools/durchgang/`)
 
 `http://localhost:3000/tools/durchgang/` oder live unter
-https://iryogameshows.github.io/tools/durchgang/; nicht per `file://`.
+https://iryo.party/tools/durchgang/; nicht per `file://`.
 Oben das Zuschauerfenster, unten die echte Hostseite, anklickbar; je Schritt
 Urteil und Notiz (`←` `→` `1` `2`, Stand im `localStorage`), Knopf **Bericht**.
 
 - **Was eine Seite lädt, muss in einem Ordner liegen, den der Deploy behält.**
   `pages.yml` entfernt `tools/shots` und `tools/reactbits`; am 2026-10-17 war
   deshalb live alles 404. Nach Deploy prüfen:
-  `curl -s -o /dev/null -w "%{http_code}\n" https://iryogameshows.github.io/tools/gemeinsam/aufbau.js`
+  `curl -s -o /dev/null -w "%{http_code}\n" https://iryo.party/tools/gemeinsam/aufbau.js`
 - Beamer-Animationen (`aufdecken.js`, Bauchbinde, `buehne.js`) sieht man nur im
   oberen Rahmen. Angeheftet über `opener` + `boardReattach`.
 - Die Spiegelung hängt an `requestAnimationFrame` (`scheduleBoardMirror`,
@@ -377,7 +377,19 @@ Urteil und Notiz (`←` `→` `1` `2`, Stand im `localStorage`), Knopf **Bericht
 
 ## Deploy
 
-Push auf `master` → `.github/workflows/pages.yml` → https://iryogameshows.github.io/
+Push auf `master` → `.github/workflows/pages.yml` → **https://iryo.party/**
+
+Eigene Domain seit 2026-10-22. `iryogameshows.github.io` leitet per 301 dorthin
+um, alte QR-Codes und Links gehen weiter. Eingetragen in den Pages-Einstellungen
+(`gh api repos/Iryogameshows/iryogameshows.github.io/pages` → `cname`), **nicht**
+per `CNAME`-Datei — die wirkt bei `build_type: workflow` nicht.
+
+DNS liegt bei **Cloudflare**: 4× `A` und 4× `AAAA` auf die GitHub-Pages-Adressen
+(`185.199.108–111.153`, `2606:50c0:8000–8003::153`), `CNAME www` →
+`iryogameshows.github.io`. Alle **DNS only** (graue Wolke) — mit Cloudflare-Proxy
+stellt GitHub kein Zertifikat aus. API-Token „Edit zone DNS", nur Zone
+`iryo.party`, liegt auf Davids Rechner als Benutzervariable
+`CLOUDFLARE_API_TOKEN`. Nie in Chat, Datei oder Commit schreiben.
 
 ## Commit und Push — automatisch, ohne Rückfrage
 

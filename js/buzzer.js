@@ -21,7 +21,7 @@ const BUZZER_URL = storeGet('buzzerUrl') || 'http://localhost:3777';
 // Wo die Seite oeffentlich liegt. Wird nur gebraucht, wenn index.html lokal per
 // Doppelklick geoeffnet wurde - dann gibt es kein location.origin, aus dem sich
 // die Buzzer-Adresse fuer den QR-Code ableiten liesse.
-const SITE_URL = 'https://iryogameshows.github.io';
+const SITE_URL = 'https://iryo.party';
 const BUZZER_FALLBACK_URL = SITE_URL + '/buzzer';
 let jeopardyBuzzer = {
   armed: false, start: 0, results: [], keys: ['a', 'l', 'b'],
