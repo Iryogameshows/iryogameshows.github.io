@@ -12,6 +12,65 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `f63fb60` Eigene Domain `iryo.party`
+
+**David:** „ich hab jetzt ne eigene Domain" → `https://iryo.party`, DNS bei Cloudflare.
+
+**Gemacht:**
+- Cloudflare-API (Token „Edit zone DNS", nur Zone `iryo.party`, von David per Popup als
+  Benutzervariable `CLOUDFLARE_API_TOKEN` gesetzt — Claude hat den Wert nie gesehen):
+  4× `A` `185.199.108–111.153`, 4× `AAAA` `2606:50c0:8000–8003::153`, `CNAME www` →
+  `iryogameshows.github.io`, alle `proxied=false`. Zone-ID `863c336ae7f8010448526a173688af8f`.
+- GitHub: `gh api -X PUT …/pages -f cname=iryo.party`, danach `-F https_enforced=true`.
+- Code: `SITE_URL` in `js/buzzer.js` → `https://iryo.party`. Doku: `CLAUDE.md` (Intro-Labor-,
+  Durchgang-, Prüf-URL, Deploy-Abschnitt samt DNS-Aufbau), `FIREBASE-ANLEITUNG.md`,
+  `tools/gemeinsam/LIESMICH.md`, `/abschluss`-Skill (Live-`curl`).
+- Außerhalb des Repos: `~/.claude/skills/graphify/` gelöscht (David: „ja").
+
+**Warum so:**
+- Domain erst bei GitHub eingetragen, **nachdem** DNS auflöste: ab dem Eintrag leitet
+  github.io auf die neue Domain um — ohne DNS wäre die Seite samt Handy-Buzzer weg gewesen.
+- Keine `CNAME`-Datei: bei `build_type: workflow` zählt nur die Pages-Einstellung.
+- DNS only statt Cloudflare-Proxy: sonst kein GitHub-Zertifikat.
+- Erstes Token (Account-Token, per Mehrfachauswahl alle Rechte) hatte kein Zone-DNS-Recht
+  (`code 10000 Authentication error`) und war viel zu weit; ersetzt durch Vorlage
+  „Edit zone DNS" über My Profile → API Tokens.
+- Nicht ersetzt: Stellen, die das **Repo** meinen (API-URL `repos/Iryogameshows/
+  iryogameshows.github.io` im abschluss-Skill, „öffentliches Repo" in
+  `assets/t/LIESMICH.md` und `tools/sprites/bau.js`).
+- Kleinkram trotz Codex-Regel selbst gemacht: 7 Ersetzungen, verzahnt mit der
+  DNS-Prüfung — ein Codex-Umlauf hätte mehr gekostet.
+
+**Geprüft:**
+- `nslookup iryo.party 1.1.1.1` → die vier A-Adressen; `www` → Alias.
+- Pages-API: `cname: iryo.party`, Zertifikat `approved` (bis 2027-01-20, `iryo.party` +
+  `www`), `https_enforced: true`.
+- `curl` 3 Durchläufe: `https://iryo.party/` 200, `/buzzer/` 200,
+  `https://www.iryo.party/` 301 → apex, `https://iryogameshows.github.io/buzzer/` 301 →
+  `https://iryo.party/buzzer/`. Erste Versuche direkt nach dem Eintragen: `000`
+  (schannel), nach ~2 min weg.
+- Browser-Pane `https://iryo.party/buzzer/`: keine Konsolenfehler, Firebase
+  `.info/connected` = `connected` (nur gelesen, nichts geschrieben).
+- `node check.js` „alles in Ordnung".
+
+**Offen:**
+- `http://iryo.party/` lieferte zum Prüfzeitpunkt noch 200 statt Umleitung auf https —
+  vermutlich Verzögerung nach `https_enforced`, nicht nachgeprüft.
+- Domain-Verifizierung bei GitHub (TXT `_github-pages-challenge-Iryogameshows`) nicht
+  eingerichtet — schützt vor Übernahme der Domain durch fremde Pages-Repos; Wert gibt es
+  nur in Davids GitHub-Einstellungen.
+- Erstes Cloudflare-Token mit allen Account-Rechten: David gebeten zu löschen —
+  nicht bestätigt.
+- Echte Show über die neue Domain (Host + Handys) nicht gespielt; nur Buzzer-Seite geladen.
+- Globale `~/.claude/CLAUDE.md` auf den **anderen** Geräten enthält noch den
+  graphify-Hinweis — dort beim nächsten Start entfernen (David: „ja").
+
+**Fallstricke:** Cloudflares neue Rechte-Auswahl bei **Account**-Tokens zeigt keine
+Zone-DNS-Rechte — das passende Token entsteht nur über My Profile → API Tokens.
+`curl` unter Windows (schannel) meldete kurz nach Zertifikatsausgabe `000`/Exit 60.
+
+---
+
 ## 2026-10-22 — `c0aab50` HANDOFF aufgeteilt, handoff-Skill korrigiert, graphify global raus
 
 **Gemacht:**
