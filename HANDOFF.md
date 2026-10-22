@@ -12,6 +12,76 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `cd20075` ponytail auf diesem Gerät nachinstalliert
+
+**David:** „und ponytail?" — nach dem Nachziehen von 38 Commits auf `476f5cc`.
+
+**Befund:** `ponytail@ponytail` stand in `.claude/settings.json` (seit `c930e2e`), war auf
+diesem Gerät aber **nicht installiert**: kein Eintrag in
+`~/.claude/plugins/installed_plugins.json`, kein Marketplace in
+`known_marketplaces.json`, kein Ordner unter `~/.claude/plugins/cache/ponytail/`. Die
+Session-Skill-Liste enthielt dementsprechend keine `/ponytail-*`-Befehle. Grund: die
+Installation vom 2026-10-21 (`471543f`) lief auf Benutzer-Ebene auf einem **anderen**
+Rechner; `settings.json` kommt per Git mit, der Plugin-Cache nicht.
+
+**Gemacht:** Mit der gebündelten CLI aus der Desktop-App
+(`AppData/Roaming/Claude/claude-code/2.1.299/f0584be0fbaf/claude.exe`, Pfad frisch per
+`find` gesucht — Version wechselt mit Updates):
+
+```
+claude.exe plugin marketplace add DietrichGebert/ponytail
+claude.exe plugin install ponytail@ponytail --scope project
+```
+
+Scope `project`, nicht `user`, weil `enabledPlugins` in der Projekt-Datei steht und das
+Plugin nur hier gebraucht wird. Ergebnis: Version `5.3.2`, Commit
+`09c434ab73ca43761c5d8b0c5d341926c2fba710`, Cache unter
+`~/.claude/plugins/cache/ponytail/ponytail/5.3.2`.
+
+Dabei fiel die schiefe Einrückung der beiden ponytail-Schlüssel in `settings.json` auf
+(drei bzw. fünf Leerzeichen statt vier) — angeglichen, das ist der ganze Inhalt von
+`cd20075`. Kein Verhalten geändert.
+
+**Warum so:** Nicht gefragt, sondern direkt nachinstalliert — `CLAUDE.md`, Abschnitt
+„Geräte-Setup", weist das ausdrücklich an (Davids Anweisung 2026-10-09). Verworfen: auf
+die Vertrauensfrage beim nächsten Projekt-Öffnen warten. Die kam auf diesem Gerät
+offenbar nicht oder wurde weggeklickt, sonst wäre das Plugin da.
+
+**userConfig bewusst auf Standard gelassen.** Die CLI meldet „4 userConfig options not
+yet set". Die vier sind `ledger` (Standard `true`, schreibt je Zug eine Zeile nach
+`~/.config/ponytail/band/<projekt>.csv`), `webhookUrl` (Standard leer), `webhookToken`
+(leer) und `sendNames` (`true`). Mit leerem `webhookUrl` verlässt nichts das Gerät —
+geprüft durch Lesen von `plugin.json`, nicht durch Mitschneiden des Netzverkehrs.
+Dieselbe Einschätzung stand schon im Eintrag zu `471543f`.
+
+**Geprüft:**
+
+- `node check.js`: 16 js-Dateien, 442 Handler gegen 942 Namen, 303 Element-IDs gegen
+  244 im Markup (53 zur Laufzeit), `styles.css` 4532 Klammernpaare — „alles in Ordnung".
+- `installed_plugins.json` enthält `ponytail@ponytail` mit Scope `project` und
+  `projectPath` auf dieses Repo.
+- `git status -s` nach dem Commit: nur noch `?? AGENTS.md`.
+
+**Nicht geprüft:** Ob die `/ponytail-*`-Befehle tatsächlich laufen. Die Skill-Liste
+einer Session steht beim Start fest — das neue Plugin erscheint erst in der **nächsten**
+Session. Ebenso ungeprüft, was die Hook-Skripte zur Laufzeit wirklich tun.
+
+**Offen:**
+
+- `/ponytail-*` erst nach Neustart der Session verfügbar.
+- `AGENTS.md` liegt untracked im Wurzelverzeichnis, Herkunft und Zweck unklar — nicht
+  von dieser Session angelegt, nicht angefasst.
+- MCP-Server `plugin:firebase:firebase` in dieser Session nicht verbunden
+  (`CONNECT_TIMEOUT` nach 30 000 ms), `plugin:design:asana` ebenfalls nicht
+  („Incompatible auth server: does not support dynamic client registration").
+
+**Fallstricke:** Der Pfad zur gebündelten `claude.exe` enthält Version **und** Hash und
+ändert sich mit jedem Update der Desktop-App — immer per `find` suchen, nie aus einem
+alten Eintrag übernehmen. Hier war es `2.1.299/f0584be0fbaf`, parallel lag noch
+`2.1.295/d2e29494ec83`.
+
+---
+
 ## 2026-10-22 — `c930e2e` ponytail in den Projekt-Settings
 
 **David** hat auf Anleitung `.claude/settings.json` selbst erweitert: `"ponytail@ponytail": true`
