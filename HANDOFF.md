@@ -12,6 +12,51 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `13a9bee` graphify entfernt · `0de9481` CLAUDE.md gestrafft
+
+**David:** „ja dann weg mit graphify, straff die md und gib mir den prompt" — nach der
+Frage, ob die Code-Struktur verbessert werden kann und ob graphify Tokens spart.
+
+**Gemacht:**
+- `13a9bee`: `git rm -r graphify-out` (279 eingecheckte Cache-Dateien + `manifest.json`),
+  lokalen Ordner gelöscht (u. a. `graph.json` 2,0 MB, `GRAPH_REPORT.md`), Block in
+  `.gitignore` entfernt.
+- `0de9481`: `CLAUDE.md` von 737 auf 458 Zeilen, 38 689 → 22 026 Bytes (≈ 10 k → 5,5 k
+  Tokens je Session). Keine Regel gestrichen.
+
+**Warum so:**
+- graphify: `cost.json` — Bau am 2026-10-12 kostete 2 912 247 Input-Tokens; seitdem 58
+  Commits an `js/`/`styles.css`/`index.html`; viele der 110 Communities waren
+  `vendor/`-Bündel (ReactBits A–G, GSAP, Lenis). `grep` über ~27 000 Zeilen eigenen Code
+  kostet wenige hundert Tokens. Verworfen: `--update` (kostet wieder, ohne Mehrwert).
+- CLAUDE.md: gestrichen wurden Wiederholungen (Warum-Geschichten doppelt, Antwortformat
+  dreimal erklärt), Zählstände aus der Umbauzeit („160-mal `getElementById`"),
+  Statusmeldungen („Stand 2026-10-10 `dffe0bd`", „Stand 2026-10-13"), die
+  AGENTS.md-Vorgeschichte. **Nicht** auf `../CLAUDE.md` ausgelagert: die liegt
+  unversioniert in `Documents/Coding`, kommt nicht auf andere Geräte, und Codex liest sie
+  nicht.
+- Ergänzt: Hook `commit-gate.js` in der Hook-Liste (fehlte); `pruefungen.yml` klar als
+  „nicht auf GitHub" (`git ls-files .github/workflows` = nur `pages.yml`, lokal auch keine
+  `pruefungen.yml`); Hinweis, `pages.yml` nicht ohne `workflow`-Recht zu ändern.
+- Abschnittsnamen „Antwortformat" und „Commit und Push" bleiben — `.claude/skills/abschluss`
+  und `handoff` verweisen darauf.
+
+**Geprüft:** `node check.js` „alles in Ordnung" vor beiden Commits. `grep -i graphify`
+über `*.md/*.json/*.js/*.yml` (ohne HANDOFF): nur noch `pages.yml` Zeile 45–52.
+
+**Offen:**
+- `pages.yml` enthält weiter `rm -rf graphify-out` und einen Kommentar dazu — harmlos,
+  nicht änderbar ohne `workflow`-Recht.
+- Globale `~/.claude/CLAUDE.md` nennt graphify weiter (gilt für alle Projekte, nicht
+  angefasst).
+- `.claude/skills/handoff/SKILL.md` Zeile 55 zitiert die alte Regel „automatisch, außer bei
+  großen Änderungen" — veraltet, nicht angefasst.
+- `HANDOFF.md` (588 KB) archivieren: Codex-Prompt an David übergeben, Ergebnis steht aus.
+
+**Fallstricke:** keine.
+
+---
+
 ## 2026-10-22 — `86656e8` Struktur-Abschnitt der `CLAUDE.md` angeglichen (erster Codex-Auftrag)
 
 **Gemacht:** Von Codex nach Claudes Prompt, nur lokal; Diff von Claude geprüft und
