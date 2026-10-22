@@ -391,6 +391,11 @@ stellt GitHub kein Zertifikat aus. API-Token „Edit zone DNS", nur Zone
 `iryo.party`, liegt auf Davids Rechner als Benutzervariable
 `CLOUDFLARE_API_TOKEN`. Nie in Chat, Datei oder Commit schreiben.
 
+Domain bei GitHub verifiziert (Konto `Iryogameshows`, `protected_domain_state:
+verified`) über TXT `_github-pages-challenge-iryogameshows.iryo.party`. **Den
+TXT-Eintrag nicht löschen** — GitHub prüft ihn wiederholt; fehlt er, verfällt
+der Schutz vor fremden Pages-Repos auf dieser Domain.
+
 ## Commit und Push — automatisch, ohne Rückfrage
 
 Anweisung von David (2026-10-08, bekräftigt 2026-10-13): Commit und Push ohne
