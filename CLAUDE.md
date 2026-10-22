@@ -396,6 +396,11 @@ verified`) über TXT `_github-pages-challenge-iryogameshows.iryo.party`. **Den
 TXT-Eintrag nicht löschen** — GitHub prüft ihn wiederholt; fehlt er, verfällt
 der Schutz vor fremden Pages-Repos auf dieser Domain.
 
+`localStorage` gilt je Domain: was der Host-Browser unter github.io gespeichert
+hatte (`designTheme`, `hostNotes`, `liveGame`, lokal angelegte Sets), ist unter
+`iryo.party` nicht da. Laut David 2026-10-22 unkritisch — Fragen kamen nicht aus
+dem Browser, Intros gehen. Bei einem weiteren Domainwechsel vorher daran denken.
+
 ## Commit und Push — automatisch, ohne Rückfrage
 
 Anweisung von David (2026-10-08, bekräftigt 2026-10-13): Commit und Push ohne
