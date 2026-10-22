@@ -409,6 +409,11 @@ Beginn jedes Zuges.
 Wird **mitgeschrieben, nicht nachgepflegt**; gehört zur Änderung wie Code und
 Prüfung. Kein Eintrag = Arbeitsschritt nicht fertig.
 
+`HANDOFF.md` hält die jüngsten Einträge und die TODO-Liste; ältere stehen in
+`HANDOFF-archiv.md` (getrennt 2026-10-22, vorher 588 KB). Wird die HANDOFF
+wieder deutlich über ~30 Einträge lang, die ältesten ins Archiv verschieben —
+das ist ein Codex-Auftrag.
+
 1. Eintrag **oben**, Datum und Commit-Hash in der Überschrift. Hash erst nach
    dem Commit bekannt → Code committen, dann Eintrag als eigener Commit.
 2. Je Eintrag: **Gemacht · Warum so (samt verworfener Wege) · Geprüft (mit

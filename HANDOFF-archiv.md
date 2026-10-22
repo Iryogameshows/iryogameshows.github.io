@@ -1,0 +1,9417 @@
+# Handoff-Archiv
+
+Ältere Einträge aus `HANDOFF.md`, neueste oben. Gilt als veraltet, bis gegen das Repo geprüft.
+
+---
+
+## 2026-10-17 — `72f8228` Prüfwerkzeuge liefen nicht mehr: Edge 155 vs. `--headless=old`
+
+**Gemacht:** `playwright-core` von 1.48.2 auf **1.64.1**; neue Datei
+`tools/shots/browser.js` mit der Browser-Wahl; `shots.js`, `ablauf.js` und `geraete.js`
+nutzen sie; `CLAUDE.md` auf `npx playwright@1.64.1 install webkit`.
+
+**Der Vorgang.** `ablauf.js` lief um 12:30 noch durch (49 OK). Eine halbe Stunde später
+brach **jeder** Start ab: `browserType.launch: Target page, context or browser has been
+closed`, der Edge-Prozess beendete sich sofort mit `exitCode=0`. Dazwischen hat sich **Edge
+im Hintergrund auf 155 aktualisiert**. Playwright 1.48.2 startet mit `--headless=old`, und
+den alten Headless-Modus hat Chromium **ab Version 132 entfernt**. `--disable-component-update`
+in der Startzeile verhindert nur Updates im gestarteten Prozess, nicht den Edge-Updater.
+
+**Verworfen: Playwrights mitgebrachter Chromium.** Naheliegend, weil er zur
+Playwright-Version gehört und keine Updates nachzieht — `npx playwright@1.48.2 install
+chromium` lud ihn (Version 130, `ms-playwright/chromium-1140`). Er **startet auf diesem
+Rechner nicht**: „Diese Anwendung konnte nicht gestartet werden, da die
+Side-by-Side-Konfiguration ungültig ist" — die Visual-C++-Runtime fehlt, die Chrome und Edge
+selbst mitbringen. Deshalb steht er in `browser.js` hinten als Rückfall, und das Problem ist
+über die Playwright-Version gelöst. **Der Download liegt ungenutzt unter
+`%LOCALAPPDATA%\ms-playwright\chromium-1140` (rund 150 MB)** — kann weg, ich habe nichts
+gelöscht.
+
+**Warum `browser.js`.** Die Kandidatenliste stand dreimal im Code (`shots.js:78`,
+`ablauf.js:34`, `geraete.js:48`), jedes Mal etwas anders. Jetzt an einer Stelle, mit diesem
+Vorgang als Kommentar daneben — damit beim nächsten Browser-Update nicht wieder geraten wird.
+
+**Geprüft (alles nach dem Update):**
+
+- `node shots.js --shows gm` über **alle 19 Richtungen** → keine Befunde, Kontaktbogen
+  angesehen.
+- `node ablauf.js` → **49 OK, 0 FEHL** (gleiche Zahl wie unter 1.48.2, keine API-Regression).
+- `node geraete.js` → **55 OK, 0 FEHL**. Dafür einmalig
+  `npx playwright@1.64.1 install webkit`.
+- `node check.js` und `node check.js --types` → sauber.
+
+**Fallstricke.** `tools/shots/node_modules` ist nicht eingecheckt und fehlte hier ganz —
+`cd tools/shots && npm install`. Tritt der Startfehler wieder auf, ist zuerst die
+Browser-Version gegen die Playwright-Version zu prüfen, nicht der Code.
+
+## 2026-10-17 — `7d859d6` Menü-Panel mittig und auf hellen Richtungen lesbar
+
+**Gemacht:** Zwei Befunde aus dem Kontaktbogen zu `f9c02b4`, plus der Zustand **`gm-menu`**
+in `shots.js` (im Commit davor).
+
+1. Das Panel saß im `gm-body`-Raster, das für ein volles Spielpanel gebaut ist — unten blieben
+   **zwei Drittel leer**. Jetzt eine schmale mittige Spalte (`.mitte`, `max-width: 400px`),
+   nach dem Vorbild von `updateGamemasterOverlay`, das ebenfalls ein Zustands- und kein
+   Steuerpanel ist.
+2. `.leer` setzte **festes Weiß**. Die hellen Richtungen setzen `color-scheme: light`
+   (`themeGmHtml`) — dort stand weißer Text auf Creme und war in **C, F, L, N und Q** kaum zu
+   lesen. Jetzt `opacity: .62` statt fester Farbe, die Schriftfarbe der Richtung bleibt.
+
+**`gm-menu`:** baut Jeopardy auf und ruft dann `gmQuitShow()`, statt `updateGamemasterMenu()`
+direkt aufzurufen. Der Fehler aus `f9c02b4` lag genau dazwischen — das Panel behielt nach dem
+Beenden den alten Inhalt. Nur der echte Weg zeigt, ob er weg ist. Dafür wurde aus
+`show === 'gm'` die Menge `GM_SHOWS` (vier Stellen), und `gm-menu` steht in `HOST_SEITEN`:
+das Panel kommt nicht auf den Beamer, die Höhenprüfung gilt dort nicht.
+
+**Geprüft:** `node shots.js --shows gm-menu` über **alle 19 Richtungen** → keine Befunde,
+Kontaktbogen `bogen-gm-menu.png` vor und nach der Änderung angesehen. `node check.js` und
+`--types` sauber, `node ablauf.js` 49 OK / 0 FEHL.
+
+**Offen:** Richtung **L** (Serifen auf Creme) ist lesbar, aber weiter die blasseste — nicht
+nachgemessen, nur angesehen. Das Panel ist nur bei 1280×720 geprüft, nicht bei 1920×1080.
+Der Knopf „Turnierstand" erscheint nur mit laufendem Turnier und war in keinem Bild dabei.
+`toggleJeopardyQR()` außerhalb von Jeopardy ist **nicht ausgelöst** worden — der Name ist alt,
+der Knopf steht in mehreren Panels.
+
+## 2026-10-17 — `f9c02b4` GM-Panel nach „Beenden": Menü statt alter Show-Steuerung
+
+**Gemacht:** Davids Befund — „wenn der Host Spiel beendet, kommt man nicht gleich ins Menü,
+sondern es öffnet sich erst die Frage 1 bei Jeopardy". Drei kleine Änderungen:
+
+1. **`updateGamemasterMenu()`** (`js/feud.js`, neben den anderen GM-Panels): Panel für
+   „keine Show läuft" — Hinweis, Notizen, QR-Knopf, Turnierstand-Knopf wenn `tournament` steht.
+2. **`updateGamemaster()`**: neuer Zweig `if (screenActive('menu-screen')) return
+   updateGamemasterMenu();` **vor** den Spiel-Flags.
+3. **`commitGamemasterHtml(html, ohneQuit)`** (`js/buzzer.js`): zweiter Parameter, mit dem
+   `gmInsertQuit` übersprungen wird. Ein „⏹ Beenden" im Menü-Panel hätte nichts zu beenden.
+
+**Warum so.** Die **erste Vermutung war falsch** und ist widerlegt worden, bevor Code
+entstand: `gmQuitShow()` entfernt die Overlays mit `.remove()`, bricht aber die Timer in
+`closeOverlay`/`fadeOutBackdrop` (`js/core.js`) nicht ab — naheliegend war also ein
+nachlaufender Callback, der `showScreen('jeopardy-screen')` ruft. Ein Messskript über beide
+Phasen (Beenden im Intro, Beenden bei offener Frage) zeigte im Hauptfenster aber **sofort
+`menu-screen`, über 2,5 s stabil, kein Nachlauf**. Die Timer-Theorie ist damit vom Tisch; es
+wurde nichts dafür gebaut.
+
+Das erste Skript lief mit `window.open = () => null` (aus `ablauf.js` übernommen) und sah das
+GM-Panel deshalb nicht. Zweites Skript, diesmal in das **iframe `#gm-embed-frame`** gelesen —
+das Panel ist kein Popup, also messbar. Vor dem Beenden standen dort die Jeopardy-Knöpfe, **nach
+dem Beenden dieselben**, nur `sichtbar: false`. Ursache: `showScreen` (`js/core.js:978`) nimmt
+beim Menü nur die Klasse `visible` weg und leert das iframe nicht, und `updateGamemaster()` hat
+für „alle Flags aus, Menü steht" keinen Zweig — die Kette fällt bis zum Feud-Fallback durch, wo
+`if (!q) return;` wortlos aussteigt und den letzten Inhalt stehen lässt. Der Kommentar über
+`result-screen` beschreibt genau diese Falle für einen anderen Fall; hier fehlte sie noch.
+
+Der Zweig prüft **den Screen, nicht die Flags**: steht `menu-screen`, läuft definitiv keine
+Show, egal welches Flag noch gesetzt ist. Er muss vor die Spiel-Flags, sonst gewinnt ein
+liegengebliebenes `active`. Verworfen: das iframe in `gmQuitShow()` zu leeren — dann wäre das
+Panel beim nächsten Öffnen für einen Moment weiß, und der Weg über `showScreen` (Menü aus dem
+Spiel heraus, ohne Beenden) wäre weiter offen geblieben.
+
+**Mitgenommen:** `commitGamemasterHtml` schickt das HTML per `pushGamemasterHtmlToFirebase`
+auch ans **Handy-Gamepad**. Der alte Inhalt stand also auf beiden Geräten; der neue Zweig
+räumt beide auf.
+
+**Geprüft:**
+
+- Eigenes Messskript (Scratchpad, nicht im Repo), beide Phasen, GM-Panel im iframe gelesen:
+  **vorher** Jeopardy-Knöpfe inkl. „👁 Frage aufdecken" → **nachher** nur noch das Menü-Panel
+  mit „📱 QR-Code".
+- `node check.js` → sauber (442 Handler, 303 IDs, `styles.css` 4495 Klammernpaare).
+- `node check.js --types` → **15 Dateien, keine Meldung.**
+- `node ablauf.js` → **49 OK, 0 FEHL**, darunter „Gamepad Beenden: Host im Menü, keine Show"
+  und „keine JS-Fehler" auf Host, Handy und Gamepad.
+
+**Ungeprüft:** das Aussehen des neuen Panels in den 19 Design-Richtungen (`shots.js` hat
+dafür keinen Zustand — es gibt keinen Screenshot-Fall „Menü-Panel"), der echte Beamer, und ob
+`toggleJeopardyQR()` außerhalb von Jeopardy das Erwartete tut; der Name ist alt, der Knopf
+steht in mehreren Panels, aufgerufen wurde er in dieser Lage nicht.
+
+**Fallstricke.**
+
+- `tools/shots/node_modules` fehlte auf diesem Rechner (nicht eingecheckt). `cd tools/shots &&
+  npm install` holt `playwright-core` 1.48.2 nach — steht so im Kopf von `shots.js`, dauert
+  4 s.
+- Beim Messen von GM-Panels **nicht** `window.open = () => null` setzen und dann glauben, man
+  sähe das Panel. Es ist ein iframe; die Blockade betrifft es nicht, aber sie verdeckte in
+  Lauf 1, dass es überhaupt um das Panel geht.
+
+**Zum Repo-Stand bei Sitzungsbeginn:** lokal 274 Commits zurück, dazu 50 uncommittete Zeilen in
+`styles.css` („Politur je Richtung (Material)", nur Richtung I). Nach dem Vorspulen gab es
+Konflikt. Die Arbeit liegt in `origin/master` längst fertig vor — Block „Material je
+Design-Richtung" ab Zeile 3862, rund 4850 Zeilen, allein 270 Regeln für `data-theme="I"`. Der
+lokale Entwurf war also ein überholter Vorläufer. `styles.css` steht jetzt exakt auf
+`origin/master`; der Entwurf liegt weiter als `stash@{0}` („Politur je Richtung (uncommitted,
+vor ff-merge 274)"), falls doch etwas daraus fehlt.
+
+## 2026-10-16 — `b6e9ec6` Handy folgt der Leinwand, Wrapper auf volle Breite
+
+**Gemacht:** Zwei offene Punkte aus den sechs Kompositions-Commits.
+
+1. **`width: 100%` für die inneren Wrapper von DDF und PIH** in B, E, I, K, L, O
+   (`#ddf-screen > div`, `#pih-screen > div`). D bleibt unangetastet, dort ist der Wrapper
+   schon ein Raster mit eigenen Spalten.
+2. **Handy-Buzzer** (`buzzer/index.html`, neuer Abschnitt „Komposition (2026-10-16)") für
+   **E, I, K, L, O** — bisher hatte nur B einen. Der Knopf füllt die Breite
+   (`min(84–86vw, 42–46vh)`) statt als 340-px-Quadrat mittig zu sitzen; die Statuszeile bekommt
+   je Richtung die Schrift der Sendung. **L und O sind linksbündig** (Zeitungsspalte bzw.
+   Konsolenzeilen, in O mit `> ` als `::before` vor dem Status), **E, I, K bleiben mittig**, weil
+   dort auch das große Bild mittig komponiert ist.
+
+**Die Ursache des offenen DDF-Punkts aus dem O-Eintrag ist damit gefunden.** Sie lag nicht an
+Spezifität: ein Playwright-Messskript zeigte `playersMax: "none"`, `playersWidth: "765.766px"`
+und `wrapper: { w: 766, x: 257 }` in einem Screen von 1216 px. Die Regeln griffen also alle — der
+**Wrapper** war zu schmal, weil `.screen.active` `display: flex; flex-direction: column;
+align-items: center` hat und ein Flex-Element in der Querachse nur so breit wird wie sein Inhalt.
+`width: 100%` behebt es. **Lehre:** bei „die Regel greift nicht" erst die Kette der Elternboxen
+messen, nicht die Selektoren zählen.
+
+**Geprüft (alles nach dieser Änderung):**
+
+- `node shots.js --shows ddf,pih,buzzer,buzzer-pause,buzzer-login` über **alle 19 Richtungen**
+  bei 1280×720 → keine Befunde. Kontaktbogen `bogen-buzzer.png` angesehen, `ddf-O.png` ist jetzt
+  über die volle Fensterbreite gesetzt.
+- `node shots.js --themes Studio,B,E,I,K,L,O` je einmal bei **1280×800** und **1920×1080**,
+  alle 27 Zustände → je **keine Befunde**.
+- Derselbe Umfang mit **`--reduced`** → **keine Befunde**, es läuft also nichts weiter, wenn
+  „Bewegung reduzieren" an ist.
+- `node ablauf.js` → **49 OK, 0 FEHL**.
+- `node geraete.js` → **55 OK, 0 FEHL**. Dafür musste einmalig
+  `npx playwright@1.48.2 install webkit` laufen (WebKit 18.0, 48 MiB, nach
+  `C:\Users\david\AppData\Local\ms-playwright\webkit-2083`) — auf diesem Rechner hatte das
+  gefehlt und `geraete.js` brach mit „Please run the following command to download new browsers"
+  ab.
+- `node check.js` sauber.
+
+**Weiter ungeprüft:** der echte Beamer, `gamepad/index.html`, das Feud-Setup und die Sonderfälle
+je Show (TP-Drehphase und -Siegbild, DDF-Stichwahl, PIH-Superpreis-Finale, WWDS-Einsatzphase,
+Turnier-Ergebnis).
+
+## 2026-10-16 — Abschluss-Prüfung aller 19 Richtungen (Stand `abd11c8`)
+
+Nach den sechs Kompositions-Commits (B `45f52e7`, E `eb35967`, I `317f491`, K `0b0110a`,
+L `8f312b7`, O `4deaace`) ein **voller Lauf**: `node shots.js` ohne Filter — 19 Richtungen ×
+27 Zustände bei 1280×720, rund 20 Minuten.
+
+**Ergebnis: 1 Befund — `feud F: 78 px höher als das Fenster`.** F (Comic) ist nicht angefasst
+worden. Nachgegangen:
+
+1. Eigener Git-Worktree auf `39bb00e` (Stand vor dieser Sitzung), `--themes F --shows feud`
+   → **passt**.
+2. Derselbe Worktree nacheinander auf alle sechs Kompositions-Commits, je `--themes F --shows
+   feud` → **sechsmal passt**, auch auf `4deaace`.
+3. Im Arbeitsverzeichnis `--themes E,F --shows feud` → passt. `--shows feud` über alle 19
+   Richtungen → passt.
+
+Also **nicht reproduzierbar**: ein Ausreißer im langen Lauf (vermutlich Schrift- oder
+Zeitproblem nach 20 Minuten), kein Fehler im Stand. Kein Fix nötig, aber im Auge behalten: wenn
+`feud F` wieder auffällt, ist es doch echt.
+
+**Studio-Blau:** nicht mit `--basis`/`--vergleich` gemessen — es gab keinen Basis-Stand von vor
+der Sitzung. Belegt ist es anders: ein Skript über die sechs neuen Blöcke hat jede Selektorzeile
+geprüft, **null Selektoren ohne `:root[data-theme="X"]`-Präfix** (die elf Treffer, die es meldet,
+sind Prozentzeilen in den `@keyframes` des D-Blocks von vorgestern). Dazu der Kontaktbogen
+`bogen-feud.png`: Studio und die zehn nicht angefassten Richtungen sehen unverändert aus, die
+sechs neuen fallen sofort auf.
+
+**Weiter ungeprüft (für alle sechs Richtungen):** 1280×800 und 1920×1080, `--reduced`,
+`ablauf.js`, `geraete.js`, der echte Beamer, `gamepad/index.html`, das Feud-Setup und die
+Sonderfälle je Show (TP-Drehphase und -Siegbild, DDF-Stichwahl, PIH-Superpreis-Finale,
+WWDS-Einsatzphase, Turnier-Ergebnis). Der Handy-Buzzer hat nur in B einen Kompositions-Teil
+bekommen.
+
+## 2026-10-16 — `4deaace` Terminal (O): die Show füllt das Konsolenfenster
+
+**Gemacht:** Neuer Abschnitt „O · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+P-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Der Screen ist das Fenster:** 1 px Rahmen in Phosphorgrün (`box-shadow: 0 0 0 1px`), innen
+  ein Zeichen Luft. Das Brett darin verliert seinen eigenen Rahmen.
+- **Statuszeile unten:** `.round-bar` liegt als Grid-Fläche `status` am unteren Rand, invertiert
+  (Phosphor auf Schwarzgrün), über die volle Fensterbreite. `width: auto` statt
+  `calc(100% + 40px)` — mit `calc` blieb rechts eine Lücke, weil das Rasterfeld die Zeile ohnehin
+  auf Spaltenbreite zieht und die negativen Außenabstände dann zu kurz greifen.
+- **Teamfenster** stehen oben links nebeneinander, linksbündig. Die aktive Tafel bekommt
+  `padding-top: 34px`, weil die Marke „> am zug_" oben links sitzt und sich sonst mit der
+  Punktzahl überlagerte (im Bild `feud-O.png` gesehen).
+- Das Logo wird zur kleinen Kopfzeile links über dem Fenster.
+
+**Geprüft:** `node shots.js --themes O` über alle 27 Zustände bei 1280×720: **keine Befunde**.
+Nach den beiden Korrekturen gezielter Lauf über `feud, ddf, jeop, wwds-joker, tp, feud-finale,
+ergebnis` → keine Befunde. `node check.js` sauber. Bilder angesehen: Feud, Jeopardy, WWDS-Frage,
+DDF, PIH.
+
+**Offen, nicht gelöst:** Bei DDF bleiben die Prozesstabelle und die Frage mittig statt
+linksbündig, obwohl `#ddf-screen .ddf-players { max-width: none; width: 100% }` und
+`#ddf-screen .ddf-question { max-width: none; margin: 0 }` gesetzt sind und die übrigen Regeln
+desselben Blocks greifen (Statuszeile, Teamtafeln). Gemessen: der Tabellenblock ist 762 px breit
+in einem 1176 px breiten Fenster — weder `1000px` (O-Grundregel) noch volle Breite. Die Ursache
+ist **nicht gefunden**. Dass das Bild aktuell ist, ist belegt: md5 vor dem Lauf
+`c226a229…`, danach `5e111721…`. Es sieht nicht kaputt aus, nur nicht wie eine Konsolenausgabe.
+Nächster Schritt dafür: in der Seite mit DevTools nachsehen, welche Regel `width` gewinnt.
+
+## 2026-10-16 — `8f312b7` New York (L): die Seite wird gesetzt statt gestapelt
+
+**Gemacht:** Neuer Abschnitt „L · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+M-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Satzspiegel statt Stapel:** Zeitungskopf oben (Logo, 3-px-Linie darunter), darunter die Zeile
+  mit Runde und Punkten zwischen zwei Haarlinien, dann die Schlagzeile über die Breite, darunter
+  zwei Spalten: links der Text, rechts hinter einer senkrechten Haarlinie ein Kasten mit
+  Spitzmarke — „Der Stand", bei DDF „Kandidaten", bei PIH „Rangliste".
+- **L behält als einzige Richtung das große, mittige Logo**: es ist der Zeitungskopf, kein
+  Sendungslogo.
+- Die Schlagzeile ist linksbündig, weil die Spitzmarke „Umfrage:" als `::before` davorsteht —
+  zentriert hing sie schief daneben (erst so gebaut, im Bild `feud-L.png` gesehen, geändert).
+
+**Geprüft:** `node shots.js --themes L` über alle 27 Zustände bei 1280×720: ein Befund
+(wwds-joker, siehe unten), nach dessen Behebung gezielter Lauf über `wwds-joker, feud, ddf,
+feud-finale, jeop` → **keine Befunde**. `node check.js` sauber. Bilder angesehen: Feud, DDF, PIH.
+
+**Zwischenbefund:** WWDS mit Publikumsjoker 5 px zu hoch — dieselbe Ursache wie bei K
+(`.wwds-opts { flex: 1 }` schiebt das Balkenbild ans untere Ende), dieselbe Lösung
+(`flex: 0 0 auto` unter `:has(.wwds-aud)`).
+
+**Fallstrick, der die meiste Zeit gekostet hat:** `pih-L.png` zeigte zweimal hintereinander das
+alte Layout, auch nach einem gezielten Neu-Lauf, und die Datei hatte beide Male exakt dieselbe
+Größe. Ein eigenes Messskript (Playwright, Computed Styles) belegte, dass die Regeln sehr wohl
+greifen: `maxWidth: 1216px`, `wrapperDisplay: grid`, Grid-Flächen korrekt. Es war also kein
+CSS-Fehler, sondern ein **altes Bild** — erst `rm out/pih-L.png` vor dem Lauf zeigte den neuen
+Stand. **Lehre:** Wenn ein Bild nach einer Änderung unverändert aussieht, erst die Datei löschen
+und neu schießen, bevor man die CSS verdächtigt. Das Messskript lag als `tools/shots/dbg.js` und
+ist wieder gelöscht.
+
+## 2026-10-16 — `0b0110a` Neon-Bar (K): Schilder hängen an der Röhre
+
+**Gemacht:** Neuer Abschnitt „K · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+L-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Kein Kasten mehr:** `.board` und `.jeopardy-board` verlieren Hintergrund, Neonrand und
+  Polsterung. Eine Röhre ist eine Linie, kein Rahmen um alles.
+- **Schilder an der Kante:** Die Teamnamen stehen per Grid-Fläche `teams` ganz oben,
+  `justify-content: space-between`, das erste um −1,2°, das letzte um +1° gedreht.
+- **Die Röhre** darunter ist ein eigenes `::after` (2 px Creme plus zwei Lichthöfe), **nicht**
+  ein `box-shadow` der Teamreihe. Erster Versuch war genau das — ein Schein am Kasten leuchtet
+  rundherum und sah aus wie ein gerahmter Kasten, also das Gegenteil des Ziels. Im Bild
+  `feud-K.png` war das sofort zu sehen.
+- Dasselbe `::after` trägt der Finale-Stand.
+
+**Geprüft:** `node shots.js --themes K` über alle 27 Zustände bei 1280×720: keine Befunde außer
+WWDS mit Joker (siehe unten), nach dessen Behebung ein gezielter Lauf `wwds-joker` → **passt**.
+Feud, Jeopardy, TP und Feud-Finale nach der ::after-Umstellung erneut geschossen und angesehen.
+`node check.js` sauber.
+
+**Zwischenbefund, der Zeit gekostet hat:** WWDS mit Publikumsjoker blieb über drei Anläufe exakt
+5 px zu hoch — kleinere Schrift und flachere Pillen änderten **nichts**. Das Bild zeigte warum:
+`.wwds-opts` hatte `flex: 1` und nahm die ganze Resthöhe, also rutschte das Balkenbild ans untere
+Ende und seine Beschriftung (A B C) stand unter dem Bildrand. Lösung:
+`#wwds-screen:has(.wwds-aud) .wwds-opts { flex: 0 0 auto }`. **Lehre:** wenn eine Maßnahme die
+Zahl nicht bewegt, ist die Ursache eine andere — ins Bild sehen statt weiter zu schrumpfen.
+
+**Ungeprüft:** Studio-Blau nicht mit `--basis`/`--vergleich` gemessen (alle Regeln auf
+`[data-theme="K"]` begrenzt), 1280×800, 1920×1080, `--reduced`, `ablauf.js`, `geraete.js`,
+echter Beamer, Gamepad, Handy-Buzzer.
+
+## 2026-10-16 — `317f491` Salon (I): der Screen wird der Spieltisch
+
+**Gemacht:** Neuer Abschnitt „I · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+J-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Ein Tisch statt zwei:** Bisher lag der Filz als Hintergrund hinter allem **und** nochmal als
+  Kasten in der Bildmitte. Jetzt trägt der Screen selbst `--brd-surface`, `--brd-radius` und
+  `--brd-frame` (Goldkante), und `.board` bzw. `.jeopardy-board` darin verlieren Hintergrund,
+  Schatten und Polsterung.
+- **Plätze gegenüber:** `.scoreboard` & Co. stehen per Grid-Fläche `teams` an der unteren
+  Tischkante, `justify-content: space-between` — zwei Spieler sitzen sich über den Filz hinweg
+  gegenüber. Der Topf bleibt der Goldjeton oben.
+- **Jeopardy-Frage:** Betrag als 96-px-Goldjeton mit gestricheltem Cremerand am rechten Rand,
+  Kategorie als Goldzeile links, Frage in Cormorant darunter.
+- **DDF/PIH:** innerer Wrapper als Grid, Kandidaten bzw. Rangliste an die untere Kante;
+  `height: auto !important` statt des inline gesetzten `height: 100%`.
+
+**Geprüft:** `node shots.js --themes I` über alle 27 Zustände bei 1280×720: **keine Befunde**
+(`setup` 389 px und die übrigen Hostseiten zählen nicht). `node check.js` sauber (4218
+Klammernpaare). Bilder angesehen: Feud, Jeopardy-Brett, Jeopardy-Frage, DDF, PIH, Feud-Finale.
+
+**Fallstrick, der Zeit gekostet hat:** Ein Bild aus dem ersten Lauf (`pih-I.png`) zeigte keine
+der neuen Regeln — kein Tisch, Rangliste an der falschen Stelle. Ursache war **nicht** die CSS:
+der Lauf war gestartet, bevor die Datei auf der Platte lag, und hat PIH noch mit dem alten Stand
+gerendert. Ein zweiter Lauf nur für `pih` zeigte das richtige Bild. **Lehre:** nach einer
+Änderung nicht in einen schon laufenden `shots.js`-Lauf hineinsehen.
+
+**Zwischenbefund, der behoben wurde:** WWDS mit Publikumsjoker war 9 px zu hoch — Balkengrafik
+auf `clamp(58px,10vh,78px)` gedeckelt, Frage und Plätze enger. Greift nur unter
+`#wwds-screen:has(.wwds-aud)`.
+
+**Ungeprüft:** wie bei B und E — Studio-Blau nicht mit `--basis`/`--vergleich` gemessen (alle
+Regeln auf `[data-theme="I"]` begrenzt), 1280×800, 1920×1080, `--reduced`, `ablauf.js`,
+`geraete.js`, echter Beamer, Gamepad. Der Handy-Buzzer hat in I keinen Kompositions-Teil
+bekommen.
+
+## 2026-10-16 — `eb35967` 70er (E): Komposition als Samstagabend-Bühne
+
+**Gemacht:** Neuer Abschnitt „E · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+F-Block. Kein Markup, kein JavaScript angefasst.
+
+- **Bühne füllt, Plaketten davor:** Der Screen bekommt `flex: 1 0 auto`, das Brett dehnt sich über
+  die Resthöhe, und `.scoreboard` / `.wwds-top` / `.jeopardy-scores` / `.tp-top` rutschen per
+  Grid-Fläche `teams` an den unteren Rand — zentriert, gleich breite runde Schilder
+  (`flex: 0 1 300px`).
+- **DDF und PIH** bekommen den inneren Wrapper als Grid, damit Kandidatenreihe bzw. Rangliste
+  ebenfalls unten stehen. Dabei `height: auto !important` statt des inline gesetzten
+  `height: 100%` — das ist zirkulär, sobald der Screen mit dem Inhalt wächst.
+- **Jeopardy-Frage:** Kategorie als Orangepille links, Betrag im Ringschild (`--e-ringe`) rechts,
+  die Frage in Shrikhand darunter. Keine Karte in der Bildmitte mehr.
+- **Ergebnis** bleibt mittig (am Ende der Sendung steht der Sieger in der Bildmitte), bekommt aber
+  das Ringschild. **Menü** wird vierspaltig.
+
+**Warum nicht wie D oder B:** D ist eine Sendegrafik mit Schlagzeile links und schmaler Spalte
+rechts, B ein Automat mit HUD oben. E ist eine Varieté-Bühne: eine Fläche, davor die Pulte.
+Übernommen ist nur der Grundsatz — nichts schwebt mittig, genau ein lautes Ding je Bild.
+
+**Geprüft:** `node shots.js --themes E` über alle 27 Zustände bei 1280×720: **keine Befunde**
+(`turnier-host` 1840 px, `setup` 393 px, `menu` 72 px zu hoch sind Hostseiten, `HOST_SEITEN`).
+`node check.js` sauber (4131 Klammernpaare). Bilder angesehen: Feud, PIH, DDF, Jeopardy-Frage,
+WWDS mit Publikumsjoker.
+
+**Zwischenbefunde, die behoben wurden:** PIH war 49 px zu hoch (Produktfoto ohne Deckel plus zwei
+Reihen Ranglistenplaketten — jetzt `max-height: min(24vh,200px)` und straffere Zeilen).
+WWDS mit Publikumsjoker war 50 px zu hoch und brauchte vier Durchgänge (50 → 32 → 12 → 2 → 0 px):
+flachere Antwortpillen, gedeckelte Balkengrafik (`clamp(62px,11vh,84px)`), weniger Abstand um
+Frage und Plakettenreihe. Alles unter `#wwds-screen:has(.wwds-aud)`, greift also nur mit Joker.
+
+**Ungeprüft:** wie bei B — Studio-Blau nicht mit `--basis`/`--vergleich` gemessen (alle Regeln
+sind auf `[data-theme="E"]` begrenzt), ebenso 1280×800, 1920×1080, `--reduced`, `ablauf.js`,
+`geraete.js`, echter Beamer, Gamepad. Der Handy-Buzzer hat in E **keinen** Kompositions-Teil
+bekommen — der runde Polsterknopf des Entwurfs füllt die Seite schon.
+
+## 2026-10-16 — `45f52e7` Arcade (B): Komposition wie am Automaten
+
+**Auftrag:** David, 2026-10-16: „mach alle nacheinander" — die übrigen Richtungen auf dieselbe Stufe
+wie D. Reihenfolge: B, E, I, K, L, O. Dies ist die erste.
+
+**Gemacht:** Neuer Abschnitt „B · Komposition (2026-10-16)" in `styles.css`, direkt vor dem
+C-Block, plus ein Komposition-Teil im B-Block von `buzzer/index.html`. Kein Markup, kein
+JavaScript angefasst.
+
+- **HUD statt Kästen:** `.scoreboard`, `.wwds-top`, `.jeopardy-scores` und `.tp-top` sind eine Zeile
+  über die volle Breite, `justify-content: space-between`, Strich in `--b-line` darunter. Die
+  Teamanzeigen verlieren Hintergrund und Rahmen; die letzte spiegelt sich an den rechten Rand
+  (1P links, 2P rechts). Am Zug: gelber Strich unten statt Rahmen.
+- **Spielfeld füllt:** `:is(#game-screen, …).active { flex: 1 0 auto }`. `body` ist Flex-Spalte mit
+  `min-height:100vh`, der Screen nimmt also den Rest. Bewusst `1 0 auto` und nicht `1 1 auto`:
+  wachsen ja, schrumpfen nie — sonst wird ein langer Screen gestaucht und läuft unten aus dem
+  Beamerbild.
+- **Jeopardy-Frage:** der weiße Doppelrahmen sitzt als `inset`-Schatten am Bildrand statt um eine
+  Karte in der Mitte. Kategorie links, Betrag rechts, cyanfarbene Linie darunter, Frage mittig.
+- **Ergebnis** bleibt mittig (am Automaten steht der Endstand in der Bildmitte), bekommt aber den
+  Kicker „Game Over" und den Rahmen. **Menü** wird vierspaltig mit Kicker „Select Game".
+- **Handy:** Buzzer füllt die Breite (`min(88vw,46vh)` statt 340-px-Quadrat), Statuszeile in Press
+  Start, Pause als Pixelquadrat statt Kreis.
+
+**Warum so und nicht wie D:** D ist eine Sendegrafik (links Schlagzeile, rechts schmale Spalte).
+Das wäre bei B falsch — ein Automat hat eine HUD-Zeile oben und darunter das formatfüllende
+Spielfeld. Übernommen ist nur der Grundsatz: nichts schwebt mittig, genau ein lautes Ding je Bild.
+
+**Verworfen:** Erst standen Kategorie und Betrag der Jeopardy-Frage am oberen Bildrand
+(`align-content: start`) — der Betrag lief unter den „Beenden"-Knopf. Jetzt `align-content` über
+die ganze Höhe mit `7vh` Innenabstand. Zweiter verworfener Weg: `height: 100%` auf den inneren
+Wrappern von DDF und PIH beibehalten — das ist zirkulär, sobald der Screen mit dem Inhalt wächst;
+jetzt `height: auto !important` plus `flex: 1`.
+
+**Geprüft:** `node shots.js --themes B` über alle 27 Zustände bei 1280×720: **keine Befunde**
+(`turnier-host` 1696 px und `setup` 338 px zu hoch sind Hostseiten, `HOST_SEITEN`, und zählen
+nicht). `node check.js` sauber: 15 JS-Dateien, 440 Handler, 301 IDs, 4036 Klammernpaare. Bilder
+angesehen: Feud, Jeopardy-Brett, Jeopardy-Frage, WWM, WWDS, WWDS-Frage, DDF, PIH, TP,
+Feud-Finale, Finale-Frage, Ergebnis, Menü, Buzzer.
+
+**Zwischenbefunde, die behoben wurden:** PIH war 179 px zu hoch (Produktfoto ohne Höhendeckel,
+jetzt `max-height: min(30vh,260px)`), PIH-Gebot 70 px. Das Finale-Vergleichsfeld
+(`#finale-reveal-comparison`, von `js/feud.js` erzeugt) landete per Auto-Platzierung oben rechts
+im Raster und hat jetzt eine eigene Fläche.
+
+**Ungeprüft:** Studio-Blau wurde **nicht** mit `--basis`/`--vergleich` gemessen — es gab keinen
+Basis-Stand von vor der Änderung. Belegt ist nur, dass jede neue Regel auf `[data-theme="B"]`
+bzw. den B-Block der Handy-Seite begrenzt ist. Ebenfalls ungeprüft: 1280×800 und 1920×1080,
+`--reduced`, `ablauf.js`, `geraete.js`, der echte Beamer, das Gamepad und die Sonderfälle je Show
+(TP-Drehphase und -Siegbild, DDF-Stichwahl, PIH-Superpreis-Finale, WWDS-Einsatzphase).
+
+**Fallstrick:** `tools/shots/out` ist ignoriert, ein eigener `--out`-Ordner nicht. Ein Lauf mit
+`--out out-b` hinterlässt also unversionierte Dateien im Arbeitsbaum.
+
+## 2026-10-15 — ABBRUCH der Sitzung (Stand `6d8c88f`)
+
+Kein Code offen, alles committet und gepusht. Dieser Eintrag ist die Abschluss-Übersicht, damit die
+nächste Sitzung ohne Suchen weitermachen kann.
+
+**Aktueller Stand:** Richtung D (Late Night) ist auf der neuen Stufe fertig — alle elf Screens:
+Feud, Jeopardy (Brett und Frage-Aufdecken), WWM, WWDS, DDF, PIH, TP, Feud-Finale, Ergebnis, Menü,
+Handy. Dazu kam in dieser Sitzung das Frage-Aufdecken bei Jeopardy für alle übrigen Richtungen
+(`16031e3`) und zwei Überlauf-Behebungen bei WWDS, die alle Richtungen betrafen (`485ef60`, `ceed206`).
+Neue Prüfzustände in `tools/shots/shots.js`: `wwds-frage`, `wwds-joker`, `wwds-master`,
+`ddf-ergebnis`, `feud-finale-frage`.
+
+**Stopppunkt:** Nach dem Push von `6d8c88f` (HANDOFF zu Menü und Handy). Davids Antwort auf die Frage,
+welche Richtung als Nächstes drankommt, steht noch aus. Es wurde nichts angefangen.
+
+**Kreative Ansätze und Vorstellungen, die im Raum stehen:**
+- Das Muster, nach dem D gebaut ist, trägt für die anderen Richtungen: je Screen genau EIN lautes Ding
+  (Schlagzeile oder Zahl), alles andere Haarlinie und kleine Schrift; die Marke klein oben links;
+  links die Schlagzeile mit der Liste, rechts eine schmale Spalte mit Stand/Teams; die Akzentfarbe nur
+  dort, wo gerade etwas passiert. Dieses Gerüst lässt sich für B, E, I, K, L und O übernehmen —
+  die Komposition bleibt, Farbe, Schrift und Material wechseln.
+- Davids Vorgabe von `afa1045`: Designs ähnlich lassen, aber viel hochwertiger; „geisteskrank
+  übertreiben“ gilt auch für Assets, nicht nur Animationen.
+- Noch nicht umgesetzt: eigene Aufdeck-Choreografien je Richtung (außerhalb von D und der
+  gemeinsamen Fassung aus `16031e3`), Show-Logos in D sind noch das allgemeine Symbol plus Schrift,
+  und für die großen Momente am Beamer (`mainscreen/buehne.js`) gibt es bisher nur `REGIE.D`.
+
+**Nächste Schritte:**
+1. Davids Wahl der nächsten Richtung abwarten, dann dieselben elf Screens durchgehen wie bei D.
+   Reihenfolge, die sich bewährt hat: Feud, Jeopardy, WWM, WWDS, DDF, PIH, TP, Finale, Ergebnis,
+   Menü, Handy — je Screen ein Commit plus HANDOFF-Eintrag.
+2. Offene Sonderfälle aus den Einzeleinträgen: Gäste ohne Handy (DDF, PIH), DDF-Stichwahl und
+   -Siegbild, PIH-Superpreis-Finale, TP-Drehphase/Nachfassen/Siegbild, WWDS-Einsatz- und
+   Stichfrage-Phase. Je ein shots-Zustand, dann messen.
+3. `gamepad/index.html` und das Feud-Setup (`setup`) sind in D nie angesehen worden.
+4. Der echte Beamer ist in dieser ganzen Sitzung nicht geprüft worden — nur das Popout im Test.
+5. `.github/workflows/pruefungen.yml` liegt weiter nur lokal (Token ohne `workflow`-Recht, siehe
+   CLAUDE.md, Abschnitt Screenshot-Prüfung).
+
+## 2026-10-15 — `e18f94d` + `a3777b4` Late Night: Menü und Handy — D ist fertig
+
+**Menü (`e18f94d`):** `styles.css`, nach dem Ergebnis-Block. Das Senderlogo steht oben links
+(`body:has(#menu-screen.active) .logo`, vorher groß und mittig), darunter Kicker „Heute im Programm“
+als `::before` des Rasters, die acht Sendungen vierspaltig über die volle Breite statt im 720-px-Block,
+die Werkzeuge als linksbündige Leiste. Hostseite, kommt nicht auf den Beamer (`HOST_SEITEN`).
+
+**Handy (`a3777b4`):** `buzzer/index.html`, D-Block. Die Screens sind linksbündig
+(`.screen{align-items:stretch;text-align:left}`), das Team ist ein kleines Schild oben links statt
+einer zentrierten Pille, der Buzzer füllt die Breite (`min(86vw, 48vh)` statt 340-px-Quadrat), die
+Statuszeile ist eine Schlagzeile in der Sendungsschrift. In der Pause steht statt des großen Quadrats
+ein 12-px-Balken in der Teamfarbe („Sendepause“). Der Bereitschaftsring (`#buzz::after`) rückt von
+−10 px auf −6 px, sonst schnitt er bei voller Breite in das Team-Schild.
+
+**Geprüft:** `menu` in allen 19 Richtungen ohne Befund, D zusätzlich bei 1280×800 und 1920×1080.
+`buzzer`, `buzzer-pause`, `buzzer-login` in allen 19 Richtungen ohne Befund (390×844). `ablauf.js`
+49/49 OK. Bilder angesehen. `check.js` sauber.
+
+**Damit ist die D-Liste abgearbeitet:** Feud, Jeopardy, WWM, WWDS, DDF, PIH, TP, Finale, Ergebnis,
+Menü, Handy. Offen aus den Einzeleinträgen: Sonderfälle je Show (Gäste ohne Handy, Stichwahl,
+Superpreis-Finale, TP-Drehphase und -Siegbild), das Gamepad (`gamepad/index.html`, nie in D
+angesehen), das Feud-Setup (`setup`) und der echte Beamer.
+
+**Nächster großer Schritt:** dieselbe Stufe für die übrigen Richtungen (B, E, I, K, L, O), siehe
+Eintrag zu `afa1045`.
+
+## 2026-10-15 — `62d42db` Late Night: Ergebnis als Abspann-Karte
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem Finale-Block. Auf `#result-screen` steht
+die Show-Marke jetzt klein oben links wie auf den Spiel-Screens; vorher stand sie dort groß und mittig,
+weil `#result-screen` nicht in der Liste der Logo-Regel ist. Eigene Regel über `body:has(#result-screen.active)`.
+Darunter: Kicker „Endstand“ (orangenes Schild, `.winner-text::before`), der Sieger als riesige
+Schlagzeile, darunter eine Haarlinie und der Stand mit großen Zahlen. Die Knöpfe stehen linksbündig.
+Das Pokal-Emoji (`.result-icon`) ist in D ausgeblendet. Ein Farb-Emoji passt nicht zur Sendegrafik,
+und es wäre neben der Schlagzeile ein zweites lautes Ding.
+
+**Warum nur Schrift beim Stand:** Der Stand kommt als Text mit `<br>` aus vier Dateien (`feud.js`,
+`jeopardy-ui.js`, `wwds.js`, `tournament.js`). Zeilen-Elemente gibt es nicht, Markup und JS sind nicht
+angefasst. Deshalb ist der Sieger nicht farbig hervorgehoben.
+
+**Geprüft:** `ergebnis` in allen 19 Richtungen bei 1280×720 ohne Befund. D bei 1280×800 und 1920×1080
+ohne Befund, `--reduced` ohne Befund. Bild angesehen. `check.js` sauber.
+
+**Ungeprüft:** drei Teams, Turnier-Ergebnis (lange Zeile „gewinnt das Turnier! 🏆“), Buzzer-Bestenliste
+(`#result-leaderboard`) und Konfetti.
+
+## 2026-10-15 — `99c9c3b` Late Night: Feud-Finale neu komponiert
+
+**David:** „Mach mit D weiter, als Nächstes das Feud-Finale.“ Dazwischen kam: „warum fragst du auf einmal
+die ganze Zeit nach“. Ab hier wird die D-Liste ohne Rückfrage je Screen abgearbeitet (Memory
+`keine-zwischenfragen-bei-liste`).
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem TP-Block. `#finale-screen` wird ein Grid
+mit den Bereichen kopf/uhr | board/stand | board/vergleich. Links: Kicker mit orangem „Finale“-Schild,
+wer spielt und Frage x/y, die Frage als Schlagzeile (in der Antwortphase `.finale-big-q` noch größer),
+in der Auflösung die Liste darunter. Rechts: Uhr als Konturziffer oben, Stand beider Teams als große
+weiße Zahlen, darunter „Diese Frage“ mit Team, Antwort (Fehlgriff grau durchgestrichen) und Punkten.
+`tools/shots/shots.js`: neuer Zustand `feud-finale-frage` (Antwortphase per `startFinale()`, Uhr
+sichtbar auf 20).
+
+**Geprüft:** `feud-finale` und `feud-finale-frage` in allen 19 Richtungen bei 1280×720 ohne Befund. D bei
+1280×800 und 1920×1080 ohne Befund, `--reduced` ohne Befund. Bilder angesehen. `check.js` sauber.
+
+**Bekannt, nicht angefasst:** In der Auflösung steht im Kicker „Auflösung“ doppelt (`finale-team-label`
+und `finale-q-info` aus `js/feud.js`). Das ist in allen Richtungen so.
+
+**Ungeprüft:** Teamwechsel-Overlay, „urgent“-Uhr und Beamer.
+
+**Nächste Schritte:** D weiter mit Ergebnis, Menü, Handy.
+
+## 2026-10-15 — `b628323` Late Night: TP neu komponiert
+
+**David:** „Mach mit D weiter, als Nächstes TP.“
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem PIH-Block. `#tp-screen` wird ein Grid
+wie Feud: Kicker (On Air, „Runde läuft · Am Zug“) oben links, darunter das Rad
+(`clamp(220px, 40vh, 300px)`, vorher 260 px fest) neben der Frage als Schlagzeile, die Antwort als weiße
+Bauchbinde. Rechts stehen die Teams untereinander: Torte klein (64 px) links, Name groß und „0 von 6“
+daneben, Strich in Teamfarbe oben. Am Zug: Name orange und orangem Strich unten.
+Markup und `js/tp.js` sind nicht angefasst.
+
+**Geprüft:** `tp` in allen 19 Richtungen bei 1280×720 ohne Befund. D bei 1280×800 und 1920×1080 ohne
+Befund, `--reduced` ohne Befund. Bild angesehen. `check.js` sauber.
+
+**Ungeprüft:** Drehphase (Hinweis statt Frage), Nachfassen (`.tp-steal`), Siegbild (`.tp-win` mit
+großer Torte), drei Teams und Beamer (Rad-Drehung im Spiegel).
+
+**Nächste Schritte:** D weiter mit Finale (Feud), Ergebnis, Menü, Handy.
+
+## 2026-10-15 — `fd47efb` Late Night: PIH neu komponiert
+
+**David:** „Mach mit D weiter, als Nächstes PIH.“
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem DDF-Block. Der innere Wrapper von
+`#pih-screen` wird ein Grid mit den Spalten Bild | Rest | Stand (346 px inkl. 56 px Abstand). Links:
+Uhr als kleine orange Zeile, Artikel als Schlagzeile mit On-Air-Schild davor (`.pih-item::before`),
+darunter das Foto (max. 36vw × 30vh). Daneben steht der aufgelöste Preis als einzige große Zahl, mit
+Kicker „Der Preis“ (nur wenn `.pih-price` nicht leer ist) und der Notiz darunter. Die Gebote laufen
+zweispaltig, der Gebotszähler ist groß und orange. Rechts: beide Teams untereinander (Strich in
+Teamfarbe, Führender mit orangem Strich unten), darunter „Rangliste“ wie die DDF-Kandidaten. Wer den
+Punkt holt (`.picked`), ist eine orange Zeile. Nebenbei in DDF: Die Avatar-Verkleinerung griff nicht
+(`> :first-child:not(:only-child)`, der Avatar ist das einzige Kind-Element). Jetzt über `.pmini-av`.
+
+**Fallstricke:** `.pih-scores` hat in der Grundregel `margin: 0 auto`. Im Grid schrumpft die Liste
+dadurch auf Inhaltsbreite, daher `margin: 0 0 0 56px`. Der innere Wrapper braucht `width: 100%`,
+sonst sitzt das Grid mittig und schmal. Die Zeile mit dem Gebotsraster ist die `1fr`-Zeile. Lag die
+auf der Notiz, klaffte zwischen Foto und Geboten eine Lücke.
+
+**Geprüft:** `pih` und `pih-gebot` in allen 19 Richtungen bei 1280×720 ohne Befund. D mit `pih`,
+`pih-gebot`, `ddf` und `ddf-ergebnis` bei 1280×800 und 1920×1080 ohne Befund, `--reduced` ohne Befund.
+Bilder angesehen. `check.js` sauber.
+
+**Ungeprüft:** Finale um den Superpreis, Gäste ohne Handy (Eingabezeilen), Artikel ohne Foto, sehr
+lange Artikelnamen und Beamer.
+
+**Nächste Schritte:** D weiter mit TP, Finale (Feud), Ergebnis, Menü, Handy.
+
+## 2026-10-15 — `4dd7e29` Late Night: DDF neu komponiert
+
+**David:** „Mach mit D weiter, als Nächstes DDF.“
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem WWDS-Block. Der innere Wrapper von
+`#ddf-screen` (Inline-`display:flex` in `index.html`) wird ein Grid wie Feud/WWDS. Links stehen
+Kicker (On-Air-Schild vor „8 noch dabei“, Uhr als Konturziffer rechts in derselben Zeile), Frage als
+Schlagzeile, Lösung als Bauchbinde, Notiz und Abstimmung. Rechts steht „Kandidaten“ als Liste
+untereinander, Name links, Herzen rechts. Das letzte Herz bekommt einen roten Strich links, Ausgeschiedene
+sind gedimmt, der Verlierer der Abstimmung (`.picked`) ist eine orange Zeile. Der Stimmenzähler
+„0 / 8“ ist groß und orange, die Ergebnis-Zeilen stehen linksbündig in der Sendungsschrift.
+`tools/shots/shots.js`: neuer Zustand `ddf-ergebnis`. Hugo ist raus, Gina hat das letzte Herz,
+Dieter verliert eins (Stimmen 4/2/1).
+
+**Fallstricke:** Die alte D-Regel `.ddf-player { flex: 1 1 140px }` (Kachelreihe) wirkt in der Spalte
+als Höhe. Jede Zeile war 140 px hoch, der Screen 532 px zu hoch, daher `flex: none`. Die Zeilen der
+Abstimmung kommen mit Inline-Styles aus `ddfRenderVoteGrid` (`js/ddf.js`), deshalb dort `!important`.
+Der Zähler wird über `> div:has(> span)` gefunden, nicht über die Position: Mit Gästen ohne Handy
+kommen weitere Zeilen dazu.
+
+**Geprüft:** `ddf` und `ddf-ergebnis` in allen 19 Richtungen bei 1280×720 ohne Befund (nur D geändert,
+der neue Zustand ist aber überall gemessen). D zusätzlich bei 1280×800 und 1920×1080 und `--reduced`
+ohne Befund. Bilder angesehen. `check.js` sauber.
+
+**Ungeprüft:** Gäste ohne Handy (Eingabezeilen in der Abstimmung), Stichwahl/Gleichstand, Siegbild
+(`ddfFinish`), Uhr im laufenden Zustand. Beamer ebenfalls ungeprüft.
+
+**Nächste Schritte:** D weiter mit PIH, TP, Finale, Ergebnis, Menü, Handy.
+
+## 2026-10-15 — `ceed206` WWDS-Masterfrage passt bei 1280×720 in allen Richtungen
+
+**David:** „Leg den shots-Zustand wwds-master an und miss ihn in allen Richtungen.“
+
+**Gemacht:** `tools/shots/shots.js`: neuer Zustand `wwds-master`. Beide Teams haben 1500 €, Rot tippt B,
+Blau C, die Masterfrage ist aufgelöst und der Timer angehalten. Das ist der höchste Fall dieser Phase:
+Tipp-Marken in den Teamkarten, Team-Etiketten an den Antworten, Statuszeile darunter.
+`styles.css` im `max-height: 900px`-Block der WWDS-Bühne (nach `@keyframes wwdsTick`), alle Richtungen
+außer D. Solange eine `.wt-lock` steht (Einsatz, Masterfrage, Stichfrage), entfallen `.wt-meta`
+(„Joker frei · 6 Fragen“, gilt nur für die Hauptrunde) und die `.round-bar`. Die zeigt in diesen
+Phasen nur „Masterfrage · Am Zug: —“, und der Chip in der Bühne sagt dasselbe. Die Marke ist kompakter
+(1,3 rem, line-height 1), die Statuszeile hat nur noch 6 px Abstand.
+
+**Befund vorher:** Bei 1280×720 standen 14 von 19 Richtungen über, bis 48 px (E). Ohne Befund waren
+B, D, F, H, N, O und P.
+
+**Verworfen:** Die Marke absolut in die rechte obere Ecke der Karte zu setzen. Das passte rechnerisch
+überall, überdeckte aber in B den Teamnamen und in O das €-Zeichen (Ausschnitt angesehen). Jede
+Richtung legt die Teamkarte anders an, deshalb gibt es keine Ecke, die überall frei ist.
+
+**Geprüft:** `wwds`, `wwds-frage`, `wwds-joker` und `wwds-master` in allen 19 Richtungen ohne Befund, bei
+1280×720, 1280×800 und 1920×1080. `wwds-master --reduced` ohne Befund. Bogen angesehen.
+`check.js` sauber.
+
+**Ungeprüft:** Einsatz-Phase und Stichfrage haben keinen eigenen shots-Zustand. Die Regeln greifen dort
+mit, weil auch dort Marken stehen, gemessen ist das aber nicht. Beamer ebenfalls ungeprüft.
+
+**Nächste Schritte:**
+1. Optional: Zustände `wwds-einsatz` und `wwds-stich` anlegen und messen.
+2. D weiter: DDF, PIH, TP, Finale, Ergebnis, Menü, Handy.
+
+## 2026-10-15 — `485ef60` WWDS-Frage passt bei 1280×720 in allen Richtungen
+
+**David:** „Behebe zuerst den Überlauf von 38 px bei wwds-frage in Studio-Blau und lass wwds-frage in
+allen Richtungen laufen.“
+
+**Befund vorher:** Nicht nur Studio. `wwds-frage` lief bei 1280×720 in 15 von 19 Richtungen über, von 9 px (N)
+bis 74 px (E). Ohne Überlauf waren nur B, D, H und O. Mit Publikumsjoker (neuer Zustand `wwds-joker`)
+waren es 18 von 19, bis 186 px (E). Nur D passte.
+
+**Gemacht:** `styles.css` nach `@keyframes wwdsTick`, gilt für alle Richtungen außer D: Die Frage-Bühne
+(`#wwds-stage:has(> .wwds-opts)`) wird ein Raster a | b | c. Kategorie-Chip und Countdown teilen sich
+eine Zeile, vorher waren es zwei. Der Publikumsjoker steht in Spalte c rechts neben den Antworten,
+vorher 110 px darunter. Unter `max-height: 900px` kommen flachere Abstände dazu (Screen-Gap 10,
+Frage-Padding 10, Antwort-Padding 10). Gilt auch für die Masterfrage, die dieselben Bausteine hat.
+`shots.js`: Zustand `wwds-joker`.
+
+**Warum so:** Nur zu verkleinern hätte für die Frage gereicht, für den Joker (186 px) nicht. Die Balken
+daneben nutzen den leeren Platz rechts der Antworten. D ausgenommen (`:root:not([data-theme="D"])`),
+weil D eine eigene Komposition hat und Zeile/Spalte dort anders belegt sind.
+
+**Geprüft:** `wwds-frage` und `wwds-joker` in allen 19 Richtungen ohne Befund, bei 1280×720, 1280×800 und
+1920×1080 (dort zusätzlich `wwds`). `--reduced` ohne Befund. Bogen `wwds-joker` angesehen: Balken
+sitzen in allen Richtungen rechts neben den Antworten. `check.js` sauber.
+
+**Bewusst geändert:** Studio-Blau sieht anders aus, weil Chip und Countdown jetzt nebeneinander stehen.
+Ein Basis-Vergleich lief deshalb nicht.
+
+**Ungeprüft:** Masterfrage, Einsatz- und Stichfrage-Phase in allen Richtungen (kein shots-Zustand).
+Beamer. Der Joker in D steht weiterhin unter den Antworten, ohne eigene Gestaltung.
+
+**Nächste Schritte:**
+1. shots-Zustand für die Masterfrage (`wwds-master`) anlegen und messen.
+2. D weiter: DDF, PIH, TP, Finale, Ergebnis, Menü, Handy.
+
+## 2026-10-15 — `8375328` Late Night: WWDS neu komponiert
+
+**David:** „weiter bitte“ – Schritt 3 aus dem Eintrag zu `16031e3` (D-Fertigbau), erster Screen WWDS.
+
+**Gemacht:** `styles.css`, Abschnitt „D · Komposition“, nach dem WWM-Block: `#wwds-screen` als Grid wie
+Feud – Kicker-Zeile (On Air, Runde, Am Zug klein) und Bühne links, Teams als Spalte rechts (Strich in
+Teamfarbe oben, Geld groß, Am Zug mit orangem Strich unten). Auswahl: `.wwds-sub` wird zur Schlagzeile
+„TEAM ROT / WÄHLT EINE KATEGORIE“, Kategorien dreispaltig mit hohen Zeilen. Frage: Kategorie als
+Kicker, Frage als Schlagzeile, Countdown als Konturziffer rechts daneben (wie Betrag bei der
+Jeopardy-Frage), Antworten als Liste über die volle Breite. `tools/shots/shots.js`: neuer Zustand
+`wwds-frage` (Kategorie 1 offen, B eingeloggt, Timer angehalten).
+
+**Warum so:** Chip- und Timer-Wrapper tragen Inline-Styles aus `js/wwds.js` (`text-align:center`,
+`justify-content:center`, `margin-bottom`) – Markup nicht angefasst, deshalb dort `!important`.
+Das Bühnen-Grid hängt an `#wwds-stage:has(> div > .wwds-timer)`, greift also nur in Frage und
+Masterfrage; Einsatz- und Stichfrage-Phase bleiben im alten D-Layout.
+
+**Geprüft:** `check.js` sauber; `shots.js --themes D --shows wwds,wwds-frage` bei 1280×720 und
+1920×1080 ohne Befunde, `--reduced` ohne Befunde, Bilder angesehen. Alle neuen Regeln hängen an
+`:root[data-theme="D"]` – Studio-Vergleich nicht gelaufen (keine Basis `basis-wwds-*` auf diesem Rechner).
+
+**Fund (nicht behoben):** `wwds-frage` in **Studio-Blau** steht 38 px unter dem Fenster (1280×720).
+War vorher nicht messbar, weil es den Zustand nicht gab. Übrige Richtungen bei `wwds-frage` nicht gelaufen.
+
+**Ungeprüft:** Masterfrage, Einsätze, Stichfrage und Publikumsjoker in D; Beamer.
+
+**Nächste Schritte:**
+1. Studio-Überlauf `wwds-frage` beheben, `wwds-frage` in allen Richtungen laufen lassen.
+2. D weiter: DDF, PIH, TP, Finale, Ergebnis, Menü, Handy.
+
+## 2026-10-15 — Nachprüfung zu `16031e3` (Jeopardy-Aufdecken), kein Code geändert
+
+**David:** „aus der Handoff weitermachen bitte“. Schritte 1 und 2 aus dem Eintrag darunter.
+
+**Geprüft:**
+- Studio-Blau: Basis mit `shots.js --basis` am Stand `1416d52` (Worktree im Scratchpad, `node_modules` per
+  Junction), dann `--vergleich` am aktuellen Stand: `jeop` 40 Elemente, `jeop-frage` 4, `jeop-antwort` 4,
+  jeweils 0 abweichend. **Schwach bei Frage/Antwort:** der Stil-Schnappschuss liest nur `.screen.active`,
+  das Overlay hängt aber an `body` – verglichen werden dort nur 4 Elemente, das Overlay selbst nicht.
+- Bild für Bild (Animationen per `getAnimations()` angehalten, `currentTime` angefahren), Studio, E, K, B:
+  Frage 0–1800 ms – Lichtstoß, Wörter klappen gestaffelt auf, Lichtkante, Endbild ruhig. Antwort 0–900 ms –
+  Stempel groß/gesperrt → scharf, grüner Stoß, Endbild ruhig. Keine Seitenfehler.
+- Reduced Motion: `shots.js --reduced --shows jeop-frage,jeop-antwort` alle 19 Richtungen ohne Befunde;
+  zusätzlich direkt nach dem Aufdecken gezählt (shots wartet 1,4 s, da wären die Animationen ohnehin
+  vorbei): 0 laufende Animationen in Studio, E, K, B.
+- `isolation: isolate`: keine Richtung setzt eigene `::before`/`::after` am Overlay (grep), Störung entfällt.
+
+**Ungeprüft:** Beamer-Popout (Spiegel des Aufdeckens), echte Bildrate auf dem Beamer-Rechner, übrige
+14 Richtungen nur im Standbild.
+
+**Offen / Nächste Schritte:**
+1. Davids Blick auf das Aufdecken (Strg+F5 in Haupt- und Beamerfenster).
+2. `STIL_SCHNAPPSCHUSS` in `tools/shots/shots.js` auch `#jeopardy-clue-ov` einbeziehen lassen.
+3. D-Komposition je Screen: WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy (siehe Eintrag darunter).
+
+## 2026-10-15 — `16031e3` Jeopardy-Aufdecken für alle Richtungen (ABBRUCH, David muss weg)
+
+**David:** „bitte mach bei Jeopardy die Frage aufdecken Funktion schöner, das ploppt nur so auf“.
+Davor: „Mach D fertig: WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü und Handy auf die neue Stufe bringen.“
+
+**Gemacht:** `styles.css` direkt nach `.jeopardy-answer-img.visible` (~Zeile 1342): Choreografie für alle
+Richtungen außer D (`:root:not([data-theme="D"])`), hängt an `data-neu` aus `renderJeopardyClueOverlay`
+(`js/jeopardy.js:697`). Frage: Lichtstoß in `--gold-rgb` (`overlay::after`), Lichtkante unter der Frage,
+Wörter `.jw` klappen gestaffelt aus der Tiefe (`jqWort`, 55 ms je Wort, Verzögerung gedeckelt bei 1,3 s),
+Betrag-Schlag, Bilder steigen nach. Antwort: Stempel (`jqStempel`) + grüner Stoß. Alle Endzustände `none`.
+`prefers-reduced-motion` schaltet alles ab.
+
+**Geprüft:** `check.js` sauber. `shots.js --shows jeop --themes Studio,E,K` ohne Befunde (Standbild).
+**Ungeprüft:** die Animation selbst Bild für Bild (Methode: Scratchpad-Ansatz aus `afa1045`, Animationen per
+`currentTime` anfahren), der Beamer, `--reduced`, Studio-Vergleich (Basis `basis-jeop-1280x720.json` fehlte
+auf diesem Rechner). `isolation: isolate` am Overlay ist neu — könnte bei Richtungen mit eigenen
+`::after`/z-index am Overlay stören (nicht nachgesehen).
+
+**Stopppunkt:** D-Fertigbau (WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy) NICHT begonnen. Stand
+von D: `styles.css` Abschnitt „D · Komposition (2026-10-15)“ (~Zeile 4640 ff.) hat nur Feud, Jeopardy,
+Jeopardy-Frage, WWM; die übrigen D-Regeln (~4520–4610) sind nur Farbe/Schrift auf Standard-Layout.
+
+**Kreative Ansätze:** Grundsatz aus D-Komposition: je Screen genau EIN lautes Ding, Rest Haarlinie und
+kleine Schrift, Orange nur wo etwas passiert; Marke klein oben links; Schlagzeile links, schmale Spalte
+rechts (Topf/Teams). Davids Vorgabe: „geisteskrank übertreiben“, auch Assets hochwertiger.
+
+**Nächste Schritte:**
+1. Aufdecken im Browser Bild für Bild ansehen (Studio, E, K, B), Beamer-Popout mit Strg+F5.
+2. Basis anlegen und vergleichen: `node shots.js --basis` am Stand vor `16031e3`, dann `--vergleich`.
+3. D-Komposition je Screen per Grid: WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy; danach
+   `shots.js --themes D`, `--reduced`, `ablauf.js`.
+
+## 2026-10-15 — `77fd44a` Late Night am Beamer: lebende Stadt, große Momente
+
+**David:** „bei den Intros hab ich damals gesagt du sollst geisteskrank übertreiben,
+das sollst du auch bei den designs jetzt machen“.
+
+**Gemacht:** `mainscreen/buehne.js` — Beamer spielt große Momente selbst (Muster
+von `aufdecken.js`, BAUPLAN 4.8), Regie je Richtung (`REGIE.D`): lebende Stadt
+(Canvas: Fenster an/aus, Antennen, Suchscheinwerfer, Flugzeug), Antwort-Schlag
+(Balken quer, Blitz, Funken, Wackler, Zählwerk, dann FLIP auf die Zeile), X-Schlag,
+Runden-Titelkarte, Punkte-Sprung. Auslöser: Klassen-/Textänderungen im
+gespiegelten DOM (`open`, `lit`, `#round-info`, `.t-score`).
+
+**Fund:** In `mainscreen/index.html` war `html{background}` gesetzt → der
+`body`-Hintergrund malte über alle `z-index:-1`-Ebenen. Skyline (D), Gitterboden (B),
+Sonnenstrahlen (E), Falz (L) waren **am Beamer nie sichtbar**. Jetzt trägt mit
+Richtung das `<html>` den Grund, `<body>` ist durchsichtig.
+
+**Fallstricke beim Testen:** Popout muss offen sein, BEVOR das Brett gebaut wird
+(sonst fehlen die Zellen im Spiegel); `pop.bringToFront()`, sonst läuft im
+Hintergrund-Popup kein `requestAnimationFrame` (Canvas leer); `gsap.timeline`
+abfangen und pausieren, dann `.time(s)` anfahren (Scratchpad `buehne-test.js`).
+GSAP-`fromTo` rendert sofort — Funken brauchen `immediateRender:false`, sonst
+stehen sie schon vor dem Schlag im Bild.
+
+**Geprüft:** Antwort- und X-Schlag Bild für Bild im Popout, Stadt im Ruhebild,
+keine Seitenfehler; `ablauf.js` 49/49; `check.js` sauber (prüft `mainscreen/`
+nicht), `node --check` ok.
+
+**Offen:** Nur am Beamer (Hauptfenster zeigt die CSS-Fassung). Runden-Karte und
+Punkte-Sprung nicht im Bild geprüft. Jeopardy/WWM/andere Shows in D noch ohne
+Bühnen-Momente. Echte Rechnerlast mit Canvas + GSAP am Beamer nicht gemessen.
+Übrige Richtungen: gleiche Stufe offen.
+
+## 2026-10-15 — `fabf7c1` Late Night: Wort-für-Wort-Aufdecken, bessere Assets
+
+**David:** „D gefällt mir soweit gut, nur das Fragen aufdecken passt wieder nicht —
+ploppt nur auf ohne irgendwas.“ Und: „nicht nur Animationen, sondern auch die
+Assets selbst hochwertiger“.
+
+**Gemacht:** `jeopardyWoerter()` (js/jeopardy.js) setzt die Frage in Wort-Spans mit
+`--i`; D: Balken 0,62 s, dahinter steigen die Wörter gestaffelt aus der Unschärfe
+auf. Assets: `assets/d/skyline.svg` (zwei Häuserreihen, Tanks, Antennen,
+Fensterraster), On-Air als gefülltes Schild, X gezeichnet, „Im Topf“.
+
+**Warum / Fallstricke:** Das „Ploppen“ ließ sich NICHT nachstellen — lokal, auf der
+Live-Seite (headless, `86d157d` ausgeliefert) und im Beamer-Popout liefen
+`thDZeile`/`thDBalken` jedes Mal (per `getAnimations()` nachgesehen). Vermutung:
+Fenster vor dem Deploy geöffnet → alte styles.css. Unabhängig davon war der
+Block-auf-einmal-Effekt zu schwach; jetzt Wort für Wort. Skyline als Datei statt
+Data-URI (26 KB hätten styles.css aufgebläht).
+
+**Geprüft:** `shots.js --themes D` 22 ohne Befunde; Studio-Blau (feud, jeop, wwm)
+unverändert, Basis `jeop-frage`/`jeop-antwort` neu; `ablauf.js` 49/49;
+`check.js`/`--types` sauber.
+
+**Offen:** Davids Blick auf das neue Aufdecken (mit Strg+F5 in Haupt- UND
+Beamerfenster); Show-Logos in D noch das allgemeine Symbol + Schrift; übrige
+D-Screens (WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy) noch nicht neu
+komponiert; andere Richtungen ploppen weiter.
+
+## 2026-10-15 — `afa1045` Late Night neu komponiert, Jeopardy-Aufdecken neu
+
+**Davids Kritik:** Die Richtungen „sehen kaum anders aus — als hättest du es leicht
+umgebaut“; beim Jeopardy „ploppt die Frage einfach auf, das sieht billig aus“.
+Rückfrage beantwortet: **Designs ähnlich lassen, aber viel hochwertiger; erst eine
+Richtung**, dann die anderen.
+
+**Gemacht:** D (Late Night) als Prototyp der neuen Stufe. Kern: nicht mehr Farbe
+über dem mittig gestapelten Standard-Layout, sondern die **Komposition des Entwurfs**
+per CSS-Grid (Markup unverändert): Marke klein oben links; Feud mit Schlagzeile +
+Liste links, Topf als einzige große Zahl + Teams-Spalte rechts; Jeopardy
+linksbündig mit Teams-Zeile; Jeopardy-Frage als Sendegrafik (Kicker, Kontur-Betrag,
+Schlagzeile, Antwort-Bauchbinde). Aufdecken: `data-neu`/`data-stand` am Overlay
+(`js/jeopardy.js`), D spielt einen orangen Balken über die Zeile, dahinter die Frage;
+Beamer-Flug startet an der Ziffer, blendet das Original aus, Konturschrift kopiert,
+Punktzahl erst nach Landung (kein „30300“ mehr).
+
+**Warum so / verworfen:** Erster Balken per `clip-path` am Text — schnitt den Balken
+(`::after`) mit ab, war nie sichtbar → Schrift `color: transparent` bis der Balken
+deckt. Bildschirmfotos in Echtzeit taugen für Animationen nicht (Screenshot dauert
+länger als die Zeitschritte) → Animationen angehalten und per `currentTime` bzw.
+GSAP-`progress` angefahren (Scratchpad `frames.js`, `flug.js`; Flug-Test braucht
+das Popout VOR dem Brett und eine abgefangene `gsap.timeline`).
+
+**Geprüft:** `shots.js --themes D` 22 Zustände ohne Befunde (neu: `jeop-frage`,
+`jeop-antwort`), `--reduced` ohne Befunde, Studio-Blau-Vergleich (feud, jeop, wwm,
+ddf, pih, tp) unverändert, `ablauf.js` 49/49, `check.js`/`--types` sauber.
+
+**Offen:**
+- **Davids Abnahme von D** — danach dieselbe Stufe (Komposition des Entwurfs +
+  eigenes Aufdecken) für B, E, I, K, L, O.
+- Bei allen anderen Richtungen ploppt die Jeopardy-Frage noch (nur D hat die neue
+  Choreografie; `data-neu` steht aber schon für alle bereit).
+- D noch nicht neu komponiert: WWDS, DDF, PIH, TP, Finale, Ergebnis, Menü, Handy
+  (nur Feud, Jeopardy, WWM).
+- Echter Beamer nicht geprüft; Netz war zeitweise weg (`git fetch` „Connection was
+  reset“, kam nach Wiederholung durch).
+
+## 2026-10-14 — `10faac8` Feud-GM: Verlauf der Runde (Ansatz 5) statt Jetzt-Karte
+
+**Gemacht:** Rundenprotokoll `feudLog` + `feudLogAdd(text, art, pts)` + `feudTeamName(i)` in `js/feud.js` (Typ
+`FeudLogEintrag`). Einträge an: `revealQuestion`, `revealAnswer` (+Punkte; bei letzter Antwort Punktvergabe),
+`revealAll` (Punktvergabe, „Alle Antworten aufgedeckt“), `addStrike`, `switchTeam` („X ist dran“ / „Alle Teams sind
+raus“), `undoLast` in `js/core.js` („↩ Rückgängig“), Erstbuzz-Callback, `feudSetStartTeam` und `feudAutoSetStartTeam` in
+`js/buzzer.js`. Geleert in `loadRound`; `nextRound` merkt den Verlauf in `feudRoundUndo.log`, `feudUndoRound` stellt ihn
+wieder her. GM-Fenster: Jetzt-Karte aus `7c113b4` entfernt. Ab 760 px Teamleiste über die volle Breite, links Frage +
+Antworten (ab 1200 px höhenfüllend, einspaltig), rechts `.ff-log` (füllt die Höhe), darunter Buzzer/Verbunden/Reihenfolge/
+Notizen. Unter 760 px (Gamepad) `.ff-log-mini` „Zuletzt“ mit den zwei neuesten Einträgen ganz oben.
+
+**Warum so:** David mochte Skizze 5 (`7c113b4`) im Ergebnis nicht; nach zehn Kastenvarianten habe ich fünf grundsätzlich
+andere Ansätze als Bilder gebaut (Board-Spiegel, ein großer Knopf, Kachel-Pult, Team-Hälften, Verlauf — Prototyp nur im
+Scratchpad, Bilder in `tools/shots/out/gm-ansaetze/`, ignoriert). Er hat „am ehesten“ 5 gewählt. Undo löscht keinen
+Eintrag, damit sichtbar bleibt, dass zurückgenommen wurde. Die Liste ist `column-reverse` und umgekehrt ausgegeben: liest
+sich chronologisch, der neueste Eintrag bleibt beim Überlaufen unten sichtbar.
+
+**Geprüft:** Sieben Zustände (verdeckt, scharf, Buzz anderes Team, läuft mit Strike + Undo, alle raus, fertig, langer
+Verlauf) bei 1707×951 und 390×844 in Studio und L angesehen, keine JS-Fehler. `shots.js --shows gm,feud` in
+A,B,D,E,I,K,L,O,Studio bei 1707×951 und `--shows gm` A,L,O,Studio bei 1000×700: keine Befunde, Bögen angesehen.
+`ablauf.js` 49 OK / 0 FEHL. `check.js`, `check.js --types` sauber.
+
+**Offen:**
+- Echtes Buzzern über Firebase nicht ausprobiert (Erstbuzz-Eintrag nur im Skript nachgestellt).
+- 3 Teams, Finale, Gleichstand-Auswahl nicht angesehen; das Finale hat kein Protokoll.
+- „Team wechseln“ per Knopf legt keinen Undo-Schritt an (war schon vorher so), schreibt aber jetzt „X ist dran“.
+- Zeitstempel kommen aus der Uhr des Host-Rechners.
+- Davids Urteil steht aus („am ehesten“, nicht „gefällt“). Übertrag auf andere Shows erst danach.
+- `setGmFeudTab`/`gmFeudTab` weiter ungenutzt.
+
+**Fallstricke:** `undoLast` (core.js) ruft `feudLogAdd` — es wird nur aus Feud aufgerufen; wer es für eine andere Show
+nutzt, bekommt Einträge im Feud-Verlauf. Python-Heredocs, die Dateien schreiben, scheitern in dieser Umgebung mit
+`Bad file descriptor` — Edit-Werkzeug nehmen.
+
+## 2026-10-14 — `7c113b4` Feud-GM: Skizze 5 „Nächster Schritt“ gebaut
+
+**Gemacht:** In `updateGamemaster` (`js/feud.js`) eine „Jetzt“-Karte (`.ff-now`) unter der Teamleiste. Sie leitet aus
+dem Zustand ab, was dran ist, in Ablauf-Reihenfolge: Frage verdeckt („Frage aufdecken“, Karte klickbar) → alle raus →
+alles aufgedeckt („Runde fertig – Punkte gehen an …“) → erster Buzz vor der ersten Antwort/dem ersten Strike („Bert (Team
+Blau) war zuerst · 0,31 s“, mit „→ Team beginnt“-Knopf, wenn das Team nicht schon dran ist) → Buzzer scharf ohne Buzz (beide
+Startteam-Knöpfe) → sonst „Team X ist dran · n von 3 Strikes“. Die alte Zeile „⚠ Alle Teams out“ ist durch die Karte ersetzt.
+Ab 1200 px (`.ff-body`): eine Spalte statt Haupt-/Seitenspalte, Antworten zweispaltig wie auf dem Board (1–4 links, 5–8
+rechts, `--ff-rows`), füllen die Höhe; Buzzer/Verbunden/Reihenfolge/Notizen als Viererreihe darunter.
+
+**Warum so:** David fand den vorigen Stand nur „größer gemacht“ (`fdebea9`) — die untere Hälfte blieb leer. Aus 10
+Skizzen (Wireframes, dann echtes GM-Markup in Studio-Blau, Prototyp-Skript nur im Scratchpad) hat er Skizze 5 gewählt.
+Abweichung von der Skizze: statt eines Chips „6 verbunden · Notizen ▸“ oben stehen die Panels als Reihe unten, weil Buzzer-
+Panel (Startteam-Knöpfe), QR und Spieler-Teamwahl dort erreichbar bleiben müssen.
+
+**Geprüft:** Sechs Zustände (verdeckt, scharf, Buzz anderes Team, läuft mit Strike, alle raus, fertig) bei 1707×951 und
+390×844 in Studio, L und O angesehen, keine JS-Fehler. `shots.js --shows gm,feud` in A,B,D,E,I,K,L,O,Studio bei 1707×951:
+keine Befunde, Bogen angesehen. `ablauf.js` 49 OK / 0 FEHL. `check.js` und `check.js --types` sauber.
+
+**Offen:**
+- 3 Teams, Fragen mit 6–8 Antworten, echtes Gamepad-Gerät und echtes Buzzern nicht angesehen.
+- Auf dem Handy schiebt die Karte die Antworten weiter nach unten (dort scrollt die Mitte wie vorher).
+- Ein offenes Panel in der unteren Reihe macht die Mitte scrollbar; bewusst so gelassen.
+- `setGmFeudTab`/`gmFeudTab` weiter ungenutzt.
+- Übertrag auf die anderen GM-Fenster steht aus.
+
+**Fallstricke:** Der 760-px-Block in `GM_SHARED_CSS` setzt `.gm-body{align-items:start}` — in einer Flex-Spalte schrumpft
+dann alles auf Inhaltsbreite, deshalb `align-items:stretch` in `.ff-body`. `themeGmHtml` setzt `.panel{border-color}` je
+Richtung; eigene Rahmenfarben auf Panels brauchen höhere Spezifität (`.panel.ff-now`).
+
+## 2026-10-14 — `7ae63d8` Feud-GM: Prüfung nach dem Umbau, „Am Zug“ in L lesbar
+
+**Gemacht:** Nächste Schritte aus `08b1425` abgearbeitet. Einziger Befund: in Richtung L war das „Am Zug“-Schild
+unlesbar (Schrift `#1a1200` auf dem dunklen Gold-Ersatz von L). Jetzt `color:var(--on-accent,#1a1200)` in `js/feud.js`.
+
+**Warum so:** `--on-accent` ist das Paar zum Gold-Hintergrund, das auch `.gm-btn.gold` nutzt. Der Rückfall greift in
+Studio-Blau, wo `themeGmHtml` keine Variablen setzt.
+
+**Geprüft:** `shots.js --shows gm` bei 1707×951 (B,D,I,K,L,O,Studio) und 390×844 (E,A,B,D,I,K,L,O,Studio): keine Befunde,
+Kontaktbögen angesehen. Nach dem Fix L/E/Studio bei 390×844 erneut angesehen. `ablauf.js`: 49 OK, 0 FEHL. `check.js`: in Ordnung.
+
+**Offen:**
+- Auf Handy-Breite steht die Karte „Rundenpunkte“ allein in der zweiten Zeile (auto-fit). Funktioniert, wirkt etwas leer;
+  bewusst nicht geändert, bis David den Aufbau abgenommen hat.
+- Nicht angesehen: 3 Teams, Zustand „alle out“, echtes Gamepad-Gerät.
+- `setGmFeudTab`/`gmFeudTab` weiter ungenutzt vorhanden.
+- Davids Urteil zum neuen Aufbau steht aus; danach Übertrag auf die anderen GM-Fenster.
+
+**Fallstricke:** Feste Farben im GM-Template, die `themeGmHtml` nicht umschreibt, brechen in abweichenden Richtungen —
+auf `#FFD23F`-Hintergrund immer `var(--on-accent)` nehmen.
+
+## 2026-10-14 — `08b1425` Feud-GM neu geordnet (Abbruch: David muss weg)
+
+**Gemacht:** `updateGamemaster` für Feud (`js/feud.js`, `teamsHtml` + gmHtml): oben ist jetzt eine Teamleiste. Jede
+Teamkarte (`score-card ff-team`) zeigt Name, Stand, 3 Strike-Kreise (`.ff-pip`) und ein „Am Zug“-Schild, daneben steht eine
+Karte mit den Rundenpunkten (`ff-pot`, gestrichelt). Die Frage hat eine eigene Karte mit „Frage x von y“, Klick ruft weiter
+`revealQuestion`. Über der Liste steht „Antworten · anklicken zum Aufdecken“. Die Tabs „Aktuelle Frage/Reihenfolge“ sind weg,
+die Reihenfolge ist ein `<details>` in der Seitenspalte. Neue Reihenfolge der Seitenspalte: Buzzer, Verbunden, Reihenfolge,
+Notizen.
+
+**Warum so:** David fand das Panel unübersichtlich: „Am Zug“, die Strikes und die Frage waren verstreut, der Punktestand
+fehlte ganz. Die Klassen `score-card`/`score-val`/`score-name` wurden wiederverwendet, damit `themeGmHtml` und die
+`gm`-Regeln je Richtung (Radius, Schrift) greifen. Die neuen `.ff-*`-Regeln stehen im Feud-Template und nutzen nur Literale,
+die `themeGmHtml` umschreibt (`rgba(255,255,255,`, `#FFD23F`, `#fff`).
+
+**Geprüft:** `check.js` meldet „alles in Ordnung“, `shots.js --shows gm --themes E,A` bei 1707×951 ohne Befunde, das E-Bild
+habe ich angesehen.
+
+**Stopppunkt / Offen:**
+- Nicht angesehen: Gamepad-Handy (schmale Spalte, die Teamleiste bricht dort per `auto-fit` um), die Richtungen B/D/I/K/L/O,
+  3 Teams, der Zustand „alle out“.
+- `setGmFeudTab`/`gmFeudTab` (`js/core.js:885`, Erlaubnisliste in `js/buzzer.js:698`) wird nicht mehr benutzt, ist aber noch
+  da. Aufräumen wäre möglich, die Gamepad-Liste dann mitziehen.
+- Die untere Hälfte bleibt bei 5 Antworten weiter leer. Denkbar wäre, die Antworten bei ≥1200 px zweispaltig wie das Board
+  zu zeigen (1–4 links, 5–8 rechts), oder Buzzer-Ergebnisse groß unter die Antworten zu holen.
+- Die anderen GM-Fenster (Jeopardy, WWM, WWDS, DDF, PIH, TP) haben nur die mitwachsende Schrift aus `fdebea9` bekommen,
+  keinen neuen Aufbau.
+
+**Nächste Schritte:** 1. Gamepad und `ablauf.js` prüfen. 2. Davids Urteil zum neuen Aufbau abholen. 3. Bei Zustimmung
+denselben Aufbau (Lageleiste → Aufgabe → Aktionen) auf die anderen GM-Fenster übertragen.
+
+## 2026-10-14 — `fdebea9` GM-Fenster wächst im großen Fenster mit
+
+**Gemacht:** In `GM_SHARED_CSS` (`js/core.js`) gilt ab 1200 px ein neuer Block: `html{font-size:clamp(16px,1.15vw,22px)}`,
+dazu mehr Innenabstand bei Kopfzeile, Inhalt, Antworten, Panels und Knöpfen, die Frage ist größer, die Panel-Köpfe sind kräftiger.
+In der Feud-GM-Ansicht (`js/feud.js`, strikesHtml) sind die Strike-Kästchen jetzt `1.5rem` groß statt `24px`, das inaktive Team
+hat `.5` statt `.3` Deckkraft.
+
+**Warum so:** David hat einen Screenshot vom maximierten GM-Fenster (1707×951, Richtung E) geschickt: Schrift rund 14 px, untere
+Hälfte leer. Fast alles im GM-CSS hängt an `rem`, deshalb wächst mit der Grundschrift alles gemeinsam. Ein Umbau einzelner
+Templates war nicht nötig. Die Schwelle 1200 px lässt Gamepad-Handy und schmale Fenster unverändert.
+
+**Geprüft:** `shots.js --shows gm --themes E,A` bei 1707×951 und E bei 1280×720 ohne Befunde, die Bilder habe ich angesehen.
+`check.js` meldet „alles in Ordnung“.
+
+**Offen:** Die GM-Fenster von Jeopardy, WWM, WWDS, DDF, PIH und TP sind nicht angesehen, Studio-Blau habe ich nicht gegen die
+Basis verglichen (gm ändert sich dort gewollt). Die untere Hälfte bleibt bei Feud mit 5 Antworten weiterhin teils leer.
+
+**Fallstricke:** Inline-`px` in den Templates wächst nicht mit, nur `rem`.
+
+## 2026-10-14 — Abschluss Grafik-Rework aller acht Richtungen (Übersicht)
+
+**Aktueller Stand:** Alle acht verbleibenden Richtungen tragen ihre Entwurfs-
+Identität jetzt auf **allen** Flächen (Beamer, Host/Menü/Setup, GM-Fenster/Gamepad,
+Handy), nicht nur auf den Brettern: A Studio (Vorsession), D `215485a`, B `ad935ea`,
+E `5ae0b61`, I `d575580`, K `1550927`, L `b852653`, O `f23015f`. Neu: Feld `gm` je
+Richtung in `js/theme.js`, `tools/shots`-Zustände `menu`/`setup`.
+
+**Gesamtprüfung (nach `f23015f`):**
+- `shots.js --themes A,B,D,E,I,K,L,O`: 20 Zustände × 8 = 160 Bilder, **keine Befunde**.
+- `shots.js --reduced` für B,D,E,I,K,L,O: **keine Befunde** (nichts läuft endlos).
+- Studio-Blau: alte Basis vom 2026-10-10 war veraltet (40 Abweichungen, alle aus
+  Änderungen anderer Sessions an GM/Feud/WWM seit dem 10.). Neue Basis am Stand
+  **vor** dem Rework (`600af2c`, Worktree, danach entfernt) → Vergleich: **18 von 18
+  Zuständen unverändert**. Basis für `menu`/`setup` neu angelegt (`out/`, ignoriert).
+- `ablauf.js`: **49 OK, 0 FEHL**.
+- Deploy-Actions aller Pushes: success (zuletzt Lauf 38602524447).
+
+**Stopppunkt / Offen:**
+- **Davids Abnahme steht für alle aus**, besonders B (zurück aufs Original statt
+  „Automat 1987“ — von mir entschieden, er hatte nicht gewählt) und L (Grund jetzt
+  Papier statt Braun).
+- Nicht angesehen: echte Beamer-Ausgabe, Intros/Overlays über der O-Vignette,
+  Editor-Screens (nur Menü/Setup als Host-Seiten im Prüflauf), Gamepad direkt.
+- Aufräumen nach Abnahme: Richtungen C, F, H, J, M, N, P, Q, R, S löschen (Plan aus
+  `26beddf`), SVG-Filter `#ico-pixel*` in `index.html`, Galerie `designs/`.
+- `.github/workflows/pruefungen.yml` weiter nicht auf GitHub (Token, siehe CLAUDE.md).
+
+**Kreative Linien je Richtung (für spätere Feinarbeit):** D Sendestudio/Skyline/
+Papierkarten; B 1P/2P, Pixelrahmen, Gitterboden; E Plaketten, Punktbogen, Sonnen-
+strahlen; I Jetons, Karten, gefächerte Hand; K Röhren als Kontur, Kassenbon; L
+Zeitung, Kreuzworträtsel, Stempel; O Fenster, Statuszeile, Prozesstabelle.
+GSAP-Momente (wie der Jeopardy-Flug) kämen **zusätzlich** obendrauf — noch keiner
+pro Richtung gebaut.
+
+## 2026-10-14 — `f23015f` Design-Rework O Terminal
+
+**Gemacht:** Konsolen-Identität auf allen Flächen: Fenster mit Titel in der Kante,
+invertierte Statuszeile, Prompt + Blockcursor, Radioknöpfe/Checkboxen bei WWM,
+diff-Stil bei WWDS, Prozesstabelle bei DDF, „◄ WINNER“ bei PIH, nummeriertes
+Menü, `[ BEFEHL ]`-Knöpfe, GM-Kopf als Statuszeile. Dazu `js/wwds.js`: Teamname
+im Kategorie-Hinweis von fest `#FFD23F` auf `var(--accent-text)` (Studio-Blau
+gleicher Wert; behebt den gelben Text auf Papier in L).
+
+**Warum so:** Glühen nur als Nachglimmen der Schrift (Phosphor), keine Flächen.
+Handy-Buzzer: Text im Knopf erst durch `[ BUZZ ]` ersetzt — verworfen, weil das JS
+dort auch Zustände schreibt; der Knopftext bleibt.
+
+**Geprüft:** `shots.js --themes O` 20 Zustände, WWM 9 px / PIH 14 px → behoben,
+danach ohne Befunde; Kontaktbögen angesehen. `check.js`, `--types` sauber.
+
+**Offen:** Röhren-Vignette (`body::after`, z-index ganz oben, ohne Klicks) liegt
+auch über Overlays/Intros — gewollt, aber nicht mit Intro angesehen.
+
+## 2026-10-14 — `b852653` Design-Rework L New York
+
+**Gemacht:** Zeitungs-Identität auf allen Flächen; **Grund jetzt Papier**
+(`--bg #E6DECA` + Faserkorn, Falz per `body::before`) statt Mittelbraun mit Vignette.
+Spielstand-Kästen, Dementis, Kreuzworträtsel mit Nummern, Stimmzettel, Stempel,
+Kleinanzeigen, Inhaltsverzeichnis-Menü, Stempel-Buzzer. Details im Commit.
+
+**Warum so:** Der Entwurf ist durchgehend Papier; das Braun war eine Abweichung.
+
+**Fallstricke:** Die Hell-Regel weiter unten setzt auf Teamkarten dunkle Felder
+(`--field-bg`) — gewinnt wegen Reihenfolge; L braucht dort `[data-theme-hell]`
+zusätzlich im Selektor. WWM-Frage ist Flexbox: `::before`/`::after`-Anführungszeichen
+wurden eigene Flex-Elemente → entfernt.
+
+**Geprüft:** `shots.js --themes L` 20 Zustände, Feud-lang 7 px → behoben, ohne
+Befunde; Kontaktbögen angesehen. `check.js`, `--types` sauber.
+
+**Offen:** WWDS-Hinweis „Team Rot wählt eine Kategorie“ steht gelb auf Papier
+(Farbe kommt aus dem JS, schon vor dem Rework so) — ungeprüft, welche Stelle.
+
+## 2026-10-14 — `1550927` Design-Rework K Neon-Bar
+
+**Gemacht:** Röhren-Identität auf allen Flächen (gemeinsame Röhrenregel über
+`--nc`), Teams als Leuchtschrift, wachsende Balken-Leiter, Kassenbon-Gebote,
+schiefe Leuchtschilder im Menü, GM-Feld, Handy. Details im Commit.
+
+**Warum so:** Bei K ist Glühen keine Dekoration, sondern das Material — darum
+bleibt es, aber nur als Kontur + Lichthof, nie als gefüllte Leuchtfläche.
+
+**Fallstricke:** `:is()` übernimmt die höchste Spezifität seiner Liste — ein
+zusammengesetzter Selektor in der Sammelregel hätte alle Zustandsregeln
+geschlagen. `height: calc(10px + var(--k-h)*4px)` an `::before` griff im
+Screenshot nicht (Ursache nicht weiter untersucht) → Höhen explizit je `nth-child`.
+
+**Geprüft:** `shots.js --themes K` 20 Zustände, Feud-lang 21 px → behoben, danach
+ohne Befunde; Kontaktbögen und Leiter-Ausschnitt angesehen. `check.js`, `--types` sauber.
+
+**Offen:** nichts Eigenes.
+
+
+## 2026-10-14 — `d575580` Design-Rework I Salon
+
+**Gemacht:** Spieltisch-Identität auf allen Flächen: Team-Plätze mit Jeton,
+Jeton-X, Gold-Topf, Karten mit Eckzeichen/Farbzeichen, Jetonstapel-Leiter,
+gefächertes Menü, Jeton-Buzzer, GM-Feld. Details im Commit.
+
+**Warum so:** Original hatte Jetons und Karten als Kern; vorher kamen nur die
+Bretter davon an. Kartenflächen flach statt Verlauf; Tisch-Lichtkegel bleibt,
+weil er im Entwurf steht.
+
+**Geprüft:** `shots.js --themes I` 20 Zustände, ein Befund (Feud-lang 13 px)
+behoben, danach ohne Befunde; Kontaktbögen angesehen. Fallstrick: `.round-bar
+.pts` trägt bei TP/WWDS Text („TEAM ROT“), nicht nur Zahlen — als Kreis war es
+ein Ei, jetzt Pille. `check.js`, `--types` sauber.
+
+**Offen:** nichts Eigenes.
+
+## 2026-10-14 — `5ae0b61` Design-Rework E 70er
+
+**Gemacht:** 70er-Identität (Kakaobraun, Senf/Orange/Rost, Shrikhand, runde Formen)
+auf allen Flächen; Sonnenstrahlen-Muster, Team-Plaketten mit Ring, Pillen-Balken,
+WWM-Punktbogen, Ringschild-Preis, gestrichelte Gebote, GM-Feld, flacher Handy-Buzzer.
+
+**Warum so / verworfen:** Davids Vorgabe „Original, nur hochwertiger“ (Emaille-
+Verläufe abgelehnt) → alle Flächen flach, Tiefe nur über harte Unterkanten. Der
+alte Leuchtschein (`--bg-img` radial) ist raus. Der Punktbogen der WWM-Leiter
+ist per `margin-top` je `nth-child` gebaut (keine Geometrie im Markup nötig).
+
+**Geprüft:** `shots.js --themes E`: erster Lauf 5 Befunde (Höhe bei 1280×720:
+Feud/Feud-lang 23, PIH 36, Ergebnis 16, WWM-Joker 10 px) → eigene
+`@media (max-height:900px)`-Regeln, danach ohne Befunde. Kontaktbögen angesehen.
+`check.js`, `--types` sauber.
+
+**Offen:** nichts Eigenes; Gesamtlauf aller Richtungen folgt am Ende.
+
+## 2026-10-14 — `ad935ea` Design-Rework B Arcade: zurück zum Original, veredelt
+
+**Gemacht:** B wieder aus `designs/s/B-*.html` (Gelb/Cyan, Press Start, Pixelrahmen),
+auf allen Flächen ausgebaut: 1P/2P-Anzeigen, Plätze „01“ per CSS-Zähler,
+Punkte-Platzhalter, Levelleiste oben, Auswahlpfeil, ITEMS-Joker, Zählwerk-Preis,
+Segmentbalken, Gitterboden, Menü mit Pfeil, Knöpfe mit hartem Versatz, GM-Fenster,
+Automatenknopf am Handy. Details im Commit.
+
+**Warum so / verworfen:**
+- Davids offene Frage „Arcade behalten oder zurück“ habe ich entschieden (er hat
+  „mach alles davon fertig“ gesagt, ohne zu wählen): zurück zur Identität, weil
+  „Automat 1987“ Magenta-Verläufe + Glow war — das, was er bei D abgelehnt hat.
+  **Davids Bestätigung steht aus.** Rückweg: `0f4e9e9` steht in der History.
+- `git revert 0f4e9e9` wurde vom Auto-Modus blockiert → Block über `swapblock.js`
+  (Scratchpad) neu geschrieben, alte Werte aus `git show 0f4e9e9^:…` übernommen.
+- Show-Logos: erst `font-size` je Zeile gesetzt — brach WWDS/DDF (Zeilen
+  ineinander). Jetzt `transform: scale(.7)` um die eigene Grundlinie
+  (`transform-box: fill-box`), passt für alle Logos.
+- Pixelify (Vorsession) blieb verworfen; Press Start liest sich ab ~.6rem sauber,
+  5 ≠ S.
+
+**Geprüft:** `shots.js --themes B` 20 Zustände ohne Befunde; Kontaktbögen und
+Logo-Ausschnitte aller Shows angesehen. `check.js`, `--types` sauber.
+
+**Offen:** `--reduced` für B nicht eigens gelaufen (Blink-Animationen sind in
+`@media (prefers-reduced-motion)` abgeschaltet, ungeprüft). SVG-Filter
+`#ico-pixel` in `index.html` weiter unbenutzt.
+
+## 2026-10-14 — `215485a` Design-Rework D Late Night: ganzes Grafikdesign
+
+**Gemacht:** David: „mach alles davon fertig“ (Plan aus der Vorsession: D über alle
+Flächen, B entscheiden, dann E, I, K, L, O). D trägt jetzt die Entwurfs-Identität
+überall: Korn + Studiolicht + Skyline (`body::before`), Teamtafeln mit Teamfarb-Strich,
+„On Air“-Kopf, Feud-Headline mit Kicker, Kontur-Ziffern, WWM-Leiter als Balkenleiste
+oben, Papierkarten, Joker als Wörter, DDF-Leben als Punkte, PIH-Gebote als
+Preisschilder, nummeriertes Menü, eckige Knöpfe, GM-Fenster, Handy-Buzzer flach.
+Neu: optionales Feld `gm` je Richtung in `js/theme.js` (CSS fürs GM-Fenster/Gamepad,
+`themeGmHtml` hängt es an). Neu in `tools/shots`: Zustände `menu` und `setup`
+(Host-Seiten, ohne Höhenprüfung).
+
+**Warum so / verworfen:**
+- Alles CSS (BAUPLAN 4.8), Layout-Eingriffe nur per CSS (`order`, `flex-direction`):
+  WWM-Leiter oben statt rechts ist eine reine CSS-Umstellung.
+- Korn zuerst mit `background-blend-mode: soft-light` — auf dem Handy und im GM-Fenster
+  greift die Regel nicht (eigene `<body>`-Stile), dort wurde der Grund grau. Jetzt Korn
+  mit Alpha .06 ohne Blend-Mode, überall gleich.
+- Skyline zuerst 46vw breit: Fenster lagen als orange Punkte zwischen den
+  Jeopardy-Feldern. Jetzt 30vw, nur in der Ecke.
+- Joker-Wörter über `font-size:0` + `::before` je `nth-child` (Markup hat Emojis).
+
+**Geprüft:** `shots.js --themes D` 20 Zustände ohne Befunde (vorher WWM-Joker 19 px,
+Ergebnis 10 px zu hoch → `@media (max-height:900px)` und kleinere Siegerzeile).
+Alle Kontaktbögen angesehen. `check.js`, `--types` sauber.
+
+**Offen:** Echtes Beamerfenster mit D nicht eigens geprüft (Spiegel nutzt dieselbe
+`styles.css`). Jeopardy-Flug (`aufdecken.js`) mit D-Punktzahl ungeprüft — er kopiert
+berechnete Stile, sollte also passen. Gamepad nur über GM-Bild geprüft.
+
+## 2026-10-14 — Auftrag präzisiert: Rework = gesamtes Grafikdesign, nicht nur Übergänge
+
+**David (wörtlich):** „Das Rework soll nicht nur mit diesen Übergängen zu sehen sein.
+Alles, auch das Grafikdesign selber soll reworked werden.“
+
+**Was das heißt (Stand aller Aussagen von heute):**
+- Jede der acht Richtungen (A, B, D, E, I, K, L, O) bekommt ein **überarbeitetes
+  Grafikdesign** auf allen Flächen (Beamer, Host-Seite/GM-Panel, Handys) — Bretter,
+  Teamanzeigen, Typografie, Raster, Symbole, Details. Die GSAP-Momente kommen
+  **zusätzlich** dazu, sie ersetzen das Grafik-Rework nicht.
+- **Identität behalten:** Look und Grundidee des Originals bleiben erkennbar
+  (Late Night und 70er hat David in „neu erfunden“ abgelehnt). Studio (A) als
+  komplett neu ist abgenommen.
+- **Kein Verlaufs-/Glow-Einheitsbrei** („AI Slop gradient scheiß“) — Qualität über
+  echte Gestaltung (siehe Memory „design-rework-kein-verlaufs-slop“).
+- Offen: Arcade (B) neu behalten oder aufs Original zurück.
+- Vorgehen: je Richtung Original-Entwurf (`designs/s/<K>-*.html`) und Ist-Stand
+  prüfen, kurzen Plan zeigen, nach OK bauen.
+
+Kein Code geändert.
+
+## 2026-10-14 — `921be17` BAUPLAN 4.8: „Beamer animiert selbst“ als erlaubter Weg
+
+**Gemacht:** David hat den Jeopardy-Flug am Beamer abgenommen („jetzt is er clean“).
+BAUPLAN 4.8 um die Ausnahme ergänzt, mit den Regeln aus `d890f20`/`8116fbf`/`c7e7bb1`
+(Auslöser gespiegeltes Element, nur `data-nur-beamer` animieren, FLIP vom Endzustand,
+zwei Frames warten + `lagSmoothing`, weicher Ausklang, reduced motion, Cache-Buster).
+Kein Code geändert.
+
+**Offen:** nächster Leinwand-Moment nach diesem Muster (Davids Wahl); Arcade
+behalten oder zurück; Veredelung der Original-Richtungen.
+
+## 2026-10-14 — `c7e7bb1` Jeopardy-Flug: Zahl landet deckungsgleich (echtes FLIP)
+
+**Gemacht:** Die fliegende Zahl ist eine exakte Kopie der Punktzahl der Frage (gleiche
+Box, berechnete Stile inline) und wird nur per `transform` bewegt; am Ende `transform`
+= null → deckungsgleich. Kein `will-change` auf der Zahl (sonst unscharf im Vollbild).
+
+**Warum:** David sah nach `8116fbf` noch „eine leichte Verschiebung“. Ursache: zwei
+verschieden gesetzte Texte (große eigene Zahl vs. Punktzahl) lassen sich nur
+annähernd zur Deckung rechnen (blieben 2–3 px, davor 9–11 px). Lehre: Bei FLIP immer
+**vom Endzustand aus** bauen, nicht auf den Endzustand zurechnen.
+
+**Geprüft:** Abweichung 0/0/0 px in A und B, Standbilder angesehen, Bildrate
+gegen `8116fbf` gleich/besser (Zahlen im Commit), Flugtest 7/7, `ablauf.js` 49/49.
+
+**Offen:** wie im Eintrag darunter (echter Beamer, BAUPLAN 4.8, Arcade-Entscheidung).
+
+## 2026-10-14 — `8116fbf` Jeopardy-Flug: Bildrate abgesichert, Ausklang ohne Schnitt
+
+**Gemacht:** Siehe Commit. FLIP (nur `transform`/`opacity`), Start nach zwei Frames,
+`lagSmoothing(80,16)`, weicher Ausklang (Frage liegt ab Landung darunter, Fläche
+löst sich über 0,6 s auf), Zahl landet eingemessen auf der Punktzahl.
+
+**Warum / Fallstricke:**
+- David hat die Erstfassung live gesehen und mochte sie („das gefällt mir“), aber
+  den harten Schnitt am Ende bemängelt.
+- **Messungen schwanken stark mit der Rechnerlast.** Ein früher Lauf zeigte 0 Hänger,
+  ein späterer derselben Fassung deutlich schlechter. Belastbar nur abwechselnd
+  alt/neu unmittelbar hintereinander.
+- Haupt- und Beamerfenster laufen im **selben Thread** (gleicher Ursprung, Popup).
+  Was das Hauptfenster beim Öffnen tut, bremst den Beamer — daher der verzögerte Start.
+- Testwerkzeug: `evaluate(() => tl.pause())` hängt, weil Playwright die GSAP-Zeitleiste
+  serialisieren will — Rückgabewert verwerfen. Zeitleiste ist für Tests als
+  `window.__flugTl` erreichbar.
+- Landung: `screenIn` der verdeckten Frage verschiebt die Punktzahl beim Messen —
+  vorher `getAnimations({subtree:true}).finish()`.
+
+**Geprüft:** Zahlen im Commit. Scratchpad-Tests `fpstest.js` (Bildrate, CDP-Bremse),
+`flugtest.js` (7/7 A und B), `ausklang.js` (Standbilder 0,8–1,5 s, Landeabweichung).
+
+**Offen:**
+- Am echten Beamer ungeprüft, ebenso mit Hauptfenster im Hintergrund.
+- Lange Frames beim Öffnen kommen aus dem Hauptfenster (Spiegel, GM-Panel, Sichern),
+  nicht aus der Animation — die Arbeit selbst wäre der nächste Hebel.
+- Die Prüfskripte liegen nur im Scratchpad; bei Bedarf nach `tools/shots/` übernehmen.
+- BAUPLAN 4.8 anpassen (Beamer animiert selbst), wenn David das Muster abnimmt.
+
+## 2026-10-14 — `d890f20` GSAP auf dem Beamer: Jeopardy-Feld fliegt zur Frage
+
+**Gemacht:** Siehe Commit. Kern: das **Beamerfenster spielt Animationen selbst**
+(`mainscreen/aufdecken.js` + `vendor/gsap.min.js`), ausgelöst dadurch, dass ein
+gespiegeltes Element ankommt (`#jeopardy-clue-ov` mit `data-col/-row`). Eigene Knoten
+tragen `data-nur-beamer`, `morphMirror` lässt sie stehen.
+
+**Warum so:** David fragte, warum GSAP nicht auf dem Beamer geht. Antwort: über den
+Spiegel nicht (je Frame ein Spiegel-Durchlauf, im Hintergrund gedrosselt). Erlaubt
+ist es, wenn das Beamerfenster selbst animiert — das ist dieser Versuch. Verworfen:
+GSAP im Hauptfenster + Spiegel; Overlay-Stil auf dem Beamer animieren (der Spiegel
+würde `style` beim nächsten Durchlauf zurücksetzen) — deshalb eigene Karte.
+
+**Geprüft:** Flugtest im echten Beamerfenster (Scratchpad `flugtest.js`) 7/7 in A und B,
+Bilder je Phase angesehen. `ablauf.js` 49/49, `check.js`/`--types` sauber.
+
+**Offen / ungeprüft:**
+- **BAUPLAN 4.8 anpassen**, sobald David das Muster abnimmt: „Beamer animiert selbst“
+  als erlaubter Weg.
+- Mit echtem Beamer und Hauptfenster im Hintergrund nicht geprüft (headless hat
+  kein echtes Hintergrund-Drosseln).
+- Landung des Betrags ~15 px tiefer als die Punktzahl (Schriftmetrik), beim
+  Überblenden kaum sichtbar.
+- Host-Fenster selbst zeigt die Frage weiterhin sofort, ohne Flug.
+
+## 2026-10-14 — `e25b4f0` Late Night zurück aufs Original; Kurs des Reworks geändert
+
+**Gemacht:** `94b61cb` (Late Night neu: Walnuss, Bernstein, Stadtlichter) per
+`git revert` zurückgenommen — D ist wieder das Original (Haarlinien, große Ziffern,
+Orange, Bauchbinden-Wisch). Der Space-Age-Ersatz für die 70er und eine
+„Veredelung“ der 70er mit Emaille-Verläufen wurden **nie committet** und verworfen.
+
+**Warum:** David: Late Night habe „komplett seinen Look verloren“ — „hör auf mit diesem AI
+Slop gradient scheiß, dafür hab ich dir nicht die Mittel gegeben“. Davor zu den 70ern:
+„das Original-Design ist besser, es soll nur hochwertiger sein“.
+**Neuer Kurs:** Identität jeder Original-Richtung behalten und veredeln — über
+Typografie, Raster, Präzision, Details, gezielte Bewegung —, keine weichen Verläufe,
+Glows, Glasbänder als Ersatz für Gestaltung. Als Memory gespeichert.
+
+**Stand der Richtungen:** A Studio neu (abgenommen, bleibt). B Arcade neu (`0f4e9e9`,
+live) — **offen, ob David das behalten will**; nach seiner Kritik fraglich, weil
+ebenfalls verlaufslastig. D, E, I, K, L, O: Original, noch nicht veredelt.
+
+**Offen:** Entscheidung zu B; Plan je Richtung vor dem Bauen zeigen.
+
+## 2026-10-14 — `0f4e9e9` Design-Rework B Arcade
+
+**Gemacht:** „Automat 1987“ (Details im Commit). David hat Studio abgenommen
+(„das is krass, mach weiter mit dem rest“). Reihenfolge danach: B, D, E, I, K, L, O.
+Werkzeug: `swap.js` im Scratchpad ersetzt je Richtung Eintrag in `js/theme.js`, Block
+in `styles.css` (`/* ── K · ` bis zum nächsten Kopf) und die Symbol-Zeile.
+
+**Warum / verworfen:** Pixelify Sans für alles verworfen — 5 las sich als S, „Blau“ als
+„Glau“. Pixelify nur noch Logo/Überschriften, Felder und Zahlen Chakra Petch.
+Pixel-Mosaik-Filter der Symbole entfernt (Logo-Symbol war unsichtbar).
+
+**Geprüft:** `shots.js --themes B` ohne Befunde, Feud/Jeopardy/WWM/GM/Buzzer/DDF/TP
+angesehen. `check.js`, `--types` sauber.
+
+**Offen:** SVG-Filter `#ico-pixel`/`#ico-pixel-g` in `index.html` jetzt unbenutzt —
+beim Aufräumen am Ende entfernen. Sonst wie beim Studio-Eintrag darunter.
+
+## 2026-10-14 — `26beddf` Design-Rework: Prototyp Studio (A) — wartet auf Davids Abnahme
+
+**Auftrag (David):** Designs komplett neu machen, nicht umbauen (Layout darf bleiben),
+hochwertiger, mit den vorhandenen Bibliotheken/Plugins. Entscheidungen per Rückfrage:
+- **Weniger, dafür besser.** Bleiben: **A Studio, B Arcade, D Late Night, E 70er,
+  I Salon, K Neon-Bar, L New York, O Terminal.** Wegfallen sollen C, F, H, J, M, N, P, Q,
+  R, S — **noch nichts gelöscht**; erst wenn die acht neuen stehen.
+- Themen bleiben als Vorgabe, die Umsetzung ist neu.
+- Flächen: Beamer/Leinwand, Host-Seite + GM-Panel, Handys (Buzzer + Gamepad).
+  **Studio-Blau (ohne Richtung) bleibt unverändert.**
+- Vorgehen: erst ein Prototyp (Studio), Abnahme, dann die anderen sieben.
+
+**Gemacht (Studio „Primetime-Studio“):** siehe Commit-Text. Kern: Graphit unter zwei
+Scheinwerferkegeln, Champagner `#E8C27A` als Akzent, blaues Kantenlicht `#5AA9FF`,
+Anybody (weit, `font-stretch`) + Hanken Grotesk. Feld-Aufdecken: Licht geht an
+(`thALicht`) + Lichtstreif (`thAStreif`), reines CSS. Teamkarten als Kandidatenpulte
+(Graphit + leuchtendes Band in Teamfarbe). Buzzer in Graphitfassung.
+
+**Warum so / verworfen:**
+- Big Shoulders + Instrument Sans waren die erste Wahl — verworfen, weil D (bleibt) sie
+  schon nutzt. Anybody und Hanken Grotesk nutzt keine andere Richtung.
+- GSAP/React Bits nicht auf dem Beamer (BAUPLAN 4.8); alles Sichtbare fürs Publikum CSS.
+- Antworten in Feud zuerst 125 % breit → „Bus/Bahn verpasst“ brach um; lange Texte
+  (Feld-Antwort, TP-Frage/-Lösung) jetzt 100 %.
+
+**Geprüft:** `shots.js --themes A` alle Zustände ohne Befunde; feud, jeop, wwm, wwds, tp,
+pih, ergebnis, gm, buzzer einzeln angesehen. `check.js`, `--types` sauber.
+
+**Offen / ungeprüft:**
+- **Davids Abnahme des Prototyps steht aus** — erst danach die anderen sieben.
+- Hauptmenü und Einrichtungs-Screens (Host) in Studio nicht angesehen (kein shots-Zustand).
+- Gamepad in Studio nur indirekt (gleiches HTML wie GM-Panel).
+- Galerie `designs/` und Voting-Seite zeigen noch die alten Entwürfe (216 Dateien).
+- Intro-Vorlagen und Show-Logos nicht eigens gestaltet (folgen den Variablen).
+
+## 2026-10-14 — `c84140b` Prüfpunkt: Beenden-Knopf nie auf dem Beamer
+
+**Gemacht:** David: „Er soll nicht auf den Beamer kommen.“ Im echten Beamerfenster
+(headless Chrome, `openBoardPopout`, Ersatz-DB) geprüft, im Intro und im Spiel:
+`#host-quit` wird mitgespiegelt, steht dort aber auf `display: none` (Ausblendliste in
+`js/feud.js`); `.gm-quit` kommt gar nicht aufs Beamerbild. Screenshot angesehen, kein
+Knopf. Neu als fester Punkt in `tools/shots/ablauf.js` („auf der Hostseite ja, auf dem
+Beamer nicht“). Kein App-Code geändert.
+
+**Geprüft:** `node tools/shots/ablauf.js` 49 OK / 0 FEHL. Erster Lauf brach ab, weil die
+neue Prüfung das GM-Panel ausblendete und nicht wieder einblendete — Testfehler, behoben.
+
+## 2026-10-14 — Branches aufgeräumt (kein Code geändert)
+
+**Gemacht:** Auf Davids Anweisung gelöscht: lokal `wip/beenden-f5`,
+`claude/game-buzzer-fixes-90cyjz`, `claude/merge-symbole`, `claude/tooling-setup`; auf
+origin `claude/game-buzzer-fixes-90cyjz` und `claude/tooling-setup`. Vorher geprüft: je
+0 Commits außerhalb master (`git rev-list --count master..<b>` bzw. gegen `origin/master`),
+lokal mit `git branch -d` (verweigert Ungemergtes). Danach `git fetch --prune`: lokal und
+origin nur noch `master`. Damit ist der erste „Offen“-Punkt im Eintrag „Am PC: Branches
+aufgeräumt“ unten erledigt.
+
+## 2026-10-13 — `45d0f4e` Buzzer „Zu spät“ statt Strafe, Offline-Banner frei, Geräte-Test stabil, Action vorbereitet
+
+**Auftrag (David):** die drei offenen Punkte aus `e2d5fd0` — Wackler finden, Prüfungen
+als GitHub Action bei jedem Push, Offline-Banner über den Knöpfen.
+
+**Gemacht:**
+1. **Wackler in `geraete.js`** — mit Diagnose statt Raten (10 Einzel- + 4 Doppelläufe je
+   Runde, auf einer Kopie im Scratchpad, damit parallel gearbeitet werden konnte). Ursachen:
+   - Testwerkzeug: WebKit baut die SSE-Verbindung unter Last neu auf; das `close` der
+     alten löschte in `relay.js` den NEUEN Client → Gerät bekam keine Updates mehr.
+     Jetzt nur sich selbst austragen, 10-s-Puls; `fbrelay.js` meldet beim Abriss
+     `.info/connected = false` und holt nach dem Neuaufbau den vollen Stand (wie Firebase).
+   - Testwerkzeug: `tap()` auf den pulsierenden Buzzer wartete in WebKit auf „stabil“ →
+     `force: true` (ein Finger wartet auch nicht), Tap bis zu 3× bis das Handy bestätigt.
+   - Testwerkzeug: WebKit meldet abgebrochene SSE im Gamepad-iframe als „access control
+     checks“ → CORS-Kopfzeilen im Relay, Meldung im Fehlerfänger ausgenommen.
+   - **App (`buzzer/index.html`): Druck nach entschiedenem Duell wurde bestraft.** Feud
+     macht nach dem ersten Buzz zu, wenn das Team wechselt (`feudAutoSetStartTeam`). Wer
+     danach drückte, bekam „Zu früh! Gesperrt 3s“ mit Wackeln — obwohl er zu SPÄT war.
+     Neu: `entschieden()` (nicht scharf, es gibt Buzzes, ich habe nicht gebuzzert) → Knopf
+     aus, Statuszeile „Zu spät — schon entschieden“. Bild: `out/geraete-zuspaet-iphoneSE.png`.
+   - Testannahmen: „scharf“ wurde als „Knopf an“ geprüft (der ist auch vor dem Scharfmachen
+     an); „Lange Leitung“ setzte 150 ms Vorsprung voraus, den der WebKit-Tap nicht immer hat.
+2. **GitHub Action** `.github/workflows/pruefungen.yml` geschrieben (check.js, --types,
+   ablauf.js, geraete.js; Bilder als Artefakt; hält den Deploy nicht auf). **Nicht gepusht:**
+   GitHub lehnt Workflow-Dateien ohne `workflow`-Token-Recht ab („refusing to allow an OAuth
+   App to create or update workflow … without `workflow` scope“). Weder Git-Token noch `gh`
+   (`gist, read:org, repo, user`) hat es. Die Datei liegt **nur lokal** (untracked) auf
+   Davids PC. Anleitung in CLAUDE.md, Abschnitt Screenshot-Prüfung.
+3. **Offline-Banner:** Handy — `.topbar` rutscht unter das Banner (`body:has(#conn.show)`),
+   der Buzzer bleibt stehen. Gamepad — das Panel-iframe rückt um 2,2rem nach unten.
+   Geprüft per Rechteck: Banner-Unterkante 33 ≤ Knöpfe 53,6 (Pixel); 30 ≤ Panel 35,2 (Gamepad).
+
+**Geprüft:** letzte Runde `geraete.js` 8 Einzel- + 4 Doppelläufe = **16/16 grün** (55–57
+Punkte je nach Wettlauf-Ausgang). `ablauf.js` 48/0. `check.js` sauber. `shots.js --shows
+buzzer` keine Befunde, Bogen angesehen (unverändert). Bilder angesehen: Offline Pixel und
+Gamepad, „Zu spät“ iPhone SE.
+
+**Offen:** Action aktivieren (David: `gh auth refresh -h github.com -s workflow`, dann
+pushen). Ob das echte Firebase-SDK den Buzz-Fall aus `e2d5fd0` je auslöste, weiter ungeprüft.
+WebKit unter Windows lädt die Google-Fonts im Gamepad-iframe nicht (Ersatzschrift im Bild) —
+nur Testumgebung, vermutlich.
+
+## 2026-10-13 — `e2d5fd0` Geräte-Simulation (`tools/shots/geraete.js`) + Buzzer-Fix Rundenwechsel
+
+**Auftrag (David):** „simulier so viel wie möglich“, auch iOS, „am liebsten komplett autonom“.
+
+**Gemacht:**
+- `tools/shots/geraete.js`: Host in Chrome (1280×720), vier Spielerhandys mit echten
+  Playwright-Geräteprofilen — iPhone 15 und iPhone SE in **WebKit** (Safari-Engine),
+  Pixel 7 und Galaxy S9+ in Chromium — und das Gamepad auf iPhone 15 Pro Max (WebKit).
+  Bedienung per `tap()` (Touch) und getippter Tastatur. 50 Prüfpunkte, siehe Kopf der
+  Datei. Bilder `out/geraete-<zustand>-<geraet>.png`.
+- `tools/shots/relay.js` (Node) + `fbrelay.js` (Browser): Ersatz-Firebase als Server im
+  Testprozess, weil Chromium und WebKit keinen BroadcastChannel teilen (`fbshared.js`
+  bleibt für `ablauf.js`). Wie echtes Firebase: `TIMESTAMP` beim Eintreffen am Server,
+  `transaction` als Vergleichen-und-Setzen am Server, `onDisconnect` bei Abriss/Neuladen,
+  Schreibvorgänge warten offline und gehen nach der Rückkehr raus. Je Gerät
+  `relay.offline(name, true/false)` und `relay.delay(name, ms)`.
+- **App-Fix `buzzer/index.html`** (round-Listener): beim Rundenwechsel `rawBuzzes = {}`
+  (nicht beim ersten Wert nach dem Laden). Gefunden durch den Test: Feud `nextRound()` →
+  `feudBuzzPrepare()` schreibt neue Runde und `buzzes: null` in einem Update. Feuert
+  `round` vor `buzzes`, fand `recomputeResults` den eigenen Buzz der alten Runde und
+  setzte `buzzedThisRound` wieder → Handy in der neuen Runde auf „Gebuzzert! ✔“
+  gesperrt. Ob das echte Firebase-SDK die Listener in dieser Reihenfolge feuert, ist
+  **nicht geprüft** (Vermutung: es geht alphabetisch, `buzzes` vor `round`, dann trat es
+  live nicht auf). Der Fix macht es reihenfolgeunabhängig.
+
+**Geprüft:** `node geraete.js` 7 Läufe: 6× 50 OK / 0 FEHL, **1× 47 OK / 3 FEHL** — welche
+drei, ist nicht festgehalten (Ausgabe nur gezählt). Gegenprobe: ohne den Buzzer-Fix
+schlägt „Runde 2: auch das iPhone mit Verzögerung ist scharf“ fehl. `ablauf.js` 48/0,
+`check.js` sauber. Bilder angesehen (Buzz iPhone SE, PIH iPhone SE, DDF Galaxy, Offline
+Pixel): nichts abgeschnitten, kein waagerechtes Scrollen.
+
+**Beobachtet, nicht geändert:** Offline-Banner auf dem Handy überdeckt die Knöpfe
+Einstellungen/Abmelden oben rechts, solange es steht.
+
+**Grenzen:** WebKit unter Windows ≠ iOS-Safari (gleiche Engine, andere Plattform).
+Nicht simuliert: Bildschirmsperre, Wake-Lock, App-Wechsel, echte Funkaussetzer.
+Einmal je Gerät: `npx playwright@1.48.2 install webkit` (~60–100 MB, nach
+`%LOCALAPPDATA%\ms-playwright`). Laufzeit ~1,5 min.
+
+**Offen:** die eine wacklige Lauf-Variante finden (bei nächstem FEHL die Zeilen notieren);
+optional als GitHub Action bei jedem Push (Workflow-Änderung → David fragen).
+
+## 2026-10-13 — `5460017` Gamepad im automatischen Durchlauf (`tools/shots/ablauf.js`)
+
+**Gemacht (David: „kannst du was bauen, dass du auch das Handy-Zeug testen kannst?“):**
+Handy-Buzzer war schon drin, das Gamepad nicht. Jetzt öffnet `ablauf.js` einen dritten
+Tab `gamepad/` (390×844) an derselben Ersatz-Datenbank und prüft vom Handy aus:
+Zwischensequenz-Panel mit „Weiter“, „Weiter“ führt den Host bis ins Feud-Tutorial,
+„Tutorial überspringen“ ist da und wirkt, danach weg; Spielpanel mit Beenden in der
+Kopfzeile; „Strike“ kommt beim Host an; „Beenden“ (Rückfrage bestätigt) → Host im Menü,
+Buzzer-Handy in der Lobby; keine JS-Fehler im Gamepad. Bild: `out/ablauf-gamepad.png`.
+
+`fbshared.js` dafür erweitert:
+- `on('child_added')` (erst vorhandene, dann neue Kinder) und `snap.ref` — sonst kam
+  kein Gamepad-Befehl (`gmremote/commands`) beim Host an.
+- Antwort auf `hallo` heißt jetzt `stand` und gilt nur dem fragenden Tab, nur einmal.
+  Vorher ging sie als `set ''` an alle: jedes Neuladen des Gamepad-iframes (das
+  eigene Firebase-Skript fragt mit `hallo`) löste beim Gamepad ein Update aus →
+  `fullLoad` → iframe lädt neu → `hallo` … Endlosschleife, iframe blieb auf
+  `readyState: loading`. **Nur ein Test-Artefakt**, echtes Firebase verhält sich nicht so.
+
+**Geprüft:** `node tools/shots/ablauf.js` zweimal hintereinander 48 OK / 0 FEHL
+(vorher 38). Gamepad-Bild angesehen: Kopfzeile „GAMEMASTER … ■ Beenden“, Strike
+gezählt (1 rotes X bei Team Rot). `node check.js` sauber.
+
+**Grenzen:** Ersetzt nicht das echte Handy: Touch, echtes Firebase mit Latenz,
+Bildschirmsperre, iOS-`confirm` im iframe sind nicht abgedeckt.
+
+## 2026-10-13 — `3835b52` GM-Panel: Beenden in der Kopfzeile, „Tutorial überspringen“ repariert
+
+**Gemacht (David: „Knopf passt da oben nicht“, „Tutorial überspringen geht nicht“):**
+- `js/core.js` `startGmPoller`: Zustand ist jetzt Overlay da/weg **plus** Tutorial
+  läuft/läuft nicht. Vorher wurde das GM-Panel nur beim Wechsel Overlay da/weg neu gebaut.
+  Im Feud-Intro folgen Willkommen → Tutorial → schwarze Pause ohne Lücke, deshalb fehlte
+  der Knopf während des Tutorials und stand danach wirkungslos da.
+- `js/buzzer.js` `gmInsertQuit` (aus `commitGamemasterHtml`): Beenden-Knopf wird im
+  geparsten Dokument rechts in `.gm-header` gesetzt, zusammen mit einem vorhandenen Chip
+  in `.gm-head-right`. Panels ohne Kopfzeile (Zwischensequenz) bekommen `.gm-quit.fix`
+  (fest oben rechts wie bisher). Schrift erbt die Richtung (`font:inherit`).
+  Das HTML für Firebase/Gamepad wird danach aus dem Dokument serialisiert.
+- Farbe des Knopfs in GM-Panel und `.host-quit` (styles.css):
+  `light-dark(#B42318, #FF8A80)` — helle Richtungen setzen `color-scheme: light`.
+
+**Warum so:** Vorher schwebte der Knopf mit `position:fixed` über der Kopfzeile, nicht
+auf ihrer Linie, und hätte in Jeopardy den Verbindungs-Chip (`connChip`) verdeckt.
+Einsetzen im DOM statt per String-Ersetzung, weil das Dokument ohnehin geparst wird.
+
+**Geprüft:** Im Browser nachgestellt (Feud-Intro bis Tutorial): vorher Panel ohne
+„Tutorial überspringen“, nach dem Fix vorhanden, Klick beendet das Tutorial, danach ist
+der Knopf weg. Kopfzeile bei 1280 und 390 px Breite angesehen. `gmInsertQuit` mit
+Jeopardy-artiger Kopfzeile: Chip und Knopf rechts in einer Gruppe. `node check.js`,
+`node check.js --types` sauber. `node tools/shots/ablauf.js` 38 OK / 0 FEHL.
+`shots.js --shows gm,feud,buzzer` keine Befunde, Bögen angesehen (gm-C, feud-Q).
+
+**Nachgeprüft (gleicher Tag):** Echtes Jeopardy-GM-Panel im Browser
+(`startJeopardyActual`, Board 1/2): Kopfzeile „JEOPARDY · ● Server verbunden ·
+■ Beenden“ in einer Linie, bei 1280 und 390 px Breite, Knopf ganz drin
+(390 px: Knopf x 280–374), kein JS-Fehler.
+
+**Offen:** Gamepad am echten Handy weiter ungeprüft.
+
+## 2026-10-13 — Am PC: Branches aufgeräumt, Screenshots mit echten Schriften (kein Code geändert)
+
+**Gemacht:** Nächste Schritte 1 und 4 aus dem Pause-Eintrag darunter.
+- `wip/beenden-f5` und `ccr-42a1f1c9-bjm7g8` auf origin gelöscht (David selbst; die
+  Umgebung hat `git push --delete` für Claude gesperrt). Nach `git fetch --prune` per
+  `git branch -r` geprüft: weg.
+- `node tools/shots/shots.js --shows gm,feud,buzzer` am PC mit Netz: „keine Befunde“,
+  Exit 0. Kontaktbögen GM, Feud, Buzzer angesehen: echte Schriften, „■ Beenden“ oben
+  rechts im GM-Panel und auf der Feud-Hostseite in allen 19 Richtungen, überdeckt nichts.
+
+**Beobachtet, nicht geändert:** Auf hellen Richtungen (C, F, H, L, N, P, Q) ist der
+Hostknopf „Beenden“ blass (rot-transparent auf Hell). Lesbar, aber schwach. Er ist nur
+für den Host, aufs Beamerbild kommt er nicht (Ausblendliste in `js/feud.js`) — darum
+bewusst so gelassen, bis David etwas anderes will.
+
+**Offen:**
+- `origin/claude/game-buzzer-fixes-90cyjz` und `origin/claude/tooling-setup`: je 0
+  Commits außerhalb master (`git rev-list --count origin/master..<branch>`), also
+  löschbar. Nicht gelöscht, wartet auf David.
+- Gamepad-Beenden am echten Handy und F5 mitten in Feud am echten Aufbau: weiter
+  ungeprüft (Schritte 2 und 3 unten).
+
+## 2026-10-13 — PAUSE: Stand nach Beenden-Knopf/F5 (`c571568` live) — hier weitermachen
+
+**Aktueller Stand:** Beenden-Knopf (Hostseite + GM-Panel/Gamepad) und Fortsetzen nach F5
+sind auf master und live. Deploy-Läufe #275 (`0eb6d59`) und #276 (`c571568`): beide
+`success`, per `gh run list` geprüft. Live-Seite selbst nicht im Browser angesehen.
+
+**Stopppunkt:** Branch `wip/beenden-f5` liegt noch auf GitHub (per API-Branchliste
+geprüft). Aus der Cloud-Session nicht löschbar: `git push --delete` meldet „Everything
+up-to-date“ ohne Wirkung, die GitHub-API antwortet 403 („Write access to this GitHub API
+path is not permitted through this proxy“). Sein Stand `34849f7` ist in master enthalten
+(`git merge-base --is-ancestor` geprüft) — Löschen verliert nichts. David hatte gerade
+keinen PC-Zugriff und macht später weiter.
+
+**Kreative Ansätze & Visionen (unverändert aus dem Abbruch-Eintrag):** Beenden-Knopf
+rot-transparent oben rechts, auf Hostseite und im GM-Panel gleich; Rückfrage immer auf
+dem Gerät, auf dem gedrückt wird. Hostknopf „immer da, solange eine Show läuft“ (auch im
+Intro), nicht im Menü — falls David ihn auch im Menü will: Intervall-Bedingung in
+`js/resume.js` lockern. Verworfen: Beamerfenster nach F5 per `window.open('', 'Board')`
+holen (ohne Nutzergeste unzuverlässig), stattdessen meldet sich das Fenster selbst.
+
+**Nächste Schritte:**
+1. Am PC: `git push origin --delete wip/beenden-f5` (oder GitHub → Branches → Mülleimer).
+   Danach ist auch `ccr-42a1f1c9-bjm7g8` erledigt (Stand = master) und kann weg.
+2. Gamepad am echten Handy: „Beenden“ drücken, `confirm` im iframe bestätigen → Host im
+   Menü, Handy in der Lobby. Bisher nur im Code gelesen.
+3. Am echten Aufbau mitten in Feud F5 am Host: Spiel läuft ohne Klick mit Punkten weiter,
+   Beamerfenster hängt sich binnen ~1,5 s wieder an. Dabei die Konsole auf
+   `Cannot read properties of null (reading 'nodeType')` beobachten — der Fix in
+   `scheduleBoardMirror` ist nicht durch einen roten Lauf belegt.
+4. Am PC (mit Netz für Schriften) einmal `node tools/shots/shots.js --shows gm,feud,buzzer`
+   — in der Cloud fehlten Google Fonts, die Bögen dort zeigen Ersatzschriften.
+
+## 2026-10-13 — `0eb6d59` auf master (Fast-Forward)
+
+David: „Mach weiter“ → `ccr-42a1f1c9-bjm7g8` per Fast-Forward auf master gepusht
+(`738c24b..0eb6d59`), `check.js` davor sauber. Deploy-Lauf #275 gestartet.
+`git push origin --delete wip/beenden-f5` meldete nur „Everything up-to-date“; ob der
+Branch weg ist, ist **nicht geprüft** (die Nachkontrolle wurde von der Rechte-Sperre der
+Umgebung abgelehnt). Sein Stand `34849f7` ist in master enthalten, Löschen ist gefahrlos.
+
+## 2026-10-13 — `2fea83a` Beenden-Knopf + F5 fortgesetzt (Branch `ccr-42a1f1c9-bjm7g8`, seit `0eb6d59` auf master)
+
+**Gemacht:** `origin/wip/beenden-f5` (`34849f7`) in den Session-Branch gemerged, dann
+die Nächsten Schritte aus dem Abbruch-Eintrag darunter:
+- `js/feud.js` `scheduleBoardMirror`: Durchgang auslassen, solange
+  `boardWin.document.body` fehlt (Beamerfenster lädt neu). Danach meldet sich die Seite
+  ohnehin per `boardPageReady()` (mainscreen/index.html Z. 56) und spiegelt neu.
+- `tools/shots/ablauf.js`: Prüfung 1 heißt jetzt „Beenden-Knopf da (Hostseite oder
+  GM-Panel)“ — sichtbarer Hostknopf ODER offenes Panel mit `.gm-quit`.
+- `ablauf.js` und `shots.js`: `firebase-app-compat.js` wird erst echt geholt, schlägt das
+  fehl, kommt ein Minimal-Firebase (`apps`, `initializeApp`). Grund: in der Cloud-Umgebung
+  ist gstatic gesperrt, ohne das lief kein Test (`firebase is not defined`). Mit Netz
+  ändert sich nichts.
+
+**Warum so:** Absichern statt Ursache umbauen — der Spiegel ist ein reines Nachziehen,
+ein ausgelassener Frame wird beim nächsten Mutationsereignis bzw. beim `boardPageReady`
+nachgeholt. Branch statt master: die Cloud-Session darf nur auf ihren Branch pushen.
+
+**Geprüft:** `node tools/shots/ablauf.js` 38 OK, 0 FEHL, 0 JS-Fehler in beiden Tabs.
+`node check.js` und `node check.js --types` (15 Dateien, keine Meldung) sauber.
+`node shots.js --shows gm,feud,buzzer`: keine Befunde; Kontaktbogen GM angesehen —
+„■ Beenden“ oben rechts in allen 19 Richtungen, überdeckt nichts. Headless-Browser:
+`CHROME=/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headless_shell`.
+
+**Offen / ungeprüft:**
+- Der `nodeType`-Fehler ließ sich **nicht** reproduzieren: ohne Fix lief `ablauf.js` hier
+  ebenfalls 38/38. Timing-Fall; der Fix ist begründet, aber nicht durch einen roten Lauf
+  belegt.
+- Google Fonts und cdnjs (QRCode) sind in der Cloud gesperrt — die Screenshots zeigen
+  Ersatzschriften.
+- Gamepad (`gamepad/index.html`) auf echtem Handy: Knopf, `confirm` im iframe — ungeprüft.
+- Merge auf master + Deploy, Löschen von `wip/beenden-f5` — steht aus.
+
+**Fallstricke:** `/opt/pw-browsers/chromium` startet mit `headless: true` (old headless)
+nicht mehr, dafür die `headless_shell` nehmen.
+
+## 2026-10-13 — ABGEBROCHEN: Beenden-Knopf + F5 fortsetzen — Stand auf Branch `wip/beenden-f5` (`34849f7`)
+
+**Abgebrochen auf Davids Anweisung.** Nichts davon ist auf `master` oder live. Der
+unfertige Code liegt auf `origin/wip/beenden-f5`, ein Commit `34849f7` auf `20d93ef`.
+
+**Auftrag (David):** 1. Im Gamepad und im Hostmenü ein Beenden-Knopf, der immer da ist.
+2. Nach F5 soll der Spielstand erhalten bleiben und ohne Klick weiterlaufen.
+
+**Aktueller Stand auf dem Branch:**
+- `js/resume.js`: `gmQuitShow()` beendet jede Show (TP/DDF/PIH über ihre Quit-Funktionen,
+  sonst alle `*.active = false`, Buzzer/Eingabe zu, Overlays weg, `RESUME_KEY` gelöscht,
+  `joinLocked:false`, `lobbyNeueShow()`, Menü). `hostQuitClick()` mit `confirm`.
+  Intervall (700 ms) blendet `#host-quit` ein, solange eine Show oder ein Intro-Overlay
+  läuft. `resumeGame(ohneKlick)`: bei F5 (`performance` navigation type `reload`) und
+  frischem Stand ohne Banner nach `load` fortsetzen, ohne `openBoardPopout`.
+  Feud-Fortsetzen ruft `lockBuzzerJoins` **nicht** mehr auf.
+- `js/buzzer.js`: `GM_QUIT_HTML` wird in `commitGamemasterHtml` vor `</body>` jedes
+  GM-Panels gesetzt (fester Knopf oben rechts, `confirm` im Panel bzw. Gamepad, dann
+  `opener.gmQuitShow()`). `gmQuitShow` steht in `GM_REMOTE_ALLOWED_FNS`.
+- `index.html`: `<button id="host-quit" class="host-quit">` nach `#gm-bar`.
+  `styles.css`: `.host-quit` (z-index 4900, über den Intros, unter der Host-Sperre); aus,
+  wenn `#gm-embed-overlay.visible` (`body:has(...)`), weil das Panel einen eigenen hat.
+- `js/feud.js`: `boardReattach(win)`; `#host-quit` in der Board-Ausblendliste.
+  `mainscreen/index.html`: meldet sich alle 1,5 s per `opener.boardReattach(window)`.
+- `tools/shots/ablauf.js`: neuer Abschnitt „F5 mitten im Spiel, Beamerfenster, Beenden“.
+
+**Stopppunkt:** Letzter Lauf `node tools/shots/ablauf.js`: 36 OK, 2 FEHL.
+1. `Feud laeuft: Beenden-Knopf auf der Hostseite sichtbar` — **Testannahme falsch,
+   kein App-Fehler:** beim Spielstart ist das GM-Panel eingeblendet, dann ist der
+   Hostknopf absichtlich aus. Prüfung ändern auf „Hostknopf sichtbar ODER Panel offen
+   mit `.gm-quit`“.
+2. JS-Fehler Host: `TypeError: Cannot read properties of null (reading 'nodeType')` in
+   `morphMirror` (js/feud.js ~Z. 1051), aufgerufen aus `scheduleBoardMirror`
+   (`morphMirror(boardWin.document.body, document.body)`, ~Z. 1093). Vermutung,
+   ungeprüft: Direkt nach dem Wiederanhängen bzw. während das Beamerfenster neu lädt,
+   ist `boardWin.document.body` noch `null`. Ich war gerade dabei, die Stelle zu lesen.
+Grün waren u. a.: F5 setzt Feud ohne Klick mit Punkten fort, das Beamerfenster hängt sich
+nach F5 wieder an und zeigt das Spiel, Beenden über das GM-Panel → Menü/Stand
+gelöscht/Handy in der Lobby, Beenden mitten im TP-Intro über den Hostknopf.
+
+**Nebenbei gefunden (auf dem Branch behoben, auf master noch offen):** Das Fortsetzen
+per Klick (bestehende Funktion) ruft bei Feud `lockBuzzerJoins` mit noch leerer
+Presence-Liste auf → `lockedNames: []` → **alle Handys gesperrt** („screen-blocked“).
+
+**Ideen/Ansätze, die im Raum standen:**
+- Beenden-Knopf rot-transparent oben rechts, im GM-Panel und auf der Hostseite gleich;
+  Rückfrage immer auf dem Gerät, auf dem gedrückt wird, nie als Dialog auf dem Host.
+- Der Hostknopf ist bewusst „immer da, solange eine Show läuft“ (auch im Intro), nicht
+  im Menü. Falls David ihn auch im Menü will: Intervall-Bedingung lockern.
+- Verworfen: Beamerfenster nach F5 per `window.open('', 'Board')` holen — ohne
+  Nutzergeste unzuverlässig; deshalb meldet sich das Fenster selbst.
+
+**Nächste Schritte:**
+1. `git switch wip/beenden-f5` (oder `git merge --ff-only` nach Prüfung auf master).
+2. In `scheduleBoardMirror` absichern: `if (!boardWin.document || !boardWin.document.body) return;`,
+   den Fehler reproduzieren und prüfen, dass er weg ist.
+3. Die Prüfung 1 in `ablauf.js` korrigieren (s. o.), danach soll `ablauf.js` 38/38 zeigen.
+4. `node check.js --types`, `node tools/shots/shots.js --shows gm,feud,buzzer` (Knopf im
+   GM-Panel in allen Richtungen ansehen — **noch nicht gemacht**).
+5. Gamepad (`gamepad/index.html`) mit echtem Handy prüfen: Knopf sichtbar, `confirm`
+   im iframe geht, Befehl kommt an — **ungeprüft**, nur über den Code gelesen (iframe ohne
+   `sandbox`).
+6. Auf master mergen, HANDOFF-Eintrag mit Hash, push, Deploy prüfen, Branch löschen
+   (Löschen vorher Bescheid geben).
+
+## 2026-10-13 — `2623227` Pause-Screen zwischen den Fragen (weder Buzzer noch GIF)
+
+**Gemacht:** Im Handy-Buzzer neu `#screen-wait` mit Team-Chip, blasser
+atmender Kugel im Teamverlauf (`.wait-orb`, `--buzz-*` aus `applyBuzzColor`) und
+dem Text „Gleich geht's weiter“. `refreshRoot`: Buzzer nur bei
+`live || armed || buzzedThisRound`, bei `everActive` ohne offene Frage →
+`showWait()`, sonst Lobby. In `tools/shots` neuer Zustand `buzzer-pause`; in
+`ablauf.js` sind die früheren INFO-Zeilen jetzt Soll-Punkte (`screen-wait`).
+
+**Warum so:** David: zwischen den Fragen „weder Buzzer noch GIF“, ein Übergang.
+Er hat damit meinen halb begonnenen Weg abgebrochen, in DDF/PIH die Lobby zu
+zeigen (Flag `ohneBuzzer` — nie geschrieben, nichts davon im Code). Gestaltung:
+Kugel in Größe und Verlauf des Buzzers, nur blass. Beim Wechsel schrumpft sie aus
+1,3-facher Größe (`waitEin`), damit Knopf → Pause wie ein Übergang wirkt und
+nicht wie ein Seitenwechsel. Ein Spinner wurde verworfen, er hätte nach Laden
+ausgesehen. Der Text nennt weder Frage noch Buzzer, damit er auch zu DDF und PIH
+passt.
+
+**Geprüft:** `node tools/shots/ablauf.js` 28/28 (Feud zwischen zwei Fragen, DDF
+nach der Abstimmung und PIH nach der Auswertung → `screen-wait`).
+`node shots.js --shows buzzer,buzzer-pause,buzzer-login`: keine Befunde,
+Kontaktbogen und E einzeln angesehen. `check.js` fehlerfrei.
+
+**Offen:** Nicht auf echtem Handy. Bei „Bewegung reduzieren“ läuft das Atmen nur
+einmal (globale Regel) — `--reduced` nicht eigens laufen lassen.
+
+## 2026-10-13 — `9a0eece` ablauf.js: Jeopardy, DDF und PIH
+
+**Gemacht:** `tools/shots/ablauf.js` spielt jetzt fünf Shows in einer Host-Sitzung
+(Feud, TP, Jeopardy, DDF, PIH). Drei Accounts ohne Handy-Tab (Anna, Bert, Carla)
+für die Teilnehmer-Auswahl. Das Handy gibt in DDF wirklich eine Stimme
+(`sendVote`) und in PIH ein Gebot über `#est-input`/`#est-send` ab.
+
+**Warum so:** Ohne echte Stimme bzw. echtes Gebot bricht `ddfEvaluateVote` /
+`pihEvaluate` mit `alert` ab („noch keine Stimme“), und die Runde bleibt offen —
+der erste Lauf meldete das fälschlich als „Handy bleibt in der Abstimmung“.
+Jeopardy-Schätzfrage: ein normales Feld wird im Test per `clue.estimate = true`
+umgestellt, statt auf eine Schätzfrage in den Demodaten zu hoffen.
+
+**Geprüft:** `node tools/shots/ablauf.js` 28/28, 0 JS-Fehler in beiden Tabs.
+`check.js` fehlerfrei.
+
+**Offen — Befund, nicht geändert:** In DDF und PIH zeigt das Handy nach der ersten
+Abstimmung bzw. dem ersten Gebot zwischen den Runden den **gesperrten Buzzer**
+(`everActive` → `showBuzz`), obwohl es dort keinen Buzzer gibt. Davor steht es in
+der Lobby. Ob dort Lobby oder ein eigener Warte-Screen hingehört, ist Davids
+Entscheidung; im Test steht es als INFO-Zeile ohne Soll.
+
+## 2026-10-13 — `1ed09e3` „zuletzt da“ in der Spielerübersicht; Durchlauf-Test Host+Handy
+
+**Gemacht:**
+- `js/core.js`: `cleanPlayerAccount` übernimmt `seen`; `playerSeenText` zeigt bei
+  Offline-Spielern „zuletzt vor X h / Tagen“, mit Team und < 12 h bis zum
+  48-h-Ablauf zusätzlich „(Team noch N h)“.
+- `tools/shots/ablauf.js` + `tools/shots/fbshared.js`: Host- und Handy-Tab im
+  selben Browser-Kontext teilen eine Ersatz-Datenbank (BroadcastChannel). Spielt
+  Feud, dann TP in derselben Host-Sitzung durch und prüft die Handy-Screens.
+- `CLAUDE.md`: `node ablauf.js` bei der Screenshot-Prüfung eingetragen (eigener
+  kleiner Commit nach diesem Eintrag).
+
+**Warum:** David: „mach das selber so weit wie's geht“ zu den offenen Punkten aus
+`a0468d9`. Der Durchlauf ersetzt die Show-Probe für das, was sich automatisch
+prüfen lässt. Die Auslegung der 48 h („ab letzter Teilnahme“) bleibt Davids
+Entscheidung und ist unverändert. `fbstub.js` reichte nicht: jeder Tab hatte
+eine eigene, leere Datenbank, Host und Handy sahen sich nicht.
+
+**Geprüft:** `node tools/shots/ablauf.js` 13/13 — Lobby nach Login, `seen`
+gestempelt, 49-h-Team weg, Lobby im Feud-Intro, Buzzer ab erster Frage, scharf
+nach dem Aufdecken, Buzzer zwischen den Fragen, Lobby bei der zweiten
+Einrichtung, Lobby im TP-Intro, Rad nach dem Intro, „zuletzt vor 2 Tagen“,
+0 JS-Fehler in beiden Tabs. Übersicht im Screenshot angesehen. `check.js` und
+`--types` ohne Meldung.
+
+**Offen:**
+- Nicht auf echten Geräten. Die Intros wurden übersprungen (Overlays entfernt),
+  nicht durchgeklickt.
+- `ablauf.js` deckt nur Feud und TP ab, nicht Jeopardy, DDF und PIH.
+
+**Fallstricke:** Im Ersatz müssen `get`/`once` auf den Abgleich zwischen den Tabs
+warten. Sonst findet das Auto-Login im Handy-Tab den Account nicht und meldet ab.
+
+## 2026-10-13 — `a0468d9` Teams/Lobby verfallen nach 48 h; Buzzer erst nach den Intros
+
+**Gemacht:**
+- Handy: `registerPresence` schreibt `buzzer/players/<key>/seen` (Server-Zeit) und
+  wird alle 15 min wiederholt, solange die Seite offen und verbunden ist.
+- Host: `lobbyNeueShow()` (js/buzzer.js) läuft aus `showScreen` (js/core.js) beim
+  **Betreten** jeder Show-Einrichtung (`*setup-screen` außer `wwm-setup-screen`):
+  `lobbyReset` + offene Runden zu, dann `expireStalePlayers()`.
+- `expireStalePlayers()`: Team weg bei `seen` älter als 48 h; Presence weg bei `ts`
+  älter als 48 h oder ohne `ts`; Accounts ohne `seen` bekommen einen Stempel.
+- `lockBuzzerJoins` schreibt zusätzlich `lobbyReset`.
+
+**Warum so:**
+- Davids Vorgabe: Zuteilung höchstens 48 h, danach raus aus Team und Lobby, Login
+  und Account bleiben (Antwort auf Rückfrage). Ausgelegt als 48 h **ab der letzten
+  Teilnahme**, nicht ab der Zuteilung — beide Antworten zusammen lesen sich so.
+  Falls doch „ab Zuteilung“ gemeint war: ein `teamSince` beim Zuteilen setzen und
+  darauf prüfen.
+- Abgeräumt wird beim Host, weil nur er alle Accounts sieht und ein Handy, das zwei
+  Tage weg war, sich nicht selbst abräumen kann. Zeitpunkt: Einrichtung einer Show —
+  genau dann zählt die Zuteilung. Host-Uhr statt Server-Zeit; bei 48 h egal.
+- Accounts ohne `seen`: Stempeln statt Abräumen. Die letzte Teilnahme ist für sie
+  unbekannt; Abräumen hätte auch die Teams von gestern gelöscht.
+- Buzzer im Intro: `lobbyReset` gab es nur beim ersten Verbinden der Host-Sitzung
+  (`isFresh`). Ab der zweiten Show blieb `everActive` auf den Handys stehen →
+  Buzzer schon im Intro. `live` setzt der Host erst nach dem Intro
+  (`feudBuzzPrepare` usw.), also reicht es, den Merker bei jeder Einrichtung und
+  jedem Start zu löschen. Nicht jedes `ensure*LobbyConnected` genommen, weil das
+  auch aus `oninput` der Teamnamen-Felder läuft (jeder Tastendruck ein Schreiben).
+
+**Geprüft:** Host-Test (Scratchpad, Firebase-Stub mit Nutzdaten) 11/11: 49 h Team
+weg, 47 h bleibt, ohne `seen` Stempel und Team bleibt, ohne Team nichts, Presence
+49 h und ohne `ts` raus, frische bleibt, zweite Einrichtung (TP) setzt erneut
+zurück, gleicher Screen erneut nicht, WWM nicht, Spielstart ja, 0 JS-Fehler.
+Handy-Test: beim Verbinden `set presence/sony` und `set players/sony/seen`.
+`check.js` und `--types` ohne Meldung. Keine Screenshot-Prüfung (nichts Sichtbares
+geändert).
+
+**Offen:**
+- Nicht live durchgespielt: zweite Show am selben Abend → Handys im Intro in der
+  Lobby, nach der ersten Frage am Buzzer.
+- Handys mit altem Code (Cache bis 10 min) stempeln kein `seen` und erneuern die
+  Presence nicht; nach 48 h Dauerverbindung fallen sie aus der Lobby, bis sie neu
+  verbinden.
+- Die Spielerübersicht zeigt `seen` nicht an.
+
+## 2026-10-13 — `703b381` lobbyReset: „nie gesehen“ zählt als Änderung
+
+**Gemacht:** Im `lobbyReset`-Listener des Handy-Buzzers löscht jetzt
+`alt !== jetzt` den Merker, auch bei `alt === null`.
+
+**Warum:** David sah nach `43f702b` weiterhin nur den Buzzer. Live war alles zu,
+`lobbyReset` gesetzt. Das Handy hatte den neuen Code **nach** dem Reset des Hosts
+geladen: kein gespeicherter Wert, also galt es als „keine Änderung“, und der
+Merker aus dem TP-Rad blieb. Ein fehlender Wert kann nur ein neuer Tab sein, dort
+ist `everActive` aus, oder ein Rest von vor diesem Listener. Löschen ist in beiden
+Fällen richtig. Zusätzlich hält GitHub Pages die Seite bis zu 10 min im Cache
+(`Cache-Control: max-age=600`); ein Handy kann also kurz noch den alten Stand haben.
+
+**Geprüft:** Handy-Test 4/4 (neu: alter Merker, Wert nie gesehen → Lobby; der
+fünfte Punkt im Test ist der bekannte Stub-Fehler mit `.get()`). `check.js`
+fehlerfrei.
+
+**Offen:** Auf dem echten Handy von David noch nicht bestätigt.
+
+## 2026-10-13 — `43f702b` Handy: Lobby nach hängender Runde, Ring über Statuszeile
+
+**Gemacht:**
+1. `lobbyReset` (Server-Zeitstempel) schreibt der Host beim ersten Verbinden
+   einer Lobby mit (`lobbyFrisch()` in `js/buzzer.js`, genutzt in
+   `ensureLobbyConnected` und `ensureRosterConnected` in `js/roster.js`). Der
+   Handy-Buzzer hört darauf, merkt sich den Wert in `sessionStorage`
+   (`buzzerReset`) und löscht `everActive`, sobald er sich ändert.
+2. `#buzz{margin-block:var(--buzz-rand)}` plus je Richtung `--buzz-rand`
+   (A 26, R 28, E 22, C/H/J 16, I/S 13, B/P 12, K/O 8 px).
+
+**Warum:**
+1. Von David gemeldet, nachdem das offene TP-Rad live geschlossen war: Die Handys
+   kamen sofort auf den Buzzer, ohne Lobby. Das Rad hatte `markActive()` ausgelöst,
+   `everActive` liegt in `sessionStorage`. Gelöscht wurde es nur beim **Wechsel**
+   `joinLocked` true → false — `joinLocked` war aber schon `false`, also gab es
+   keinen Wechsel. Ein Wert, der sich bei jedem Einrichten ändert, ist das
+   zuverlässige Signal. Verworfen: `everActive` bei jedem `joinLocked:false`
+   löschen — DDF/PIH sperren nie, das hätte dort zwischen zwei Runden die
+   Lobby gezeigt.
+2. Ebenfalls gemeldet. Die Ringe sind `box-shadow`-Spreads, `outline` oder
+   `::before` und zählen nicht zum Layout. In E und R lagen sie über Team-Chip und
+   „BEREIT …“. **War schon im Kontaktbogen zu `b33680d` sichtbar und wurde dort
+   übersehen** — der Bogen ist klein, Einzelbilder ansehen.
+
+**Geprüft:** Handy-Test (Scratchpad, Firebase-Stub, `lobbyReset` über
+`sessionStorage` als Ersatz für die DB) 4/4: alter Merker → Buzzer; neuer Wert →
+Lobby; Neuladen bei gleichem Wert → Merker bleibt; Neuladen bei neuem Wert →
+Lobby. `tools/shots` für buzzer und buzzer-login: keine Befunde, E/R/P einzeln
+angesehen. `check.js` und `--types` ohne Meldung.
+
+**Offen:**
+- Handys, die schon offen sind, kennen noch keinen `lobbyReset`-Wert. Sie springen
+  erst beim **nächsten** Einrichten einer Show (Host neu laden, Show-Setup öffnen)
+  in die Lobby, oder wenn der Handy-Tab geschlossen und neu geöffnet wird.
+- Die blasse große Kreislinie hinter dem Buzzer (in allen Richtungen) läuft bei
+  einigen weiter durch die Statuszeile. Sie gehört zum Hintergrund, das war vorher
+  auch so. Nicht angefasst.
+- Nicht auf einem echten Handy geprüft, nur bei 390×844.
+
+**Fallstricke:** `fbstub.js` kennt kein `.get()`; das Auto-Login im Handy-Buzzer
+wirft dort `db.ref(...).get(...).then is not a function`. Das ist ein Stub-Fehler,
+kein App-Fehler.
+
+## 2026-10-13 — `5ed8e82` Abstimmung und Schätzen/Bieten genauso absichern
+
+**Gemacht:** `TPSPIN_ZU` aus `c1d0f91` heißt jetzt `RUNDEN_ZU` und setzt neben
+`tpspin/active` auch `ddfvote/active` und `estimate/active` auf `false` — an
+denselben drei Stellen (`ensureLobbyConnected`, `ensureRosterConnected`,
+`lockBuzzerJoins`).
+
+**Warum:** gleiches Muster wie das Rad. Der Handy-Buzzer prüft Abstimmung und
+Schätzen vor Lobby und Buzzer; geschlossen werden sie nur von DDF/PIH/Jeopardy
+selbst. Jede Show öffnet ihre Runde nach dem Start ohnehin frisch (`set` mit
+`active:true`), das Schließen vorher schadet also nicht. Resume ruft
+`ensureRosterConnected` nicht auf und `lockBuzzerJoins` nur für Feud, das keinen
+der drei Kanäle nutzt — eine fortgesetzte offene Runde wird also nicht zugemacht.
+
+**Geprüft:** Host-Test (Scratchpad, Firebase-Stub mit Nutzdaten) 8/8, alle drei
+Felder in jedem der drei Updates, TP-Start öffnet danach frisch, 0 JS-Fehler.
+`node check.js` und `--types` (15 Dateien) ohne Meldung. Nicht einzeln geprüft:
+DDF-Abstimmung und PIH-Gebote nach dem Schließen (Code-Reihenfolge wie bei TP:
+Schließen beim Setup/Start, `set` erst bei `ddfBeginVote`/`pihBeginBids`).
+
+**Offen:**
+- **Live steht `buzzer/tpspin` weiter auf `active:true` (Sony).** Direktes Setzen
+  per REST-PUT wurde vom Rechte-System der Session abgelehnt („Modify Shared
+  Resources“). Räumt sich ab, sobald die Hostseite (neuer Stand) eine
+  Show-Einrichtung öffnet — oder David setzt es selbst bzw. gibt die Aktion frei.
+- `jeopardyEstimate.open` (Merker im Host) wird beim Jeopardy-Start nicht
+  zurückgesetzt; harmlos, nächste Frage setzt ihn neu.
+
+## 2026-10-13 — `c1d0f91` Offenes TP-Rad hielt Team-Handys in jeder Show fest
+
+**Gemacht:** `TPSPIN_ZU = {'tpspin/active': false}` in `js/buzzer.js`, mitgeschickt
+beim ersten Verbinden einer Lobby (`ensureLobbyConnected`, `ensureRosterConnected`
+in `js/roster.js`) und bei jedem Spielstart (`lockBuzzerJoins`). `startTp` ruft
+vorher `tpCloseSpin()`.
+
+**Warum:** David schickte ein Handy-Bild „🎡 Ihr seid dran / Sony hat gedreht /
+Gedreht ✔" statt der Lobby. Live gelesen (REST, nur GET):
+`buzzer/tpspin = {active:true, by:{name:"Sony", ts:1791597342931}, round:1791583178838, team:0}`.
+Runde am 09.10. ~22:20 UTC geöffnet, Sony drückte ~4 h später (10.10. ~02:15 UTC),
+der Host schloss nie. Geschlossen wird das Rad sonst nur von TP selbst (`tpSpin`,
+`tpQuit`); wird die Hostseite mitten in einer offenen Runde geschlossen oder neu
+geladen, passiert das nie. Weil `refreshRoot` im Handy-Buzzer `myTeamSpins()` **vor**
+Lobby und Buzzer prüft (`buzzer/index.html` ~Z. 830), blieb jedes Handy von Team Rot
+in jeder Show auf diesem Screen — auch beim Buzzern in Feud.
+- Die Stellen sind dieselben, die schon eine liegengebliebene `joinLocked`-Sperre
+  „aus der letzten Show“ lösen — gleiche Art Problem, gleicher Ort.
+- `tpCloseSpin` in `startTp`: ohne das stand `tpSpinOpen` nach einer nicht beendeten
+  TP-Runde noch auf `true`, und `tpRender` öffnete nie wieder eine Dreh-Runde.
+- Verworfen: Handy-seitig ein „veraltetes“ Rad erkennen (über `by.ts`) — hängt an
+  Handy-Uhren und rät; der Host weiß es sicher.
+- Nicht direkt in die Live-Datenbank geschrieben (Live-Daten nur nach Rückfrage).
+  Der Fix räumt den Zustand selbst ab, sobald die Hostseite eine Show-Einrichtung
+  öffnet.
+
+**Geprüft:** Headless Chrome, Firebase-Stub mit mitgeschriebenen Nutzdaten (Test im
+Scratchpad): 8/8 — Feud-Lobby und Roster-Lobby (DDF) schließen beim ersten
+Verbinden, `lockBuzzerJoins` schließt, zweites Verbinden schreibt nichts, TP-Start
+mit `tpSpinOpen = true`: erst `tpspin/active:false`, danach `set` mit `active:true`
+und frischer Runde; 0 JS-Fehler. `node check.js` und `--types` (15 Dateien) ohne
+Meldung.
+
+**Offen:**
+- Live steht der alte Zustand noch, bis die Hostseite (neuer Stand) eine
+  Show-Einrichtung öffnet. Danach live nachlesen: `buzzer/tpspin/active` muss `false` sein.
+- Gleiches Muster bei `ddfvote` und `estimate` (Abstimmung, Schätzen/Bieten haben auf
+  dem Handy ebenfalls Vorrang). Live stehen beide auf `active:false`; ein
+  Absicherungs-Reset wie hier fehlt dort noch.
+- DDF/PIH/WWM rufen `lockBuzzerJoins` beim Start nicht auf — innerhalb einer laufenden
+  Host-Sitzung schließt dort nur das erste Verbinden.
+
+**Fallstricke:** `tools/shots/fbstub.js` schreibt nur `typeof` der Werte mit; für
+Nutzdaten im Test `typeof v === 'string' ? v : typeof v` durch `JSON.stringify(v)` ersetzen.
+
+## 2026-10-13 — `b33680d` Lobby als MP4, 10-MB-Dublette weg, Pages-Upload eingegrenzt
+
+**Gemacht:**
+- Handy-Lobby (`buzzer/index.html`): 13 Lobby-GIFs zusätzlich als MP4
+  (`buzzer/images/lobby-gifs/<name>.mp4`), abgespielt als
+  `<video id="lobby-video" muted loop playsinline>`. `LOBBY_GIFS` enthält jetzt
+  Namen ohne Endung. Neue Funktionen `lobbyVideoPlay()` (aus `showLobby`) und
+  `lobbyBild()` (Rückfall aufs GIF); `showScreen` pausiert das Video außerhalb
+  der Lobby.
+- `buzzer/images/freddy-fazbear-fnaf.gif` gelöscht: bytegleich (`cmp`) mit der
+  Kopie in `lobby-gifs/`, einzige Referenz zeigt auf die Kopie.
+- `.github/workflows/pages.yml`: neuer Schritt vor dem Upload entfernt aus der
+  Lauf-Kopie `graphify-out .claude types tools/shots tools/reactbits`, die
+  Wurzel-`*.md`, `check.js jsconfig.json firebase.json database.rules.json
+  .gitignore`; `test -f .nojekyll && test -d designs && test -d tools/intros`
+  bricht ab, falls das je etwas Nötiges trifft.
+
+**Warum so:**
+- Auslöser: Befundliste von David („Bloats"). Davon nur die belegbar sicheren
+  angefasst. Laufzeit-Befunde (Leinwand-MutationObserver, GM-DOMParser,
+  synchrones `resumeSave`), Lazy-Load/Aufteilen der großen Skripte und
+  Per-Datei-Cache-Buster bewusst **nicht** — brauchen erst einen
+  Performance-Trace bzw. sind Umbau mit Show-Risiko.
+- MP4 statt WebM: WebM wäre zusammen nur ~200 KB kleiner (927 gegen 1127 KB),
+  bräuchte aber doppelte Dateien und ist auf iOS unsicher. H.264 läuft überall.
+- GIFs bleiben im Repo als Rückfall: iOS im Stromsparmodus lehnt `play()` ab,
+  ein GIF animiert trotzdem. Deshalb sinkt der Deploy durch die MP4s nicht,
+  wohl aber der Download auf dem Handy (Erwartungswert je Login gerechnet ~1,6 MB → ~100 KB).
+- `play()` erst in `showLobby`, nicht beim Würfeln: ein unsichtbares Video darf
+  iOS ablehnen, und iOS lädt ohnehin erst beim ersten `play()`.
+- `AbortError` löst keinen Rückfall aus — der kommt, wenn die Lobby verlassen
+  wird, bevor das Video lief, und ist kein Abspielproblem.
+- `designs/` bleibt im Deploy, obwohl die Befundliste es „Design-Exporte"
+  nannte: `js/theme.js` öffnet die Galerie und lädt `designs/s/*-Menu.html` als
+  iframe, die Voting-Seite ebenso. `tools/intros/` läuft laut CLAUDE.md bewusst
+  live.
+- Verworfen: GIFs verkleinern (David will die Pixelmaße behalten), GIFs aus dem
+  Pool nehmen.
+
+**Geprüft:**
+- Konvertierung: 13 GIFs, 21 681 KB → 1 127 KB MP4. Frames und Dauer identisch
+  bei 5 Stichproben (freddy 111/5,50 s, nose-fur 30/1,45 s, stich 36/1,75 s,
+  triplet 59/5,80 s, 67 23/2,20 s). Mittel-Frame von freddy und nose-fur
+  nebeneinander angesehen, kein sichtbarer Unterschied. Keins der 13 hat
+  transparente Pixel (alle Frames ausgezählt), MP4 ohne Alpha verliert also nichts.
+- Headless Chrome (installierter Chrome, Firebase durch `tools/shots/fbstub.js`
+  ersetzt, Test im Scratchpad, nicht im Repo): 18/18 OK — Video läuft sichtbar
+  in 498×498, nur MP4 angefragt, kein GIF; außerhalb der Lobby pausiert; zurück
+  läuft weiter; 10× `showLobby` stabil; sofort verlassen ohne Rückfall;
+  `play()` abgelehnt → GIF; MP4 404 → GIF; arna als Bild ohne MP4-Anfrage;
+  Bild → Video umschalten; alle 13 MP4 dekodierbar; 0 JS-Fehler.
+- `node tools/shots/shots.js --shows buzzer,buzzer-login`: 38 Bilder, keine
+  Befunde, Kontaktbogen angesehen. Die Lobby selbst ist **kein** Zustand in
+  `shots.js` — dort also nicht abgedeckt.
+- `node check.js`: alles in Ordnung.
+- Workflow-Schritt lokal an einer `git checkout-index`-Kopie simuliert:
+  27,7 MB/604 Dateien → 26,4 MB/294 Dateien, `.nojekyll`/`designs`/`tools/intros`
+  vorhanden.
+
+**Offen:**
+- **Nicht auf einem echten iPhone geprüft**, auch nicht im Stromsparmodus. Der
+  Rückfall ist nur per nachgebautem `NotAllowedError` getestet.
+- Lobby-Zustand in `tools/shots` aufnehmen, damit er künftig mitgeprüft wird.
+- Die übrigen Befunde der Liste (s. „Warum so") sind unberührt.
+
+**Fallstricke:**
+- `arna-celebration.gif` ist ein animiertes WebP (RIFF-Header), ffmpeg 6.0 kann
+  es nicht dekodieren. Wer neue Lobby-GIFs ergänzt: Header prüfen.
+- H.264 verlangt gerade Kantenlängen; `triplet` (165×302) wird um 1 px
+  beschnitten (164×302).
+- Werkzeug: ffmpeg kam per `npm install ffmpeg-static@5.2.0` in den
+  Scratchpad, nicht ins Repo. Konvertier-Befehl: `-c:v libx264 -preset
+  veryslow -crf 23 -profile:v high -movflags +faststart`, Filter
+  `crop=trunc(iw/2)*2:trunc(ih/2)*2,scale=out_color_matrix=bt709:out_range=tv,format=yuv420p`,
+  dazu `-colorspace/-color_primaries/-color_trc bt709 -color_range tv`.
+- `git checkout-index` in den Scratchpad scheitert ohne
+  `-c core.longpaths=true` an den langen graphify-Cache-Pfaden.
+
+## 2026-10-13 — `7dd8727` Auto-Commit/Push-Regel wiederhergestellt
+
+**Gemacht:** Abschnitt „Commit und Push" in `CLAUDE.md` wieder auf Auto-Commit
+ohne Rückfrage gestellt (wie 2026-10-08), ausdrücklich auch für `CLAUDE.md` und
+`.claude/`. Ausgenommen bleiben nur History-Umschreiben und Löschen.
+
+**Warum so:** Missverständnis im Verlauf des Tages. David sagte „committe nicht
+alles selbst", was ich erst als „immer fragen", dann als „gar nicht committen"
+umgesetzt habe (Zwischenfassungen nie gepusht). Gemeint war das Gegenteil:
+automatisch pushen ohne sein Eingreifen. Auf Klarstellung zurückgedreht.
+
+**Geprüft:** `node check.js` fehlerfrei („alles in Ordnung"). Betrifft keinen
+js-Code.
+
+**Offen:** keine.
+
+**Fallstricke:** Keine Vermutungen über widersprüchliche Kurz-Anweisungen —
+früher nachfragen hätte drei Fehlfassungen gespart.
+
+## 2026-10-13 — `49bf9e9` Abbruch-Regel bei knappem Session-Token-Budget
+
+**Gemacht:** Neuer Abschnitt in `CLAUDE.md` („Nutzungskontingent läuft leer —
+kontrolliert abbrechen", über dem HANDOFF-Abschnitt). Fällt der pro Zug
+eingeblendete `<total_tokens>`-Rest unter ~300 000, wird der laufende Schritt an
+nächster sauberer Stelle beendet, abgebrochen, ein HANDOFF-Eintrag mit
+Stopppunkt und nächsten Schritten geschrieben und David informiert.
+
+**Warum so:** David will nicht, dass bei leerlaufendem Budget unfertige,
+unprotokollierte Arbeit liegen bleibt. Erste Fassung bezog sich irrtümlich auf
+das Abo-Kontingent (sehe ich nicht); auf Klarstellung umgeschrieben auf den
+Session-Zähler, den die Umgebung pro Zug einblendet. Schwelle 300 000 als
+großzügiger Puffer, damit der HANDOFF-Eintrag selbst noch reinpasst.
+
+**Geprüft:** `node check.js` fehlerfrei (300 IDs, 2465 Klammernpaare, „alles in
+Ordnung"). CLAUDE.md-Änderung berührt keinen js-Code. Kein Screenshot-Lauf
+nötig (kein CSS/Layout).
+
+**Offen:** Vorbehalt in der Regel selbst: Zähler steht erst im nächsten Zug
+fest, mitten in langem Tool-Lauf kann er zwischen zwei Blicken fallen; sicher
+nur der Blick zu Zuganfang.
+
+**Fallstricke:** `CLAUDE.md` selbst steht in der „Groß — erst fragen"-Liste,
+deshalb trotz Auto-Commit-Regel vor dem Commit gefragt.
+
+## 2026-10-12 — `988961b` graphify-Cache + Manifest eingecheckt
+
+**Gemacht:** `/graphify` (Skill) einmal voll über das ganze Repo laufen
+lassen: AST aller 48 Code-Dateien (1762 Knoten, 4543 Kanten) plus 26
+Subagent-Chunks für 270 Dokumente/GIFs (621 Knoten). Ergebnis-Graph: 2388
+Knoten, 5658 Kanten, 110 Communities. Danach `.gitignore` erweitert und nur
+`graphify-out/cache/` (278 Dateien) + `graphify-out/manifest.json`
+eingecheckt. `graph.html`/`graph.json`/`GRAPH_REPORT.md`/`cost.json` und die
+`.graphify_*`-Pfaddateien bleiben per `.gitignore` lokal.
+
+**Warum so:** David: einmalige Investition, danach dauerhaft sparen.
+`cache/` + `manifest.json` lassen `/graphify --update` auf jedem Gerät nur
+geänderte Dateien neu extrahieren statt aller 318 — ein voller Lauf kostete
+rund 2,9 Mio. Subagent-Tokens. Verworfen: (1) ganzen `graphify-out/`
+committen — der Pages-Deploy lädt per `path: '.'` alles hoch, dann wären
+`graph.json`/`GRAPH_REPORT.md` mit eingebettetem HANDOFF-/BAUPLAN-Text
+öffentlich unter iryogameshows.github.io; `.graphify_python` trägt zudem
+einen gerätespezifischen Pfad. (2) `graphify-out/` ganz löschen — verwirft
+den Cache, nächster Lauf wieder teuer. David hat die öffentliche Freigabe
+der reinen Knoten-Labels (keine Volltexte) in `cache/semantic/` bewusst in
+Kauf genommen.
+
+**Geprüft:** `node check.js` fehlerfrei (300 feste IDs gegen 239 Markup-IDs,
+styles.css 2465 Klammernpaare). Health-Check des Graphen: 0 fehlende/hängende
+Endpunkte, 47 Self-Loops, 216 zusammengefallene Kanten (fast alles im
+minifizierten `vendor/`-Code). `git add -An` zeigte 279 Dateien, Rest von
+`graphify-out/` korrekt ignoriert.
+
+**Offen:** `vendor/` verzerrt God Nodes und rund 30 Communities (nicht
+ausgeschlossen). `HANDOFF.md` (7299 Zeilen) wurde vom Extraktor nur teilweise
+gelesen, ältere Einträge fehlen im Graphen. 15 GIF→`buzzer/index.html`-Kanten
+nur abgeleitet, ungeprüft. Zwei Entwurfsfehler nebenbei gefunden, nicht
+behoben: `designs/s/H-PIH.html` enthält nicht ersetzten Template-Ausdruck
+`{t(e(PIH_PROD),34)}` (per Grep bestätigt, nur diese Datei);
+`designs/s/R-PIH.html` trägt „IRY 4003".
+
+**Fallstricke:** Chunk 02 brach am Nutzungslimit ab, Datei war aber schon
+gültig geschrieben. `Remove-Item` mit einem `/`-Argument sperrt den ganzen
+PowerShell-Befehl — Aufräumen getrennt. Subagent-Limit 20 gleichzeitig, die
+restlichen 6 Chunks starteten nach.
+
+---
+
+## 2026-10-10 — `1d113a8` Spielstand sichern/fortsetzen (`js/resume.js`)
+
+**Gemacht:** Neue Datei `js/resume.js` (lädt als letztes Skript, nach
+`tp.js`): `resumeSaveSoon`/`resumeSave` (localStorage `liveGame`,
+400 ms gebündelt; Aufruf oben in `updateGamemaster` und am Ende von
+`showScreen`), `resumeOffer` (Menü `#resume-banner`, bis 6 h),
+`resumeGame`, `resumeDiscard`. Je Show: Feud (state, finaleState,
+Gleichstandswahl), Jeopardy (Zustand + Board), WWM, WWDS, DDF, PIH, TP.
+Offene Handy-Runden springen zurück (DDF-Abstimmung → `answer`,
+PIH-Gebote → `show`); Jeopardy-Buzzer zu, offene Frage bleibt; TP-
+Nachfassen wird neu scharf. Gelöscht wird nur bei klarem Ende (Ergebnis,
+Menü, Setup) — in schwarzen Übergängen bleibt der letzte Stand.
+
+**Warum so:** Plan mit David abgestimmt („Ja, wie beschrieben“).
+`updateGamemaster` als Haken, weil fast jeder Spielschritt dort
+vorbeikommt — kein Eingriff in jede einzelne Aktion. Jeopardy speichert
+das Board nur im laufenden Stand (nicht als Dauer-Daten — dort bleibt es
+bei Davids „So lassen“).
+
+**Geprüft (Browser, gestubbt, Skript im Scratchpad):** 7/7 Shows
+spielen → neu laden → Banner → fortsetzen → Stand gleich; Menü löscht den
+Stand. `tools/shots` (9 Zustände × 4 Richtungen) ohne Befunde.
+`check.js`, `--types` ok.
+
+**Offen / ungeprüft:** Echter Neustart des Browsers (Tab-Absturz) nicht
+nachgestellt, nur `reload`. Handys nach dem Fortsetzen mit echtem
+Firebase ungetestet. Großes Jeopardy-Board über 5 MB: Meldung,
+nicht getestet. `CLAUDE.md` (Strukturliste `js/`, „14 Dateien“) nennt
+`resume.js` noch nicht — Änderung braucht Davids Freigabe. BAUPLAN:
+eine neue Show muss in `resumeSave`/`resumeGame` angemeldet werden,
+sonst wird sie nicht gesichert — noch nicht in den BAUPLAN eingetragen.
+
+---
+
+## 2026-10-10 — `0d35dd3` DDF/PIH: Turnierwertung Team oder Einzelspieler
+
+**Gemacht:** `#ddf-tour-mode`/`#pih-tour-mode` (`index.html`, Klasse
+`.tour-mode-select`); `tournamentTeamScoresFromPlayers(…, modus)` —
+`'einzel'`: Maximum je Team, sonst Summe; `ddfFinish`/`pihFinish` geben die
+Einstellung mit; in `ddfSettings`/`pihSettings` gemerkt. Entscheidung David:
+„nur Team oder nur Einzelspieler, beides Summe“ → auf Rückfrage „bester
+Spieler zählt fürs Team“.
+**Geprüft (Browser, gestubbt):** 4/4. `check.js`, `--types` ok.
+**Offen:** Wirkt nur aufs Turnier. Die Teamleiste im PIH-Spiel und das
+Vertreter-Finale bleiben, wie sie sind. Setup-Screens sind nicht in
+`tools/shots`, die neue Auswahl ist nicht fotografiert.
+
+---
+
+## 2026-10-10 — `977e3a3` Feud: Gleichstand um Platz 2, Host wählt (mittlere Punkte, 8)
+
+**Gemacht:** `endGame` (3 Teams) → bei `sorted[1].score === sorted[2].score`
+`feudTieChoice` + `feudShowTieChoice` (Overlay `.feud-tie-overlay`, bewusst
+nicht in `GM_OVERLAY_SELECTOR`), GM `updateGamemasterFeudTie`, Wahl
+`feudPickFinalist` (freigegeben). Entscheidung David: „Host wählt“.
+**Geprüft (Browser, gestubbt):** Ablauf 100/50/50 bis zum Ausscheiden.
+Voller `tools/shots` 1280×720 nach allen heutigen JS-Änderungen ohne
+Befunde (1 Lade-Timeout, wiederholt sauber).
+**Offen:** Turnier-Wertung DDF/PIH — Rückfrage an David („nur Team oder
+nur Einzelspieler“, siehe Chat). Spielstand-Sicherung: Plan folgt.
+
+---
+
+## 2026-10-10 — `8fa6bb8` Pop-up-Meldung; Handy-offline geprüft (mittlere Punkte, 7)
+
+**Gemacht:** `openBoardPopout` meldet einen blockierten `window.open`
+einmal je Sitzung (`popoutBlockedWarned`); `openMainscreen` setzt den
+Merker, weil es selbst meldet. **Geprüft:** 1 Meldung bei 2 Versuchen.
+**Korrektur zur Fehlerliste:** „Handy offline zeigt Gebuzzert ✔“ — das
+Handy sperrt den Buzz-Knopf schon über `.info/connected`
+(`buzzer/index.html:778`); offen bleibt nur das Fenster, bis Firebase
+den Abriss erkennt. Nicht geändert.
+
+---
+
+## 2026-10-10 — `8bba3fd` Feud-Finale: Undo, doppelte Antwort, Finalfragen-Hinweis (mittlere Punkte, 6)
+
+**Gemacht:** `finaleUndoStack`/`finaleSaveUndo`/`finaleUndo` (`js/feud.js`),
+GM-Knopf im Finale, freigegeben; Wachen in `finalePickAnswer`/
+`finaleMarkMiss`; `#feud-setup-info` (`index.html`, befüllt in
+`showScreen`). **Korrektur zur Fehlerliste:** „doppelte Antworten nicht
+abgefangen“ stimmte fürs GM-Fenster nicht — dort war die Antwort schon
+ausgegraut; ungeschützt war nur der Weg über einen Fernbefehl.
+**Geprüft (Browser, gestubbt):** 5/5. `check.js`, `--types` ok.
+**Offen:** Gleichstand um Platz 2 bei drei Teams — braucht eine
+Entscheidung (Stichfrage? Host wählt?).
+
+---
+
+## 2026-10-10 — `488cd54` WWDS-Undo/Import, GM-Timer (mittlere Punkte, 5)
+
+**Gemacht:** WWDS `save()` in `wwdsAdjustBet`, `wwdsStartMaster`,
+`wwdsMasterSet`, `wwdsRevealMaster`, `wwdsAfterMaster`,
+`wwdsShowTieGuesses`; Import über `wwdsDrei`/`wwdsRichtig`;
+`wwdsStartTimer` aktualisiert das GM nur bei Start/Ablauf. GM-Timertext
+(WWDS/DDF/PIH) „⏱ Zeit läuft“/„Zeit abgelaufen“; `startRoundClock`
+(`js/core.js`) ruft `updateGamemaster` bei Start und Ablauf.
+**Geprüft (Browser, gestubbt):** GM-Updates 4 → 1 in 3,2 s; Master-Undo;
+Import. `check.js`, `--types` ok.
+**Offen:** Die eine verbleibende GM-Aktualisierung während des Timers ist
+nicht zugeordnet (vermutlich Poller/Overlay) — unkritisch.
+
+---
+
+## 2026-10-10 — `d43b604` Jeopardy: Boardwechsel per Knopf, Daily Double (mittlere Punkte, 4)
+
+**Gemacht:** `jeopardyFinishClue` wechselt nicht mehr selbst; GM-Boardansicht
+(`updateGamemasterJeopardy`, `js/feud.js`) zeigt bei vollem Board
+„▶ Weiter zu Board 2“ / „🏁 Zum Ergebnis“ → `jeopardyAdvanceBoard` (Wache:
+aktiv, kein offenes Feld, Board voll, einmal; freigegeben).
+`openJeopardyClue` blockt bei `ddPending`/offenem Feld. DD-Auswahl nur
+über `jeopardyClueHasContent`. `jeopardyUndo` rendert kein Overlay bei
+`ddPending`.
+**Warum so:** Verworfen: Undo über den Boardwechsel hinweg (müsste das
+neue Board samt Übergang zurückdrehen). Ein Klick mehr pro Board ist der
+kleinere Preis. **Achtung Ablauf:** Der Host muss jetzt am Boardende
+selbst weiterklicken.
+**Geprüft (Browser, gestubbt):** 4/4 + 3/3. `check.js`, `--types` ok.
+**Offen:** DD + getippte Frage öffnet die Eingabe weiter für alle Handys
+(werten darf nur das DD-Team) — nicht angefasst. Ob Undo je in einen
+`ddPending`-Stand führt, ist fraglich (kein Snapshot in dem Zustand) — die
+Absicherung schadet nicht.
+
+---
+
+## 2026-10-10 — `99fa1f9` Feud: Undo für „Nächste Runde“ (mittlere Punkte, 3)
+
+**Gemacht:** `feudRoundUndo`/`feudUndoRound` in `js/feud.js`; `nextRound`
+merkt den Stand vor dem Wechsel (nicht vor dem letzten), `undoLast`
+(`js/core.js`) nutzt ihn bei leerem Verlauf; Reset in `startGameActual`.
+**Geprüft (Browser, gestubbt):** 4/4. `check.js`, `--types` ok.
+**Offen:** Der Buzzer bleibt nach dem Rücksprung im Zustand der neuen
+Runde (vorbereitet, nicht scharf) — beim Weiterspielen unkritisch, nicht
+eigens getestet.
+
+---
+
+## 2026-10-10 — `5dbaa63` Jeopardy-Leertaste (mittlere Punkte, 2)
+
+**Gemacht:** `jeopardyKeyHandler` (`js/jeopardy-ui.js`): Leertaste erst
+nach der Verbindungsprüfung und nur bei `currentClue` +
+`questionRevealed`. **Geprüft (Browser, gestubbt):** 4/4. `check.js` ok.
+**Offen:** keine für diesen Punkt.
+
+---
+
+## 2026-10-10 — `eba0e2e` WWM-Fragen werden gespeichert (mittlere Punkte, 1)
+
+**Gemacht:** `wwmSave`/`wwmLoad`/`wwmNormalize` in `js/wwm.js`
+(localStorage `wwmData`); gespeichert bei jeder Editor-Änderung, Bild,
+Hinzufügen, Löschen, Import und beim Verlassen des Editors
+(`showScreen`, `js/core.js`); bei vollem Speicher einmal `alert`.
+**Geprüft (Browser, gestubbt):** 3/3. `check.js`, `--types` ok.
+**Offen:** Jeopardy-Boards weiter ungespeichert — laut Kommentar in
+`tournament.js` bewusst (Bilder mehrere MB); eigene Entscheidung nötig.
+
+---
+
+## 2026-10-10 — `86c0cb9` Buzzer-Listener gezielt, nie zwei zugleich (Liste Punkt 8)
+
+**Gemacht (`js/buzzer.js`):** `buzzerListen(bz, ref, cb)` /
+`buzzerUnlisten(bz)` mit gemerkten Callbacks (`subs` an
+`jeopardyBuzzer`/`feudBuzzer`), für die vier Spiel-Listener und Presence;
+Disconnect ohne `off()`-ohne-Argumente. `jeopardyBuzzConnect` trennt
+Feud, `feudBuzzConnect` trennt Jeopardy. Feud-Startteam mit
+`(state.teamNames || [])`.
+
+**Wie geprüft:** RTDB-Emulator (Java 21 portabel im Scratchpad, offene
+Regeln, `demo-keller`), Seite mit der **echten** SDK von gstatic, per
+Route auf `useEmulator('127.0.0.1', 9000)` umgebogen — keine
+Live-Daten berührt. Gezählt: Aufrufe von `recordReaction` je Buzz.
+Vorher/nachher: Feud 1/1, Feud neu verbunden 1/1, Jeopardy-Lobby dann
+Feud 2/1, Feud dann Jeopardy 2/1, Online-Anzeige der Spielerliste nach
+Umschalten false/true, JS-Fehler 3/0. `check.js`, `--types` ok.
+
+**Warum so:** Zuerst nur gegenseitiges Trennen probiert — blieb bei 2,
+weil das parameterlose `off()` die Listener nicht verlässlich entfernte
+(dafür aber fremde auf derselben Stelle). Meine Vermutung aus der
+Fehlersuche, Listener vermehrten sich mit jedem Spiel, hat der Test
+**widerlegt** (Neuverbinden blieb bei 1).
+
+**Fallstricke:** `fbstub.js` taugt für solche Fragen nicht — er bildet
+`off()`-Semantik nicht nach. Für Listener-Verhalten den Emulator nehmen
+(Aufbau siehe oben, Skripte im Scratchpad).
+
+---
+
+## 2026-10-10 — `1034939` PIH-Finale ohne Team-Vertreter (Liste Punkt 7)
+
+**Gemacht:** `pihSetFinalists` setzt Vertreter nur, wenn beide Teams einen
+haben, sonst leere Liste; `pihMayBid`: leere Liste im Finale = alle bieten;
+`pihBidProgress` zählt nur Bietberechtigte; Hinweis „Superpreis — alle
+bieten, er zählt mehrfach“.
+**Warum so:** Verworfen: die zwei punktbesten Einzelspieler als Finalisten
+— das Finale soll Teams gegeneinander stellen; ohne Teams gibt es keine
+sinnvolle Paarung, also bleibt es eine offene Runde mit Mehrfachwertung.
+**Geprüft (Browser, gestubbt):** 3/3. `check.js`, `--types` ok.
+**Offen:** keine für diesen Punkt.
+
+---
+
+## 2026-10-10 — `62be7c1` WWDS-Stichfrage (Liste Punkt 6)
+
+**Gemacht:** `wwdsRevealTie` mit Wache (`phase === 'tie'`, nicht
+`tieRevealed`); `wwdsFinish` nur einmal; neu `wwdsEndDraw` (nur bei
+Gleichstand ohne Schaetzfrage) als GM-Knopf „Unentschieden beenden“ und
+für den Knopf am Hauptbildschirm, in `GM_REMOTE_ALLOWED_FNS`;
+`wwdsSetGuess` ohne `Math.floor`.
+**Geprüft (Browser, gestubbt):** 5/5 — Doppelklick: Sieger +1, ein Ende;
+wieder gleich: `tieIdx` 1; ohne Schätzfrage GM-Knopf, endet einmal
+„Unentschieden!“; 3,7 bleibt 3,7. `check.js`, `--types` ok.
+**Offen:** keine für diesen Punkt (WWDS-Undo in Master/Stichfrage steht
+weiter auf der Liste).
+
+---
+
+## 2026-10-10 — `52244ac` Gamepad-Freigaben vollständig, DDF-Patt im GM (Liste Punkt 5 + neu)
+
+**Gemacht:** `GM_REMOTE_ALLOWED_FNS` (`js/buzzer.js`) um 15 Funktionen
+ergänzt: `wwmLock/Reveal/Next/WalkAway/Fifty/Phone/Audience/Undo`,
+`wwdsUndo`, `ddfUndo`, `pihUndo`, `tpUndo`, `ddfVoteOut`,
+`jeopardyStepsReveal`, `gmShowScreen`. Neu `gmShowScreen(id)` (`js/wwds.js`,
+feste Liste: Menü, Setup DDF/PIH/TP) statt `showScreen` in den
+Endknöpfen von DDF/PIH/TP. DDF: Phase `tiebreak` hat im GM je Kandidat
+„✕ … verliert ein Herz“ (`ddfVoteOut`). WWM: `wwmWalkAway` und
+`wwmFifty` nach dem Loggen gesperrt.
+
+**Warum:** Beim Arbeiten an Punkt 5 gefunden — vom Handy-Gamepad wurden
+nicht freigegebene Befehle stumm verworfen (`js/buzzer.js` Listener:
+`if (!GM_REMOTE_ALLOWED_FNS.has(cmd.fn)) return`). WWM war vom Gamepad
+praktisch unspielbar. `showScreen` nicht freigegeben, weil es jede ID
+nimmt.
+
+**Geprüft (Browser, gestubbt):** 9/9; Abgleich aller `opener.X(` und
+`${pfx}X(` in `js/` gegen die Liste — nichts fehlt (nur „X“/„xxx“ aus
+Kommentaren). `check.js`, `--types` ok. **Ungeprüft:** echter Weg
+Handy → Firebase → Host.
+
+**Fallstricke:** Wer einen neuen GM-Knopf baut, muss die Funktion in
+`GM_REMOTE_ALLOWED_FNS` eintragen — sonst geht er im GM-Fenster, aber
+nicht vom Gamepad. Abgleich-Befehl siehe Commit.
+
+---
+
+## 2026-10-10 — `45fed04` DDF/PIH: Spielende im GM, nur einmal (Liste Punkt 4)
+
+**Gemacht:** `updateGamemaster` (`js/feud.js`) leitet nach den
+`active`-Prüfungen über `screenActive('ddf-screen'|'pih-screen')` weiter.
+`ddfFinish`/`pihFinish`: Wache `phase === 'done'`, am Ende
+`updateGamemaster()`. GM-Kopf: „Spielende“, DDF-Patt „Stichwahl gleich“.
+**Warum:** nach Spielende war `active` aus, das GM fand nicht mehr hin und
+blieb auf „Weiter →“; Doppelaufruf meldete ans Turnier erneut.
+**Geprüft (Browser, gestubbt):** 6/6. `check.js`, `--types` ok.
+**Offen:** Im DDF-GM steht nach dem Ende weiter die letzte Frage mit
+„· noch verdeckt“ (Kosmetik).
+
+---
+
+## 2026-10-10 — `3be649e` Undo: Reset beim Start, Sichern nach der Prüfung (Liste Punkt 3)
+
+**Gemacht:** `wwmUndoStack/wwdsUndoStack/ddfUndoStack/pihUndoStack.reset()`
+beim Spielstart (TP hatte es schon). `save()` hinter die Wache verschoben
+in `wwmLock/Next/Fifty/Phone/Audience`, `wwdsPick/Lock/Reveal/Next/Audience`,
+`pihEvaluate` (nach „kein Gebot“), `ddfApplyLoss`.
+**Warum:** Undo im ersten Zug holte das vorige Spiel zurück (DDF/PIH mit
+alter Spielerliste); abgewiesene Klicks legten wirkungslose Einträge ab.
+**Geprüft (Browser, gestubbt):** 12/12. `check.js`, `--types` ok.
+**Offen:** Die übrigen Undo-Lücken der Liste (WWM-Reveal ohne Sichern,
+WWDS-Master/Stichfrage, Feud „Nächste Runde“/Finale) sind nicht Teil
+davon.
+
+---
+
+## 2026-10-10 — `9761b5a` Feud: „Alle aufdecken“ schreibt Punkte gut (Liste Punkt 2)
+
+**Gemacht:** `revealAll` (`js/feud.js`) schreibt erspielte
+`roundPoints` dem Team am Zug gut, bevor es den Rest aufdeckt.
+**Warum:** vorher auf 0 gesetzt, `nextRound` zahlt nur bei nicht
+vollständig aufgedecktem Brett → Punkte weg. Bei „alle out“ unverändert
+(dort sind `roundPoints` schon 0). Verworfen: Knopf erst nach Rundenende
+zeigen — der Host nutzt ihn auch, um die Runde abzuschließen.
+**Geprüft (Browser, gestubbt):** 3/3 — 68 Punkte gutgeschrieben, nächste
+Runde nicht doppelt, Undo nimmt die Gutschrift zurück. `check.js` ok.
+**Offen:** keine für diesen Punkt.
+
+---
+
+## 2026-10-10 — `da023cb` WWM im Turnier: Kandidat spielt für ein Team (Liste Punkt 1)
+
+**Gemacht:** `TOURNAMENT_GAMES['Wer wird Millionär'].pickTeam` — kein
+Direktstart aus dem Turnier (`tournamentStartAt` behandelt es wie
+`roster`). WWM-Setup zeigt aus dem Turnier heraus „Spielt fürs Turnier
+für“ mit einem Knopf je Team (`#wwm-tour-teams`, `renderWwmTourTeams`,
+`wwmPickTourTeam` in `js/wwm.js`, Aufruf aus `showScreen`); der Kandidat
+heißt dann wie das Team. `startWwm` lehnt im Turnier einen Namen ohne
+Team ab. `tournamentAutoRecordIfActive`: kein Namenstreffer UND andere
+Teamzahl → nichts eintragen, Platz bleibt offen (vorher „alle 0“ = alle
+Erster). GM-Turnierstand: „Einrichten“ + Hinweis für `pickTeam`.
+
+**Warum so:** Entscheidung David (Kandidat = ein Team). Zuordnung läuft
+weiter über den Namen — das ist die vorhandene Logik in
+`tournamentAutoRecordIfActive`, deshalb Kandidat = Teamname statt eines
+zweiten Felds. Verworfen: „von Hand eintragen“ (offerTournamentResult
+ordnet bei einem Namen nach Reihenfolge zu → immer Team 1) und „jedes Team
+spielt“ (Umbau).
+
+**Geprüft (Browser, Firebase gestubbt, Skript im Scratchpad):** 7/7 —
+Turnierstart bleibt auf Setup, Knöpfe „Team Rot, Team Blau“, Start ohne
+Team gesperrt (Meldung), Team Blau gewählt → Ergebnis [0, 16000],
+Turnierpunkte [1, 2]; ohne Namenstreffer `false`, Spiel offen; ohne
+Turnier kein Picker. 0 JS-Fehler. Bild WWM-Setup (Studio) angesehen.
+`check.js`, `--types` in Ordnung. `tools/shots` nicht gelaufen (neue
+Regel betrifft nur das Setup, das shots nicht abbildet).
+
+**Offen:** Team wählen geht nur am Hauptrechner (wie die Teilnehmerwahl bei
+DDF/PIH), nicht vom Gamepad. Der neue Schutz in
+`tournamentAutoRecordIfActive` gilt für alle Shows: Feud mit 3 Teams in
+einem 2-Team-Turnier ohne gleiche Namen trägt jetzt nichts mehr automatisch
+ein, sondern bietet den Knopf zum Eintragen an.
+
+---
+
+## 2026-10-10 — Fehlersuche über alle Shows (nur Analyse, kein Code)
+
+**Auftrag David:** „Zähl mir sämtliche Stolpersteine auf, wo's Bugs gibt,
+sämtliche Logikfehler in den Shows, alles.“ Stand `c9fbea7`ff. (Code
+unverändert seit `db196d1`).
+
+**Wie geprüft:** Code gelesen — `wwm.js`, `ddf.js`, `pih.js` (Spiellauf),
+`tp.js` (Spiellauf), `wwds.js`, `jeopardy.js`/`jeopardy-ui.js`
+(Spiellauf), `feud.js` (Runde, Strikes, Finale, GM), `buzzer.js`
+(Listener), `core.js` (Undo, Speichern, showScreen), `tournament.js`
+(Start, Wertung). Belege mit Zeile. **Nicht live nachgestellt** — außer wo
+angegeben ist jeder Punkt aus dem Code abgeleitet.
+**Nicht gelesen:** `intro.js`, `roster.js`, `theme.js`, `voting/`,
+`gamepad/`, `mainscreen/`, Editoren im Detail, `buzzer/index.html` nur
+Buzz-Teil.
+
+Nebenbei: Handy-Seiten in den hellen Richtungen gemessen (Kontrast aller
+Texte, 10 Screens + Gamepad): lesbar; blass nur Statuszeilen („Warte auf
+die Frage…“ 1,8–2,5, Gamepad-Status 2,3–2,6), Studio-Blau ähnlich (2,2–2,8).
+Nicht geändert.
+
+### Querschnitt
+- Undo-Stapel wird beim Spielstart nicht geleert: wwm, wwds, ddf, pih (nur tp.js:172 reset). Folge: Undo im ersten Zug einer neuen Runde holt Zustand des vorigen Spiels zurueck (bei ddf/pih inkl. alter Spielerliste). Belegt: grep UndoStack.reset -> nur tp.
+- WWM- und Jeopardy-Daten werden nicht gespeichert (kein storeSetJson fuer wwmData/jeopardyData). Editor-Aenderungen und Importe sind nach Neuladen weg. Jeopardy laut Kommentar tournament.js bewusst (Bildergroesse), WWM ohne Begruendung.
+
+### WWM (js/wwm.js)
+- wwmLock/wwmNext/wwmFifty/wwmPhone/wwmAudience: undo.save() VOR der Guard-Pruefung -> No-op-Eintraege im Undo-Stapel (Undo-Knopf erscheint, Klick tut sichtbar nichts). wwm.js:144,161,211,228,236.
+- wwmReveal speichert kein Undo -> Undo nach Aufloesen springt vor das Loggen (zwei Schritte zurueck). wwm.js:151.
+- wwmWalkAway prueft locked/revealed nicht; ueber GM-Remote-Befehl jederzeit aufrufbar (Knopf nur vor Loggen sichtbar). wwm.js:187.
+- wwmFifty prueft locked nicht (nur revealed). wwm.js:212.
+- Editor: Frage 16+ zeigt "(0 €)" (WWM_LADDER[i]||0); mehr als 15 Fragen werden nie gespielt (oberstesFeld beendet bei 15). wwm.js:342,166.
+- WWM im Turnier: tournamentStartAt startet startWwm sofort (lobby:null), der Kandidatenname ist, was zufaellig im Feld steht. wwmEnd meldet tournamentAutoRecordIfActive([name],[amount]) - 1 Name gegen >=2 Teams: kein Namenstreffer, sameLength false -> alle Teams mit Ergebnis 0, Spiel als "gespielt" markiert. Weil die Turnierpunkte nach Platz vergeben werden, landen alle auf Platz 1 und JEDES Team bekommt die vollen Punkte. Richtig nur, wenn der Kandidat exakt wie ein Team heisst. wwm.js:202, tournament.js:356-371, 240-258.
+
+### DDF (js/ddf.js)
+- ddfFinish ruft updateGamemaster nicht auf (auch ddfRenderRound kehrt vorher zurueck). GM-Fenster/Gamepad zeigt nach Spielende weiter "Weiter ->"; erneuter Klick ruft ddfFinish nochmal -> tournamentReportTeamless ein zweites Mal (Platz schon frei -> bietet das Ergebnis erneut an). ddf.js:198,443-465.
+- Phase 'tiebreak' (Stichwahl wieder gleich): ddfGmControlsHtml hat keinen Zweig dafuer -> im GM-Fenster/Gamepad KEIN Knopf; aufloesen nur am Hauptbildschirm (ddf-vote-grid). Kopfzeile zeigt dann "Frage". ddf.js:718-742, 796-798.
+- Siegertext nutzt winner.name statt winner.label (bei zwei gleichen Namen nicht unterscheidbar). ddf.js:459.
+- Kein Undo-Reset beim Start (siehe Querschnitt) - Undo im ersten Zug holt alte Spielerliste.
+- Rundenuhr (startRoundClock, core.js:70) aktualisiert das GM-Fenster nicht: GM zeigt "Timer: 30 s" fest, "Zeit abgelaufen" erst beim naechsten Anlass. Betrifft DDF und PIH. ddf.js:805.
+
+### PIH (js/pih.js)
+- pihFinish ruft updateGamemaster nicht auf (wie DDF): GM/Gamepad bleiben auf "Weiter ->", zweiter Klick -> pihFinish + Turnierbericht nochmal. pih.js:313,594-632.
+- Finale (★-Artikel) ohne Team-Zuordnung: finalists leer -> pihMayBid fuer alle false; "only" wird null gesendet -> alle Handys duerfen tippen, ihre Gebote fallen in pihAllBids stumm raus; Auswerten meldet ewig "noch kein Gebot". Nur "Ueberspringen" fuehrt raus. pih.js:236-242,445-461,501. Ebenso: nur ein Team besetzt -> nur ein Finalist.
+- Gebotszaehler im Finale: total = alle Spieler statt der 2 Finalisten -> "0 / 8 Gebote", Knopf "Auswerten (vorzeitig)" obwohl alle Finalisten geboten haben. pih.js:486-488.
+- pihEvaluate: undo.save vor Guard (No-op bei "noch kein Gebot"). pih.js:493.
+- Teamzuordnung kommt aus allPlayers (Firebase). Offline/ohne Firebase: alle "ohne Team", Teamwertung 0:0, Finale ohne Finalisten (siehe oben). pih.js:182-187.
+
+### WWDS (js/wwds.js)
+- wwdsRevealTie ohne Wache gegen Doppelaufruf (prueft tieRevealed nicht): Doppeltipp/Fernbefehl zweimal -> Sieger bekommt +2 statt +1 und wwdsFinish laeuft zweimal (Turnier: zweiter Lauf bietet Ergebnis erneut an); bei Gleichstand tieIdx++ zweimal -> eine Schaetzfrage wird uebersprungen. wwds.js:464-490.
+- Keine Schaetzfrage hinterlegt + Gleichstand: GM/Gamepad-Knoepfe "Aufloesen"/"Schaetzungen aufdecken" tun nichts (wwdsRevealTie return bei !t); "Trotzdem beenden" gibt es nur am Hauptbildschirm. Fernsteuernder Host steckt fest. wwds.js:265,465,539-541.
+- Undo in Masterfrage/Stichfrage: wwdsToBetting/StartMaster/RevealMaster/AdjustBet sichern nicht -> Undo springt zurueck in die Hauptrunde (letzte Frage aufgeloest), Einsaetze und Master-Ergebnis weg. wwds.js:378-424.
+- wwdsPick/Lock/Reveal/Next/Audience: undo.save vor Guard (No-op-Eintraege). wwds.js:287,310,319,333,350.
+- Timer schickt jede Sekunde updateGamemaster -> Handy-Gamepad laedt sein Panel jede Sekunde komplett neu (Firebase gmremote/html jede Sekunde neu geschrieben). wwds.js:129-139.
+- Stichfrage-Schaetzung wird per Math.floor abgeschnitten (3,7 -> 3), Antwort aber Number(...) mit Nachkommastellen -> Abstand falsch bei Dezimal-Antworten. wwds.js:448, 823.
+- Editor: Felder schreiben ohne wwdsSave; gesichert wird erst beim Verlassen des Editor-Screens (core.js:921). Browser zu waehrend im Editor -> Aenderungen weg. (DDF/PIH/TP speichern je Tastendruck.)
+- Import: correct nicht auf 0..2 begrenzt (Number(x.correct)||0; 5 bleibt 5 -> keine richtige Antwort), answers nicht auf 3 aufgefuellt. wwds.js:856-857 (WWM macht das richtig, wwm.js:381-387).
+
+### Jeopardy (js/jeopardy.js, js/jeopardy-ui.js)
+- Letzte Frage eines Boards: jeopardyFinishClue wechselt sofort aufs naechste Board/Ergebnis und leert die Undo-Historie -> eine Fehlwertung bei der letzten Frage ist nicht mehr rueckgaengig zu machen. jeopardy-ui.js:338, 401.
+- Leertaste (Tastatur-Fallback) macht die Buzzer scharf, solange Jeopardy aktiv ist - auch ohne offene Frage und auch mit Firebase-Verbindung (der connected-Check kommt erst danach). Handys koennen dann ohne Frage buzzern. jeopardy-ui.js:119-120.
+- Daily Double angekuendigt (ddPending): Board bleibt fuer alle sichtbar und klickbar; Klick auf ein anderes Feld ueberschreibt die offene DD-Frage, das DD-Feld bleibt ungespielt und unmarkiert. jeopardy.js:343-366.
+- Daily Double kann auf ein leeres Feld (ohne Frage) fallen - die Auswahl prueft nur den Wert. jeopardy.js:211-220.
+- Daily Double + getippte Frage (Schaetzung/Einzelantwort): Eingabe oeffnet fuer ALLE Handys, werten darf nur das DD-Team - die anderen tippen umsonst. jeopardy.js:413.
+- Undo bei ddPending: jeopardyUndo rendert das Frage-Overlay, obwohl die Frage noch nicht angekuendigt ist (DD verraet sich auf der Leinwand). jeopardy.js:181.
+- Jeopardy-Boards werden nicht gespeichert (s. Querschnitt) - nach Neuladen Standard-Boards.
+
+### Family Feud (js/feud.js, core.js)
+- "Alle aufdecken" vor "Naechste Runde" vernichtet die Rundenpunkte: revealAll setzt roundPoints=0 und deckt alles auf; nextRound vergibt nur, wenn NICHT alles aufgedeckt ist -> das Team am Zug bekommt nichts. Knopf steht immer im GM (auch mitten in der Runde). feud.js:353-359, 432-438, 1112, 1697.
+- "Naechste Runde" ist nicht rueckgaengig zu machen (kein Snapshot, actionHistory wird in loadRound geleert) - ein Fehlklick vergibt die Punkte und springt weiter. feud.js:432, core.js:845.
+- Strike: Teamwechsel kommt per setTimeout 750 ms. Undo innerhalb dieser Zeit -> Wechsel passiert trotzdem nach dem Undo. feud.js:373-376.
+- "Team wechseln" im GM speichert keinen Snapshot (nicht rueckgaengig). feud.js:1111.
+- 3 Teams, Gleichstand um Platz 2/3 vor dem Finale: wer ausscheidet, entscheidet die Sortierreihenfolge (Teamindex), keine Stichfrage, kein Hinweis. feud.js:443-446.
+- Finale (Fast Money): kein Undo - falsch angeklickte Antwort (finalePickAnswer/finaleMarkMiss) ist nicht korrigierbar; doppelte Antworten der beiden Teams werden nicht abgefangen. feud.js:571-590.
+- Finalfragen gibt es nur per Import (finaleQuestions startet leer, core.js:765) - ohne Import endet Feud ohne Finale direkt im Ergebnis, ohne Hinweis vorher.
+
+### Buzzer (js/buzzer.js, Host-Seite)
+- Jeopardy- und Feud-Buzzer haengen beide eigene Listener an denselben Firebase-Pfad 'buzzer' (attachBuzzerGameListeners). Wer erst die Jeopardy-Lobby und dann die Feud-Lobby oeffnet (oder umgekehrt), hat danach beide aktiv: jeder Buzz wird doppelt gezaehlt (Reaktions-Bestenliste, Account-Statistik buzzes, Buzz-Ton doppelt), und im Jeopardy-Spiel setzt der Feud-Listener nebenher das Feud-Startteam. Getrennt wird erst bei Spielende (jeopardyBuzzDisconnect/feudBuzzDisconnect). buzzer.js:294-319, 337-339, 424-429, 457-467. Plausibel aus dem Code, nicht live nachgestellt.
+- Reaktionszeit = Server-Eingangszeit (ServerValue.TIMESTAMP am Handy-Buzz) minus armStart: Netzlatenz entscheidet mit; ein Handy im langsamen WLAN/Mobilfunk verliert knappe Duelle. Bauart, kein Fehler im engeren Sinn. buzzer.js:303-308, buzzer/index.html:815.
+- Doppelte Buzzes werden nach Name entfernt (seen[b.name]): zwei Geraete mit demselben Account zaehlen als einer - gewollt; zwei verschiedene Spieler mit gleichem Anzeigenamen gibt es nicht (Account-Key = Name).
+
+### Turnier (js/tournament.js)
+- Punkte nach Platzierung (tournamentGamePoints): Gleichstand teilt den Platz. Folge fuer den WWM-Fehler oben: alle Teams 0 -> alle auf Platz 1 -> JEDES Team bekommt die vollen Punkte (Teamzahl x Gewichtung). tournament.js:490-507.
+- Teamlose Shows (DDF: Summe der uebrigen Leben, PIH: Summe der Punkte) addieren je Team ueber die Mitspieler: ein Team mit mehr Leuten gewinnt strukturell. tournament.js:399-416, ddf.js:453, pih.js:603.
+- Teamzuordnung fuer DDF/PIH-Turnierwertung kommt aus allPlayers (Firebase) zum Spielende - ohne Verbindung "keine Team-Zuordnung", Ergebnis muss von Hand.
+
+### Querschnitt / Betrieb
+- Spielstand wird nirgends gesichert: Neuladen oder Absturz des Host-Browsers mitten in einer Show = Stand weg (nur Turnier, Fragen, Einstellungen liegen im Speicher). grep storeSetJson: kein state/jeopardyState/...
+- Pop-up-Blocker: openBoardPopout kehrt still zurueck, wenn window.open blockiert ist - kein Beamerfenster, keine Meldung. feud.js:888.
+- Start aus dem Gamepad/GM-Fernbefehl (z. B. tournamentStartNext) ruft window.open ohne Nutzergeste -> Popup wird blockiert, falls das Beamerfenster nicht schon offen ist.
+- Handy offline beim Buzzern: Firebase-push wird gepuffert, nicht abgelehnt -> Handy zeigt "Gebuzzert ✔", der Buzz kommt erst bei Wiederverbindung (mit spaeterem Zeitstempel). Der .catch-Zweig greift nur bei Ablehnung. buzzer/index.html:815-822.
+- Zu-frueh-Sperre 3 s haengt am lokal bekannten armed-Zustand: kommt "scharf" verspaetet aufs Handy, sperrt ein rechtzeitiger Druck trotzdem 3 s. buzzer/index.html:813.
+- Zweiter Host-Rechner auf der Seite schreibt seine Design-Richtung nach design -> der zuletzt geoeffnete gewinnt (HANDOFF 431a43e, weiter offen).
+- Bewusst offen (Entscheidung David): Datenbank offen, PIN-Hashes lesbar, gmremote/html beschreibbar, Host-Passwort im JS.
+
+**Offen:** alles oben; nichts behoben. **Nächste Schritte:** mit David
+Reihenfolge festlegen — Vorschlag zuerst: WWM-Turnierwertung, Feud „Alle
+aufdecken“, Undo-Reset bei Spielstart, DDF/PIH-Spielende im GM,
+DDF-Stichwahl-Patt im GM, WWDS Doppelklick Stichfrage, PIH-Finale ohne
+Teams, doppelte Buzzer-Listener.
+
+---
+
+## 2026-10-10 — `db196d1` Helle Richtungen: Eingabefelder und `.q-meta` lesbar
+
+**Gemacht:** `styles.css` vor dem Reduced-Motion-Block am Dateiende, nur
+`:root[data-theme-hell]`: `--field-bg` (weiß .78), `--field-line`;
+alle Felder (außer Checkbox/Radio/Farbe/Range/Datei), `textarea`,
+`select` mit `background`, `color: var(--fg)` und `border-color` per
+`!important`; Fokus `--accent-text`; Platzhalter .45; `.q-meta` .5
+(außer `.tour-weight`). Auf farbigen Teamkarten (`.team-card` u. a. mit
+`.red/.blue/.green`) bleibt `--field-bg` dunkel.
+
+**Warum so:** Freigegeben war ein Umbau mit Feld-Tokens in ~8 Dateien.
+Umgesetzt nur in `styles.css`: `!important` schlägt die Inline-Styles
+der 121 Feld-Tags, ohne jedes im JS anzufassen, und ein künftiges Feld
+ist automatisch richtig. Nur hell, damit Studio-Blau und die dunklen
+Richtungen sicher gleich bleiben. Platzhalter nur hell kräftiger
+(Entscheidung David). Erster Versuch ohne Teamkarten-Ausnahme: Weiß auf
+Weiß (1,00), weil die hellen Richtungen auf den Teamkarten `--fg` weiß
+setzen.
+
+**Geprüft (1280×900, 16 Setup-/Editor-Screens, Turnier-Host):**
+- Felder hell vorher Median 2,27–6,42 (C/F/H/P/Q 2,27–2,69), Minimum
+  1,02–1,51, unter 3: 36–183 von 218 → nachher Median 6,74–18,55, Minimum
+  2,11–6,05; die 9 Werte unter 3 je Richtung sind die Teamkarten-Felder —
+  das Skript misst gegen `--bg`, nicht gegen den Kartenverlauf; im Bild
+  (C) Weiß auf Dunkelrot, gut lesbar.
+- Platzhalter hell 1,00–1,38 → 2,25–3,22. Studio-Blau 1,53–1,61, unverändert.
+- `.q-meta` hell 1,54–1,75 → 2,55–3,50. Studio-Blau 2,24, unverändert.
+- Studio-Blau Felder 12,95/18,70 vorher wie nachher. Dunkle Richtungen
+  (B, D, E, I, J, K, M, O, R, S) nur nachher gemessen: Minimum 10,35, keine
+  unter 4,5 — unverändert durch Bauart (Regel nur unter
+  `data-theme-hell`); der Commit-Text sagt fälschlich „wie vorher“.
+- Bilder C Setup, N WWM-Editor, Q TP-Editor angesehen.
+- `tools/shots` turnier-host, gm, ergebnis ohne Befunde; `check.js` ok.
+
+**Offen:** Platzhalter in Studio-Blau und dunklen Richtungen bleiben bei
+~1,5 (bewusst). Handy-Seiten (`buzzer/`, `gamepad/`) haben eigenes CSS,
+nicht geprüft.
+
+**Fallstricke:** Mess-Skripte, die nur `background-color` mischen,
+übersehen Verläufe (Teamkarten) — dort Bild ansehen.
+
+---
+
+## 2026-10-10 — `3ce6b69` CLAUDE.md: 17 Zustände
+
+**Gemacht:** Stand der Screenshot-Prüfung in `CLAUDE.md` auf 17 Zustände
+(mit `turnier-host`) und Hinweis auf `HOST_SEITEN` ohne Höhenprüfung.
+Freigabe David.
+
+**Geprüft:** `turnier-host` zusätzlich bei 1280×800, 1920×1080 und
+`--reduced`: je keine Befunde (1280×720 schon mit `dffe0bd`). Die
+übrigen 16 Zustände nicht neu gelaufen — Stand `00ecc8e`, seitdem nur
+`js/tournament.js` und `.tour-*`-Regeln geändert. `node check.js`
+fehlerfrei.
+
+**Offen:** keine neuen; siehe Eintrag zu `dffe0bd` (`.q-meta`,
+Eingabefelder hell).
+
+---
+
+## 2026-10-10 — `dffe0bd` Turnier-Host-Seite in den hellen Richtungen lesbar
+
+**Gemacht:** `js/tournament.js` — die letzten 13 Inline-Farben
+(`renderTournament`, `tournamentDataPanelHtml`, Umbenennen-Panel) durch
+Klassen ersetzt: `.tour-pts`, `.tour-weight`, `.tour-stand` +
+`.tour-zeile`, `.tour-hinweis`, `.tour-blass`, `.tour-leer`,
+`.tour-fussnote`, `.tour-datei`, `.tour-check` (Haken-Label),
+`.tour-select` (Spieltyp-Auswahl). In `js/tournament.js` steht jetzt keine
+feste Farbe mehr (`grep "rgba(255,255,255\|#FFD23F"` leer).
+`styles.css` neben den `.tour-*`-Regeln von `56de705`; hell
+(`:root[data-theme-hell]`) blasse Hinweise .5 bzw. .6, Hinweis „zählt
+über die Team-Zuordnung“ in `--accent-text`.
+`tools/shots/shots.js`: Zustand `turnier-host` (Depot offen, Spiel 6
+geheim, Spiel 5 DDF mit Ergebnis von Hand), `HOST_SEITEN` (`gm`,
+`turnier-host`) ohne Höhenprüfung.
+
+**Warum so:** wie `56de705` — Tokens statt Regeln je Richtung, Studio-Blau
+bleibt gleich. Die Deckkraft hell nur dort angehoben, wo die blassen
+Hinweise auf Creme deutlich unter ihrem Studio-Wert lagen.
+
+**Geprüft (1280×720):**
+- Kontrast vorher → nachher, hell C/F/H/L/N/P/Q: „Noch nicht gespielt“
+  1,02–1,66 → 2,55–3,50; Ergebnis „Team Rot: 300 …“ 1,04–2,27 →
+  3,19–4,84; Punkte/Gewichtung 1,03–2,43 → 3,68–6,18; Hinweis Team-
+  Zuordnung 1,01–1,99 → 3,68–6,18; Fußnote 1,03–1,67 → 2,53–3,48;
+  „Geheim halten“ 1,06–2,59 → 4,01–6,81; Datei-Info 1,07–1,97 →
+  3,10–4,71. Studio-Blau: alle Werte gleich.
+- Berechnete Werte Studio-Blau (Reihenfolge, ohne Klassennamen):
+  `turnier` 109/0, `turnier-host` 225/3 abweichend — Breite von
+  `#intro-pick` und zwei Kindern 194,969 → 194,953 px (Rundung, im
+  Commit-Text vertauscht).
+- `node shots.js --shows turnier,turnier-host`: keine Befunde. Bild C
+  angesehen (oberer Teil).
+- `node check.js`, `node check.js --types`: alles in Ordnung.
+
+**Offen:**
+- Datum im Spielplan („Freitag“, `.q-meta`, global .25) bleibt hell bei
+  1,54–1,75 (Studio 2,24) — gemeinsame Klasse für alle Listen, nicht
+  angefasst.
+- Auswahlfeld und Eingaben der Editor-Karten liegen hell auf
+  `rgba(0,0,0,.3)` (grau auf Creme) — wie alle `.editor-card input`, nicht
+  angefasst, nicht gemessen.
+- `CLAUDE.md` nennt „16 Zustände“ — mit `turnier-host` sind es 17; nicht
+  geändert (braucht Freigabe).
+
+---
+
+## 2026-10-10 — `56de705` Turnierstand in den hellen Richtungen lesbar
+
+**Gemacht:** `js/tournament.js` — `tournamentStandingsHtml` und
+`renderTournamentBoard` ohne Inline-Farben, stattdessen Klassen
+`.tour-lead`, `.tour-next`, `.tour-bar-row`, `.tour-bar`, `.tour-bar-fill`
+(Breite bleibt inline), `.tour-total`, `.tour-stand`, `.tour-pts`,
+`.tour-jetzt`, `.tour-spaeter`, `.tour-weight`, `.tour-leer`;
+`styles.css` neben `.tour-icon-svg`, auf `--accent-text`, `--fg-rgb`,
+`--gold-rgb`, `--font-display`. `:root[data-theme-hell] .tour-spaeter`
+mit .45 statt .3.
+
+**Warum so:** Tokens statt Regeln je Richtung — die Werte im Studio-Blau
+sind identisch (`--accent-text` = #FFD23F, `--fg-rgb` = 255,255,255,
+`--font-display` = Bebas Neue), jede Richtung bekommt ihre Farben ohne
+eigenen Block. Die Turnierpunkte stehen damit in der Display-Schrift der
+Richtung statt fest in Bebas. Der Balken bleibt gelb (auf Creme gut
+sichtbar, Kontaktbogen angesehen).
+
+**Geprüft:**
+- Kontrast (Schrift gegen `--bg` + halbtransparente Flächen gemischt):
+  Ergebniszeile hell vorher C 1,07, F 1,04, H 1,16, L 2,27, N 1,27,
+  P 1,11, Q 1,13 → jetzt 4,71 / 4,84 / 4,43 / 3,40 / 3,19 / 4,55 / 4,08;
+  Studio 6,97 vorher wie nachher. L und N liegen auf Höhe ihrer eigenen
+  Teamnamen (3,33 / 3,24). „kommt noch“ hell 2,29–3,00 (Studio 2,68).
+- Studio-Blau 1280×720 und 1920×1080: je 109 Elemente, berechnete Werte
+  gleich — `--vergleich` selbst meldet 96 Abweichungen, weil die
+  Schlüssel die Klassennamen enthalten; verglichen deshalb in
+  DOM-Reihenfolge ohne Klassennamen.
+- `tools/shots --shows turnier` ohne Befunde, Kontaktbogen angesehen.
+- `node check.js` und `node check.js --types`: alles in Ordnung.
+
+**Offen:** Die Host-Seite des Turniers (`renderTournament`,
+`js/tournament.js` ab ~600: Spielplan-Editor, Ergebnisse, Depot) hat
+dieselben weißen Inline-Farben — nicht auf der Leinwand, nicht angefasst.
+
+**Fallstricke:** `shots.js --vergleich` taugt nicht, wenn sich
+Klassennamen ändern — der Schlüssel ist `Index:TAG#id.klassen`.
+
+---
+
+## 2026-10-10 — `00ecc8e` DDF, PIH, Turnierstand passen · `shots --reduced` · `0df6c46` CLAUDE.md
+
+**Gemacht (`styles.css`):**
+- Logo-Verkleinerung (`body:has(… .active) .logo`) auch für `#ddf-screen`,
+  `#pih-screen`, `#tournament-board-screen`.
+- `@media (max-height: 900px)` am Dateiende (vor Reduced Motion): DDF
+  Karten 5px/14px, Frage `clamp(1.6rem, 6vh, 3.4rem)` mit 6px Polster,
+  Antwort/Hinweis/Stimmen flacher; PIH Team-Leiste 3px, Wertung, Artikel
+  (Zeilenhöhe 1,2), Preis 2,1rem, Foto in der Bietphase
+  `max(120px, 34vh - 50px)`; Turnierstand-Zeilen 6px Polster.
+- `@media (min-width: 700px)`, jede Höhe: steht die PIH-Gebotsliste
+  (`.pih-bid-grid:has(.pih-bid-row)`), zwei Spalten à max. 420px, Platz 1
+  oben links, zeilenweise gelesen; Foto dann
+  `clamp(80px, 34vh - 160px, 250px)`.
+
+**Gemacht (`tools/shots/shots.js`):** `pih` mit Produktfoto (SVG 4:3),
+neuer Zustand `pih-gebot` (Bietphase); `--reduced` — Kontext mit
+`reducedMotion: 'reduce'`, Befund je laufender Animation mit
+Endlosschleife oder > 50 ms und wenn `matchMedia` nicht anspricht.
+`CLAUDE.md`: Stand und Aufruf `--reduced` (Freigabe David).
+
+**Warum so:** Gemessen (Studio 1280×720): PIH Gebotsliste 369 px
+(8 × 45), DDF Spielerkarten 196 + Frage 169 (54-px-Schrift), Turnierstand
+Logo 161 + 10 Zeilen. Zwei Spalten sparen bei PIH ~180 px, ohne Schrift zu
+verkleinern. Das Produktfoto erst nachträglich in den Aufbau genommen —
+mit Foto war PIH auch bei **1920×1080 schon 233 px zu hoch** (vorher
+unbemerkt, die Messung hatte kein Foto). Deshalb gelten zwei Spalten und
+kleines Foto in der Auflösung bei jeder Höhe, nicht nur unter 900 px; nur
+ab 700 px Breite, weil zwei Spalten auf dem Handy zu eng wären. Das Foto
+schrumpft nur, wenn die Liste steht (`:has(.pih-bid-row)`) — in der
+Bietphase bleibt es groß (bei 720 px ~195 px). Verworfen: Foto immer klein
+(85 px bei 720 — fürs Publikum zu klein). Spieler im Aufbau als
+Handy-Accounts statt Gäste (siehe Eintrag zu `d897a6d`).
+
+**Geprüft:**
+- Voller `node shots.js` bei 1280×720, 1280×800, 1920×1080: je **keine
+  Befunde** (16 Zustände × 19 Fassungen).
+- `--vergleich` 1920×1080 Studio-Blau gegen Basis vor der Änderung: ddf
+  68, pih-gebot 62, turnier 109, feud 48, feud-lang 48, feud-finale 54
+  Elemente → 0 Abweichungen; pih 91 → **20 Abweichungen, gewollt** (zwei
+  Spalten, kleineres Foto).
+- `--reduced` voller Lauf: keine Befunde. Gegenprobe (Kopie ohne
+  Emulation): 12 Befunde, u. a. Buzzer-Ring endlos, Glühbirnen A, POW F —
+  die Prüfung schlägt also an. Vorher von Hand: 210 Zustände, 0 laufende
+  Animationen mit Emulation, 51 verschiedene ohne; TP-Rad 500 statt
+  3200 ms. Intros: 5 Film-Intros 0 laufende Animationen, Titelkarte steht;
+  die 3 Vorlagen blenden bewusst per `kgFade` 3,3–4,6 s über
+  (`styles.css:1796`).
+- Kontaktbögen PIH, DDF, Turnierstand angesehen.
+- `node check.js` fehlerfrei.
+
+**Offen:**
+- **Neu, nicht behoben:** Turnierstand in den hellen Richtungen (C, F, H,
+  L, N, P, Q): Spielplan-Zeilen fast unlesbar — `renderTournamentBoard`
+  (`js/tournament.js:552–560`) setzt Inline-Farben für dunklen Grund
+  (`rgba(255,255,255,.6)`, `#FFD23F`, `rgba(255,255,255,.3)`).
+- DDF und PIH mit Gästen ohne Handy: zusätzliche Eingabezeilen für den
+  Host auf dem Screen, nicht als eigener Zustand gemessen.
+- Echtes Popout am Beamer, echte Handys: ungesehen.
+
+**Fallstricke:** `--basis` nach einer Änderung am Aufbau neu ziehen, sonst
+vergleicht `--vergleich` zwei verschiedene Zustände (hier: PIH ohne und
+mit Foto). Dafür die CSS-Änderung kurz per `git stash push styles.css`
+beiseitelegen.
+
+---
+
+## 2026-10-10 — `d897a6d` DDF, PIH, TP, Ergebnis, Turnierstand gemessen
+
+**Gemacht:** `tools/shots/shots.js` um fünf Aufbauten erweitert (in
+`ALLE_SHOWS`): `ddf` (acht Handy-Spieler, Antwort offen, Abstimmung),
+`pih` (acht Spieler, alle Gebote aufgelöst), `tp` (Frage gezogen, Lösung
+gezeigt), `ergebnis` (Feud-Ergebnis), `turnier` (`tournament-board-screen`,
+vier Teams, sechs Spiele). Behoben ist nichts.
+
+**Warum so:** Spieler als Accounts (`allPlayers` + `roster(game).selected`)
+statt Gäste. Erster Versuch mit acht Gästen: DDF 425 px zu hoch — davon
+gut 300 px die Knopfreihen, mit denen der Host für Gäste ohne Handy
+abstimmt (`ddfRenderVoteGrid`, `js/ddf.js:212`). Das ist ein eigener,
+seltener Fall. Turnier zuerst am `tournament-screen` gemessen (978 px) —
+das ist die Verwaltungsseite des Hosts, nicht in `BOARD_PUBLIC_SCREENS`
+(`js/feud.js:728`); gemessen wird jetzt der Turnierstand für die Leinwand.
+TP zog die Frage zufällig, je Richtung eine andere — `Math.random` beim
+Ziehen jetzt fest.
+
+**Geprüft:**
+- 1280×720, alle 19 Fassungen: **57 Befunde** — `ddf` 52–126 px (Studio
+  101, I 126), `pih` 195–276 px (Studio 222, Q 276), `turnier` 133–153 px
+  (Studio 135). `tp` und `ergebnis`: alle passen.
+- 1920×1080, dieselben fünf: keine Befunde.
+- Bilder angesehen: DDF — unter dem Bild liegen der Hinweis „Abstimmung
+  läuft“ und der Stimmenzähler. PIH — die Gebotsliste läuft ab Platz 5
+  unten heraus. Turnier — der Spielplan ab Spiel 4.
+- `node check.js` fehlerfrei.
+
+**Offen:**
+- DDF, PIH, Turnierstand passen bei 1280×720 in keiner Richtung.
+- DDF mit Gästen ohne Handy: zusätzlich die Host-Knopfreihen auf dem
+  Screen, auch im Zuschauerfenster sichtbar — nicht gemessen als eigener
+  Zustand.
+- `CLAUDE.md` „voller Lauf … ohne Befunde“ stimmt wieder nicht (jetzt 57);
+  nicht geändert, wartet auf Davids Freigabe.
+
+**Fallstricke:** Aufbau-Funktionen werden per `page.evaluate` in die Seite
+geschickt — Hilfsfunktionen aus `shots.js` gibt es dort nicht, alles muss
+im Funktionsrumpf stehen. `--out` mit relativem Pfad landet unter
+`tools/shots/`, dort ist nur `out/` ignoriert.
+
+---
+
+## 2026-10-10 — Screenshot-Prüfung bei 1280×800 und 1280×900 (nur Messung)
+
+**Geprüft (Stand `b5f9b30`):** `node shots.js --size 1280x800` (alle 10
+Zustände × 19 Fassungen): **keine Befunde**. `--size 1280x900` für feud,
+feud-lang, feud-finale, jeop, wwm, wwm-joker: **keine Befunde**.
+Kontaktbogen `feud-finale` bei 900 angesehen (900 ist die Grenze der
+Media Queries, dort gilt noch die Zeilenanordnung): alles im Bild.
+
+**Offen:** damit nur noch das echte Popout am Beamer ungesehen. Ein voller
+Lauf beider Größen dauert über 10 Minuten — im Hintergrund starten.
+
+---
+
+## 2026-10-10 — `8a84676` Lange Feud-Frage in I, M, P, S · `01b4e79` CLAUDE.md
+
+**Gemacht:** `styles.css`, neuer `@media (max-height: 900px)`-Block direkt
+vor dem `prefers-reduced-motion`-Block am Dateiende:
+- I, M, P, S: `.q-text { line-height: 1.25 }` (vorher 1.5 geerbt).
+- I, S: `.board` `padding-block: 16px` (vorher 28 bzw. 26 px).
+- P: `.board` `padding-block: 14px` (vorher 22), `.q-text`
+  `margin-bottom: 10px` (vorher 18), `.answers` Abstand 8px (vorher 14).
+
+`CLAUDE.md` (`01b4e79`): Stand der Screenshot-Prüfung zurück auf „ohne
+Befunde“, wie im Eintrag zu `9ab5ee8` als offen vermerkt.
+
+**Warum so:** Gemessen bei 1280×720 mit der 103-Zeichen-Frage: Frage
+I 112, P 114, S 112, M 97 px hoch gegen Studio 83 — Schrift 1,4–1,7rem bei
+Zeilenhöhe 1,5; dazu weitere Brett-Polster und Feldabstände. E und Q
+haben ähnlich große Schrift, aber Zeilenhöhe ~1,1 und passten. Nur die
+Richtung und nur unter 900 px, damit 1920×1080 und Studio-Blau gleich
+bleiben. Schriftgröße bewusst nicht angefasst.
+
+**Geprüft:**
+- Messung danach 1280×720: I, M, P, S je 0 px Überstand; bei 1920×1080
+  dieselben Werte wie vorher (z. B. I Zeilenhöhe 40,8 px).
+- Voller `node shots.js` 1280×720: **keine Befunde** (alle 10 Zustände ×
+  19 Fassungen). Kontaktbogen `feud-lang` angesehen: Frage zweizeilig,
+  alle vier Zeilen des Bretts sichtbar.
+- `--vergleich` 1920×1080 Studio-Blau: `feud` 48, `feud-lang` 48
+  Elemente, 0 Abweichungen.
+- `node check.js` fehlerfrei.
+
+**Offen:** Fensterhöhen zwischen 721 und 900 px weiter ungemessen. Echtes
+Popout am Beamer nicht angesehen.
+
+**Fallstricke:** Die Regeln stehen absichtlich am Dateiende — gleiche
+Spezifität wie die Richtungsregeln (`:root[data-theme="X"] …`), sie müssen
+also danach kommen. Wer sie nach oben verschiebt, hebelt sie still aus.
+
+---
+
+## 2026-10-10 — `9ab5ee8` CLAUDE.md: Stand der Screenshot-Prüfung
+
+**Gemacht:** Abschnitt „Screenshot-Prüfung“ in `CLAUDE.md`: statt „voller
+Lauf ohne Befunde“ jetzt „4 bekannte Befunde, alle `feud-lang`“ (I 34,
+P 34, S 14, M 6 px) mit Stand `e80ad5f`.
+
+**Warum:** Seit `e3acca7` misst `tools/shots` drei Zustände mehr; die
+alte Zeile hätte jeden `feud-lang`-Befund wie einen neuen Fehler aussehen
+lassen. Freigabe David (Änderungen an `CLAUDE.md` nur mit Rückfrage).
+
+**Geprüft:** `node check.js` fehlerfrei. Zahlen aus dem vollen Lauf nach
+`e80ad5f` (HANDOFF-Eintrag darunter), nicht neu gemessen.
+
+**Offen:** Sobald `feud-lang` behoben ist, die Zeile wieder auf
+„ohne Befunde“ setzen.
+
+---
+
+## 2026-10-10 — `e80ad5f` Feud-Finale passt in 1280×720
+
+**Gemacht (`styles.css`):**
+- Logo-Verkleinerung (`body:has(… .active) .logo`) um `#finale-screen`
+  erweitert — dieselbe Regel wie Jeopardy, Feud, WWM.
+- `@media (max-height: 900px)` direkt hinter dem Finale-Block:
+  `#finale-screen.active` als umbrechende Zeile (`flex-direction: row;
+  flex-wrap: wrap`), Timer/Brett/Vergleichskarten `flex-basis: 100%` —
+  dadurch stehen Kopf (links ausgerichtet) und Punktestand in einer Zeile.
+  Titel 2rem, Punktekarten 6px/20px Polster, Punkte 2rem, Brett-Polster
+  oben/unten 12px, Frage 4px/10px, Vergleichskarten 8px/16px, Punkte
+  1,6rem, Abstände `clamp(6px, 2vh - 4px, 14px)`.
+
+**Warum so:** Gemessen (Studio, 1280×720): Logo 191, Kopf 94,
+Punktestand 91, Brett 328, Karten 124 px — 205 px zu viel. Nur Logo und
+Polster zu verkleinern hätte geschätzt 160 px gebracht, für E (280 px zu
+hoch) nicht genug. Kopf und Punktestand nebeneinander spart allein eine
+ganze Zeile (~90 px), ohne Schrift im Brett anzufassen. Media Query statt
+`clamp()`, weil es ein Umbau der Anordnung ist, kein stufenloses
+Schrumpfen; Schwelle 900 px, damit 1920×1080 unverändert bleibt.
+Verworfen: Vergleichskarten neben das Brett (Screen ist 880 px breit,
+hätte `max-width` für den Finale-Screen gebraucht), Kopfzeilen „Auflösung“
+doppelt ausblenden (Text kommt aus JS, CSS hat keinen Haken dafür).
+
+**Geprüft:**
+- Erste Stufe (ohne Titel/Frage-Anpassung): Studio, A, H, S passten,
+  E 11, I 12, Q 8, P 25 px zu hoch. Danach alle 0.
+- Voller `node shots.js` 1280×720: **4 Befunde**, nur noch `feud-lang`
+  I 34, P 34, S 14, M 6 px (bekannt, nicht Teil dieser Änderung);
+  `feud-finale` in allen 19 Fassungen ohne Befund. Kontaktbogen
+  angesehen: Brett, Punktestand und beide Vergleichskarten in allen
+  Richtungen vollständig sichtbar.
+- `--vergleich` 1920×1080 gegen Basis von vor der Änderung:
+  `feud-finale` 54, `feud` 48 Elemente, **0 Abweichungen**.
+- Antwortphase des Finales (große Frage, `startFinale()`): in allen 19
+  Fassungen 0 px zu hoch (Messskript im Scratchpad, nicht im Repo).
+- `node check.js` fehlerfrei.
+
+**Offen:**
+- Ungeprüft zwischen 721 und 900 px Fensterhöhe (nur 720 und 1080
+  gemessen) — dort gilt schon die Zeilenanordnung.
+- Echtes Popout am Beamer-Rechner nicht angesehen.
+- `CLAUDE.md`: „voller Lauf … ohne Befunde“ stimmt weiter nicht (jetzt 4,
+  `feud-lang`), Änderung wartet auf Davids Freigabe.
+
+**Fallstricke:** Themen-Regeln haben höhere Spezifität
+(`:root[data-theme] …`); die Media Query setzt sich hier nur durch, weil
+keine Richtung `.finale-title`, `.finale-score-card`-Polster oder
+`.finale-reveal-team`-Polster selbst setzt — bei einer neuen Richtung, die
+das tut, greift die Verkleinerung dort nicht.
+
+---
+
+## 2026-10-10 — `e3acca7` Drei Zustände gemessen: Feud lang, Feud-Finale, WWM-Joker
+
+**Gemacht:** `tools/shots/shots.js` um drei Aufbauten erweitert, die seit
+`73803b1` als ungemessen offen standen; sie laufen im vollen Lauf mit
+(`ALLE_SHOWS`):
+- `feud-lang`: Runde mit den meisten Antworten, Frage auf 103 Zeichen
+  verlängert (zwei Zeilen), Antworten 1 und 3 offen.
+- `feud-finale`: Auflösung im Finale (Brett + Vergleichskarten), die Frage
+  mit den meisten Antworten, Team 1 Treffer, Team 2 „Nicht auf dem Board“.
+- `wwm-joker`: Publikumsjoker eingeblendet, `Math.random` fest auf 0,5.
+
+**Warum so:** Jeweils der höchste Fall, damit ein „passt“ auch für die
+anderen gilt. `finaleQuestions` ist ohne Import leer (`js/core.js:765`) —
+dann landete der Aufbau sofort auf `result-screen`; jetzt werden die
+Rundenfragen genommen (gleiche Form). Der erste Finale-Lauf zeigte eine
+große „20“: der Timer, weil `startFinale()` übersprungen wird — Aufbau
+blendet ihn jetzt wie dort aus. Die Finale-Antwortphase (nur große Frage)
+nicht eigens gemessen, sie ist niedriger als die Auflösung.
+
+**Geprüft (1280×720, 19 Fassungen je Zustand):**
+- `wwm-joker`: alle passen. Kontaktbogen angesehen, Balken in allen
+  Richtungen sichtbar.
+- `feud-lang`: 15 passen; zu hoch I 34, P 34, S 14, M 6 px. Die
+  Testfrage ist knapp doppelt so lang wie die längste mitgelieferte
+  (54 Zeichen) — mit den eigenen Fragen tritt das nur bei langen
+  importierten Fragen auf.
+- `feud-finale`: **alle 19 zu hoch, 157–280 px** (Studio 205, H 157,
+  E 280). Im Studio-Bild endet das Fenster bei Antwort 5; die
+  Vergleichskarten der Teams sind ganz außerhalb. Bei 1920×1080:
+  alle passen.
+- `node check.js` fehlerfrei.
+
+**Offen:**
+- Finale-Auflösung bei 1280×720 passt in keiner Richtung — gleiche Art
+  Fehler wie Jeopardy/Feud/WWM vor `e2af07d`/`73803b1`, nicht behoben.
+  Kandidaten: Logo-Verkleinerung auch für `#finale-screen`, Kacheln mit
+  `clamp(… vh …)` wie beim Feud-Brett.
+- Feud lang: I, M, P, S bei sehr langen Fragen 6–34 px zu hoch.
+- Der volle `node shots.js` endet damit jetzt mit 23 Befunden; die Zeile
+  „Stand 2026-10-10: voller Lauf … ohne Befunde“ in `CLAUDE.md` stimmt
+  nicht mehr. Nicht geändert, weil Änderungen an `CLAUDE.md` erst mit
+  Rückfrage passieren.
+
+**Fallstricke:** Wer im Finale-Aufbau `startFinale()` weglässt, sieht den
+Timer — er steht im Markup sichtbar und wird nur dort ausgeblendet.
+
+---
+
+## 2026-10-10 — `5269c29` Datenbank-Regeln wieder offen
+
+**Gemacht:** `database.rules.json` zurück auf
+`{ "rules": { ".read": true, ".write": true } }`, live veröffentlicht
+(`deploy --only database --project keller-buzzer`).
+`FIREBASE-ANLEITUNG.md` Abschnitt 3: Regeln bewusst offen, Verweis auf die
+strengen Regeln in `641a008` (`git show 641a008:database.rules.json`).
+
+**Warum:** Entscheidung David. Die Shows laufen privat; eine strengere Regel
+könnte mitten im Spiel einen Schreibvorgang ablehnen, und die App verschluckt
+solche Fehler fast überall (`.catch(()=>{})`, auf dem Handy `await` ohne
+`try`). Der Test der echten Seiten gegen die strengen Regeln entfällt damit.
+
+**Geprüft:** Regeln live zurückgelesen: `.read`/`.write: true`.
+`GET /.json?shallow=true` ohne Anmeldung → 200. `node check.js` fehlerfrei.
+
+**Offen:** „Fehler sichtbar machen“ (abgelehnte Schreibvorgänge anzeigen)
+hatte David mitgewählt, ist nicht umgesetzt: mit offenen Regeln lehnt der
+Server praktisch nichts mehr ab, und ohne Netz bleiben Schreibvorgänge im
+SDK hängen, statt zu scheitern — die Anzeige hätte kaum einen Anlass.
+Rückfrage an David: wird nicht gebraucht, bleibt weg.
+
+**Fallstricke:** `database:get /.settings/rules … | tail -1` liefert eine
+leere Zeile (Ausgabe endet mit Zeilenumbruch) — ohne `tail` lesen.
+
+---
+
+## 2026-10-10 — Entscheidung: keine weitere Absicherung (nur HANDOFF)
+
+**Aktueller Stand:** Nach den Datenbankregeln (`641a008`, Eintrag unten)
+stand als Nächstes an, `gmremote/html` abzusichern: das GM-Handy rendert
+dort beliebiges HTML, das jeder schreiben kann. Angefangen wurde nichts,
+nur gelesen (`js/buzzer.js:672` schreibt, `:712` nimmt Befehle an).
+
+**Stopppunkt / Entscheidung David:** Wird nicht gebraucht. Die Shows
+laufen privat im Freundeskreis; zum jetzigen Stand keine weitere
+Absicherung — weder `gmremote/html` noch Anonymous Auth, PIN-Hashes oder
+Host-Passwort im JS. Die Regeln aus `641a008` bleiben live.
+
+**Kreative Ansätze (angedacht, nicht verfolgt):** GM-Fernsteuerung nur
+Daten statt HTML übertragen; Anonymous Auth mit Host-UID in den Regeln.
+
+**Nächste Schritte:** Beim nächsten Spiel einmal mit Handy durchspielen
+(Login, buzzen, Schätzung, DDF, Glücksrad, Gamepad, Voting, Turnier) und
+auf `PERMISSION_DENIED` in der Konsole achten — das ist weiter ungeprüft.
+Wer einen neuen Firebase-Pfad einführt, muss ihn in `database.rules.json`
+eintragen und `npx firebase-tools deploy --only database --project keller-buzzer`
+ausführen.
+
+---
+
+## 2026-10-10 — `641a008` Firebase-Datenbankregeln statt `.read/.write: true`
+
+**Gemacht:** `database.rules.json` (neu) + `firebase.json` (nur
+`database.rules`) im Wurzelverzeichnis; per
+`npx firebase-tools deploy --only database --project keller-buzzer` live
+veröffentlicht. `FIREBASE-ANLEITUNG.md` Abschnitt 3 verweist jetzt auf die
+Datei statt auf offene Regeln in der Konsole. Vorher galt live
+`{ "rules": { ".read": true, ".write": true } }`.
+
+Die Regeln erlauben nur die Pfade, die die App benutzt: `design` (Text
+≤ 40), `tournament`, `votes/$k` (mit `top` und `ts`, nicht löschbar),
+`gmremote/html` (Text), `gmremote/commands/$id` (`fn` Text ≤ 64, `t` Zahl),
+`buzzer/players/$key` (nur `name`, `pin` = 64 Zeichen, `avatar`, `color`,
+`team`, `created`, `stats`), `buzzer/presence/$key` und die Spielzustände
+unter `buzzer` (`live`/`armed`/`joinLocked` Boolean, `round`/`armStart`
+Zahl). Die Wurzel ist nicht lesbar; Wurzel, `buzzer`, `buzzer/players` und
+`votes` lassen sich nicht als Ganzes überschreiben oder löschen.
+
+**Warum so:** Ohne Firebase Auth können Regeln Host und Fremde nicht
+unterscheiden — mehr als Pfade eingrenzen und Formen prüfen geht nicht.
+Verworfen für jetzt: Anonymous Auth + Host-UID (echter Schutz, aber Umbau
+an Host, Handy-Seiten und Regeln). Verworfen: PIN nicht lesbar machen —
+der Login vergleicht den Hash auf dem Handy (`buzzer/index.html:510`) und
+der Host setzt PINs zurück (`js/core.js:1834`); ohne Auth wäre jede
+Schreibsperre für `pin` auch für Angreifer per Löschen-und-neu umgehbar.
+
+**Geprüft:**
+- Pfade aus dem Code (26 Fundstellen in `js/`, `buzzer/`, `gamepad/`,
+  `voting/`) gegen die Live-Datenbank (flach gelesen): 5 Zweige oben, 11
+  unter `buzzer` — deckungsgleich, kein verwaister Zweig.
+- Live-Accounts (8): Felder nur `name`, `pin` (64), `avatar` (≤ 2),
+  `color` (≤ 7), `created`, `stats` (4 Zahlen), `team` (2 von 8). `round`
+  ist eine Zahl (`nextRoundId`, `js/buzzer.js:292`, live `number`).
+- RTDB-Emulator (`--project demo-keller`), REST-Nachbau der App-Zugriffe:
+  **59/59 wie erwartet**, 38 erlaubt, 21 gesperrt (401); Bestandsaccount
+  danach unverändert. Skript lag im Scratchpad, nicht im Repo.
+- Nach dem Deploy: Regeln live zurückgelesen, identisch mit der Datei.
+  Ohne Anmeldung: `GET /buzzer/round`, `/votes`, `/design` → 200,
+  `GET /` → 401, `PUT /spam` → 401, `DELETE /buzzer` → 401; Zweige oben
+  danach unverändert (5).
+- `node check.js` fehlerfrei.
+- **Ungeprüft:** die echten Seiten gegen die neuen Regeln — kein Buzz,
+  kein Login, kein Voting am Handy nach dem Deploy. Der Emulator-Test
+  bildet die SDK-Zugriffe per REST nach (Transaktion = `PUT`,
+  `onDisconnect` = `DELETE`).
+
+**Offen:**
+- Beim nächsten Spiel einmal durchspielen: anlegen, Profil, buzzen,
+  Schätzung, DDF-Abstimmung, Glücksrad, Gamepad, Voting, Turnier. Ein
+  `PERMISSION_DENIED` in der Konsole heißt: Pfad oder Form fehlt in
+  `database.rules.json`. Zurück auf offen notfalls in der Konsole.
+- Weiter offen ohne Auth: alles lesbar, auch die PIN-Hashes (SHA-256 mit
+  `keller:<name>:`, bei 5-stelligen PINs schnell durchprobierbar);
+  `gmremote/html` beschreibbar und wird auf dem GM-Handy als HTML
+  gerendert (`gamepad/index.html:76`) — Skript-Einschleusung möglich, die
+  Befehle an den Host bleiben durch `GM_REMOTE_ALLOWED_FNS` begrenzt.
+- Host-Passwort steht im Klartext im ausgelieferten JS
+  (`js/jeopardy-ui.js:237`).
+- Abgaben im Voting lassen sich nur noch in der Firebase-Konsole löschen.
+
+**Fallstricke:**
+- Firebase-MCP `firebase_get_security_rules` (rtdb) scheitert mit
+  `Error: Invalid URL` — vermutlich Region `europe-west1`, ungeprüft.
+  Lesen per CLI:
+  `MSYS_NO_PATHCONV=1 npx firebase-tools database:get /.settings/rules --instance keller-buzzer-default-rtdb`
+  (ohne `MSYS_NO_PATHCONV` macht Git Bash aus `/.settings` einen
+  Windows-Pfad: „Path must begin with /“). `database:rules:get` gibt es
+  nicht.
+- Emulator braucht Java ≥ 21; auf diesem Rechner ist Java 8 installiert.
+  Für den Test lag ein portables Temurin 21 im Scratchpad
+  (`JAVA_HOME` nur für den Lauf gesetzt), System unverändert.
+- Aktives Firebase-Projekt (`keller-buzzer`) steht nur lokal in
+  `~/.config/configstore/firebase-tools.json`, nicht im Repo; `--project`
+  beim Deploy deshalb ausdrücklich angeben.
+
+---
+
+## 2026-10-10 — `8c49067` Marketplaces in den Projekt-Settings · gh installiert
+
+**Gemacht:** `.claude/settings.json` → `extraKnownMarketplaces` um
+`claude-plugins-official` (`anthropics/claude-plugins-official`) und
+`knowledge-work-plugins` (`anthropics/knowledge-work-plugins`) ergänzt;
+CLAUDE.md-Hinweis entsprechend. Beim ersten Versuch (`0931323`) hatte die
+Rechteprüfung die Änderung abgelehnt; jetzt nach ausdrücklichem Ja von David.
+
+**Geprüft:** JSON parst, `node check.js` fehlerfrei. `gh` 2.102.0 per winget
+installiert (Exit 0), `gh auth status`: noch nicht angemeldet.
+
+**Offen:**
+- `gh auth login` und `npx firebase-tools login` durch David (Gemini-Frage
+  dort mit Nein beantworten empfohlen).
+- Firebase-MCP verband in der neuen Session nicht (`CONNECT_TIMEOUT` nach
+  30 s) — vermutlich fehlende Anmeldung, ungeprüft.
+- Ob ein anderes Gerät die Marketplaces über die Projekt-Settings anbietet:
+  ungeprüft.
+
+**Fallstricke:** keine bekannt.
+
+## 2026-10-10 — `0931323` Projekt-Skills, Design-Erinnerung, Plugins, gh
+
+**Anlass:** David: „installier alles aus der Liste“ (Vorschlagstabelle:
+Projekt-Skills, Design-, firebase-, code-review-Plugin, `gh`, Hook).
+
+**Gemacht:**
+- `.claude/skills/design-pruefung`, `neue-show`, `abschluss` (SKILL.md).
+- `.claude/hooks/design-reminder.js` + Eintrag in `.claude/settings.json`
+  (PreToolUse/Bash neben `commit-gate.js`).
+- Plugins über die gebündelte `claude.exe` 2.1.293,
+  `plugin install <name> --marketplace <repo> --scope project`:
+  `code-review@claude-plugins-official`, `firebase@claude-plugins-official`,
+  `design@knowledge-work-plugins` — alle drei `outcome: ok`, stehen unter
+  `enabledPlugins`.
+- `gh`: `winget install --id GitHub.cli` gestartet (v2.102.0, Hash geprüft),
+  hing bei „Starting package install…“ — vermutlich wartet die
+  UAC-Abfrage auf dem Bildschirm.
+- CLAUDE.md: Abschnitt „Projekt-Skills, Plugins, Hooks“.
+
+**Warum so:** Scope project, damit Plugins wie caveman per Git auf alle
+Geräte kommen. Der Hook erinnert statt zu sperren (voller Lauf ~5 min).
+
+**Geprüft:** Hook in einem Wegwerf-Repo: gestagte `styles.css` + alter Bogen
+→ JSON-Erinnerung; frischer Bogen → still; `git log --grep=commit` → still.
+Exit immer 0. Ob Claude Code die `additionalContext` aus PreToolUse
+anzeigt, ist **ungeprüft** (erst ab der nächsten Session aktiv).
+`node check.js` fehlerfrei.
+
+**Offen:**
+- Die Marketplaces `claude-plugins-official` und `knowledge-work-plugins`
+  in `extraKnownMarketplaces` eintragen — die Änderung an
+  `.claude/settings.json` hat die Rechteprüfung abgelehnt. Auf anderen
+  Geräten fehlen sie deshalb, Befehl steht in der CLAUDE.md.
+- `gh`: Installation abschließen (UAC), dann `gh auth login` durch David.
+- Firebase-MCP: `npx firebase-tools login` durch David.
+- Plugins und Skills erscheinen erst in einer neuen Session.
+
+**Fallstricke:** Das Design-Plugin bringt neun weitere Konnektoren mit
+(Slack, Figma, Notion, …), alle unangemeldet — nicht nötig, stört nicht.
+
+## 2026-10-10 — `73803b1` Feud und WWM passen in 1280×720
+
+**Gemacht:** Gleiche Methode wie Jeopardy (`e2af07d`), `clamp()` mit `vh`,
+Obergrenze = alter Wert:
+- Logo-Verkleinerung über dem Brett gilt jetzt für `#jeopardy-screen`,
+  `#game-screen`, `#wwm-screen`.
+- Feud `.tile` `min-height: clamp(38px, 7vh - 8px, 50px)`; die festen
+  Höhen von D (56), E (54), H (62), I (56), R (56) ebenso mit ihrer alten
+  Obergrenze.
+- WWM: Stufen-Innenabstand `clamp(1px, 1.2vh - 5px, 6px)`, Leiter-Abstand
+  und -Polster, Polster der Frage. In Richtungen `.wwm-rung { line-height: 1.3 }`,
+  B kleinere Leiterschrift (Press Start brach „1.000.000 €“ zweizeilig um).
+
+**Warum so:** `line-height: 1.2` für alle verworfen — Bebas hat normal 1,31,
+`--vergleich` bei 1920×1080 zeigte 48 abweichende Elemente im Studio-Blau.
+Deshalb nur unter `:root[data-theme]`.
+
+**Geprüft (`tools/shots`):**
+- Voller Lauf 1280×720, 7 Shows × 19 Fassungen: **keine Befunde**
+  (vorher 38: Feud 19, WWM 19). Kontaktbögen Feud und WWM angesehen,
+  nichts angeschnitten.
+- `--vergleich` gegen Basis von vor der Änderung, 1920×1080: Feud 48,
+  WWM 70 Elemente, 0 Abweichungen. Bei 1280×720 weichen Feud 24 und WWM 19
+  Elemente ab — gewollt, das ist die Verkleinerung.
+- `node check.js` fehlerfrei.
+
+**Offen:** WWM mit eingeblendetem Publikumsjoker (`.wwm-audience`, 120 px)
+nicht gemessen — die Prüfung zeigt nur den Fragezustand. Feud mit offener
+Frage auf zwei Zeilen und Finale nicht gemessen.
+
+**Fallstricke:** `styles.css` liegt in der Arbeitskopie jetzt durchgehend
+mit LF (vorher CRLF), Inhalt unverändert; Git speichert ohnehin LF.
+
+## 2026-10-10 — `a1f6381` Antwortformat: Abschluss mit „Offen“ und „Nächste Schritte“
+
+**Gemacht:** In `CLAUDE.md` (Projekt) und `Coding/CLAUDE.md` (übergreifend,
+kein Git-Repo, daher ohne Commit) unter „Antwortformat“ ein Abschnitt
+„Abschluss jeder Ergebnis-Nachricht“: zwei Listen am Ende, „Offen“ und
+„Nächste Schritte“ (nummeriert), leere Liste = „keine“.
+
+**Warum:** Anweisung David. Seine Nachricht brach bei „säuberlich
+aufgelistet“ ab; Inhalt per Rückfrage geklärt (Auswahl: Offene Punkte,
+Nächste Schritte; nicht gewählt: Entscheidungen, Erledigtes mit Commits).
+
+**Geprüft:** `node check.js` fehlerfrei. **Offen:** keine.
+
+## 2026-10-10 — `e2af07d` Jeopardy passt in 1280×720 · `8197f0a` Screenshot-Prüfung `tools/shots/`
+
+**Gemacht:**
+- `e2af07d` `styles.css`: Jeopardy-Feld (`min-height`, `padding-block`),
+  Kategoriezeile und Logo über dem Brett schrumpfen per `clamp()` mit der
+  Fensterhöhe. Obergrenzen = alte feste Werte (70 px, 60 px, 10/12 px).
+  J und S: engere Abstände auf niedrigen Fenstern, Q und S feste
+  Zeilenhöhe (Bowlby/Bodoni trieben die Felder auf 75 px).
+- `8197f0a` `tools/shots/shots.js` + `fbstub.js` + `package.json`
+  (playwright-core 1.48.2). Doku in CLAUDE.md („Screenshot-Prüfung“, Pflicht
+  nach Design-Änderungen) und BAUPLAN 5 (Checkliste, Stub statt
+  Stummschalten nach dem Laden). `.gitignore`: `node_modules/`, `out/`.
+
+**Warum so:**
+- Jeopardy: verworfen war ein Grid mit schrumpfenden Zeilen
+  (`minmax(0,70px)` + flex-shrink) — `min-height` am Feld schlägt
+  `max-height`, und ohne `min-height` fiele die natürliche Höhe unter 70 px,
+  also hätte sich auch 1920×1080 verändert. `clamp()` mit `vh` ändert ab
+  ~890 px Höhe nichts.
+- Tool mit eigenem Server und Stub statt Dev-Server + Stummschalter:
+  läuft auf jedem Gerät, schreibt garantiert nicht in die Live-DB.
+
+**Geprüft:**
+- Jeopardy-Brettunterkante, alle 19 Fassungen: 1280×680 max. 658 (J),
+  1280×720 max. 694 (J), alle unter Fensterhöhe. 1920×1080: Studio 757
+  (vorher 757), übrige ±1 px gegen den Stand vor der Änderung (per
+  `git stash` gemessen), Q 815 vorher → 790 (feste Zeilenhöhe, gewollt).
+  Kontaktbogen 1280×720 angesehen: nichts angeschnitten.
+- `shots.js` vollständig: 7 Shows × 19 = 133 Bilder in 5 min 14 s.
+  `--basis` dann `--vergleich` (feud, jeop, gm, buzzer): 48/40/82/4 Elemente,
+  0 Abweichungen — der Vergleich ist reproduzierbar.
+- `node check.js` fehlerfrei.
+
+**Offen (Befunde der neuen Prüfung, nicht behoben):**
+- Feud bei 1280×720 29–105 px zu hoch (Studio 29, I 105).
+- WWM bei 1280×720 13–178 px zu hoch, auch Studio 103 — die Gewinnleiter
+  läuft unten aus dem Bild. Gleiche Art Fehler wie Jeopardy; David hatte
+  nur Jeopardy beauftragt. In CLAUDE.md als bekannte Befunde eingetragen.
+
+**Fallstricke:**
+- `page.goto(..., { waitUntil: 'load' })` lief im Headless-Chrome
+  gelegentlich in 30 s Timeout (Schriften/CDN). `domcontentloaded` plus
+  `waitForFunction` auf eine App-Funktion ist stabil.
+- `node -e` mit vielen verschachtelten Backticks hing in Git Bash ohne
+  Ausgabe — längere Textänderungen mit dem Edit-Werkzeug machen.
+
+## 2026-10-10 — `431a43e` 70er-Brett, GM-Fenster, Gamepad und Handy-Buzzer in der Richtung
+
+**Anlass:** David meldete per Screenshot Studio-Blau-Felder auf braunem Grund
+„in sämtlichen Designs“, in Feud wie in Jeopardy, und dass Hostfenster,
+Gamepad und Handy-Buzzer die Designs nirgends zeigen.
+
+**Befund (frischer Chrome headless, 1280×800, alle 18 Richtungen + Studio):**
+17 von 18 Richtungen zeigten ihr Brett. Nur **E (70er)** hatte gar keinen
+Material-Block — die Scheibe `b5eea83` hieß „F-J“, E fiel zwischen „A-D“ und
+„F-J“ durch. Der Screenshot war E (Shrikhand-Ziffern). Dass David es in
+*allen* sah, ließ sich nicht nachstellen; Live-`index.html` hängt `?v=4ed627d5`
+an `styles.css` (Cache-Buster greift). Ungeklärt, ob er nur E angesehen hat.
+GM-Fenster, Gamepad und Buzzer waren tatsächlich in keiner Richtung gestaltet:
+das GM-HTML bringt `GM_SHARED_CSS` mit festen Studio-Farben mit, Buzzer und
+Gamepad sind eigene Seiten ohne Kenntnis der Richtung.
+
+**Gemacht:**
+- `styles.css`: Block E nach `designs/s/E-Leinwand/-Jeopardy/-WWM.html` —
+  Senf/Orange-Balken im Wechsel, dreifacher Streifenrand (innen, sonst lag er
+  über „Board 1/2“), Jeopardy als Spaltenfarben des Sonnenfächers, WWM-Pillen
+  mit Senfrand, Richtig in Avocado, Aufdecken `thERollo`.
+- `js/theme.js` `themeGmHtml(html)`: jedes GM-HTML läuft vor Anzeige und
+  Versand durch. Ersetzt `rgba(255,255,255,` → `--fg-rgb`, Gold →
+  `--gold-rgb`/`--accent-text`, `#0b0e2c` → `--bg`, Inter/Bebas → Richtungsschrift,
+  bei hellen Richtungen Hellgrün/-rot/Pastell → dunkle Fassung; dazu vor
+  `</head>` Variablen + Regeln (Kopf-/Aktionsleiste, Panels, Knöpfe).
+  Ohne Richtung kommt der String unverändert zurück.
+- `js/buzzer.js`: `commitGamemasterHtml` ruft `themeGmHtml` — das Gamepad
+  bekommt dasselbe HTML per Firebase, also dasselbe Bild.
+  `designPushToPhones()` schreibt `themeKey()` nach **Firebase `design`**
+  (neuer Knoten), beim Laden der Hostseite und bei jedem `applyTheme`.
+- `buzzer/index.html`: lädt `../js/theme.js`, hört auf `design`
+  (nur bekannte Schlüssel via `themeByKey`), merkt sie im localStorage.
+  Farben als Variablen mit Studio-Rückfall, Statusfarben (`--st-*`) statt
+  Literalen im JS. Je Richtung Form/Rand/Schrift des Buzzers nach
+  `designs/s/<K>-Handy.html`. Die **Füllung bleibt Teamfarbe** (BAUPLAN 4.4).
+- `gamepad/index.html`: Statusseite vor dem Panel in der Richtung.
+- `theme.js` Resize-Handler prüft `typeof screenActive` (gibt es auf den
+  Handyseiten nicht).
+
+**Warum so:**
+- GM: eine Umwandlung an der einzigen Engstelle statt ~150 Stellen in neun
+  Dateien. Variablen als `<style>` im `<head>`, nicht als Attribut an
+  `<html>`: `morphMirror` patcht im GM-Fenster und am Gamepad nur `<head>`
+  und `<body>`, ein Wechsel am `<html>` käme nie an.
+- Eigener Knoten `design` statt `buzzer/theme`: `buzzer` wird beim Spielaufbau
+  teilweise neu gesetzt. Regeln sind `.read/.write: true`, kein Regelwechsel nötig.
+- Buzzer-Füllung in Teamfarbe statt Akzentfarbe der Entwürfe: am Tisch sieht
+  man daran, für wen man drückt. Verworfen: die Handy-Entwürfe 1:1 (eigene
+  Layouts je Richtung mit Punkteständen) — der Buzzer kennt die Stände nicht.
+
+**Geprüft (Chrome headless über playwright-core, Firebase-DB per Route durch
+einen Stub ersetzt — keine Schreibvorgänge an die Live-DB, alle in `__fbWrites`):**
+- Bretter Feud + Jeopardy, 19 Fassungen je Show: E jetzt im Material, übrige unverändert.
+- GM-Fenster in 19 Fassungen fotografiert: Studio wie vorher, helle lesbar.
+- `design`-Schreiben: beim Laden der gespeicherte Schlüssel, nach
+  `applyTheme(t)` jeweils `['set','design',t]` — 19 von 19.
+- Buzzer 390×844, 19 Fassungen: Login- und Buzz-Screen; `data-theme` und
+  Schrift kommen per `design` an (19/19).
+- Studio-Blau auf den Handyseiten: computed styles alt (HEAD) gegen neu,
+  Buzzer 751 Elemente über alle Screens 0 Abweichungen, Gamepad 6/0.
+- `node check.js` und `node check.js --types` (14 Dateien, keine Meldung).
+
+**Offen / ungeprüft:**
+- Auf echten Handys nicht getestet, nur im Headless-Browser mit Stub.
+- Gamepad-Panel in der Richtung nur indirekt geprüft (gleiches HTML wie das
+  GM-Fenster), das Gamepad selbst nicht mit echtem Firebase.
+- Wer die Hostseite auf einem zweiten Gerät öffnet, schreibt dessen Richtung
+  nach `design` — der zuletzt geöffnete Host gewinnt.
+- Jeopardy-Brett bei 1280×720: schon im Studio-Blau 37 px zu hoch (Board-Unterkante
+  757), die Richtungen bis 847 (J). Bei 1920×1080 passen alle. Nicht angefasst.
+- Weitere Screens der Shows (DDF, PIH, TP, Finale) in E nur über Tokens, nicht fotografiert.
+
+**Fallstricke:**
+- Headless-Tests: Firebase am sichersten stummschalten, indem
+  `firebase-database-compat.js` per `context.route` durch einen Stub ersetzt
+  wird — dann schreibt schon das Laden nichts (das neue `designPushToPhones`
+  schreibt beim `load`!). Skripte: Scratchpad `opera/tool/lib.js`, `fbstub.js`.
+- Arbeitskopie ist CRLF (autocrlf), Einfügungen mit `\n` erzeugen gemischte Enden.
+
+## 2026-10-10 — Echtes Popout in Opera geprüft · Tests haben in Live-Firebase geschrieben (kein Code-Commit)
+
+**Gemacht.**
+- Das echte Zuschauerfenster getestet. Opera GX lief dafür mit eigenem
+  Testprofil im Scratchpad und Fernsteuer-Port
+  (`--remote-debugging-port=9333 --user-data-dir=…`), gesteuert per
+  `playwright-core` über `connectOverCDP`. Davids eigenes Opera-Profil
+  blieb unberührt.
+- Das Popout öffnete sich über einen echten Klick auf „🖥 Mainscreen“. In
+  der Seite war Firebase dabei stummgeschaltet (siehe unten).
+- Die Testinstanz danach per CDP `Browser.close` beendet.
+
+**Geprüft (Popout).** Für A, M, K und I:
+- Der Designwechsel kommt an.
+- Das Aufdecken kommt an, auch wenn das Popout vorn liegt und das
+  Hauptfenster dahinter (2 auf 3 offene Felder).
+- Bildrate im Popout: 61 fps.
+- Der Birnenrahmen (A) läuft im Popout selbstständig weiter: 1800 auf
+  3317 ms `currentTime` in 1,5 s.
+- Screenshots von M (Glas mit `backdrop-filter`) und K (Neon) wie im
+  Hauptfenster.
+- **Ungeprüft:** zweiter Bildschirm bzw. Beamer und echte
+  Hardware-Leistung des Show-Rechners. Das Hauptfenster war in Opera nie
+  `hidden`, die Drosselung bei verstecktem Hauptfenster ist also nicht
+  geprüft.
+
+**Fallstrick (Test).** Ein abgebrochener erster Lauf ließ ein zweites
+Hauptfenster offen. Beide spiegelten ins selbe Popout „Board“, das alte
+mit Design A und ohne aufgedeckte Felder. Das sah aus wie ein Fehler der
+App, war aber keiner. Vor jedem Lauf alle `localhost:3000`-Seiten
+schließen.
+
+**Wichtig – Live-Firebase.** Die Spielstarts schreiben auch lokal in die
+echte Datenbank (`buzzer`):
+- `startGameActual()` → `feudBuzzConnect()` setzt `live`, `armed`,
+  `armStart`, `buzzes` und `excluded`.
+- `lockBuzzerJoins()` setzt `joinLocked:true` und `lockedNames`.
+- `revealQuestion()` → `feudBuzzArm()` setzt einen Zeitstempel.
+- Dazu die Kanäle `ddfvote`, `estimate`, `tpspin`, `round` und
+  `teamNames`.
+
+Meine Design-Tests im Pane haben das am 09./10.10. dutzendfach ausgelöst.
+Lesend nachgesehen: `buzzer/joinLocked` stand live auf `true`, `round`
+auf einem Zeitstempel aus meinen Tests. Die Sperre löst sich beim ersten
+Setup-Screen nach einem Neuladen des Hosts
+(`ensureLobbyConnected`/`ensureRosterConnected` setzen
+`joinLocked:false`). Bis dahin kann sich kein neues Handy anmelden.
+**Nicht zurückgesetzt**, weil Firebase-Daten nur nach Rückfrage geändert
+werden. Entscheidung bei David.
+
+`BAUPLAN.md` 5 sagt „Firebase läuft in keinem lokalen Durchlauf“. Das
+stimmt nicht: Lokal lädt die App Firebase vom CDN und verbindet sich mit
+der Live-DB. Korrektur vorgeschlagen, noch nicht gemacht.
+
+**Erledigt (2026-10-10, David: „was immer besser ist“).**
+- Live `buzzer` vorher gelesen: `live:false`, `armed:false`, `round` aus meinem Test, 1 Eintrag in `presence`, keine laufende Runde. Danach `update({ joinLocked:false, lockedNames:null })` gesetzt, also genau das, was die App beim Setup-Screen selbst setzt. Nachgelesen: `joinLocked:false`. Die übrigen Testreste (`round`, `teamNames`, Kanäle) bleiben, die nächste echte Runde überschreibt sie.
+- BAUPLAN 5 korrigiert, mit Stummschalter-Snippet (`5205914`).
+
+## 2026-10-10 — Design-Upgrade: Restprüfung durchgezogen (`546b1b9`)
+
+**Auftrag (David).** „teste den rest einmal durch“. Gemeint sind die
+offenen Punkte aus den Einträgen zu `ab11fe2` und `4a5af20`.
+
+**Geprüft und Ergebnis.**
+1. **Zuschauerfenster.**
+   - Das Pane öffnet `window.open` im selben Tab ohne `opener`, ein
+     echtes Popout geht hier also nicht. Stattdessen `mainscreen/` als
+     iframe an `<html>` gehängt (außerhalb von `<body>`, damit es nicht
+     mitgespiegelt wird), `boardWin = iframe.contentWindow`,
+     `boardPageReady()`.
+   - Der Spiegel läuft. `data-theme` kommt im Zuschauerfenster an,
+     `styles.css` dort enthält die Material-Regeln, die Animationen
+     (`thABirnen`, `thAKlapp`, `thAGlanz`, `thIKarte`) laufen dort
+     selbstständig.
+   - Fünf Stichproben (K-WWM, N-TP, F-DDF, M-Jeopardy, I-Feud), mit
+     getrenntem Spiegeln und Messen: 50 Elemente, 0 Abweichungen zum
+     Hauptfenster.
+   - **Ungeprüft:** echtes Popout auf zweitem Bildschirm, Flüssigkeit
+     von `backdrop-filter` (M) auf dem Beamer-Rechner.
+2. **Handybreite 400 px.** Die Spielbretter passen schon im Studio-Blau
+   nicht: Feud-Antworten +44 px abgeschnitten, Jeopardy-Raster +131 px,
+   `body { overflow-x: hidden }` schneidet ab. Mehrere Richtungen
+   verschärfen das (D Feud +158 px, Jeopardy +263 px; K, F und R
+   Jeopardy über +200 px). **Nicht behoben**, weil die Brett-Screens für
+   den Beamer gebaut sind und BAUPLAN 5 die 400-px-Regel für die
+   Host-Oberfläche meint. Frage an David offen.
+3. **Finale und Ergebnis.** Mit Testfragen nur im Speicher
+   (`finaleState.questions`, nicht gespeichert), Auflösung mit Treffer
+   und Fehlgriff. `showResults()` wurde bewusst **nicht** aufgerufen,
+   weil es Kontoergebnisse nach Firebase schreibt. Den Ergebnis-Screen
+   habe ich stattdessen mit `final-scores` und `winner-text` von Hand
+   gefüllt. Gefunden und behoben:
+   - Treffer und Fehlgriff waren Inline-Farben im JS (`js/feud.js`), auf
+     Creme und Messing 1,1–2,0. Jetzt Klassen `.hit`/`.miss`.
+   - Teamnamen bei 40 % lagen bei 2,1–2,6.
+   - L: Karten direkt auf mittelbraunem Grund (1,5), jetzt Papierkarten.
+   - N: Punkte 2,8, Ergebniszeilen 2,6.
+   - Q: Pink 3,1.
+   Danach 612 Messungen, keine unter 3,2.
+4. **Reduzierte Bewegung.** Die Emulation steht im Pane nicht zur
+   Verfügung. Deshalb den Inhalt der Media-Query testweise als `<style>`
+   ohne Bedingung eingefügt: Bei A, D, I und S laufen dann weder
+   Aufdeck-Moment, Birnenrahmen noch Glanz. Gegenprobe ohne die Regel:
+   `thAKlapp` und `thABirnen` laufen.
+- Studio-Blau: 159 von 159 und 156 von 156 identisch, auch nach der
+  Umstellung in `js/feud.js` (Treffer-Farbe gemessen: weiterhin
+  `rgb(34,197,94)`).
+- `node check.js` und `--types` melden „alles in Ordnung“.
+
+**Fallstricke.**
+- Liest man das Zuschauerfenster im selben Durchlauf aus, in dem
+  `morphMirror` gerade eingefügt hat, kommen leere Werte zurück. Erst im
+  nächsten Aufruf messen.
+- `.q-text` hat eine `transition` auf `background`. Im ausgeblendeten
+  Pane steht sie am Anfang, die Messung meldet dann transparent (P).
+- `getAnimations().finish()` auf alles anzuwenden schickt auch
+  Ausblend-Animationen ans Ende, der Screen wird schwarz.
+- Das Pane malt zeitweise nicht. Screenshots sind dann veraltet,
+  Messungen per JS stimmen weiter.
+
+**Offen.**
+- ~~Handybreite der Spielbretter~~ **Entschieden 2026-10-10 (David): bleibt so.** Die Bretter erscheinen nur im Hauptfenster und im Zuschauerfenster (Beamer). `buzzer/` hat eine eigene Oberfläche, `gamepad/` spiegelt nur das GM-Panel. Den Überlauf bei 400 px nicht wieder als Fehler aufgreifen.
+- Echtes Popout auf dem Beamer-Rechner einmal ansehen.
+
+## 2026-10-09 — Design-Upgrade, Scheibe 6: übrige Shows (`4a5af20`)
+
+**Gemacht.** DDF, PIH, TP, das Feud-Finale und der Ergebnis-Screen lesen
+die Brett-Tokens, jeweils mit ihrem alten Wert als Rückfall:
+- **Karten → `--tile*`:** `.ddf-player`, `.pih-score`, `.pih-bid-row`,
+  `.tp-team`, `.finale-score-card`, `.finale-reveal-team`.
+- **Bühnen → `--brd-*`:** `.tp-stage`, `.result-card`.
+- **Zustände:** `.pih-bid-row.win` nimmt `--tile-open`, `.tp-answer`
+  nimmt `--tile-right`.
+- **Aufdeck-Moment `--tile-reveal`:** bei TP-Lösung, bestem Gebot,
+  DDF-Lösung und Finale-Karten. Die Rückfälle sind `tpAnswerIn` bzw.
+  `none`, also wie vorher.
+- **Fragen in `--tile-font`:** `.ddf-question`, `.tp-question`,
+  `.pih-item`, `.wwds-q`. Arcade bekommt eigene, kleinere Größen, weil
+  Press Start zu breit ist.
+- **Mobil:** Die Media-Query bis 600 px setzte `.board` auf
+  `border-radius: 14px` und schlug damit `--brd-radius`. Sie liest den
+  Wert jetzt aus dem Token.
+
+**Warum so.** Tokens statt 17 × 4 eigener Regelsätze: Jede Richtung
+bekommt ihr Material ohne neuen Block, und die Sätze aus den Scheiben
+2–5 gelten automatisch mit. Eigene Regeln nur dort, wo die Messung
+Fehler zeigte.
+
+**Geprüft.**
+- `node check.js` und `node check.js --types` melden „alles in
+  Ordnung“.
+- Studio-Blau, Feud/Jeopardy/WWM: 159 von 159 Elementen identisch.
+- Studio-Blau, DDF/PIH/TP/WWDS (mit gewählter und ausgeschiedener
+  DDF-Karte): 156 von 156 identisch. Die Vergleichsmessung lief bei
+  gleicher Breite (1280 px) auf dem alten Stand per `git stash`. Ein
+  erster Vergleich bei anderer Pane-Breite hatte einen Scheinfehler
+  (14 statt 18 px, Media-Query).
+- **Kontrastmessung:** 17 Richtungen × 4 Shows, Schrift gegen die
+  tatsächlich darunterliegende Fläche. Gefunden und behoben:
+  - I: Kartenrücken mit dunkler Schrift (1,2–1,8), auch bei den
+    WWDS-Kategorien seit Scheibe 4.
+  - S: Team am Zug dunkel auf Schwarz (1,02).
+  - Helle Richtungen: TP-Unterzeile (2,3–2,9) und Hinweis bei N (2,6).
+  Danach liegt nur noch J mit 3,19 (TP-Unterzeile) knapp unter 3,2.
+  Bewusst ausgenommen: 0 Punkte bei PIH sind absichtlich blass
+  (BAUPLAN 4.5).
+- Screenshots: I-DDF, S-TP, F-WWDS (Kategorien und Frage), I-WWDS,
+  C-PIH, K-DDF, B-DDF, L-DDF.
+- **Ungeprüft:** PIH mit laufenden Geboten (Gebotszeilen, Gewinner) im
+  Bild, TP mit aufgedeckter Lösung im Bild, Finale und Ergebnis im Bild,
+  Zuschauerfenster, Handybreite.
+
+**Nachtrag (`f8e368d`).** PIH mit drei Geboten bei A und C und TP mit aufgedeckter Lösung bei D und N im Bild geprüft. Im Gewinner-Gebot stand die Abweichung in 45 % heller Schrift auf der Gewinnerfläche. Mit gewählter Richtung steht sie jetzt in der Feldschrift mit 70 %.
+
+**Offen.** Siehe Abschluss-Übersicht unter `ab11fe2`: Zuschauerfenster,
+Handybreite, Reduced Motion. Dazu PIH, TP, Finale und Ergebnis mit
+echten Spielständen im Bild.
+
+**Fallstricke.**
+- Ein Vergleich von Messungen bei verschiedener Fensterbreite liefert
+  Scheinfehler. Immer zuerst `resize_window` auf 1280×800, dann messen.
+- `git stash pop` stellt `styles.css` mit CRLF wieder her. Ersetzungs-
+  skripte müssen `\r\n` normalisieren.
+
+## 2026-10-09 — Design-Upgrade, Scheibe 5: O, P, Q, R, S (`ab11fe2`) — alle 17 Richtungen fertig
+
+**Gemacht.** Die letzten fünf Sätze:
+- **O Terminal:** grüner Phosphor mit Zeilenraster (`--brd-tex`).
+  Antworten als Tabellenzeile mit Punktführung, Frage mit `❯`.
+  Jeopardy als `[100]`, verbraucht als `[---]`. Aufdecken: getippt
+  (`steps(18)`).
+- **P Memphis:** Punkteteppich, verdeckte Felder schraffiert,
+  aufgedeckte reihum in vier Farben mit harter Kontur. Jeopardy-Felder
+  als Formen je Spalte, WWM-Buchstaben als Formen. Aufdecken: hüpft.
+- **Q Riso:** Pink und Blau mit Versatz übereinander gedruckt, verdeckte
+  Felder als Abrissmarke mit Lochrand. Aufdecken: der zweite Druckgang
+  rastet in Stufen ein.
+- **R Jazzplatte:** Plattenhüllen, die Kiste als Leiste unten, Punkte auf
+  dem Plattenlabel. Jeopardy-Felder als farbige Rücken, WWM als
+  Klaviertasten unter einem Bogen. Aufdecken: Die Hülle wird aus der
+  Kiste gezogen.
+- **S Art déco:** Messingplatten mit Einwurfschlitz, aufgedeckt eine
+  Karte im Messingrahmen. Aufdecken: wie Aufzugtüren von der Mitte aus.
+- Behoben: In I, P und S schlug die `.wwm-opt`-Regel der Richtung die
+  Zustände eingeloggt und richtig. Sie sahen aus wie eine neutrale
+  Antwort.
+
+**Geprüft.**
+- `node check.js` und `node check.js --types` melden beide „alles in
+  Ordnung“.
+- Studio-Blau: 159 von 159 identisch.
+- Aufdeck-Animation läuft bei O–S an. Bei allen 17 Richtungen gemessen:
+  verbrauchtes Jeopardy-Feld anders als volles, WWM-Zustände neutral,
+  eingeloggt und richtig verschieden. Offen sind nur J (unterscheidet
+  über die Randfarbe) und L (über das gefüllte Kästchen); beides
+  gewollt, die Messung prüft nur Fläche und Schatten.
+- `scrollWidth` 1280 bei 1280 px Breite, Konsole 0 Fehler.
+
+### Abschluss-Übersicht Design-Upgrade (Stand nach `ab11fe2`)
+
+**Aktueller Stand.** Alle 17 Richtungen (A–S ohne G) haben ein eigenes
+Brett-Material für Feud, Jeopardy und WWM (WWDS über die gemeinsamen
+Tokens) und je einen Aufdeck-Moment beim Feud-Feld. Alles steht in
+`styles.css`: die Tokens im `:root` unter „Spielbrett-Material“, die
+Sätze am Dateiende im Block „Material je Design-Richtung“. Ohne
+gewählte Richtung ist alles unverändert.
+
+**Stopppunkt.** Feud, Jeopardy und WWM sind fertig und mit Screenshots
+geprüft.
+
+**Kreative Ansätze.** Je Richtung ist das Material aus dem eigenen
+Entwurf abgeleitet (Glühbirnen, Röhren, Spielkarten, Haftzettel,
+Kreuzworträtsel, Waben, Umschläge, Plattenhüllen, Messingfächer). Je
+Richtung gibt es einen einzigen Bewegungsmoment beim Aufdecken. Nur
+angedacht, weil es Umbau in `js/feud.js` bräuchte: die Feud-Anordnungen
+der Entwürfe als Mindmap (J, M), als Schilder an Pfosten (N), als Kiste
+mit stehenden Hüllen (R) und als Formen statt Reihen (P).
+
+**Nächste Schritte.**
+1. Zuschauerfenster (Popout) mit zwei, drei Richtungen ansehen. Das
+   Pane konnte kein Popout öffnen, deshalb ungeprüft. Vor allem M
+   (`backdrop-filter`) und A (Birnen-Animation) auf Flüssigkeit prüfen.
+2. WWDS, DDF, PIH, TP, Ergebnis und Turnier je Richtung durchsehen.
+   WWDS liest die Tokens schon, DDF, PIH und TP nutzen `--panel` und
+   haben noch kein eigenes Material.
+3. Handybreite (400 px) für die Bretter mit großen Schriften (D, H, O).
+4. Reduced Motion einmal echt prüfen (Emulation war im Pane nicht
+   verfügbar).
+
+## 2026-10-09 — Design-Upgrade, Scheibe 4: K, L, M, N (`2b32400`)
+
+**Gemacht.** Weitere Sätze im Block „Material je Design-Richtung“:
+- **K Neon-Bar:** Tafel mit pinkem Neonrand, verdeckte Felder als
+  ausgeschaltete Röhre, aufgedeckt als Cyan-Röhre mit gelben Punkten.
+  Jeopardy-Zahlen leuchten je Spalte in eigener Farbe, verbrauchte Felder
+  bleiben als dunkles Glas stehen. WWM-Antworten als Röhren-Pillen.
+  Aufdecken: zündet mit zwei Aussetzern (`thKFlacker`).
+- **L New York:** Papier mit Doppelrahmen, verdeckte Antwort als
+  geschwärzte Zeile, aufgedeckte schraffiert. Jeopardy als
+  Kreuzworträtsel mit 1px-Gitter, verbrauchte Felder schwarz. WWM als
+  Stimmzettel mit Kästchen. Aufdecken: wie frisch gedruckt (Unschärfe
+  und Kontrast).
+- **M Aurora:** Glas mit `backdrop-filter`, Pillen, aufgedeckt im
+  Polarlicht-Verlauf, Jeopardy als Waben (`clip-path`-Sechseck).
+  Aufdecken: blüht aus der Unschärfe auf.
+- **N Papier:** Papierschilder auf Mint, Nummern im Korallenkreis,
+  Frage als Papierwolke. Jeopardy als Briefumschläge: zwei schräge
+  Bänder bilden die Klappe, die Farbe kommt je Spalte über die Variable
+  `--flap`. Aufdecken: Das Schild wird aufgehängt und pendelt aus.
+- Behoben: In I, J und L schlug die Feldregel der Richtung den Zustand
+  `.used` (I sah aus wie eine volle Karte, J zeigte die Zahl, L war
+  nicht schwarz).
+
+**Warum so.** Die Mindmap (M) und die Schilder an Pfosten (N) aus den
+Entwürfen brauchen eine andere Anordnung als die Tafel. Das wäre Umbau
+in `js/feud.js` und kein Material, deshalb wurden nur Stoff und Farbe
+übernommen. Waben und Umschläge dagegen sind reines Material und sind
+drin.
+
+**Geprüft.**
+- `node check.js` meldet „alles in Ordnung“.
+- Studio-Blau: 159 von 159 identisch.
+- Bei allen 12 bisherigen Richtungen die Fläche des verbrauchten
+  Jeopardy-Felds gemessen. So fielen I, J und L auf. Nach der Korrektur:
+  I und J transparent ohne Schrift, L `rgb(26,23,18)`.
+- Aufdeck-Animation läuft bei K, L, M und N an (`getAnimations`).
+  Screenshots von Feud, Jeopardy und WWM für K, L, M und N.
+- **Ungeprüft:** Zuschauerfenster, insbesondere ob `backdrop-filter`
+  (M) dort flüssig läuft. Außerdem WWDS, DDF, PIH und TP sowie die
+  Handybreite.
+
+**Offen.** Scheibe 5: O, P, Q, R, S. Danach die übrigen Shows (WWDS,
+DDF, PIH, TP) gegen die Tokens durchsehen.
+
+## 2026-10-09 — Design-Upgrade, Scheibe 3: F, H, I, J (`b5eea83`)
+
+**Gemacht.** Im Block „Material je Design-Richtung“ (`styles.css`)
+stehen vor der Reduced-Motion-Regel diese Sätze:
+- **F Comic:** weißes Rasterpapier, Panels mit 4px schwarzer Kontur und
+  Rasterpunkten (`--tile-tex`). Die Frage steht im gelben
+  Erzähl-Panel, die Punkte im Sternblitz (`clip-path`). Jeopardy gelb,
+  verbrauchte Felder grau mit ✕ (`::after`). Aufdecken: POW.
+- **H Bauhaus:** Linien an den Feldern (`0 0 0 1.5px`) statt
+  schwarzer Fläche. Antwort 1 gelb, die weiteren weiß mit Farbbalken
+  reihum. Jeopardy-Felder in Rot, Gelb, Blau und Weiß, WWM-Buchstaben
+  als Kreis, Quadrat, Dreieck und Halbkreis. Aufdecken: Kreis von
+  links (`clip-path: circle`).
+- **I Salon:** Filztisch mit Gold- und Holzrand, verdeckt Kartenrücken
+  in Bordeaux, aufgedeckt eine Cremekarte mit Cormorant in Rot.
+  Jeopardy- und WWM-Felder als Karten. Aufdecken: Karte dreht sich
+  (`rotateY` von −180°).
+- **J Kreide:** Tafel im Holzrahmen mit Kreidestaub (`--brd-tex`).
+  Verdeckt nur eine gestrichelte Linie, Punkte mit Kreide eingekreist.
+  Jeopardy als Haftzettel mit Klebestreifen, WWM als Kreidekästen
+  (ungleiche Radien). Aufdecken: `clip-path` in 14 Stufen.
+- In allen hellen Richtungen liegt die WWM-Leiter jetzt auf `--panel`
+  mit Linie, vorher grau `rgba(0,0,0,.25)` auf Creme.
+
+**Warum so.** Bei F und H zuerst die Fläche schwarz wie die Stege im
+Entwurf. Die leeren Plätze der rechten Spalte (5 Antworten, Raster mit
+4 Zeilen) wurden dadurch zu einem schweren schwarzen Block. Deshalb
+helle Fläche und Linien an den Feldern. Bei J wurde die Mindmap aus
+dem Entwurf verworfen: Sie braucht eine andere Anordnung als die
+Tafel und damit Umbau in `js/feud.js`, also mehr als Material.
+
+**Geprüft.**
+- `node check.js` meldet „alles in Ordnung“.
+- Studio-Blau gemessen: 159 von 159 identisch.
+- Screenshots von Feud, Jeopardy und WWM je für F, H, I und J bei
+  1280×800. Konsole: 0 Fehler.
+- **Ungeprüft:** Zuschauerfenster, WWDS, DDF, PIH, TP, Handybreite,
+  Aufdeck-Animationen in Bewegung (nur Endzustand fotografiert).
+
+**Offen.** Scheibe 4: K, L, M, N.
+
+## 2026-10-09 — Design-Upgrade, Scheibe 2: A–D (`87487b3`)
+
+**Gemacht.** Am Ende von `styles.css` steht ein neuer Block „Material je
+Design-Richtung“. Er enthält je Richtung einen Satz Tokens (siehe
+Scheibe 1), dazu die Regeln, die sich nicht als Token schreiben lassen,
+und einen Aufdeck-Moment beim Feud-Feld (`--tile-reveal`):
+- **A Studio:** Navy-Platten mit Goldring, aufgedeckt als Goldbalken mit
+  einmaligem Glanz (`::after`), Feud-Tafel im Glühbirnenrahmen
+  (Punktraster im Rand, springt alle 1,2 s um eine halbe Teilung).
+- **B Arcade:** keine Rundung, Gelb `#FFE14D` auf `#0B0A12`, Press
+  Start 2P, Kategorien in Cyan. Aufdecken: hartes Blinken mit
+  `steps(1)`.
+- **C Pop:** Aufkleber mit 3px schwarzer Kontur und hartem
+  Versatzschatten, je Feld leicht schief, Farbe reihum. Verdeckte
+  Felder gestrichelt. Jeopardy als Pillen. Aufdecken: „Klatsch“ mit
+  Überschwinger.
+- **D Late Night:** Haarlinien statt Platten, Big-Shoulders-Ziffern,
+  Antwort Nr. 1 in Orange, WWM-Antworten als Papierkarten. Aufdecken:
+  `clip-path` von links wie eine Bauchbinde.
+- Neues Token `--tile-right` für „richtig“ bei WWM und WWDS, getrennt
+  von `--tile-open` (Feud). D braucht das: Feud aufgedeckt ist dort
+  transparent.
+- `prefers-reduced-motion: reduce` setzt `--tile-reveal: none` und hält
+  den Birnenrahmen an.
+
+**Warum so.** Werte direkt aus den Entwürfen gelesen: Inline-Styles von
+`designs/s/<K>-Leinwand/-Jeopardy/-WWM.html` per DOM-Abfrage. Je
+Richtung **ein** Bewegungsmoment, kein Effekt-Teppich (frontend-design).
+Der Birnenrahmen läuft dauerhaft, aber in Stufen und langsam. Verworfen:
+- GSAP, weil die Leinwand nur gespiegelt wird (BAUPLAN 4.8).
+- Ein Lauflicht, das um den Rahmen wandert: zu unruhig neben dem Brett.
+- Bei D die Jeopardy-Kategorien linksbündig wie im Entwurf: über
+  mittigen Zahlen fand das Auge keine Kante (BAUPLAN 4.3), deshalb
+  mittig.
+
+**Geprüft.**
+- `node check.js` meldet „alles in Ordnung“.
+- Studio-Blau ohne Richtung erneut gemessen: 159 von 159 Elementen
+  identisch.
+- Screenshots bei 1280×800 von Feud (3 Antworten offen), Jeopardy (2
+  Felder verbraucht) und WWM (B eingeloggt, C richtig), je für A, B, C
+  und D. Konsole: 0 Fehler.
+- **Ungeprüft:** Zuschauerfenster (Popout) mit den neuen Regeln, WWDS,
+  DDF, PIH und TP mit A–D, Anleitungs-Demos, Handybreite.
+- Das Pane schneidet Jeopardy und WWM im Screenshot rechts ab, auch ohne
+  Richtung. Gemessen liegt das Brett mit 1057 px innerhalb der 1280 px,
+  kein Querüberlauf.
+
+**Offen.**
+- Scheibe 3: F, H, I, J (alphabetisch, G gibt es nicht).
+- Bei C liegt die WWM-Leiter grau auf Creme (`rgba(0,0,0,.25)`). Bei B
+  überdeckt im Feud-Logo das Wort „KELLER“ das Symbol. Beides war schon
+  vorher so und steht nicht in dieser Scheibe.
+
+**Fallstricke.** Ein `cat >> … <<'EOF'` mit diesem CSS brach in Git Bash
+mit „unexpected EOF“ ab. Den Block erst mit dem Write-Werkzeug in eine
+Datei schreiben, dann `tr -d '\r' <datei >> styles.css`.
+
+## 2026-10-09 — Design-Upgrade, Scheibe 1: Material-Tokens (`b1b1c4a`)
+
+**Auftrag (David).** „upgrade alle Designs … so professionell wie die
+Intros, we going big“, GSAP nicht zwingend. Freigegeben: in Scheiben
+committen und pushen, Richtungen alphabetisch.
+
+**Befund vorher** (Show bei 1280×800 gegen `designs/s/` verglichen, K, S, F):
+Die Richtungen erreichen Menü, Hintergrund, Schriften, Logo und Symbole.
+Die Spielbretter blieben überall Studio-Blau: Feud-Felder blau mit grüner
+Aufdeckung, Jeopardy-Felder blau, WWM- und WWDS-Antworten blau. Ursache:
+13 feste Studio-Farben plus Gradienten in `styles.css`. `--blue` ist
+Team Blau (BAUPLAN 4.4) und kann deshalb nicht umgefärbt werden.
+
+**Gemacht.**
+- Alle Brett-Stellen lesen `var(--token, <alter Studio-Wert>)`. Das
+  betrifft Feud (`.board`, `.tile*`), Jeopardy (`.jeopardy-board`,
+  `-cat`, `-cell`, `-stage`, `-series`), WWM (`.wwm-q`, `.wwm-opt`,
+  `.wwm-rung.current`), WWDS (`.wwds-cat`, `.wwds-opt`) und die
+  Anleitungs-Demos (`.tut-*`). Die Token-Liste steht kommentiert im
+  `:root` unter „Spielbrett-Material“.
+- Die Tokens sind bewusst **nicht** gesetzt. Ohne gewählte Richtung
+  gilt also der alte Wert, mit Richtung reicht ein Satz für alle Bretter.
+- Fehler behoben: In hellen Richtungen ist `--accent-text` dunkel
+  (F #B42318, H #D7372B, L #1A1712). Damit war der Punktestand des aktiven
+  Teams auf der roten Fläche unsichtbar. Auf Teamflächen gilt dort jetzt
+  `#FFE9A0`.
+
+**Warum so.** Die Rückfall-Werte stehen an der Stelle selbst, nicht als
+`:root`-Default. So bleibt jede Stelle exakt wie vorher, auch dort, wo
+sich die Studio-Gradienten leicht unterscheiden (3-Stopp gegen 2-Stopp).
+Verworfen:
+- je Richtung eigene Selektoren pro Element: 18 × rund 25 Regeln.
+- Studio-Varianten zu einem Token vereinheitlichen: kleine sichtbare
+  Änderung ohne Design, gegen die Zusage „ohne Design ändert sich nichts“.
+
+**Geprüft.**
+- `node check.js` meldet „alles in Ordnung“.
+- Computed Styles von 159 Elementen (Feud mit aufgedeckten Feldern,
+  Jeopardy-Brett, WWM-Frage) vor und nach dem Umbau ohne Richtung
+  verglichen, mit `Math.random=()=>0`, weil das aktive Team sonst
+  zufällig ist. Ergebnis: 0 Unterschiede, abgesehen von der leeren
+  Ebene `none,` vor dem Gradienten, die nichts zeichnet.
+- Comic-Feud im Screenshot: „0“ des aktiven Teams ist lesbar.
+- **Ungeprüft:** WWDS und die Anleitungs-Demos per Messung (gleiches
+  Muster, nicht gemessen), Zuschauerfenster.
+
+**Offen.**
+- Scheibe 2 und folgende: die Materialsätze je Richtung, alphabetisch
+  A–S, je Richtung ein Signatur-Moment beim Aufdecken (reines CSS,
+  BAUPLAN 4.8).
+- Bei F sind Frage und Punkte auf dem Brett noch schlecht lesbar (dunkle
+  Akzentschrift auf Blau und Grün). Das erledigt der F-Satz.
+
+**Fallstricke.**
+- `styles.css` hat CRLF, ein Skript mit `split('\n')`-Mustern findet
+  nichts.
+- Ein mit dem Write-Werkzeug geschriebenes Skript enthält in Template-
+  Strings ebenfalls `\r`.
+- Das Testen braucht `#host-gate` ausgeblendet und `window.open=()=>null`,
+  sonst öffnen GM- und Board-Fenster.
+
+## 2026-10-09 — Regie, Tresor, Outrun als Film-Intros (`86ae5ab`)
+
+**Gemacht.** Die Arbeit an drei weiteren Film-Intros lag ungespeichert
+im Arbeitsverzeichnis (Dateien zuletzt 20:07 geändert, Herkunft: eine
+frühere Session, nicht diese). David: „Zuerst prüfen, dann committen“.
+- `#intro-variant` um `regie`, `tresor` und `outrun` erweitert,
+  registriert in `INTRO_FILME`. Die Zeitpläne stehen in `INTRO_RG`,
+  `INTRO_TR` und `INTRO_OR`, der Ton in `introRegieTon`,
+  `introTresorTon` und `introOutrunTon`.
+- Der Logo-Höhepunkt aus Primetime ist in Bausteine zerlegt:
+  `introFilmLogo` (Optionen `spiegel` und `preisWort`), `introFunken`,
+  `introPyro`, `introKonfetti` und `introGlitzer`. Die vier Intros außer
+  Arcade nutzen sie, deshalb betrifft die Änderung auch Primetime.
+- Das Textfeld `vorab` gilt jetzt für alle Intros außer Arcade, bisher
+  nur für Primetime.
+- Für Outrun kommt die Schrift Mr Dafoe dazu, in `index.html`, in
+  `#font-warm` und in `injectBoardStyles` (`js/feud.js`).
+
+**Warum so.** Alles ist reines CSS wie bei Arcade und Primetime
+(BAUPLAN 4.8, siehe Eintrag zu `d090a50`). Die Entwurfsentscheidungen
+hat die frühere Session getroffen. Hier wurden sie nur geprüft, nicht
+neu begründet.
+
+**Geprüft.**
+- `node check.js` und `node check.js --types` ergeben „alles in
+  Ordnung“: 14 Dateien, 428 Handler, 277 IDs.
+- Im Browser (localhost:3000) habe ich alle drei per
+  `document.getAnimations()` angehalten und auf 0,5 / 2 / 3,5 / 5 / 6,5
+  / 8 / 9,5 / 11 / 13 s gespult. Geprüft wurde, welche `.ifw` sichtbar
+  ist. Die Abfolge passt zu den Zeitplänen: Titelkarte ab etwa 9,5 s,
+  Klick-Hinweis bei 13 s.
+- **Ungeprüft:** das Bild selbst. Das Browser-Pane war ausgeblendet, die
+  Screenshots liefen in Zeitüberschreitung. Ebenfalls ungeprüft sind der
+  Ton und das Zuschauerfenster. Arcade und Primetime wurden nach dem
+  Umbau auf gemeinsame Bausteine nicht erneut angesehen.
+
+**Offen.**
+- Bei Outrun ist zwischen 0,5 und 2 s keine `.ifw` sichtbar, bei
+  Tresor bei 8 s ebenfalls nicht. Möglicherweise ist das gewollt
+  (Linie und Sonne stehen außerhalb der Einstellungen, oder es ist der
+  Flug der Tür). Am Bild nachsehen.
+- Als Nächstes hat David ein großes Design-Upgrade angekündigt: „Designs
+  so professionell wie die Intros, we going big“, GSAP nicht zwingend.
+  Was das Publikum sieht, bleibt CSS (BAUPLAN 4.8). Vor dem Start kurze
+  Pause auf Davids Wunsch.
+
+**Fallstricke.** Ein ausgeblendetes Pane liefert keine Screenshots. Die
+Zustände per `getAnimations()` auszulesen, funktioniert trotzdem.
+
+## 2026-10-09 — Arcade und Primetime als Show-Intros (`d090a50`)
+
+**Gemacht.** David: „bau arcade in die show ein … zum Auswählen wie die
+anderen auch“ und „mach noch eins, wo du wirklich maximal flexxt“.
+- Intro-Auswahl (`#intro-variant`) um `arcade` und `primetime` ergänzt;
+  `runIntroThen` ruft dafür `playFilmIntro(key)` in `js/intro.js`.
+- Arcade: das Labor-Intro (`tools/intros/arcade/`) von GSAP auf reines
+  CSS übersetzt, gleiche Zeiten (Röhre .1, INSERT COIN .9, Titel 3.0,
+  Spielerwahl 6.0, VS 7.2, READY 8.8, GO 9.8, Titelbild 10.6).
+- Primetime (neu): Samstagabend-Opener, Zeitplan in `INTRO_PT`, Takt
+  0,55 s. Kaltstart mit Spot → LED-Wand (20×11 Felder, Welle) mit der
+  Schlagzeile in bis zu 3 Schlägen (Teile mit · getrennt) → 3 Makro-
+  Beauty-Shots am Chrom-Logo → Team-Split mit Blitz und VS → Lichttunnel
+  (16 Ringe in CSS-3D) → Logo: Buchstaben fliegen einzeln aus dem Raum an,
+  3 Druckwellen, 90 Funken, 52 Pyro-Teilchen, 70 Konfetti, Glitzer,
+  Flare, Spiegelboden, Preis-Plakette; danach Orbit im Kreis, bis geklickt.
+- Texte (`introTexte`, localStorage `introTexte`) gelten für beide; der
+  Intro-Editor zeigt bei Arcade/Primetime 8 Textfelder statt der Stufen
+  (`renderIntroTexteEditor`), „+ Stufe“ ist dann aus. Export schreibt
+  `intro-texte.json`, Import erkennt beide Formen an der Struktur.
+- Ton: `INTRO_TON` (gekürzter Lab.Ton) mit eigenem AudioContext, nur
+  wenn `SFX.enabled`; beim Wegklicken weich aus.
+- Schriften Press Start 2P und Unbounded in `index.html` und
+  `injectBoardStyles`; `#font-warm` im Body setzt sie unsichtbar, damit
+  Google Fonts die Dateien vor dem Intro lädt – auch im Zuschauerfenster,
+  weil der Body gespiegelt wird.
+- CLAUDE.md: Zeile zu `intro.js` ergänzt (von David freigegeben).
+
+**Warum so.** Das Zuschauerfenster führt keinen Code aus (BAUPLAN 4.8),
+deshalb keine GSAP-Zeitleiste. Stattdessen steht alles beim Start im
+DOM, jede Einstellung in einem `.ifw` mit `--a`/`--b`: zwei
+1-ms-Animationen `ifAn` (Füllung both) und `ifAus` (nur forwards, steht
+hinten in der Liste und gewinnt ab `--b`). `visibility` mit, damit
+ausgeblendete Einstellungen nicht zeichnen. Mehrere Wackler auf einem
+Element gehen als Liste derselben Keyframes mit verschiedenen
+Verzögerungen ohne Füllung. Chromschrift ist pro Buchstabe zweimal
+gesetzt (`.ex` Tiefe per text-shadow-Stapel in em, `.fc` Verlauf per
+background-clip:text), weil bei transparenter Textfarbe der Schatten über
+der Füllung läge. Glanz: zweite Animation ohne Rückwärtsfüllung, sonst
+überschreibt sie die erste vor ihrem Start. Verworfen: das Labor-Intro
+im Zuschauerfenster selbst abspielen lassen (bräuchte Code im
+Mainscreen, Gleichlauf unsicher); eigene Datei `js/intro-film.js` (wäre
+ein Struktur-Umbau mit neuem Script-Tag gewesen).
+
+**Geprüft.**
+- `node check.js` und `node check.js --types`: „alles in Ordnung“. Die
+  Typprüfung meldete zuerst 2× TS2502 bei `@param {typeof INTRO_TON}`,
+  gelöst mit `@typedef {typeof INTRO_TON} IntroTon`.
+- Im Browser (localhost, 480×270) alle Einstellungen per Zeitsprung
+  angesehen: alle Animationen nach dem Start einsammeln, pausieren,
+  `currentTime` setzen. Gefunden und behoben: VS verdeckte die
+  Teamnamen (jetzt diagonal versetzt), Spiegelung klebte am Preis, die
+  schräge Wischblende ragte am linken Rand ins Bild (Weg auf −210/+135vw).
+- Zuschauerfenster simuliert: `mainscreen/` im iframe, `boardWin` darauf,
+  `boardPageReady()`. Dort 821 Animationen wie im Hauptfenster, `ptSchub`
+  in beiden bei 1900 ms, 4 Schriftdateien geladen, nach Klick ist das
+  Overlay in beiden weg.
+- Lange Texte („Partykellergameshow“, „Die unglaublichen Kellerkinder“)
+  bleiben in 480 px Breite im Bild. Editor: Titel wechselt, 8 Felder,
+  „+ Stufe“ aus; beim eigenen Intro wieder an. Keller-Intro läuft weiter.
+- Ton: 216 (Primetime) bzw. 126 (Arcade) Klangquellen ohne Fehler
+  eingeplant.
+
+**Offen / ungeprüft.**
+- Ton nicht angehört.
+- Echtes Popup-Fenster am Beamer und Leistung des Show-Rechners: Primetime
+  hat 821 Animationen, viele davon mit box-shadow und mix-blend-mode. Ruckelt
+  es, zuerst Funken/Konfetti-Anzahl und die Moving Heads (mix-blend-mode)
+  reduzieren.
+- `prefers-reduced-motion` (zeigt nur das Schlussbild) nicht ausprobiert.
+- Kein Tempo-Regler; die Zeiten stehen fest in `INTRO_PT` bzw. im Block
+  `#kga` in `styles.css`.
+- Primetime ist nicht im Intro-Labor; ansehen geht über die Show
+  (Editor → „▶ Vorschau“).
+
+**Fallstricke.**
+- `document.getAnimations()` liefert beendete Animationen ohne Füllung
+  nicht mehr. Zum Spulen die Liste direkt nach dem Start einsammeln.
+- Im ausgeblendeten Browser-Pane zeigt ein Screenshot oft den Stand vor
+  dem letzten Sprung, gelegentlich mit Bildresten: nach dem Sprung 1 s
+  warten, im Zweifel ein zweites Mal aufnehmen.
+- `index.html` hat CRLF; ein Einfügen mit `\n` ergab gemischte
+  Zeilenenden (`git ls-files --eol` zeigte `w/mixed`).
+
+## 2026-10-09 — Intro-Labor: Texte bearbeitbar, Jackpot, Boxring, Gürtel, F1-Wagen (`9e17780`)
+
+**Gemacht.** Davids Rückmeldung nach dem Ansehen am anderen PC:
+- Jackpot zeigte Zufallszeichen.
+- Der Ring sah nicht wie ein Boxring aus, der Gürtel nicht gut.
+- Die Autos bei Startampel sahen schlecht aus.
+- Die Intros sollen bearbeitbar sein wie die alten.
+- Lob: „mega, vor allem Arcade“.
+
+Umgesetzt:
+- **Text-Editor** (`Lab.editor()` in `lab.js`, Stile in `lab.css`):
+  - Felder: kleine Zeile, Titel in zwei Zeilen, Untertitel, Vorspann,
+    Uhrzeit, zwei Teams und vier Einblendungen
+  - Gespeichert in `localStorage` unter `introLabor.texte`, gemeinsam für
+    alle Intros. Dazu Export und Import als `intro-texte.json` und eine
+    Schaltfläche „Standard“.
+  - Knopf „✏ Texte“ in jeder Bedienleiste und auf der Übersicht.
+    Ereignishorizont nutzt jetzt auch `Lab.SHOW` und lädt nach dem
+    Übernehmen neu.
+  - Fest eingebaute Wörter kommen jetzt aus den Texten: „20:00“, „Rot“,
+    „Blau“, „KELLER GAMES“, „Grundriss: Keller“, die Trailer-Fetzen.
+  - `Lab.titelZeilen()` ersetzt überall `titel.split(' ')`. `Lab.kurz()`
+    liefert das letzte Wort eines Teamnamens.
+- **Jackpot:** Die Walzen drehen jetzt in `yPercent` statt in Pixeln.
+  - Vor dem Start zeigen alle Walzen einen Stern.
+  - Hinter dem Zielbuchstaben liegt ein Polsterzeichen für das
+    Überschwingen.
+  - Die Walzenbreite richtet sich nach der Buchstabenzahl
+    (`--n`, `calc(78vw / var(--n))`).
+- **Ringansage:** `ringSvg()` und `guertelSvg()` als SVG.
+  - Ring in Zentralperspektive: vier Pfosten, Polster vorn links rot und
+    vorn rechts blau, drei Seile je Seite mit Schatten und Glanz, Schürze
+    mit dem Titel.
+  - Gürtel: Lederriemen mit Naht, Seitenplatten in Team-Farben,
+    Zackenrand, Kranz aus 14 Steinen, Krone, gravierte Schrift (Größe
+    passt sich der Länge an), Glanzbalken, Funkeln.
+- **Startampel:** `wagen()` zeichnet einen Formel-1-Wagen von hinten als
+  SVG: Reifen mit Profil, Querlenker, Motorabdeckung mit Finne, Diffusor,
+  Heckflügel mit Teamnamen, Regenlicht, das beim Start flackert.
+- **Fallblatt:** Die Tafel wächst mit dem Titel, mindestens 14 Felder.
+- **Partikelsturm:** Die Wortformen werden neu berechnet, sobald sich die
+  Texte ändern. Die alten Puffer werden freigegeben.
+
+**Warum so.**
+- *Ursache bei Jackpot:* Vermutet, nicht nachgestellt. Die Pixelstrecke
+  wurde beim Start gemessen, nach einer Größenänderung stimmt sie nicht
+  mehr. Messung danach: bei 1280×720 gestartet und auf 1700×900
+  vergrößert, alle 14 Fenster zeigen „KELLERGAMESHOW“.
+- *Gemeinsamer Text-Speicher statt einem pro Intro:* David will „seine“
+  Show-Texte einmal pflegen. Intro-eigene Wörter (WUMMS, In einer Welt …)
+  bleiben fest.
+- *Nicht gebaut:* Tempo und Länge einstellbar wie „Sekunden je Stufe“ im
+  alten Editor. Der Ton ist zu festen Zeiten eingeplant, ein Tempo-Regler
+  hieße, ihn in jedem Intro mitzuskalieren.
+
+**Geprüft.**
+- Alle 18 per iframe gestartet: keine Fehler, Titel „Keller Gameshow“
+  nach dem Zurücksetzen der Texte.
+- Editor: Titel „Partykeller“, Team „Die Füchse“, „50 €“ übernommen.
+  Arcade zeigte danach PARTYKELLER, DIE FÜCHSE und „HI-SCORE 000050 €“.
+  Jackpot rastete auf PARTYKELLERGAMESHOW ein (Automat 860 von 1024 px
+  breit). Fallblatt zeigte alle vier Zeilen vollständig (Tafel 99–925 px).
+- Ring, Gürtel und Wagen per Screenshot angesehen.
+- `node check.js`: „alles in Ordnung“ (prüft `tools/` nicht).
+
+**Ungeprüft.**
+- Den Jackpot-Fehler selbst habe ich nicht nachgestellt, die Ursache ist
+  vermutet.
+- Sehr lange Texte in den übrigen Intros: Der Editor warnt, dass sie über
+  den Rand laufen können. Angepasst sind nur Jackpot und Fallblatt.
+- Ton weiterhin nicht angehört.
+
+**Offen.** Favoriten für den Weg in die Show (Zuschauerfenster).
+
+**Fallstricke.**
+- Screenshots im Browser-Pane bei fester Größe (1280×720) und
+  Pixeldichte 1,25: Die Seite erscheint verkleinert in der Ecke, bei
+  jedem Intro gleich. Mit `preset: desktop` ist es richtig.
+- Bash-Heredocs mit vielen `'`, `"` und `${}` scheitern an der
+  Werkzeug-Übergabe. Längere Umbau-Skripte als Datei in den Scratchpad
+  schreiben und mit `node` ausführen.
+
+---
+
+## 2026-10-09 — CLAUDE.md: Intro-Labor eingetragen, gsap-demo gelöscht (`47385fd`)
+
+**Gemacht.** Auf Davids „lösch gsap-demo und trag es in die CLAUDE.md ein“.
+- `tools/gsap-demo/` gelöscht. Es war nie committet, nur lokal, und ist
+  durch das Intro-Labor überholt.
+- `CLAUDE.md`, Struktur-Liste:
+  - `mainscreen/`, `tools/intros/` und `tools/reactbits/` ergänzt
+  - `intro.js` auf den Stand nach `ad0b630` gebracht: eine Engine, drei
+    Bühnen, Vorlagen
+- Neuer Abschnitt „Intro-Labor“: was es ist, `lab.js`, warum die Intros
+  nicht ins Zuschauerfenster kommen, `lab.zeige()`, die Dramaturgie.
+- `vendor/`-Abschnitt: „Neue Animationen vorzugsweise mit GSAP“
+  widersprach BAUPLAN 4.8. Jetzt gilt: Die Leinwand wird mit CSS animiert,
+  GSAP nur für den Host und das Labor.
+
+**Warum so.** Beide Stellen waren seit `ad0b630` als offen vermerkt. Die
+GSAP-Regel hätte die nächste Session in genau den Fehler geschickt, den
+BAUPLAN 4.8 beschreibt. `mainscreen/` stand nicht in der Liste, obwohl alle
+Animationsregeln an ihm hängen.
+
+**Geprüft.** `node check.js`: „alles in Ordnung“. `ls tools` zeigt nur noch
+`intros` und `reactbits`. Der Diff der `CLAUDE.md` hat 36 Zeilen mehr und
+4 weniger.
+
+**Offen.** Favoriten unter den 18 Intros stehen aus (siehe Eintrag
+darunter).
+
+**Fallstricke.** Keine.
+
+---
+
+## 2026-10-09 — Intro-Labor: 18 Intro-Prototypen (`f58ac59`)
+
+**Gemacht.** Unter `tools/intros/` liegen 18 eigenständige Intro-Seiten.
+Sie sind **nicht** in die Show eingebunden, eine Übersicht steht in
+`tools/intros/index.html`. Entstanden in drei Schritten auf Davids Wunsch:
+„zeig wie es mit GSAP aussehen würde“, „komplett neues, kein Limit,
+Interstellar-Qualität“, „5 kernverschiedene“, dann „sehen schön aus, haben
+aber zu wenig mit einem Intro zu tun – mach 12 mehr“.
+- *Erste Runde (Stimmungen):*
+  - Ereignishorizont: WebGL-Shader, Schwarzes Loch mit Lichtkrümmung,
+    Sprung durchs Sternenfeld, eigener Ton, 40 s
+  - Lichtshow: Canvas, Moving Heads im Dunst, LED-Wand, Pyro, 32 s
+  - Schlagzeile: Typo-Plakat mit Archivo und variabler Breite, Schnitte auf
+    120 BPM, 21 s
+  - Partikelsturm: 36.000 WebGL-Punkte, alle Formen vorberechnet, spulbar,
+    32 s
+  - Agentenakte: SVG-Grundriss, Laser, Akten, Glitch, 30 s
+  - Bastelbogen: Stop-Motion mit `gsap.ticker.fps(12)`, Papier, 26 s
+- *Zweite Runde (Anlauf, dann Logo-Moment mit Schlag, dann Titelkarte):*
+  Countdown 16 s, Vorhang auf 16 s, Jackpot 16 s, Senderlogo (CSS-3D mit
+  18 Schichten) 14 s, Arcade 17 s, Ringansage 19 s, Feuerwerk
+  (Canvas-Simulation) 19 s, Fallblatt 13 s, Comic 16 s, Trailer 21 s,
+  70er-Show 20 s, Startampel 17 s.
+- *`lab.js` / `lab.css`* (gemeinsam):
+  - `Lab.SHOW` mit allen Texten, `Lab.zeichen`
+  - `Lab.starte`: Startbildschirm, Bedienleiste mit Neustart, Pause, Ton
+    und Spulen. Lädt vor dem Start alle Schriften.
+  - `Lab.Ton`: WebAudio-Baukasten, alles synthetisch: Kick, Snare, Hi-Hat,
+    Aufprall, Anstieg, Saite (Karplus-Strong), Fläche, Bläser-Stoß, Ping,
+    Wirbel, Jubel, Chiptune, Tusch, Motor, Pfiff
+  - `Lab.explosion`: Teilchen an der Zeitleiste, deshalb spulbar
+  - `window.lab.zeige(t)`: baut ohne Ton auf und springt an Stelle `t`,
+    gedacht für Tests
+
+**Warum so.**
+- *Eigene Seiten statt Show-Code:* Erst die Richtung finden, dann einbauen.
+  Ins Zuschauerfenster kommt davon so nichts (BAUPLAN 4.8: es spiegelt nur
+  den DOM und führt kein GSAP und keinen Canvas aus).
+- *Dieselbe Dramaturgie in Runde zwei:* Davids Kritik war, dass Runde eins
+  zu viel erklärt (Grundriss, Akten, Klebezettel) und zu wenig „Intro“ ist.
+- *Ton synthetisch:* Keine Dateien, kein Download, keine Lizenzfrage.
+- *Verworfen:* Ein Generator für alle Intros. Jedes hat bewusst eigenen
+  Code, weil die Ideen grundverschieden sind. Gemeinsam ist nur das Gerüst
+  in `lab.js`.
+
+**Geprüft.**
+- Alle 18 Seiten nacheinander per iframe gestartet (Startknopf geklickt,
+  2,2 s laufen lassen): keine Fehler, keine abgelehnten Promises. Ton-Knoten
+  je Intro zwischen 49 (Senderlogo) und 673 (Feuerwerk).
+- Jedes Intro an mindestens zwei Stellen mit `lab.zeige(t)` angehalten und
+  per Screenshot angesehen. Feuerwerk ist eine Simulation, deshalb von Hand
+  mit 30 Schritten pro Sekunde vorgespult.
+- `node check.js`: „alles in Ordnung“. Es prüft `tools/` aber gar nicht,
+  nur `js/`.
+
+**Ungeprüft.**
+- **Der Ton ist nicht angehört.** Er startet ohne Fehler, mehr nicht.
+- **Leistung auf dem Show-Rechner.** Am teuersten dürften Ereignishorizont
+  (Shader mit 100 Schritten je Pixel, regelt selbst auf 55 % Auflösung
+  herunter), Lichtshow und Partikelsturm sein.
+- Ohne Netz: Alle Schriften kommen von Google Fonts.
+- Schmale Fenster und Handy: nicht angesehen.
+
+**Offen.**
+- David soll Favoriten wählen. Für die gewählten muss geklärt werden, wie
+  sie ins Zuschauerfenster kommen: Entweder spielt das Popout sie selbst ab,
+  angestoßen über eine Nachricht vom Hauptfenster (nötig für GSAP, Canvas
+  und WebGL), oder die DOM-Intros werden auf reines CSS umgeschrieben.
+  Leichteste Kandidaten für CSS: Schlagzeile, Vorhang auf, Fallblatt, 70er.
+- `tools/gsap-demo/` (Keller-Intro mit GSAP) liegt nur lokal, **nicht
+  committet** und überholt. Löschen nach Rückfrage.
+- `CLAUDE.md` nennt `tools/intros/` in der Struktur-Liste nicht. Dazu die
+  zwei veralteten Stellen aus dem Eintrag zu `ad0b630` (GSAP-Regel, „zwei
+  Bühnen“). Alles braucht Davids OK.
+- Die Intros sind jetzt öffentlich unter `iryogameshows.github.io/tools/intros/`,
+  weil der Deploy das ganze Repo hochlädt.
+
+**Kreative Ansätze, nicht gebaut.** Senderwechsel (Testbild, Rauschen,
+Kanal landet auf „Keller TV“), Zaubertrick (Rauchwolke, Zylinder),
+Neon-Motelschild, Spiegelung der Neonschrift im Gitterboden.
+
+**Fallstricke.**
+- **Ausgeblendetes Browser-Pane liefert keine Animationsbilder**
+  (`requestAnimationFrame` steht). GSAP läuft dann nicht weiter, Zeitleisten
+  bleiben bei 0. Zum Prüfen mit `lab.zeige(t)` an feste Stellen springen
+  statt in Echtzeit abspielen. Ein Screenshot löst einzelne Bilder aus.
+- **`fromTo` später in der Zeitleiste setzt seinen Startwert sofort**
+  (`immediateRender`). Das ergab einen weißen Countdown und eine zu früh
+  sichtbare Spiegelung. Bei `fromTo`, das nicht am Anfang steht, immer
+  `immediateRender: false`.
+- `pause(t)` unterdrückt `onUpdate` (Zähler blieben stehen), deshalb
+  `seek(t, false)`.
+- GSAP rechnet `letterSpacing` in `em` falsch um (1 px statt 14 px).
+  Stattdessen eine CSS-Variable `--ls` mit `calc(var(--ls) * 1em)` tweenen.
+- `non-scaling-stroke`: Strichlängen in Bildschirmpixeln, `getTotalLength`
+  in SVG-Einheiten. Umrechnen, sonst zeichnet sich der Grundriss nur halb.
+- `destination-in` zweimal hintereinander löscht alles außerhalb des
+  zweiten Bilds. Die Dunstmaske muss ein einziges Bild sein.
+- Beim Vorspulen der Feuerwerk-Simulation wurde `dt` negativ, Funken flogen
+  ins Unendliche. `dt` ist jetzt nach unten auf 0 begrenzt.
+- Schriften lädt der Browser erst bei der ersten Sichtbarkeit. Deshalb lädt
+  `Lab.starte` vorher alle über `document.fonts`.
+- Node unter Git-Bash sieht `/tmp` nicht. Pfade mit `cygpath -w`
+  übersetzen oder in den Scratchpad schreiben.
+
+---
+
+## 2026-10-09 — Intros: Profi-Schicht (`fc31f21`)
+
+**Gemacht.** Auf Davids „Ich will dass es krass aussieht. Richtig hochwertig
+wie von Profis“. Aufbauend auf `ad0b630`, gleiche Engine.
+- **Eigene Schriften.** Bungee für Keller und Geburtstag, Tilt Neon für Neon.
+  Vorher erbten die Intros `--font-logo` vom Theme, im Test war das „Press
+  Start 2P“. Geladen über den Google-Fonts-Link in `index.html` und über
+  `injectBoardStyles()` (`js/feud.js`) für das Zuschauerfenster.
+- **Metallschrift.** Jeder Buchstabe hat einen Chrom-Verlauf mit harter Kante
+  bei 50 % als Horizont: Gold, Pink, und Grün für den Geldbetrag. Er läuft
+  über `background-clip:text`. Die Tiefe kommt aus 4 gestapelten
+  `drop-shadow` plus Schlagschatten plus Glühen an der ganzen Zeile. Ein
+  Glanzstreifen läuft einmal durch (`kgShine`), auf der letzten Stufe alle
+  4 s (`kgShineLoop`).
+- **Raum.** Strahlenkranz (`.rays`, `repeating-conic-gradient`, 80 s je
+  Umdrehung, Maske), Dunst (`.haze`), die Wand zieht über 40 s auf
+  (`kgPush`), Vignette (`.vig`), Filmkorn (`.grain`, SVG-Rauschen, 7 %,
+  `overlay`).
+- **Ereignisse je Stufe.** Eine anamorphe Flare (`.flare`) und eine
+  Konfetti-Explosion (`.cf`, 22 Stück, Richtung in JS gewürfelt). Das
+  Konfetti kommt auf der Geburtstagsbühne bei jeder Stufe, sonst nur beim
+  Geldbetrag und auf der letzten Stufe.
+- **Goldstaub** (`introDust`): 26 kleine Körner hinten und 5 große, weiche
+  vorn. Nur Keller und Geburtstag.
+- **Bauchbinde.** Die kleine Zeile bekommt zwei Linien, die nach außen
+  wachsen.
+- **Neon.** Beim Zünden blitzen kurz Farbsäume in Rot und Cyan auf
+  (`knIgnite`).
+- **Reduzierte Bewegung.** Strahlen, Dunst, Korn und Wand stehen still,
+  Staub, Konfetti und Flare sind aus, die Linien stehen voll da.
+
+**Warum so.** Was eine Fernseh-Intro von einer Folie unterscheidet, sind
+Schichten: Material in der Schrift, Licht im Raum, ein Ereignis beim
+Wechsel, ein Bildfilter über allem. Alles bleibt CSS (BAUPLAN 4.8).
+Animiert werden nur `transform` und `opacity`. Einzige Ausnahme ist der
+Glanz (`background-position`), und der läuft einmal je Stufe.
+- *`text-shadow` verworfen* für die Metallschrift: Bei durchsichtiger Füllung
+  läge der Schatten über dem Verlauf. Deshalb `drop-shadow` am `<p>`.
+- *`filter:blur` verworfen* für den Staub vorn, bei 31 bewegten Teilchen zu
+  teuer. Die Unschärfe kommt aus dem weichen Verlauf.
+- *Glühbirnen-Punkte in den Buchstaben* angedacht und verworfen, das kippt
+  ins Kitschige und ist aus 3 m schlechter lesbar.
+- *Spiegelung im Neon-Boden* (`-webkit-box-reflect`) angedacht. Sie hätte mit
+  der kleinen Zeile darunter kollidiert, deshalb nicht gebaut.
+
+**Geprüft.**
+- `node check.js --types`: alles in Ordnung (1129 Klammernpaare, 14 Dateien
+  typgeprüft).
+- Browser-Pane bei 1280×720: `document.fonts.check` ergibt für Bungee und
+  Tilt Neon `true`. Das Keller-Intro hat 31 Staubteilchen, 22
+  Konfettistücke, 7 Flares und den Strahlenkranz.
+- Screenshots angesehen:
+  - Keller „GAMESHOW / NUMMER 1“: Gold- und Pink-Chrom mit Tiefe, Bauchbinde.
+  - Keller „30 €“ mit Konfetti und Flare.
+  - Geburtstag „HAPPY BIRTHDAY / AJDIN!“ mit Torte und Konfetti.
+  - Neon „GAMESHOW / NUMMER 1“.
+- Die Rahmenbirnen liegen in der Bühne (rechteste bei 1257 px von 1265 px).
+
+**Ungeprüft.**
+- **Leistung.** Das Browser-Pane drosselt selbst eine leere Seite auf 1 fps.
+  Mit laufendem Intro waren es 29 fps, schlimmster Frame 50 ms. Das ist kein
+  Maß für den Beamer-Rechner. Zwei Fenster zeichnen gleichzeitig. Wenn es
+  ruckelt, zuerst die Ebenen abschalten, in dieser Reihenfolge: `.grain`
+  (ganzflächig mit `mix-blend-mode`), dann die `drop-shadow`-Kette, dann
+  `.rays`.
+- Das Zuschauerfenster selbst, wie im Eintrag darunter, und ohne Netz: Die
+  Schriften kommen von Google Fonts. Ohne Netz fällt die Bühne auf
+  `--font-logo` zurück und ist dann wieder Theme-Schrift.
+- Reduzierte Bewegung nicht emuliert.
+
+**Offen.**
+- Die Schriften liegen bei Google Fonts. Für einen Abend ohne Netz müssten
+  sie als `woff2` nach `vendor/fonts/` (wie GSAP). Das braucht einen
+  Download, also Davids OK.
+- Die zwei Stellen in `CLAUDE.md` aus dem Eintrag darunter stehen weiter aus.
+
+**Fallstricke.**
+- Die Screenshots im Pane hinken wieder hinterher. Ein Bild zeigte noch die
+  vorige Bühne. Zweimal aufnehmen.
+- Ein Ersetzen per `node -e` mit Template-Strings scheiterte an `${...}` in
+  der Bash („bad substitution“). Für solche Stellen das Edit-Werkzeug
+  nehmen.
+
+---
+
+## 2026-10-09 — Intros: eine Engine für alle, Leuchtbuchstaben (`ad0b630`)
+
+**Gemacht.** Auf Davids „rework mal die Intros mit deinen neuen Tools“, Umfang
+„Engine + Optik“ von ihm gewählt.
+- `js/intro.js`: neue `playIntro(daten, weiter)`. Keller, Keller Tag 2 und
+  Geburtstag sind jetzt Vorlagen (`INTRO_PRESETS`) im Datenformat des eigenen
+  Intros. `showGameshowIntro`, `showGameshowIntroTag2`, `showBirthdayIntro`
+  und `runKgIntro` liegen jetzt hier. Die alten Fassungen sind aus
+  `js/feud.js` (150 Zeilen) und `js/jeopardy.js` (30 Zeilen) entfernt.
+  `getBdayName`/`saveBdayName` bleiben in `feud.js`.
+- Drei Bühnen: `buehne` (#kg), neu `geburtstag` (#kgb, vorher nur fest
+  verdrahtet) und `neon` (#kgn). `#kg2` ist entfallen, Tag 2 läuft auf #kg
+  mit 3,3 s Takt.
+- Neues Feld je Stufe, „Extra über dem Text“: Teams, Torte, Tag 1 + Tag 2,
+  Geldbetrag. Neues Feld „Vorlage laden“ im Kopf-Kasten des Editors (fragt
+  nach, wenn Stufen mit Inhalt da sind).
+- Optik: Die großen Zeilen stehen erst als dunkle Leuchtreklame da und gehen
+  dann Buchstabe für Buchstabe an. Keller und Geburtstag flackern wie
+  Glühbirnen (`kgBulbOn`), Neon zündet wie Röhren (`knIgnite`/`knIgnite2`
+  im Wechsel). Dazu ein Scheinwerfer-Schlag hinter jeder Stufe (`kgHit`,
+  nicht auf Neon) und der Lämpchenrahmen als Lauflicht in drei Phasen
+  (`kgChase`) statt Gleichtakt-Blinken. `?` wackelt nach dem Angehen.
+- Schriftgrößen in `min(vh, vw)` statt fester px. Die Media-Queries für
+  schmale Fenster sind damit entfallen.
+- `prefers-reduced-motion`: Stufen blenden weich mit echter Dauer, Buchstaben
+  stehen sofort.
+- Auswahlfelder im Intro-Editor sind jetzt 38 px hoch (vorher rund 20 px).
+- `BAUPLAN.md` hat eine neue Regel 4.8: Was das Publikum sieht, wird mit CSS
+  animiert.
+
+**Warum so.**
+- *GSAP verworfen*, obwohl es so angefragt war: `mainscreen/index.html`
+  lädt keine `js/`-Dateien (nur ein Inline-Script) und bekommt den DOM per
+  `MutationObserver` + `morphMirror` gespiegelt (`js/feud.js`, `startBoardMirror`).
+  GSAP schreibt je Frame `style`. Das hieße ein Spiegel-Durchlauf je Frame,
+  und im Hintergrund gedrosselt bliebe die Leinwand stehen. Die zweite
+  Möglichkeit, GSAP ins Popout zu laden und über einen eigenen Kanal
+  anzustoßen, wäre viel Aufwand ohne sichtbaren Gewinn für diesen Effekt.
+  David hat gefragt, was hochwertiger aussieht; Antwort: CSS.
+- *React Bits verworfen*: viele Komponenten sind Canvas/WebGL und kommen
+  durch den Spiegel gar nicht an.
+- Die Vorlagen sind Daten statt Markup, damit jede Zeile ohne Code-Änderung
+  im Editor austauschbar ist und die Bühne nur noch einmal existiert.
+- „Spend boldness in one place“ (frontend-design): Der eine auffällige Effekt
+  sind die Leuchtbuchstaben, alles andere bleibt wie es war.
+
+**Geprüft.**
+- `node check.js`: „alles in Ordnung“ (426 Handler, 273 IDs, 1064
+  Klammernpaare).
+- `node check.js --types`: 14 Dateien, keine Meldung.
+- Im Browser-Pane (localhost:3000, 1280×720), Funktionen direkt per JS
+  aufgerufen:
+  - Keller: 7 Stufen, 89 Buchstaben-Spans, 95 Rahmenbirnen. Die große Zeile
+    misst 77,76 px, `WILLKOMMEN!` ist 821 px breit bei 1265 px Bühne.
+    Screenshot: Buchstaben gehen nacheinander an.
+  - Geburtstag: 6 Ballons, 2 Torten, Kopfzeile mit Name.
+  - Neon: kein `.frame`, Buchstaben abwechselnd `knIgnite`/`knIgnite2`, 2 Pills.
+    Die Halte-Stufe steht mit `opacity 1`, Screenshot mit „30 €“.
+  - Editor: Vorlage „Tag 2“ geladen → 6 Stufen, 3,3 s, Extras
+    `['','','','teams','tage','geld']`, 6 Extra-Felder richtig vorbelegt,
+    gespeichert. Danach den vorigen Stand zurückgeschrieben.
+  - Auswahlfelder 38 px hoch.
+  - Konsole: keine Fehler.
+
+**Ungeprüft.**
+- Das echte Zuschauerfenster mit Spiegel. Kein Popout geöffnet, die Aussage
+  „läuft dort flüssig“ beruht auf dem Mechanismus, nicht auf einer Messung.
+  **Vor der nächsten Show einmal mit offenem Popout und Beamer-Vollbild
+  durchklicken.**
+- `prefers-reduced-motion` nicht emuliert, nur die Regeln geschrieben.
+- Der Weg über die Intro-Auswahl im Setup-Screen und einen echten Spielstart
+  (`runIntroThen`). Dessen Code ist unverändert, er ruft dieselben Namen auf.
+- Das Weiterklicken vom GM-Panel aus. `#kg-overlay` steht unverändert in
+  `GM_OVERLAY_SELECTOR`.
+
+**Offen.**
+- `CLAUDE.md` ist an zwei Stellen veraltet, und Änderungen dort brauchen
+  Davids OK:
+  - Zeile 131 sagt „Neue Animationen vorzugsweise mit GSAP“. Das widerspricht
+    der neuen Regel 4.8, gemeint ist jetzt: nur was der Host sieht.
+  - Zeile 177 sagt „Eigenes Intro (Editor, zwei Bühnen)“. Richtig ist: alle
+    Intros, drei Bühnen, Vorlagen.
+- Kleine Abweichungen von den alten festen Intros:
+  - „DIE GROSSE / KELLER / GAMESHOW“ hat jetzt nur zwei große Zeilen, „Die
+    Große“ steht als kleine Zeile darüber.
+  - „TAG 2“ in der Kopfzeile ist nicht mehr grün.
+  - „DER GESAMTSTAND“ und „EWIGE EHRE“ sind gold statt grün.
+  - Der Name im Geburtstags-Intro ist nicht mehr extra groß.
+  Wer das zurück will, braucht eine Farb- bzw. Größenwahl je Zeile.
+- Die Team-Figuren sind weiter Mint und Rosa, nicht die festen Team-Farben
+  aus BAUPLAN 4.4. Bewusst so gelassen und im Code begründet. Ob David das
+  so will, ist nicht gefragt.
+
+**Kreative Ansätze, nur angedacht.** Eine Farb- und Größenwahl je Zeile.
+Eine dritte Wahl der Bewegung je Bühne (z. B. Buchstaben fallen von oben ein
+statt anzugehen). Ein Trommelwirbel-Takt, bei dem der Scheinwerfer-Schlag
+genau mit dem letzten Buchstaben kommt.
+
+**Fallstricke.**
+- Im Browser-Pane liegt die Host-Sperre (`#host-gate`) über allem. Für die
+  Screenshots per JS ausgeblendet, kein Passwort eingegeben.
+- Screenshots im Pane hinken der Animation hinterher. Ein Bild zeigte das
+  Menü durch die Bühne, weil es mitten im 0,8-s-Einblenden entstand. Erst
+  per `getComputedStyle`/`getAnimations()` nachmessen, dann urteilen.
+- Port 3000 belegt der Server einer anderen Session (`preview_start` mit
+  `name` verweigert). Mit `url: http://localhost:3000` ging es, das ist
+  dasselbe Verzeichnis.
+- Dateien haben CRLF im Arbeitsverzeichnis. Beim Ersetzen per Node-Skript
+  `\r` mitbehandeln.
+
+---
+
+## 2026-10-09 — BAUPLAN: Überblick-Zahlen nachgezogen (`590e4c2`)
+
+**Gemacht.** `BAUPLAN.md` Abschnitt 0, Zeile 31: „13 Dateien in `js/`“ → 14,
+„Rund 16.000 Zeilen“ → „Rund 17.000“. Offener Punkt aus dem Eintrag darunter,
+auf Davids „ja korrigier das auch“.
+
+**Warum so.** Die Zeilenzahl stand im selben Satz und war ebenfalls veraltet.
+Wie die ursprünglichen 16.000 gezählt wurden, steht nirgends; gezählt habe ich
+`wc -l index.html styles.css js/*.js buzzer/index.html gamepad/index.html` =
+17.066 (mit `check.js` 17.315). „Sieben Shows“ und „drei Bildschirme“ stimmen
+und blieben.
+
+**Geprüft.** `ls js/*.js` = 14 Dateien. `node check.js`: „alles in Ordnung“.
+
+**Offen.** Nichts aus diesem Schritt.
+
+**Fallstricke.** Keine.
+
+---
+
+## 2026-10-09 — CLAUDE.md: Struktur-Liste nachgezogen (`8b89c56`)
+
+**Gemacht.** In der Struktur-Liste der `CLAUDE.md` fehlten `js/intro.js`
+(eigenes Intro mit Editor und zwei Bühnen, `INTRO_SLOTS` je Show) und
+`js/tp.js` (Trivial Pursuit). Beide eingetragen, in der Ladereihenfolge von
+`index.html` (`intro.js` direkt nach `core.js`, `tp.js` als letztes Spiel;
+`tournament.js`/`buzzer.js`/`roster.js` stehen in der Liste weiter gesammelt
+unten, wie vorher). Im Abschnitt Typprüfung „Alle elf Dateien" → „Alle 14".
+Anlass: David fragte nach den Bibliotheken, dabei fiel beim `grep` über
+`js/*.js` auf, dass dort 14 Dateien liegen. Auf Davids „ja trag sie nach“.
+
+**Warum so.** Nur die Liste und die Zahl, kein Umbau der Datei. Die „11
+`js/`-Module“ im Abschnitt „Warum das hier so scharf formuliert ist“ bleiben,
+das beschreibt den Stand vom 2026-09-16.
+
+**Geprüft.** `node check.js --types`: 14 js-Dateien typgeprüft, keine
+Meldung; 424 Handler-Aufrufe gegen 821 globale Namen; 273 feste IDs; „alles in
+Ordnung“. Damit stimmt die Aussage „Alle 14 … melden nichts“.
+
+**Offen.** `BAUPLAN.md` Zeile 31 nennt „13 Dateien in `js/`“ — veraltet
+(14), nicht angefasst. „Sieben Shows“ dort stimmt (Feud, Jeopardy, WWM, WWDS,
+DDF, PIH, TP). Nebenbefund dieser
+Session: `vendor/` (GSAP 3.15.0, ScrollTrigger, Lenis 1.3.26, React Bits mit
+nur ShinyText) ist weiterhin nirgends eingebunden (`grep` in `js/` und
+`index.html`: 0 Treffer). In `~/.claude/skills` 16 caveman-Ordner gezählt,
+der Eintrag `8d987e7` unten nennt 17 — nicht geklärt.
+
+**Deploy.** Push `6d093ad` → Pages-Action Lauf 37916413219: `completed`,
+`success` (abgefragt über die öffentliche GitHub-API per `curl`).
+
+**Fallstricke.** `gh` ist auf diesem Gerät nicht installiert (weder in Bash
+noch in PowerShell). Den Deploy-Lauf stattdessen über
+`curl https://api.github.com/repos/Iryogameshows/iryogameshows.github.io/actions/runs?head_sha=<hash>`
+prüfen, das Repo ist öffentlich und braucht kein Token.
+
+---
+
+## 2026-10-09 — Abschluss-Übersicht Show-Symbole je Design (Session-Ende, kein Code)
+
+David beendet die Session und fängt neu an. Stand geprüft:
+`git fetch` → `master` = `origin/master` = `d135aa6`; der Branch
+`claude/game-buzzer-fixes-90cyjz` ist vollständig in master (`785a09b`,
+`git log origin/master..origin/claude/game-buzzer-fixes-90cyjz` leer).
+
+**Aktueller Stand.** Show-Symbole (Menükarten, Logo-Kopf, Intros, Tutorial,
+Titel-Schild, Turnierplan) haben je Design-Richtung einen eigenen Zeichenstil
+per CSS-Variablen (`styles.css`, Block „Show-Symbole je Design-Richtung",
+Umsetzung `5ac4376` aus einer Parallel-Session). Dazu aus dieser Session: B
+Logo-Kopf repariert (`af2d91c`, Schatten im Filter `#ico-pixel-g` statt
+`drop-shadow()`-Kette), B ohne Mosaik in Tutorial/Titel-Schild/Turnierplan
+(`bde423d`). Live seit Deploy `9e11800` (siehe Eintrag darunter).
+
+**Stopppunkt.** Davids Beanstandung am Screenshot „Jeopardy-Brett in Richtung
+L" — „nummer 1 ist es falsche zugeschnitten, nummer 2 ist das nicht wies
+aussehen soll … Bei ALLEN. ALLE SPIELE" — ist **ungeklärt**. Ich habe „1/2" als
+die beiden B-Befunde gelesen und die behoben; am L-Bild selbst sah ich keinen
+Fehler (Symbol vollständig, dunkle Leuchtsäule, graue Nebensäulen). David hat
+auf die Rückfrage, was dort falsch ist, noch nicht geantwortet. **Nächste
+Session: zuerst nachfragen**, nicht raten.
+
+**Kreative Ansätze & Visionen.** Je Richtung ein eigener Zeichenstil statt
+bloßer Umfärbung: A Studio-Gold mit Glühbirnen-Schein · B Pixel-Mosaik +
+harter Versatzschatten · C/F Sticker/Comic mit dicker Kontur · D/R zweifarbig ·
+E 70er-Doppelschatten · H Bauhaus-Dreiklang · I Strichzeichnung · J Kreide
+(`#ico-chalk`) · K Neon · L Druckerschwärze · M Aurora-Verlauf ·
+N Papierschnitt · O Phosphor-Scanlinien · P Memphis mehrfarbig · Q Riso
+(`multiply`) · S Art déco mit Metallverlauf. **Verworfen:** meine eigene
+Parallel-Umsetzung (`4abba0a`/`d74ae24`, durch master ersetzt), `crispEdges`
+statt Mosaik im B-Logo, `feDropShadow stdDeviation="0"` (Symbol verschwand).
+**Nie beantwortet:** ob statt Stil je Richtung ein eigenes Piktogramm je Show
+und Richtung gewünscht ist (18 × 9 Zeichnungen).
+
+**Nächste Schritte.**
+1. David fragen, was am L-Jeopardy-Screenshot falsch ist (abgeschnitten?
+   Größe? Farben? Form der Säulen?) — evtl. Vergleichsbild erbitten. Danach
+   für alle Shows beheben.
+2. Ungeprüftes im echten Ablauf ansehen: Titel-Schild (`showClickOverlay`),
+   Tutorials `pih`/`tp`/`wwds`, Intros aller Shows, Mainscreen-Spiegel,
+   Menü-Hover — in mehreren Richtungen, nicht nur B.
+3. Piktogramm-Frage klären.
+4. Alten Branch `claude/game-buzzer-fixes-90cyjz` auf origin: löschen nur auf
+   Davids Wort (inhaltlich in master).
+
+**Fallstricke.** Lokal startet `npx http-server` (launch.json „Gameshows")
+erst nach einigen Sekunden — vor `navigate` mit `curl` warten. Das Host-Gate
+erscheint nach jedem frischen Laden neu; David hat das Entsperren mit dem
+Passwort aus `js/jeopardy-ui.js` für die lokale Prüfung erlaubt. Screenshots
+der Browser-Pane direkt nach `applyTheme`/Overlay zeigen Zwischenzustände —
+0,9–1,5 s warten.
+
+---
+
+## 2026-10-09 — Branch `game-buzzer-fixes` nach master gemerged (`785a09b`)
+
+**Anlass.** David wollte wissen, warum „löschen“ im Zusammenhang mit dem alten
+Branch auftauchte (ein Vorschlag der App-Oberfläche, nicht von mir). Ich habe
+nichts gelöscht, den Branch gemessen: 17 Commits nicht in master, davon 16
+inhaltlich (`git cherry`). Danach auf Davids Anweisung gemergt und gepusht.
+
+**Gemacht.** Neuer Branch `claude/merge-symbole` von `origin/master`
+(`19c7f38`), `claude/game-buzzer-fixes-90cyjz` hineingemergt (`--no-ff`),
+Merge-Commit `785a09b`. Inhalt des Branches: Design B, Show-Symbole
+(`index.html`: Filter `ico-pixel-g` mit Schatten im Filter; `styles.css`: in
+Tutorial, Titel-Schild und Turnierplan nur Schatten + `crispEdges`, kein
+Mosaik) und der Abschnitt „Abschluss-Übersicht“ in `CLAUDE.md`.
+
+**Konflikt.** Genau einer, `HANDOFF.md` (beide Seiten hatten oben Einträge
+ergänzt). Aufgelöst: Einträge von master zuerst, dann die des Branches,
+beide vollständig. Die Datei hat CRLF; das Auflöse-Skript hat das erhalten
+(erster Versuch mit `\n`-Vergleich scheiterte an `=======\r`, Datei blieb
+unverändert). `CLAUDE.md`, `index.html`, `styles.css` ließen sich ohne Konflikt
+verschmelzen (master hatte `index.html`/`styles.css` seit dem Merge-Base
+`5e339a9` nicht angefasst).
+
+**Geprüft.** `node check.js`: „alles in Ordnung“ (nach dem Merge). Im Browser,
+Design B auf dem gemergten Stand: Menükarten behalten den Mosaik-Filter
+(`url(#ico-pixel) drop-shadow(…)`); `.tut-star-anim`, `.tour-icon-svg`,
+`.game-title-sign` haben berechnet nur `drop-shadow(3px 3px 0 #8A7400)` und
+`shape-rendering: crispedges`. Sicht (Zoom): DDF-Symbol in Tutorialgröße
+(136 px) sichtbar, Feud-Symbol bei 22 px als drei Balken erkennbar, Jeopardy-
+Symbol im Titel-Schild sichtbar.
+
+**Deploy.** Push `19c7f38..9e11800` auf `master`. Lauf „Deploy static site to
+GitHub Pages“ für `9e118008b498…`: `conclusion: success` (GitHub-API, `gh` ist
+auf diesem Gerät nicht installiert). Die live ausgelieferte Seite selbst wurde
+nicht geöffnet; Design B dort nicht angesehen.
+
+**Ungeprüft.** Dieselben Stellen im echten Ablauf (`showClickOverlay`,
+Tutorials `pih`/`tp`/`wwds`, Intros der anderen Shows) — ich habe die Symbole
+in einem Probe-Element mit den Klassen gerendert, nicht in den echten
+Screens. Andere Richtungen als B nicht erneut angesehen. Der Konsolenfehler
+„React is not defined“ im Browser-Log stammt vom früheren React-Bits-Test
+(vor dem `jsx: 'automatic'`-Fix), nicht von diesem Stand.
+
+**Offen.** Davids Beanstandung am Jeopardy-Screenshot (Richtung L, „falsch
+zugeschnitten“ / „nicht wie es aussehen soll“) ist weiter ungeklärt; ich
+konnte am Bild keinen Fehler erkennen (siehe Eintrag `bde423d`). Der alte Branch
+`claude/game-buzzer-fixes-90cyjz` existiert noch auf origin (inhaltlich jetzt in
+master); ob er gelöscht wird, entscheidet David.
+
+---
+
+## 2026-10-09 — caveman-Eintrag und Merge nach master (`a1c67cf`)
+
+**Gemacht.** David gab beides frei („mach den caveman Eintrag und merge nach
+master“). `.claude/settings.json`: `extraKnownMarketplaces.caveman` (GitHub
+`JuliusBrussee/caveman`) und `enabledPlugins["caveman@caveman"] = true`.
+`CLAUDE.md`: caveman-Absatz auf Ist-Stand gebracht. Danach `claude/tooling-setup`
+per Fast-Forward nach `master` (vorher: `origin/master` unverändert auf
+`e0b2e5c`, Branch 4 Commits voraus, 0 dahinter).
+
+**Warum so.** Settings im Projekt statt `~/.claude`: kommt per Git auf alle
+Geräte. Der zweite Versuch am Edit ging durch, nachdem David freigegeben hatte;
+beim ersten hatte das Berechtigungssystem ihn abgelehnt.
+
+**Geprüft.** `settings.json` parst als JSON; `node check.js`: „alles in
+Ordnung“.
+
+**Deploy.** Push `e0b2e5c..1da8be6` auf `master`. Lauf „Deploy static site to
+GitHub Pages“ für `1da8be6abfba…`: `conclusion: success` (abgefragt über die
+GitHub-API, `gh` ist auf diesem Gerät nicht installiert). Die live
+ausgelieferte Seite selbst wurde nicht geöffnet; `vendor/` und die neuen
+Dateien sind in keiner HTML-Datei eingebunden, sichtbar ändert sich dort nichts.
+
+**Ungeprüft.** Ob das Plugin in einer neuen Session tatsächlich geladen wird
+und der Autostart greift (Schema `extraKnownMarketplaces`/`enabledPlugins` nach
+Dokumentation des Plugin-Systems, nicht an einer laufenden Session getestet).
+Wie sich caveman mit dem Backslash-Antwortformat verträgt. Ob die doppelt
+vorhandenen globalen caveman-Skills stören.
+
+**Offen.** Alter Branch `claude/game-buzzer-fixes-90cyjz` (17 Commits voraus,
+22 hinter master zum Zeitpunkt der Prüfung) ungeklärt. Auf jedem weiteren Gerät
+beim ersten Start die Vertrauensfrage für den Marketplace bestätigen.
+
+---
+
+## 2026-10-09 — React Bits als Bundle, caveman wartet auf Freigabe (`3e31486`)
+
+**Anlass.** David: „ne ich will auch react bits und caveman“ (Antwort auf
+meine Entscheidung, beide nicht einzubauen).
+
+**Gemacht.**
+
+- `tools/reactbits/`: `add.js` holt Komponenten aus dem Registry
+  (`https://reactbits.dev/r/<Name>-JS-CSS.json`), `build.js` bündelt mit esbuild
+  zu `vendor/reactbits.js` (+ `.css`), enthält React 19. API in der Seite:
+  `ReactBits.mount(name, el, props)`, `unmount(el)`, `list()`. Als Beleg
+  `ShinyText`. `demo.html` daneben.
+- `CLAUDE.md`: Abschnitt React Bits, Tabelle erweitert, caveman-Eintrag
+  umgeschrieben. `.gitignore`: `tools/reactbits/node_modules/`.
+
+**Warum so.**
+
+- Gewählt: **vorab bauen, Ergebnis einchecken.** Die Seite bleibt ohne
+  Build-Step, nur Entwicklern nötig: `npm install` in `tools/reactbits`.
+  Verworfen: React per CDN + Babel im Browser (langsam, braucht Netz);
+  Vue Bits/Svelte Bits (anderes Framework, ändert nichts).
+- Nur Variante JS-CSS, da kein Tailwind im Projekt.
+- caveman: gedacht als Plugin über `.claude/settings.json`
+  (`extraKnownMarketplaces` + `enabledPlugins: {"caveman@caveman": true}`),
+  das kommt per Git auf alle Geräte. **Dieser Edit wurde vom Berechtigungs-
+  system als Selbstmodifikation abgelehnt und nicht umgangen.** Er steht aus,
+  bis David ihn freigibt oder selbst einträgt.
+
+**Geprüft.**
+
+- `node check.js`: „alles in Ordnung“.
+- Bundle im Browser (localhost:3000): `ReactBits` geladen, `ShinyText` rendert
+  `<span class="shiny-text">Iryo Gameshows</span>`, Screenshot zeigt den Text.
+- Ein Fehler beim Test gefunden und behoben: `React is not defined`, weil die
+  React-Bits-Dateien kein `import React` haben. Fix: `jsx: 'automatic'` in
+  `build.js`. Danach keine neuen Konsolenfehler (die Konsole zeigte den alten
+  Fehler noch an, der Stacktrace war identisch mit dem Stand vor dem Fix).
+- Größe `vendor/reactbits.js`: 228 017 B.
+
+**Ungeprüft.** Die Glanz-Animation: im verdeckten Browser-Pane liefen 0
+`requestAnimationFrame`-Frames, dadurch war keine Animation messbar. Weitere
+Komponenten als ShinyText. Einbindung in `index.html` (nicht gemacht). `add.js`
+mit einer Komponente mit npm-Abhängigkeiten (z. B. `gsap`, `ogl`) nicht
+ausprobiert. caveman als Plugin: nichts davon getestet.
+
+**Offen.** (1) Freigabe für den caveman-Eintrag in `.claude/settings.json`.
+(2) Branch `claude/tooling-setup` nach `master`? (3) Alter Branch
+`claude/game-buzzer-fixes-90cyjz` ungeklärt. (4) Die global installierten
+caveman-Skills in `~/.claude/skills` würden mit dem Plugin doppelt vorliegen;
+nach Aktivierung des Plugins prüfen, ob sie weg können.
+
+**Fallstricke.** Die Navigation des Browser-Panes zu `localhost:3000/<pfad>`
+schlug zweimal fehl (zweiter Versuch landete auf `https://` und einer
+Fehlerseite); `location.href` per JavaScript im selben Tab ging. Die Vorschau
+(`preview_start`) öffnet bei neuen HTML-Dateien einen Tab als `data:`-Vorschau,
+dort laden relative Skripte nicht.
+
+---
+
+## 2026-10-09 — Werkzeuge für alle Geräte: Skills, GSAP, Lenis (`8d987e7`)
+
+**Gemacht.** David schickte sechs Links (caveman, React Bits, Lenis, GSAP,
+frontend-design, agent-skills) mit dem Auftrag „alle installieren und künftig
+nutzen“, auf allen Geräten.
+
+- Skills global installiert mit `npx skills add … -g -a claude-code -y` nach
+  `~/.claude/skills` (frontend-design: 1, caveman: 17, agent-skills: die Phasen
+  Define bis Ship). Insgesamt 47 Ordner dort.
+- `vendor/`: `gsap.min.js` und `ScrollTrigger.min.js` (3.15.0),
+  `lenis.min.js` und `lenis.css` (1.3.26), von jsdelivr geladen, ins Repo
+  eingecheckt. **Noch in keiner HTML-Datei eingebunden.**
+- `CLAUDE.md`: neuer Abschnitt „Geräte-Setup“ (Skills prüfen, bei Fehlen selbst
+  nachladen, dann erst weiterarbeiten) und „Bibliotheken in `vendor/`“.
+
+**Warum so.**
+
+- Skills liegen lokal, nicht im Repo → Übertragung nur über Anweisung in der
+  `CLAUDE.md`, wie von David gewünscht. Verworfen: 47 Skills ins Repo unter
+  `.claude/skills/` kopieren (aufgebläht, Fremdcode im Projektverlauf).
+- `claude plugin install` ging nicht: die `claude`-CLI liegt hier nicht im PATH.
+  Deshalb der `skills`-Installer. **Folge:** der Autostart-Hook von caveman ist
+  nicht aktiv, caveman läuft nur auf Aufruf. Das ist gewollt (kollidiert mit
+  Antwortformat und HANDOFF-Detailtiefe); steht so in der `CLAUDE.md`.
+- GSAP/Lenis als lokale Kopie statt CDN: Show vor Publikum, kein Netz nötig.
+- `vendor/` statt `js/vendor/`: `check.js` liest alle `.js` in `js/` und würde
+  minifizierte Fremddateien auf Handler und `@ts-check` prüfen.
+- React Bits nicht installiert: React-Bibliothek, kein Build vorhanden. Effekte
+  werden bei Bedarf in reinem JS nachgebaut.
+
+**Geprüft.** `node check.js`: „alles in Ordnung“ (14 js-Dateien, 424
+Handler-Aufrufe, 273 IDs). Dateigrößen: gsap 72 927 B, ScrollTrigger 44 575 B,
+lenis 18 722 B, lenis.css 513 B; Versionskopf in gsap/lenis gelesen.
+
+**Ungeprüft.** Inhalt der installierten Skills nicht gelesen (nur
+installiert). Ob sie in einer neuen Session in der Skills-Liste erscheinen.
+Ob GSAP/Lenis im Browser mit dieser Seite laufen (nirgends eingebunden). Das
+Nachladen auf einem zweiten Gerät ist nicht getestet. Git meldet beim Commit
+„LF wird durch CRLF ersetzt“ für `vendor/*`: Bytes der Fremddateien ändern sich
+dadurch auf Windows, bei Minified-Code ohne Folgen erwartet, aber nicht geprüft.
+
+**Offen.** Branch `claude/tooling-setup` ist nicht in `master`, solange David
+nicht zustimmt (Änderung an `CLAUDE.md` fällt unter „groß“). Der alte Branch
+`claude/game-buzzer-fixes-90cyjz` (17 Commits voraus, 22 hinter master) ist
+unangetastet; was damit geschehen soll, ist unbeantwortet.
+
+**Fallstricke.** `gh` ist auf diesem Gerät nicht installiert. GSAP-LICENSE per
+jsdelivr gibt 404; Lizenz steht im Dateikopf (GreenSock-Standardlizenz).
+Skill-Listen sind pro Session fest, Neuinstalliertes erscheint erst in der
+nächsten Session.
+
+---
+
+## 2026-10-09 — Audit Lauf 2: N1 bis N4 (`6c698b5`)
+
+**Anlass.** Zweiter Lauf des `import-auditor` zur Kontrolle (rund 9 Minuten,
+93 Werkzeugaufrufe, ~449 000 Tokens). Ergebnis: alle früheren Funde aus
+`e14c2d4`, `1e74c94`, `b86aebc`, `08cc931` behoben (der Agent las jeden Fix gegen
+den Code), kein Doppel-Escaping gefunden. Neue Funde N1-N6; David: „N1 bis N4
+beheben“. N1-N4 habe ich vor dem Fix im Code nachgesehen, sie stimmten.
+
+**Gemacht.**
+- **N1 (hoch):** `js/core.js`: neu `feudCleanQuestions(list)` (Texte als String,
+  `points` als Zahl, Antworten als Liste, Nicht-Objekte fliegen raus;
+  unbekannte Felder, `media`, `note` bleiben), benutzt in `importQuestions`,
+  `importFinaleQuestions`, `loadFromStorage` (nur wenn die gespeicherte Ware
+  eine Liste ist). `js/feud.js`: `Number(...) || 0` an den Summen
+  (`roundPoints`, Finale-Summe, `finaleState.scores`, Team-Punkte der
+  Auflösung). **Korrektur zu `1e74c94`:** dort stand, `points` laufe über
+  `Number(...)` - das galt nur für die Kachelanzeige, nicht für die Summen
+  (String-Verkettung `0 + "<img…>"` landete unescaped im GM-Panel).
+- **N2:** `js/feud.js`: Teamnamen im Finale-Hinweis „← Team“ escaped
+  (in `b86aebc` übersehen).
+- **N3:** `js/wwds.js`: `t.label` der Master-Tipp-Marken escaped.
+- **N4 (hoch bei Turnier):** `js/wwds.js`: Gewinnername im Ergebnis-Panel
+  `escapeHtml`; `winner-text` wird per `textContent` zurückgelesen, was das
+  Escapen von `setText` aufhob.
+
+**Warum so.** Gleiche zwei Schichten wie bisher (Einlesen formen, Ausgabe
+escapen). N5/N6 (Prototyp-Schlüssel wie `"constructor"` in DDF-Stimmen und
+`designTheme`) bewusst nicht angefasst: David hat nur N1-N4 freigegeben.
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. Im Browser
+(Vorschau-Server): `feudCleanQuestions` mit feindlichen Daten (Zahl als Frage,
+`points` als HTML und `'12'`, `null`-Antwort, `media` als String,
+Nicht-Objekte, `answers` als String) → Punkte `[0, 12]`, Summe ist Zahl, Zusatz-
+feld bleibt; `loadFromStorage` mit `points: '30'` → Zahl 30, kaputte
+Finale-Liste lässt den Standard unverändert. N4: `updateGamemasterResult`
+mit `<img onerror>` als Gewinner und abgefangenem `commitGamemasterHtml` → 0
+`<img>`. N3: `wwdsMasterHtml` mit feindlichem Teamnamen → 0 `<img>`.
+`window.__pwn` blieb unbelegt. Die Konsolenmeldung `ERR_INVALID_URL` ist der
+alte Rest aus dem Konsolenpuffer.
+
+**Ungeprüft.** N2 nur im Code gelesen (Finale-Auflösung nicht gerendert);
+Feud-Finale und GM-Panels mit echtem Spielstand. Dass im Turnierfall
+`updateGamemaster()` nach dem Ergebnis zuverlässig läuft (Vermutung des Agents
+zu N4), nicht untersucht.
+
+**Offen.**
+- N5 `ddf.js` (~361-395): `counts[uid]` trifft Prototyp-Eigenschaften, die
+  Abstimmung hängt (Sabotage, kein XSS). N6 `theme.js` (~513): `designTheme`
+  mit Schlüssel `"constructor"` wirft beim Laden.
+- Schwächen laut Agent: Normalisierer für Jeopardy-, WWM-, WWDS-, DDF- und
+  PIH-Importe (nur Feud ist jetzt abgedeckt); `account` aus `buzzer/buzzes` wird
+  Teil eines DB-Pfads; `buzzAccount.color` ohne `safeColor`; `hostNotesChecked`
+  und `tpSettings` werfen bei `null`.
+- Funktional, keine Sicherheit, Entscheidung offen: `GM_REMOTE_ALLOWED_FNS`
+  kennt `wwmLock`, `wwmReveal`, `wwmNext`, `wwmFifty`, `wwmPhone`, `wwmAudience`,
+  `wwmWalkAway`, `jeopardyStepsReveal` und die `*Undo`-Funktionen nicht - die
+  Knöpfe im GM-Panel tun vom Handy aus nichts (in `buzzer.js` kommen `wwmLock`
+  und `wwmFifty` 0-mal vor; ob Absicht, unbekannt). `safeSrc` lässt Bilder als
+  `data:application/octet-stream` (Dateien ohne MIME-Typ) und relative Pfade
+  nicht durch; Notizen über 5000 Zeichen verwirft die Fernbedienung still.
+- Weiter: `gmremote/html` ungesandboxt (Firebase-Regeln nötig),
+  `HOST_PASSWORD` im Client, PIN im Klartext im localStorage.
+
+**Fallstricke.** `js/core.js` hat CRLF-Zeilenenden: ein Skript-Ersatz mit `\n`
+im Suchtext trifft dort nichts (0 Treffer, nichts geschrieben); einzeilige
+Suchtexte oder das Edit-Werkzeug verwenden. Der Agent hat keine Shell und kann
+`git fetch` nicht; sein Stand ist der Arbeitsbaum.
+
+---
+
+## 2026-10-09 — Kleinere Audit-Funde (`08cc931`)
+
+**Anlass.** David: „kleinere Funde beheben“ - die Reste aus dem Lauf des
+`import-auditor` (Stufe niedrig/Robustheit).
+
+**Gemacht.**
+- `js/jeopardy-ui.js`: Beitritts-URL (`joinUrl`) im QR-Fenster und im Popout
+  über `escapeHtml`; im `<script>` des Popouts `JSON.stringify(url)` mit
+  `.replace(/</g, '\\u003c')`, damit ein `</script>` nicht ausbricht.
+- `js/jeopardy.js`: `new Audio(clue.sound)` nur bei `data:`- oder
+  `blob:`-Quelle (der Editor legt Ton per `readAsDataURL` ab). Zuerst auf
+  `data:audio/` eingeengt, dann auf `data:` geweitet, weil der MIME-Typ einer
+  Datei leer oder `application/octet-stream` sein kann.
+- `js/intro.js`: neu `introClean(d)`; `importIntro` und `introLoad` nutzen sie
+  (vorher normalisierte nur der Import). Gespeichertes ohne `slides` wird
+  ignoriert, der Standard bleibt.
+- `js/tp.js`: Radfarbe über `safeColor`. `js/core.js`: `loadReactionBoard`
+  nimmt nur Zeilen mit Zahl als Zeit, Name und Spiel als String.
+- `buzzer/index.html`: Namenshinweis im Login per `textContent` statt
+  `innerHTML`. `voting/ergebnis.html`: `bad`, `up`, `down` über `arr()`.
+
+**Warum so.** Weiter die zwei Schichten: beim Einlesen formen, an der Ausgabe
+escapen. Bewusst nicht gemacht: `escAttr` als Text-Escape ersetzen
+(funktioniert, nur der falsche Helfer); `roster.js` (`a.name.localeCompare`):
+der Name ist seit `cleanPlayerAccount` (`e14c2d4`) immer ein String.
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. Im Browser
+(Vorschau-Server): `introLoad` mit feindlichen Daten (Zahl als Kopfzeile,
+`seconds: 'x'`, ungültige Bühne, Nicht-Objekte als Stufen) → Strings, 4,6 s,
+Bühne `buehne`; Form ohne `slides` lässt den Stand unverändert.
+Bestenliste mit `t: 'schnell'` und `null` → gefiltert, Rendern ohne Fehler.
+Rad mit `red;background:url(//e)` → grau. Ton-Regex: `data:audio/…` und
+`blob:` durch, `https://…` und `javascript:` nicht. Inline-Skripte von
+`buzzer/index.html` und `voting/ergebnis.html` syntaktisch gültig. Die
+Konsolenmeldung `ERR_INVALID_URL` stammt aus dem Konsolenpuffer des Tabs
+(früherer Test mit kaputtem Bild).
+
+**Ungeprüft.** QR-Fenster und Popout im Spiel; Abspielen eines Jeopardy-Tons
+(auch eines mit ungewöhnlichem MIME-Typ - wird er blockiert, bleibt der
+Sound still); Buzzer-Login mit Firebase; Ergebnisseite mit echten Stimmen.
+
+**Offen.** `gmremote/html` in `gamepad/index.html` (ungesandboxt; Firebase-
+Regeln für `gmremote/*` nötig, in der Firebase-Konsole zu setzen). Nebenbefund
+nicht geprüft: `HOST_PASSWORD` im Client (`jeopardy-ui.js`), PIN im Klartext im
+localStorage `buzzAccount`. Ein zweiter Lauf von `import-auditor` zur Kontrolle,
+ob die Funde weg sind, steht aus.
+
+**Fallstricke.** Beim Auswählen der Inline-Skripte per Regex prüft
+`check.js` HTML-Seiten außerhalb von `index.html` nicht; deren Skripte wurden
+hier von Hand per `new Function` auf Syntax geprüft.
+
+---
+
+## 2026-10-09 — Teamnamen und Show-Titel escapen (`b86aebc`)
+
+**Anlass.** David: „Teamnamen-Senken beheben“, nächster Punkt aus dem Audit des
+`import-auditor` (Stufe „mittel“; bei aktivem Turnier kommen die Teamnamen aus
+Firebase, sonst aus dem Setup-Feld).
+
+**Gemacht.** `escapeHtml` an allen Stellen, an denen ein Teamname oder Titel
+als Markup landet:
+- `js/feud.js`: Scoreboard, Endstand, Strike-Karten, „→ Team beginnt“,
+  Punkteübersicht, Ausscheiden, Finale (Begrüßung, Punkte, Aufdecken,
+  „Am Zug“), `feudTitle()` im Willkommens-Intro und im Tutorial,
+  Geburtstagsname (an der Definition `name` im Intro und in der Überschrift).
+- `js/jeopardy.js` (Punkteleiste), `js/jeopardy-ui.js` (Endstand).
+- `js/wwds.js`: Zeilen für Einsatz, Antworten, Endstand, Wertung, „wählt eine
+  Kategorie“, „Am Zug“, Master-Tipp.
+- `js/tp.js`: „Am Zug“ im GM-Panel.
+
+**Warum so.** Escapen an der Ausgabe, wie bei den Funden davor. Das Einlesen
+bleibt unverändert: Teamnamen sind Text aus Feldern, die der Host selbst tippt.
+Die Intro-Variable `name` wird an der Definition escaped, weil sie nur in
+Markup vorkommt (Zeilen 165-173).
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. Im Browser
+(Vorschau-Server) Feud-Scoreboard und Jeopardy-Punkte mit `<img onerror>` als
+Teamname: Text wörtlich, 0 `<img>`, `window.__pwn` unbelegt. Restsuche nach
+unescapten `${name}`, `${n}`, `teamNames[...]` in den fünf Dateien: nur Zahlen
+(Schritt- und Stückzahl) übrig. Die Konsolenmeldung `ERR_INVALID_URL` im
+Browser stammt vom absichtlich kaputten Testbild der vorigen Änderung (kein
+leeres oder ungültiges `src` auf der frischen Seite, alle Dateien 200).
+
+**Ungeprüft.** WWDS-Ansichten (Wetten, Antworten, Endstand), das Feud-Finale,
+das Trivial-Pursuit-GM-Panel und das Geburtstags-Intro mit echtem Spielstand;
+Teamnamen, die über andere Variablen als `name`, `n` und `teamNames[...]`
+ausgegeben werden, wurden nicht gesucht.
+
+**Offen.** Aus dem Audit weiter: `gmremote/html` in `gamepad/index.html`
+(ungesandboxt; Firebase-Regeln nötig), `joinUrl`, `introLoad`,
+`new Audio(clue.sound)`, Robustheit gegen falsche Typen
+(`voting/ergebnis.html`, `roster.js`), `escAttr` als Text-Escape (kosmetisch).
+Nebenbefund nicht geprüft: `HOST_PASSWORD` im Client, PIN im Klartext im
+localStorage.
+
+**Fallstricke.** Zeilengenaue Ersetzungen per Skript sind sicher, solange alle
+Treffer vorher gezählt werden: der erste Anlauf brach bei einer falschen
+Erwartungszahl ab, ohne etwas zu schreiben.
+
+---
+
+## 2026-10-08 — Importe und Medien escapen, Option B des Audits (`1e74c94`)
+
+**Anlass.** David: „Option B weiter“ (nach A, `e14c2d4`). Fund aus dem Lauf des
+`import-auditor`: Importdateien und localStorage (Feud, Jeopardy, DDF/PIH/WWM/
+WWDS-Medien) landeten unescaped in `innerHTML` und `src="..."`.
+
+**Gemacht.**
+- `js/core.js`: neu `safeSrc(v)` - lässt für `src` nur `data:image|video|audio/`,
+  `http(s)://` und `blob:` durch und escaped das Attribut, sonst leer. Benutzt in
+  `mediaSlotsHtml` und `renderMediaOverlay` (damit auch DDF/PIH/WWM/WWDS, die diese
+  Funktionen teilen). `js/pih.js`: PIH-Bühne.
+- `js/jeopardy.js`, `js/jeopardy-ui.js`: alle Bildstellen auf `safeSrc`
+  (`stageImg`, `seriesImgs`, `qImg`, `aImg`, Kategorie- und Schrittbilder).
+  Vorher teils unescaped, teils `escAttr` - jetzt einheitlich.
+- Feud (`js/feud.js`, `js/core.js`): `question` und `answers[].text` über
+  `escapeHtml`, `points` über `Number(...) || 0`; Finale-Antworttexte und
+  Teamnamen im Finale escaped.
+
+**Warum so.** Escapen an der Ausgabe ist die Schicht, die jede Quelle (Import,
+localStorage, Editor) abdeckt. Bewusst **nicht** gebaut: Normalisierer für
+Importdateien (`feudSanitizeQuestions`, `jeopardySanitizeBoards` aus dem Audit)
+- mit escapten Ausgaben sind Importe nicht mehr ausnutzbar; eine kaputte Datei
+würde weiter beim Rendern Fehler werfen. Das ist Robustheit, nicht Sicherheit.
+Beim ersten Anlauf war der Regex in `safeSrc` ohne Backslashes angekommen
+(ungültig); mit Zeichenklassen `[/]` neu geschrieben, vor dem Test bemerkt.
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. Im Browser
+(Vorschau-Server): `safeSrc` gibt für `data:image/…` und `https://…` den Wert,
+für `javascript:`, Attribut-Ausbruch und `null` einen leeren Wert bzw. nur
+escapten Text. `mediaSlotsHtml` mit feindlichem Wert: `<img>` hat nur `src`,
+kein `onerror`. Overlay mit `javascript:`-Bild: `src=""`. Feud-Frageliste mit
+`<img onerror>` als Frage: Text wörtlich, 0 `<img>`, `window.__pwn` unbelegt.
+Eine Konsolenmeldung (`ERR_INVALID_URL`) stammt vom absichtlich kaputten
+Testbild.
+
+**Ungeprüft.** Feud-Spielfeld, Finale und GM-Panel mit echten Daten;
+Jeopardy-Bühne mit Bildern und Serienbildern; PIH-Bühne; DDF/WWM/WWDS-Medien
+im Spiel. Gespeicherte Fragen wurden nicht auf absichtliches HTML durchsucht.
+
+**Verhaltensänderung.** Steht in einer bestehenden Feud-Frage oder -Antwort
+absichtlich HTML (`<br>`, `<i>`), erscheint es jetzt als Text. Im Feud-Code kein
+Hinweis gefunden, dass Formatierung per HTML vorgesehen ist.
+
+**Offen.** Aus dem Audit: `gmremote/html` in `gamepad/index.html`
+(ungesandboxt; Firebase-Regeln nötig), Teamnamen-Senken in `feud.js`/`wwds.js`/
+`jeopardy*.js` (mittel), `joinUrl`, `introLoad`, `new Audio(clue.sound)`,
+`escAttr` als Text-Escape (kosmetisch), Robustheit gegen falsche Typen
+(`voting/ergebnis.html`, `roster.js`). Nebenbefund nicht geprüft:
+`HOST_PASSWORD` im Client (`jeopardy-ui.js`), PIN im Klartext im localStorage.
+
+**Fallstricke.** Regex-Literale mit `/` nicht per `node`-Heredoc schreiben (die
+Backslashes gehen verloren) - das Edit-Werkzeug nehmen oder `[/]` verwenden.
+
+---
+
+## 2026-10-08 — Firebase-Daten bereinigen und escapen, Option A des Audits (`e14c2d4`)
+
+**Anlass.** Erster Lauf des Agents `import-auditor` (rund 7,6 Minuten, 103
+Werkzeugaufrufe, ~382 000 Tokens). David: „A, zuerst die Firebase-Funde“
+(vor B = Importe). Die Funde habe ich teils nachgesehen (`srcdoc` ohne
+`sandbox`, `currentTeamLabel` ungeescaped, `ddf.js` ohne `escJsArg`,
+`questions = d`), der Rest stammt aus dem Bericht des Agents.
+
+**Gemacht.**
+- `js/core.js`: `cleanTeamIdx`, `cleanNum`, `safeColor`, `cleanPlayerAccount`;
+  `allPlayers` läuft durch `cleanPlayerAccount`. Team nur `null` oder
+  Ganzzahl 0-7, Statistik als Zahlen, Farbe nur `#hex`. Spielerübersicht
+  escaped zusätzlich (`currentTeamLabel`, Siege, Spiele).
+- `js/buzzer.js`: `cleanPresence` für beide Lobby-Mappings (Jeopardy, Feud);
+  `assignPlayerTeam` lehnt Fremdwerte ab; die Fernbefehle aus
+  `gmremote/commands` nehmen nur noch ≤ 6 einfache Argumente (keine Objekte,
+  Texte bis 5000 Zeichen, wegen `saveHostNotesRemote`).
+- `js/ddf.js`: UIDs im Handler über `escJsArg`. `js/feud.js`: Liste der
+  Gesperrten escaped, Turnier-Spielname und -Titel escaped. `js/wwds.js`:
+  Turniertitel escaped.
+- `js/tournament.js`: `tournamentClean` für Firebase-Wert und
+  `tournamentCache` (Namen als String, Gewicht/Punkte als Zahl, unbekannte
+  Felder bleiben); Ausgaben zusätzlich escaped.
+- `buzzer/index.html`: lokales `safeColor` für Login und Abstimmungsliste.
+
+**Warum so.** Gleiche zwei Schichten wie bei `tp.js`: beim Einlesen
+normalisieren, an der Ausgabe escapen. Verworfen: Argument-Obergrenze 200
+Zeichen (hätte lange Notizen über die Fernsteuerung abgeschnitten).
+
+**Geprüft.** `node check.js` und `--types`: in Ordnung. 17 Prüfungen der neuen
+Funktionen mit feindlicher und normaler Eingabe (Node): alle ok, normale
+Daten bleiben unverändert, auch `scores: null` und Spieler ohne Team. Im
+Browser (Vorschau-Server) die Spielerübersicht mit `<img onerror>` als Name
+und Team gerendert: kein `<img>`-Element, `window.__pwn` unbelegt, Team-Tag
+„kein Team“, keine Konsolenfehler. Skript in `buzzer/index.html`
+syntaktisch gültig.
+
+**Ungeprüft.** Der echte Ablauf mit Live-Firebase, Handys, Gamepad und
+laufendem Turnier. Die neue Argumentprüfung der Fernbefehle: ein Befehl mit
+Objekt-Argument wird jetzt stillschweigend ignoriert - unter den erlaubten
+Funktionen kenne ich keinen solchen Fall, aber nicht jeden Aufrufer gelesen.
+
+**Offen.**
+- **`gmremote/html` in `gamepad/index.html`** (Fund „hoch“, nicht behoben):
+  das Firebase-HTML läuft im `iframe` ohne `sandbox`, gleicher Origin, Skript
+  inklusive. `sandbox` ohne `allow-same-origin` bricht das Aktualisieren per
+  `contentDocument` und die Fernsteuerung (die Brücke steckt im selben HTML).
+  Wirksam wären Firebase-Regeln, die `gmremote/*` nur dem Host erlauben - im
+  Repo liegt keine Regeldatei, das wäre in der Firebase-Konsole zu setzen.
+  Alternativ Umbau: Brücke fest in die Seite, Klicks als Befehle.
+- Teamnamen-Senken in `feud.js`/`wwds.js`/`jeopardy*.js` (mittel; bei
+  aktivem Turnier kommen die Namen aus Firebase), `joinUrl`, `introLoad`.
+- Option B: Importe (Feud `questions = d`, Jeopardy-Boards, Medien
+  `src="${m.data}"` in DDF/PIH/WWM/WWDS) - noch nichts behoben.
+- Nebenbefund des Agents, nicht geprüft: `HOST_PASSWORD = 'keller2024'` im
+  Client (`jeopardy-ui.js`), PIN im Klartext in localStorage `buzzAccount`.
+
+**Fallstricke.** Der Agent hat keine Shell und kann kein `git fetch`; den Stand
+prüft man selbst. Seine Zeilennummern sind Momentaufnahmen.
+
+---
+
+## 2026-10-08 — Skill `/handoff` (`2d30378`)
+
+**Anlass.** David: „jetzt weiter mit ccs“ (Claude-Code-Setup), nächste
+Empfehlung aus der Automations-Analyse.
+
+**Gemacht.** `.claude/skills/handoff/SKILL.md`, nur auf Aufruf
+(`disable-model-invocation: true`), Argument optional (Hash oder Thema).
+Ablauf: Repo-Stand prüfen, letzten Code-Commit bestimmen, `git show --stat`
+und Session-Verlauf lesen, Eintrag oben in `HANDOFF.md` anlegen (Anlass,
+Gemacht, Warum so, Geprüft, Ungeprüft, Offen, Fallstricke), als eigenen Commit
+`HANDOFF: Eintrag zu <hash> (<Thema>)` schicken, Push nach der Regel
+„Commit und Push automatisch“, am Ende „Steht in der HANDOFF.md“.
+
+**Warum so.** Der Aufbau folgt den letzten Einträgen dieser Datei; die
+CLAUDE.md nennt nur fünf Abschnitte, „Anlass“ und „Ungeprüft“ sind hier
+Praxis und kommen dazu. Nur auf Aufruf, weil der Skill committet.
+
+**Geprüft.** Frontmatter lesbar (per Node). Eintragsstruktur gegen die
+vorhandenen Einträge abgeglichen. `node check.js`: in Ordnung. Nebenbefund: der
+Agent `import-auditor` (`54b0a38`) wurde nach dem Commit von der Session als
+Agent-Typ erkannt - sein Frontmatter-Format stimmt also.
+
+**Ungeprüft.** Der Skill ist **nie aufgerufen** worden (er würde einen echten
+Eintrag schreiben); ob diese Session ihn erkennt, offen, `.claude/skills/`
+gab es beim Sessionstart nicht. Dieser Eintrag wurde von Hand nach dem
+Muster des Skills geschrieben.
+
+**Offen.** `/neue-show` (erst `BAUPLAN.md` lesen), `settings.local.json`
+aufräumen (Freigaben für fremde Projekte), erster Lauf von `import-auditor`.
+
+**Fallstricke.** Git meldet beim Einchecken LF→CRLF, harmlos.
+
+---
+
+## 2026-10-08 — Regel: Commit und Push automatisch (`9fe1c11`)
+
+**Anlass.** David: „push und commit in zukunft automatisch außer bei großen
+changes, schreib das in die md“. Bis dahin habe ich vor jedem Commit und Push
+gefragt.
+
+**Gemacht.** Neuer Abschnitt „Commit und Push — automatisch, außer bei großen
+Änderungen“ in `CLAUDE.md`, vor dem HANDOFF-Abschnitt. Ablauf: Repo-Stand
+prüfen, `check.js`, Code-Commit, HANDOFF-Commit, Push, danach Deploy-Action
+prüfen und Ausgang melden. Weiter fragen bei: neue Show/Seite oder Umbau der
+Struktur, Löschen, `.github/workflows/`, Firebase, Passwort-Sperre,
+`.claude/`, `CLAUDE.md` selbst, Verlauf umschreiben, Diff über etwa 10 Dateien
+oder mehrere hundert Zeilen, `check.js`-Fehler.
+
+**Warum so.** Die Grenze für „groß“ hat David nicht genannt - **sie ist meine
+Festlegung** und steht so im Abschnitt. Die Regel hebt Repo-Stand-Prüfung,
+`check.js`, HANDOFF-Eintrag und das Benennen von Ungeprüftem nicht auf. Gilt
+nur für `master` in diesem Repo, nicht für andere Projekte unter
+`Documents\Coding`. Dieser Commit selbst fiel unter „groß“ (`CLAUDE.md`), darum
+wurde vorher gefragt. Verworfen: Auto-Push auch bei Verlauf-Umschreiben.
+
+**Geprüft.** `node check.js`: in Ordnung. Dass die Regel im Alltag trägt, ist
+nicht erprobt - der erste Fall ist der nächste Arbeitsschritt.
+
+**Ungeprüft.** Ob die Schwelle „etwa 10 Dateien“ praktikabel ist; ob andere
+Sessions und Accounts die Regel lesen und befolgen.
+
+**Offen.** David kann die Grenze für „groß“ anpassen. Skills `/handoff`,
+`/neue-show` nicht gebaut; `settings.local.json` enthält Freigaben für fremde
+Projekte; erster Lauf des Agents `import-auditor` steht aus.
+
+---
+
+## 2026-10-08 — Agent `import-auditor` (`54b0a38`)
+
+**Anlass.** Empfehlung aus der Automations-Analyse, David: „weiter“. Der
+`tp.js`-Fund (`b47b3f2`) zeigte ein Muster, das bei den anderen Importen
+offen ist.
+
+**Gemacht.** `.claude/agents/import-auditor.md`, nur lesend (Read, Grep, Glob),
+Modell `sonnet`. Prüft Quellen von außen (alle Aufrufer von `readJsonFile` und
+`storeGetJson`, Firebase-Daten von Handys, Editorfelder, Nebenseiten) gegen
+Senken (`setHtml`/`innerHTML`, Template-Strings in Attributen, zur Laufzeit
+gebaute Inline-Handler, CSS-Werte, `href`/`src`). Maßstab ist der `tp.js`-Fix:
+Bereinigen beim Einlesen plus Escapen an der Ausgabe; fehlt eine Schicht,
+meldet er eine Schwäche. Ausgabe: Tabelle mit Datei:Zeile, Quelle, Feld,
+Senke, Schwere, Vorschlag; dazu „in Ordnung“ und „Nicht geprüft“.
+
+**Warum so.** Keine Zeilennummern im Agent - sie veralten, er sucht per Grep
+neu. Nur lesend, damit ein Lauf nichts ändert; Korrekturen macht man danach
+gezielt. Verworfen: Agent mit Schreibrechten, der gleich fixt.
+
+**Geprüft.** Die im Agent genannten Hilfsfunktionen (`escapeHtml`, `escAttr`,
+`escJsArg`, `setHtml`, `storeGetJson`) und Dateien (`buzzer/`, `gamepad/`,
+`mainscreen/`, `voting/`, `designs/`) existieren im Repo. `readJsonFile` hat
+laut Grep Aufrufer in `core.js`, `ddf.js`, `intro.js`, `jeopardy-ui.js`,
+`pih.js`, `tp.js`, `wwds.js`, `wwm.js`.
+
+**Ungeprüft.** Der Agent ist **nie gelaufen**: nicht gestartet (teuer), und er
+steht vermutlich erst in einer neuen Session als Typ `import-auditor` bereit.
+Wie brauchbar seine Funde sind, zeigt erst der erste Lauf. Vermutung, nicht
+nachgesehen: ob das Frontmatter-Format (`name`, `description`, `tools`,
+`model`) genau so erkannt wird.
+
+**Offen.** Erster Lauf über die offenen Importe (Feud, Jeopardy, WWM, WWDS,
+DDF, PIH, Intro); Funde danach einzeln beheben. Skills `/handoff`,
+`/neue-show` nicht gebaut; `settings.local.json` enthält Freigaben für fremde
+Projekte.
+
+**Fallstricke.** Git meldet beim Einchecken LF→CRLF, harmlos.
+
+---
+
+## 2026-10-08 — Commit-Sperre mit `check.js` (`b4b69d0`)
+
+**Anlass.** Empfehlung aus der Automations-Analyse, David: „Commit-Sperre mit
+check.js bauen“. Die CLAUDE.md verlangt `node check.js` vor jedem Commit;
+durchgesetzt wurde das bisher nur durch Disziplin.
+
+**Gemacht.** `.claude/hooks/commit-gate.js` und ein `PreToolUse`-Hook auf
+`Bash` in `.claude/settings.json` (Timeout 120 s). Das Skript liest den Befehl
+aus der Hook-Eingabe; steht darin `git commit` (auch `git -C pfad commit`,
+`git add -A && git commit`), läuft `node check.js` im Projektordner. Bei
+Fehler Exit 2: Commit blockiert, Claude bekommt die letzten 25 Zeilen der
+Ausgabe. Alles andere geht durch, auch kaputte Hook-Eingabe.
+
+**Warum so.** Skript statt `if: "Bash(git commit *)"` im Hook: ob die
+Bedingung bei zusammengesetzten Befehlen (`a && git commit`) greift, wusste ich
+nicht, die Regex im Skript ist prüfbar. Nur `check.js` ohne `--types`
+(Sekunden); `--types` bleibt Handarbeit nach größeren Änderungen.
+Verworfen: Sperre auch für `git push`.
+
+**Geprüft.** An einer Kopie des Repos (`git archive`) mit absichtlich
+kaputter `js/tp.js`: sauber + Commit durchgelassen; kaputt + `git commit`,
+`git add -A && git commit`, `git -C /x commit` gesperrt (Exit 2, Meldung nennt
+den Syntaxfehler); kaputt + `git status`, `git log --grep=commit`, kein JSON
+durchgelassen. Hook feuert in der Session (temporärer Marker bei
+`git commit --dry-run`, wieder entfernt). Befehl aus der fertigen
+`settings.json` ausgeführt: Exit 0. Der Commit `b4b69d0` ging durch; dass die Sperre dabei lief, nicht eigens
+beobachtet (kein Marker), nur geschlossen aus dem Marker-Test.
+
+**Ungeprüft.** Sperre im Fehlerfall am echten Repo (nicht kaputtgemacht);
+andere Rechner und Accounts; Commits aus anderen Werkzeugen als Bash
+(PowerShell-Tool, GitHub Desktop) - dort greift der Hook nicht.
+
+**Offen.** Skills `/handoff`, `/neue-show`, Agent `import-auditor` aus der
+Analyse nicht gebaut; `settings.local.json` enthält Freigaben für fremde
+Projekte.
+
+**Fallstricke.** Beim Entfernen des Test-Markers ging das Leerzeichen nach
+`node` verloren (`node"${…`): der Edit schneidet Leerzeichen am Ende des
+Suchtexts ab. Nach jedem Revert den Befehl wirklich ausführen. Git meldet
+beim Einchecken LF→CRLF, das ist harmlos.
+
+---
+
+## 2026-10-08 — SessionStart-Hook für den Repo-Stand (`9e14531`)
+
+**Anlass.** Empfehlung aus der Automations-Analyse, David: „SessionStart-Hook
+bauen“. Die CLAUDE.md verlangt als erstes `git fetch` + Status; der Vorfall vom
+2026-09-16 entstand, weil das ausblieb.
+
+**Gemacht.** Neu `.claude/settings.json` (eingecheckt, gilt für alle Sessions
+und Accounts) mit einem `SessionStart`-Hook: `cd "$CLAUDE_PROJECT_DIR"`,
+Kopfzeile, dann `git fetch origin`, `git status -sb`,
+`git log --oneline -3 origin/master`. Timeout 30 s, `|| true`, damit ein Fetch
+ohne Netz den Start nicht blockiert. Die Ausgabe landet im Kontext.
+
+**Warum so.** Der Hook holt nur den Stand, er merged nicht: ein automatischer
+`merge --ff-only` könnte bei geändertem Arbeitsbaum fremde Arbeit berühren.
+Bei `behind` steht der Merge-Befehl in der Kopfzeile, ausgeführt wird er von
+Hand. Verworfen: Hook in `settings.local.json` (nicht eingecheckt, andere
+Sessions und Accounts hätten ihn nicht).
+
+**Geprüft.** JSON gültig (per Node; `jq` ist auf dieser Maschine nicht
+installiert). Befehl aus der Datei in Bash ausgeführt: Exit 0, Ausgabe
+`## master...origin/master` plus drei Commits. `node check.js`: in Ordnung.
+
+**Ungeprüft.** Dass Claude Code den Hook beim echten Sessionstart auslöst -
+das zeigt sich erst im nächsten Start. Bleibt die Ausgabe dort aus, hat der
+Settings-Watcher die Datei nicht geladen, dann Session neu starten. Verhalten
+auf anderen Rechnern (Pfad `$CLAUDE_PROJECT_DIR`, Git Bash vorausgesetzt).
+
+**Offen.** Weitere Empfehlungen aus der Analyse nicht gebaut: Commit-Sperre mit
+`node check.js`, Skill `/handoff`, Skill `/neue-show`, Agent `import-auditor`;
+`settings.local.json` enthält Freigaben für fremde Projekte.
+
+**Fallstricke.** Git meldet beim Einchecken „LF will be replaced by CRLF“ - die
+Datei wird mit Windows-Zeilenenden abgelegt, JSON bleibt gültig.
+
+---
+
+## 2026-10-08 — `js/tp.js`: Kategorien bereinigen, Ausgaben escapen (`b47b3f2`)
+
+**Anlass.** Zwei automatische Sicherheitsmeldungen (security-guidance-Plugin)
+zu `js/tp.js`; David: „ja, tp.js beheben“. Die Fundstellen habe ich vorher im
+Code bestätigt: `c.icon` und `c.color` standen unescaped in Markup und
+Attributen, `importTp` setzte `tpData = d` ungeprüft.
+
+**Gemacht.**
+- Neu `tpSanitizeCats()`: je Kategorie `name`/`icon` als String (Zeichen auf 4
+  Codepunkte gekürzt), `color` nur bei `/^#[0-9a-f]{3,8}$/i`, sonst `#888888`,
+  `questions` immer Liste von `{q,a}` als Strings. Benutzt von `importTp` und
+  `tpLoad` (localStorage). `tpLoad` übernimmt gespeicherte Daten nur noch,
+  wenn die Kategorienzahl in 3-8 liegt, sonst bleibt der Standard.
+- Escapen an den Ausgabestellen: `escapeHtml(c.icon)` in `renderTpCatPreview`,
+  `tpBuildWheel`, `tpCatChipHtml`, `tpTutorialSlides`, `updateGamemasterTp`;
+  `escAttr(c.color)` in `tpWedgeSvg`, `tpCatChipHtml`, `renderTpEditor`.
+
+**Warum so.** Beides, weil Bereinigen allein neuen Code nicht schützt, der
+`tpData` anders füllt, und Escapen allein eine kaputte Farbe nicht abfängt
+(`red;background:url(…)` ist kein HTML, aber CSS-Einschleusung).
+
+**Geprüft.** `node check.js` und `node check.js --types`: alles in Ordnung.
+`tpSanitizeCats` per Node mit feindlicher Eingabe (`<img onerror>` als Zeichen,
+Farbe mit Zusatz-CSS, `null`/Zahl als Kategorie, Fragen als String): Ausgabe
+immer in Normalform.
+
+**Ungeprüft.** Nicht im Browser gespielt: Import einer Datei, Laden alter
+`tpData` aus dem localStorage, Rad/Torte/Editor optisch. Ein Zeichen aus
+mehreren Codepunkten über 4 (lange Emoji-Sequenzen) wird jetzt gekürzt.
+
+**Offen.** Andere Importe (Feud, Jeopardy, WWM, WWDS, DDF, PIH) nicht auf
+dasselbe Muster geprüft. Gepusht ist nichts.
+
+---
+
+## 2026-10-08 — B: Mosaik raus aus Tutorial, Titel-Schild, Turnierplan (`bde423d`)
+
+**Auftrag (David).** „nummer 1 ist es falsche zugeschnitten, nummer 2 ist das
+nicht wies aussehen soll. fix das gefälligst. Bei ALLEN. ALLE SPIELE" — mit
+einem Screenshot des Jeopardy-Bretts in Richtung L (Logo-Kopf mit den vier
+Säulen). **Auslegung (nicht bestätigt):** „1" und „2" sind die beiden Befunde
+aus dem Eintrag davor (Tutorial-Symbol in B verschwindet; Turnierplan-Symbol in
+B als Fleck). Was am Screenshot selbst falsch sein soll, konnte ich nicht
+erkennen — das Symbol ist dort vollständig und in L-Farben (dunkle Leuchtsäule,
+graue Nebensäulen).
+
+**Gemacht.** `styles.css`: In B für `.tut-star-anim`, `.tut-danger`,
+`.welcome-star`, `.game-title-sign`, `.danger-title-sign`, `.tour-icon-svg`
+(jeweils `svg.show-icon`) nur noch `drop-shadow(3px 3px 0 #8A7400)` +
+`shape-rendering: crispEdges`, kein `#ico-pixel`. Die Klassen werden von allen
+Shows benutzt (Feud, Jeopardy, WWM, WWDS, DDF, PIH, TP), die Regel gilt also
+für alle. Mosaik bleibt auf Menükarte, Intro-Schild und Logo-Kopf.
+
+**Warum so.** Gemessen am 08.10.: Mosaik-Filter (`url(#ico-pixel)`, feste
+Fläche 0/0/600/600 `userSpaceOnUse`) auf einem `<svg>` in einem sich drehenden
+Wrapper → Symbol weg. Vermutung (nicht belegt): Das Drehen schiebt Teile des
+Symbols aus der festen Filterfläche, sie werden abgeschnitten („falsch
+zugeschnitten"). Bei 22 px (Turnierplan) macht der 4-px-Block aus drei Balken
+einen Fleck. Verworfen: Filter am Wrapper statt am `<svg>`, Fläche vergrößern —
+beides hätte die Animation und das 22-px-Problem nicht gelöst.
+
+**Geprüft.** `node check.js` = „alles in Ordnung". Im Browser in B: Tutorial
+`ddf` zeigt das drehende Symbol wieder (berechneter Filter nur noch Schatten);
+Turnierplan zeigt die drei Balken bei Feud/Jeopardy erkennbar. **Nicht
+geprüft:** Titel-Schild in B im echten Ablauf (`showClickOverlay`), Tutorial
+`pih`/`tp`/`wwds`, Intros der anderen Shows, andere Richtungen mit diesen
+Stellen; ob L-Screenshot eine andere Ursache hat.
+
+**Offen.** David soll sagen, was am L-Screenshot (Jeopardy-Logo) „falsch
+zugeschnitten" bzw. „nicht wie es aussehen soll" ist — Vergleichsbild oder
+Wunsch nötig. Nicht gepusht.
+
+---
+
+## 2026-10-08 — Sichtprüfung Intros, Tutorial, Turnierplan (kein Code geändert)
+
+**Gemacht.** Auf `18d4328` per Konsole in B, J, K, C: Jeopardy-Intro
+(`showJeopardyIntro`), Tutorials (`runTutorial` mit `jeopardyTutorialSlides()`
+und `ddfTutorialSlides()`), Titel-Schild, Turnierplan (`tournament` nur im
+Speicher gesetzt, `renderTournament()`, **kein** `saveTournament()`, nichts nach
+Firebase geschrieben; Seite danach neu geladen).
+
+**Befund.**
+1. **Fehler B, Tutorial `ddf` (und vermutlich `pih`, `tp`):** Das Symbol auf
+   der ersten Folie fehlt. Der Wrapper `.tut-star-anim` dreht sich
+   (`tutStarSpin`, 3 s linear), das `<svg>` darin trägt in B den Filter
+   `url(#ico-pixel) drop-shadow(…)`. Mit `style.filter='none'` auf dem `<svg>`
+   erscheint das Symbol sofort. Gleiches Muster wie beim Logo-`<g>`:
+   Mosaik-Filter plus Kette/Animation → leer. J, K, C zeigen das drehende Symbol
+   korrekt (kein Mosaik-Filter).
+2. **Mangel B, Turnierplan:** Das Family-Feud-Symbol (~24 px) wird im Mosaik
+   (4-px-Blöcke) zu einem gelben Fleck, nicht mehr als drei Balken erkennbar.
+   In C und K sind die Symbole in der Zeile lesbar.
+3. In Ordnung: Jeopardy-Intro in B (Symbol mit Mosaik, 120 px), Jeopardy-
+   Tutorial in B (Symbol sichtbar), Tutorial `ddf` in J, K, C, Turnierplan in
+   C, K.
+
+**Geprüft.** Sicht per Screenshot (0,5–0,6) und berechnete Stile. **Nicht
+belastbar:** das Titel-Schild in B (`game-title-sign`) — ich habe das Overlay von
+Hand zusammengesetzt statt `showClickOverlay` zu nutzen, es blieb bei Deckkraft
+0; deshalb kein Urteil. Nicht angesehen: Intros der anderen Shows (`feud`,
+`ddf`, `pih`, `tp`), Tutorials `pih`/`tp`/`wwds`, Turnierplan in den übrigen
+Richtungen, Mainscreen-Spiegel, Hover im Menü.
+
+**Offen / Vorschlag.** Für B die Filter nur auf kleine/ruhige Fälle: im Tutorial
+(`.tut-star-anim svg`) keinen Mosaik-Filter, im Turnierplan (`.tour-icon-svg
+svg`) kleineren Block (z. B. 2 px) oder gar keinen. Noch nicht umgesetzt,
+wartet auf Davids Entscheidung.
+
+**Fallstricke.** Screenshots direkt nach `applyTheme`/Overlay-Start zeigen oft
+einen Zwischenzustand (Überblendung, Karten noch leer); nach 1–2 s erneut
+aufnehmen. Hilfsfunktionen (`__tut`, `__tour` …) leben nur in der
+Browser-Konsole der Sitzung.
+
+---
+
+## 2026-10-08 — Sichtprüfung der übrigen Richtungen (kein Code geändert)
+
+**Gemacht.** Auf `ea7805e` per `applyTheme(key)` + `renderLogo(…)` je Richtung
+Menü (8 Karten) und Show-Logo oben angesehen, Screenshot bei Skalierung 0,5
+nach 0,9 s Wartezeit: A (feud), C (danger), D (wwds), E (trophy), F (feud),
+I (wwm), J (danger), L (pih), M (tp), N (wwds), P (ddf), Q (wwm), R (trophy).
+Zusätzlich B mit `danger` und `ddf` (Logo-Reparatur `af2d91c`).
+
+**Ergebnis.** In allen 15 Ansichten sind Symbole auf den acht Karten und im
+Logo-Kopf sichtbar und im Stil der Richtung: A Gold mit Schein, C/F Sticker mit
+Kontur, D/R zweifarbig, E Doppelschatten, I/J Linie (J mit Kreide-Körnung),
+L Druckerschwärze, M Aurora, N Papierschnitt, P mehrfarbig, Q Riso. B-Logo mit
+Mosaik und Schatten auch bei `danger` und `ddf`. Keine fehlenden Symbole, keine
+leeren Karten.
+
+**Geprüft.** Nur Sicht, keine Messung. Bei 0,5 Skalierung sind Feinheiten
+(Kontur-Breite, Körnung, ob der Schatten bei Q wirklich Rosa zeigt) nicht
+sicher beurteilbar — nur „da und passend".
+
+**Offen.** Weiter nicht angesehen: Intros, Tutorial, Turnierplan,
+Mainscreen-Spiegel (Zuschauerfenster), Hover im Menü, die Logos oben von
+B mit `feud`/`tp`/`pih`/`trophy`. Frage nach Piktogrammen je Show und Richtung
+weiter offen.
+
+**Fallstricke.** Die Screenshots der Browser-Pane hinken einen Schritt
+hinterher, wenn gleich nach `applyTheme` aufgenommen wird; in der Batch-Zeile
+vor dem Screenshot `await new Promise(r=>setTimeout(r,900))` einbauen.
+
+---
+
+## 2026-10-08 — B: Logo-Symbol im Show-Kopf repariert (`af2d91c`)
+
+**Gemacht.** `--ico-filter` in B ist jetzt nur noch `url(#ico-pixel-g)`
+(`styles.css`); der harte Versatzschatten (#8A7400, 5 Einheiten = rund 3 px
+bei Skalierung 0,575) steckt als `feOffset` + `feFlood` + `feComposite` +
+`feMerge` am Ende des Filters `#ico-pixel-g` in `index.html`.
+`--ico-filter-root` (Karten, `<svg>`) unverändert.
+
+**Ursache (gemessen).** Auf der `<g>` im Logo zeigte `url(#ico-pixel-g)` allein
+das Symbol, die Kette `url(#ico-pixel-g) drop-shadow(3px 3px 0 …)` nicht —
+beides im selben Browser nacheinander per `style.filter` gesetzt. Nicht die
+Filterfläche war also das Problem (anders als in `5ac4376` vermutet),
+sondern die Verkettung mit `drop-shadow()` auf der `<g>`. Verworfen: der
+erste Versuch mit `feDropShadow stdDeviation="0"` im Filter — damit
+verschwand das Symbol wieder (Chrome liefert bei Abweichung 0 leer, vermutet,
+nicht eigens belegt); erst die ausgeschriebene Fassung funktioniert.
+Auch verworfen: meine frühere Notlösung `crispEdges`.
+
+**Geprüft.** `node check.js` = „alles in Ordnung". Im Browser (B, `renderLogo`
+mit `wwm`): Logo-Symbol sichtbar mit Mosaik und Schatten, alle acht Menükarten
+mit Mosaik. Der erste Screenshot nach `applyTheme`+`renderLogo` zeigte die
+Karten noch leer, der zweite vollständig — die Filter brauchen einen Moment.
+
+**Offen.** Ungeprüft: B-Logo in den anderen Shows (`danger`, `ddf` usw. — nur
+`wwm` gesehen), Intros, Tutorial, Turnierplan, Mainscreen-Spiegel, Hover.
+Richtungen A, C, D, E, F, I, J, L, M, N, P, Q, R weiter nicht in der
+master-Fassung gesehen. Piktogramm-Frage offen. Nicht gepusht.
+
+**Fallstricke.** Filterketten (`url() drop-shadow()`) auf einer `<g>` sind in
+Chrome unzuverlässig — Effekte lieber in den Filter selbst legen.
+
+---
+
+## 2026-10-08 — Sichtprüfung der master-Fassung der Show-Symbole (kein Code geändert)
+
+**Gemacht.** Dev-Server „Gameshows" (Port 3000) auf dem Stand `84f53de`, Host-Gate
+war aus der Vorsitzung noch entsperrt. Per `applyTheme(key)` + `renderLogo(…)`
+Menü und Show-Logo oben angesehen: B (Menü + Logo `wwm`), K (`danger`),
+O (`pih`), S (`tp`), H (`ddf`).
+
+**Befund.** (1) **Fehler in B:** Das Symbol im Show-Logo oben fehlt. Berechnet
+ist `filter: url("#ico-pixel-g") drop-shadow(…)` auf der `<g>`
+(`getBoundingClientRect` 41 × 52 px bei x 484, y 39 — Fläche da, nichts
+gezeichnet). Mit `style.filter='none'` auf der `<g>` erscheint das Symbol. Die
+Aussage aus `5ac4376`, der Pixel-Filter sei „repariert", stimmt für die
+`<g>` im Logo also **nicht**. Das Mosaik auf den acht Menükarten (`<svg>`,
+`#ico-pixel`) funktioniert. (2) K, O, S, H: Menü und Logo-Symbol sichtbar, wie
+gedacht (K Neon-Linien, O grüner Schein, S Gold, H dreifarbig).
+(3) In B sind einige Kartensymbole durch das Mosaik grob (Der Dümmste fliegt,
+Preis ist heiß) — Geschmack, kein Fehler.
+
+**Geprüft.** Nur Sicht per Screenshot (0,5–1,0 Skalierung) und berechnete
+Stile; kein `node check.js` nötig, da nichts geändert. **Nicht angesehen:** A, C,
+D, E, F, I, J, L, M, N, P, Q, R mit master-Fassung (vorher mit meiner
+verworfenen Fassung gesehen, das zählt nicht), Intros, Tutorial, Turnierplan,
+Mainscreen-Spiegel, Hover im Menü.
+
+**Offen.** B-Logo-Symbol reparieren: Ursache unbekannt (Vermutung:
+`#ico-pixel-g` mit festem `userSpaceOnUse`-Bereich 0/0/300/300 trifft die
+Position der `<g>` nicht, sie liegt im Logo bei ~127/6 mit Skalierung 0,575).
+Falls nicht rasch lösbar: für `g.show-icon` in B nur Schatten + `crispEdges`
+(meine verworfene Notlösung, die in B funktionierte). Dazu die ungeprüften
+Richtungen oben und die Frage nach Piktogrammen je Show und Richtung.
+
+**Fallstricke.** `preview_start` meldet „Server started", der Port 3000
+antwortet aber erst nach einigen Sekunden (`npx http-server`); `navigate`
+davor scheitert. Mit `curl http://localhost:3000/` warten.
+
+---
+
+## 2026-10-07 — Merge mit master: Show-Symbole doppelt gebaut, master gilt (`e947db4`)
+
+**Gemacht.** `origin/master` in `claude/game-buzzer-fixes-90cyjz` gemergt.
+Konflikte in `styles.css`, `index.html`, `HANDOFF.md`.
+
+**Fund.** Eine parallele Session hatte dieselbe Aufgabe („Show-Symbole je
+Design") schon auf master erledigt (`5ac4376`, Eintrag `e8ba588`): gleiche
+Idee, aber andere Umsetzung (`--ico-fstroke`/`--ico-fsw`/`--ico-lw`) und mit
+**zwei** Pixel-Filtern (`#ico-pixel` für `<svg>`, `#ico-pixel-g` für `<g>`,
+feste `userSpaceOnUse`-Fläche) statt meiner Notlösung `crispEdges`. Beides
+entstand unabhängig, weil mein Zweig nach `d5850ae` nicht mit master abgeglichen
+war.
+
+**Entscheidung.** In `styles.css` und `index.html` die Fassung von master
+genommen, meine Regeln (`4abba0a`, `d74ae24`) verworfen. Begründung: master
+löst das Filterproblem im Pixel-Filter selbst (der Fehler, den ich in B
+gefunden habe, ist dort als Ursache benannt: Filterregion bei `<g>`), meine
+Lösung hätte B auf die schwächere Optik gesetzt. `js/` war ohnehin gleich. Die
+beiden HANDOFF-Zweige zusammengelegt (master-Einträge oben, meine
+darunter); meine Einträge zu `4abba0a`/`d74ae24` beschreiben Code, der nicht
+mehr existiert, und sind nur noch Verlauf.
+
+**Geprüft.** `node check.js` = „alles in Ordnung" (Klammern 1052).
+`git diff origin/master`: nur `CLAUDE.md` (+18) und `HANDOFF.md` (+118)
+weichen ab, der Code ist identisch mit master. **Nicht im Browser angesehen** —
+die Fassung von master habe ich nicht selbst geprüft.
+
+**Offen.** (1) Sichtprüfung der master-Fassung (vor allem B, `#ico-pixel-g` im
+Show-Logo). (2) Die Frage nach eigenen Piktogrammen je Show und Richtung ist
+weiter offen. (3) Nicht gepusht; ein Push des Zweigs ändert live nichts, erst
+`master`.
+
+**Fallstricke.** Vor Arbeit an einer Aufgabe aus der HANDOFF zuerst
+`git log origin/master` ansehen, nicht nur `git status`: der Zweig stand
+„sauber", master war trotzdem schon fertig.
+
+---
+
+## 2026-10-07 — Entwürfe hochwertiger: acht Richtungen in `designs/s/` (`be7ec34`)
+
+**Auftrag (David).** „1,4,5,8 (deutlich), 11,14, 17 und 18 hochwertiger“.
+Zuordnung nach der Nummerierung der Designs-Seite (annahme, nicht
+rückbestätigt): 1 = A Studio, 4 = D Late Night, 5 = E 70er, 8 = I Salon
+(deutlich); 11 = L New York, 14 = O Terminal, 17 = R Jazzplatte, 18 = S Art
+déco. Auf Nachfrage „Beides“ (Entwürfe und laufende Show) und: vor allem
+hochwertigere Details, manche Sachen sähen „billig“ aus; feinere Details,
+bessere Schrift und Abstände, stimmigere Farben, mehr Bewegung. Nach dem
+Pilot an I: „mach die anderen sieben Richtungen genauso“.
+
+**Gemacht (nur die Entwürfe, 95 Dateien in `designs/s/`).** Je Richtung ein
+Skript in `designs/polish/` (siehe README dort), das exakt erkannte
+Style-Muster der Exportdateien umschreibt - kein Handeditieren von 96 Dateien.
+- **I Salon:** Filz mit Körnung und Vignette, goldener Doppelrand, Papierkarten
+  mit Textur/Innenrahmen/Schichtschatten, Kartenrücken mit Raute, Chips mit
+  Ring und Kante (Stapel wirken dick), Spielautomat im Handy-Bild mit
+  Metall- und Lackverläufen.
+- **D Late Night:** Filmkorn, warmer Lichtkegel, Papierkarten, Orange-Block
+  mit Glut, Skyline mit Kantenlicht und glühenden Fenstern, Balken mit
+  Tiefe, Zeilen mit weichem Lichtverlauf, Orange-Schrift mit Glut.
+- **A Studio:** Glanzkante auf allen Tafeln, Glühbirnen mit hellem Kern,
+  eingelassene Antwortfelder, 3D-Goldflächen, Korn und Vignette, weichere
+  Scheinwerferkegel.
+- **E 70er:** glänzendes Email (Orange/Gelb/Braun mit Glanzkante und hartem
+  Retro-Schatten), Antwortbänder, Korn, Strahlen blenden zum Rand aus,
+  SVG-Fächer im Jeopardy-Bild mit Kante und Schatten.
+- **L New York:** Papierfaser, Falz in der Mitte, Druckerschwärze mit Struktur,
+  Schlagzeilen mit Farbbluten, Rotstempel als Multiply.
+- **O Terminal:** Kunststoffgehäuse mit Korn, stärkere Phosphor-Glut,
+  **Animation:** rollende Scanlines, leichtes Flackern, blinkender Cursor.
+- **R Jazzplatte:** Plattenhüllen aus Karton, Vinyl mit Glanz, Etiketten mit
+  Verlauf, Papierkarten, Raum mit Korn.
+- **S Art déco:** schwarzer Lack mit Korn, Goldleisten mit Tiefe,
+  Eintrittskarten mit Papier, **Animation:** Strahlenkränze drehen sich
+  langsam (240 s). Beide Animationen stehen in einem
+  `<style id="iryo-polish">` im Kopf und gehen bei `prefers-reduced-motion` aus.
+
+**Warum so.** Der Export hat überall nur Inline-Styles; ein gemeinsames
+Stylesheet hätte gegen sie `!important` gebraucht. Das Umschreiben der
+Style-Attribute nach festen Mustern lässt sich pro Richtung prüfen und
+zurücknehmen (`git checkout -- designs/s/<K>-*.html`). Erste Fassung der I-Politur
+hatte den SVG-Filterverweis doppelt kodiert (`%2523`) - Karten wurden schwarz;
+Filz zuerst zu hell, Papier in L zuerst zu grau (Faser zu stark). Beides
+korrigiert. Verworfen: Entwürfe per iframe-Skript statt Umschreiben der Dateien,
+und gemeinsame Regeln für alle Richtungen (jede hat anderes Material).
+
+**Geprüft.** Alle 96 Dateien: Klammern in allen 4792 Style-Attributen
+ausgeglichen, keine `undefined`/`NaN`. Im Browser (Vorschau-Server, Ansicht in
+Haelften wegen des schmalen Fensters) angesehen: Menü, Family Feud, Jeopardy,
+Millionär für A, D, E, I, L, O, R, S; dazu Handy und weitere Screens bei I
+(Automat), D, E. `node check.js` = alles in Ordnung (prüft `designs/` nicht).
+Dateigröße der acht Richtungen von 760 auf 1032 KB (Rauschen als data-URI,
+meist 20-40 KB je Datei).
+
+**Ungeprüft.** Nicht jeder der 96 Screens einzeln (Stichproben), das Verhalten
+auf einem echten Handy, die Auslastung beim Voting mit 18 Vorschauen, in denen
+jetzt O und S animieren, **die laufende Show** (`js/theme.js`, `styles.css`)
+- dort ist nichts geändert, sie kennt weiter nur Farben und Schriften der
+Richtungen. Ob das Wort „billig“ bei David genau diese Stellen meint, ist
+Vermutung.
+
+**Offen.** Das Gleiche für die laufende Show (David wählte „Beides“).
+Entwürfe und Show sind damit auseinander; wer neu exportiert, überschreibt die
+Politur und muss `designs/polish/` erneut laufen lassen.
+
+---
+
+## 2026-10-06 — Voting-Seite für die 18 Design-Richtungen `/voting/` (`2982e6d`)
+
+**Auftrag (David).** Eine Seite, die Freunde bekommen: alle Designs
+anschauen, Top 5 geordnet abgeben (Pflicht), bis zu 5 Schlechte geordnet
+(optional), Bookmarks setzen, am Anfang 2-3 Textfenster zur Bedienung,
+frei vor und zurück, am Ende eine Übersicht zum Abgeben.
+
+**Annahme, nicht abgesprochen:** Abgestimmt wird über die 18 Richtungen aus
+`designs/` (nicht über Spiele oder etwas anderes).
+
+**Gemacht.** Neuer Ordner `voting/`, kein Eingriff in die Show:
+- `voting/index.html`: drei Etappen (Anleitung in 3 Fenstern, Durchgehen,
+  Abgabe), Kopfleiste jederzeit anklickbar, Browser-Zurück-Taste geht auch.
+  Durchgehen: ◀ ▶ und Pfeiltasten, Reiter je Screen, Bookmarks 👍/👎 (nur
+  Merkzettel), Streifen mit allen 18. **Abgabe als Stempel-Übersicht**
+  (David: „die Übersicht, und die clicken an und setzen so kleine stamps
+  1-5", nachdem die erste Fassung mit Listen und ▲▼ verworfen wurde):
+  Raster aller 18 mit Vorschau. **Die Stempel gehen der Reihe nach** (David,
+  zweite Korrektur: „nicht so auswählen, das 1. was sie anclicken is
+  Platz 1, das 2. Platz 2"): erster Klick = ★1, zweiter = ★2 … ★5 (Top 5,
+  Pflicht, 1 = Favorit). Nach dem fünften springt die Seite auf ✖ (Schlecht,
+  optional, ✖1 = am schlechtesten); zwei Knöpfe oben schalten von Hand um.
+  Ein gestempeltes Design nochmal anklicken nimmt den Stempel ab, die
+  folgenden rücken auf (Nummern bleiben lückenlos, deshalb gibt es keine
+  Stempelwahl mehr). Stempel groß auf dem Bild, Übersicht oben, Hinweis
+  „Nächster Stempel: ★n“, Filter. Erste Fassung (Listen mit ▲▼) und zweite
+  (Stempelwahl pro Design) sind verworfen.
+  Annahmen von mir: Umschalten auf ✖ automatisch nach ★5; ein
+  Design von ★ nach ✖ zu verschieben heißt abnehmen und neu anklicken.
+- `voting/ergebnis.html`: Rangliste (Top 5 = 5…1 Punkte, Schlechte = −5…−1),
+  Einzelabgaben, live. Nirgends verlinkt - nur David kennt die Adresse.
+- `voting/data.js`: Kopie der Richtungsliste aus `designs/index.html`.
+  **Beide Listen von Hand synchron halten.**
+- Speicher: Firebase Realtime Database, Pfad `votes/<name>` (dieselbe
+  Datenbank wie der Buzzer, Config aus `buzzer/index.html`). Gleicher Name =
+  gleiche Abgabe, vorher kommt eine Rückfrage, wenn der Name schon vergeben
+  ist. Fortschritt bleibt in `localStorage` (`iryo-voting-v1`).
+- Schlägt das Senden fehl, kommt ein Fenster mit der Auswahl als Text zum
+  Kopieren.
+
+**Warum so.** Firebase, weil das Projekt es schon nutzt und die Regeln offen
+sind - kein neuer Dienst. Gerüst wird nur einmal gebaut und danach nur
+aktualisiert, weil jedes Neuzeichnen die 18 Vorschau-iframes neu geladen
+hätte.
+
+**Geprüft.** Im Browser per Skript durchgespielt (ohne Firebase): Anleitung
+vor/zurück, Durchgehen mit Bookmarks, Reiter, Kopfleiste und Browser-Zurück,
+Fallback-Fenster bei fehlendem Firebase (alles an der ersten Fassung). An der
+Reihenfolge-Fassung: Klicks in Reihenfolge, Abnehmen mit Aufrücken, Wechsel
+auf ✖ nach ★5, Umschalten von Hand, sechster Klick in voller Liste
+abgelehnt, Namenspflicht, Anzeige in Übersicht und auf dem Bild, Aussehen
+per Screenshot (Handybreite). Keine Konsolenfehler beim Laden. `node check.js` ändert sich nicht (prüft
+`voting/` nicht).
+
+**Firebase-Test (Davids Auftrag „mach nen Testeintrag in Firebase“, nach
+`2982e6d`).** Über die lokale Seite mit dem echten „Stimmen abgeben“-Knopf
+eine Abgabe als „TEST-LOESCHEN“ geschickt (5 Top, 2 Schlechte, keine
+Bookmarks). Ergebnis: Dankesseite kam, Eintrag lag unter
+`votes/test-loeschen` mit `top`, `bad`, `name`, `ts`, `v`; `ergebnis.html`
+las ihn live und rechnete richtig (C · Pop 5 Punkte vorn, dann A, B, D, E mit
+4-1). Danach den einen Eintrag per `remove()` gelöscht, `votes/` war leer
+(`null`), die Ergebnisseite zeigte „Noch keine Abgaben“. Beobachtung:
+Firebase speichert leere Listen nicht, bei einer Abgabe ohne Bookmarks fehlen
+`up` und `down` - `ergebnis.html` fängt das mit `|| []` ab, der Test lief
+genau so. Getestet nur von `localhost`; von der Live-Adresse aus ist es
+dieselbe Datenbank, aber nicht eigens versucht.
+
+**Ungeprüft.** Das Aussehen auf dem Handy-Gerät selbst (nur Screenshot in
+Handybreite im Browser-Fenster), Ladezeit von 18 Vorschauen auf dem Handy,
+das Verhalten bei zwei gleichzeitigen Abgaben, die Live-Adresse nach dem
+Deploy.
+
+**Offen.** Jeder mit dem Link kann Abgaben anderer überschreiben oder
+löschen (offene Datenbankregeln, wie beim Buzzer). Ergebnis-Adresse liegt
+unter `/voting/ergebnis.html`, ist aber nicht geheim.
+
+---
+
+## 2026-10-06 — Show-Symbole je Design: Regeln in styles.css (`5ac4376`)
+
+**Gemacht.** Fortsetzung von `d226865`. David: „Stil je Richtung wie geplant
+umsetzen" - ein Zeichenstil je Richtung, nicht je Show und Richtung.
+- `styles.css`: Block „Show-Symbole je Design-Richtung" nach den Show-Logo-
+  Regeln. Jede Richtung (A-S ohne G) setzt nur Variablen `--ico-*` (Fläche,
+  Kontur, Linie, Aussparung, gedimmt, Filter, Blend); die Regeln darunter
+  greifen per Attribut-Selektor auf die vier Elementsorten. Bauhaus (H) und
+  Memphis (P) färben reihum per `:nth-child`.
+- Alte Regeln für `#main-logo` entfernt (Verlauf-Stops, `[fill="#0b0e2c"]`,
+  `[fill="#3a3f6b"]`, die `data-theme-hell`-Stops). Die `.logo-word`-Regeln
+  bleiben.
+- `index.html`: Filter `#ico-pixel` neu gebaut, dazu `#ico-pixel-g`.
+
+**Warum so.**
+- Wächter per `:where(...)`: `:root[data-theme]:not([data-theme="A"])` hätte
+  0,3,0 Spezifität und die Richtungs-Regeln (nth-child, Umriss-Stile)
+  geschlagen. A behält das Gold und bekommt nur Aussparung, Dimmung, Schein.
+- Elemente mit eigenem `stroke` (Karte im WWDS-Pult, Mittelpunkt der Torte)
+  werden getrennt behandelt, sonst verschwindet deren Fuge bzw. die
+  Linienbreite wird überschrieben.
+- Umriss-Stile (I, J, K): Aussparungen und gedimmte Flächen bekommen
+  `fill:none` plus Linie (`--ico-cutline`, `--ico-dimline`); sonst wäre die
+  gedimmte Säule heller als die leuchtende.
+- **Lücken in der Tabelle, von mir gewählt** - bitte prüfen: H Linie #141414,
+  Aussparung #ECEAE4, gedimmt #141414. P gedimmt rgba(20,20,20,.3),
+  Aussparung #F4F1FF. M Linie #B7A6FF statt Verlauf (ein senkrechter Strich
+  hat keine Breite, ein Verlauf nach Bounding-Box wird dort nicht gezeichnet;
+  nicht eigens geprüft, Vorsichtsmaßnahme). Q Linie = Fläche.
+- **Pixel-Mosaik (B), drei Anläufe.** (1) Der vorbereitete Filter mit Fläche
+  = Elementrand und feFlood in festen Einheiten: am `<svg>` ging es, an der
+  `<g>` (Show-Logo oben) blieb das Symbol leer. Vermutung: die Teilregion
+  der feFlood liegt im Koordinatensystem des Elements, die Filterfläche
+  beginnt aber am Rand der `<g>`. (2) `primitiveUnits="objectBoundingBox"`
+  mit Bruchteilen: in Chrome nirgends sichtbar. (3)
+  `filterUnits="userSpaceOnUse"` ab 0/0 mit fester Fläche: geht an `<svg>`
+  (CSS-Pixel, 4-px-Blöcke) und an `<g>` (Symbol-Einheiten, 6 Einheiten) -
+  an einem Testkreis in allen drei Fällen nachgestellt. Deshalb zwei Filter:
+  `--ico-filter-root` für das `<svg>`, `--ico-filter` für die `<g>`.
+- Der Hover der Menükarte setzt `filter` mit Spezifität 0,3,1; die Filter-
+  Regel hat dafür eine eigene Hover-Zeile.
+
+**Geprüft.** `node check.js` und `node check.js --types` = alles in Ordnung
+(1052 Klammernpaare). Im Browser (Vorschau-Server, 18 iframes mit
+`applyThemeToDoc`; je Richtung die Menü-Symbole aller acht Spiele plus
+Show-Logo `pih`): alle 18 Richtungen zeichnen, B, J, K, M, O, Q, S nach dem
+Filter-Umbau einzeln angesehen. Testseiten wieder gelöscht, `designTheme`
+im Browser zurückgesetzt.
+
+**Ungeprüft.** Mainscreen/Zuschauerfenster (Filter-Verweise `url(#ico-...)`
+im gespiegelten Dokument), Hover auf einer Menükarte, Intros/Tutorial/
+Turnierplan mit Richtung, Klassik ohne Richtung (die Regeln gelten nur bei
+`data-theme`; nicht nachfotografiert). Die Passwort-Sperre habe ich für die
+Tests nur als Overlay im iframe entfernt, nichts eingegeben.
+
+**Offen.** Davids Entscheidung „eigenes Piktogramm je Show und Richtung"
+(Eintrag darunter) ist offen; er hat sich für den Zeichenstil je Richtung
+entschieden. Das Mosaik wirkt bei WWDS und Torte unruhig.
+
+**Fallstricke.** Python gibt es auf dieser Maschine nicht; Textumbauten mit
+`node -e`. Mehrzeilige Texte nicht per `node -e` in Bash quoten - dafür das
+Edit-Werkzeug nehmen. Der Vorschau-Screenshot lief mehrfach in ein Timeout,
+ein zweiter Versuch klappte jeweils.
+## 2026-10-07 — Show-Symbole im Browser geprüft, Pixel-Filter raus (`d74ae24`)
+
+**Gemacht.** Dev-Server „Gameshows" (Port 3000), Host-Gate mit dem
+Passwort aus `js/jeopardy-ui.js` entsperrt (Davids ausdrückliche Bitte, lokal).
+Per `applyTheme(key)` im Menü angesehen: A, B, C, D, E, F, H, I, J, K, M, N,
+O, P, Q, S. Show-Logo oben (`renderLogo`) zusätzlich in B, F, J.
+
+**Fund: `#ico-pixel` ging nicht.** Mit dem Mosaik-Filter (feTile +
+feMorphology) auf den Symbolen verschwanden in B die Menü-Symbole (nur bei
+einem blieb ein Klecks), das Show-Logo-Symbol (Filter auf `<g>`) fehlte ganz,
+und der Screenshot lief mehrfach in den Timeout (Filter schwer, acht Karten +
+Logo). Ohne den Filter am Logo-`<g>` war das Logo-Symbol da, die Karten blieben
+leer → der Filter ist insgesamt unzuverlässig, nicht nur auf `<g>`.
+Verworfen. Stattdessen in B: `shape-rendering: crispEdges` auf allen
+Symbol-Elementen + harter Versatzschatten (#8A7400). `#ico-pixel` aus
+`index.html` entfernt. Danach Menü und Logo in B vollständig sichtbar.
+`#ico-chalk` (J, Turbulenz) lief in Menü und Logo ohne Ausfall.
+
+**Geprüft.** `node check.js` = „alles in Ordnung". Sichtprüfung wie oben, nur
+im Menü und im Logo-Kopf, mit Screenshots bei 0,6 Skalierung. **Nicht
+angesehen:** Richtungen L und R (Menü/Logo), Logos oben in allen außer B/F/J,
+Intros, Tutorial, Turnierplan, Mainscreen-Spiegel, Hover im Menü,
+Logo-Kopf in K/M/O mit Schein.
+
+**Auffällig, nicht vertieft.** In H und N wirken die Menükarten grau-braun
+(kommt aus den Richtungen selbst, nicht aus den Symbol-Regeln — nicht geprüft).
+In P hat nur ein Teil der Symbole mehrere Farben (`:nth-child` greift je nach
+Aufbau unterschiedlich).
+
+**Offen.** (1) Je-Show-Piktogramm statt nur Stil je Richtung: weiter keine
+Antwort. (2) `origin/master` ist 112 Dateien weiter (u. a. `styles.css`,
+`HANDOFF.md`); ein Merge-Test (`git merge-tree`) zeigt Konflikte in genau diesen
+beiden Dateien — vor dem Zusammenführen auflösen. (3) Branch
+`claude/game-buzzer-fixes-90cyjz`, dieser Stand noch nicht gepusht.
+
+**Fallstricke.** Die Screenshots der Browser-Pane laufen bei schweren Filtern
+in einen Timeout — ein einzelner Wiederholungsversuch reicht meist; trat er
+dauerhaft auf, war das ein Hinweis auf den Filter selbst.
+
+---
+
+## 2026-10-06 — UNFERTIG: Show-Symbole je Design, CSS geschrieben, nicht angesehen (`4abba0a`)
+
+**Aktueller Stand.** Die Regeln aus der Tabelle im Eintrag zu `d226865` stehen
+in `styles.css` (Block hinter `:root[data-theme-hell] #main-logo .logo-word`),
+für alle 17 Richtungen (A–S ohne G). Variablen je Richtung: `--ico-fill`,
+`--ico-line` (Rückfall: Fläche), `--ico-contour` + `--ico-cw` (Kontur um
+Flächen, `paint-order:stroke`), `--ico-cut`, `--ico-dim`, `--ico-filter`. A
+bekommt nur Schein, Aussparung und Dimmung (Gold bleibt). I/J/K zeichnen
+Aussparungen und Säulen als Linie. H und P färben per `:nth-child` mehrfarbig.
+Die alten `#main-logo`-Umfärbungen (Verlaufs-`stop`, `#0b0e2c`, `#3a3f6b`,
+hell-Variante) sind entfernt, die `.logo-word`-Regeln geblieben.
+
+**Stopppunkt.** `node check.js` = „alles in Ordnung" (Klammern 1049). **Im
+Browser nicht angesehen** — auf Davids Wunsch unterbrochen, bevor der
+Dev-Server lief (`.claude/launch.json`, Name „Gameshows", Port 3000). Nicht
+gepusht.
+
+**Kreative Ansätze & Visionen.** Je Richtung ein eigener Zeichenstil statt
+Umfärbung: A Studio-Glühbirnen-Schein · B Mosaik/Pixel · C und F Sticker/Comic
+mit dicker schwarzer Kontur und Versatzschatten · D, R zweifarbig · E 70er-
+Doppelschatten · H Bauhaus-Dreiklang · I Strichzeichnung · J Kreide · K Neon ·
+L Druckerschwärze · M Aurora-Verlauf · N Papierschnitt · O Phosphor mit
+Scanlinien · P Memphis · Q Riso mit `multiply` · S Art déco mit Metallverlauf.
+Weiter offen (David nie beantwortet): reicht der Stil je Richtung, oder je
+Show **und** Richtung ein eigenes Piktogramm (18 × 9 Zeichnungen)?
+
+**Nächste Schritte.**
+1. Dev-Server starten, je Richtung Menü, Show-Logo oben, Intro, Tutorial und
+   Turnierplan ansehen (Screenshot, 17 Richtungen).
+2. Prüfen: wirkt `#ico-pixel` / `#ico-chalk` als CSS-`filter` auf `<g>` im
+   Show-Logo und im Mainscreen-Spiegel? Sonst Filter nur auf `<svg>`.
+3. Prüfen: `:nth-child` in H/P zählt wegen `<defs>` im Symbol schief → ggf.
+   anders lösen; Kontur der Aussparungen in I/J/K (`tp`-Mitte).
+4. Von mir **geraten**, nicht aus dem Plan: Aussparung H (#ECEAE4) und Dimmung
+   H/P (rgba(20,20,20,.25)); Linie in M/Q/L-ähnlichen Richtungen = Fläche.
+5. Bei Hover im Menü ersetzt `--ico-filter` den bisherigen Hover-Schatten —
+   ansehen, ob das stört.
+6. Erst danach push; `node check.js --types` laufen lassen (nur CSS geändert,
+   daher wenig Risiko).
+
+**Fallstricke.** Edge headless: nach jedem CDP-Lauf Prozesse mit `scratchpad`
+in der Kommandozeile beenden (Eintrag `86bc0e2`).
+
+---
+
+## 2026-10-06 — Abschluss-Übersicht um „Kreative Ansätze & Visionen" erweitert (`8b1c8a2`)
+
+**Gemacht.** David hat die Vorgabe präzisiert. Die Abschluss-Übersicht in
+`CLAUDE.md` hat jetzt vier Punkte: Aktueller Stand · Stopppunkt · Kreative
+Ansätze & Visionen (Design-Ideen, Stile, Layouts, auch verworfene) · Nächste
+Schritte. Ergänzt `746eab9`, das nur drei Punkte hatte.
+
+**Geprüft.** `node check.js`: „alles in Ordnung". Nur Markdown.
+
+**Offen.** Weiterhin nicht gepusht (3 Commits vor origin auf
+`claude/game-buzzer-fixes-90cyjz`). Die übergeordnete `Coding/CLAUDE.md` ist
+unverändert.
+
+---
+
+## 2026-10-06 — Regel: Abschluss-Übersicht auch in die HANDOFF (`746eab9`)
+
+**Gemacht.** In `CLAUDE.md` (Abschnitt „HANDOFF.md") neuer Unterabschnitt
+„Abschluss-Übersicht bei Themenwechsel oder Abbruch": bei Abbruch oder
+Themenwechsel einer komplexen Aufgabe kommt eine kurze Übersicht (zuletzt
+bearbeitet · Stand · nächste Schritte) immer auch in die `HANDOFF.md`, auch
+ohne Commit.
+
+**Warum so.** David wollte die Regel dauerhaft statt nur für ein Gespräch. Die
+Projekt-`CLAUDE.md` gewählt, weil dort die HANDOFF-Regeln stehen. Nicht in die
+übergeordnete `Coding/CLAUDE.md` geschrieben (läge außerhalb dieses Repos);
+sie müsste dort bei Bedarf separat ergänzt werden.
+
+**Geprüft.** `node check.js`: „alles in Ordnung". Nur Markdown geändert.
+
+**Offen.** Nicht gepusht (Branch `claude/game-buzzer-fixes-90cyjz`). Der
+unfertige Eintrag zu den Show-Symbolen darunter ist unverändert.
+
+---
+
+## 2026-10-06 — UNFERTIG: Show-Symbole je Design neu zeichnen (`d226865`)
+
+**Auftrag (David).** „die Show-Symbole auch pro Design neu zeichnen" - nach
+`86bc0e2` sind die Symbole in allen Richtungen nur umgefärbt.
+
+**Stand.** Abgebrochen auf Davids Wunsch, um an einem anderen Rechner
+weiterzumachen. Gepusht ist nur die Vorbereitung, sichtbar ändert sich
+nichts:
+- `js/core.js`: Klasse `show-icon` an `STAR_SVG`, `DANGER_SVG` (je am
+  `<svg>`), `gameCardIcon` (`<svg>`) und den beiden Symbol-`<g>` in
+  `renderLogo`. Damit erfasst eine CSS-Regel alle fünf Stellen: Show-Logo
+  oben, Menükarten, Intros/Titel (auch Mainscreen), Tutorial, Turnierplan.
+- `index.html`: `<svg id="show-icon-defs">` direkt nach `<body>` - Filter
+  `#ico-pixel` (Mosaik, 5 Einheiten), `#ico-chalk` (Turbulenz + Körnung),
+  Verläufe `#ico-aurora`, `#ico-deco`, Muster `#ico-scan`. Bewusst nicht
+  `display:none` (dann baut der Browser Verläufe/Filter nicht, siehe
+  Kommentar über `withOwnGradId`) und im `<body>`, damit der Spiegel es in
+  den Mainscreen trägt.
+
+**Was fehlt: die Regeln in `styles.css`.** Die Symbole bestehen aus vier
+Sorten Elementen, die sich per Attribut-Selektor greifen lassen:
+`[fill^="url"]` (Goldfläche), `[stroke^="url"]` (Goldlinie),
+`[fill="#0b0e2c"]`/`[stroke="#0b0e2c"]` (Aussparung), `[fill="#3a3f6b"]`
+(gedimmte Jeopardy-Säulen). Geplant: Basisregel
+`:root[data-theme]:not([data-theme="A"]) .show-icon …` mit Variablen
+`--ico-fill`, `--ico-sfill`, `--ico-line`/`--ico-lw` (Kontur mit
+`paint-order:stroke`), `--ico-cut`, `--ico-dim`, `--ico-filter` auf
+`svg.show-icon, g.show-icon` (Spezifität muss
+`.menu-card:hover .menu-card-icon svg` schlagen, also `svg.show-icon` und
+später im CSS). Je Richtung:
+
+| | Technik | Fläche / Linie / Aussparung / gedimmt / Filter |
+|---|---|---|
+| A | Studio-Gold bleibt, Glühbirnen-Schein | Gold unverändert / – / #0A0C26 / #2A2E66 / drop-shadow 0 0 6px rgba(255,201,60,.6) |
+| B | verpixelt | #FFE14D / – / #0B0A12 / #2B2740 / url(#ico-pixel) drop-shadow(3px 3px 0 #8A7400) |
+| C | Sticker | #FFA3D1, Kontur #121212 3.5 / Linien #121212 / #121212 / #FFF / drop-shadow(4px 4px 0 #121212) |
+| D | zweifarbig | #FF5B1F / Linien #F2F2F2 / #0E0E0E / #3A3A3A / – |
+| E | 70er-Doppelschatten | #F6E7CB / Linien #F2B33D / #2B1810 / #8C3A1A / drop-shadow(3px 3px 0 #E8622C) drop-shadow(3px 3px 0 #8C3A1A) |
+| F | Comic | #FFE600, Kontur #111 3.5 / Linien #E8453C / #111 / #FFF / drop-shadow(4px 4px 0 #111) |
+| H | Bauhaus | `:nth-child(3n+1/2/3)` → #D7372B / #1F4FA3 / #F2C230 / #ECEAE4 / #141414 |
+| I | Strichzeichnung | fill none, stroke #C9A54C 2 (auch Aussparungen) / dim rgba(201,165,76,.4) |
+| J | Kreide | fill none, stroke #EDEDE6 3 / url(#ico-chalk) |
+| K | Neon | fill none, stroke #FF4FA3 3, Linien #45F0FF / drop-shadow(0 0 3px #FF4FA3) drop-shadow(0 0 8px #FF4FA3) |
+| L | Druckerschwärze | #1A1712 / #1A1712 / #978C73 / rgba(26,23,18,.35) / – |
+| M | Aurora | url(#ico-aurora) / #070A1A / rgba(183,166,255,.25) / drop-shadow(0 0 6px rgba(183,166,255,.6)) |
+| N | Papierschnitt | #F06A4E / Linien #163936 / #FBF5E8 / #9CCBC0 / drop-shadow(2px 3px 0 rgba(22,57,54,.25)) |
+| O | Phosphor | url(#ico-scan) / Linien #7CFFA0 / #05140B / #1F5A33 / drop-shadow(0 0 4px rgba(124,255,160,.7)) |
+| P | Memphis | `:nth-child(4n…)` #FFD23F #3FD0C9 #FF6FA8 #7B5CFF, Kontur #141414 2.5 / #141414 / #F4F1FF |
+| Q | Riso | #3255A4 / #F2EEE4 / rgba(50,85,164,.3) / drop-shadow(3px 2px 0 rgba(255,72,176,.85)), mix-blend-mode multiply |
+| R | Plattencover | #F2A900 / Linien #F4F1EA / #111 / #3A3A3A / – |
+| S | Art déco | url(#ico-deco), Haarlinie #FBEBC0 .8 / Linien #D9B66B / #0B0A08 / rgba(217,182,107,.25) |
+
+Danach die alten Regeln in `styles.css` entfernen, die nur `#main-logo`
+umfärben (`#main-logo linearGradient stop`, `#main-logo [fill="#0b0e2c"]`,
+`[fill="#3a3f6b"]`, `:root[data-theme-hell] #main-logo linearGradient
+stop`) - die `.logo-word`-Regeln bleiben.
+
+**Offene Entscheidung.** David wurde gefragt, ob dieser Zeichenstil je
+Richtung reicht oder ob er je Show und Richtung ein eigenes Piktogramm
+will (18 × 9 Zeichnungen). Keine Antwort bisher - vor dem Weiterbauen
+klären.
+
+**Geprüft.** `node check.js` = alles in Ordnung. Nicht im Browser angesehen
+(es gibt noch nichts zu sehen). Ungeprüft: ob `#ico-pixel` als CSS-`filter`
+auf einem `<g>` im Show-Logo und im Mainscreen-Dokument wirkt.
+
+**Fallstricke.** Edge headless für Tests: nach jedem CDP-Lauf Prozesse mit
+`scratchpad` in der Kommandozeile beenden (Eintrag `86bc0e2`). Das
+Testskript `cdp.mjs` liegt nur im Scratchpad der alten Sitzung.
+
+---
+
+## 2026-10-06 — Eigenes Logo je Design-Richtung (`86bc0e2`)
+
+**Gemacht.** David: „Die Logos sind nicht da drin, da is überall das
+Standardlogo." Stimmte: `renderIryoHubLogo` (core.js) zeichnete immer das
+Blau-Gold-Canvas-Schild, `theme.js` fasste Logos nicht an.
+- `DESIGN_LOGOS` in `js/theme.js`: je Richtung die Wortmarke aus
+  `designs/s/<K>-Menu.html`, als HTML auf 640 px Breite. `themeLogoHtml`
+  rechnet jede px-Angabe in `cqw` um (Box mit `container-type:inline-size`),
+  dasselbe Markup passt so ins Menü (400 px) und auf den Wartebildschirm
+  (`BOARD_IDLE_WIDTH`, 60vw).
+- `renderIryoHubLogo` nimmt mit Richtung dieses HTML, sonst wie bisher das
+  Schild. `applyTheme` zeichnet Menü- und Wartebildschirm-Logo sofort neu.
+- Design-Screen zeigt das Hub-Logo (vorher „KELLER FEUD" aus dem
+  `else`-Zweig von `showScreen`).
+- Show-Logos oben (`renderLogo`): per CSS `--font-logo`, Symbol und Wort in
+  `--gold-rgb` (helle Richtungen: Wort `--fg`, Symbol `--accent-text`),
+  kein Goldschein. `fitLogoWords` staucht Wörter über 284 Einheiten per
+  `textLength` (Press Start 2P, Fraktur). L nimmt für Show-Logos Playfair
+  Display 900 - Fraktur in Versalien („WER WEISS") war unleserlich.
+- Klassik-Schild: lädt Luckiest Guy per `document.fonts.load` nach, wenn
+  die Seite mit Richtung gestartet wurde (sonst Ersatzschrift im Canvas).
+
+**Warum HTML statt Canvas je Richtung.** Der Mainscreen spiegelt per
+`cloneNode`, ein geklontes Canvas kommt leer an (Kommentar in core.js).
+Verworfen: die Menü-Entwürfe per iframe einbetten - eigenes Dokument, kein
+Spiegel, und das ganze Menü statt nur der Marke.
+
+**Geprüft.** `node check.js` = alles in Ordnung (1013 → 1020
+Klammerpaare); `node check.js --types` = 14 Dateien, keine Meldung.
+Edge headless: Kontaktabzug aller 18 Menü-Logos; F (Umbruch), O
+(ASCII-Grafik zerfiel, Rahmenzeichen in Ersatzschrift - durch VT323-
+Schriftzug ersetzt), P (Zeile auseinander), S (Strahlenkranz zu stark)
+nachgebessert und erneut fotografiert. Show-Logos WWDS für B, L, K, C, S, F
+und Jeopardy für 6 Richtungen (Breiten 117-272, keine über 284). Start mit
+`designTheme=L`, dann Klassik: Schild in Luckiest Guy,
+`fonts.check` = true. Echtes Mainscreen-Fenster: nach `applyTheme('R')`
+steht in `#board-idle` „Iryo GAMESHOW RECORDS".
+
+**Ungeprüft.** Show-Logos für die übrigen 12 Richtungen einzeln; die
+Symbole sind nur umgefärbt, nicht je Richtung neu gezeichnet. Handy-Seiten
+(`buzzer/`, `gamepad/`) tragen keine Richtung.
+
+**Fallstricke.** `msedge --remote-debugging-port` hinterlässt nach
+`ed.kill()` Kindprozesse, die den Port halten; der nächste Lauf hängt sich
+dann an die alte Instanz (in einen Popup-Tab ohne `applyTheme`). Vor jedem
+Lauf Edge-Prozesse mit `scratchpad` in der Kommandozeile beenden.
+
+---
+
+## 2026-10-06 — Design-Fenster live: Branch nach master, Overlay-Hintergrund (`7b19391`)
+
+**Gemacht.** `claude/game-buzzer-fixes-90cyjz` per Fast-Forward nach
+`master` gebracht (vorher 42 Commits voraus, 0 zurück; master stand
+unverändert bei `71522b2`). Damit live: der Knopf „🎨 Design" im Hauptmenü
+öffnet den Screen `#design-screen` in der Show selbst (kein eigener Tab mehr,
+Davids Wunsch „auf der Website mit nem Window, nicht eine extra url"),
+`js/theme.js` mit 18 Richtungen, und alle Entwürfe aus Runde 2 und 3 unter
+`designs/`. Dazu `7b19391`: `#host-gate` und `.jeopardy-clue-overlay`
+nehmen `var(--bg-img)`/`var(--bg-size)` statt des fest eingetragenen
+Studio-Blau-Schimmers.
+
+**Warum der Fix.** Beim Durchklicken lag auf L (New York) und Q (Riso) ein
+blauer Fleck oben im Passwort-Overlay; das Jeopardy-Overlay hatte denselben
+festen Verlauf und steht auf der Leinwand. Der `<body>` las die Variable
+schon, die beiden Overlays nicht.
+
+**Geprüft.** `node check.js` = alles in Ordnung (14 js-Dateien, 424
+Handler, 269 IDs, 1013 Klammerpaare). Durchgeklickt per Edge headless über
+das DevTools-Protokoll (Skript im Scratchpad, nicht im Repo; das
+Vorschaufenster der App lud nicht): 18 Richtungen in `DESIGN_THEMES`
+(ABCDEFHIJKLMNOPQRS), Design-Screen mit 19 Karten (Klassik + 18) und 18
+Vorschau-iframes, `--pv-scale` 0.2016; `applyTheme('L')` setzt
+`data-theme=L`, `localStorage.designTheme=L`, Schrift „Old Standard TT";
+nach Neuladen weiter `L`; Mainscreen-Fenster (`openMainscreen`) übernimmt
+`L` und beim Wechsel `Q`; `applyTheme('')` entfernt Attribut, Speicher und
+alle Inline-Variablen. Konsolenfehler: nur `favicon.ico` 404. Das
+Passwort-Overlay wurde im Test per Skript entfernt, nicht per Eingabe.
+
+**Ungeprüft.** Ein echter Spielablauf mit Firebase-Buzzern unter einer
+Richtung; Feud-Start (`startGame` brach im Test mit „Keine Fragen!" ab,
+weil das frische Profil keine Fragen hat). Die übrigen Screens nur über
+die Variablen, nicht einzeln angesehen.
+
+**Offen.** Das Gamemaster-Fenster (`updateGamemasterOverlay` in
+`js/feud.js`, „Zwischensequenz läuft") hat eigene, fest dunkle Farben und
+folgt der Richtung nicht. Nur Host-Sicht, deshalb liegen gelassen. Die
+Generator-Skripte der Entwürfe liegen weiter nur im Scratchpad.
+
+**Fallstricke.** `window.open` aus `Runtime.evaluate` braucht
+`userGesture: true`, sonst blockt Edge das Mainscreen-Fenster.
+
+---
+
+## 2026-10-06 — Themen-Layouts, Runde 3 abgeschlossen (`de8c19f`, `9ca0239`, `3a8cbd8`, `c0526ac`, `febdeb7`, `79b91db`)
+
+Fortsetzung des Eintrags darunter (L, D, H, M). Auftrag, Methode und
+Prüfweg stehen dort.
+
+### Gemacht
+
+| Commit | Richtung | neu |
+|---|---|---|
+| `de8c19f` | N Papier | Feud als **Wegweiser in der Hügellandschaft**, Wer weiß als **Briefumschläge** (Briefmarken als Punkte), TP als **Spielpfad** mit Figur, Turnier als **Papierberge** mit Gipfelfahnen, Handy als **Papierstapel** |
+| `9ca0239` | P Memphis | Feud als **Formen-Collage** (verdeckte Formen gemustert), Wer weiß als **Sprechblasen**, TP als **Twister-Matte** mit Drehscheibe, Handy als **Sternknall** |
+| `3a8cbd8` | Q Riso | Feud als **Abreiß-Tickets**, PIH als **Supermarkt-Prospekt**, Wer weiß als **Prüfungsbogen**, TP als **Kartenfächer**, Turnier als **Festival-Plakat** (Größe nach Platz), Handy als **Eintrittskarte** |
+| `c0526ac` | R Jazzplatte | Feud als **Plattenkiste**, PIH als **Cover mit Preisaufklebern**, Wer weiß als **Plattenhüllen**, TP als **Plattenspieler von oben**, Millionär als **Jukebox** |
+| `febdeb7` | S Art déco | Feud als **Hotel-Postfächer** mit Rezeptionsglocken, PIH als **Auktionshaus** mit Bieterkellen, Wer weiß als **Aufzugtüren** |
+| `79b91db` | C, H, S | Nachzügler aus der Gesamtsichtung: C Wer weiß **Stickerbogen**, C Millionär **Glücksscheibe**, H Turnier **Kreisplakat**, S TP **Halbfächer** |
+
+Insgesamt in Runde 3: **40 Screens** (36 aus der ersten Liste + 4
+Nachzügler).
+
+### Warum die Nachzügler
+
+Die erste Liste kam aus Kontaktabzügen nur für D, H, L–S, weil B bis K laut
+Branch-Historie schon eine zweite Runde hatten. Der Schluss-Abzug über
+**alle 18** zeigte trotzdem vier Gerüst-Dubletten in C, H und S. Lehre:
+„laut Historie erledigt“ ist kein Befund, der Abzug über alle ist es.
+
+### Geprüft
+
+- Jeder neue Screen per Edge-Headless in Originalgröße angesehen. Beim
+  Ansehen gefunden und behoben u. a.: Überdruck-Kopie brach anders um als
+  der Text (Q-Turnier, jetzt Grid mit zwei Ebenen in derselben Box);
+  `clip-path` schnitt die Kontur-Schatten mit ab (P-Formen, jetzt Kontur
+  auf eigener Ebene); Wortbruch „BIERKAST-EN“ (R); Karte angeschnitten
+  (Q-TP, R-WWDS, BAUPLAN 4.6); Zeiger auf falscher Kategorie (P-TP).
+- Schluss-Kontaktabzüge aller 18 Richtungen für Feud, Wer weiß, PIH,
+  Millionär, DDF, TP, Turnier, Lobby, Ergebnis, Menü, Handy, Jeopardy
+  angesehen.
+- Die Ähnlichkeits-Kennzahl taugt **nicht** als Beleg: Feud vorher/nachher
+  z. B. D 68→67, M 63→59, P 77→66, Q 35→69 — jede mittig gesetzte
+  Komposition landet bei 60–75. Belastbar sind nur die Abzüge.
+- `node check.js` vor jedem Commit: alles in Ordnung.
+
+### Offen
+
+- **Nach `master`** (live) erst nach Davids Freigabe. Der Branch enthält
+  außer `designs/` auch den Design-Umschalter in der Show (`9a78a8f`:
+  `styles.css` auf Variablen, `js/theme.js` neu) — der greift in die
+  laufende Show ein und sollte vor dem Merge einmal im Browser durchgeklickt
+  werden.
+- Nicht neu gebaut, weil sie schon eigene Ideen haben, aber Kandidaten,
+  falls David weiter schärfen will: Listen-Layouts bei Wer weiß (A, D, J,
+  K, O) und Handy-Knöpfe, die alle mittig sitzen (liegt am Buzzer selbst).
+- Skripte (`kit.js` + je Richtung eine Datei) weiterhin nur im Scratchpad.
+
+---
+
+## 2026-10-06 — Themen-Layouts, Runde 3, Teil 1 (`b76eda5`, `6ca0f92`, `bac49f1`, `c901a8f`)
+
+**Auftrag (David):** „alle sollen ein individuelles Layout haben, auch
+inspiriert am Design (z.b. mit der Zeitung und dpih kann man was schönes
+machen) … bei allen die nicht fertig sind fertig machen."
+
+**Vorab:** Diese Sitzung hat auf dem Branch der vorigen weitergemacht. Deren
+„Runde 2“ (`79e91c6` … `202cddc`, B bis K: „eigenes Grundgerüst“) stand
+noch in keinem HANDOFF-Eintrag — hier nachgetragen: B, C, D (nur Turnier),
+E, F, H (DDF, Handy), I, J, K bekamen dort für einzelne Screens neue Gerüste.
+Für L bis S lief Runde 2 nicht mehr.
+
+### Wie „nicht fertig“ bestimmt wurde
+
+1. **Gemessen:** alle 216 Screens in iframes geladen, je Screen ein Raster
+   (32×18) aus Text- und Flächenpositionen, Kosinus-Ähnlichkeit zur
+   ähnlichsten anderen Richtung. Taugt nur als Hinweis: Jeopardy lag bei
+   allen um 0,77, weil das 6×5-Brett vom Spiel vorgegeben ist — obwohl die
+   Bretter sichtbar verschieden sind.
+2. **Kontaktabzüge angesehen**, je Show alle Richtungen nebeneinander, für
+   D, H, L, M, N, P, Q, R, S größer. Ergebnis, 36 Screens:
+   - Family Feud bei **allen neun** dasselbe Gerüst (Frage oben, zwei
+     Spalten Antworten, Punkte daneben).
+   - Wer weiß: drei A/B/C-Spalten bei H, L, M, N, P, Q, R, S.
+   - Preis ist heiß: Produkt + großer Preis + Liste bei D, L, Q, R, S.
+   - TP: Rad links, Karte rechts bei N, P, Q, R. Turnier: Rangliste bei
+     M, N, Q. Millionär: D und R gleich. Handy: runder Knopf bei M, N, P, Q.
+     Ergebnis: M.
+
+### Gemacht (bisher)
+
+| Commit | Richtung | neu |
+|---|---|---|
+| `b76eda5` | L New York | PIH als **Kleinanzeigen-Seite** (Gebote als Anzeigen, Zuschlag mit Tintenkreis), Feud als **Umfrage-Infografik** (geschwärzte Balken), Wer weiß als **Stimmzettel** |
+| `6ca0f92` | D Late Night | Feud als **Top-8-Countdown** mit Moderatorentisch vor Skyline, PIH als **Applausometer**, Millionär mit Leiste oben und **Moderationskarten** |
+| `bac49f1` | H Bauhaus | Feud als **Mondrian-Raster**, Wer weiß als **Kreis/Quadrat/Dreieck-Komposition** |
+| `c901a8f` | M Aurora | Feud als **Sternbild**, Wer weiß als **Umlaufbahn**, Turnier als **Planetensystem**, Handy als **Glasplatte**, Ergebnis als **Planet mit Mond** |
+
+### Geprüft
+
+- Jeder neue Screen als Edge-Headless-Bildschirmfoto in Originalgröße
+  (1280×720, Handy 390×844) angesehen; gefundene Fehler behoben: Etikett
+  ragte aus dem Bild (M-Feud), Kugel überdeckte Fragekarte (M-WWDS),
+  geschwärzte Balken länger als höher platzierte Antworten (L-Feud),
+  leere untere Hälfte (L-WWDS).
+- `node check.js` vor jedem Commit: alles in Ordnung.
+
+### Offen
+
+- ~~**N, P, Q, R, S** stehen noch aus~~ — erledigt, siehe Eintrag darüber.
+- Dann alles nach `master` — erst nach Davids Freigabe; der Branch enthält
+  auch den Design-Umschalter in der Show (`9a78a8f`, ändert `styles.css`).
+- Skripte (`kit.js` + je Richtung eins) liegen im Scratchpad dieser Sitzung,
+  nicht im Repo.
+
+### Fallstricke
+
+- Das Vorschaufenster der Desktop-App rendert nicht, solange die App im
+  Hintergrund liegt („page did not finish rendering“). Zuverlässig:
+  `msedge --headless=new --screenshot` mit eigenem `--user-data-dir` — ohne
+  das hängt sich der zweite Aufruf an den ersten und schreibt keine Datei.
+
+---
+
+## 2026-10-05 — Eigene Layouts je Richtung (`e3df1d8` … `c114944`)
+
+**Auftrag (David):** „gib den Designs auch verschiedene Layouts. die sind
+1zu1 gleich alle, nur reskins. das sollen schon eigene dinger sein."
+
+### Gemacht
+
+17 Richtungen (B–S, ohne A als Vorlage) haben in `designs/s/` eigene
+Anordnungen bekommen, nicht nur andere Farben. Je Richtung ein Commit:
+
+| Commit | Richtung | neu gebaut |
+|---|---|---|
+| `e3df1d8` | B Arcade | alle 10 Spiel-/Menü-Screens |
+| `47cdba6` | C Pop | alle 10 |
+| `dd9f0a8` | D Late Night | 8 (Menü, Leinwand unverändert) |
+| `3b9a87d` | E 70er | alle 10 |
+| `e80362d` | F Comic | alle 10 |
+| `16fef42` | H Bauhaus | 8 (Menü, Leinwand unverändert) |
+| `818da68` | I Salon | alle 10 |
+| `fd62ea8` | J Kreide | alle 10 |
+| `f28ec6a` | K Neon-Bar | alle 10 |
+| `ef34011` | L New York | 7 (Menü, Leinwand, Handy unverändert) |
+| `648ea92`, `66567a0` | M Aurora | alle 10, danach Menü-Umlaufbahn über das Dock gehoben |
+| `5221c62` | N Papier | alle 10 |
+| `d64080e` | O Terminal | 8 + Lobby und Ergebnis |
+| `0db89a1` | P Memphis | alle 10 |
+| `102c55b` | Q Riso | alle 10 |
+| `ba532fb` | R Jazzplatte | 8 (Menü, Leinwand unverändert) |
+| `c114944` | S Art déco | alle 10 + Lobby und Ergebnis |
+
+Lobby und Ergebnis von O und S stammen nicht aus `5532a96`, sondern aus
+der Ursprungsfassung der Entwürfe, und waren dort das umgefärbte A-Gerüst
+(`grid-template-columns: 330px minmax(0,1fr)` in A, O und S) — deshalb
+nur dort neu. Die 15 aus `5532a96` hatten schon eigene Gerüste.
+
+### Warum so
+
+- **Erzeugt, nicht von Hand.** Je Richtung ein Python-Skript, gemeinsamer
+  Inhalt (Fragen, Namen, Punkte) aus einer `base.py`, damit alle 216
+  Screens dieselbe Spielsituation zeigen und nur das Layout sich
+  unterscheidet. Die Skripte liegen **nur im Scratchpad der Sitzung**, nicht
+  im Repo — siehe Offen.
+- **Layout aus dem Thema abgeleitet, nicht zufällig variiert**: Arcade als
+  Highscore-Liste, Jazzplatte mit Plattenteller und Tonarm, Art déco mit
+  Stufentürmen und Strahlenfächer usw. Verworfen: ein gemeinsames Gerüst
+  mit drei, vier Varianten — genau das wäre wieder „Reskin".
+
+### Geprüft
+
+- Jede Richtung nach dem Bau mit einem Playwright-Prüfer (1280×720,
+  Handy 390×844, Google Fonts lokal eingebunden): überlappende
+  Textkästen, Text außerhalb des Bildes, abgeschnittener `nowrap`-Text,
+  Konsolenfehler. Plus Kontaktabzug aller 12 Screens angesehen.
+- Schlusslauf über alle 18 Richtungen: **0 Seitenfehler**. Übrig bleiben
+  Meldungen in D-Menü (1), I-WWDS (1), O-Leinwand (8), Q (9 Screens),
+  R (3 Screens) — alle angesehen und gewollt: Riso-Überdruck mit
+  versetzter Kopie, riesige Hintergrundzahl, angeschnittene Schallplatte,
+  Terminal-Punktlinien. Der Prüfer kennt Absicht nicht.
+- Bei S beim Prüfen gefunden und behoben: Bodoni-„4" mit Haarstrich las
+  sich bei 34 px wie „1" (Jeopardy „400" → „100") — Zahlen jetzt in
+  Josefin Sans; Stufen-`clip-path` war rechts nicht gespiegelt (schräge
+  Kante statt Stufen); Verlaufsschrift im Handy-Knopf war unsichtbar, weil
+  der Knopf-Hintergrund `background-clip:text` überschrieb.
+- `node check.js` und `node check.js --types`: alles in Ordnung
+  (14 js-Dateien typgeprüft, keine Meldung).
+
+### Offen
+
+- **Generatoren nicht im Repo.** Wer ein Layout ändern will, ändert jetzt
+  das HTML in `designs/s/` direkt. Die Skripte gehen mit dem Container
+  verloren.
+- **Canvas-Artefakt** (claude.ai, Version 32) hat nur die Fixes aus
+  `247cce7`, nicht die neuen Layouts. Ein Re-Export aus dem Canvas würde
+  die Layouts überschreiben.
+- Die Layouts sind **Entwürfe**. In der App selbst (`index.html`) wechselt
+  das Design nur Farben und Schriften (Eintrag `9a78a8f` unten), nicht die
+  Anordnung.
+
+### Fallstricke
+
+- Python 3.11: kein Backslash und keine gleichen Anführungszeichen innerhalb
+  von f-String-Ausdrücken — hat bei acht Skripten geknallt.
+- `background-clip:text` auf einem `<button>` wird vom eigenen
+  `background` des Knopfs überschrieben → Text in ein `<span>`.
+
+---
+
+## 2026-10-05 — Lobby und Ergebnis für 15 Richtungen (`5532a96`)
+
+**Auftrag (David):** „mach außerdem für den Rest der bisher keins hat Lobby
+und Ergebnis"
+
+### Gemacht
+
+30 neue Dateien `designs/s/X-Lobby.html` / `X-Ergebnis.html` für die 15
+Richtungen außer A, O und S (die hatten sie schon), `designs/index.html`
+listet jetzt **216 Screens** (18 × 12).
+
+### Geprüft / Offen
+
+Im Schlusslauf (Eintrag oben) mitgeprüft, 0 Seitenfehler. Die schon
+vorhandenen O- und S-Fassungen waren nur das A-Gerüst umgefärbt — in
+`d64080e` und `c114944` ersetzt.
+
+---
+
+## 2026-10-05 — Design der ganzen Seite umstellbar (`9a78a8f`)
+
+**Auftrag (David):** „ich will dass man mit dem Button in ein Menü kommt,
+wo man das für die Ganze Seite das Design einstellen kann."
+
+### Gemacht
+
+- **`styles.css`**: Farben und Schriften als Variablen auf `:root`
+  (Standard = bisheriges Studio-Blau): `--font-display/-body/-logo`, `--bg`,
+  `--bg-img`, `--bg-size`, `--panel`, `--panel-hi`, `--line`, `--fg`,
+  `--fg-rgb`, `--fg-strong`, `--muted`, `--pill-fg`, `--accent-line`,
+  `--accent-text(-rgb)`, `--on-accent`. Ersetzt: 46× Bebas, 16× Inter,
+  2× Luckiest, 42× `color:#fff`, 174 weiße `rgba(...)` in color/border/
+  background, 55× `color: var(--gold)` → `--accent-text`, 11 goldene
+  `rgba`-Schriftfarben, 5× `#1a1200` → `--on-accent`.
+- **`js/theme.js`** (neu, lädt im `<head>` direkt nach `styles.css`, damit
+  nichts erst blau aufblitzt): `DESIGN_THEMES` mit 18 Sätzen,
+  `applyThemeToDoc(doc, key)`, `applyTheme(key)` (speichert in
+  `localStorage` unter `designTheme`), Design-Screen mit Vorschau-Iframes
+  (`renderDesignScreen`), Sprung in die Entwurfsseite
+  (`openDesignGallery`).
+- **`index.html`**: Knopf „🎨 Design" im Hauptmenü öffnet `#design-screen`.
+- **`js/feud.js`**: Mainscreen-Popout bekommt das Thema per
+  `applyThemeToDoc` — der Spiegel kopiert nur `<body>`, die Variablen auf
+  `<html>` kämen sonst nie an.
+- **Helle Themen** (C, F, H, L, N, P, Q): eigenes `--accent-text`, Logo-
+  Schrift über `.logo-word` eingefärbt, Teamkarten mit deckenden Verläufen
+  und weißer Schrift.
+
+### Warum so
+
+Variablen statt austauschbarer Stylesheets: ein Satz von 18 Werten je
+Thema statt 18 Kopien von 1000 Regeln. Verworfen: Pixelvergleich als
+Beleg, dass Klassik unverändert bleibt — die Einblend-Animation der Screens
+machte ihn zu verrauscht; stattdessen berechnete Styles verglichen.
+
+### Geprüft
+
+- Ohne Thema: **694 Elemente** mit identischen berechneten Styles vor und
+  nach der Umstellung.
+- Kontrast (Schwelle 3:1, halbtransparente Schrift angenähert) auf Menü,
+  Jeopardy-, Feud-, WWM-Setup und Turnier für alle 18 Themen, am Ende
+  dieser Sitzung neu gemessen: 17 Themen **0** Treffer, L (New York) **2** —
+  der Hinweis „QR-Code zeigen und scannen" mit 2,9:1.
+- `node check.js`, `node check.js --types`: in Ordnung.
+
+### Offen
+
+- **Handy-Seiten** (`buzzer/`, `gamepad/`) sind nicht thematisiert.
+- Das Thema gilt **pro Browser** (`localStorage`); ein zweites Gerät
+  startet in Klassik. Der Mainscreen-Popout zieht mit.
+- Nur Farben und Schriften wandern in die App, keine Layout-Möbel der
+  Entwürfe (Platten, Stufen, Rahmen).
+- **Nicht geprüft**: Press Start 2P (B Arcade) und Bangers (F Comic) in
+  den Spiel-Screens auf Überlauf — beide laufen breiter als Bebas. Bangers
+  hat dasselbe ß-Problem wie in den Entwürfen (ß ≈ B), in der App nicht
+  behandelt.
+- L: Hinweistext 2,9:1, knapp unter 3.
+
+### Fallstricke
+
+- Neue Farben in `styles.css` als Variable schreiben, nicht als
+  `#fff`/`rgba(255,255,255,…)` — sonst bleibt die Stelle in hellen Themen
+  weiß auf hell. Für Weiß mit Alpha: `rgba(var(--fg-rgb), .5)`.
+- Gold als **Schrift** heißt `--accent-text`, Gold als **Fläche/Linie**
+  bleibt `--gold`/`--accent-line`. In hellen Themen sind das zwei
+  verschiedene Farben.
+
+## 2026-10-05 — Entwürfe durchgemessen, drei Fehler behoben, Menü-Knopf (`247cce7`)
+
+**Auftrag (David):** „siehst du die neuen Designs" → „fix alles" → „das liegt
+aktuell auf einer Seperaten url. ich will dass das auf der Seite ein Menü
+dafür gibt."
+
+### Gemacht
+
+Alle **186** Screens aus `designs/s/` im Browser vermessen (Playwright,
+1920×1080) — die Lücke, die der Eintrag darunter als „nicht geprüft"
+ausweist. Gesucht: überlappende Textkästen, abgeschnittener `nowrap`-Text,
+waagerechtes Scrollen, Konsolenfehler.
+
+Drei echte Fehler, alle behoben:
+
+1. **D · Late Night, Menü.** Titel `font-size: 46px` in einer Spalte von
+   330 px (Zeile 03) bzw. 348 px (04). Gemessene Textbreite 348 bzw. 403 px
+   → Umbruch auf zwei Zeilen = 92 px in einer fest `height: 86px` hohen
+   Zeile, also 6 px über die Trennlinie. Jetzt **38 px + `white-space:
+   nowrap`**; gemessen: alle acht Titel einzeilig (38 px hoch),
+   `scrollWidth == clientWidth`, nichts abgeschnitten. 38 px ist die
+   größte Stufe, bei der auch „Wer weiß denn sowas" (333 px) in seine
+   348-px-Spalte passt.
+2. **Q · Riso, Menü.** Die beiden Deko-Kreise (`right: 90px/top: -60px` und
+   `right: 230px/top: 40px`) lagen über „GAMESHOW · AUSGABE 8" (Textkasten
+   530–938 px) und über dem Titel von Karte 4. Dunkelblau auf Magenta ist
+   nicht lesbar. Nach oben rechts geschoben (`right: 10px/top: -110px` und
+   `right: 80px/top: -30px`), so dass die Unterkante über der Kartenreihe
+   (236 px) und die linke Kante rechts vom Text (938 px) bleibt.
+3. **A · Studio und F · Comic, ß.** Bebas Neue und Bangers sind reine
+   Versalschriften; ihr ß wird auf Versalhöhe gezeichnet und liest sich wie
+   ein B — „WER WEIB DENN SOWAS", „DER PREIS IST HEIB". Eine Regel im
+   `<head>` jeder A-/F-Datei setzt `text-transform: uppercase` auf alles,
+   dessen Inline-Style die Schrift nennt; Chrome bildet ß dabei auf SS ab.
+
+Dazu, auf Davids Wunsch, der Weg hin und zurück:
+
+- **`openDesigns()`** in `js/core.js`, Knopf „🎨 Designs" in den
+  `menu-pills` des Hauptmenüs. Öffnet einen eigenen Tab (benannt
+  `iryo-designs`, also höchstens einer), kein Screen-Wechsel.
+- **Rückweg** in `designs/index.html`: Link „← Show" im Kopf.
+
+### Warum so
+
+- **38 px statt zwei Zeilen bei D.** Die Alternative war `line-height: .9`
+  (2 × 41,4 = 82,8 px, passt auch in 86 px). Verworfen: sechs der acht
+  Zeilen sind einzeilig, zwei zweizeilige dazwischen sehen nach Versehen
+  aus, nicht nach Entwurf. Das Menü ist der Host-Bildschirm, nicht die
+  Leinwand — BAUPLAN 4.2 (aus drei Metern lesbar) gilt dort nicht.
+- **Kreise verschieben statt Text verschieben.** Der Riso-Look lebt von den
+  Flächen in der Ecke; die Textpositionen sind die Komposition.
+- **`text-transform` statt „weiss" schreiben.** Die Schreibweise im Entwurf
+  bleibt richtiges Deutsch, nur die Darstellung ändert sich. Geprüft: in
+  allen 22 A-/F-Dateien kein Element mehr, das in der Versalschrift ein ß
+  zeigt — und kein Element, das die Regel versehentlich erwischt (also
+  `uppercase` ohne die Versalschrift).
+- **Eigener Tab statt Screen.** `designs/` hat bewusst keinen Zugriff auf
+  `js/`, `styles.css` oder Firebase. Ein Fehlklick während der Show soll
+  die laufende Seite nicht verlassen.
+- **Regel gebrochen, bewusst:** der Eintrag darunter hält fest „Kein Link
+  aus `index.html`". David hat den Knopf ausdrücklich verlangt. Die Trennung
+  bleibt technisch bestehen — nur der Link ist neu.
+
+### Geprüft
+
+- `node check.js --types`: 13 Dateien typgeprüft, keine Meldung; 420
+  Handler, 263 IDs, 986 Klammernpaare. Alles in Ordnung.
+- **186 Screens, vorher und nachher.** Vorher 12 auffällige Dateien, nachher
+  11 — die verbliebenen sind gewollt: Q-Riso druckt jeden Titel doppelt
+  versetzt (Fehldruck-Effekt), F legt „IRYO!" auf „GAMESHOW", L stapelt den
+  Stempel, O-Leinwand ist ASCII. **0 Konsolenfehler, 0 waagerechtes
+  Scrollen, 0 abgeschnittener nowrap-Text** in allen 186.
+- D-Menu meldet weiter „Show ↔ Host-Steuerung · 8 Shows (328×6)". Das ist
+  **kein** Fehler: bei `font-size: 148px; line-height: .82` ragt der
+  *Inline-Kasten* des `<span>` 6 px tiefer als seine Zeilenhöhe. Im
+  Screenshot liegt zwischen der Unterkante von „SHOW" und der Unterzeile
+  sichtbar Luft. Ich hatte das David zuerst als Fehler gemeldet — falsch.
+- Knopf im Hauptmenü: im DOM vorhanden, `typeof openDesigns === 'function'`,
+  Klick öffnet `designs/#1/Leinwand` in einem zweiten Tab, dessen „← Show"
+  auf die Wurzel zeigt. 0 Seitenfehler.
+- **Nicht geprüft:** ob die Entwürfe auf einem echten Beamer taugen; die
+  Helligkeit der hellen Richtungen ist nur im Screenshot beurteilt.
+
+### Fallstricke
+
+- **Schriften über den Proxy sind unzuverlässig.** Die ersten beiden
+  Durchläufe liefen ohne die Google-Schriften — der Browser im Container
+  geht nicht von selbst über `HTTPS_PROXY`, und selbst mit Proxy kam die
+  Schrift mal an und mal nicht. Mit Ersatzschrift ist Big Shoulders
+  Display viel breiter, und D sah nach vier kaputten Zeilen aus statt nach
+  zwei. **Für jede Messung an `designs/` erst die Schriften lokal ablegen
+  und per `page.route` ausliefern** — sonst misst man den Offline-Fall.
+  Das Gerüst dafür liegt im Scratchpad (`lab.mjs`, `gf/`), nicht im Repo.
+- Die Dateien in `designs/s/` sind **Export**. Dieselben drei Fixes stehen
+  deshalb auch in der Canvas-Quelle
+  (https://claude.ai/artifact/696browiHr6kBspCBfJm6G, Version 32):
+  `project/D-Menu.dc.html`, `project/Q-Menu.dc.html` und die
+  `<helmet><style>`-Blöcke von `project/Main.dc.html` (= A · Menü) sowie
+  allen `A-*` und `F-*`. Wer neu exportiert, bekommt sie mit. Das
+  Export-Skript selbst gibt es weiterhin nicht im Repo.
+- Das Prüfskript findet nur Überlappungen zwischen **Text**kästen. Der
+  Riso-Kreis über dem Text ist ihm entgangen — gesehen habe ich das erst im
+  Screenshot. Messen ersetzt das Hinsehen nicht.
+
+---
+
+## 2026-10-05 — Design-Entwürfe als eigene Seite `designs/` (`69e3a75`)
+
+**Auftrag (David):** „ein KOMPLETTes visuelles rework, erstmal nur
+prototypen um sich für eins zu entscheiden“ — dann „mach einen Button wo
+ich durchwechseln kann, mit einer Vorschau, durchnummeriert“ und „push mir
+den Button mit den Designs“ (ausdrücklich: ins Repo, live).
+
+### Gemacht
+
+`designs/index.html` blättert durch **18 Richtungen** (nummeriert 01–18),
+je **Menü, Family-Feud-Leinwand, Handy-Buzzer** und die sieben übrigen
+Shows (Jeopardy, WWM, WWDS, DDF, PIH, TP, Turnier); A, O und S zusätzlich
+Lobby und Ergebnis. **186 Screens** in `designs/s/`, je eine eigenständige
+HTML-Datei. Bedienung: ◀ ▶, Reiter je Screen, Miniaturen, Pfeiltasten;
+der Zustand steht im Hash (`#7/Leinwand`), ein Link zeigt also genau einen
+Entwurf.
+
+Live: https://iryogameshows.github.io/designs/
+
+### Warum so
+
+- **Reine Vorschau, vom Spiel getrennt.** Kein Link aus `index.html`, kein
+  Zugriff auf `js/`, `styles.css` oder Firebase, `noindex`. Nichts davon ist
+  ins Spiel übernommen — die Entscheidung für eine Richtung steht aus.
+- **Jeder Screen als eigenes Dokument im `<iframe>`.** 18 Richtungen bringen
+  18 Schriftfamilien-Sätze und widersprüchliches CSS mit; im iframe stört
+  keiner den anderen. Verworfen: alles in eine Seite mit Klassen-Präfixen —
+  hätte jeden Entwurf umschreiben müssen.
+- **Statisch gerendert.** Die Entwürfe entstehen in einem claude.ai-Design-
+  Canvas (`.dc.html` mit Vorlagen-Syntax, 32 davon mit Schleifen). Ein
+  Export-Skript rendert sie zu reinem HTML; die Canvas-Laufzeit wird nicht
+  gebraucht.
+- Teamfarben bleiben in allen Richtungen Rot `#E8453C` / Blau `#3B82F6`
+  (BAUPLAN 4.4), Leinwand-Screens ohne Host-Knöpfe (4.1).
+
+### Geprüft
+
+- `node check.js`: alles in Ordnung (13 JS-Dateien, 419 Handler, 263 IDs,
+  986 Klammernpaare) — `designs/` liegt außerhalb dessen, was er prüft.
+- Export: 186 Screens, **0** Vorlagenreste (`{{`, `<sc-`, `<dc-import>`).
+- Lokal im Browser (`http-server`, Port 3000): Startansicht #1, Umschalten
+  per Reiter auf einen gerenderten Schleifen-Screen (B · Menü), zweimal ▶
+  → `#4/Menu`, `D · Late Night`, richtiges `src`. **0 Konsolenfehler.**
+  Handybreite 375 px: Reiter brechen um, Vorschau skaliert, Miniaturen
+  scrollen waagerecht.
+- **Nicht geprüft:** jeder einzelne der 186 Screens auf Überlauf; nur
+  Stichproben angesehen.
+
+### Offen
+
+- **Quelle liegt nicht im Repo.** Canvas:
+  https://claude.ai/artifact/696browiHr6kBspCBfJm6G (privat). Generator,
+  Häute und Export-Skript lagen nur im Scratchpad der Sitzung. Wer
+  `designs/` ändern will, ändert den Canvas und exportiert neu — oder die
+  Skripte kommen ins Repo; das wäre der nächste sinnvolle Schritt, falls die
+  Seite länger lebt.
+- David: G (Arena) gestrichen, A und O „passen“, **S soll schöner werden** —
+  steht als Nächstes an und ersetzt dann die S-Dateien hier.
+- Inhalte (Fragen, Namen, Punkte) sind Beispielinhalt.
+
+### Fallstricke
+
+- Im Canvas darf ein `<sc-for>` nicht direkt in `<table>` stehen — der
+  HTML-Parser schiebt es aus der Tabelle. Tabellen dort als CSS-Grid.
+- Der Canvas-Index (`canvas.json`) wird von der Seite selbst normalisiert;
+  vor jedem Schreiben neu lesen, sonst lehnt der Publish ab.
+
+---
+
+## 2026-10-05 — BAUPLAN: Architektur-Überblick und drei Test-Regeln (`b255a14`)
+
+**Auftrag (David):** Erst „beschreib meine ganze codebase so als wäre ich ein
+Kind", dann „beschreib mir den code, sodass ich mit großen worten um mich
+werfen kann obwohl ich keine Ahnung hab" — und schließlich „pack das in die
+BAUPLAN.md".
+
+### Abschnitt 0 · Was hier eigentlich steckt
+
+Der Überblick für jemanden, der das Projekt zum ersten Mal sieht. In einem
+Satz: zero-build, framework-lose Single-Page-Anwendung mit
+Realtime-State-Synchronisation über drei Clients und einem selbstgeschriebenen
+statischen Analyzer.
+
+**Jeder Begriff ist an einer Code-Stelle belegt, die dabeisteht.** Das ist die
+Bedingung, unter der so ein Abschnitt in einen Bauplan gehört: DOM-Diffing →
+`morphMirror`, dreistufige Degradation → `mode: 'firebase'|'sse'|'none'`,
+Proxy-RPC → `gmRemoteBridgeScript`, Optimistic Concurrency → die `transaction`
+auf `tpspin/by`, logische Uhr → `nextRoundId`, Fail-closed Allowlist →
+`BOARD_PUBLIC_SCREENS` und `GM_REMOTE_ALLOWED_FNS`.
+
+**Die zweite Tabelle ist die wichtigere: was hier NICHT steckt.** Keine
+Test-Suite (`check.js` ist ein Linter), keine CI-Prüfung (die Action deployt
+nur und ruft `check.js` nicht auf — nachgesehen in `pages.yml`), kein Server,
+keine Skalierung über den Keller hinaus, keine Typsicherheit zur Laufzeit.
+`HOST_PASSWORD` steht als `'keller2024'` im ausgelieferten JavaScript — ein
+Vorhang, kein Schloss.
+
+Ein Bauplan, der mit Wörtern wirbt, die nicht eingelöst sind, verleitet den
+Nächsten zu falschen Annahmen. Deshalb beides in einem Abschnitt.
+
+### Dabei eine eigene Aussage korrigiert
+
+In der ersten Fassung stand, die PINs seien „SHA-256-gehasht, **ungesalzen**".
+Beim Nachsehen in `hashPlayerPin()`:
+
+```js
+const data = new TextEncoder().encode('keller:' + playerKeyOf(name) + ':' + pin);
+```
+
+Das ist ein fester Präfix plus der Name — kein Zufallswert je Eintrag und kein
+Key-Stretching, aber auch nicht schlicht „ungesalzen". Gegen eine Tabelle über
+alle Nutzer hilft es, gegen gezieltes Durchprobieren einer einzelnen PIN nicht.
+So steht es jetzt da.
+
+**Die grobe Fassung stand schon in der Datei, bevor sie geprüft war** — der
+Fehler lag nicht im Schreiben, sondern in der Reihenfolge. Erst alle
+Behauptungen belegen, dann committen.
+
+### Abschnitt 5.1 · Drei Regeln für den Test selbst
+
+Diese drei standen in **vier HANDOFF-Einträgen in Folge** als „gehört in den
+BAUPLAN" und haben jeweils einen Fehler durchgelassen. Jetzt eingetragen:
+
+1. **Ein Test, der beim kaputten Code grün gewesen wäre, ist kein Beleg.**
+   (`82e9822` — Turnier-Direktstart meldete ohne verbundene Handys „bleibt
+   stehen", was der kaputte Code auch gemeldet hätte.)
+2. **Ein Test muss die Wege nehmen, die der Host nimmt, nicht die, die der Code
+   vorsieht.** (`6074253` — der Lobby-Merker wurde über „Buzzer auf, Buzzer zu"
+   geprüft; die echten Fälle standen nie drin.)
+3. **Globales `querySelector` trifft in dieser App fast immer den falschen
+   Screen.** Alle Screens stehen gleichzeitig im DOM; der erste Treffer ist
+   womöglich der eines anderen Spiels, unsichtbar, mit Bounding-Box 0×0.
+   (`21ca4e7`.)
+
+### Warum Abschnitt 0 und nicht eine neue 1
+
+Die Nummerierung bleibt dadurch stabil. In `HANDOFF.md` stehen Verweise auf
+`BAUPLAN.md` 3.9, 4.3 und 5; eine Umnummerierung hätte sie alle stillschweigend
+falsch gemacht. Interne Verweise innerhalb der Datei gibt es keine — geprüft.
+
+### Geprüft
+
+- Alle Behauptungen aus Abschnitt 0 gegen den Code: `HOST_PASSWORD` im
+  Klartext, `hashPlayerPin` ohne Zufallssalt, `pages.yml` ohne `node`-Aufruf,
+  `new Proxy` in `js/buzzer.js:626`, `.transaction(` an drei Stellen,
+  `onDisconnect()` in `buzzer/index.html`, `EventSource` als SSE-Rückfall.
+- `node check.js` ohne Befund (Markdown berührt ihn nicht, der Lauf gehört
+  trotzdem zum Schritt).
+- Gliederung danach: 0 bis 5, 587 Zeilen.
+
+### Offen
+
+- Abschnitt 0 nennt „rund 16.000 Zeilen" und „13 Dateien in `js/`". Das ist der
+  Stand von heute und veraltet mit der nächsten Show. Beim nächsten größeren
+  Umbau nachzählen statt fortschreiben.
+- Die Testskripte und der Firebase-Stub liegen weiterhin nur im Scratchpad.
+  5.1 verweist auf den Stub, ohne dass er im Repo liegt — das ist die
+  offensichtlichste Lücke in dieser Datei.
+
+---
+
+## 2026-09-28 — GIF-Screen zwischen Fragen, zweiter Anlauf (`6074253`)
+
+**Symptom (David):** „Man soll den gif screen zwischen fragen NICHT sehen."
+
+**Das ist die zweite Meldung zu derselben Sache.** Die erste Fassung
+(`1db72e0`, Merker `everLive`) war unvollständig, und einen Teil davon habe ich
+danach selbst wieder aufgerissen.
+
+### Die zwei Löcher
+
+**1 · Der Merker hing nur an `live`.** Seit eine Schätzfrage den Buzzer gar
+nicht mehr öffnet (`7d55620`, gestern gebaut), wird `live` bei einer Show, die
+mit einer Schätzfrage anfängt, **nie** true. `everLive` blieb false, und nach
+dem Schließen der Frage stand das GIF wieder da.
+
+Das ist eine Folgewirkung meiner eigenen Änderung von vor einer Stunde: ich
+habe den Buzzer für getippte Fragen abgeschaltet, ohne zu prüfen, wer sonst
+noch an `live` hängt.
+
+**2 · Der Merker stand nur im Speicher.** Das war beim ersten Mal eine bewusste
+Entscheidung, mit der Begründung „nach einem Neuladen sieht man einmal die
+Lobby, das ist der harmlose Fall". Das war falsch eingeschätzt: ein Handy, das
+in der Tasche liegt, wird vom Browser verworfen und beim Herausholen neu
+geladen — genau dann, wenn man den Buzzer braucht.
+
+### Gemacht
+
+`everActive` statt `everLive`:
+
+- **Zählt jede Regung**, nicht nur den Buzzer: `live`, `armed`, Schätzfeld,
+  Rad (Trivial Pursuit), Abstimmung (Der Dümmste fliegt). Sechs Stellen rufen
+  `markActive()`.
+- **Liegt im `sessionStorage`**, überlebt also das Neuladen und endet mit dem
+  Tab. Lesen und Schreiben in `try/catch` — im privaten Modus wirft das.
+
+Zurückgesetzt wird er, wenn die **Beitrittssperre gelöst** wird: das tut der
+Host beim Einrichten der nächsten Show (`ensureLobbyConnected`), und dann ist
+die Lobby wieder richtig. Geprüft wird der WECHSEL (war an, ist jetzt aus) —
+der Listener feuert beim Laden ohnehin einmal mit dem aktuellen Wert.
+
+Ein Spiel, das gar nichts auf die Handys schickt („Wer weiß denn sowas"),
+behält die Lobby durchgehend. Dort ist sie richtig: es gibt keine „zwischen
+zwei Fragen"-Lage, und die Lobby zeigt seit `924a80e` immerhin das Team.
+
+### Geprüft
+
+Mit dem Firebase-Stub, alle sechs Wege am Stück:
+
+| Lage | Screen | vorher |
+|---|---|---|
+| vor der ersten Frage | Lobby | Lobby (richtig) |
+| Host öffnet Frage | Buzzer | Buzzer |
+| zwischen zwei Fragen | **Buzzer** | GIF |
+| Show fängt mit Schätzfrage an, danach zwischen zwei Fragen | **Buzzer** | GIF |
+| F5 zwischen zwei Fragen | **Buzzer** | GIF |
+| Host richtet nächste Show ein | Lobby | Lobby (richtig) |
+
+Keine JavaScript-Fehler.
+
+### Lehre
+
+Beim ersten Mal war der Test derselbe Pfad wie der Code: ich habe „Buzzer auf,
+Buzzer zu" nachgestellt und für gelöst erklärt. Die Fälle, die David trifft —
+eine Show, die mit einer Schätzfrage anfängt, und ein Handy, das aus der Tasche
+kommt — standen nie im Test.
+
+**Das ist jetzt der vierte Eintrag in Folge mit dieser Lehre.** Sie gehört in
+`BAUPLAN.md`, Abschnitt 5: ein Test muss die Wege nehmen, die der Host nimmt,
+nicht die, die der Code vorsieht. Noch nicht getan.
+
+---
+
+## 2026-09-28 — Schätzfrage: Feld steht beim Öffnen schon, gesperrt (`7d55620`)
+
+**Wunsch (David):** „wenn es ne Schätzfrage ist, dann soll es nicht auf den
+Buzzer umspringen auf der Buzzer seite. wenn die ausgewählte Frage eine
+Schätzfrage ist, dann soll die Schätzzeile auch schon da sein. aber halt mit
+nem Schloss davor, und drunter steht dann: du kannst schätzen wenn der Host die
+Frage zeigt".
+
+(Der erste Teil derselben Nachricht — Teamnamen statt „Rot und Blau" — hat sich
+erledigt: „ne das is geregelt". Nicht angefasst.)
+
+### Was vorher passierte
+
+`openJeopardyClue()` rief für **jede** Frage `jeopardyBuzzPrepare()`, also auch
+für Schätzfrage und Einzelantwort. Das Handy sprang damit auf den
+Buzzer-Screen mit „Achtung — noch NICHT buzzern!", und erst beim Aufdecken auf
+das Eingabefeld. Zwei Wechsel für eine Frage — und der erste zeigte etwas, das
+bei dieser Fragesorte **nie** kommt: dort wird nicht gebuzzert.
+
+### Gemacht
+
+Beim Öffnen einer getippten Frage: `jeopardyBuzzClose()` statt `-Prepare()`,
+dazu `jeopardyEstimatePrepare()`. Das Feld steht damit sofort, aber gesperrt —
+Schloss im Titel, Feld und Knopf deaktiviert, darunter Davids Satz. Beim
+Aufdecken fällt die Sperre und die Frage kommt dazu.
+
+**Die Frage geht im gesperrten Zustand bewusst nicht mit.** Sie steht zu dem
+Zeitpunkt noch nicht auf der Leinwand; ein Handy, das sie vorher zeigt, wäre
+ein Leck — und bei einer Schätzfrage ein besonders wirksames, weil man dann in
+Ruhe nachschlagen kann. `question` bleibt leer, bis der Host aufdeckt.
+
+Gebaut als **ein** Weg mit Schalter, nicht als zwei Funktionen:
+
+```js
+function jeopardyEstimateOpen(gesperrt){ … }
+function jeopardyEstimatePrepare(){ jeopardyEstimateOpen(true); }
+```
+
+Zwei fast gleiche Funktionen wären auseinandergelaufen, sobald am Kanal etwas
+dazukommt — dieselbe Lehre wie bei den Team-Knöpfen.
+
+Auf dem Handy trägt `estLocked` den Zustand. Die Eingabetaste im Feld ruft
+dieselbe Funktion wie der Knopf, deshalb steht die Sperre auch in der Wache von
+`sendEstimate()` — ein deaktivierter Knopf allein hätte nicht gereicht.
+
+Der Hinweis im GM-Panel sagt jetzt „Auf den Handys steht das Feld schon —
+gesperrt, mit Schloss", statt „Beim Aufdecken geht ein Textfeld auf".
+
+### Im Test gefunden
+
+Die Hinweiszeile wurde nur `if (estLocked)` gesetzt und blieb deshalb stehen,
+nachdem der Host längst aufgedeckt hatte: „Du kannst schätzen, wenn der Host
+die Frage zeigt" über einer offenen Frage. Sie wird jetzt in jedem Fall
+gesetzt.
+
+### Geprüft
+
+Handy (mit dem Firebase-Stub aus `924a80e`):
+
+| Zustand | Screen | Titel | Frage | Feld/Knopf | Hinweis |
+|---|---|---|---|---|---|
+| gesperrt | estimate | 🔒 Schätzfrage | leer | **aus** | steht |
+| aufgedeckt | estimate | 📊 Schätzfrage | da | an | weg |
+| Einzelantwort gesperrt | estimate | 🔒 Einzelantwort | leer | **aus** | steht |
+| normale Frage | **buzz** | — | — | — | — |
+| Eingabetaste trotz Sperre | nichts abgegeben | | | | |
+
+Host-Seite (auch mit Stub): beim Öffnen einer Schätzfrage ist der Buzzer zu
+(`armed:false`), das Feld vorbereitet (`locked:true`) und die Frage geheim
+(`question:''`); beim Aufdecken fällt die Sperre und die Frage kommt. Eine
+normale Frage läuft unverändert über den Buzzer — vorbereitet beim Öffnen,
+scharf beim Aufdecken.
+
+Keine JavaScript-Fehler, `node check.js --types` ohne Befund.
+
+### Offen
+
+- „Der Preis ist heiß" benutzt denselben Firebase-Zweig (`buzzer/estimate`),
+  kennt `locked` aber nicht und schreibt es bei `pihBeginBids()` per `.set()`
+  ohnehin weg. Dort bleibt es beim bisherigen Ablauf — die Gebote gehen auf,
+  wenn der Host sie öffnet. Nicht angefasst, weil dort kein Zwischenzustand
+  „Artikel gewählt, aber noch nicht gezeigt" existiert.
+- Das Daily Double bleibt unberührt: dort antwortet nur das wählende Team, und
+  ein Eingabefeld auf allen Handys wäre falsch.
+
+---
+
+## 2026-09-28 — Team-Zuteilung in allen Lobbys · Team-Anzeige auf dem Handy (`924a80e`)
+
+**Symptom (David, mit Bild der Jeopardy-Lobby):** „die team zuteilung soll da
+laufen. nicht über ein seperates Fenster. bitte. bau das endlich bei allen um."
+Dazu: „wenn man im Gif Screen ist, soll irgendwo stehen: Du bist in Team ...,
+oder Du bist in noch keinem Team".
+
+### 1 · Zuteilung an der Zeile, in allen sechs Lobbys
+
+In den vier **Team-Lobbys** (Family Feud, Jeopardy, Wer weiß denn sowas,
+Trivial Pursuit) stand je Zeile nur ein Merkzettel — der Team-Tag „kein Team".
+Zugeteilt wurde in der Spielerübersicht, einem eigenen Screen, auf den der
+Knopf „👥 Teams zuteilen" führte. Der Host musste also weg von dem Bildschirm,
+den er gerade einrichtet, dort zuteilen und zurück.
+
+Bei „Der Dümmste fliegt" und „Der Preis ist heiß" ging es längst an der Zeile.
+Jetzt überall — mit `playerTeamButtonsHtml()`, derselben Funktion. Der Knopf
+zur Spielerübersicht heißt nun „👥 Accounts verwalten": dort geht es um
+Passwörter und Löschen, nicht mehr um Teams.
+
+**Dabei aufgefallen — und es hätte den Umbau sonst wertlos gemacht:**
+`assignPlayerTeam()` schrieb den neuen Stand lokal nur nach `allPlayers`. Die
+Setup-Lobbys zeichnen ihre Zeilen aber aus `buzzer.presence` — zwei
+verschiedene Firebase-Knoten (`buzzer/players` und `buzzer/presence`).
+
+Solange die Zuteilung in der Spielerübersicht stattfand, fiel das nicht auf:
+die liest `allPlayers`. In der Lobby hätte der Knopf erst reagiert, wenn
+Firebase die Presence zurückspiegelt — bei stockender Verbindung also gar
+nicht. Genau der Fall, den der Kommentar „Sofort anzeigen, statt auf die
+Antwort der Datenbank zu warten" seit jeher verhindern sollte.
+
+Die Presence-Kopien werden jetzt mitgezogen (beide Kontexte: Jeopardy hat eine
+eigene Verbindung, Feud/WWDS/TP teilen sich eine), und
+`refreshOpenSetupLobby()` zeichnet die offene Lobby neu — Gegenstück zum schon
+vorhandenen `refreshOpenRosterLobby()`.
+
+**Gemessen:** ohne die Presence-Zeilen meldete der Test nach einem Klick
+`{davidTeam: null, aktiv: 0}` — nichts passiert. Mit ihnen
+`{davidTeam: 0, aktiv: 1}`.
+
+### 2 · Team-Zeile im Wartebildschirm des Handys
+
+Neue Zeile zwischen Namen und Hinweistext: **„Du bist in Die Blauen"** in der
+Teamfarbe, oder **„Du bist in noch keinem Team"** zurückgenommen. Davids
+Wortlaut übernommen.
+
+Sie liest denselben Wert wie der Chip auf dem Buzzer-Screen (`myTeam`,
+`teamNames`). Beide Firebase-Listener rufen `refreshRoot()`, sie steht also
+sofort richtig da, wenn der Host zuteilt — während der Spieler wartet, und
+genau dann passiert die Zuteilung.
+
+### Neu im Werkzeugkasten: ein Firebase-Stub für die Tests
+
+Die Handy-Seite ließ sich bisher gar nicht im Browser testen. Sie ruft
+`firebase.initializeApp()` in der ersten Zeile; ohne geladenes CDN — und in
+dieser Sandbox ist es gesperrt — wirft das, und **alles** darunter läuft nie,
+auch die `let`-Deklarationen. Der Test sah davon nur ein
+„Cannot access 'acc' before initialization" und wusste nichts damit anzufangen.
+
+`fbstub.js` im Scratchpad ersetzt Firebase durch ein Gerüst, das nichts tut,
+aber jede Kette durchlaufen lässt (`ref().child().on()`, `set`, `push`,
+`transaction`, `onDisconnect`, `ServerValue.TIMESTAMP`). Damit läuft die Seite
+bis zum Ende durch und ihre Funktionen sind aufrufbar.
+
+**Das ist die erste Möglichkeit überhaupt, `buzzer/index.html` automatisch zu
+prüfen.** Alles, was dort bisher geändert wurde — Buzzer-Sperre, Lobby-GIF,
+Einzelantwort — war nur aus dem Code hergeleitet.
+
+### Geprüft
+
+| | Ergebnis |
+|---|---|
+| Team-Knöpfe in den vier Team-Lobbys | je 8 (3 Leute × 2 Teams + 2 ✕) |
+| Knopftext zur Spielerübersicht | „👥 Accounts verwalten" |
+| Klick auf „Die Roten" in der Lobby | Team gesetzt, Knopf markiert, sofort |
+| Handy ohne Team | „Du bist in noch keinem Team", grau |
+| Handy Team 1 / Team 2 | „Du bist in Die Roten" rot / „Die Blauen" blau |
+| JavaScript-Fehler | 0 in beiden Fenstern |
+
+`node check.js --types` ohne Befund, das Skript von `buzzer/index.html`
+separat mit `node --check`.
+
+### Offen
+
+- Der Firebase-Stub liegt im Scratchpad, nicht im Repo. Wenn die Handy-Seite
+  öfter geprüft werden soll, gehört er samt Testskripten in einen `test/`-Ordner
+  — dieselbe offene Frage wie bei den anderen Skripten.
+- Die Lobby zeigt nur **verbundene** Handys (Presence). Wer einen Account hat,
+  aber gerade offline ist, taucht dort nicht auf und wird weiterhin über die
+  Spielerübersicht zugeteilt. Das ist gewollt, aber nicht mit David besprochen.
+
+---
+
+## 2026-09-28 — Mainscreen bekommt eine eigene Adresse (`dc03697`)
+
+**Wunsch (David):** „optimal wärs eigentlich wenn das ne eigene Seite wär, also
+….gameshows/mainscreen. dann weil so isse die gleiche Url".
+
+**Rückfrage gestellt**, weil zwei Lesarten sehr verschieden teuer sind:
+nur eine eigene Adresse (~30 Minuten) oder eine Seite, die auch **allein**
+läuft, an einem zweiten Rechner (großer Umbau: der ganze Anzeigezustand müsste
+über Firebase, in allen sieben Shows einzeln — das bestehende Verfahren scheidet
+aus, es würde bei jedem Buzz Megabyte durch die Datenbank schieben).
+
+Davids Antwort: **„das soll genau das sein, was jetzt grad im popout passiert,
+nur mit eigener URL".** Also die erste Variante.
+
+### Gemacht
+
+`mainscreen/index.html` als echte Seite. `openBoardPopout()` öffnet sie mit
+`window.open(url, 'Board', …)` statt `about:blank` + `document.write`.
+
+**Die Seite hält absichtlich fast nichts.** Schriften, `styles.css` und die
+Regeln, welche Screens das Publikum sehen darf, setzt das Hauptfenster ein
+(`injectBoardStyles()`). Der Grund ist `BOARD_PUBLIC_SCREENS`: die Liste steht
+in `js/feud.js`, und eine zweite Kopie in der HTML-Datei wäre irgendwann
+auseinandergelaufen — dann stünde ein Editor auf der Leinwand oder das
+Spielbrett bliebe schwarz. `styles.css` wird mit der URL aus dem Hauptdokument
+verlinkt, samt `?v=`-Cache-Buster des laufenden Deploys.
+
+**Neuladen im Zuschauerfenster** war der Fall, der beim Entwurf sofort auffiel:
+das Fensterobjekt bleibt dasselbe, aber Dokument und eingesetzte Stile sind
+weg. Das Hauptfenster spiegelte dann in ein Dokument ohne Regeln — und dort
+stünden alle Screens auf einmal. Gelöst, indem die Seite sich selbst meldet:
+
+```js
+if (window.opener && typeof window.opener.boardPageReady === 'function')
+  window.opener.boardPageReady();
+```
+
+`boardPageReady()` setzt die Stile neu, leitet den Wartebildschirm aus dem
+aktiven Screen ab und startet die Spiegelung. Dieselbe Funktion läuft auch
+beim normalen Öffnen — ein Weg, nicht zwei.
+
+**Direkt aufgerufen**, ohne Hauptfenster, zeigt die Seite einen Hinweis, wo sie
+herkommt. Sie ist die Anzeige des Hosts, kein zweiter Zugang; an einem anderen
+Rechner bleibt sie leer. Der Hinweis verschwindet per CSS-Regel, sobald das
+Hauptfenster die Stile einsetzt (`#ms-warten{display:none!important}`).
+
+### Geprüft
+
+Im echten zweiten Fenster, Ablauf am Stück:
+
+| Schritt | Adresse | Wartebildschirm | Regeln + CSS | sichtbarer Screen |
+|---|---|---|---|---|
+| nach dem Öffnen | `/mainscreen/` | **an** | ja | — |
+| Spielbrett zeigen | `/mainscreen/` | aus | ja | `game-screen` |
+| **F5 im Mainscreen** | `/mainscreen/` | aus | **ja, neu gesetzt** | `game-screen` |
+| danach Setup-Screen | `/mainscreen/` | **an** | ja | — |
+
+Direkt aufgerufen: Titel steht, Hinweis sichtbar. Keine JavaScript-Fehler in
+beiden Fenstern. `node check.js --types` ohne Befund, das Skript der neuen
+Seite separat mit `node --check` geprüft.
+
+### Offen / Fallstricke
+
+- **Die Seite funktioniert nur mit dem Hauptfenster.** Das ist die bewusst
+  gewählte Variante, aber es steht jetzt eine Adresse im Netz, die allein
+  aufgerufen nichts tut. Der Hinweistext fängt das ab; wer mehr will, braucht
+  die Firebase-Variante.
+- **`mainscreen/index.html` bekommt keinen Cache-Buster vom Deploy.** Die
+  Action hängt `?v=` nur an die Pfade **in** `index.html`. Die neue Seite trägt
+  deshalb dieselben `no-cache`-Metas wie `index.html`. Ungeprüft, ob GitHub
+  Pages die respektiert — falls der Mainscreen nach einem Deploy einmal veraltet
+  aussieht, ist das die Stelle.
+- Das Fenster heißt weiterhin `'Board'` (der `window.open`-Name). Das ist der
+  Grund, warum ein zweites Öffnen dasselbe Fenster trifft — nicht die URL.
+
+---
+
+## 2026-09-28 — Wartebildschirm aus dem Menü heraus leer · Logo auf 60% (`b755854`)
+
+**Symptom (David, mit Bild vom Hauptmenü):** „logo kleiner, das soll auch wenn
+ich auf dem screen bin schon angezeigt werden."
+
+### Der Fehler im zweiten Halbsatz
+
+Wer den Mainscreen aus dem **frisch geladenen Hauptmenü** öffnete, sah dort
+nichts. Gemessen: `body.className` leer, `#board-idle` auf `display:none`.
+
+**Ursache:** `setBoardIdle()` lief ausschliesslich in `showScreen()`. Beim
+Laden der Seite ist `menu-screen` aber schon aktiv — die Klasse steht im
+Markup, `showScreen()` wurde nie gerufen. Also fehlte `board-idle`, und das
+Popout zeigte weder einen Screen (alle sind für das Publikum gesperrt) noch
+den Wartebildschirm.
+
+Der Fehler trat nur auf diesem einen Weg auf. Vom Setup-Screen aus
+funktionierte es, weil man dorthin nur über `showScreen()` kommt — und genau
+so hatte ich es getestet. Wieder ein Test, der die kaputte Stelle nicht
+berührt hat.
+
+**Gemacht:** `boardIdleFromCurrentScreen()` **liest** den Zustand aus dem
+aktiven Screen ab, statt ihn mitzuführen:
+
+```js
+const aktiv = document.querySelector('.screen.active');
+setBoardIdle(!aktiv || !BOARD_PUBLIC_SCREENS.includes(aktiv.id));
+```
+
+Gerufen in `openBoardPopout()`, auf beiden Wegen — frisches Fenster und
+wiederverwendetes. Abgelesener Zustand kann nicht veralten; mitgeführter
+schon, und dann fehlt genau der eine Pfad, auf dem niemand ihn setzt.
+
+### Die Größe
+
+Von 86% auf **60%** der Fensterbreite (`BOARD_IDLE_WIDTH`, jetzt an einer
+Stelle statt zweimal im Code). Das ist zwischen zwei Rückmeldungen
+interpoliert: bei 40% — der alten festen 760px-Grenze — war es David zu klein,
+bei 86% zu groß. Bei 1920px Breite sind das 1152px, mit Luft ringsum wie im
+Menü.
+
+Zum Vergleich: das Logo im Hauptmenü ist 400px bei 1686px Fensterbreite, also
+24%. Auf einem Beamer wäre das zu wenig — dort steht niemand einen halben Meter
+vor dem Bild.
+
+### Geprüft
+
+Alle drei Wege ins Popout, Zielfenster 1920×1080:
+
+| geöffnet … | sichtbar | Breite | Anteil | Versatz |
+|---|---|---|---|---|
+| aus dem frisch geladenen Menü | **ja** | 1152px | 60% | 0/0 |
+| vom Setup-Screen | ja | 1152px | 60% | 0/0 |
+| vom Turnier | ja | 1152px | 60% | 0/0 |
+| während eines Spiels | nein | — | — | — |
+
+`node check.js --types` ohne Befund, keine JavaScript-Fehler.
+
+### Fallstrick
+
+Die erste Fassung des Wartebildschirms (`da49b63`) war über `showScreen()`
+gesteuert, und der Test ging auch über `showScreen()`. Beides stimmte
+miteinander überein und beides war blind für den Fall, dass der Screen schon
+steht, ohne dass jemand ihn gesetzt hat. **Ein Test, der denselben Weg nimmt
+wie der Code, prüft die Annahme mit, statt sie zu prüfen** — dritter Eintrag
+in Folge mit dieser Lehre, sie gehört in den `BAUPLAN.md`.
+
+---
+
+## 2026-09-28 — Wartebildschirm: Logo füllt das Fenster (`02e288b`)
+
+**Symptom (David):** „mach das Loogo größer und in die MItte".
+
+**Ursache für „größer":** Die Breite stand auf `min(760px, 70vw)`. Das zweite
+Glied kam nie zum Tragen — auf einem Beamer mit 1920px griff immer die feste
+Grenze. 760px von 1920px sind 40% der Fläche, der Rest war Rand.
+
+Jetzt `min(86vw, 158vh)`: begrenzt wird nur noch vom Fenster selbst. Die
+zweite Schranke hält das Bild bei einem hohen, schmalen Fenster in der Höhe —
+das Logo ist 900:500, also 1,8 mal so breit wie hoch, und 158vh Breite ergeben
+88vh Höhe.
+
+**Zu „in die Mitte": es war schon exakt mittig.** Gemessen, nicht geschätzt —
+der Versatz vom Fenstermittelpunkt ist in beiden Richtungen 0, bei allen drei
+geprüften Größen. Was David als „nicht mittig" gelesen hat, war vermutlich der
+viele Rand um ein zu kleines Bild. Die Zentrierung ist unverändert
+(`position:fixed; inset:0; display:flex; align-items:center;
+justify-content:center`), nur das Padding ging von 24px auf 16px.
+
+**Dazu die Zeichenschärfe.** `renderIryoHubLogo()` hat einen dritten Parameter
+bekommen: wie viele echte Pixel je CSS-Pixel gezeichnet werden. Das kleine
+Logo oben bleibt bei 2, der Wartebildschirm zeichnet mit 4. Ohne das hätte der
+Canvas 1800px nativ für 1651px Anzeige gehabt — das reicht gerade so für
+1080p, aber nicht für einen 4K-Beamer, und das Bild wird hier fast zwei Meter
+breit an eine Wand geworfen.
+
+### Gemessen
+
+Im echten zweiten Fenster, das per `openMainscreen()` geöffnet wurde:
+
+| Fenster | Bild | Anteil Breite | Anteil Höhe | Versatz | nativ | scharf |
+|---|---|---|---|---|---|---|
+| 1920×1080 | 1651×917 | 86% | 85% | 0/0 | 3600×2000 | ja |
+| 1280×720 | 1101×612 | 86% | 85% | 0/0 | 3600×2000 | ja |
+| 1080×1920 | 929×516 | 86% | 27% | 0/0 | 3600×2000 | ja |
+
+Der geringe Höhenanteil im Hochformat ist richtig: ein 1,8:1-Logo kann ein
+9:16-Fenster nicht füllen, ohne angeschnitten zu werden.
+
+### Offen
+
+- Weiterhin ungeprüft, ob „Luckiest Guy" beim Öffnen des Popouts schon geladen
+  ist (Google Fonts ist in dieser Sandbox gesperrt). Das Bild wird jetzt mit
+  Schärfe 4 gezeichnet — steht dort die falsche Schrift, fällt es umso mehr auf.
+  Der Fix wäre ein `await document.fonts.ready` vor dem Zeichnen.
+
+---
+
+## 2026-09-28 — Wartebildschirm im Zuschauerfenster (`da49b63`)
+
+**Symptom (David, mit Bild vom Beamer):** „genau das soll nicht passieren da
+soll das Logo sein, bis das spiel GESTARTET wird". Zu sehen war das kleine
+Show-Logo („KELLER FEUD") oben in der Ecke und darunter nichts.
+
+### Zwei Ursachen, eine davon nicht offensichtlich
+
+**1 · Ein geklonter Canvas ist leer.** Das grosse Iryo-Logo entsteht in
+`renderIryoHubLogo()` auf einem `<canvas>`. Das Zuschauerfenster ist eine
+Spiegelung des Hauptfensters, und `morphMirror` kopiert mit `cloneNode(true)`.
+Ein geklonter Canvas bringt sein Bild **nicht** mit — die Pixel hängen am
+Zeichenkontext, nicht am Element. Das kleine Show-Logo daneben ist ein SVG und
+wanderte deshalb mit; genau das sah David.
+
+`renderIryoHubLogo()` hängt jetzt ein `<img>` mit `toDataURL()` ein statt des
+Canvas. Das überlebt den Klon — und nebenbei auch jede andere Stelle, an der
+gespiegelt wird.
+
+**2 · Es gab gar keinen Wartebildschirm.** Seit das Popout nur noch die
+Screens aus `BOARD_PUBLIC_SCREENS` zeigt (`66616c9`), ist dort schwarz,
+solange der Host einrichtet. Vorher stand da der Setup-Screen — was auch
+niemand wollte, und genau deswegen wurde die Whitelist gebaut. Der Zustand
+dazwischen („nichts anzuzeigen, aber der Beamer läuft") war schlicht nie
+bedacht.
+
+### Gebaut
+
+`#board-idle`, ein leerer Block **ausserhalb aller Screens**, direkt neben
+`#main-logo`. Ausserhalb, weil die Spiegelung ihn dann immer mitnimmt; im
+Hauptfenster ist er per `styles.css` grundsätzlich unsichtbar.
+
+Gesteuert über eine Klasse am `<body>`:
+
+```js
+function setBoardIdle(an){ document.body.classList.toggle('board-idle', !!an); }
+```
+
+Der Mirror kopiert Body-Attribute mit, also entscheidet das Popout allein per
+CSS, ob es das Logo oder den Screen zeigt. **Kein zweiter Kanal, keine
+Nachricht zwischen den Fenstern** — das war die Alternative und ist verworfen:
+sie hätte einen zweiten Weg gebraucht, der mit dem Mirror synchron bleiben
+muss.
+
+Gesetzt wird die Klasse an zwei Stellen:
+
+- `showScreen()` — anhand **derselben** `BOARD_PUBLIC_SCREENS`-Liste, aus der
+  auch das Popout-CSS gebaut wird. Zwei Quellen würden auseinanderlaufen.
+- `addBlackBackdrop()` löscht sie. Der schwarze Vorhang steht am Anfang
+  **jedes** Intro-Laufs (alle sieben Shows rufen ihn) und ist damit das
+  verlässlichste Signal für „die Show fängt an". Nötig, weil die Intro-Läufe
+  die Screens direkt umschalten (`querySelectorAll('.screen').forEach(…)`),
+  ohne `showScreen()` zu rufen — die Klasse wäre sonst hängengeblieben und das
+  Logo läge über dem Intro.
+
+Gezeichnet wird in `openBoardPopout()`, nicht beim Seitenstart: der Canvas-Text
+braucht die Schrift „Luckiest Guy", und beim Laden ist die oft noch nicht da —
+dann stünde dort die Ersatzschrift. Auch beim Wiederverwenden eines schon
+offenen Fensters wird neu gezeichnet.
+
+Solange das Logo steht, weicht das kleine Show-Logo (`body.board-idle
+#main-logo{display:none}`). Zwei Logos übereinander sind eines zu viel.
+
+### Geprüft — im echten zweiten Fenster
+
+Playwright öffnet das Popup wie der neue Knopf und misst darin:
+
+| Screen im Hauptfenster | Logo | kleines Show-Logo | sichtbarer Screen |
+|---|---|---|---|
+| Setup (Host richtet ein) | **an** | aus | — |
+| Fragen-Editor | **an** | aus | — |
+| Hauptmenü | **an** | aus | — |
+| Spielerübersicht | **an** | aus | — |
+| Turnier-Werkstatt | **an** | aus | — |
+| Spielbrett | aus | an | `game-screen` |
+| Ergebnis | aus | an | `result-screen` |
+| Turnierstand | aus | an | `tournament-board-screen` |
+
+Bild 760×422, `naturalWidth > 0` (also wirklich geladen, nicht nur eingehängt).
+Beim `startGame()` fällt die Klasse zusammen mit dem Vorhang. Keine
+JavaScript-Fehler. Screenshot an David gegangen.
+
+### Offen
+
+- Im Test steht im Logo die Ersatzschrift, weil Google Fonts in dieser Sandbox
+  gesperrt ist. Bei David ist „Luckiest Guy" geladen — sein eigenes Bild vom
+  Menü zeigt das. **Ungeprüft bleibt damit, ob der Canvas beim Öffnen des
+  Popouts die Schrift schon hat.** Falls dort einmal die falsche Schrift steht:
+  `openBoardPopout()` müsste auf `document.fonts.ready` warten.
+- Der Wartebildschirm hat keinen Inhalt ausser dem Logo. Ein „gleich geht es
+  los" oder der Name der nächsten Show wäre denkbar — nicht gebaut, weil
+  David das Logo verlangt hat und nichts sonst.
+
+---
+
+## 2026-09-28 — Setup-Screens mittig · Team-Knöpfe bei jedem · Mainscreen-Knopf (`21ca4e7`)
+
+**Anlass:** David hat ein Bild des PIH-Setup-Screens geschickt, zwei Stellen
+rot eingekreist („das is nicht zentriert"), dazu: „dazu hast dus mit den Leuten
+nicht besser gemacht. mach hinter dazu noch buttons für die teams". Mitten in
+der Arbeit kam der Wunsch nach einem Knopf „Mainscreen öffnen" dazu.
+
+### Was nicht zentriert war — und warum
+
+**Der Wertungs-Block.** Er ist eine alleinstehende `.team-card`. Die Klasse
+trägt `max-width:300px`, gedacht für die Karten in einer Flex-Zeile. Ohne
+Flex-Eltern und ohne `margin:auto` zieht diese Deckelung den Kasten an den
+linken Rand. Die Knöpfe darin hatten zusätzlich kein `justify-content:center`.
+
+**Der Gäste-Block.** Überschrift, Eingabefelder und „+ Gast" lagen als drei
+lose Elemente direkt im Screen — also linksbündig, während alles andere mittig
+ist. Jetzt ein eigener Block `.setup-guests`, bei DDF und PIH gleich.
+
+**Dazu, im Bild sichtbar, aber nicht eingekreist:** die drei Karten „Team 1 /
+Team 2 / Superpreis" brachen als 2+1 um, und die dritte stand schmaler da als
+die beiden darüber. Das ist dieselbe Sache, die der `BAUPLAN.md` unter 4.3
+beschreibt — ein flex-wrap mit verschieden breiten Elementen. Die Reihen sind
+jetzt ein Raster (`.setup-row`, `auto-fit` + `minmax(190px,1fr)`); gemessen
+bei 430px: drei Karten zu je 192px.
+
+### Team-Knöpfe bei jedem
+
+Vorher erschienen sie erst, **nachdem** jemand über „dazu" ausgewählt war —
+zwei Schritte, und bis zum ersten Klick sah die Liste aus, als könne man nur
+an- und abwählen. Jetzt stehen sie in jeder Zeile.
+
+Ein Klick auf ein Team nimmt den Spieler **zugleich in die Runde**. Das ist
+eine Zutat von mir, nicht wörtlich verlangt: sonst entstünde der Zustand
+„Team zugeteilt, spielt aber nicht mit", der in keiner Wertung auftaucht und
+den niemand sieht.
+
+Gebaut als `rosterNoteAssigned(key, teamIdx)`, gerufen aus
+`assignPlayerTeam()` — also aus der Funktion, an der **alle** Team-Knöpfe
+hängen. Damit bleibt es bei einer Fassung der Knöpfe
+(`playerTeamButtonsHtml`). Die Alternative wäre gewesen, im Roster eine zweite
+zu bauen; zwei Fassungen derselben Sache waren in `66616c9` schon einmal der
+Fehler. Es greift nur, wenn der Teilnehmer-Screen offen ist: aus der
+Spielerübersicht heraus soll eine Zuteilung niemanden in eine Runde schieben,
+die der Host noch gar nicht zusammenstellt.
+
+**Dazu:** nicht ausgewählte Zeilen werden nicht mehr abgeblendet
+(`opacity:.45`). Solange niemand gewählt war — und das ist der Zustand, in dem
+der Host den Screen öffnet — stand damit die ganze Liste blass da. Ein Haufen
+halbdurchsichtiger Namen ist keine Einladung, einen davon anzutippen.
+Stattdessen bekommen die Mitspielenden einen goldenen Rahmen (`.pr-row.mit`).
+
+### Mainscreen-Knopf
+
+`openMainscreen()` in `js/feud.js`: öffnet das Zuschauerfenster, ohne ein Spiel
+zu starten. Steht auf allen sieben Setup-Screens, im Hauptmenü und im Turnier.
+
+Zu sehen ist das Logo — **ohne dass dafür etwas gebaut werden musste**:
+`#main-logo` steht außerhalb aller Screens und wird deshalb immer mitgespiegelt.
+Auf einem Setup-Screen ist es sogar schon das Logo der Show, die gleich kommt
+(`showScreen` setzt es je Screen um).
+
+Die eigene Funktion statt `openBoardPopout()` direkt am Knopf hat einen Grund:
+schluckt der Pop-up-Blocker das Fenster, passierte sonst wortlos nichts. Jetzt
+sagt es das.
+
+### Nebenbefund: `assignPlayerTeam` starb ohne Firebase
+
+```js
+function assignPlayerTeam(key, teamIdx){
+  firebase.database().ref(…).set(teamIdx)…   // ← erste Zeile, ungeschützt
+  …
+  const acc = (allPlayers || []).find(a => a.key === key);
+  if (acc) acc.team = …;   // "Sofort anzeigen, ohne auf die Datenbank zu warten"
+```
+
+Lädt das CDN nicht (kein Netz, Firewall, schlechtes WLAN), ist `firebase` nicht
+definiert — dann warf die **erste** Zeile, und alles danach lief nie. Auch
+nicht die lokale Anzeige, die laut dem Kommentar darunter genau für diesen Fall
+gedacht war. Der Knopf tat wortlos nichts.
+
+Aufgefallen im Browser-Test, wo das CDN gesperrt ist: der Team-Klick blieb ohne
+Wirkung, „firebase is not defined" in der Konsole. Jetzt erst anzeigen, dann
+schreiben, und das Schreiben in `try/catch`.
+
+> Das ist dieselbe Klasse von Fehler wie der Timer in `1db72e0`: die Absicht
+> stand als Kommentar da, der Code tat etwas anderes.
+
+### Geprüft
+
+Im Browser bei 430px Breite, mit acht Accounts (dieselben Namen wie in Davids
+Bild), keiner vorausgewählt:
+
+| | Ergebnis |
+|---|---|
+| Abweichung von der Screenmitte | Wertungsknöpfe 0px · Gäste-Block 0px · „+ Gast" 0px · Lobby 0px |
+| Kartenbreiten je Reihe | `[192,192]` und `[192,192,192]` |
+| Team-Knöpfe sichtbar | 16 (8 Leute × 2 Teams), auch ohne Auswahl |
+| Klick auf „Team 1" bei Joni | Teilnehmer 0 → 1, `joniTeam:0`, Aufstellung „Team 1 Joni" |
+| Überlappungen | keine |
+| JavaScript-Fehler | 0 (vorher: „firebase is not defined") |
+| Mainscreen-Knopf im Screen | vorhanden |
+
+`node check.js --types` ohne Befund. Screenshot an David gegangen.
+
+### Fallstrick im eigenen Testskript
+
+Die erste Messung meldete den Gäste-Block 215px links der Mitte — also am
+linken Rand. Ursache war nicht der Code, sondern der Test:
+`document.querySelector('.setup-guests')` trifft den **ersten** im Dokument,
+und das ist der von „Der Dümmste fliegt", der weiter oben im Markup steht und
+gerade unsichtbar ist. Eine Bounding-Box von 0×0 sieht in der Rechnung aus wie
+„ganz links". Die Messung läuft jetzt über
+`document.getElementById('pih-setup-screen').querySelector(…)`.
+
+**Für den Bauplan:** In einer App, in der alle Screens gleichzeitig im DOM
+stehen und nur per Klasse sichtbar werden, ist ein globales `querySelector` in
+einem Test fast immer falsch. Gehört zu 3.9 ergänzt — noch nicht getan, wie der
+Punkt aus dem vorigen Eintrag („ein Test muss beim kaputten Code rot sein").
+
+### Offen
+
+- Steht auf dem Branch, **nicht auf master**. Zusammen mit `82e9822` (PIH
+  startete aus dem Turnier ohne Teilnehmer-Auswahl durch) warten zwei Commits
+  auf den Deploy.
+- Die drei Karten in einer Reihe brechen bei schmalem Fenster als 2+1 um. Sie
+  sind jetzt gleich breit, aber die einzelne in Zeile 2 steht links, nicht
+  mittig. Eine in CSS saubere Zentrierung der letzten Grid-Zeile gibt es nicht
+  ohne Media-Query je Kartenzahl; bewusst so gelassen, weil die linke Kante mit
+  der Karte darüber fluchtet.
+- `.setup-row` gilt bisher nur für die drei Reihen, die den Inline-Style
+  wortgleich trugen (DDF eine, PIH zwei). Andere Setup-Screens haben eigene
+  Bauweisen; die sind nicht angefasst.
+
+---
+
+## 2026-09-28 — „Der Preis ist heiß" startete aus dem Turnier ohne Auswahl (`82e9822`)
+
+**Gefunden beim Erklären, nicht beim Testen.** David fragte, wie der
+Turniermodus jetzt funktioniert. Beim Nachlesen im eigenen Code fiel auf, dass
+die Antwort, die ich ihm zwei Nachrichten vorher gegeben hatte, falsch war.
+
+**Der Fehler:** Der Halt vor den Shows mit Teilnehmer-Auswahl hing an
+
+```js
+if (cfg.lobby === 'roster'){ … return; }
+```
+
+„Der Dümmste fliegt" trug `lobby:'roster'`, also griff es dort. „Der Preis ist
+heiß" hat aber **eigene Teamnamen-Felder** (`pih-t1-name`, `pih-t2-name`) und
+musste deshalb `lobby:'pih'` tragen — womit der Halt dort nie griff. Der
+Direktstart rief `startPih()` unmittelbar auf.
+
+**Warum es im Test durchrutschte — das ist der eigentliche Lehrsatz:** Im
+Browser-Durchlauf war kein Handy verbunden. `rosterSeed()` wählt die
+verbundenen Accounts automatisch vor; ohne Handys blieb die Liste leer, und
+`startPih()` brach mit „Mindestens ein Teilnehmer" ab. Der Test meldete
+`{aktiv:false, screen:'pih-setup-screen'}` — **genau das, was der gewollte Halt
+auch gemeldet hätte.** Ich habe das als Bestätigung gelesen und in der Antwort
+an David behauptet, die Show bleibe stehen. Mit verbundenen Handys wäre sie
+ohne Rückfrage losgelaufen, mit einer Teilnehmerliste, die der Host nie gesehen
+hat.
+
+> Ein grüner Test ist nur dann ein Beleg, wenn er beim kaputten Code rot
+> gewesen wäre. Dieser hier wäre in beiden Fällen grün gewesen.
+
+**Gemacht:** Zwei Felder statt eines Werts mit zwei Bedeutungen.
+
+| | vorher | jetzt |
+|---|---|---|
+| Der Dümmste fliegt | `lobby:'roster'` | `lobby:null, roster:true` |
+| Der Preis ist heiß | `lobby:'pih'` | `lobby:'pih', roster:true` |
+
+`lobby` sagt jetzt nur noch, **wo die Teamnamen stehen**; `roster` sagt, **ob
+erst ausgewählt werden muss**. Das sind zwei Fragen, und ein Wert, der beide
+beantwortet, fällt irgendwann auf die Nase. Betroffen: `tournamentStartAt()`
+und das GM-Panel des Turnierstands (`updateGamemasterTournamentBoard` in
+`js/wwds.js`, zweimal).
+
+**Geprüft — diesmal mit dem Fall, der vorher fehlte.** Drei Accounts als
+online gesetzt, damit `rosterSeed()` sie vorwählt:
+
+| Spiel | läuft? | Screen | Teilnehmer | Teamnamen |
+|---|---|---|---|---|
+| Der Preis ist heiß | nein | `pih-setup-screen` | 3 vorgewählt | Rote/Blaue übernommen |
+| Der Dümmste fliegt | nein | `ddf-setup-screen` | 3 vorgewählt | — |
+| Jeopardy | **ja** | — | — | Rote/Blaue übernommen |
+
+Keine Meldung, keine JavaScript-Fehler. Der GM-Knopf heißt bei beiden
+Roster-Shows „▶ Einrichten", bei den anderen „▶ Nächstes Spiel starten".
+`node check.js --types` ohne Befund.
+
+**Offen:** Der Fehler stand rund eine Stunde live auf `master` (`31e6228` bis
+zu diesem Commit). Wer in der Zeit „Der Preis ist heiß" aus dem Turnier heraus
+gestartet hat, ist mit den zufällig verbundenen Handys ins Spiel gesprungen.
+
+**Fallstrick für den Bauplan:** Der Abschnitt „Abnahme" in `BAUPLAN.md` sagt,
+was zu prüfen ist, aber nicht, dass ein Test auch beim kaputten Code hätte
+fehlschlagen müssen. Das gehört dort ergänzt — noch nicht getan.
+
+---
+
+## 2026-09-28 — Lobbys zentriert und vergrößert · BAUPLAN.md (`230f821`)
+
+### 11 · Lobbys
+
+**Symptom (David):** „Zentrier die Elemente den Lobbys. Und mach dass alles
+Groß genug ist, ohne Überlappungen".
+
+**Ursache:** Der Kasten war auf 520px gebaut und durchgehend in 0,68–0,85rem
+gesetzt. In eine Zeile der Teilnehmer-Auswahl gehörten Punkt, Avatar, Name
+(mit `flex:1`), der Mitspielen-Knopf und bis zu vier Team-Knöpfe. Das passte
+nicht: der Name drückte alles nach rechts, die Team-Knöpfe rutschten darunter
+und schoben sich dabei über den Knopf daneben.
+
+**Gemacht:**
+
+| | vorher | jetzt |
+|---|---|---|
+| Kastenbreite | 520px | 640px |
+| Innenabstand | 14/16px | 18/20px |
+| Zeile | .85rem, 5/4px | 1rem, 9/12px, eigener Block |
+| Team-Knopf | .7rem, 5/12px | .82rem, 8/15px |
+| Mitspielen-Knopf | .7rem, 4/10px inline | .78rem, 7/16px in CSS |
+| Avatar | 28px | 34px |
+| Team-Tag | .65rem | .75rem |
+| Kopfzeile | .68rem | .8rem |
+| Listenhöhe | 220px | min(56vh, 470px) |
+
+Dazu die drei Eingriffe, die das Layout tragen:
+
+1. **Der Name trägt kein `flex:1` mehr**, sondern die Klasse `.pr-name`. Erst
+   dadurch lässt sich die Zeile mittig stellen — mit `flex:1` ist sie immer
+   linksbündig, egal was `justify-content` sagt. Betrifft `js/buzzer.js`
+   (`renderSetupLobby`) und `js/roster.js` (`renderRosterLobby`).
+2. **`.roster-teams` bekommt `flex-basis:100%`** und steht damit immer in einer
+   eigenen, zentrierten Zeile unter dem Namen. Vorher hing der Umbruch am
+   verfügbaren Platz. Ein erzwungener Umbruch sieht immer gleich aus, ein
+   zufälliger nie.
+3. **Jede Zeile ist ein eigener Block** (eigener Hintergrund, 10px Radius). Wenn
+   die Team-Knöpfe darunter umbrechen, ist zu sehen, was zusammengehört.
+
+Der Inline-Style `opacity:.45` für nicht ausgewählte Spieler ist als Klasse
+`.pr-row.aus` ins CSS gewandert.
+
+**Warum mittig:** Die Zeilen sind verschieden lang — mal nur ein Name, mal ein
+Name mit Team-Tag, mal ein Name mit vier Knöpfen. Linksbündig steht dann jede
+Zeile woanders und das Auge findet keine Kante. Das ist dasselbe Argument wie
+bei `f14dd4c` (Knopf-Raster) und `fde849b` (Kategorie-Chips), nur eine Ebene
+tiefer.
+
+**Geprüft — im Browser, mit automatischer Überlappungsprüfung.** Das Skript
+(`lobby.js` im Scratchpad) lädt die Seite über einen lokalen Server, füllt
+sechs Spieler mit langen Namen (Björn-Maximilian, Elisabeth-Charlotte) und
+gemischter Team-Zuteilung ein und vergleicht dann für **jeden** Container die
+Bounding-Boxes aller direkten Geschwister auf Schnittmengen.
+
+Bei 1280px und bei 420px Fensterbreite, in Team-Lobby, Teilnehmer-Auswahl und
+Spielerübersicht:
+
+- **Überlappungen: keine** (alle sechs Kombinationen).
+- **Schrift unter 12px: keine.**
+- Null JavaScript-Fehler.
+
+Screenshots der drei Kästen sind an David gegangen.
+
+### 12 · BAUPLAN.md
+
+**Auftrag (David):** „schreib in die MD eine gewisses Skelett zum langhangeln
+für zukünftige Gameshows, dass sie einheitlich gebaut werden. Ich will das
+alles besser machen. Regeln zum Design und Code sollten helfen. Zieh die Regeln
+aus bisherigen Gameshow arbeiten und Anweisungen/Kritik meinerseits".
+
+**Gemacht:** `BAUPLAN.md` im Wurzelverzeichnis, fünf Teile:
+
+1. **Sieben Fragen vor der ersten Zeile** — Teams oder Teilnehmer, buzzern oder
+   tippen die Handys, was sieht nur der Host, was ist ein Zug, wie endet sie,
+   wie wird gewertet. Sie entscheiden über die halbe Architektur.
+2. **Das Skelett** — die feste Reihenfolge in einer Spieldatei, der bei allen
+   Shows wortgleiche Start- und Intro-Lauf, der Schnitt des GM-Panels
+   (`xxxGmControlsHtml(pfx)` + `updateGamemasterXxx()`), und eine Tabelle mit
+   den **elf Stellen**, an denen eine neue Show angemeldet werden muss.
+3. **Code-Regeln** (10 Stück) — Helfer statt rohes DOM, Escapen als Pflicht,
+   Inline-Handler sind für Werkzeuge unsichtbar, Wache vor Wirkung,
+   Anzeige folgt dem Zustand an allen drei Orten, Rundennummern statt Zähler,
+   Timer müssen nach Ablauf einmal mehr zeichnen, relativ statt gegen null
+   rechnen, eine Quelle für eine Sache, Typen am Code.
+4. **Design-Regeln** (7 Stück) — der Bildschirm gehört dem Publikum, lesbar aus
+   drei Metern, mittig bei ungleichen Zeilen, nur ein lautester Knopf, null ist
+   kein Erfolg, angeschnitten sieht aus wie kaputt, was läuft darf nicht neu
+   anfangen.
+5. **Abnahme** — die Prüfläufe und eine Checkliste mit elf Punkten.
+
+**Warum jede Regel einen Anlass nennt:** Eine Regel ohne Grund wird beim ersten
+Termindruck gebrochen. Eine Regel mit dem Fehler daneben, der sie ausgelöst
+hat, überlebt. Deshalb steht bei jeder der Commit-Hash — `1673e6d` (Host-Knöpfe
+standen auf der Leinwand), `f14dd4c` (vier Knöpfe brachen als 2+1+1),
+`fde849b` (drei verschieden breite Kästchen), `ed25b18` (die Lösung muss im
+GM-Fenster immer stehen), `1db72e0` (Undo vor der Wache, Timer-Sperre),
+`66616c9` (drei Fassungen derselben Teamnamen), `a3fd47c` (eigener FileReader).
+
+**Verworfen:** die Regeln in `CLAUDE.md` unterzubringen. Die Datei wird vor
+**jeder** Änderung gelesen, auch vor einer Zeile im Editor — sie muss kurz
+bleiben. Der Bauplan ist dreimal so lang und nur relevant, wenn es um eine Show
+geht. `CLAUDE.md` verweist jetzt darauf und sagt, wann er zu lesen ist.
+
+**Geprüft:** Alle 23 Funktions- und Konstantennamen, die der Bauplan nennt,
+gegen `js/` geprüft — alle vorhanden. `node check.js --types` ohne Befund.
+
+### Offen
+
+- Der Bauplan beschreibt den **Ist-Zustand**. Zwei Stellen darin sind
+  Beobachtung, keine geprüfte Vorgabe: die „elf Anmeldungen" sind aus dem
+  Bestand abgeleitet, nicht durch das Anlegen einer achten Show erprobt. Wer
+  die nächste Show baut, soll die Tabelle dabei gegenlesen und korrigieren.
+- Die Design-Regeln nennen Mindestgrößen (12px Schrift, 32px Klickfläche).
+  Geprüft ist davon die Schriftgröße, automatisch, in den Lobbys. Für
+  Klickflächen gibt es keine Prüfung — das wäre ein lohnender Zusatz im
+  Testskript.
+- Die Testskripte (`lobby.js`, `smoke.js`, `flow.js`, `imp.js`) liegen im
+  Scratchpad der Sitzung und sind **nicht** im Repo. Sie setzen einen lokalen
+  Server, einen Browserpfad und eine npm-Installation voraus. Wenn solche
+  Läufe öfter gebraucht werden, gehören sie als `test/`-Ordner ins Repo — das
+  ist bewusst offen gelassen und nicht entschieden.
+
+---
+
+## 2026-09-28 — Turniermodus, TP-Rad, Mehrfachwertung, Zuschauerfenster (`66616c9`, `a3fd47c`)
+
+**Sechs Meldungen von David (Punkte 5–10).** Erstmals im Browser nachgestellt,
+nicht nur aus dem Code hergeleitet — siehe „Geprüft" unten.
+
+### 5 · Das Trivial-Pursuit-Rad zeigte die falsche Kategorie
+
+**Symptom (David):** „Das Trivial Pursuit Rad ist quasi nutzlos weil die
+ausgewählten Kategorien nicht die selben waren wie die, die gedreht wurde."
+
+**Ursache:** `tpSpin()` rechnete den Zielwinkel so aus, als stünde das Rad auf 0,
+und addierte ihn dann auf den Stand, auf dem es tatsächlich stand:
+
+```js
+const target = 360*4 + (360 - (cat*seg + seg/2));
+tpState.angle += target;
+```
+
+Beim **ersten** Dreh stimmte das — das Rad stand ja auf 0. Ab dem zweiten blieb
+der alte Restwinkel als Versatz drin und summierte sich weiter auf.
+
+**Gemessen** (6 Kategorien, Segmentbreite 60°, acht Drehungen nacheinander):
+
+| Dreh | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+|---|---|---|---|---|---|---|---|---|
+| Abweichung alt | 0° | 30° | 120° | 90° | 120° | 30° | 0° | 30° |
+| Abweichung neu | 0° | 0° | 0° | 0° | 0° | 0° | 0° | 0° |
+
+Ab 30° zeigt der Zeiger auf das Nachbarsegment. Davids „quasi nutzlos" ist
+exakt das, was die Zahlen sagen.
+
+**Gemacht:** Es wird gerechnet, wie weit von der AKTUELLEN Stellung aus noch zu
+drehen ist. Die Differenz wird immer vorwärts genommen (bei ≤ 0 kommt eine
+Umdrehung drauf), damit das Rad nie rückwärts läuft und nie stillsteht.
+
+### 6 · „Gebote abgegeben" stand im GM-Panel still
+
+**Symptom (David):** „Die ‚Gebote Abgegeben' Zahl aufm Gamemaster Panel und
+Gamepad hat nicht funktioniert … Die aufm Mainscreen war aber OK."
+
+**Ursache:** Der Firebase-Handler von `pihBids` rief nur `pihUpdateBidProgress()`
+— das ist die Anzeige auf dem Hauptbildschirm. `updateGamemaster()` fehlte, und
+das GM-Panel baut seine Zahl aus einem eigenen HTML-Durchlauf.
+
+**Gemacht:** `updateGamemaster()` ergänzt, im Handy-Handler und in `pihHostBid()`
+(dem Weg, auf dem der Host Gast-Gebote am Hauptfenster einträgt).
+
+### 7 · Schätzfragen: mehrere Teams werten
+
+**Symptom (David):** „bei Schätzfragen will ich beiden Teams Punkte geben
+können, falls beide gleich weit weg schätzen".
+
+**Gemacht:** `jeopardyScore()` schließt die Frage nur noch beim **Buzzern**. Bei
+Schätzfrage und Einzelantwort — dort tippen alle — bleibt sie offen:
+
+- `jeopardyState.scoredTeams` merkt, wer schon Punkte bekam; derselbe Knopf ein
+  zweites Mal zahlt nicht doppelt, gewertete Teams zeigen ein Häkchen.
+- Der Rumpf „Feld abhaken, Frage zu, Board frei" ist als `jeopardyFinishClue()`
+  herausgelöst — ihn nutzen jetzt auch `jeopardySkip()` (wo er wortgleich
+  dupliziert war) und der neue Knopf **„✔ Frage abschließen"**.
+- `scoredTeams` geht in Snapshot und Undo mit.
+
+**Gemessen:** zwei Teams gewertet → `scores [100,100,0]`, `scoredTeams [0,1]`,
+Frage noch offen; dritter Klick auf Team 0 ändert nichts; nach dem Abschließen
+ist `used[0][0]` gesetzt.
+
+### 8 · Editoren standen auf der Leinwand
+
+**Symptom (David):** „Wenn man Fragen und Intro bearbeitet, sieht man das auch
+auf den Mainscreen."
+
+**Ursache:** Das Zuschauerfenster hatte eine **Liste der auszublendenden**
+Screens. Sie hinkte jeder neuen Show hinterher — zuletzt fehlte
+`#intro-edit-screen`.
+
+**Gemacht:** umgedreht. `BOARD_PUBLIC_SCREENS` zählt die neun Zuschauer-Screens
+auf, `boardHiddenScreensCss()` baut daraus `.screen:not(#…):not(#…){display:none}`.
+Eine Liste, die man beim Anlegen eines Screens pflegen muss, wird vergessen;
+eine, die man beim Anlegen eines **Zuschauer**-Screens pflegen muss, fällt
+sofort auf — dann bleibt die Leinwand schwarz.
+
+**Gemessen:** 20 Screens werden jetzt ausgeblendet, darunter `intro-edit-screen`,
+alle sieben Editoren, alle sieben Setup-Screens, Spielerliste, Notizen und der
+Turnier-Screen.
+
+### 9 · Turniermodus
+
+**Symptom (David):** „das Turnier soll eine richtige Funktion haben, so Grad
+geht da nix." Vier Wünsche: Spieldaten vorab importieren, Spiele nacheinander
+im selben Popout, beim Einrichten nichts auf der Leinwand, und nach dem Spiel
+ein durchgehender Ablauf ohne Umweg über Menü und Lobby.
+
+**Gemacht:**
+
+`TOURNAMENT_GAMES` ist die neue Registry: je Show der Setup-Screen, die
+Startfunktion, der Schlüssel für die Teamnamen-Felder, die Import-Funktion und
+eine Funktion, die sagt, was gerade geladen ist. `TOURNAMENT_STARTABLE` wird
+daraus abgeleitet und bleibt nur als Name bestehen.
+
+**Spieldaten-Depot** (Turnier-Screen, „📦 Spieldaten & Intro laden"): je
+geplantem Spieltyp plus Intro eine Zeile mit „Laden" und dem aktuellen Stand.
+Die Dateien gehen über **dieselbe** Import-Funktion wie im Editor dorthin, wo
+sie hingehören; im Turnier steht nur Dateiname und Uhrzeit.
+
+> **Warum nicht die Daten selbst ins Turnier:** das Turnier-Objekt liegt in
+> Firebase und wird bei jeder Änderung komplett geschrieben. Ein Jeopardy-Board
+> mit eingebetteten Bildern ist mehrere MB — das würde jede Runde ausbremsen.
+
+`readJsonFile()` hat dafür einen einmaligen Erfolgs-Haken bekommen
+(`onJsonImportOk`), der nur bei geglücktem Import feuert. Die sieben
+Import-Funktionen selbst blieben unverändert — jede einzeln umzubauen wären
+sieben Gelegenheiten, eine zu übersehen.
+
+**„📦 Nächste Spieldaten überprüfen"** listet für alle offenen Spiele Datei,
+Uhrzeit und den echten Stand aus dem Speicher („3 Kategorien · 4 Fragen").
+Bewusst ein `alert` und kein weiterer Screen: der Host drückt das kurz vor dem
+Start und macht weiter.
+
+**Direktstart:** `tournamentStartAt(i)` / `tournamentStartNext()` betreten den
+Setup-Screen (wegen der Nebenwirkungen von `showScreen()`: Lobby verbinden,
+Einstellungen laden, Teilnehmerfelder bauen), übernehmen die Turnier-Teams in
+dessen Felder inklusive Team-3-Haken und rufen dann die Startfunktion. Sichtbar
+wird der Setup-Screen nicht — er steht nicht in `BOARD_PUBLIC_SCREENS`.
+
+> „Der Dümmste fliegt" und „Der Preis ist heiß" (`lobby:'roster'`) bleiben auf
+> ihrem Setup-Screen stehen: dort muss erst ausgesucht werden, **wer**
+> mitspielt. Das kann kein Knopf erraten. Der Knopf heißt dort „Einrichten".
+
+**Neuer Zuschauer-Screen `tournament-board-screen`:** Tabelle und Spielplan,
+kein einziger Knopf, das nächste Spiel hervorgehoben. Er und der Host-Screen
+rechnen über dieselbe Funktion (`tournamentStandingsHtml`) — zwei Kopien wären
+zwei Stände, die auseinanderlaufen.
+
+**Der Ablauf** ist jetzt der, den David beschrieben hat:
+
+1. Spiel endet → Mainscreen bleibt beim Ergebnis. `tournamentRecordPending()`
+   springt **nicht** mehr auf den Turnier-Screen (dort steht die Werkstatt des
+   Hosts, und das Sieger-Bild war weg, bevor es jemand gesehen hatte).
+2. „📊 Turnierstand anzeigen" → die Leinwand wechselt.
+3. Im GM-Panel: nächstes Spiel mit Name, Gewichtung und Spieldaten-Zeile,
+   dazu „▶ Nächstes Spiel starten", „📦 Nächste Spieldaten überprüfen",
+   „🛠 Turnier bearbeiten", „🏠 Zum Menü".
+
+Der GM-Zweig für diesen Screen steht **vor** den Spiel-Flags im Dispatch: ob
+das Flag der eben beendeten Show schon zurückgesetzt ist, hängt daran, wie sie
+geendet hat.
+
+Trivial Pursuit, „Der Dümmste fliegt" und „Der Preis ist heiß" enden nicht auf
+dem gemeinsamen Ergebnis-Screen. Bei ihnen führte nach dem Spiel nur „Zum Menü"
+weiter; sie haben den Turnier-Knopf jetzt in ihrem eigenen Endzustand
+(`tournamentEndButtonHtml`).
+
+**Popout über mehrere Shows:** `openBoardPopout()` schrieb das Dokument bei
+jedem Spielstart neu — zwischen zwei Spielen wurde das Zuschauerfenster weiß
+und holte Schriften und `styles.css` erneut. Steht das Fenster schon, wird es
+jetzt nur neu angeheftet. Die Prüfung braucht keine Markierung im Dokument:
+`boardWin` steht nur, wenn dieses Fenster es selbst geöffnet hat. (Eine
+Markierung im `<body>` wäre ohnehin wirkungslos — der Mirror kopiert die
+Attribute des Haupt-`<body>` mit und würde sie wegräumen. Das war der erste
+Versuch und ist verworfen.)
+
+### 10 · Team-Zuteilung
+
+**Symptom (David):** „Da zuteilen in Team bei dpih hat nur schlecht
+funktioniert, mach das wie in den ersten Paar spielen und dann einheitlich bei
+allen gleich. Außerdem gibt's im Team/Spieler Menü Überlappungen von Buttons
+und Feldern."
+
+**Ursache:** drei Fassungen derselben Sache.
+
+| Ort | vorher |
+|---|---|
+| Setup-Lobbys | `lobbyTeamNames()` + `playerTeamButtonsHtml()`, beliebig viele Teams |
+| Teilnehmer-Auswahl (DDF/PIH) | eigene Fassung, **fest zwei Teams** — `rosterTeamOf` gab bei Index > 1 `null` |
+| Spielerübersicht | eigene Fassung, **immer drei Knöpfe**, egal wie viele Teams spielen |
+
+Wer über die Spielerübersicht in „Team 3" gelegt wurde, galt bei „Der Preis ist
+heiß" als „ohne Team" und tauchte in keiner Wertung auf.
+
+**Gemacht:** eine Quelle, eine Funktion.
+- `contextTeamNames(game)` in `buzzer.js` beantwortet „wie heißen die Teams
+  gerade" für alle Kontexte.
+- `playerTeamButtonsHtml()` baut die Knöpfe überall — Setup-Lobbys,
+  Teilnehmer-Auswahl und Spielerübersicht. Es nimmt jetzt `p.id` **oder**
+  `p.key` (derselbe Wert, nur aus verschiedenen Firebase-Knoten) und hat den
+  „✕ Team wegnehmen"-Knopf bekommen, den vorher nur die Teilnehmer-Auswahl hatte.
+- `currentTeamLabel(i)` ist ein Einzeiler über `currentTeamNames()`.
+
+**Überlappungen:** `.player-row` hatte Name und Knopfleiste als zwei
+Flex-Geschwister, die sich um dieselbe Breite stritten — beide durften wachsen,
+keiner richtig schrumpfen (der Name wegen seiner Emoji-Kette aus Statistik und
+Team-Tag, die Knöpfe wegen `white-space:nowrap`). Jetzt hat jeder Block eine
+Mindestbreite (200px / 260px) und bricht darunter in eine eigene Zeile.
+
+Dabei aufgefallen: `.pr-team-btn` war nur unterhalb von `.setup-lobby`
+gestaltet. Außerhalb — also in der Spielerübersicht, wo die Knöpfe jetzt auch
+stehen — wären sie als nackte Browser-Knöpfe herausgekommen. Die Regel gilt
+jetzt ohne Vorfahren-Bedingung. Und `.roster-teams` durfte nicht umbrechen; bei
+drei Teams plus ✕ schob sich die Leiste über den Nachbarknopf.
+
+### Nebenbefund: zwei Importe liefen an `readJsonFile` vorbei
+
+Im Browser-Test fiel auf, dass der Trivial-Pursuit-Import die Datei zwar lud,
+der Dateiname im Depot aber nicht ankam. `importTp` und `importIntro` hatten
+einen **eigenen FileReader** — dieselbe Mechanik noch einmal, aber ohne
+BOM-Behandlung, mit einer Fehlermeldung, die bei kaputtem JSON „Datei konnte
+nicht gelesen werden" sagte statt zu verraten was daran kaputt ist, und ohne
+die Erfolgsmeldung. Beide laufen jetzt über `readJsonFile`; ihre
+spielspezifische Prüfung wirft statt selbst zu melden.
+
+### Geprüft
+
+**Zum ersten Mal im echten Browser.** Chromium ist in dieser Umgebung
+vorinstalliert; die Seite lief über einen lokalen Server, gesteuert per
+Playwright. Die Skripte liegen im Scratchpad der Sitzung (`smoke.js`,
+`flow.js`, `flow2.js`, `imp.js`) — sie sind **nicht** ins Repo gewandert, weil
+sie einen Server, einen Browserpfad und eine npm-Installation voraussetzen.
+
+Nachgestellt und bestanden:
+- Turnier anlegen, drei Spiele in den Plan, Spieldaten-Panel, „Spieldaten
+  prüfen", Turnierstand anzeigen.
+- Direktstart Jeopardy: `jt1/2/3` = Rote/Blaue/Grüne, Team-3-Haken gesetzt,
+  `jeopardyState.teamNames` stimmt, `activeTournamentGameIndex` = 0.
+- Einzelantwort: öffnet, `jeopardyEstimate.single` true; zwei Teams gewertet,
+  Frage bleibt offen, dritter Klick zahlt nicht doppelt; Abschließen hakt ab.
+- Kompletter Turnierlauf TP → Ergebnis automatisch eingetragen (`[6,1]` →
+  `+4/+2`) → Turnierstand → Jeopardy gestartet.
+- Direktstart bei „Der Preis ist heiß": startet **nicht** durch, bleibt auf dem
+  Setup-Screen, Teamnamen sind trotzdem übernommen.
+- Echter Datei-Import durch den echten Datei-Input: Datei kommt an, Name wird
+  gemerkt, Stand stimmt. Kaputte Datei: konkrete Fehlermeldung, der vorherige
+  Eintrag bleibt stehen.
+- Popout: zweiter Aufruf liefert dasselbe Fenster, Inhalt bleibt erhalten.
+- Turnier-Knopf im Endzustand von TP, DDF und PIH vorhanden.
+- Rad-Winkel: acht Drehungen, 0° Abweichung (alt: bis 120°).
+- **Null JavaScript-Fehler** in allen Durchläufen. Die Meldungen in der Konsole
+  sind ausnahmslos Netzwerk (Firebase, Google Fonts, CDN) — in dieser Sandbox
+  ist der Ausgang gesperrt.
+
+Dazu wie immer `node check.js` und `node check.js --types`: 13 Dateien, 410
+Handler-Aufrufe gegen 783 globale Namen, 264 Element-IDs, keine Meldung.
+
+### Ungeprüft / offen
+
+- **Firebase lief in keinem Test.** Alles, was daran hängt — Lobby, Presence,
+  Team-Zuteilung über die Handys, der Turnier-Sync — ist weiterhin nur aus dem
+  Code hergeleitet. Der erste Abend mit echten Handys ist der eigentliche Test.
+- **Das Zuschauerfenster wurde nicht gesehen.** Geprüft ist die erzeugte
+  CSS-Regel und die Liste, nicht das Bild auf dem Beamer.
+- **Der Spieldaten-Speicher ist nicht überall dauerhaft.** `tpData`, `wwdsData`,
+  `ddfData`, `pihData`, `introData` und die Feud-Fragen liegen im
+  `localStorage`; **`jeopardyData` nicht** — ein Neustart des Browsers wirft das
+  geladene Board weg. Deshalb steht unter dem Depot der Hinweis, nach einem
+  Neustart „Spieldaten prüfen" zu drücken. Wenn das stört, wäre die Stelle
+  `jeopardyData` in `js/jeopardy.js` samt einem Paar `storeSetJson/storeGetJson`
+  — mit der Einschränkung, dass Boards mit eingebetteten Bildern die
+  5-MB-Grenze des localStorage reißen können.
+- Ein Spieltyp kann mehrfach im Plan stehen (zwei Jeopardy-Runden an einem
+  Abend); geladen wird er trotzdem nur einmal. Für zwei verschiedene Boards am
+  selben Abend müsste zwischendurch nachgeladen werden.
+- `tournamentEnterResult()` fragt die Punkte weiterhin per `prompt()` ab, eins
+  nach dem anderen. Für die teamlosen Shows ist das der Weg — es ist nicht
+  schön, wurde aber nicht angefasst.
+
+---
+
+## 2026-09-28 — Einzelantwort, TP-Logik, Buzzer-Sperre, Lobby-GIF (`1db72e0`)
+
+**Vier Meldungen von David in einer Nachricht.** Der Reihe nach.
+
+### 1 · Jeopardy: Schätzfrage mit Wörtern → eigene Sorte „Einzelantwort"
+
+**Symptom (David):** „Jeopardy Schätzfragen auch mit Wörtern haben mal wieder
+nicht funktioniert → bauen wir um in Einzelantwort. Auf dem Handy geht ein
+Textfeld auf."
+
+**Rückfrage gestellt**, weil „Einzelantwort" drei Lesarten hatte (eigener
+Fragetyp für alle / nur einer tippt / Buzzer entscheidet dann Textfeld).
+Davids Antwort: **eigener Fragetyp, alle tippen.**
+
+**Gemacht:**
+- Neues Feld `clue.single` (📝 Einzelantwort) gleichrangig neben
+  `clue.estimate` (📊 Schätzfrage). Der alte Unterhaken `estimateText`
+  („🔤 Buchstaben") ist raus.
+- Die beiden Haken schließen sich gegenseitig aus — `jeopardyEditTyped()` in
+  `js/jeopardy-ui.js` nimmt dem einen das Kreuz weg, wenn der andere gesetzt
+  wird, und löscht `estimateText` gleich mit.
+- `jeopardyTyped(clue)` / `jeopardySingle(clue)` in `js/jeopardy.js` — überall
+  dort eingesetzt, wo vorher `clue.estimate` direkt abgefragt wurde
+  (`jeopardyRevealQuestion`, GM-Panel in `js/feud.js`, GM-Leiste).
+- Sortierung: bei `single` strikt nach Eingang, die Zahlen-Logik läuft gar
+  nicht erst an. Beschriftung im GM-Panel, auf dem Handy (Überschrift,
+  Platzhalter, „Antwort abgegeben ✔") und im Board-Gitter (📝-Abzeichen) folgt.
+- Import alter Boards: `jeopardyMigrateBoard()` macht aus
+  `estimate + estimateText` ein `single`. Zur Laufzeit zählt
+  `estimateText` nur noch in `jeopardyEstimateOpen()` als Rückfall.
+- `openJeopardyClue()` setzt `jeopardyEstimate.answers`/`.single` zurück —
+  sonst zeigte das GM-Panel vor dem Aufdecken noch die Liste der vorigen Frage.
+
+**Warum so:** Die alte Bauart war der Fehler selbst. Eine Wortantwort lief
+weiter durch `parseEstimate()`, das aus allem ohne Ziffer `null` macht; die
+Sortierung hängte sie als „Rest" hinter die Zahlen. Die Liste war also nach
+nichts sortiert, und ein versehentlich stehengebliebener Zahlen-Haken kippte
+die ganze Frage still auf Ziffernblock. Zwei gleichrangige Sorten, die sich
+ausschließen, machen den Zustand am Haken ablesbar.
+
+**Verworfen:** den alten Unterhaken nur zu reparieren. Er war die Ursache,
+nicht das Symptom — und David hat den Umbau ausdrücklich verlangt.
+
+### 2 · Trivial Pursuit: Logikfehler
+
+David hat keine benannt („gibt's Logik Fehler die fixt du bitte"), also
+`js/tp.js` durchgelesen. Gefunden und behoben:
+
+| Stelle | Fehler | Folge |
+|---|---|---|
+| `tpEnterFinal()` | setzte `finalTeam`, aber nicht `turn` | Nach erfolgreichem Nachfassen, das das letzte Stück brachte, stand das falsche Team am Zug: GM-Kopf, Dreh-Knopf auf den Handys und Torten-Markierung zeigten den Vorgänger, gewertet wurde der Finalist |
+| `tpShowAnswer()` | setzte auch beim Nachfassen `phase = 'answer'` | `tpStealAward()`/`tpStealNobody()` prüfen auf `'steal'` und taten danach wortlos nichts — der Host konnte das Nachfassen nicht mehr werten |
+| `tpJudge()` | keine Phasen-Wache | Zweiter Klick (Doppeltipp, doppelt ankommender Fernbefehl) schob den Zug ein zweites Mal weiter, ein Team wurde übersprungen |
+| `tpSpin()`, `tpJudge()`, `tpStealAward()`, `tpStealNobody()` | `tpUndoStack.save()` **vor** der Wache | Jeder abgeprallte Aufruf legte einen Zustand auf den Stapel; „↩ Undo" holte denselben Spielstand zurück und sah aus, als täte es nichts |
+| `startTp()` | kein `tpUndoStack.reset()` | „↩ Undo" im ersten Zug holte den Spielstand des **vorigen** Spiels zurück |
+| `tpDrawQuestion()` | schob bei leerer Auswahl die `0` ein zweites Mal in `used` | `used.length` wuchs über `questions.length`; `tpOpenCats()` hielt die Kategorie danach für erledigt |
+| `tpRender()` | setzte `tpSpinOpen = true` auch ohne Verbindung | Der Dreh-Knopf kam nie mehr auf die Handys, auch wenn Firebase längst wieder da war |
+| `tpStealAward()` | keine Prüfung `team !== turn` | Das Team, das gerade daneben lag, konnte bei sich selbst nachfassen (über einen alten GM-Spiegel) |
+
+Dazu ein neuer Merker `tpState.stealShown`: der Host kann die Antwort jetzt
+**während** des Nachfassens aufdecken, ohne die Phase zu verlassen — im
+GM-Panel liegt dafür ein „Antwort zeigen"-Knopf in der Steal-Leiste.
+
+### 3 · Lobby-GIF zwischen den Fragen
+
+**Symptom (David):** „Zwischen jedem Buzzer geht immer wieder der Lobbyscreen
+mit Gif auf. Soll nicht."
+
+**Ursache:** `refreshRoot()` in `buzzer/index.html` kannte nur
+`live || armed || buzzedThisRound` → Buzzer-Screen, sonst Lobby. Zwischen zwei
+Fragen steht `live` auf `false`, also sprang jedes Handy in die Lobby zurück —
+samt frisch eingeblendetem GIF.
+
+**Gemacht:** Merker `everLive`. Er trennt die beiden Fälle, die `live === false`
+sonst zusammenwirft: „Show hat noch nicht angefangen" (Lobby ist richtig) und
+„nächste Frage kommt gleich" (Buzzer-Screen bleibt stehen, Statuszeile sagt
+„Warte auf die Frage…").
+
+**Bewusst nur im Speicher**, nicht in `localStorage`: nach einem Neuladen
+mitten in der Show sieht man einmal die Lobby, spätestens bei der nächsten
+Frage steht der Buzzer wieder da. Das ist der harmlose Fall — ein persistenter
+Merker müsste dagegen wissen, wann eine Show *endet*, sonst bekäme ein Gast
+beim nächsten Event nie wieder die Lobby zu sehen.
+
+**Nebenwirkung, gewollt:** „Wer weiß denn sowas" setzt `live` nie und behält
+damit wie bisher die Lobby. Trivial Pursuit setzt es beim Nachfassen — dort
+bleibt das Handy danach auf dem Buzzer-Screen statt in der Lobby.
+
+### 4 · Buzzer blieb für die ganze Frage gesperrt
+
+**Symptom (David):** „Wenn man zu nah aneinander die Frage anzeigt und aber
+noch vorher buzzert bleibt der Buzzer permanent gesperrt für die Frage."
+
+**Ursache (aus dem Code hergeleitet, nicht live nachgestellt):** In
+`buzzer/index.html` stand
+
+```js
+setInterval(() => { if (locked()) refreshBuzz(); }, 250);
+```
+
+Solange die 3-Sekunden-Sperre lief, wurde gezeichnet. In dem Takt, in dem sie
+ablief, war die Bedingung falsch — es wurde **nicht** noch einmal gezeichnet.
+Stehen blieb also das letzte Bild, das mit deaktiviertem Knopf. Er ging erst
+wieder auf, wenn von außen ein Ereignis kam (fremder Buzz, Umschalten des
+Hosts, neue Runde).
+
+Genau deshalb hängt es an „zu nah aneinander": deckt der Host kurz nach dem
+Öffnen auf, kommt das `armed`-Ereignis **während** der Sperre. Danach kommt
+keins mehr — der Spieler ist für die ganze Frage raus, und niemand sieht warum.
+Bei genug Abstand kommt `armed` nach der Sperre und räumt sie mit auf; deshalb
+fiel es nur in der Hektik auf.
+
+**Gemacht:** Der Takt läuft jetzt, solange eine Sperre eingetragen ist, und
+räumt sie beim Ablaufen selbst weg — das ergibt genau den einen Durchlauf nach
+dem Ende, der gefehlt hat.
+
+**Dazu (4a):** zweiter Knopf **„🔔 Buzzer neu (alle dürfen)"** neben dem
+bisherigen „(1. gesperrt)" — im GM-Panel und in der GM-Leiste.
+`jeopardyBuzzReopen()` und der neue `jeopardyBuzzReopenAll()` teilen sich
+`jeopardyBuzzReopenCore(sperreErsten)`. Der neue Knopf leert die Sperrliste
+ganz, auch schon bestehende Einträge. Dabei mit aufgefallen: die alte Fassung
+schrieb `excluded: {}` — ein leeres Objekt schreibt Firebase nicht, der alte
+Knoten wäre stehengeblieben. Jetzt `null`, wenn die Liste leer ist.
+`jeopardyBuzzReopenAll` steht in `GM_REMOTE_ALLOWED_FNS`, ist also auch vom
+Handy-Gamepad aus erreichbar.
+
+### Geprüft
+
+- `node check.js` — 13 js-Dateien syntaktisch, 392 Handler-Aufrufe gegen 758
+  globale Namen, 259 feste Element-IDs gegen 213 im Markup, 974
+  Klammernpaare in `styles.css`. Ohne Befund.
+- `node check.js --types` — 13 Dateien typgeprüft, keine Meldung.
+- `buzzer/index.html`: das große `<script>` herausgelöst und mit
+  `node --check` geprüft (`check.js` sieht diese Datei nicht an).
+
+### Ungeprüft / offen
+
+- **Nichts davon lief im Browser oder in einer echten Show.** Alle vier
+  Befunde sind aus dem Code hergeleitet. Besonders Punkt 4 gehört mit zwei
+  Handys nachgestellt: Feld öffnen, sofort drücken, sofort aufdecken — der
+  Knopf muss nach spätestens 3 Sekunden wieder angehen.
+- Punkt 3 und Trivial Pursuit greifen ineinander: seit `everLive` bleibt das
+  Handy auch bei TP zwischen den Zügen auf dem Buzzer-Screen. Falls das dort
+  stört, ist die Stelle `refreshRoot()` in `buzzer/index.html`.
+- `estimateText` lebt noch als Rückfall in `jeopardyEstimateOpen()` und in der
+  Typdefinition. Wenn sicher ist, dass keine alte Board-Datei mehr im Umlauf
+  ist, kann beides raus.
+- Die Fallstricke bei Trivial Pursuit, die **nicht** angefasst wurden:
+  `tpHasAll()` verlangt `wedges[team].length === tpCatCount()` — wer im Editor
+  während eines laufenden Spiels eine Kategorie hinzufügt, macht das Spiel
+  unlösbar. Und `tpRenderTeams()` zeigt „🏁 Schlussfrage" bei **jedem** Team
+  mit voller Torte, nicht nur bei dem, das gerade dran ist.
+
+---
+
+## 2026-09-26 — Intro-Editor landete immer bei Family Feud (`a58aab4`)
+
+**Symptom (David):** „wenn ich in das Intro laden will dann komm ich IMMER
+automatisch zu Family Feud".
+
+**Ursache:** Der „Zurück"-Knopf im Intro-Editor stand als
+`onclick="showScreen('setup-screen')"` im Markup — und `setup-screen` ist der
+Family-Feud-Screen. Der Bedienblock `#intro-pick` wandert über alle acht
+Setup-Screens (`INTRO_SLOTS`), der Rückweg tat das nicht. Wer das Intro aus
+Jeopardy, WWDS oder dem Turnier heraus öffnete, stand danach im
+Family-Feud-Setup — und einen Klick von der falschen Show entfernt.
+
+**Behoben:** `openIntroEditor()` merkt sich den gerade aktiven Screen in
+`introEditFrom`, `closeIntroEditor()` geht dorthin zurück. Gibt es den Screen
+nicht (mehr), führt es ins Menü statt in eine Sackgasse. Beide in
+`js/intro.js`, die zwei `onclick` in `index.html` zeigen jetzt darauf.
+
+**Geprüft:** `node check.js --types` ohne Meldung. Im Browser **5 Prüfungen,
+alle grün**: von **allen acht** Setup-Screens (Feud, Jeopardy, WWM, WWDS,
+DDF, PIH, TP, Turnier) den Editor geöffnet und zurück — jedes Mal auf dem
+Screen gelandet, von dem aus geöffnet wurde. Nach einem JSON-Import bleibt
+man im Editor und kommt danach richtig zurück. Bei unbekannter Herkunft
+landet man im Menü. Keine Konsolenfehler.
+
+**Fallstrick beim Patchen:** `<button ... onclick="showScreen('setup-screen')">Zurück</button>`
+steht **zweimal** in `index.html` — einmal im Feud-Editor, einmal im
+Intro-Editor. Eine Ersetzung darauf muss mit der Zeile davor ankern, sonst
+trifft sie die falsche.
+
+## 2026-09-26 — Teams in der Lobby · Nachfassen nur fürs andere Team (`e24b4aa`)
+
+Drei Meldungen von David, alle berechtigt.
+
+### 1. „dpih team? da kann man nix auswählen"
+
+**Stimmt.** Beim Teamstand hatte ich zwei Namensfelder ins PIH-Setup gebaut,
+aber keine Möglichkeit, jemanden einem Team zuzuordnen. Die Lobby von
+„Der Preis ist heiß" und „Der Dümmste fliegt" (`renderRosterLobby` in
+`js/roster.js`) kannte nur „spielt mit / dazu" — die Team-Knöpfe hat nur
+`renderSetupLobby`, die die anderen vier Shows benutzen.
+
+Jetzt hat jede **ausgewählte** Zeile „Rot"/„Blau" und ein ✕. Beschriftet
+wird über `rosterTeamNames(game)`: bei PIH aus den Setup-Feldern, sonst aus
+einem laufenden Turnier, sonst „Team 1/2". Geschrieben wird über
+`assignPlayerTeam` — **dieselbe Stelle wie überall sonst**, damit es nicht
+zwei Stände gibt.
+
+### 2. „die spieler werden dann als einzeln angezeigt"
+
+Auch nach dem Zuteilen stand in der Lobby nur eine Namensliste. Jetzt steht
+darunter die **Aufstellung** in einer Zeile: `Rot Anna, Ben · Blau Clara,
+David · ohne Team Emil, Gustav (Gast)`. Gäste ohne Account stehen dort
+ausdrücklich mit drin — sie spielen mit, zählen aber auf kein Team ein.
+
+Dazu: `assignPlayerTeam` setzt den Wert jetzt **sofort lokal** in
+`allPlayers` und ruft `refreshOpenRosterLobby()`. Vorher wartete die Anzeige
+auf die Antwort der Datenbank; ohne Verbindung kam die nie und der Knopf sah
+aus, als hätte er nicht reagiert.
+
+### 3. „beim Rad drehen steht da, dass man gebuzzert hat"
+
+**Zwei Fehler in einem.**
+
+**a)** Nach dem Nachfassen blieb auf dem Handy dessen, der gebuzzert hatte,
+„Gebuzzert! ✔" stehen. Grund: `buzzedThisRound` wird auf dem Handy erst bei
+einer **neuen Runde** zurückgesetzt (`round !== lastRound`), und
+`feudBuzzClose` zählt die Runde nicht weiter. Danach ging es sofort ans Rad —
+und auf dem Handy stand weiter, man habe gebuzzert.
+
+Neu: `feudBuzzEndRound()` in `js/buzzer.js` schließt **und** zählt die Runde
+weiter. TP benutzt sie an allen vier Stellen statt `feudBuzzClose`.
+**Family Feud bleibt, wie es war**: dort ist das Nachleuchten gewollt (man
+soll seinen Platz noch sehen, wenn der Host gleich weitermacht) — deshalb
+keine Änderung an `feudBuzzClose` selbst.
+
+**b)** Beim Nachfassen war der Buzzer für **alle** offen, auch für das Team,
+das gerade daneben lag — das konnte seinen eigenen Fehler wieder
+einsammeln. Neu sperrt `tpExcludeTurnTeam()` dessen Handys über die
+vorhandene `excluded`-Liste (nach Namen, so wertet das Handy sie aus). Dort
+steht dann „Für diese Frage gesperrt 🚫" und der Knopf ist aus.
+
+### Geprüft
+
+`node check.js --types` ohne Meldung (388 Handler, 974 Klammernpaare).
+**24 Prüfungen, alle grün**, Firebase durch eine mitschreibende Attrappe
+ersetzt:
+
+- Lobby: 2 Knöpfe je ausgewähltem Spieler, Beschriftung folgt den
+  Setup-Namen (Test mit „Feuer"/„Eis"), Zuteilung wirkt sofort, ✕ nimmt sie
+  weg, vier aktive Knöpfe markiert, Aufstellung gruppiert richtig, Gast
+  unter „ohne Team". DDF-Lobby hat sie auch. Bildschirmfoto.
+- TP: nach falscher Antwort läuft das Nachfassen, `excluded` enthält genau
+  `Anna, Ben` (das Team am Zug), der Zustand kennt die Sperre; nach der
+  Entscheidung wird eine neue Buzzer-Runde geschrieben, der Buzzer ist aus
+  und die Sperre wieder weg.
+- Handy: gesperrtes Team kann nicht buzzern und sieht den Grund, das andere
+  Team kann; eine neue Runde löscht „Gebuzzert".
+- Keine Konsolenfehler.
+
+**Fallstrick:** Die Lobby baut sich nach **jedem** Klick neu auf. Ein Test,
+der sich Knöpfe vorher in eine Liste holt und dann nacheinander anklickt,
+klickt ab dem zweiten Mal auf tote Elemente. Nach jedem Klick neu suchen.
+
+**Vorsicht beim Testen:** Ohne Firebase-Attrappe verbindet sich die Seite mit
+der **echten** Datenbank und zeigt die echten Accounts. Ein Klick auf einen
+Team-Knopf schreibt dann wirklich. Erst abklemmen, dann klicken.
+
+## 2026-09-26 — Komplettdurchlauf (`bac0cd5`, ein Fund behoben)
+
+Alles einmal durchgetestet. **89 Prüfungen, alle grün**, davon 80 auf der
+Hostseite und 9 auf dem Handy. `node check.js --types` ohne Meldung
+(13 Dateien, 386 Handler, 213 IDs, 967 Klammernpaare). Firebase war durch
+eine Attrappe ersetzt, die jeden Schreibversuch **mitschreibt** statt ihn zu
+senden (137 abgefangen), Popout gezählt statt geöffnet (4).
+
+**Ein echter Fund, behoben in `bac0cd5`:** Der Ergebnis-Bildschirm lief bei
+400 px Breite über — 430 px statt 400. Ursache: mit laufendem Turnier stehen
+dort **vier** Knöpfe in einer Reihe („Ins Turnier übernehmen", „Zur
+Turnierübersicht", „Nochmal spielen", „Zum Menü"), und `.result-btns` hatte
+kein `flex-wrap`. Ohne Turnier sind zwei davon versteckt, deshalb ist es
+vorher nie aufgefallen. Jetzt bricht die Reihe um.
+
+**Durchgespielt:**
+
+- **Feud**: Antwort, Strike, Teamwechsel, Undo, Runde 2.
+- **WWM**: 15 Stufen, 4 Antworten, 50:50 und dessen Undo, Frage weiter, und
+  das „Beenden" nach einer falschen Antwort (der Spielzug, kein Abbruch).
+- **WWDS**: 12 Kategorien, Publikumsjoker, Punkte, Undo.
+- **Jeopardy**: eigener Punktwert 800 auf einem 100er-Feld (Board zeigt ihn),
+  Kategorie-Bild, Schritt-Frage mit Muster T,B,T, **Daily Double auf genau
+  dieser Frage** → 1600 statt 800, Abzug 400, Schritte einzeln, Undo nimmt
+  einen Schritt zurück, Gutschrift 1600. Ton in einer Schritt-Frage →
+  **kleine** Anzeige, Schritte bleiben lesbar, Stopp räumt auf.
+- **DDF**: vier Teilnehmer à 3 Leben, Abstimmung mit allen vier Stimmen,
+  Mehrheit trifft den Richtigen, Undo gibt das Leben zurück.
+- **PIH**: Ordner-Import (3 Bilder, Reihenfolge nach `01_`, Preise erkannt,
+  „Playstation 5" ohne Preis, Bilder unter 200 KB), Teamleiste, 1 Runde +
+  Finale, `only` geht an die Handys, nur die zwei Vertreter dürfen bieten,
+  Superpreis bringt 3 Punkte (plus 1 nur bei punktgenauem Treffer), Undo,
+  Endstand nennt das Team zuerst.
+- **TP**: Rad-Kanal öffnet mit dem richtigen Team, Stück vergeben, Undo nimmt
+  es zurück und das Rad hängt nicht.
+- **Alle sieben Shows**: Hauptbildschirm hat **0** Host-Knöpfe; DDF, PIH und
+  TP haben im GM kein „Beenden" mehr, dafür Undo.
+- **Sieben Editoren** bauen auf. **Beide Intro-Bühnen** laufen (Kellerbühne
+  mit Lämpchenrahmen, Neon mit Gitter und Sonne, dort korrekt ohne Rahmen).
+- **Logos**: der goldene Balken findet seinen Verlauf, keine doppelte
+  Verlaufs-ID im Dokument.
+- **Töne**: alle acht Einträge in `SFX` da, Knopf „Töne probehören" im Menü.
+- **Handy**: Rad-Knopf frei, wenn das eigene Team dran ist; nach fremdem Dreh
+  gesperrt mit Namen; anderes Team sieht nichts; Finale-Sperre greift und
+  nennt die Bieter; ohne Einschränkung darf jeder.
+- **Gamepad** lädt ohne Fehler.
+- **Kein Querüberlauf** auf zwölf Screens, weder bei 1024 px noch bei 400 px
+  (nach dem Fix). Keine Konsolenfehler auf allen drei Seiten.
+
+**Fünf Fehlalarme, die keine waren** — für den nächsten Durchlauf:
+
+- `ddfHostVote` trägt nur **Gäste** ein; Konten stimmen über Firebase ab.
+  Ein Test muss `ddfState.votes[uid]` direkt setzen, sonst zählt nur eine
+  Stimme. (Dasselbe gilt für `pihHostBid`/`pihState.bids`.)
+- Der **Undo-Knopf verschwindet nach dem Undo** — der Stapel ist dann leer.
+  Wer direkt danach auf den Knopf prüft, findet ihn zu Recht nicht.
+- Das **WWM-„Beenden"** erscheint nur nach einer **falschen** Antwort.
+- Im PIH-Finale gibt ein **punktgenaues** Gebot einen Punkt extra, der
+  Superpreis bringt also 3+1 statt 3.
+- `document.body.textContent` auf der Gamepad-Seite enthält den Inhalt der
+  `<script>`-Blöcke. Das sieht nach ausgeplauderter Konfiguration aus, ist
+  aber keine: `innerText` ist leer. Mit `innerText` prüfen.
+
+**Ungeprüft geblieben:** alles, was zwei echte Geräte über Firebase braucht —
+Rad drehen vom Handy, Gebote im Finale, Buzzer-Wettlauf. Dazu das echte
+Board-Popout und der Datei-Dialog per Mausklick.
+
+## 2026-09-26 — Rad vom Handy · Host-Knöpfe nur im GM · Undo überall (`1673e6d`)
+
+Drei Wünsche in einem Commit, weil sie sich überlappen.
+
+### 1. Trivial Pursuit: Rad vom Handy drehen
+
+Das Team **am Zug** dreht jetzt selbst. Neuer Zweig `buzzer/tpspin` nach dem
+Muster von `ddfvote` und `estimate` (`makeRoundChannel`): der Host schreibt
+`{active, round, team, teamName, by:null}`, auf den Handys dieses Teams
+erscheint „🎡 Rad drehen" (`#screen-tpspin`).
+
+**Genau ein Dreh je Runde**, auf drei Ebenen abgesichert: das Handy setzt
+`by` per **transaction** (kommt nur durch, solange dort `null` steht — zwei
+gleichzeitige Finger ergeben einen Dreh); der Host schließt den Zweig im
+Rückruf **sofort** und noch einmal in `tpSpin`; und jede Runde hat eine
+eigene `round`, sodass ein Handy mit altem Stand in eine Runde schreibt, die
+niemand mehr abhört. `tpSpinOpen` verhindert, dass jedes Neuzeichnen eine
+neue Runde aufmacht.
+
+Der Knopf beim Host **bleibt**: ohne Verbindung, ohne Handy oder bei einem
+hängenden Gerät dreht er wie bisher. Wer gedreht hat, steht kurz in der
+Rundenleiste (`#tp-spin-by`).
+
+### 2. Host-Knöpfe weg vom Hauptbildschirm
+
+David hat ein Foto geschickt: „Antwort zeigen / Richtig / Falsch / Beenden"
+standen bei TP **auf dem Bildschirm, den auch das Publikum sieht**. Nachgesehen:
+**Feud, Jeopardy, WWM und WWDS** haben dort **keine** Steuerung, sie läuft nur
+über das GM-Fenster (und damit auch über das Gamepad, das die GM-Seite
+spiegelt). **DDF, PIH und TP** — die drei neueren Shows — hatten sie doppelt.
+
+Jetzt sind `#tp-controls`, `#ddf-controls` und `#pih-controls` samt ihren
+Render-Funktionen weg. Die GM-Helfer hatten schon **alle** Knöpfe, mit einer
+Lücke: „Nochmal / Zum Menü" nach Spielende stand nur auf dem Hauptbildschirm.
+Das steht jetzt im GM unter `phase === 'done'`.
+
+### 3. Undo in allen Shows
+
+`makeUndo(lies, ueberspringen, danach)` in `core.js`: ein flacher
+JSON-Schnappschuss des Zustandsobjekts, Stapel bis 40 Schritte.
+**`timerInt` wird ausgelassen** — zurückgeschrieben liefe der alte Timer
+weiter und der neue dazu. Bei TP bleibt zusätzlich `spinning` außen vor,
+sonst hängt das Rad nach einem Undo mitten in der Drehung.
+
+Benutzt von **WWM, WWDS, DDF, PIH, TP**. Feud (`undoLast`) und Jeopardy
+(`jeopardyUndo`) hatten schon eigene und bleiben, wie sie sind — zwei
+funktionierende Implementierungen umzubauen wäre Risiko ohne Gewinn.
+
+Gesichert wird vor: WWM `wwmLock/Next/Fifty/Phone/Audience`; WWDS
+`wwdsPick/Lock/Reveal/Next/Audience`; DDF `ddfReveal/ApplyLoss/Next`; PIH
+`pihEvaluate/pihNext`; TP `tpSpin/tpJudge/tpStealAward/tpStealNobody`. Der
+Knopf erscheint nur, wenn der Stapel etwas hergibt (`can()`).
+
+**Was Undo nicht kann:** Gesendetes zurückholen. Was auf den Handys stand,
+stand dort. Der Zustand beim Host und die Anzeige stimmen danach wieder,
+mehr verspricht der Knopf nicht. Steht so auch im Kommentar.
+
+### „Beenden"
+
+Bei DDF, PIH und TP raus — Feud, Jeopardy und WWDS hatten nie eins.
+**Das WWM-„Beenden" bleibt**: es ruft `wwmNext()` und ist der Spielzug nach
+einer falschen Antwort, kein Abbruch. Wer eine Show wirklich verlassen will,
+nimmt „Zum Menü" am Spielende oder lädt neu.
+
+### Geprüft
+
+`node check.js --types` ohne Meldung (386 Handler, 213 IDs, 967
+Klammernpaare). Im Browser **23 Prüfungen, alle grün**, Firebase durch eine
+mitschreibende Attrappe ersetzt:
+
+- TP-Hauptbildschirm hat **0** Knöpfe, das GM-Fenster „🎡 Rad drehen" und
+  „Beenden"… (letzteres ist beim Test noch dagewesen, danach entfernt und
+  gegengeprüft: `tpGmControlsHtml` enthält kein „Beenden" mehr, ebenso DDF
+  und PIH).
+- Rad-Kanal: `active:true`, richtiges Team, Teamname, `by:null`. Eingehender
+  Dreh → Rad läuft, Kanal zu (`active:false` geschickt), Name auf dem
+  Bildschirm; ein zweiter Dreh während der Drehung prallt ab; nach 3,6 s
+  steht die Frage und der Kanal bleibt zu.
+- Undo je Show: WWM nimmt 50:50 zurück und geht eine Frage zurück; WWDS
+  nimmt die Punkte zurück; DDF gibt das Leben zurück; PIH nimmt die Punkte
+  zurück und steht wieder in der Gebotsphase; TP nimmt das Tortenstück
+  zurück, das Team bleibt am Zug und das Rad hängt nicht.
+- Der Undo-Knopf fehlt, solange nichts zurückzunehmen ist, und erscheint
+  nach dem ersten Schritt.
+- Keine Konsolenfehler.
+
+**Ungeprüft:** der Rad-Knopf auf einem echten Handy über Firebase (die
+Handy-Seite ist nur gelesen, nicht gefahren), und ob Undo in jeder denkbaren
+Zwischenphase sinnvoll aussieht — gesichert sind die Schritte, die Punkte,
+Leben oder Runde ändern, nicht jede Kleinigkeit.
+
+## 2026-09-26 — Handys im Finale stumm · Turnier-Teams umbenennbar (`c3ef922`)
+
+### Handys im Finale
+
+**Vorher** stand während des Finales bei **allen** Handys das Eingabefeld
+offen; die Gebote der Nicht-Finalisten fielen erst in der Auswertung
+stillschweigend raus. Auf dem Handy sah das aus wie ein Fehler. (Stand als
+„bewusst so gelassen" im Eintrag zu `8ef97a8` — David wollte es anders.)
+
+**Jetzt** schreibt `pihBeginBids` im Finale zwei Felder mit in
+`buzzer/estimate`: `only` (die **Account-Schlüssel** der Vertreter) und
+`onlyNames` (für die Anzeige). Das Handy liest beides, `mayEstimate()`
+vergleicht `only` mit dem eigenen Schlüssel, und wer nicht dabei ist bekommt
+den neuen Bildschirm `#screen-estwatch`: „★ Finale — Es bieten Anna und
+Clara." `sendEstimate` prüft es **noch einmal**, falls jemand den alten
+Bildschirm offen hat.
+
+**Warum Schlüssel und nicht uids:** Das Handy kennt nur seinen Account, nicht
+die spielinterne uid. Gäste haben gar keinen Schlüssel — sie tippen ohnehin
+beim Host und sind im Finale sowieso raus.
+
+**Rückwärtskompatibel:** Fehlt `only`, darf jeder. Die Jeopardy-Schätzfrage
+schreibt ihr `set` ohne diese Felder, und `set` ersetzt den ganzen Knoten —
+eine Einschränkung kann also nicht aus einer alten Runde hängen bleiben.
+
+### Turnier-Teams umbenennen
+
+Turniername und Teamnamen standen nach `tournamentCreate` fest. Ein Tippfehler
+blieb den ganzen Abend, und wer die Teams erst nach dem ersten Spiel tauft,
+musste das Turnier neu anlegen — samt Verlust aller Ergebnisse. Neu:
+`✏ Namen ändern` über der Tabelle, klappt ein Formular auf
+(`tournamentRenamePanelHtml` / `tournamentRenameSave`).
+
+**Bewusst nur Umbenennen, kein Sortieren und kein Löschen:** Die Punkte hängen
+am **Index** (`scores[0]` ist Team 1). Zwei Namen zu tauschen würde die
+Ergebnisse *nicht* mittauschen — das wäre eine Falle. Steht als Hinweis auch
+im Formular. Ein leer gelassenes Feld behält den alten Namen.
+
+**Nebenbefund, mitbehoben:** Team- und Turniernamen gingen an vier Stellen
+**ungeprüft ins Markup** (`<strong>${tournament.teams[o.i]}</strong>` und
+drei weitere). Mit frei eingetippten Namen ist das eine offene Tür; jetzt
+alle durch `escapeHtml`.
+
+### Geprüft
+
+`node check.js --types` ohne Meldung (403 Handler, 215 IDs). Im Browser
+**26 Prüfungen, alle grün**, Firebase durch eine Attrappe ersetzt, die
+mitschreibt, *was* gesendet wird:
+
+- Normale Runde: `only` und `onlyNames` sind `null` — keine Einschränkung.
+- Finale: `only` trägt genau `['k1','k3']` (Anna, Clara), `onlyNames`
+  „Anna und Clara".
+- Handy (`buzzer/index.html` lokal geladen, **nicht** eingeloggt, also keine
+  Schreibzugriffe auf die echte Datenbank): ohne `only` darf jeder; mit
+  `only` und fremdem Schlüssel greift die Sperre, der Warte-Bildschirm wird
+  aktiv und nennt beide Namen, das Eingabefeld bleibt zu; als Vertreter darf
+  man; `sendEstimate` schickt auch dann nichts, wenn der alte Bildschirm noch
+  offen ist. Bildschirmfoto gemacht.
+- Turnier: Formular öffnet vorbelegt, Umbenennen ändert Namen und lässt die
+  Punkte bei **4 : 2**, das alte Ergebnis 300 : 100 bleibt stehen, die
+  Tabelle zeigt die neuen Namen, gespeichert wird unter `tournamentCache`,
+  ein leeres Feld behält den alten Namen, Abbrechen verwirft.
+- Ein Teamname mit `<b>` erscheint als **Text**, kein eingeschleustes Markup.
+- Keine Konsolenfehler.
+
+**Ungeprüft:** der echte Weg über Firebase mit zwei Handys.
+
+**Fallstrick:** Das Turnier liegt unter `tournamentCache`, nicht unter
+`tournament`. Eine Prüfung auf den falschen Schlüssel meldet einen Fehler,
+der keiner ist.
+
+## 2026-09-26 — Preis ist heiß: Teamstand und Finale (`8ef97a8`)
+
+**Anlass:** David hat gefragt, ob „Der Preis ist heiß" normalerweise ein
+Finale hat. Im Fernsehen ja (drei Spielrunden, zum Schluss der Superpreis),
+bei uns hatte es keins — die Phasen waren `show → bid → result → done`.
+Dazu kam von ihm: **„wir spielen in 2 teams"**. Das Spiel kannte Teams
+vorher **überhaupt nicht**, sie tauchten erst ganz am Ende beim
+Turnier-Eintrag auf.
+
+**Von David entschieden** (über die Auswahlfrage): Finale mit **je einem
+Vertreter** pro Team, Gewicht **im Setup einstellbar**, Teamstand **während
+des ganzen Spiels** sichtbar.
+
+**Gemacht, 1 — Teamstand:** Neue Leiste `#pih-teams` über der Einzelwertung,
+führendes Team hervorgehoben. Die Zuordnung kommt aus `allPlayers[].team`
+(Lobby → „Teams zuteilen"), also **aus derselben Quelle wie das Turnier** —
+zwei Quellen wären zwei Stände, die auseinanderlaufen. Namen aus den neuen
+Feldern `pih-t1-name`/`pih-t2-name`; leer gelassen zieht es die Namen aus
+einem laufenden Turnier, sonst „Team 1"/„Team 2". Gäste ohne Account haben
+kein Team, spielen mit und werden unter der Leiste namentlich ausgewiesen —
+sie fallen sonst stillschweigend aus der Wertung.
+
+**Gemacht, 2 — Finale:** Im Editor markiert ein **★** je Artikel den
+Superpreis (immer nur einen; ein zweiter Klick hebt es auf). `startPih`
+nimmt ihn aus der Mischung und hängt ihn ans **Ende** von `order`;
+`finalAt` merkt sich die Stelle, `pihIsFinal()` fragt sie ab. „Artikel pro
+Spiel" zählt ihn nicht mit — die Zahl meint die normalen Runden.
+
+Im Finale bietet je Team nur der **Punktbeste** (`pihTeamChampions`,
+festgelegt in `pihNext` *vor* dem Eintritt, damit die letzte Vorrunde noch
+zählt). `pihMayBid` filtert `pihPhoneBidders`/`pihGuestBidders`, damit gehen
+Gebote anderer gar nicht erst in die Wertung. Der Superpreis bringt
+`finalWeight` Punkte (Setup, Standard 2). **Der Bonus für den punktgenauen
+Treffer bleibt bei 1** — sonst entscheidet ein Zufallstreffer die Show
+doppelt.
+
+Ohne markierten Artikel ist `finalAt` −1 und alles läuft wie vorher. Ein als
+Superpreis markierter Artikel **ohne gültigen Preis** wird ignoriert.
+
+**Geprüft:** `node check.js --types` ohne Meldung (400 Handler, 214 IDs).
+Im Browser **41 Prüfungen, alle grün**, Firebase abgeklemmt (72 Aufrufe),
+vier Accounts in zwei Teams plus ein Gast:
+
+- Editor: Stern je Artikel, immer nur einer gesetzt, wieder abwählbar,
+  Hinweiszeile wechselt zwischen „kein Superpreis" und „Superpreis gesetzt".
+- Start mit „3 Artikel": `order` hat **4** Einträge, der Superpreis steht an
+  Position 4 und kommt in den Vorrunden nicht vor.
+- Teamleiste da, Gast als „ohne Team" ausgewiesen.
+- Drei Vorrunden durchgespielt: Anna punktgenau (1+1), Clara, Ben →
+  **Rot 3 : Blau 1**. Knopf heißt dann „★ Zum Finale" statt „Endstand".
+- Finale: Vertreter sind **Anna** (2) und **Clara** (1), nur die beiden
+  dürfen bieten, Davids Gebot taucht im Ergebnis **nicht** auf, der Gast
+  bietet nicht mehr mit, Überschrift „★ SUPERPREIS".
+- Clara gewinnt das Finale → **3 Punkte** → Endstand **Rot 3 : Blau 4**, das
+  Finale dreht das Spiel also wie gewollt.
+- Endstand nennt Teamergebnis zuerst, bester Einzelspieler dahinter.
+- Gegenprobe ohne Superpreis: `finalAt` −1, zwei Runden wie eingestellt,
+  alle dürfen bieten. Nur ein besetztes Team: ein Vertreter, kein Absturz.
+- Keine Konsolenfehler. Bildschirmfoto der Teamleiste (Rot 4 : Blau 2).
+
+**Offen / bewusst so gelassen:** Während des Finales zeigen **alle** Handys
+weiter das Eingabefeld — die Gebote der Nicht-Finalisten werden nur nicht
+gewertet. Sie stumm zu schalten hieße, in die gemeinsame Estimate-Leitung
+einzugreifen, die sich PIH mit der Jeopardy-Schätzfrage teilt. Der
+Bildschirm sagt, wer bietet; der Host sagt es ohnehin an.
+
+**Ungeprüft:** ein echter Durchlauf mit Handys über Firebase, drei Teams
+(der Code kennt hier bewusst nur zwei), und was passiert, wenn der
+Punktbeste eines Teams zwischendurch das Spiel verlässt.
+
+## 2026-09-26 — Preis ist heiß: ganzen Ordner einlesen (`a74661d`)
+
+**Gemacht:** Knopf **„📁 Ordner einlesen"** in der Werkzeugleiste des
+Artikel-Editors (`<input type="file" webkitdirectory>`). Je Bild im Ordner
+entsteht ein Artikel: **Name und Preis aus dem Dateinamen**, das Bild auf
+Medienplatz 1. Darunter eine Meldezeile (`#pih-import-info`) mit dem
+Ergebnis. Nicht-Bilder im Ordner werden übersprungen, sortiert wird
+alphabetisch nach Dateiname (`localeCompare` mit `numeric`, damit `2_` vor
+`10_` kommt).
+
+**Erkannte Muster** (`pihParseFileName`): `Name_49,99` · `Name - 49,99` ·
+`Name 49,99 €` · `Name # 49,99` · `49,99 - Name`, jeweils auch mit führender
+Nummerierung `03_` / `3. `. Auch `18.500` und `1.299,90` (deutsche
+Tausenderpunkte) über das vorhandene `pihParsePrice`.
+
+**Warum aus dem Dateinamen und nicht aus einer Begleit-CSV:** David benennt
+die Bilder beim Sammeln ohnehin; eine zweite Datei, die zu den Bildern passen
+muss, ist eine Fehlerquelle mehr. Er hatte ausdrücklich „Ordner hochladen und
+es geht automatisch" gesagt.
+
+**Bewusst keine blanke Zahl am Ende:** `Playstation 5.jpg` ist ein Name, kein
+Artikel für 5 €. Eine Zahl zählt nur mit klarem Trenner (`_ | ; #`, „ - "),
+mit Nachkommastelle oder mit `€`. Ohne erkannten Preis wird der Artikel
+trotzdem angelegt — Preisfeld leer und rot, das sieht man im Editor sofort.
+
+**Der eigentliche Fallstrick war der Speicher.** Die Spieldaten liegen in
+`localStorage`, das ist bei rund 5 MB zu Ende. Zwanzig Handyfotos sind als
+Data-URL ein Vielfaches davon, und `storeSetJson` fängt den Quota-Fehler ab
+und gibt **still** `false` zurück: die Artikel hätten im Editor gestanden und
+wären nach dem nächsten Neuladen weg gewesen. Deshalb
+
+- neu `shrinkImageToDataUrl(file, maxPx, quality)` in `core.js`: rechnet über
+  ein Canvas auf 1280 px herunter. PNG/WebP behalten ihre Transparenz,
+  solange das Ergebnis unter 500 KB bleibt; darüber wird JPEG daraus, dann
+  mit weißem Grund (sonst werden durchsichtige Stellen schwarz).
+- `pihSave()` gibt jetzt den Rückgabewert von `storeSetJson` weiter, und der
+  Import meldet per Hinweis **und** `alert`, wenn nicht gespeichert werden
+  konnte, samt Rat, als JSON zu exportieren.
+
+Nur der Import benutzt den Verkleinerer; die einzelnen Bild-Knöpfe in
+Jeopardy, DDF und PIH legen ihre Bilder weiter unverändert ab. Das absichtlich
+in einem Schritt zu ändern wäre eine zweite Baustelle gewesen.
+
+**Geprüft:** `node check.js --types` ohne Meldung (13 Dateien, 399 Handler,
+210 IDs). Im Browser **17 Prüfungen, alle grün:**
+
+- **12 Dateinamen-Muster** trocken gegen erwartete Name/Preis-Paare geprüft,
+  alle richtig — inklusive `Playstation 5.jpg` → kein Preis, `iPhone 15_999`
+  → Name „iPhone 15" / 999, `Kleinwagen_18.500` → 18500,
+  `Sofa 1.299,90 €` → 1299,9.
+- Echter Import von fünf erzeugten Bildern (bis 3000 × 2000 px) plus einer
+  `.txt`: 5 Artikel, Textdatei übersprungen, Reihenfolge nach `01_`…`05_`.
+- Bilder nach dem Verkleinern **32–37 KB** statt Megabyte, längste Kante
+  genau 1280 px, das PNG blieb PNG.
+- Meldezeile nennt „5 Artikel · 1 ohne erkannten Preis (rot markiert)", das
+  leere Preisfeld hat den roten Rahmen, das Bild sitzt auf Platz 1.
+- Gesamter Datensatz in `localStorage` unter 1 MB; nach `location.reload()`
+  stehen alle 11 Artikel und 5 Bilder unverändert da.
+- Ordner ohne Bilder, abgebrochene Auswahl und eine kaputte JPEG-Datei geben
+  je eine Meldung und legen nichts an. Keine Konsolenfehler.
+
+**Ungeprüft:** ein echter Ordner aus dem Dateidialog (im Test wurde
+`input.files` gesetzt), ein sehr großer Ordner (50+ Bilder) und wie lange das
+dann dauert, Unterordner, und ob Safari `webkitdirectory` hier mitmacht.
+
+## 2026-09-25 — Jeopardy: eigener Punktwert je Frage (`5191743`)
+
+**Gemacht:** `JeopardyClue` hat das optionale Feld `pts`. Im Frage-Editor
+steht neben „Kategorie · Wert" ein Eingabefeld **Punkte**. Leer heißt wie
+bisher: der Wert der Zeile (Platzhalter zeigt ihn an). Steht eine Zahl drin,
+gilt die überall.
+
+**Gerechnet wird an genau einer Stelle:** `jeopardyValueOf(clue, row)` und
+`jeopardyCellValue(col, row)` in `js/jeopardy.js`. Daran hängen sieben
+Anzeigen — Spielbrett, Frage-Overlay, Editor-Kopfzeile, Editor-Gitter,
+GM-Spiegelbrett, DD-Warnung, Gutschrift/Abzug. Stünde die Rechnung mehrfach
+im Code, wäre beim nächsten Mal genau eine davon vergessen. Deshalb nimmt
+`renderJeopardyBoard` jetzt `JEOPARDY_VALUES.forEach((_, row) => …)` und holt
+den Wert je Zelle.
+
+**Eingaben:** 0, Leer, negative Zahlen und Buchstaben löschen `pts` wieder,
+statt einen unsinnigen Wert zu speichern. Ein Feld, das nichts oder
+Minuspunkte bringt, wäre keine Frage, sondern eine Falle. Nachkommastellen
+werden gerundet, `250,7` (deutsches Komma) ist für `Number` keine Zahl und
+fällt damit auf den Zeilenwert zurück — geprüft.
+
+**Daily Double:** Die Regel „nur auf Feldern ab 300" meint jetzt den
+**tatsächlichen** Wert. Vorher filterte der Code über den Zeilenindex. Eine
+100er-Frage, in die der Host 900 einträgt, wäre sonst nie Daily Double
+geworden, eine 500er-Frage mit 50 dagegen schon. Der Abzug bleibt die Hälfte
+des **Originalwerts** (ohne Verdopplung), jetzt eben des eigenen.
+
+**Sichtbar im Editor:** Ein Feld mit eigenem Wert ist im Gitter unterstrichen
+und trägt als `title` „Eigener Punktwert statt 100" — sonst fällt beim
+Durchsehen nicht auf, warum da 800 steht.
+
+**Geprüft:** `node check.js --types` ohne Meldung (398 Handler, 209 IDs). Im
+Browser **36 Prüfungen, alle grün**, Firebase abgeklemmt (40 Aufrufe):
+
+- Editor: Feld da, leer mit Platzhalter 100; 800 eingetragen → gespeichert,
+  Kopfzeile „· 800", Gitterfeld zeigt 800 unterstrichen; leeren stellt 100
+  wieder her; `-50`, `0`, `abc`, `250,7` werden alle verworfen.
+- Brett: 800 in Feld 1, 50 in der 500er-Zeile, Nachbarn unverändert.
+- Overlay zeigt 800 bzw. 50; Gutschrift +800 gebucht; Abzug bei 50 ist 25
+  und wurde gebucht.
+- GM-Spiegelbrett zeigt 75, die vier Nachbarn weiter 300.
+- Daily Double auf einer Frage mit 700: Warnung nennt 1400 und −350, nach
+  der Ansage `jeopardyClueValue()` = 1400, Abzug 350, Knopf „+1400".
+- **300 Spielstarts gezählt:** Das Daily Double landete auf 15 verschiedenen
+  Feldern, darunter 16-mal auf der 900er-Frage in der 100er-Zeile, **nie**
+  auf der 50er-Frage in der 500er-Zeile, sonst nur auf Zeilen ab 300.
+- JSON-Export/Import trägt `pts` mit; Fragen ohne das Feld nehmen weiter den
+  Zeilenwert.
+
+**Ungeprüft:** wie sich sehr lange Zahlen (fünfstellig) im Brett-Kästchen
+umbrechen, und das Zusammenspiel mit der Turnier-Wertung.
+
+**Fallstrick:** Ein Testfeld, das im selben Durchlauf schon gespielt wurde,
+steht im GM-Spiegelbrett leer da (`.jcell.used`). Eine Prüfung, die dort noch
+den Wert sucht, meldet einen Fehler, der keiner ist.
+
+## 2026-09-25 — Goldener Balken im Jeopardy-Logo war weg (`4b9cdfb`)
+
+**Symptom:** David schickte ein Bild vom Jeopardy-Titel: vom Logo standen nur
+noch die dunklen Säulen da, der goldene Balken fehlte.
+
+**Ursache:** `STAR_SVG` und `DANGER_SVG` in `js/core.js` bringen ihren
+Farbverlauf selbst mit — als `<linearGradient id="sg">` bzw. `id="dg"`.
+Dasselbe SVG steht mehrfach im Dokument, sobald eine Menükachel und ein Intro
+gleichzeitig existieren. Damit gibt es die id **doppelt**; `url(#dg)` trifft
+das **erste** Vorkommen, und das lag im Menü-Screen. Während des Intros ist
+der abgeschaltet (`.screen` ohne `.active` → `display:none`), und dort baut
+der Browser den Verlauf gar nicht. Der Balken blieb ungefüllt und war auf
+schwarzem Grund unsichtbar.
+
+**Nicht neu, nur jetzt aufgefallen.** Die Stelle stammt aus `4ed4cf6`
+(2026-09-15, Aufteilung von `index.html`). Zwei andere Stellen hatten
+denselben Fehler schon einzeln umschifft: `gameCardIcon` vergibt seit
+`022066f` eigene IDs (mit genau dieser Begründung im Kommentar), gab aber
+ausgerechnet diese beiden SVGs unverändert zurück; `tournamentGameIcon` baute
+sich von Hand eine eigene um, was nur innerhalb des Spielplans half.
+
+**Behoben:** `withOwnGradId(svg, id)` plus `starSvg()` und `dangerSvg()` in
+`core.js`. Alle elf Einbindungen (6× Stern in `feud.js`, 1× Gefahr in
+`feud.js`, 2× in `jeopardy.js`, 1× in `jeopardy-ui.js`, 2× in `core.js`,
+2× in `tournament.js`) gehen jetzt darüber. Die Handumbenennung in
+`tournament.js` ist raus, ebenso ihr `uid`-Parameter.
+
+**Geprüft:** `node check.js --types` ohne Meldung. Im Browser **zuerst den
+Fehler nachgestellt** (alle Screens abgeschaltet, dann `showJeopardyTitle()`):
+Das Bild sah aus wie Davids Screenshot. Nach dem Fix an derselben Stelle
+wieder vier Balken, der zweite golden — per Bildschirmfoto bestätigt.
+Dazu **6 Prüfungen, alle grün**: Jeopardy-Titel, Jeopardy-Stern-Intro,
+Feud-Willkommen, Menükacheln und Turnier-Spielplan zeigen jeweils nur
+`url(#…)`-Verweise, die auf einen Verlauf **im eigenen SVG** zeigen und deren
+id **im ganzen Dokument einmalig** ist; keine doppelte id mehr im Dokument.
+Keine Konsolenfehler.
+
+**Fallstrick für die Zukunft:** Jedes SVG, das seinen eigenen Verlauf
+mitbringt und mehr als einmal ausgegeben wird, braucht eine eigene id.
+Auffallen tut es erst, wenn die erste Kopie in einem versteckten Element
+landet — im sichtbaren Zustand funktioniert der falsche Verweis zufällig.
+Neue Logos deshalb über `withOwnGradId` ausgeben.
+
+## 2026-09-25 — Zweite Bühne fürs eigene Intro: „Neon-Nacht" (`5e656a2`)
+
+**Gemacht:** Das eigene Intro (`showCustomIntro`) lief bisher immer auf der
+Kellerbühne `#kg`. Jetzt gibt es im Intro-Editor die Auswahl **Bühne** mit
+zwei Einträgen: „Kellerbühne (Gold)" wie bisher und **„Neon-Nacht (Retro)"**
+— neue Bühne `#kgn` mit Nachthimmel und Sternen, Retro-Sonne mit
+Querstreifen, perspektivischem Gitterboden, Horizontlinie, Scanlines und
+Leuchtschrift in Cyan/Magenta.
+
+Gewählt wird über `introData.stage` (`'buehne'` / `'neon'`), die Liste steht
+als `INTRO_STAGES` in `js/intro.js`. **Feste Schlüssel statt Index**, weil der
+Wert gespeichert wird: eine spätere dritte Bühne darf die Reihenfolge ändern,
+ohne alte Einstellungen umzudeuten. Unbekannte Werte fallen über
+`introStage()` auf die Kellerbühne zurück.
+
+**Alle Funktionen sind identisch:** Kopfzeile, Sekunden je Stufe, bis zu zwölf
+Stufen mit je vier Zeilen, Verschieben, Löschen, Vorschau, Export/Import,
+Klicken zum Fortfahren. Unterschiedlich sind nur Aussehen und die Bewegung
+der Stufen: `knBeat` fährt sie seitlich mit Unschärfe ein und wieder hinaus,
+`kgBeat` schiebt sie von unten hoch. Die Taktung kommt weiterhin aus dem
+`style`-Attribut, die Bühne liefert nur `animation-name`.
+
+**Warum nicht die Kellerbühne einfach umfärben:** `#kgb` (Geburtstag) macht
+genau das und bleibt dadurch erkennbar dieselbe Bühne. David wollte etwas,
+das anders *aussieht* — deshalb erbt `#kgn` nichts von `#kg`, sondern bringt
+eigene Wand, eigenen Boden, eigene Schrift mit.
+
+**Eine Änderung außerhalb:** `runKgIntro` in `js/feud.js` baut den
+Lämpchenrahmen aus der Bühnengröße. Die Neon-Bühne hat bewusst kein `.frame`
+— ein Lämpchenrahmen wäre wieder die Kellerbühne. `build()` steigt jetzt bei
+fehlendem `.frame` sofort aus; ohne diese Zeile hätte der Zugriff geworfen.
+Damit entfallen dort auch die Funken.
+
+**Nachgebessert nach dem ersten Bildschirmfoto:** Die Stufen liegen mitten auf
+der Sonne, „HEUTE ABEND" in Cyan auf Orange war nicht lesbar. `.screen` hat
+jetzt ein dunkles Oval als Hintergrund (radialer Verlauf), das mit der Stufe
+ein- und ausblendet; Kopfzeile, kleine Zeile und Klick-Hinweis haben einen
+dunklen Schatten dazubekommen.
+
+**Geprüft:** `node check.js --types` ohne Meldung (13 Dateien, 397 Handler,
+209 IDs, 955 Klammernpaare). Im Browser **29 Prüfungen, alle grün:**
+
+- Editor: Auswahl da, Kellerbühne voreingestellt, Hinweiszeile wechselt mit,
+  alle 20 Textfelder (5 Stufen × 4) unverändert, Auswahl überlebt das
+  Neuladen (`localStorage`).
+- Neon: `#kgn` gebaut, `play` gesetzt, kein `.frame` und keine Funken, alle
+  sechs eigenen Teile da, 5 Stufen im Markup, letzte Stufe hält,
+  `animationName` ist `knBeat`, Verzögerung steht im `style`-Attribut.
+- Kellerbühne danach unverändert: `#kg`, 68 Rahmenlämpchen, 12 Funken,
+  `kgBeat`, zwei Sterne in der Kopfzeile.
+- Klick führt weiter und räumt die Bühne ab (beide Bühnen).
+- JSON: Bühne ist im Export; eine alte Datei **ohne** `stage` und eine mit
+  unbekanntem Wert landen beide auf der Kellerbühne.
+- Bei 400 px: kein Querüberlauf, Schrift auf 50 px, alle vier Zeilen im Bild
+  (Bildschirmfoto).
+- Keine Konsolenfehler.
+
+**Ungeprüft:** wie es auf dem Beamer im Vollbild wirkt, und das Zusammenspiel
+mit `prefers-reduced-motion` (Gitter und Sterne sind dort mit abgeschaltet,
+aber nicht nachgemessen).
+
+**Entschieden am 2026-09-26:** David hat die Bühne zuerst in der Liste
+„Welches Intro:" gesucht und nicht gefunden — sie steht im Intro-Editor unter
+„Kopfzeile & Takt". Auf die Frage, ob sie als eigener Eintrag
+(„Eigenes Intro — Neon") in diese Liste soll, hat er **nein** gesagt. Es
+bleibt bei der Einstellung im Editor. **Nicht ungefragt umbauen.**
+
+**Fallstrick:** Der Dev-Server einer anderen Session war zwischendurch weg,
+`navigate` auf `localhost:3000` schlug fehl. `preview_start` mit dem Namen
+aus `.claude/launch.json` startet einen eigenen.
+
+## 2026-09-25 — Ton-Anzeige klein, wenn etwas auf der Leinwand steht (`bd92ad9`)
+
+**Gemacht:** Der Befund aus `22f7fa8` ist behoben. `showSoundFx(kompakt)` in
+`js/jeopardy.js` nimmt jetzt einen Schalter; `jeopardyPlaySound` setzt ihn
+über den neuen Helfer `jeopardyClueHasVisuals(clue)`. In der kompakten
+Fassung (`.jeopardy-sound-fx.compact` in `styles.css`) sitzt die Anzeige
+unten rechts, 176 × 64 px, ohne Abdunklung und ohne Weichzeichner über der
+Leinwand, mit 7 statt 11 Balken und eigener Pulsfolge `jsfxRingSmall`.
+
+**Regel, bewusst so gezogen:** klein wird es bei **Frage-Bild, aufgedeckten
+Schritten, Bilder-Reihe, Staffelbild** und bei gezeigtem Lösungsbild. Ein
+bloßer **Fragetext zählt nicht** als Inhalt — bei der klassischen „welches
+Geräusch ist das?"-Frage soll der große Effekt den Bildschirm füllen, dafür
+ist er da. Solange die Frage noch verdeckt ist, bleibt es ebenfalls groß.
+
+**Warum unten rechts:** oben rechts sitzt schon die Buzzer-Anzeige
+(`#jeopardy-buzzer`, z-index 1300).
+
+**Warum eine eigene Pulsfolge:** `jsfxRing` wirft bis zu 90 px Schein. Um
+einen 44-px-Ring wäre das nur noch ein Fleck. Eine Animation schlägt
+außerdem jede normale Regel, die kleinere `box-shadow`-Angabe im
+`.compact`-Block allein hätte also gar nicht gewirkt.
+
+**Geprüft:** `node check.js --types` ohne Meldung (13 Dateien, 918
+Klammernpaare). Im Browser bei 1280 × 720, Firebase abgeklemmt (43 Aufrufe),
+**20 Prüfungen, alle grün:**
+
+- Schritt-Frage mit zwei aufgedeckten Hinweisen: Anzeige ist `compact`,
+  176 × 64 px = 1,6 % der Fläche, sitzt unten rechts, **überlappt keinen
+  Schritt**, keine Abdunklung. Bildschirmfoto: beide Hinweise voll lesbar.
+- Dieselbe Frage **vor** dem Aufdecken: noch die große Anzeige.
+- Reine Tonfrage (nur Text, kein Bild): große Anzeige, füllt 1280 × 720,
+  11 Balken, Abdunklung wie bisher.
+- Frage mit Frage-Bild: kleine Anzeige, Bild bleibt unverdeckt.
+- Stopp entfernt die Anzeige. Keine Konsolenfehler.
+
+**Fallstrick:** Das Browser-Panel war aus einem früheren Test noch auf 297 px
+Breite. Eine Prüfung „Anzeige < 25 % der Fensterbreite" schlug deshalb fehl,
+obwohl nichts kaputt war — bei 297 px nimmt die kompakte Anzeige eben die
+halbe Breite ein. Vor Layout-Messungen die Fenstergröße setzen, nicht
+annehmen.
+
+## 2026-09-25 — Soundeffekte neu gebaut + Ton in Schritt-Frage geprüft (`22f7fa8`)
+
+**Gemacht, Teil 1 (Test, nichts geändert):** Ton in einer Schritt-Frage. Über
+den Editor eine Frage mit 4 Schritten (Zeile 1+3, Bild 2+4) **und** einem Ton
+angelegt, beides trägt dieselbe Frage. **22 Prüfungen, alle grün:** Badges
+zeigen 📜 und 🔊, der Ton startet und läuft, während Schritte eingeblendet
+werden; das Einblenden zeichnet die Frage neu, der Ton läuft trotzdem weiter
+und der Sicht-Effekt überlebt es; Stopp im GM-Panel beendet ihn und lässt die
+Schritte stehen; Überspringen beendet ihn ebenfalls. Firebase abgeklemmt
+(33 Aufrufe abgefangen), keine Konsolenfehler.
+
+**Befund dabei, nicht behoben:** `.jeopardy-sound-fx` liegt mit `z-index:1050`
+über dem Frage-Overlay (1000) und bringt `rgba(5,8,26,.55)` plus
+`backdrop-filter: blur(4px)` mit. Bei einer reinen Tonfrage ist das richtig —
+es gibt nichts zu lesen. Bei einer **Schritt-Frage** werden damit die schon
+eingeblendeten Hinweise abgedunkelt und weichgezeichnet, während der Ton
+läuft (im Bildschirmfoto kaum noch lesbar). Vorschlag für später: den
+Sicht-Effekt klein an den Rand setzen, sobald die Frage sichtbaren Inhalt hat
+(Schritte, Bilder, Text). **Davids Entscheidung, deshalb hier nur notiert.**
+
+**Gemacht, Teil 2 (Code):** Die sechs Spielgeräusche in `js/core.js` neu
+gebaut. David: „das hört sich ja an wie liminal horror" — zu Recht. Vorher war
+jeder Effekt ein nackter Oszillator, `wrong()` etwa ein Sägezahn, der von 220
+auf 110 Hz rutschte. Jetzt:
+
+- **Obertöne.** Ein Ton besteht aus Teiltönen, die schneller ausklingen als
+  der Grundton — die Hüllkurve von Glocke und Marimba. Beim Buzzer bewusst
+  unharmonisch (2.76, 5.4), das ergibt das „Ding".
+- **Hüllkurve ohne Kanten.** Anriss in 12 ms, exponentiell aus. Kein Knacken.
+- **Tiefpass** je Ton, der beim Ausklingen mitfährt.
+- **Hall** aus künstlich erzeugter Impulsantwort (abklingendes Rauschen,
+  1,5 s). Nimmt die Schärfe und setzt alles in denselben Raum.
+- **Echte Intervalle:** `correct` C-E-G-C aufwärts, `wrong` eine fallende
+  Terz F4→D4 mit dumpfem Schlag statt Schreckmoment, `fanfare` Dreiklang
+  hoch und danach der Akkord stehen gelassen.
+- **Kompressor** auf dem Summenweg.
+
+Dazu neu im Menü: **„🎧 Töne probehören"** spielt alle sechs nacheinander
+(`sfxPreview` in `core.js`, Knopf in `index.html`). Der Knopf sperrt sich für
+6,5 s selbst und meldet „🔇 Ton ist aus", wenn der Ton aus ist. Der
+An/Aus-Schalter spielt beim Einschalten sofort `point()`, damit hörbar ist,
+dass er wirkt.
+
+**Warum erzeugt statt Audiodateien:** kein Build-Step, nichts nachzuladen,
+`git push` bleibt der ganze Deploy. Sechs anständige WAV/MP3 wären einige
+hundert KB im Repo und müssten lizenzrechtlich sauber sein.
+
+**Geprüft (mit Zahlen):** `node check.js --types` ohne Meldung (13 Dateien,
+396 Handler, 208 IDs im Markup). Jeder Effekt einzeln über eine
+`OfflineAudioContext` gerendert und gemessen — Spitze / Länge:
+
+| Effekt | Spitze | Länge |
+|---|---|---|
+| buzz | 0,158 | 0,84 s |
+| point | 0,191 | 0,49 s |
+| correct | 0,469 | 1,14 s |
+| wrong | 0,417 | 0,63 s |
+| tick | 0,045 | 0,04 s |
+| fanfare klein | 0,653 | 1,45 s |
+| fanfare groß | 0,690 | 1,82 s |
+
+Kein Übersteuern, keine Stille, keine NaN. Drei Effekte gleichzeitig
+(`fanfare(true)` + `correct` + `buzz`): Spitze 0,693 — der Kompressor fängt
+es ab. Im Browser: Knopf da, sperrt sich, gibt nach 6,5 s wieder frei, meldet
+bei ausgeschaltetem Ton „🔇 Ton ist aus"; keine Konsolenfehler; bei 400 px
+kein Querüberlauf in der Knopfreihe.
+
+**Abgehört und abgenommen:** Ich kann nur messen, nicht hören — beurteilt
+habe ich den Aufbau (Obertöne, Hüllkurven, Intervalle, Hall) und den Pegel.
+**David hat sie am 2026-09-25 über „🎧 Töne probehören" angehört: „die passen
+gut."** Damit sind die Werte in `SFX` der Stand, auf den man sich beziehen
+kann. Wer sie ändert, ändert etwas Abgenommenes — Tonhöhen, Längen und
+Lautstärken stehen als benannte Werte beieinander und sind leicht zu drehen,
+aber nicht ohne Grund.
+
+**Fallstricke:**
+
+- **Der Kompressor hat die Einzeltöne erschlagen.** Mit `knee: 26` und
+  `threshold: -16` beginnt die Kompression schon bei −29 dBFS, also unterhalb
+  von allem, was hier gespielt wird: gemessene Spitze 0,056 statt der
+  gewollten 0,13. Jetzt `threshold: -6`, `knee: 8`, und der Summenweg hebt um
+  2,7 an. Bei 3,6 übersteuerte dafür die große Fanfare (1,085), deren vier
+  stehende Töne sich addieren.
+- `exponentialRampToValueAtTime` darf **nie** auf 0 laufen und nicht von 0
+  starten — deshalb überall `.0001` als Ziel und ein `setValueAtTime(.0001)`
+  vor dem Anriss.
+- Zum Messen lässt sich `window.AudioContext` durch eine Unterklasse von
+  `OfflineAudioContext` ersetzen, die `resume()` überschreibt. Aber: `SFX`
+  merkt sich den Kontext beim ersten Ton. Für **jeden** Effekt braucht es
+  deshalb einen frischen Seitenaufruf, sonst landet alles im selben Rendering
+  auf `t=0`.
+
+## 2026-09-25 — Daily Double zusammen mit Schritten getestet (kein Commit)
+
+**Gemacht:** Den offenen Punkt aus `9cfa74f` nachgeholt. Code ist nicht
+geändert, es gab nichts zu ändern.
+
+**Aufbau:** Schritt-Frage über den echten Editor auf Feld (Board 1, Spalte 3,
+Wert 400) gelegt, Muster `T,B,B,T,B` — Zeile 1+4, Bild 2+3+5. Danach das
+Daily Double per `jeopardyState.dailyDoubles[0]` genau auf dieses Feld gesetzt.
+Firebase abgeklemmt (38 Aufrufe abgefangen), Popout gezählt, Intro
+übersprungen.
+
+**Geprüft — 30 Prüfungen, alle grün:**
+
+- Warnphase: Leinwand zeigt weiter das Board, kein Overlay, Schritt-Zähler 0.
+  Im GM-Panel steht die Daily-Double-Warnung, aber **noch kein**
+  Schritt-Knopf.
+- Ansage ohne gewähltes Team wird abgelehnt („Erst angeben, welches Team das
+  Feld gewählt hat"), der Zustand bleibt in der Warnphase.
+- Nach Team und Ansage: Rahmen und Banner stehen, Frage noch verdeckt, die
+  Schritte sind noch **gar nicht** im Markup — sie tauchen erst beim Aufdecken
+  auf.
+- Aufgedeckt: 5 Schritte, Muster stimmt, alle verdeckt. Einblenden einzeln,
+  Zeile 1 als Text, Schritt 2 als geladenes Bild (240 px Quelle).
+- Das Banner überlebt jedes Einblenden — `renderJeopardyClueOverlay` baut es
+  bei jedem Schritt neu mit auf.
+- GM-Knopf „📜 Nächster Schritt (2/5)" ist da und zählt mit; Klick im Panel
+  blendet ein.
+- Nur das wählende Team steht im Panel (eine Zeile, „Rot"), Gutschrift **+800**
+  (verdoppelt), Abzug **−200** (halber Originalwert, nicht halbiertes Doppel) —
+  wie im Kommentar an `jeopardyDeductValue` beschrieben.
+- Undo mitten in den Schritten nimmt einen Schritt zurück und lässt Daily
+  Double und Banner stehen.
+- Punkten: Rot +800, danach ist das Daily Double verbraucht
+  (`dailyDoubles[0].done`), `currentIsDaily` wieder false.
+- Nächstes Feld: kein Banner, Schritt-Zähler 0, kein Schritt-Block.
+- Layout: Banner + Frage + 5 Schritte + Lösung passen zusammen ins Bild
+  (Inhalt ≤ 768 px). Bildschirmfoto gemacht.
+- Keine Konsolenfehler.
+
+**Ungeprüft:** weiterhin das echte Board-Popout, Ton in einer Schritt-Frage,
+der echte Datei-Dialog per Mausklick und Firebase im Echtbetrieb.
+
+**Fallstrick:** Im GM-Panel stehen Teamname und Knopf in getrennten Elementen
+(`.sr-name`, `.sr-btn.plus`). Eine Prüfung auf den Text „Rot +800" am Stück
+schlägt fehl, obwohl alles stimmt — über `.score-row` zählen statt über den
+Fließtext suchen.
+
+## 2026-09-25 — Jeopardy: Frage in Schritten einblenden, Zeile/Bild gemischt (`9cfa74f`)
+
+**Gemacht:** Neuer Schalter **📜 Nacheinander** im Frage-Editor. Eine Frage kann
+aus bis zu fünf Schritten bestehen, die der Host einzeln einblendet. Jeder
+Schritt ist eine Zeile, ein Bild oder beides — frei gemischt, also z. B. 1+4
+Zeile und 2+3+5 Bild. Leere Schritte fallen raus.
+
+- `js/jeopardy.js`: `JeopardyClue` um `steps`, `stepTexts`, `stepImgs`,
+  `stepNames`, `stepCount` erweitert; Zustand `stepsRevealed` (in Snapshot,
+  Undo und Reset beim Öffnen); Helfer `jeopardyStepCount`, `jeopardyStepItems`,
+  `jeopardyStepsHtml`; `jeopardyStepsReveal()`.
+- `js/jeopardy-ui.js`: Schalter, Anzahl-Auswahl, je Schritt ein Textfeld und
+  ein Bild-Knopf bzw. Thumbnail mit ✕; Badge 📜 im Board-Gitter.
+- `js/feud.js`: Knopf „📜 Nächster Schritt (n/5)" im GM-Panel und „📜 Schritt"
+  in der Sternleiste, dazu eine Vorschau aller Schritte im Panel — der Host
+  liest vor, bevor er zeigt — und der Tag „📜 Nacheinander (n)".
+- `styles.css`: `.jeopardy-steps`, `.jeopardy-step`, `-text`, `-img`.
+
+**Warum so:** Erst war es nur „Zeilen"; auf Davids zweite Nachricht hin wurde
+daraus ein Schritt, der Zeile **und** Bild tragen kann. Das ist ein Feld mehr
+im Editor statt zweier getrennter Betriebsarten, die man nicht mischen könnte.
+Gebaut wie die Bilder-Reihe (derselbe Zähler, derselbe Undo, derselbe Knopf),
+damit nichts Neues zu lernen ist. Die **Bilder-Reihe bleibt daneben bestehen**:
+sie stellt Bilder nebeneinander, die Schritte stapeln untereinander. Text geht
+durch `escapeHtml`, Bild-`src` durch `escAttr`. Die Bilder liegen wie `qImg`
+als Data-URL in `jeopardyData`, JSON-Export und -Import brauchten keine
+Anpassung (geprüft).
+
+**Ein Fund beim Testen:** Fünf Schritte mit drei Bildern schoben die Lösung
+aus dem Bild (Inhalt 806 px bei 768 px Fenster, nichts scrollte). Behoben über
+`min-height: 0` an Schritt und Bild — ohne das darf ein Flex-Kind nicht unter
+seine Inhaltsgröße schrumpfen. Dazu teilen sich die Bilder die Höhe über die
+CSS-Variablen `--jstep-n` und `--jstep-imgs`, die `jeopardyStepsHtml` setzt.
+Danach: Inhalt 768 px, Lösung sichtbar, nichts scrollt.
+
+**Geprüft:** `node check.js --types` ohne Meldung (13 Dateien, 395 Handler,
+256 IDs, 911 Klammernpaare). Im Browser **117 Prüfungen, alle grün**, bei
+abgeklemmtem Firebase (144 Schreibversuche abgefangen) und gezähltem Popout
+(3 Aufrufe), keine Konsolenfehler.
+
+Zu den Schritten im Einzelnen: Editor legt 5 Text- und 5 Bildfelder an, Muster
+`T,B,B,T,B` kommt so im Overlay an; Fokus bleibt beim Tippen im Feld; ✕ nimmt
+ein Bild raus, ohne die Zeilen zu verlieren; Einblenden geht eins nach dem
+anderen, kein Überlauf über 5, Undo nimmt einen zurück; Zähler ist beim
+nächsten Feld wieder 0; eine Frage ohne Schritte zeigt keinen Block.
+Fernbedienung: Knopf mit Zähler 0/5 → 1/5, am Ende „✓ Alle Schritte
+eingeblendet", Vorschau listet 1.–5., Tag „Nacheinander (5)". Sternleiste
+ebenso. Bei 400 px kein Querüberlauf, alle fünf Schritte im Bild
+(Bildschirmfoto).
+
+Der übrige Durchlauf: Feud (Antworten, Strikes, Teamwechsel, Runde 2),
+Jeopardy (25 Felder, +100, Abzug −100 = halber Wert, Kategorie-Bild in Board
+und Overlay, Schätzfrage auf/zu), WWM (15 Stufen, 4 Antworten, alle drei
+Joker, Sicherheitsstufe 500 €), WWDS (12 Kategorien, Joker, Punkte,
+Teamwechsel), DDF (3 Teilnehmer à 3 Leben, Abstimmung 2:1, Leben ab, nächste
+Runde), PIH (Regel „nur drunter": Gebote 50 %, 90 %, 150 % → das 90-%-Gebot
+gewinnt, das Gebot drüber zählt nicht), TP (Frage ziehen, richtig → Stück,
+falsch → kein Stück), sieben Editoren, Turnier mit sieben startbaren Shows,
+zehn Screens bei 1024 px und bei 400 px ohne Querüberlauf, Handy-Buzzer und
+Gamepad ohne Konsolenfehler.
+
+**Ungeprüft:** echtes Board-Popout, Daily Double zusammen mit Schritten, Ton
+in einer Schritt-Frage, echter Datei-Dialog per Mausklick, Firebase im
+Echtbetrieb.
+
+**Fallstricke:**
+
+- **Im versteckten Browser-Panel stehen CSS-Animationen bei 0.** `document.hidden`
+  ist dann `true`, und eine gerade eingeblendete Zeile misst `opacity: 0`,
+  obwohl die Klasse `shown` sitzt. Das kostete eine Fehlersuche an einer
+  Stelle, an der nichts kaputt war. Abhilfe im Test:
+  `el.getAnimations().forEach(a => a.finish())` vor dem Messen.
+- `updateGMBar()` zeichnet **nur**, wenn `#gm-bar` die Klasse `visible` hat —
+  sonst kommt eine leere Leiste zurück und sieht aus wie ein fehlender Knopf.
+- Ein Feld, das schon gespielt wurde, lässt sich nicht erneut öffnen
+  (`openJeopardyClue` steigt bei `used` sofort aus). Ein Test, der dasselbe
+  Feld zweimal nimmt, prüft danach eine leere Frage.
+- Die Firebase-Attrappe braucht `firebase.database.ServerValue.TIMESTAMP`,
+  sonst wirft `jeopardyBuzzArm`.
+- WWM heißt `currentQ`/`removed`/`lifelines`, WWDS-Antworten heißen `answers`
+  (nicht `options`), der Jeopardy-Abzug ist die **Hälfte** des Feldwerts.
+
+## 2026-09-25 — Kategorie-Bild in Frage-Overlay und GM-Board getestet (kein Code geändert)
+
+**Gemacht:** Die zwei offenen Prüfpunkte aus `674f8cd` und `6c920bd` im
+Browser nachgeholt. Code ist nicht geändert.
+
+**Aufbau:** localhost:3000, Host-Sperre per JS ausgeblendet. Firebase war
+abgeklemmt: `firebase.database` lieferte eine Attrappe, `jeopardyBuzzConnect`
+und `lockBuzzerJoins` waren leer, 10 Aufrufe wurden abgefangen. Popout und
+Intro wurden übersprungen (`startJeopardyActual()`, danach von Hand
+`showScreen` + `renderJeopardyBoard`). Das Testbild `logos.png` (300 × 120)
+kam über den echten Editor-Knopf in Kategorie 1. Als Name war absichtlich
+`Logos "Firmen" <b>x</b>` gesetzt.
+
+**Geprüft:**
+- Board-Kopf: `img.jeopardy-cat-img` 183 × 84 px, alt-Text escaped als
+  reiner Text.
+- Frage-Overlay (`openJeopardyClue(0,0)`, aufgedeckt): `img.jeopardy-clue-cat-img`
+  180 × 72 px, vollständig geladen, per Screenshot sichtbar über „100“ und
+  der Frage. In der GM-Kopfzeile „Frage verdeckt · Name · Wert“ steht der Name
+  escaped.
+- GM-Spiegel-Board im iframe nach dem Überspringen: 1 × `img.jcat-img`
+  111 × 34 px in Spalte 1, die anderen vier Spalten mit Namen. Das benutzte
+  Feld 100 ist leer. Per Screenshot geprüft.
+- Keine Konsolenfehler. Danach neu geladen, es bleibt nichts zurück.
+
+**Ungeprüft:** das echte Board-Popout (`window.open`, spiegelt das DOM des
+Hauptfensters, sollte also dasselbe zeigen), ein Daily Double mit
+Kategorie-Bild, die Handy-Breite, der echte Datei-Dialog.
+
+**Fallstricke:** Nach `startJeopardyActual()` ohne Intro liegen der
+`.black-backdrop` und das GM-iframe (`#gm-embed-overlay.visible`) über dem
+Hauptfenster. Ein Screenshot zeigt dann nur Schwarz bzw. die Fernbedienung.
+Beides muss für den Test weg, die Backdrop ist eine **Klasse**, keine ID.
+
+## 2026-09-25 — Jeopardy-Editor: Upload-Knopf für Kategorie-Bild (`6c920bd`)
+
+**Gemacht:** In `renderJeopardyEditor()` (`js/jeopardy-ui.js`) steht unter dem
+Namensfeld jeder Kategorie ein kleiner Knopf „🖼 Bild“ (verstecktes
+`<input type="file">`, ruft `jeopardyEditCatImg(b, col, this)`). Ist ein Bild
+gesetzt, ersetzt ihn ein Thumbnail (`.jimg-thumb`, mit Hover-Vorschau über
+`data-preview-name`) plus ✕, das `jeopardyClearCatImg(b, col)` aufruft. Damit
+ist der offene Punkt aus `674f8cd` erledigt.
+
+**Warum so:** Knopf und Thumbnail wechseln sich ab, statt nebeneinander zu
+stehen. Bei fünf Spalten ist der Kopf schmal, zwei Elemente pro Zeile hätten
+umgebrochen. Für ein anderes Bild erst ✕, dann neu hochladen. Optik von den
+Frage-Bild-Knöpfen übernommen, nur kleiner. Das `src` des Thumbnails läuft
+durch `escAttr`, wie im Board-Kopf. Das Namensfeld bleibt stehen, weil der
+Name der alt-Text ist und der Host ihn weiter sieht.
+
+**Geprüft:** `node check.js --types` meldet „alles in Ordnung“ (13 Dateien
+ohne Meldung, 387 Handler statt 385, 256 IDs, 905 Klammernpaare). Im Browser
+(localhost:3000, Host-Sperre per JS ausgeblendet): ein erzeugtes PNG
+`logo-test.png` über den echten `change`-Handler in Kategorie 2 von Board 1
+geladen. Danach hatte `cat.img` eine Data-URL, `imgName` war „logo-test.png“,
+es gab 1 Thumbnail und 9 statt 10 Upload-Knöpfe, und
+`jeopardyCatHeadHtml` lieferte das `<img>`. Das ✕ angeklickt: `img` und
+`imgName` waren weg, wieder 10 Knöpfe und 0 Thumbnails. Keine Konsolenfehler.
+Screenshot zeigte das Thumbnail sauber im Kopf.
+
+**Ungeprüft:** ein echter Datei-Dialog mit Klick, Handy-Breite des Editors,
+und aus `674f8cd` weiterhin das Frage-Overlay und das GM-Spiegel-Board mit
+Bild.
+
+**Fallstricke:** Port 3000 war vom Dev-Server einer anderen Session belegt.
+Der served denselben Ordner mit `-c-1`, deshalb reichte
+`preview_start` mit `url: http://localhost:3000`, ohne eigenen Server.
+`jeopardyData` wird nirgends automatisch gespeichert (nur Export/Import),
+Tests im Editor hinterlassen also nichts.
+
+## 2026-09-25 — Jeopardy: Bild als Kategorie-Name, nur Anzeige (`674f8cd`)
+
+**Gemacht:** `JeopardyCategory` hat zwei neue optionale Felder, `img` (Data-URL)
+und `imgName`. Der neue Helfer `jeopardyCatHeadHtml(cat, imgClass)` in
+`js/jeopardy.js` liefert das Bild, wenn eins gesetzt ist, sonst wie bisher den
+escapten Namen. Er wird an drei Stellen benutzt: im Board-Kopf
+(`.jeopardy-cat.has-img` / `.jeopardy-cat-img`), im Frage-Overlay
+(`.jeopardy-clue-cat-img`) und im gespiegelten Board der GM-Fernbedienung
+(`.jcat-img` im Inline-CSS in `feud.js`). Außerdem gibt es
+`jeopardyEditCatImg(b, col, input)` und `jeopardyClearCatImg(b, col)` in
+`js/jeopardy-ui.js`.
+
+**Warum so:** Der Name bleibt als Feld erhalten. Er ist der alt-Text des Bilds,
+und der Host sieht ihn weiter im Editor und in der Zeile „Frage offen · Name ·
+Wert“ der Fernbedienung, weiß also, was hinter dem Bild steckt. `object-fit:
+contain` statt `cover`, damit von Logos oder Motiven nichts abgeschnitten wird,
+das zum Erraten gebraucht wird. Das Bild liegt wie `qImg` als Data-URL in
+`jeopardyData`, deshalb funktionieren JSON-Export und -Import ohne Anpassung.
+Das `src` läuft durch `escAttr`, weil importierte JSON-Dateien beliebigen Text
+enthalten können.
+
+**Geprüft:** `node check.js --types` meldet „alles in Ordnung“ (13 Dateien ohne
+Meldung, 385 Handler, 256 IDs, 905 Klammernpaare). Im Browser mit einem Testbild
+in Kategorie 1: Der Board-Kopf zeigt das Bild in 181 × 83 px, alt-Text
+„Logos“. Ein Name mit `"` und `<b>` erscheint escaped als Text. Die Spalten ohne
+Bild sehen aus wie vorher.
+
+**Ungeprüft:** das Frage-Overlay mit Bild, das GM-Spiegel-Board mit Bild und die
+Handy-Breite.
+
+**Offen:** **Im Editor fehlt der Upload-Knopf.** Die Funktionen sind fertig, es
+fehlt nur ein `<input type="file">` im Kategorie-Kopf von
+`renderJeopardyEditor()`, das `jeopardyEditCatImg(b, col, this)` aufruft, dazu
+ein Thumbnail mit ✕ für `jeopardyClearCatImg`. Bis dahin kommt ein Bild nur
+über eine importierte JSON-Datei ans Board.
+
+**Fallstricke:** Beim Einbau des Editor-Knopfs brach die Session zweimal ab, der
+Knopf ist deshalb nicht von hier. Die Host-Seite hat eine Passwort-Sperre
+(`#host-gate`). Wer im Browser testet, meldet sich vorher selbst an.
+
+---
+
+## 2026-09-25 — Zweiter Komplettdurchlauf (kein Commit, reiner Test)
+
+**Gemacht:** Alles erneut durchgetestet, inklusive der neuen Turnier-Eintragung
+für die teamlosen Shows. Nichts geändert.
+
+**Ergebnis:** `node check.js --types` ohne Befund (13 Dateien, 385 Handler, 256
+Element-IDs). Im Browser **77 Prüfungen, alle grün**, bei abgeklemmtem Firebase
+(97 Schreibversuche abgefangen) und gezähltem Popout (16 Aufrufe). Keine
+Konsolenfehler auf Hostseite, Handy und Gamepad. Bei 400 px kein Querüberlauf
+auf zehn Screens.
+
+Neu gegenüber dem ersten Durchlauf: alle **vier Wege der Turnier-Eintragung**
+geprüft — Team-Show automatisch (TP: Rot 2 / Blau 6), teamlos mit Zuordnung
+(DDF: Rot 4 / Blau 0 aus übrigen Leben), teamlos mit Gast ohne Account (PIH:
+Rot 4 / Blau 1, Gast namentlich ausgewiesen), teamlos ohne jede Zuordnung
+(Zeile unberührt, Platz frei, Grund am Bildschirm). Gesamtwertung rechnet:
+🥇 Rot 5 · 🥈 Blau 4.
+
+**Zwei Fallstricke dazugelernt:**
+
+- Ein Testlauf, der vier Shows nacheinander mit ihren Intros durchklickt,
+  braucht über 80 s und läuft in die 45-s-Grenze des Werkzeugs. Für
+  Zustandstests die Show starten und dann direkt
+  `showScreen(...)` + `render...()` aufrufen — die Intros sind separat geprüft.
+- Bei „Der Preis ist heiß" kann es unter der Regel „nur drunter zählt"
+  **keinen** Sieger geben (im Test: Eis für 1,80 €, alle Gebote drüber). Eine
+  Prüfung, die stur einen Sieger erwartet, meldet dann einen Fehler, der keiner
+  ist.
+
+---
+
+## 2026-09-25 — Teamlose Shows ins Turnier eintragbar (`b0ca45c`)
+
+**Gemacht:** „Der Dümmste fliegt" und „Der Preis ist heiß" tragen ihr Ergebnis
+jetzt selbst ins Turnier ein, statt dass der Host Zahlen in einen `prompt()`
+tippt.
+
+**Wie:** Die Brücke gab es schon — jeder Spieler-Account trägt eine
+Team-Zuordnung aus der Lobby („Teams zuteilen"). `tournamentReportTeamless()`
+rechnet das Einzelergebnis darüber auf die Turnier-Teams hoch.
+
+- DDF: **übrige Leben** je Team. Belohnt Durchhalten statt nur den einen Sieg
+  und ergibt bei mehreren Teilnehmern pro Team eine Zahl statt eines Namens.
+- PIH: **Punkte** je Team, aufsummiert.
+
+Gäste ohne Account haben keine Zuordnung. Sie fallen nicht unter den Tisch,
+sondern werden **namentlich gemeldet** — der Host sieht, dass ihre Punkte
+fehlen. Hat *niemand* eine Zuordnung, wird nichts eingetragen: dann wäre jede
+Zahl geraten. Platz freigeben, Grund auf den Bildschirm.
+
+**Eigener Fehler gefunden:** In `24556f7` ist die PIH-Zeile
+`tournamentReleaseActive()` in der **falschen Funktion** gelandet — in
+`pihRenderBidGrid` statt in `pihFinish`. Sie lief bei jedem Aufbau des
+Endstand-Gitters statt einmal am Spielende. Folgenlos, weil der Platz so oder
+so frei wurde, aber falsch. Mein Test damals hat nur DDF geprüft, nicht PIH.
+**Lehre:** eine Ersetzung, die auf `const rank = [...]` ankert, trifft in
+`pih.js` zwei Stellen — vor dem Einfügen prüfen, in welcher Funktion man
+landet.
+
+**Geprüft:** `node check.js --types` ohne Befund. Turnier mit Rot (Anna, Ben)
+und Blau (Clara, David): DDF → Rot 4 / Blau 0 mit Bericht und freiem Platz;
+PIH mit einem Gast ohne Account → Rot 8 / Blau 3, Gast namentlich als nicht
+gezählt gemeldet; ohne jede Zuordnung → Zeile unberührt, Platz frei, Hinweis
+„keine Team-Zuordnung gefunden". Keine Konsolenfehler.
+
+---
+
+## 2026-09-25 — Komplettdurchlauf (kein Commit, reiner Test)
+
+**Gemacht:** Alles einmal durchgetestet, nichts geändert.
+
+**Ergebnis:** `node check.js --types` ohne Befund (13 Dateien, 385 Handler, 256
+Element-IDs, 902 Klammernpaare). Im Browser **61 Prüfungen, alle grün** — bei
+abgeklemmtem Firebase (68 Schreibversuche abgefangen, keiner ging raus) und
+gezähltem statt geöffnetem Popout (7 Aufrufe).
+
+Durchgespielt: Feud (Intro-Kette, 5 Antwortfelder, Punkte, Strikes, Runde 2),
+Jeopardy (25 Felder, Buzzer scharf, Punkte +100, Abzug −50, Schätzfrage sendet
+`text:true`), WWM (15 Stufen, 4 Antworten), WWDS (12 Kategorien, auflösen),
+DDF (Abstimmung, Verlierer, Leben ab, Zähler „3 noch dabei"), PIH (drei
+Gebote, Regel „nur drunter" korrekt: Preis 161,88 € → Anna mit 100 gewinnt,
+200 und 300 sind drüber), TP (Zeiger trifft die gezogene Kategorie, Stück,
+Nachfassen, Sieg), Turnier (alle sieben startbar, Hinweis nur bei den zwei
+teamlosen), alle vier Intro-Varianten plus „aus", acht Editoren, Handy-Client
+(Bereitschaftsring, grüner Buzzer, Ausschlag, Tastaturwechsel, Parser,
+gestaffelte Abstimmung, Lobby-Zustände), Gamepad. Keine Konsolenfehler auf
+allen drei Seiten. Bei 400 px kein Querüberlauf auf sechs geprüften Screens.
+
+**Fallstrick für den nächsten Durchlauf:** Der Testlauf selbst produziert
+Fehlalarme, wenn man nicht aufpasst.
+
+- Stern-Intro und Schwarzpause haben **dieselbe** Klasse `.intro-overlay` und
+  liegen übereinander. `querySelector` trifft das untere — durchklicken muss
+  immer das **letzte** Element der Liste anklicken.
+- `showClickOverlay` nimmt vor Ablauf seiner 1,8 s keinen Klick an.
+- Zwischen zwei Shows müssen Overlays und Backdrop weg, sonst zeigt das
+  GM-Panel „Zwischensequenz läuft" statt der Show.
+- Container-IDs **nicht raten**: es heißt `ddf-editor` und `pih-editor`, aber
+  `jeopardy-editor-grid`, `wwm-editor-grid`, `wwds-editor-grid`,
+  `tp-editor-grid`, `intro-editor-grid`. Vier meiner Fehlschläge waren nur das.
+
+---
+
+## 2026-09-25 — Alle acht Shows im Turnier startbar (`24556f7`)
+
+**Gemacht:** `TOURNAMENT_STARTABLE` kennt jetzt alle sieben Spiel-Shows statt
+drei. Dazu die fehlenden Typen in der Auswahlliste (Der Preis ist heiß,
+Trivial Pursuit), Gewichtungen und Symbole.
+
+**Zwei Klassen beim Ergebnis — und das steht auch in der Zeile:**
+
+*Wer weiß denn sowas* meldete sein Ergebnis schon immer (`js/wwds.js:492`), war
+aber nicht startbar. Reine Lücke, eine Zeile.
+
+*Trivial Pursuit* meldet jetzt auch. Gewertet wird die **Zahl der
+Tortenstücke**, nicht nur Sieg oder Niederlage: ein Team mit fünf Stücken hat
+mehr geleistet als eines mit einem, und die Gesamtwertung rechnet mit Punkten.
+
+*Der Dümmste fliegt* und *Der Preis ist heiß* können **nicht** automatisch
+eintragen — sie kennen Teilnehmer, keine Teams, und ein Turnier läuft über
+feste Teams. Sie sind trotzdem startbar; der Host trägt das Ergebnis von Hand
+ein. Der Hinweis steht direkt in der Spielplan-Zeile, nicht in einer Fußnote,
+damit niemand vergeblich darauf wartet, dass sich der Plan von selbst füllt.
+
+**Der Fehler, den das sonst gebaut hätte:** `activeTournamentGameIndex` wird
+beim Start gesetzt und nur von `tournamentAutoRecordIfActive` gelöscht. Eine
+teamlose Show hätte ihn stehen lassen — und die nächste Show, die ein Ergebnis
+meldet, hätte es in **deren** Zeile geschrieben. Das fällt erst beim Blick auf
+die Gesamtwertung auf, und dann weiß niemand mehr, woher die Zahl kam. Dafür
+gibt es jetzt `tournamentReleaseActive()`, das beide am Spielende aufrufen.
+
+**Geprüft:** `node check.js --types` ohne Befund. Turnier mit zwei Teams und
+den vier Shows angelegt: alle vier mit Startknopf, die beiden teamlosen
+zusätzlich mit Hinweis. TP aus dem Spielplan gestartet (Platz 3), Sieg
+erzwungen — Ergebnis automatisch drin (Team Rot 3, Team Blau 6 Stücke), Platz
+wieder frei. DDF aus dem Spielplan gestartet (Platz 1) und beendet — Platz
+freigegeben, Zeile unberührt. Keine Konsolenfehler.
+
+---
+
+## 2026-09-25 — Intro-Auswahl auf dem Turnier-Screen (`7a1cf27`)
+
+**Gemacht:** Der Intro-Block wandert jetzt auch auf den Turnier-Screen. Ein
+Platzhalter mehr im Markup, ein Eintrag mehr in `INTRO_SLOTS`.
+
+**Warum:** Der Turniermodus schickt den Host auf den Setup-Screen des
+jeweiligen Spiels (`tournamentStartGame` → `showScreen(TOURNAMENT_STARTABLE…)`),
+dort steht die Auswahl seit `7383900` ohnehin — das Intro lief also schon.
+Was fehlte, war die Auswahl an der Stelle, an der der Host den Abend **plant**,
+bevor er das erste Spiel öffnet.
+
+**Geprüft:** `node check.js --types` ohne Befund. Der Block landet im
+Platzhalter und überlebt `renderTournament()` — der zeichnet nur
+`#tournament-content` neu, der Platzhalter ist ein Geschwisterelement. Auf dem
+Turnier-Screen „Geburtstag" eingestellt, dann auf den Feud-Setup gewechselt:
+Einstellung steht dort. Danach der ganze Weg: „Eigenes Intro" auf dem
+Turnier-Screen gewählt, auf den Setup-Screen gewechselt (das macht
+`tournamentStartGame`) und gestartet — Stern, dann die eigene Bühne mit fünf
+Stufen. Weiterhin genau ein Block im Dokument. Keine Konsolenfehler.
+
+**Offen:** `TOURNAMENT_STARTABLE` kennt nur Family Feud, Jeopardy und Wer wird
+Millionär. Die fünf neueren Shows lassen sich aus dem Turnier **gar nicht**
+starten — eigene Baustelle, nicht Teil dieser Änderung.
+
+---
+
+## 2026-09-25 — Intro-Auswahl für alle acht Shows (`7383900`)
+
+**Gemacht:** Eine Intro-Auswahl, die auf jedem Setup-Screen steht. Vier
+Varianten: Keller Gameshow, Keller Gameshow Tag 2, Geburtstag, Eigenes Intro.
+Die eigene Jeopardy-Zeile für das Tag-2-Intro fällt weg — es ist jetzt eine
+Variante wie die anderen.
+
+**Warum so — ein Block, der wandert:** Der Bedienblock steht genau **einmal**
+im Dokument (`#intro-pick`) und wird beim Screenwechsel in den Platzhalter des
+offenen Setup-Screens verschoben (`moveIntroPickerTo`, aus `showScreen`).
+
+Acht Kopien wären der naheliegende Weg gewesen und der falsche: dann gäbe es
+acht Mal dieselben IDs, ein `getElementById` träfe immer nur die erste, und was
+der Host auf dem einen Screen einstellt, stünde auf dem nächsten nicht drin.
+Ein verschobener Block hat von sich aus überall denselben Stand.
+
+`runIntroThen(onDone)` spielt das eingestellte Intro und ruft danach den
+Rückruf; ohne Auswahl geht es ohne Umweg weiter. Jede Show ruft das an der
+Stelle auf, an der sie sonst direkt ihren Bildschirm gezeigt hätte. Bei den
+drei neuen Shows läuft es **vor** dem Show-Zeichen, danach wie gehabt Anleitung
+und Titelkarte.
+
+`toggleIntroPicker` ist von `feud.js` nach `intro.js` gezogen — Intro-Bedienung,
+keine Feud-Logik. Die Auswahl überlebt jetzt das Neuladen (`introChoice` im
+localStorage); ohne das müsste der Host sie vor jeder Show neu setzen.
+
+**Geprüft:** `node check.js --types` ohne Befund, 13 Dateien. Der Block landet
+in allen sieben Setup-Screens und steht dabei genau einmal im Dokument. TP mit
+„Eigenes Intro": erst die Bühne, nach dem Klick das TP-Zeichen. WWM mit „Keller
+Gameshow": Bühne, dann der Spielbildschirm. WWDS mit ausgeschaltetem Intro:
+direkt der Spielbildschirm, keine Bühne. Auswahl nach Neuladen erhalten.
+Keine Konsolenfehler.
+
+---
+
+## 2026-09-25 — Eigenes Intro, frei befüllbar (`beedc12`)
+
+**Gemacht:** Dritte Intro-Variante „Eigenes Intro" neben Keller Gameshow und
+Geburtstag. Neue Datei `js/intro.js` mit Daten und Editor, neuer Screen
+`intro-edit-screen`. Je Stufe vier freiwillige Zeilen (kleine Zeile darüber,
+groß in Gold, groß in Pink, kleine darunter), dazu Kopfzeile und Sekunden je
+Stufe. Stufen anlegen, löschen, verschieben; Export/Import als JSON; Vorschau
+ohne Spielstart.
+
+**Warum:** Die beiden festen Intros stehen als Markup im Code — für einen
+anderen Namen, ein anderes Datum oder einen anderen Preis musste man die Datei
+anfassen.
+
+**Zwei Entscheidungen:**
+
+Die Bühne benutzt dieselbe id wie das Keller-Intro (`#kg`). Daran hängen alle
+Bühnenstile; sie ein zweites Mal unter anderem Namen zu führen hieße, sie ab
+jetzt doppelt zu pflegen. Es läuft immer nur ein Intro, die id ist nie zweimal
+im Dokument.
+
+Die Taktung steht **nicht** im Stylesheet: dort ist sie fest auf sieben Stufen
+verdrahtet (`.s1`–`.s7` mit ausgerechneten Verzögerungen). Hier ist die Zahl
+der Stufen frei, also rechnet JavaScript sie aus und schreibt sie ins
+`style`-Attribut. Im Stylesheet steht nur noch, *welche* Animation läuft.
+
+**Geprüft:** `node check.js --types` ohne Befund, 13 Dateien. Über echte
+Klicks bis in den Editor; eigene Daten eingetragen (Name, Datum, Teams) und
+abgespielt: Kopfzeile auf der Bühne, vier Stufen mit 0,3 / 3,3 / 6,3 / 9,3 s,
+letzte hält, leere Zeilen fielen weg (Stufe 1 zwei Absätze, Stufe 2 drei).
+Klick beendet und ruft den Rückruf. Keine Konsolenfehler.
+
+**Offen:** Das eigene Intro hängt am Feud-Setup (dort steht die
+Intro-Auswahl). Jeopardy hat seine eigene Intro-Option (`enable-jeopardy-intro`
+→ Tag-2-Bühne) und kennt die Variante noch nicht. Die anderen sechs Shows
+haben gar keine Intro-Auswahl.
+
+---
+
+## 2026-09-25 — Cache-Buster beim Deploy (`3316c2e`)
+
+**Gemacht:** Der Pages-Workflow hängt die ersten acht Stellen der Commit-ID
+als `?v=` an `styles.css` und alle zwölf `js/`-Dateien in `index.html`. Das
+Beamer-Popout nimmt die CSS-Adresse jetzt aus dem `<link>` des Hauptdokuments
+statt aus einem festen Pfad.
+
+**Warum:** `index.html` wird beim Besuch neu geholt, die verlinkten Dateien
+aber aus dem Cache. Wer die Seite schon einmal offen hatte, sah eine fertige
+Änderung nicht — hier **zweimal** passiert: erst blieb der neue Stilblock des
+TP-Setups aus, dann fehlten Intro und Anleitung der neuen Shows. Beide Male
+war der Code live, nur der Browser hielt die alte Fassung.
+
+Das Popout musste mit: mit Version wäre `styles.css` ohne Parameter eine
+*andere* Adresse, und das Popout hätte die alte Fassung aus dem Cache gezogen,
+während das Hauptfenster die neue zeigt.
+
+Geändert wird nur die ausgecheckte Kopie im Workflow-Lauf, nicht das Repo — im
+Verzeichnis stehen weiter saubere Pfade.
+
+**Geprüft:** `node check.js --types` ohne Befund. Die `sed`-Zeilen des
+Workflows gegen eine Kopie von `index.html` laufen lassen: 13 Pfade
+umgeschrieben, Form `js/core.js?v=deadbeef`. Popout-Zeile im Browser
+nachgestellt: ohne Version `styles.css`, mit Version `styles.css?v=deadbeef`.
+
+**Nebenbefund zum Intro:** Der Vorwurf „die haben kein Intro" ließ sich nicht
+bestätigen — „Der Dümmste fliegt" komplett über echte Klicks gestartet
+(Menükarte → + Gast → Namen → Spiel starten): Popout-Aufruf, Intro-Zeichen,
+schwarzer Grund, fünf Anleitungsfolien. Der Live-Stand enthält den Code
+ebenfalls (per `curl` gegen iryogameshows.github.io geprüft).
+
+**Aber:** die Anleitung läuft im Hauptfenster und auf dem Beamer-Popout — und
+das **GM-Overlay legt sich im Hauptfenster darüber** und zeigt nur
+„Zwischensequenz läuft · Weiter". Wer am Hauptrechner sitzt und kein
+Popout-Fenster hat (Popup-Blocker!), sieht vom Intro also nichts. Das ist bei
+Feud und Jeopardy genauso. **Offen:** ob das der Grund war — bei David
+nachgefragt, noch keine Antwort.
+
+---
+
+## 2026-09-24 — HANDOFF-Regel festgeschrieben (`c3afa5f`)
+
+**Gemacht:** Die Pflicht, `HANDOFF.md` bei jeder Änderung mitzuschreiben,
+steht jetzt ausdrücklich in beiden `CLAUDE.md` (Projekt und `Coding/`). Die
+sechs Einträge ohne Commit-Hash haben ihren nachgetragen, und die Datei weist
+oben aus, mit welchem Commit sie angelegt wurde.
+
+**Warum:** Inhaltlich war alles erfasst, aber sechs von acht Einträgen hatten
+keinen Hash — sie entstanden jeweils **vor** dem Commit, da war er noch nicht
+bekannt. Die Regel nennt deshalb die Reihenfolge, die das löst: Code
+committen, Hash ablesen, Eintrag damit schreiben und als eigenen kleinen
+Commit hinterherschicken. Lieber ein Commit mehr als ein Eintrag ohne Hash.
+Dieser Eintrag hier ist genau dieser Fall.
+
+Zweiter Punkt der Regel: in der Antwort ausdrücklich sagen, dass es in der
+`HANDOFF.md` steht. Die Datei ist sonst unsichtbar, und ob sie gepflegt wurde,
+lässt sich von außen nicht nachhalten.
+
+**Geprüft:** `node check.js` ohne Befund (Markdown berührt ihn nicht, aber der
+Lauf gehört zum Schritt). Alle acht Einträge tragen jetzt einen Hash, alle
+neun Commits seit `36cdbc5` sind abgedeckt.
+
+---
+
+## 2026-09-24 — GM-Panels für die drei neuen Shows (`ed25b18`)
+
+**Gemacht:** „Der Dümmste fliegt", „Der Preis ist heiß" und Trivial Pursuit
+haben jetzt ein eigenes Gamemaster-Panel. Es öffnet beim Start, noch vor dem
+Intro, und die Fernsteuerung vom Handy-Gamepad kennt ihre Funktionen.
+
+**Warum das vorher fehlte — und warum das falsch war:** Ich hatte sie bewusst
+weggelassen, weil `updateGamemaster()` sonst auf den Feud-Zweig zurückfällt.
+Der Schluss daraus war falsch: nicht „dann kein GM-Fenster", sondern „dann ein
+eigener Zweig". Ohne Panel ist die Show nur am Hauptrechner moderierbar, denn
+`gamepad/index.html` spiegelt genau dieses Fenster. Das GM-„Fenster" ist
+übrigens kein Popup, sondern das eingebettete iframe `gm-embed-frame` — es
+lässt sich deshalb direkt aus der Seite heraus prüfen.
+
+**Aufbau:** Je Spiel `xGmControlsHtml(pfx)` für die Knopfleiste und
+`updateGamemasterX()` für das Dokument, wie `wwdsControlsHtml` /
+`updateGamemasterWwds`. Dispatch in `updateGamemaster()` vor dem Feud-Rückfall.
+
+Die Lösung steht im GM-Fenster **immer**, auch solange sie auf der Leinwand
+verdeckt ist — DDF die Antwort, PIH der echte Preis, TP die Antwort. Sonst
+kann der Host nicht urteilen.
+
+Gäste ohne Handy sind vom GM aus bedienbar: DDF stimmt über
+`ddfHostVote(voterUid, candUid)` ab, PIH über das neue
+`pihHostBidValue(uid, value)`. Nötig, weil `pihHostBid(i)` seinen Wert aus
+einem Eingabefeld im **Hauptfenster** liest — das gibt es im GM-Fenster nicht.
+
+**Geprüft:** `node check.js --types` ohne Befund. Alle drei Shows gestartet,
+durchs Intro geklickt und **aus dem GM-Fenster heraus gespielt**: TP gedreht,
+Frage gezogen, falsch geurteilt → Nachfassen mit Knopf je Gegner; DDF
+aufgedeckt und zur Abstimmung, neun Gast-Stimmknöpfe (3 Wähler × 3
+Kandidaten); PIH Gebote geöffnet, drei Gast-Eingabefelder, echter Preis im GM
+sichtbar und auf der Leinwand leer. Keine Konsolenfehler.
+
+---
+
+## 2026-09-24 — Popout und Intros für die drei neuen Shows (`022066f`)
+
+**Gemacht:** „Der Dümmste fliegt", „Der Preis ist heiß" und Trivial Pursuit
+öffnen jetzt das Zuschauerfenster und haben Intro, Anleitung und Titelkarte
+wie Feud und Jeopardy. Dazu ein Tutorial-Knopf auf jedem Setup-Screen.
+
+**Was fehlte:** `openBoardPopout()` wurde nur aus `startGame`, `startJeopardy`,
+`startWwds` und `startWwm` gerufen — die drei neuen Shows nie. Und sie sprangen
+ohne ein Wort auf den Spielbildschirm; die Regeln musste der Host ansagen.
+
+**Warum so:**
+
+Der Ablauf ist derselbe wie bei den alten Shows: Zeichen → Anleitung →
+Titelkarte → Spiel, alles über `runTutorial` und `showClickOverlay`, die es
+schon gab. Kein `openGamemaster()` für die drei: sie haben kein GM-Panel, und
+`updateGamemaster()` fällt sonst auf den Feud-Zweig zurück — das Fenster zeigte
+einen Stand, der gar nicht läuft.
+
+Die Anleitungen lesen die **echten** Einstellungen: DDF zeigt die eingestellte
+Zahl Leben als Herzen, PIH nur die aktive Regel (beide nebeneinander wäre
+bequemer, aber genau daraus entsteht am Tisch der Streit), TP die echten
+Kategorien in ihren Farben und die gesetzten Regeln.
+
+Die Ausblendliste im Popout hinkte ebenfalls hinterher: WWDS, DDF, PIH und TP
+fehlten samt Editoren, dazu Spielerliste, Turnier, Notizen und Bestenliste.
+Wechselte der Host während der Show dorthin, stand das auf der Leinwand.
+
+**Gefundener Fehler:** `gameCardIcon()` vergab die Verlaufs-ID fest als
+`cg_<key>`. Sobald dasselbe Symbol zweimal im Dokument steht — genau das machen
+die neuen Intros — trifft `url(#cg_tp)` immer das **erste** Vorkommen. Das lag
+im versteckten Menü, die Füllung löste zu `none` auf und vom Symbol blieb ein
+Punkt übrig. Jetzt zählt ein Zähler hoch.
+
+**Geprüft:** `node check.js --types` ohne Befund. Alle drei Shows durchgespielt
+(Firebase abgeklemmt, `window.open` gezählt statt geöffnet): je ein Popout, ein
+Intro-Zeichen mit schwarzem Grund, fünf Anleitungsfolien mit fünf Punkten,
+Titelkarte, dann der Spielbildschirm und der Grund blendet aus. DDF zeigt sechs
+Herzen auf zwei Beispielkarten, PIH die Regel „Nur drunter zählt" mit drei
+Geboten, TP sechs Kategorie-Chips. Tutorial-Knöpfe auf allen drei
+Setup-Screens vorhanden. Keine Konsolenfehler.
+
+**Fallstrick:** `showClickOverlay` nimmt vor Ablauf seiner Verzögerung (1800 ms)
+keinen Klick an. Beim Testen erst warten, sonst sieht es aus, als hinge die
+Titelkarte.
+
+---
+
+## 2026-09-24 — DDF-Wertung, eigene Kategorien in Trivial Pursuit (`52700f0`)
+
+**Gemacht:** Die Spielerleiste bei „Der Dümmste fliegt" sortiert jetzt
+Ausgeschiedene nach hinten, hebt das letzte Herz hervor und zählt, wie viele
+noch dabei sind. In Trivial Pursuit sind die Kategorien frei: Anzahl (3–8),
+Farbe, Zeichen und Name.
+
+**Warum:**
+
+DDF wird **nicht** nach Leben sortiert, nur nach drin/raus. In diesem Spiel
+entscheidet die Abstimmung, nicht der Punktestand — eine Rangfolge nach Herzen
+wäre eine Aussage, die das Spiel gar nicht macht. Innerhalb einer Gruppe
+entscheidet die ursprüngliche Reihenfolge, sonst tauschen zwei Gleichstehende
+nach jeder Runde grundlos die Plätze. Das letzte Herz bekommt einen wärmeren
+Rand, nicht den roten — Rot ist für `.picked` reserviert, den Rauswurf.
+
+TP rechnet überall mit `tpCatCount()` statt mit einer festen Zahl; Rad, Torte,
+Vorschau und „x von y" gehen mit. Grenzen 3 und 8: darunter bleibt vom Spiel
+nichts übrig, darüber wird das Rad unlesbar. **Neue Startprüfung:** eine
+Kategorie ohne Frage kann das Rad zwar treffen, aber nie vergeben — das
+Tortenstück bliebe für immer leer und niemand könnte gewinnen. `startTp()`
+weigert sich jetzt und nennt die betroffenen Kategorien.
+
+**Geprüft:** `node check.js --types` ohne Befund. DDF mit sechs Teilnehmern:
+Reihenfolge Anna, Ben (letztes Herz), David, Frieda, dann Clara und Emil als
+ausgeschieden; Zähler „4 noch dabei". TP: hinzufügen, Farbe ändern, löschen bis
+zur Untergrenze (Knopf dann gesperrt), Überschrift und Vorschau folgen. Spiel
+mit **vier** Kategorien gestartet: vier Radsegmente, vier Tortensektoren, vier
+Stücke je Team, und nach der Drehung steht der Zeiger auf genau der gezogenen
+Kategorie. Start mit leerer Kategorie wird abgelehnt. Auslieferungszustand nach
+`localStorage`-Reset weiterhin sechs Kategorien. Keine Konsolenfehler. Firebase
+abgeklemmt.
+
+**Fallstricke:** Zwei CSS-Regeln griffen nicht, weil etwas Spezifischeres
+davorstand — `.panel-head` ist außerhalb des Lobby-Kastens `display:block`
+(Zähler und Löschknopf rutschten unter die Zeile), und die allgemeine
+Editor-Regel für Eingabefelder drückte dem Farbwähler `11px 14px` Polster auf,
+sodass vom Farbfeld ein Strich übrig blieb. Beides mit höherer Spezifität
+gelöst, nicht mit `!important`. Merke: im Editor immer die *berechneten* Werte
+nachsehen, bevor man an der eigenen Regel zweifelt.
+
+---
+
+## 2026-09-24 — Wertung bei „Der Preis ist heiß" (`29c668f`)
+
+**Gemacht:** Die Punkteleiste ist eine Rangliste geworden: nach Punkten
+sortiert, mit Platzziffer, Krone für die Spitze, graue Null statt goldener.
+Aus den Kästen sind Pillen geworden, darunter eine Trennlinie.
+
+**Warum:** Sie stand in Beitrittsreihenfolge da und jede Karte sah gleich aus —
+wer führt, musste man sich aus fünf Zahlen zusammensuchen. Bei Gleichstand
+fällt die Sortierung auf den Ausgangsindex zurück, sonst springen zwei
+Punktgleiche zwischen zwei Runden ohne Grund umeinander. Gleiche Punktzahl
+heißt gleicher Platz (2./2./4.), nicht fortlaufend durchnummeriert.
+
+Die Krone kommt erst, wenn überhaupt jemand gepunktet hat — zu Beginn stehen
+alle auf null, und fünf Kronen sagen nichts. Das Leuchten bleibt `.picked`
+vorbehalten, dem Moment, in dem jemand den Punkt holt; „führt" ist nur getönt.
+
+Die Trennlinie bindet die Leiste an den Kopf der Seite. Vorher schwebte sie
+zwischen Logo und Artikel, ohne erkennbar zu einem von beiden zu gehören.
+
+**Geprüft:** `node check.js --types` ohne Befund. Mit fünf Teilnehmern:
+👑 Anna 3 · 2. David 2 · 3. Ben 1 · 3. Emil 1 · 5. Clara 0 — Gleichstand teilt
+sich den Platz, der nächste Platz überspringt entsprechend. Mit acht
+Teilnehmern zwei Zeilen, kein Querüberlauf, keine Überlappung mit der
+Gebotsliste (Leiste endet bei 204+x, Grid beginnt bei 423). Keine
+Konsolenfehler. Firebase während des Tests abgeklemmt, zwei Schreibversuche
+abgefangen, keiner davon `joinLocked`.
+
+**Fallstrick:** `r.rank` erst nachträglich an ein Objektliteral zu hängen gibt
+TS2339 — die Eigenschaft muss beim `map` schon drinstehen (`{ p, i, rank: 0 }`).
+
+---
+
+## 2026-09-24 — Regeln in den Editor, Lobby-Kasten geordnet (`f14dd4c`)
+
+**Gemacht:** Die zwei Regel-Haken sind vom Setup- in den Fragen-Editor
+gewandert. Der Lobby-Kasten hat jetzt ein Raster aus zwei gleich breiten
+Spalten statt eines Umbruchs.
+
+**Warum:** Die Regeln sind Eigenschaften der Fragerunde, kein Startparameter —
+der Setup-Screen soll zeigen, *was* gespielt wird, nicht *wie*. Sie sichern
+sich jetzt sofort beim Umschalten (`tpSaveRules()`), sonst käme man über das
+Menü mit dem alten Stand zurück. `startTp()` liest weiter dieselben Feld-IDs;
+die liegen im DOM, egal welcher Screen sichtbar ist.
+
+Im Lobby-Kasten brachen vier verschieden breite Knöpfe als 2+1+1 um, keine
+Kante stand unter der anderen. Zwei Spalten ordnen das und stellen die Paare
+zusammen: oben QR, unten Teams. „Teams zuteilen" war `btn-primary` und damit
+lauter als „Spiel starten" darunter — es bleibt der wichtigste Knopf *im
+Kasten*, aber der Vorrang gehört dem Start, also jetzt Goldrand statt
+Goldfläche. Die Zahl im Kopf ist bei 0 grau: ein grünes „0" versprach
+Verbundene, die es nicht gab.
+
+**Betroffen sind sechs Screens**, nicht nur Trivial Pursuit: der Kasten ist
+geteilt (`renderSetupLobby` in `js/buzzer.js`, dazu `js/roster.js` für DDF und
+Der Preis ist heiß).
+
+**Geprüft:** `node check.js --types` ohne Befund. Alle sechs Setup-Screens: je
+vier Knöpfe, zwei Spaltenpositionen, gleiche Breite. Regel abschalten schreibt
+sofort nach `localStorage`, `tpLoadSettings()` holt sie zurück, `fieldChecked`
+liest sie aus dem Editor heraus. Bei 400 px eine Spalte, kein Querüberlauf.
+Keine Konsolenfehler.
+
+**Fallstrick:** `js/tp.js` hatte gemischte Zeilenenden (26 CRLF gegen 564 LF),
+weil die Datei per Write-Werkzeug mit LF entstand und spätere Perl-Einschübe
+CRLF einsetzten. Auf CRLF normalisiert, wie der Rest des Arbeitsbaums.
+
+---
+
+## 2026-09-24 — Setup-Screen von Trivial Pursuit (`fde849b`)
+
+**Gemacht:** Die zwei Regel-Haken stehen jetzt in einer eigenen Tafel, darüber
+eine Vorschau der sechs Kategorien mit Farbe und Fragenzahl.
+
+**Warum:** Vorher waren es drei einzeln zentrierte `.team-toggle`-Zeilen. Jede
+war anders breit, also saß jedes Kästchen woanders — das Auge findet darin
+keine Kante. Die Tafel gibt eine feste linke Kante, die Erklärung hängt am Text
+statt in der Zeile zu stehen. Die Kategorien liegen in einem Raster aus drei
+gleich breiten Spalten, nicht im freien Umbruch: sonst endet jede Zeile
+woanders, weil die Namen verschieden lang sind.
+
+Die Vorschau ist nicht Schmuck. Eine Kategorie ohne Frage fällt sonst erst auf,
+wenn das Rad im Spiel darauf stehen bleibt — sie wird jetzt rot ausgewiesen,
+vor dem Start.
+
+**Geprüft:** `node check.js --types` ohne Befund. Im Browser: sechs Chips,
+gleiche Breite (191 px), drei Spaltenpositionen; beide Kästchen auf derselben
+x-Position (208,1 px) — vorher drei verschiedene. Bei 400 px Fensterbreite eine
+Spalte, kein Querüberlauf (`scrollWidth` 400 = `innerWidth`).
+
+---
+
+## 2026-09-24 — Trivial Pursuit, Schätzfragen mit Text (`36cdbc5`)
+
+### Gemacht
+
+- **Achtes Spiel: Trivial Pursuit.** Neu `js/tp.js` (564 Zeilen), Setup-,
+  Editor- und Spielscreen in `index.html`, Stilblock am Ende von `styles.css`,
+  Menükarte mit eigenem Torten-Icon in `logoIconMarkup()`.
+- **Schätzfragen können Textantworten sein.** Neuer Haken „🔤 Buchstaben" im
+  Jeopardy-Editor, sichtbar nur wenn „📊 Schätzfrage" an ist.
+
+Angefasst außerdem: `js/core.js` (showScreen-Haken, Logo, `currentTeamLabel`,
+Icon), `js/buzzer.js` (`LOBBY_SETUP`), `js/jeopardy.js`, `js/jeopardy-ui.js`,
+`buzzer/index.html`.
+
+### Warum so
+
+**Kein Spielbrett mit Laufweg.** Das Brett ist im Original nur der
+Zufallsgenerator aus Würfel und Feldern. Auf einem Beamer wäre es totes Bild.
+Das Glücksrad macht dasselbe in drei Sekunden und ist dabei eine Show. Die
+Regeln bleiben unverändert: richtig = weiter, Stück nur einmal je Kategorie,
+alle sechs = Finale.
+
+**Sechs Kategorien fest verdrahtet, Namen frei.** Bei fünf oder sieben stimmt
+die Torte nicht mehr, und daran hängt das ganze Spiel. Der Import lehnt Dateien
+mit anderer Kategorienzahl deshalb ab — sonst fällt das erst mitten in der Show
+auf.
+
+**Kein eigener Firebase-Kanal.** Die Handys spielen nur beim Nachfassen mit.
+Dafür reicht der bestehende `feudBuzzer`-Kanal; TP setzt `activeBuzzerContext`
+auf `'tp'` und ist in `LOBBY_SETUP` registriert.
+
+**Verworfen:** ein GM-Panel für TP. `updateGamemaster()` hat für Feud, WWM,
+WWDS, Jeopardy, Finale, Turnier und Result je einen Zweig — „Der Preis ist
+heiß" hat bewusst keinen und rendert seine Bedienung auf dem Board. TP macht
+es genauso. Wer das später anders will, findet den Einstieg in
+`js/feud.js:1031`.
+
+**Textflag im selben Schreibvorgang.** `jeopardyEstimateOpen()` schickt `text`
+zusammen mit Frage und Runde. Als zweiter Schreibvorgang stünde auf langsamen
+Verbindungen kurz der Ziffernblock offen — und wer dann schon tippt, kommt an
+keinen Buchstaben.
+
+**Zahlen bleiben Standard.** Für „wie viele Einwohner hat X" ist der
+Ziffernblock schneller. Der Haken schaltet um, er ersetzt nichts.
+
+### Geprüft
+
+`node check.js --types`: 12 Dateien typgeprüft ohne Meldung, 336
+Handler-Aufrufe gegen 631 globale Namen, 242 feste Element-IDs, `styles.css`
+815 Klammernpaare. Ohne Befund.
+
+Komplette Show im Browser durchgespielt (lokaler Server, `.claude/launch.json`,
+Port 3000). **Firebase vorher abgeklemmt**, jeder Schreibversuch nur gezählt:
+22 Stück, darunter zweimal `joinLocked` — die wären sonst in die
+Live-Datenbank gegangen.
+
+- Jeopardy: Intro durchgeklickt, Board mit 25 Feldern, richtig +100, falsch
+  −150, Schätzfrage sendet `text:true` bzw. `text:false`, Buzzer bleibt bei
+  Schätzfragen aus.
+- Handy: `inputmode` wechselt zwischen `text` und `decimal`, Platzhalter
+  wechselt mit. `parseEstimate` unverändert: „Laika" → `null`, „390.000" →
+  `390000`, „12,5" → `12.5`.
+- TP: drei Teams. Nach der Drehung steht der Zeiger auf genau der gezogenen
+  Kategorie — nicht nach Augenmaß, sondern Winkel modulo 360 gegen die
+  Segmentmitte gerechnet; Zeigermitte 0,2 px neben der Radmitte. Richtig gibt
+  ein Stück und den nächsten Wurf, falsch öffnet das Nachfassen mit Knöpfen für
+  die anderen beiden Teams, der Nachfasser bekommt Stück und Zug. Endspiel:
+  sechstes Stück, Schlussfrage verhauen, zwei Züge später wieder Finalist,
+  gewonnen.
+- Keine Konsolenfehler auf einem frischen Laden.
+
+### Offen
+
+- **Nie gegen echte Handys und echtes Firebase getestet.** Der
+  Tastaturwechsel greift erst dort richtig — ein Desktop-Browser ignoriert
+  `inputmode` ohnehin. Beim nächsten Livespiel prüfen.
+- **TP hat kein GM-Panel** (siehe oben). Auf dem Board bedienbar, im
+  GM-Fenster nicht.
+- **TP-Fragen sind Beispielfragen.** Vier je Kategorie, als Platzhalter
+  gedacht. Sind alle 24 durch, gibt TP die Kategorien wieder frei und
+  wiederholt, statt abzubrechen.
+- Alles gepusht, Arbeitsbaum sauber.
+
+### Fallstricke
+
+- **Die Dateien im Arbeitsbaum haben CRLF.** Ein `perl -0pi -e` mit `\n` im
+  Suchmuster trifft nichts. Ein `grep -q $'\r'` hat das an einem Tag *falsch*
+  als LF gemeldet — verlässlich ist nur ein Hexdump der Zeile.
+- **`$` direkt vor dem Regex-Trenner.** `s/…text$/…/` liest Perl als Variable
+  `$/`, nicht als Zeilenende. Die Ersetzung tut dann wortlos nichts. Entweder
+  `sed` mit Zeilennummer nehmen oder das `$` vermeiden.
+- **Sehr lange Heredocs scheitern am Shell-Parser.** Ab einigen Kilobyte kam
+  „unexpected EOF". Fragment als Datei schreiben und per Skript einspleißen.
+- **Die Hostseite hat ein Passwort-Gate** (`js/jeopardy-ui.js:212`). Es legt
+  sich als Overlay über die Seite; eingespeistes JavaScript läuft darunter
+  trotzdem, Screenshots zeigen aber nur das Gate. Zum Testen das Element
+  entfernen, nicht den Merker in `localStorage` setzen — sonst bleibt der
+  Testzustand.
+
+---
+
+## 2026-09-24 — Bewegung und Optik (`cd649c1`)
+
+### Gemacht
+
+Der Durchgang `4a8ad6b` hatte die Hostseite poliert, den Handy-Client aber
+nicht angefasst: 673 Zeilen mit einer einzigen Animation und zwei Übergängen.
+Nachgezogen in `buzzer/index.html` und `gamepad/index.html`, dazu eine
+Reparatur in `styles.css`.
+
+### Warum so
+
+**Ein echter Fehler:** die Publikumsjoker-Balken bei WWM und WWDS hatten
+`transition:height`, das nie lief. Die Balken werden bei jedem Render per
+`innerHTML` neu erzeugt und bekommen ihre Höhe inline — ein Übergang braucht
+aber einen Wertwechsel an einem bestehenden Element. Gefunden mit einem Skript,
+das alle Klassen mit `transition:` gegen die JS-Templates prüft: von 26
+Kandidaten waren genau diese zwei betroffen, weil nur bei ihnen die animierte
+Eigenschaft auch inline gesetzt wird.
+
+**Versatz über Laufzeiten, nicht über `animation-delay`.** Mit Verzögerung
+bräuchte es `fill-mode: backwards`, und dann kann im gedrosselten
+Popout-Fenster ein Balken auf Höhe 0 stehenbleiben. Dieselbe Überlegung steht
+schon im Commit `4a8ad6b`.
+
+**Der Bereitschaftsring des Buzzers sitzt auf einem `::after`.** Eine laufende
+Animation gewinnt gegen die `box-shadow` aus `:active` — das Druckgefühl wäre
+sonst genau dann weg, wenn es zählt.
+
+**Unter `prefers-reduced-motion` bleibt der Ring sichtbar** und steht nur
+still. Die Information darf nicht mit der Bewegung verschwinden.
+
+### Geprüft
+
+Tokens lösen auf, alle neun Keyframes vorhanden, der Balken misst direkt nach
+dem Einhängen 0 und wächst auf die Zielhöhe, kein Querüberlauf bei 375 px,
+keine Konsolenfehler auf drei Seiten. `node --check` über alle js-Dateien
+sauber. Während des Tests wurde nichts an Firebase geschrieben — es wurde sich
+nicht angemeldet, und ohne Anmeldung schreibt der Client keine Presence.
+
+---
+
+## Davor
+
+`a031908` bis `cf5147c` (16.–19.09., von anderen Geräten): Prüfer `check.js`,
+Typprüfung per `jsconfig.json` mit `checkJs: true`, `types/globals.d.ts`, die
+DOM-Helfer `showEl`/`setText`/`setHtml`/`setClass`, Design-Tokens in
+`styles.css` und zwei Escaping-Korrekturen. Die Begründungen stehen
+ausführlich in den jeweiligen Commit-Nachrichten — dort nachlesen, hier nicht
+doppeln.
+
+---
+

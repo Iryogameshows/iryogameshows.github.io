@@ -52,5 +52,5 @@ Regeln:
 
 1. Eintrag als eigenen Commit: Message `HANDOFF: Eintrag zu <hash> (<Thema>)`, mit den Attributionszeilen aus der Session.
 2. Commit-Sperre beachten: `node check.js` muss durchlaufen (der Hook prüft das bei Bash-Commits selbst).
-3. Push richtet sich nach der Regel „Commit und Push - automatisch, außer bei großen Änderungen“ in der CLAUDE.md: bei kleinen Änderungen pushen und den Deploy-Lauf prüfen, bei großen vorher fragen.
+3. Push nach der Regel „Commit und Push — automatisch, ohne Rückfrage“ in der CLAUDE.md: pushen und den Deploy-Lauf prüfen. Vorher Bescheid geben nur bei Verlauf umschreiben oder Löschen von Dateien/Daten.
 4. In der Antwort an David ausdrücklich sagen: „Steht in der HANDOFF.md.“
