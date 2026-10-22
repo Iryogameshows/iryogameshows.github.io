@@ -177,6 +177,28 @@ Liegen im Repo und kommen per Git mit:
 - GitHub-CLI `gh` für den Deploy-Nachweis (`gh run list`); ohne `gh` die
   Action-API, siehe `/abschluss`.
 
+### Stupide Arbeit an Codex abgeben (seit 2026-10-22)
+
+Anweisung von David: Steht mechanische Arbeit an, die keine Abwägung braucht
+(viele gleichförmige Ersetzungen, Daten abtippen, Fragen-Sets befüllen,
+Umbenennen nach festem Muster), **nicht selbst machen**, sondern David einen
+fertigen Prompt für Codex schreiben. Er schickt ihn ab, um Tokens zu sparen.
+
+Der Prompt steht in einem Code-Block, damit er sich am Stück kopieren lässt,
+und ist ohne diese Unterhaltung verständlich:
+
+- Dateien und Stellen mit Pfad, das Muster mit einem Vorher-/Nachher-Beispiel,
+- was **nicht** angefasst wird,
+- `node check.js` am Ende, Ergebnis melden,
+- nicht committen und nicht pushen — das prüft und erledigt danach Claude.
+
+Codex liest `AGENTS.md`, nicht diese Datei. `AGENTS.md` verweist deshalb nur
+hierher, statt eine Kopie zu sein: eine Kopie vom 2026-10-13 lag 9 Tage
+unversioniert herum und war um 132 Zeilen veraltet.
+
+Was Abwägung braucht — Design, Spiellogik, Fehlersuche, alles am Code mit
+Firebase — bleibt hier.
+
 ## Bibliotheken in `vendor/` (GSAP, Lenis)
 
 Liegen als feste Kopien im Repo, nicht per CDN: eine Show läuft vor Publikum und
