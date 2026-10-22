@@ -16,7 +16,7 @@
 > Nach dem Backslash folgt ein Buchstabe, eine Ziffer oder ein Leerzeichen —
 > nie direkt `*`, `_`, `` ` ``, `[`, `#`, `>`, sonst frisst Markdown ihn auf.
 >
-> Das Warum steht unten unter „Antwortformat". Hier oben steht nur die Prüfung.
+> Das Warum steht unten unter „Antwortformat".
 
 ## ZUERST: Repo-Stand prüfen — nicht verhandelbar
 
@@ -28,52 +28,32 @@ git fetch origin && git status -sb && git log --oneline -3 origin/master
 
 Bei `behind`: `git merge --ff-only origin/master`.
 
-An diesem Repo arbeiten mehrere parallele Sessions und **drei** GitHub-Accounts:
-`Iryogameshows`, `IryoRun` und `iryoof`. In der Commit-History tauchen sie unter den
-Namen `Iryo`, `iryoof` und `Iryogameshows` auf. Der lokale Stand ist deshalb regelmäßig
-veraltet, oft um mehrere Commits.
+Am Repo arbeiten parallele Sessions und drei GitHub-Accounts (`Iryogameshows`,
+`IryoRun`, `iryoof`; in der History als `Iryo`, `iryoof`, `Iryogameshows`). Der
+lokale Stand ist regelmäßig mehrere Commits alt.
 
-### Warum das hier so scharf formuliert ist
+Warum so scharf: Am 2026-09-16 kam eine Strukturauskunft aus einer
+Zusammenfassung — beschrieben wurde ein Monolith `index.html`, der längst in
+`styles.css` + `js/`-Module aufgeteilt war, eine ganze Show fehlte, und
+vorgeschlagen wurde, die vorhandene Aufteilung zu bauen. Auf veraltetem Stand
+editieren überschreibt fremde Arbeit.
 
-Am 2026-09-16 hat David gefragt, wie die Repo-Struktur aussieht. Die Antwort kam aus
-einer Konversations-Zusammenfassung statt aus dem Repo: beschrieben wurde ein
-8673-Zeilen-Monolith `index.html`. Tatsächlich war origin/master zu dem Zeitpunkt
-5 Commits weiter, die Datei längst in `styles.css` + 11 `js/`-Module aufgeteilt, und
-eine ganze Show (`pih.js`) existierte, von der in der Antwort kein Wort stand.
-Obendrauf kam der Vorschlag, eine Aufteilung zu bauen, die es längst gab.
+- **Niemals** aus Gedächtnis, Zusammenfassung oder früherem Tool-Ergebnis über
+  Dateien reden. Nach einer Kompaktierung gilt jede Datei-Information als veraltet.
+- `git ls-files` ohne vorheriges `git fetch` ist für Struktur-Aussagen wertlos.
+- Vor dem ersten Edit die Datei frisch lesen.
+- Bevor etwas als „fehlt" gilt: nachsehen, ob es existiert.
 
-**Das ist nicht bloß peinlich, das ist gefährlich.** Auf so eine Falschauskunft hin
-werden Entscheidungen getroffen. Im schlimmsten Fall wird auf einem veralteten Stand
-editiert und committet — und damit fremde Arbeit überschrieben.
+## Geräte-Setup — Skills prüfen und selbst nachladen
 
-### Verbindliche Regeln
-
-- **Niemals** aus dem Gedächtnis, aus einer Zusammenfassung oder aus einem früheren
-  Tool-Ergebnis über Dateien, Struktur oder Inhalte reden. Immer frisch nachsehen.
-- Nach einer Kontext-Kompaktierung gilt **jede** Datei-Information als veraltet.
-  Zusammenfassungen beschreiben die Vergangenheit, nicht den aktuellen Stand.
-- `git ls-files` allein zeigt nur den **lokalen** Stand. Ohne vorheriges `git fetch`
-  ist das Ergebnis wertlos für eine Struktur-Aussage.
-- Vor dem ersten Edit in einer Datei: die Datei lesen. Nicht auf eine frühere Version
-  im Kontext verlassen.
-- Bevor etwas als "fehlt" oder "sollte man bauen" bezeichnet wird: nachsehen, ob es
-  schon existiert.
-- Im Zweifel nachsehen statt schätzen. Ein zusätzlicher Befehl kostet Sekunden,
-  eine Falschauskunft kostet Davids Zeit und Vertrauen.
-
-## Geräte-Setup — Skills prüfen und selbst nachladen, DANN erst weiterarbeiten
-
-David arbeitet auf mehreren Geräten. Was im Repo liegt (`vendor/`), kommt per
-Git mit. Skills liegen dagegen lokal in `~/.claude/skills` und kommen **nicht**
-mit. Deshalb am Anfang jeder Session, nach dem Repo-Stand:
+Skills liegen lokal in `~/.claude/skills` und kommen nicht per Git mit. Am
+Anfang jeder Session, nach dem Repo-Stand:
 
 ```bash
 ls ~/.claude/skills/frontend-design ~/.claude/skills/caveman ~/.claude/skills/using-agent-skills
 ```
 
-Fehlt eines davon, selbstständig nachladen — ohne Rückfrage, David hat das am
-2026-10-09 ausdrücklich angewiesen — und **erst danach** mit der eigentlichen
-Aufgabe weitermachen (Node mit `npx` genügt, die `claude`-CLI ist nicht nötig):
+Fehlt eines: ohne Rückfrage nachladen (Anweisung 2026-10-09), erst dann weiter:
 
 ```bash
 npx --yes skills add anthropics/claude-code --skill frontend-design -g -a claude-code -y
@@ -81,187 +61,121 @@ npx --yes skills add JuliusBrussee/caveman -g -a claude-code -y
 npx --yes skills add addyosmani/agent-skills -g -a claude-code -y
 ```
 
-Die Skills-Liste einer laufenden Session ist beim Start festgelegt. Frisch
-installierte Skills erscheinen daher erst in der nächsten Session. Bis dahin
-die `SKILL.md` direkt aus `~/.claude/skills/<name>/` lesen und befolgen. Am
-Ende sagen, dass nachinstalliert wurde und eine neue Session nötig ist.
-
-Quellen: `anthropics/claude-code` (`plugins/frontend-design`),
-`JuliusBrussee/caveman`, `addyosmani/agent-skills`.
+Neue Skills erscheinen erst in der nächsten Session; bis dahin die `SKILL.md`
+direkt aus `~/.claude/skills/<name>/` lesen. Am Ende sagen, dass nachinstalliert
+wurde.
 
 ### Wann was benutzen
 
-- **frontend-design**: bei jeder Arbeit an Oberfläche, Intro, Logo, Layout oder
-  Animation. Zuerst Gestaltungsplan, dann Code. Ihre Regeln hebeln die
-  Gestaltungsregeln im `BAUPLAN.md` nicht aus; bei Widerspruch gilt das
-  `BAUPLAN.md`.
-- **agent-skills** (Osmani): nach Aufgabe wählen — `spec-driven-development`
-  und `planning-and-task-breakdown` vor größeren Vorhaben,
-  `debugging-and-error-recovery` bei Fehlern, `code-review-and-quality` und
+- **frontend-design**: jede Arbeit an Oberfläche, Intro, Logo, Layout,
+  Animation. Erst Gestaltungsplan, dann Code. Bei Widerspruch gilt `BAUPLAN.md`.
+- **agent-skills** (Osmani): `spec-driven-development` /
+  `planning-and-task-breakdown` vor größeren Vorhaben,
+  `debugging-and-error-recovery` bei Fehlern, `code-review-and-quality` /
   `security-and-hardening` vor größeren Pushes, `incremental-implementation`
   bei Umbauten.
-- **caveman**: David will es (Anweisung 2026-10-09). Der Autostart läuft als
-  Plugin über die Projekt-Settings (`extraKnownMarketplaces` + `enabledPlugins`
-  mit `caveman@caveman` in `.claude/settings.json`), das kommt per Git auf alle
-  Geräte. Beim ersten Öffnen des Projekts auf einem Gerät fragt Claude Code,
-  ob der Marketplace vertraut und das Plugin installiert werden soll.
-  Zusätzlich liegen die Skills global (`/caveman`, `/caveman-commit`,
-  `/caveman-review`). Ausschalten: `/caveman off`.
-  **Auch mit caveman gilt unverändert:** Antwortformat (Backslash vor jedem
-  Absatz), Deutsch, Belege mit Zahlen. HANDOFF-Einträge, Commit-Nachrichten
-  und `CLAUDE.md` bleiben im normalen, ausführlichen Stil. Caveman kürzt nur
-  den Chat-Text.
-- **ponytail** (seit 2026-10-21, `/ponytail`, Stufe `full`): kleinste Änderung,
-  die die Aufgabe ganz löst — kein Vorrat an Abstraktionen, Optionen und
-  Wrappern. Seit 2026-10-22 steht es wie caveman in `.claude/settings.json`
-  (`extraKnownMarketplaces` + `enabledPlugins` mit `ponytail@ponytail`) und
-  kommt per Git auf alle Geräte; beim ersten Öffnen fragt Claude Code, ob dem
-  Marketplace vertraut werden soll. **Eingetragen hat das David selbst** — die
-  Umgebung verweigert Claude, die eigene Plugin-Konfiguration zu erweitern
-  („Untrusted Code Integration“ / „Self-Modification“). Bei einem weiteren
-  Plugin also gleich David die zwei Stellen nennen. Wo ponytail sich mit
-  dieser Datei reibt, gilt die Regelung direkt darunter.
+- **caveman** (David will es, 2026-10-09) und **ponytail** (seit 2026-10-21,
+  Stufe `full`): beide als Plugin in `.claude/settings.json`
+  (`extraKnownMarketplaces` + `enabledPlugins`), kommen per Git mit; beim ersten
+  Öffnen fragt Claude Code nach Vertrauen. Ausschalten: `/caveman off`.
+  Claude darf die eigene Plugin-Konfiguration nicht erweitern (die Umgebung
+  verweigert es) — bei einem weiteren Plugin David die zwei Stellen nennen.
+- **Caveman kürzt nur den Chat.** Backslash, Deutsch, Belege mit Zahlen bleiben.
+  HANDOFF, Commit-Nachrichten und diese Datei im normalen, ausführlichen Stil.
 
 #### ponytail × CLAUDE.md — was gilt
 
-Ponytail ist für den **Code** zuständig, diese Datei für **Prüfen, Melden und
-Protokoll**. Vier Stellen, an denen sich das sonst beißt:
+Ponytail regelt den **Code**, diese Datei **Prüfen, Melden, Protokoll**:
 
-- **Kürzen gilt für den Code, nicht für die Prüfung.** `node check.js` vor
-  jedem Commit, `shots.js` nach jeder Änderung an Aussehen oder Layout,
-  `--types` vor Größerem. Das ist kein Beiwerk, das ist die einzige Zusicherung,
-  die diese Seite hat — sie läuft vor Publikum ohne Netz.
-- **Ponytails „ein kleiner Test dazu" erfüllen hier `check.js` und
-  `tools/shots`.** Kein neues Testwerkzeug einführen; neue Zustände kommen in
-  `tools/gemeinsam/aufbau.js` dazu, wie bisher.
-- **HANDOFF-Eintrag bleibt vollständig.** Er ist kein Code, sondern das, was
-  der nächsten Session die zweite Erarbeitung spart: Gemacht · Warum so ·
-  Geprüft · Offen · Fallstricke. Dasselbe gilt für Commit-Nachrichten und für
-  diese Datei.
-- **Kommentardichte: Haus-Stil schlägt „ein Satz".** Ponytails eigene Regel
-  „die Struktur und Konventionen des Codebestands behalten" gibt das her — in
-  `js/` steht das *Warum* samt verworfener Wege am Code, oft mehrzeilig. Das
-  bleibt so.
+- Kürzen gilt für den Code, nicht für die Prüfung: `node check.js` vor jedem
+  Commit, `shots.js` nach Änderungen an Aussehen/Layout, `--types` vor Größerem.
+  Die Seite läuft vor Publikum ohne Netz.
+- Ponytails „kleiner Test" sind hier `check.js` und `tools/shots`. Kein neues
+  Testwerkzeug; neue Zustände in `tools/gemeinsam/aufbau.js`.
+- HANDOFF-Eintrag bleibt vollständig (Gemacht · Warum · Geprüft · Offen ·
+  Fallstricke).
+- Kommentardichte: Haus-Stil. In `js/` steht das *Warum* samt verworfener Wege
+  am Code, oft mehrzeilig.
+- Ponytails Abschlusszeile geht in die Liste **Offen**.
 
-Ponytails Abschlusszeile („was übersprungen, welches Risiko") geht in die
-Liste **Offen** am Ende der Antwort, nicht als eigener Absatz daneben.
+### Projekt-Skills, Plugins, Hooks
 
-### Projekt-Skills, Plugins, Hooks (seit 2026-10-10)
+Liegen im Repo:
 
-Liegen im Repo und kommen per Git mit:
-
-- **`/design-pruefung`** (`.claude/skills/design-pruefung/`): `tools/shots`
-  laufen lassen, Kontaktbögen ansehen, Studio-Blau vergleichen. Nach jeder
-  Änderung an Aussehen oder Layout.
-- **`/neue-show`**: Bau einer neuen Show entlang BAUPLAN — sieben Fragen,
-  Skelett, elf Anmeldungen, Design, Abnahme.
-- **`/abschluss`**: check.js, Commit, HANDOFF, Push, Deploy-Nachweis,
-  Antwort mit „Offen“ und „Nächste Schritte“. `/handoff` bleibt der Teil
-  für den HANDOFF-Eintrag allein.
-- **Hook `design-reminder.js`** (PreToolUse, Bash): bei `git commit` mit
-  `styles.css`, `js/theme.js`, `js/core.js` oder einer Handy-/Mainscreen-Seite
-  und älteren Kontaktbögen eine Erinnerung an `/design-pruefung`. Sperrt
-  nicht.
-- **Plugins** (`enabledPlugins` in `.claude/settings.json`, Scope project):
-  `code-review@claude-plugins-official` (`/code-review` vor großen Pushes),
-  `design@knowledge-work-plugins` (Barrierefreiheit, Design-Kritik,
-  Designsystem; bringt außerdem Konnektoren für Slack, Figma, Notion usw.
-  mit, die hier nicht gebraucht werden und unangemeldet bleiben dürfen),
-  `firebase@claude-plugins-official` (MCP über `npx firebase-tools mcp`,
-  braucht einmal `npx firebase-tools login` durch David). **Firebase-MCP nur
-  lesend benutzen** — Schreiben in Live-Daten bleibt „erst fragen“.
-- Die Marketplaces `claude-plugins-official` und `knowledge-work-plugins`
-  stehen wie `caveman` unter `extraKnownMarketplaces` in
-  `.claude/settings.json` und kommen per Git mit. Beim ersten Öffnen auf
-  einem Gerät fragt Claude Code, ob ihnen vertraut werden soll.
-- GitHub-CLI `gh` für den Deploy-Nachweis (`gh run list`); ohne `gh` die
-  Action-API, siehe `/abschluss`.
+- **`/design-pruefung`**: `tools/shots` laufen lassen, Kontaktbögen ansehen,
+  Studio-Blau vergleichen. Nach jeder Änderung an Aussehen oder Layout.
+- **`/neue-show`**: neue Show entlang BAUPLAN — sieben Fragen, Skelett, elf
+  Anmeldungen, Design, Abnahme.
+- **`/abschluss`**: check.js, Commit, HANDOFF, Push, Deploy-Nachweis, Antwort.
+  `/handoff`: nur der HANDOFF-Eintrag.
+- **Hook `design-reminder.js`**: erinnert bei `git commit` mit `styles.css`,
+  `js/theme.js`, `js/core.js` oder Handy-/Mainscreen-Seite an
+  `/design-pruefung`. Sperrt nicht.
+- **Hook `commit-gate.js`**: lässt Commits über das Bash-Werkzeug nur nach
+  bestandenem `node check.js` durch.
+- **Plugins**: `code-review@claude-plugins-official` (`/code-review` vor großen
+  Pushes), `design@knowledge-work-plugins` (seine Slack/Figma/Notion-Konnektoren
+  bleiben unangemeldet), `firebase@claude-plugins-official` (braucht einmal
+  `npx firebase-tools login` durch David). **Firebase-MCP nur lesend** —
+  Schreiben in Live-Daten erst nach Frage.
+- `gh` für den Deploy-Nachweis (`gh run list`).
 
 ### Stupide Arbeit an Codex abgeben (seit 2026-10-22)
 
-Anweisung von David: Steht mechanische Arbeit an, die keine Abwägung braucht
-(viele gleichförmige Ersetzungen, Daten abtippen, Fragen-Sets befüllen,
-Umbenennen nach festem Muster), **nicht selbst machen**, sondern David einen
-fertigen Prompt für Codex schreiben. Er schickt ihn ab, um Tokens zu sparen.
+Mechanische Arbeit ohne Abwägung (gleichförmige Ersetzungen, Daten abtippen,
+Fragen-Sets befüllen, Umbenennen nach Muster, Verschieben) **nicht selbst
+machen**, sondern David einen Prompt für Codex schreiben — spart Tokens.
 
-Der Prompt steht in einem Code-Block, damit er sich am Stück kopieren lässt,
-und ist ohne diese Unterhaltung verständlich:
+Der Prompt steht in einem Code-Block und ist ohne diese Unterhaltung verständlich:
 
-- Dateien und Stellen mit Pfad, das Muster mit einem Vorher-/Nachher-Beispiel,
-- was **nicht** angefasst wird,
-- `node check.js` am Ende, Ergebnis melden,
-- nicht committen und nicht pushen — das prüft und erledigt danach Claude.
-  **Steht als erste Zeile im Prompt**, wörtlich: „Nicht committen, nicht
-  pushen — alles nur lokal." (David, 2026-10-22). Eine Zeile am Ende allein
-  überliest man.
+- **Erste Zeile wörtlich: „Nicht committen, nicht pushen — alles nur lokal."**
+  (David, 2026-10-22). Am Ende noch einmal.
+- Dateien und Stellen mit Pfad, Muster mit Vorher-/Nachher-Beispiel.
+- Was **nicht** angefasst wird.
+- `node check.js` am Ende, Ergebnis melden.
 
-Codex liest `AGENTS.md`, nicht diese Datei. `AGENTS.md` verweist deshalb nur
-hierher, statt eine Kopie zu sein: eine Kopie vom 2026-10-13 lag 9 Tage
-unversioniert herum und war um 132 Zeilen veraltet.
+Danach prüft Claude den Diff selbst, committet und schreibt den HANDOFF-Eintrag.
+Codex liest `AGENTS.md`; die verweist nur hierher (eine Kopie veraltete).
+Design, Spiellogik, Fehlersuche, Firebase bleiben hier.
 
-Was Abwägung braucht — Design, Spiellogik, Fehlersuche, alles am Code mit
-Firebase — bleibt hier.
+## Bibliotheken in `vendor/`
 
-## Bibliotheken in `vendor/` (GSAP, Lenis)
-
-Liegen als feste Kopien im Repo, nicht per CDN: eine Show läuft vor Publikum und
-muss ohne Netz auskommen. Eingebunden ist **noch nichts** — wer sie nutzt, trägt
-das `<script>`-Tag in `index.html` ein (klassisch, kein `type="module"`, Reihenfolge
-siehe Abschnitt „Scripts“).
+Feste Kopien statt CDN: die Show muss ohne Netz laufen. Eingebunden ist **noch
+nichts** — wer eine nutzt, trägt das `<script>`-Tag in `index.html` ein
+(klassisch, siehe „Scripts").
 
 | Datei | Version | Zweck |
 |---|---|---|
-| `vendor/gsap.min.js` | GSAP 3.15.0 | Animationen für den Host und im Intro-Labor (`tools/intros/`) – nicht für die Leinwand |
-| `vendor/ScrollTrigger.min.js` | GSAP 3.15.0 | scrollgesteuerte Animation |
-| `vendor/lenis.min.js`, `vendor/lenis.css` | Lenis 1.3.26 | weiches Scrollen (MIT) |
-| `vendor/reactbits.js`, `vendor/reactbits.css` | gebaut aus `tools/reactbits/` | React-Bits-Komponenten (siehe unten) |
+| `vendor/gsap.min.js`, `ScrollTrigger.min.js` | GSAP 3.15.0 | Animation für Host und Intro-Labor — nicht für die Leinwand |
+| `vendor/lenis.min.js`, `lenis.css` | Lenis 1.3.26 | weiches Scrollen (MIT) |
+| `vendor/reactbits.js`, `reactbits.css` | gebaut aus `tools/reactbits/` | React-Bits-Komponenten |
 
-- GSAP unterliegt der GreenSock-Standardlizenz (https://gsap.com/standard-license),
-  Lenis ist MIT. Beim Aktualisieren die Version in dieser Tabelle mitziehen.
-- **Was das Publikum sieht, wird mit CSS animiert, nicht mit GSAP.** Das
-  Zuschauerfenster (`mainscreen/`) führt keinen App-Code aus, es bekommt nur
-  den DOM gespiegelt. GSAP schriebe jeden Frame ein `style`-Attribut und
-  stünde auf der Leinwand still, sobald das Hauptfenster im Hintergrund ist.
-  Canvas und WebGL kommen gar nicht an (BAUPLAN 4.8). GSAP also nur für das,
-  was der Host sieht, und für die Prototypen in `tools/intros/`. Beim
-  Scrollen Lenis. Immer `prefers-reduced-motion` beachten.
-- `check.js` und `jsconfig.json` prüfen nur `js/`; `vendor/` bleibt dort
-  bewusst außen vor.
+- GSAP: GreenSock-Standardlizenz. Beim Aktualisieren Version hier mitziehen.
+- **Was das Publikum sieht, wird mit CSS animiert.** `mainscreen/` bekommt nur
+  den DOM gespiegelt; GSAP-`style`-Schreibungen stünden still, sobald das
+  Hauptfenster im Hintergrund ist, Canvas/WebGL kommen gar nicht an
+  (BAUPLAN 4.8). Ausnahme: Skripte, die der Beamer selbst ausführt
+  (`mainscreen/aufdecken.js`, `buehne.js`). Immer `prefers-reduced-motion`.
+- `check.js` und `jsconfig.json` prüfen `vendor/` bewusst nicht.
 
-### React Bits (https://reactbits.dev)
-
-React Bits sind React-Komponenten. Die Seite bleibt ohne Build-Step: die
-Komponenten werden **vorab** mit esbuild zu einer fertigen Datei gebündelt, die
-eingecheckt wird (`vendor/reactbits.js` + `vendor/reactbits.css`, enthält
-React 19). Die Seite lädt nur diese zwei Dateien.
+**React Bits** (https://reactbits.dev): vorab mit esbuild gebündelt und
+eingecheckt, enthält React 19 (~223 KB mit einer Komponente — nur laden, wo
+eine vorkommt). Lizenz MIT + Commons Clause.
 
 ```bash
-cd tools/reactbits
-npm install                      # einmal pro Gerät (node_modules ist ignoriert)
-node add.js ShinyText BlurText   # holt Komponente(n) aus dem Registry und baut neu
-node build.js                    # nur neu bauen
+cd tools/reactbits && npm install   # einmal pro Gerät
+node add.js ShinyText BlurText      # Komponente(n) holen (Variante JS-CSS) und bauen
+node build.js                       # nur neu bauen
 ```
 
-- Es wird immer die Variante **JS-CSS** geholt (kein Tailwind im Projekt).
-  `add.js` installiert npm-Abhängigkeiten der Komponente selbst (z. B. `gsap`,
-  `ogl`) und meldet `registryDependencies`, die man ebenfalls holen muss.
-- Nutzung in der Seite: `<link href="vendor/reactbits.css">`,
-  `<script src="vendor/reactbits.js">` (Einbindung in `index.html` wie bei
-  GSAP/Lenis erst bei Bedarf), dann
-  `ReactBits.mount('ShinyText', element, { text: '…' })` und
-  `ReactBits.unmount(element)`; `ReactBits.list()` nennt die enthaltenen Namen.
-- **`vendor/reactbits.js` ist gebaut, nicht von Hand zu ändern.** Nach jedem
-  `add.js`/`build.js` die neue Datei mit committen, sonst fehlt sie auf den
-  anderen Geräten.
-- Gewicht: etwa 223 KB mit einer Komponente, fast alles ist React selbst. Nur
-  laden, wo eine Komponente tatsächlich vorkommt.
-- Lizenz: MIT + Commons Clause (frei für private und kommerzielle Nutzung,
-  nicht zum Weiterverkauf der Komponenten selbst).
-- `tools/reactbits/demo.html` zeigt eine Komponente in einer Seite.
+`add.js` meldet `registryDependencies`, die man mitholen muss. Nutzung:
+`ReactBits.mount('ShinyText', el, { text: '…' })`, `ReactBits.unmount(el)`,
+`ReactBits.list()`; Beispiel in `tools/reactbits/demo.html`.
+**`vendor/reactbits.js` nie von Hand ändern**, nach jedem Bau mit committen.
 
 ## Struktur
 
-Statische Seite, **kein Build-Step**. GitHub Pages served die Dateien direkt.
+Statische Seite, **kein Build-Step**. GitHub Pages liefert die Dateien direkt.
 
 ```
 index.html      Markup: alle Screens + die <script>-Tags am Ende
@@ -309,46 +223,32 @@ Eine Änderung an einem Spiel geht in die jeweilige `js/`-Datei, nicht in `index
 
 ### Intro-Labor (`tools/intros/`)
 
-Eigenständige Seiten, um Intro-Ideen auszuprobieren, bevor eine davon in die
-Show kommt. Übersicht: `tools/intros/index.html` (live unter
-https://iryogameshows.github.io/tools/intros/, weil der Deploy das ganze Repo
-hochlädt).
+Eigenständige Seiten zum Ausprobieren, live unter
+https://iryogameshows.github.io/tools/intros/. Je Intro ein Ordner mit
+`index.html`; gemeinsam nur `lab.js`/`lab.css` (Texte `Lab.SHOW`, Bedienleiste,
+Ton-Baukasten `Lab.Ton` per WebAudio, Explosions-Baustein).
 
-- Jedes Intro ist ein Ordner mit einer `index.html`. Gemeinsam ist nur
-  `lab.js` / `lab.css`: Texte (`Lab.SHOW`), Startbildschirm, Bedienleiste mit
-  Spulen, Ton-Baukasten (`Lab.Ton`, alles WebAudio, keine Tondateien),
-  Explosions-Baustein.
-- Sie benutzen GSAP, Canvas und WebGL. Deshalb laufen sie **nicht** im
-  Zuschauerfenster (siehe oben, BAUPLAN 4.8). Wer eins in die Show holt, muss
-  es entweder auf reines CSS umschreiben oder das Zuschauerfenster das Intro
-  selbst abspielen lassen.
-- `check.js` und die Typprüfung sehen `tools/` nicht.
-- Zum Prüfen ohne Ton an eine Stelle springen: `lab.zeige(sekunden)` in der
-  Konsole. Ein ausgeblendetes Browser-Pane liefert keine Animationsbilder,
-  Echtzeit-Abspielen bleibt dort stehen.
-- Neue Intros folgen der Dramaturgie der zweiten Runde: Anlauf, dann das
-  Logo als Höhepunkt mit Schlag, dann die stehende Titelkarte.
+- Nutzen GSAP, Canvas, WebGL — laufen deshalb **nicht** im Zuschauerfenster.
+  Wer eins in die Show holt, schreibt es auf CSS um oder lässt den Beamer es
+  selbst abspielen.
+- `check.js` und Typprüfung sehen `tools/` nicht.
+- Ohne Ton an eine Stelle springen: `lab.zeige(sekunden)`. Ein ausgeblendetes
+  Browser-Pane liefert keine Animationsbilder.
+- Dramaturgie: Anlauf, Logo als Höhepunkt mit Schlag, stehende Titelkarte.
 
 ## BAUPLAN.md — bevor eine Show angefasst oder gebaut wird
 
-`BAUPLAN.md` im Wurzelverzeichnis ist das Skelett, an dem sich jede Gameshow
-entlanghangelt: die Reihenfolge in der Spieldatei, die elf Stellen, an denen
-eine neue Show angemeldet werden muss, und die Code- und Design-Regeln, die
-aus den bisherigen Shows entstanden sind.
-
-**Jede Regel dort hat einen Anlass**, meist einen Fehler, der in einer Show
-aufgefallen ist — der Commit-Hash steht dabei, der Vorgang in `HANDOFF.md`.
-
-Vor einer neuen Show: ganz lesen. Vor einer Änderung an einer bestehenden:
-mindestens die Abschnitte, die sie berührt. Wer eine Regel bricht, schreibt in
-die `HANDOFF.md`, warum — und wenn sich die Regel als falsch erweist, wird sie
-im `BAUPLAN.md` geändert, statt sie stillschweigend zu umgehen.
+Das Skelett jeder Show: Reihenfolge in der Spieldatei, die elf
+Anmeldestellen, Code- und Design-Regeln. Jede Regel hat einen Anlass (Hash
+dabei, Vorgang in der HANDOFF). Vor einer neuen Show ganz lesen, sonst
+mindestens die berührten Abschnitte. Wer eine Regel bricht, begründet es in der
+HANDOFF; ist sie falsch, wird sie im BAUPLAN geändert.
 
 ## Scripts
 
-Klassische `<script src>`-Tags, **keine** ES-Module. Alles liegt global, die
-Ladereihenfolge in `index.html` zählt: `core.js` muss vor den Spielen kommen.
-Kein `import`/`export` einbauen, ohne die Tags auf `type="module"` umzustellen.
+Klassische `<script src>`-Tags, **keine** ES-Module. Alles global, Reihenfolge
+in `index.html` zählt: `core.js` vor den Spielen. Kein `import`/`export` ohne
+Umstellung auf `type="module"`.
 
 ## Nach Änderungen — Pflicht
 
@@ -356,38 +256,21 @@ Kein `import`/`export` einbauen, ohne die Tags auf `type="module"` umzustellen.
 node check.js
 ```
 
-Muss ohne Fehler durchlaufen, bevor committet wird. Der Prüfer macht vier Dinge:
+Muss fehlerfrei durchlaufen, bevor committet wird. Prüft:
 
 1. **Syntax** aller `js/`-Dateien.
-2. **Inline-Handler**: ob jeder Funktionsname, der aus einem `onclick=`/`onchange=`
-   usw. heraus aufgerufen wird, im JavaScript auch existiert.
-3. **Element-IDs**: ob zu jeder festen ID im Code (`setText('round-pts', …)`,
-   `getElementById('gm-bar')`, …) auch ein Element existiert — im Markup oder
-   im HTML, das die `js/`-Dateien zur Laufzeit erzeugen.
-4. **styles.css**: ob die geschweiften Klammern aufgehen.
+2. **Inline-Handler**: jeder Funktionsname aus `onclick=`/`onchange=` usw.
+   existiert im JavaScript.
+3. **Element-IDs**: zu jeder festen ID im Code (`setText('round-pts', …)`)
+   gibt es ein Element, im Markup oder zur Laufzeit erzeugt.
+4. **styles.css**: Klammern gehen auf.
 
-Punkte 2 und 3 sind der Grund für das Skript. Die App hängt an rund 320 Inline-Handlern,
-etwa 230 davon werden zur Laufzeit als Zeichenkette zusammengebaut:
-
-```js
-onclick="resetPlayerPassword('${p.key}', ${escJsArg(p.name)})"
-```
-
-Für jedes Werkzeug ist das Text — kein Editor, kein Linter und auch TypeScript
-sieht dort einen Funktionsnamen. Wer eine Funktion umbenennt und eine dieser
-Zeichenketten übersieht, merkt das erst, wenn während der Show jemand auf den
-Knopf drückt. Deshalb **vor jedem Commit** laufen lassen, besonders nach
-Umbenennungen.
-
-Dasselbe gilt für die IDs: die stehen ebenfalls als Zeichenketten im Code, und
-seit die Helfer bei einem fehlenden Element stillhalten, merkt es sonst
-niemand mehr — die Stelle tut dann einfach nichts. Punkt 3 hat genau so einen
-Fall gefunden: `#jeopardy-corner` wurde noch zweimal gelesen und in
-`styles.css` gestaltet, war aber nirgends mehr erzeugt.
-
-Ein Handler, dessen Funktionsname selbst eingesetzt wird
-(`onclick="opener.${togglerName}(...)"`), ist statisch nicht auflösbar. Solche
-Stellen weist der Prüfer als „nicht prüfbar" aus, statt sie zu bemängeln.
+Warum 2 und 3: rund 320 Inline-Handler, etwa 230 davon als Zeichenkette gebaut
+(`onclick="resetPlayerPassword('${p.key}', ${escJsArg(p.name)})"`). Kein Editor
+und kein TypeScript sieht dort einen Namen — eine Umbenennung fällt sonst erst
+auf, wenn in der Show jemand drückt. Fehlende IDs fallen nie auf, weil die
+Helfer still bleiben. Handler mit eingesetztem Funktionsnamen
+(`opener.${togglerName}(...)`) meldet der Prüfer als „nicht prüfbar".
 
 ## Typprüfung
 
@@ -395,51 +278,24 @@ Stellen weist der Prüfer als „nicht prüfbar" aus, statt sie zu bemängeln.
 node check.js --types
 ```
 
-Läuft nicht bei jedem Commit mit (ein Durchlauf dauert rund eine halbe Minute
-und holt TypeScript beim ersten Mal übers Netz), aber **nach größeren
-Änderungen** und bevor etwas Größeres gepusht wird.
+Rund eine halbe Minute; nach größeren Änderungen und vor größeren Pushes.
+**Kein Build-Step**: TypeScript liest nur (`noEmit`), ausgeliefert wird
+unverändertes JavaScript.
 
-Wichtig: das ist **kein Build-Step**. TypeScript liest nur (`noEmit` in
-`jsconfig.json`), die `js/`-Dateien bleiben unverändertes JavaScript und
-werden weiter direkt ausgeliefert. Es gibt nichts zu kompilieren, `git push`
-bleibt der ganze Deploy.
+**Alle 16 Dateien in `js/` melden nichts** — eine neue Meldung gehört also zur
+gerade gemachten Änderung. `checkJs` steht auf `true`, die `// @ts-check`-Marker
+bleiben. **Nie Marker entfernen oder `checkJs` zurückdrehen**, um Meldungen
+loszuwerden; wer eine nicht auflösen kann, fragt.
 
-**Alle 16 Dateien in `js/` sind geprüft und melden nichts.** Das ist der
-Zustand, in dem die Prüfung etwas wert ist: eine neue Meldung gehört dann zur
-Änderung, die gerade gemacht wurde, und niemand muss sie aus einem Rauschen
-von Altlasten heraussuchen.
-
-`checkJs` steht deshalb auf `true` — eine neu angelegte Datei ist ab der
-ersten Zeile mit dabei, auch wenn jemand das `// @ts-check` oben vergisst. Die
-Marker bleiben trotzdem in den Dateien stehen; sie sagen beim Öffnen sofort,
-woran man ist. **Nie entfernen, um Meldungen loszuwerden** — und `checkJs`
-nicht zurückdrehen. Wer eine Meldung nicht auflösen kann, fragt nach, statt
-die Prüfung abzuschalten.
-
-Typen stehen als JSDoc-Kommentare am Code, nicht in eigenen Dateien:
-
-```js
-/** @param {string} id
- *  @returns {HTMLInputElement|null} */
-function fieldEl(id) { ... }
-```
-
-Die Jeopardy-Daten haben einen eigenen Bauplan: `JeopardyClue` und
-`JeopardyCategory` stehen als `@typedef` oben in `js/jeopardy.js`, direkt über
-`makeEmptyBoard`. Dort steht, was in einem Feld stecken kann — Bilder, Ton,
-Staffelbild, Bilderreihe, Schätzfrage. **Wer eine neue Sorte Frage einbaut,
-trägt sie dort ein**, sonst kennt sie weder der Editor-Code noch die Prüfung.
-
-Globale Objekte vom CDN (`firebase`, `QRCode`) sind in `types/globals.d.ts`
-deklariert.
+Typen als JSDoc am Code. Jeopardy-Daten: `@typedef JeopardyClue` /
+`JeopardyCategory` oben in `js/jeopardy.js` — **neue Fragensorte dort
+eintragen**. CDN-Globale (`firebase`, `QRCode`) in `types/globals.d.ts`.
 
 ### Felder und Anzeigen
 
-`document.getElementById(id).value` war in dieser App rund 160-mal zu finden,
-`.textContent`/`.innerHTML = …` 45-mal, `.style.display = …` 17-mal und
-`.classList.…` 29-mal. Alle werfen, wenn es das Element nicht gibt — ein
-Tippfehler in der ID oder ein Screen, der noch nicht aufgebaut ist, reicht.
-**Alle sind abgelöst; für neuen Code die Helfer aus `core.js` benutzen:**
+Für DOM-Zugriffe immer die Helfer aus `core.js` — sie geben bei fehlendem
+Element `false`/`null`/Rückfallwert zurück statt zu werfen. Ein fehlender Knopf
+darf keine Show abbrechen.
 
 ```js
 fieldVal('ddf-lives')             // Inhalt, oder '' wenn es das Feld nicht gibt
@@ -453,28 +309,15 @@ screenActive('result-screen')     // ist dieser Screen gerade sichtbar?
 setClass('gm-bar', 'visible', on) // Klasse setzen oder wegnehmen
 ```
 
-Alle neun geben `false` zurück (bzw. `null`/den Rückfallwert), wenn es das
-Element nicht gibt, statt zu werfen. Ein Knopf, den es gerade nicht gibt, darf
-keine ganze Show abbrechen.
-
-`setHtml` nimmt niemandem das Escapen ab: was aus Benutzereingaben kommt —
-Spielernamen, getippte Schätzungen — muss vorher durch `escapeHtml` bzw.
-`escAttr`. Der Name sagt bewusst „Html", damit an der Aufrufstelle sichtbar
-bleibt, dass dort Markup landet.
-
-`screenActive` und `setClass` sind auch deshalb wichtig, weil der Zugriff in
-`showScreen` selbst ungesichert war: eine einzige vertippte Screen-ID hätte
-die komplette Navigation lahmgelegt.
-
-`showEl` blendet mit `''` ein, nicht mit `'block'` oder `'flex'`: das nimmt den
-Inline-Wert weg und lässt wieder gelten, was in `styles.css` steht. Ein fest
-eingetragenes `display` würde dort jede spätere Änderung aushebeln — und zwar
-still, weil ein Inline-Style jede Regel schlägt.
+- `setHtml` escapt nicht: Spielernamen, getippte Schätzungen vorher durch
+  `escapeHtml` bzw. `escAttr`.
+- `showEl` blendet mit `''` ein, nicht `'block'`/`'flex'` — sonst schlägt der
+  Inline-Wert still jede Regel in `styles.css`.
 
 ## Screenshot-Prüfung
 
 ```bash
-cd tools/shots && npm install      # einmal pro Gerät (node_modules ist ignoriert)
+cd tools/shots && npm install      # einmal pro Gerät
 node shots.js                      # alle Shows x alle Richtungen, 1280x720
 node shots.js --basis              # vor einer Änderung: Studio-Blau merken
 node shots.js --vergleich          # danach: Studio-Blau unverändert?
@@ -484,254 +327,132 @@ node geraete.js                    # echte Geräteprofile, iPhones in WebKit (55
 npx playwright@1.64.1 install webkit   # einmal pro Gerät, für geraete.js
 ```
 
-`ablauf.js` verbindet Host-, Handy- und Gamepad-Tab über eine gemeinsame Ersatz-Datenbank
-(`fbshared.js`, keine Live-Daten) und spielt fuenf Shows hintereinander durch (Feud, TP, Jeopardy, DDF, PIH).
-Laufen lassen nach Änderungen an Lobby, Buzzer-Logik, Spielstart oder Teams.
+**`shots.js` ist Pflicht nach jeder Änderung an CSS, Design-Richtungen,
+GM-Panel oder Handy-Seiten**, vor dem Commit. Kontaktbögen nach
+`tools/shots/out/`; Befunde: JS-Fehler, Richtung nicht angekommen, Screen höher
+als das Fenster (Code 1). Kontaktbogen ansehen, nicht nur Befunde lesen. Voller
+Lauf gut 6 Minuten je Größe — im Hintergrund. GM-Panel, Turnier-Host-Seite,
+`menu`, `setup` ohne Höhenprüfung (`HOST_SEITEN`), sie kommen nicht auf den Beamer.
+Firebase ist ersetzt (`fbstub.js`), kein Lauf erreicht Live-Daten. Browser:
+Chrome/Edge, sonst Umgebungsvariable `CHROME`. Einzelheiten: BAUPLAN 5.
 
-`geraete.js` spielt eine Show mit Host (Chrome), iPhone 15/SE (WebKit = Safari-Engine),
-Pixel 7/Galaxy S9+ und Gamepad (iPhone) per Touch: Login, Buzzer-Wettlauf, lange
-Leitung, Netzabriss, Neuladen, Nachzügler, TP-Rad, DDF, PIH. Die Ersatz-Datenbank
-ist hier ein Server im Testprozess (`relay.js` + `fbrelay.js`), weil Chromium und
-WebKit keinen BroadcastChannel teilen. Je Gerät `relay.offline()` / `relay.delay()`.
-Nicht abgedeckt: echtes iOS, Bildschirmsperre, App-Wechsel.
+- `ablauf.js`: Host, Handy, Gamepad über gemeinsame Ersatz-DB (`fbshared.js`),
+  fünf Shows (Feud, TP, Jeopardy, DDF, PIH). Nach Änderungen an Lobby,
+  Buzzer-Logik, Spielstart, Teams.
+- `geraete.js`: Host (Chrome), iPhone 15/SE (WebKit), Pixel 7/Galaxy S9+,
+  Gamepad per Touch — Login, Buzzer-Wettlauf, Netzabriss, Neuladen, Nachzügler,
+  TP-Rad, DDF, PIH. Ersatz-DB als Server im Testprozess (`relay.js` +
+  `fbrelay.js`), je Gerät `relay.offline()` / `relay.delay()`. Nicht abgedeckt:
+  echtes iOS, Bildschirmsperre, App-Wechsel.
 
-**Automatisch:** `.github/workflows/pruefungen.yml` lässt bei jedem Push auf
-`master` `check.js`, `check.js --types`, `ablauf.js` und `geraete.js` laufen
-(Bilder als Artefakt „pruefbilder“, 7 Tage). Ein roter Lauf hält den Deploy
-nicht auf — nach dem Push mit `gh run list --workflow pruefungen.yml` nachsehen.
-
-**Stand 2026-10-13: noch nicht auf GitHub.** Dateien unter `.github/workflows/`
-lassen sich nur mit einem Token mit `workflow`-Recht pushen; weder das Git-Token
-(Windows-Anmeldeverwaltung) noch `gh` (Rechte `gist, read:org, repo, user`) hat es.
-David einmal: `gh auth refresh -h github.com -s workflow` (Browser-Anmeldung),
-danach kann der Push über `gh` laufen
-(`git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin master`).
-Bis dahin liegt die Datei nur lokal auf dem Rechner, auf dem sie angelegt wurde.
-
-**Pflicht nach jeder Änderung an CSS, Design-Richtungen, GM-Panel oder
-Handy-Seiten**, vor dem Commit. Legt je Show einen Kontaktbogen nach
-`tools/shots/out/` (ignoriert) und meldet Befunde: JS-Fehler, Richtung nicht
-angekommen, Screen höher als das Fenster. Endet mit Code 1, wenn es Befunde
-gibt. Den Kontaktbogen ansehen, nicht nur die Befunde lesen.
-
-Firebase ist dabei ersetzt (`fbstub.js` statt `firebase-database-compat.js`),
-kein Lauf erreicht die Live-Datenbank. Browser: vorhandener Chrome oder Edge,
-anderer Pfad per Umgebungsvariable `CHROME`. Eigener kleiner Server, der
-Dev-Server muss nicht laufen. Warum es das gibt und die Einzelheiten:
-BAUPLAN 5.
-
-**Stand 2026-10-10 (`dffe0bd`):** voller Lauf bei 1280×720, 1280×800 und
-1920×1080 ohne Befunde, ebenso `--reduced` — 17 Zustände: Feud (auch Frage
-über zwei Zeilen, Finale-Auflösung), Jeopardy, WWM (auch Publikumsjoker),
-WWDS, DDF, Preis ist heiß (Auflösung und Bietphase, mit Produktfoto), TP,
-Ergebnis, Turnierstand, Turnier-Host-Seite, GM-Panel, Handy-Buzzer und
--Login, je in allen Richtungen. GM-Panel und Turnier-Host-Seite ohne
-Höhenprüfung (`HOST_SEITEN`; seit 2026-10-14 auch die neuen Zustände `menu` und
-`setup` — Hauptmenü und Feud-Setup), sie kommen nicht auf den Beamer. Neue Befunde gehören also zur Änderung, die gerade gemacht
-wurde. Ein voller Lauf dauert gut 6 Minuten je Größe — im Hintergrund
-starten.
+**Automatische Prüfung bei Push gibt es nicht.** Ein Workflow
+`pruefungen.yml` ist gebaut, liegt aber nicht auf GitHub: Dateien unter
+`.github/workflows/` brauchen ein Token mit `workflow`-Recht, das weder Git-
+noch `gh`-Anmeldung hat. David einmal: `gh auth refresh -h github.com -s workflow`,
+dann
+`git -c credential.helper= -c "credential.helper=!gh auth git-credential" push origin master`.
+Bis dahin auch `pages.yml` nicht ändern — der Push würde abgelehnt.
 
 ## Durchgeh-Seite (`tools/durchgang/`)
 
-Öffnen über den lokalen Server: `http://localhost:3000/tools/durchgang/`, oder
-live unter https://iryogameshows.github.io/tools/durchgang/. Geht **nicht** per
-`file://` — der Rahmen braucht dieselbe Herkunft.
+`http://localhost:3000/tools/durchgang/` oder live unter
+https://iryogameshows.github.io/tools/durchgang/; nicht per `file://`.
+Oben das Zuschauerfenster, unten die echte Hostseite, anklickbar; je Schritt
+Urteil und Notiz (`←` `→` `1` `2`, Stand im `localStorage`), Knopf **Bericht**.
 
-**Was eine Seite lädt, muss in einem Ordner liegen, den der Deploy behält.**
-`pages.yml` entfernt `tools/shots` und `tools/reactbits` vor dem Upload. Am
-2026-10-17 lagen `aufbau.js` und `fbstub.js` noch in `tools/shots` — live war
-beides 404, die Seite meldete „nicht gefunden" und `index.html?stumm=1` bekam
-gar keine Datenbank. Deshalb `tools/gemeinsam/`. Nach einem Deploy prüfen:
-
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://iryogameshows.github.io/tools/gemeinsam/aufbau.js
-```
-
-Zwei Rahmen: oben das **Zuschauerfenster** (`mainscreen/`), unten die
-Hostseite. Die neuen Animationen — Jeopardy-Flug (`aufdecken.js`), Bauchbinde,
-große Momente (`buehne.js`) — spielt der Beamer selbst, auf der Hostseite sieht
-man sie **nicht**. Angeheftet wird er über `opener` + `boardReattach`, wie das
-GM-Panel.
-
-**Die Spiegelung hängt an `requestAnimationFrame`** (`scheduleBoardMirror`,
-`js/feud.js`). In einem ausgeblendeten Browser-Pane steht sie still, und der
-Beamer bleibt auf dem Wartebild — beim Messen mit Werkzeugen daran denken, das
-ist kein Fehler der Seite.
-
-Jede Richtung mit jedem Zustand der Reihe nach, die **echte Seite im Rahmen
-und anklickbar**. Das ist der Unterschied zu den Kontaktbögen: dort steht ein
-Standbild, hier lässt sich drücken, tippen und aufklappen. Urteil („Passt" /
-„Befund") und Notiz je Schritt, Tastatur `←` `→` `1` `2`, Stand bleibt im
-`localStorage`. Der Knopf **Bericht** baut daraus einen Text zum Kopieren —
-Befunde als eine Zeile je Fund, danach was noch offen ist.
-
-Die Zustände kommen aus **`tools/gemeinsam/aufbau.js`** — dieselbe Tabelle, die
-`shots.js` für die Screenshots benutzt. Wer dort einen Zustand ergänzt, muss
-ihn in `ZUSTAENDE` der Durchgeh-Seite nachtragen, sonst fehlt er im Durchgang.
-
-**`?stumm=1`:** Die Seite hängt den Parameter an. `index.html` lädt dann die
-Ersatz-Datenbank aus `tools/gemeinsam/fbstub.js` statt Firebase, und ein roter
-Balken sagt das (`js/core.js`). Ohne das würde ein Durchgang hunderte Male
-echte Buzzer-Zustände setzen und `joinLocked` schalten — die Aufbau-Funktionen
-starten die Shows wirklich. **In diesem Modus ist kein Handy verbunden**; für
-eine echte Show nie mit `?stumm=1` arbeiten.
-
-Nicht dabei: die drei Handy-Zustände (`buzzer`, `buzzer-pause`,
-`buzzer-login`). Die stecken fest in `shots.js` und bräuchten eine eigene
-Weiche in `buzzer/index.html`.
+- **Was eine Seite lädt, muss in einem Ordner liegen, den der Deploy behält.**
+  `pages.yml` entfernt `tools/shots` und `tools/reactbits`; am 2026-10-17 war
+  deshalb live alles 404. Nach Deploy prüfen:
+  `curl -s -o /dev/null -w "%{http_code}\n" https://iryogameshows.github.io/tools/gemeinsam/aufbau.js`
+- Beamer-Animationen (`aufdecken.js`, Bauchbinde, `buehne.js`) sieht man nur im
+  oberen Rahmen. Angeheftet über `opener` + `boardReattach`.
+- Die Spiegelung hängt an `requestAnimationFrame` (`scheduleBoardMirror`,
+  `js/feud.js`) — im ausgeblendeten Browser-Pane steht sie still. Kein Fehler.
+- Zustände aus `tools/gemeinsam/aufbau.js` (dieselbe Tabelle wie `shots.js`).
+  Neuer Zustand dort → auch in `ZUSTAENDE` der Durchgeh-Seite eintragen.
+- **`?stumm=1`** lädt `tools/gemeinsam/fbstub.js` statt Firebase, roter Balken
+  zeigt es. Ohne das setzte ein Durchgang echte Buzzer-Zustände. Kein Handy
+  verbunden — für eine echte Show nie mit `?stumm=1`.
+- Nicht dabei: Handy-Zustände (`buzzer`, `buzzer-pause`, `buzzer-login`).
 
 ## Deploy
 
-Push auf `master` → GitHub Action (`.github/workflows/pages.yml`) → live auf
-https://iryogameshows.github.io/
+Push auf `master` → `.github/workflows/pages.yml` → https://iryogameshows.github.io/
 
 ## Commit und Push — automatisch, ohne Rückfrage
 
-Anweisung von David (2026-10-08, bekräftigt 2026-10-13): **Commit und Push
-passieren ohne Rückfrage und ohne Davids Eingreifen**, sobald ein
-Arbeitsschritt fertig ist. Nicht fragen „soll ich committen" — einfach machen.
+Anweisung von David (2026-10-08, bekräftigt 2026-10-13): Commit und Push ohne
+Rückfrage, sobald ein Arbeitsschritt fertig ist — auch bei `CLAUDE.md` und
+`.claude/`.
 
-**Ablauf, jedes Mal:**
+1. `git fetch origin && git status -sb`; bei `behind` erst `git merge --ff-only origin/master`.
+2. `node check.js` muss durchlaufen.
+3. Code committen, HANDOFF-Eintrag mit Hash als eigenen Commit hinterher,
+   `git push origin master`.
+4. Deploy-Lauf prüfen (`gh run list`) und melden. Fehlgeschlagen = nicht fertig.
 
-1. `git fetch origin && git status -sb`; bei `behind` erst
-   `git merge --ff-only origin/master`.
-2. `node check.js` muss durchlaufen (die Commit-Sperre in
-   `.claude/hooks/commit-gate.js` erzwingt das für Commits über das Bash-Werkzeug).
-3. Code committen, HANDOFF-Eintrag mit Hash als eigenen kleinen Commit
-   hinterher (siehe unten), dann `git push origin master`.
-4. Nach dem Push den Lauf der Deploy-Action prüfen (`gh run list`) und den
-   Ausgang melden. Schlägt sie fehl, ist der Arbeitsschritt nicht fertig.
+Vorher kurz Bescheid geben nur bei: Verlauf umschreiben (`--force`,
+`reset --hard`, `rebase`, Branches löschen) und Löschen von Dateien/Daten.
+Gilt für `master` in diesem Repo, nicht für andere Projekte.
 
-Das gilt auch für Änderungen an `CLAUDE.md`, `.claude/` und den übrigen früher
-als „groß — erst fragen" geführten Fällen: David will kein Nachfragen mehr.
-Ausgenommen bleibt nur, was Verlauf umschreibt (`--force`, `reset --hard`,
-`rebase`, Branches löschen) und das Löschen von Dateien/Daten — da vorher kurz
-Bescheid geben.
+## Session-Tokens knapp — kontrolliert abbrechen
 
-Die Regel hebt **nicht** auf: den Repo-Stand vorher prüfen, `check.js`, den
-HANDOFF-Eintrag und das Melden von Ungeprüftem. Sie gilt für `master` in diesem
-Repo, nicht für andere Projekte unter `Documents\Coding`.
-
-## Nutzungskontingent läuft leer — kontrolliert abbrechen
-
-Anweisung von David (2026-10-13): Sobald erkennbar wird, dass sein
-Nutzungskontingent zur Neige geht, die laufende Arbeit **abbrechen** statt sie
-unfertig und unprotokolliert liegen zu lassen. Dann:
-
-1. Sofort einen Eintrag in `HANDOFF.md` schreiben — **wo genau** abgebrochen
-   wurde (Datei, Funktion, Zeile, letzter geprüfter Stand) und **was als
-   Nächstes** gemacht worden wäre (konkrete Schritte, nicht „weitermachen").
-   Das ist die Abschluss-Übersicht aus dem HANDOFF-Abschnitt, auch wenn nichts
-   committet wurde.
-2. In der Antwort an David ausdrücklich sagen, dass abgebrochen wurde und dass
-   es in der `HANDOFF.md` steht.
-
-**Was als „läuft leer" gilt:** der **Session-Token-Zähler**, den die Umgebung
-pro Zug als `<total_tokens>` einblendet (nicht Davids Abo-Kontingent — das sehe
-ich nicht). Fällt der Rest unter **~300 000 Token**, gilt die Session als knapp:
-den laufenden Schritt an der nächsten sauberen Stelle beenden, dann Ablauf oben
-(abbrechen → HANDOFF mit Stopppunkt + nächsten Schritten → David sagen). Puffer
-bewusst großzügig, damit der HANDOFF-Eintrag selbst noch reinpasst.
-
-**Vorbehalt:** Der Zähler steht erst im nächsten Zug fest; mitten in einem
-langen Tool-Lauf kann er zwischen zwei Blicken fallen. Sicher ist nur der Blick
-zu Beginn jedes Zuges — da wird geprüft.
+Anweisung 2026-10-13. Maßstab ist der `<total_tokens>`-Zähler je Zug (Davids
+Abo-Kontingent ist nicht sichtbar). Unter **~300 000**: den Schritt an der
+nächsten sauberen Stelle beenden, HANDOFF-Eintrag mit Stopppunkt (Datei,
+Funktion, Zeile, letzter geprüfter Stand) und konkreten nächsten Schritten,
+David sagen, dass abgebrochen wurde und es in der HANDOFF steht. Geprüft wird zu
+Beginn jedes Zuges.
 
 ## HANDOFF.md — bei JEDER Änderung, ohne Ausnahme
 
-`HANDOFF.md` im Wurzelverzeichnis wird **mitgeschrieben, nicht nachgepflegt**.
-Sie gilt als Teil der Änderung, genau wie der Code und die Prüfung.
+Wird **mitgeschrieben, nicht nachgepflegt**; gehört zur Änderung wie Code und
+Prüfung. Kein Eintrag = Arbeitsschritt nicht fertig.
 
-**Pflicht bei jedem Arbeitsschritt, der committet wird:**
-
-1. Neuen Eintrag **oben** anlegen, mit Datum und Commit-Hash in der
-   Überschrift. Der Hash ist erst nach dem Commit bekannt — also: Code
-   committen, Hash ablesen, Eintrag damit schreiben und als eigenen kleinen
-   Commit hinterherschicken. Lieber ein Commit mehr als ein Eintrag ohne Hash.
+1. Eintrag **oben**, Datum und Commit-Hash in der Überschrift. Hash erst nach
+   dem Commit bekannt → Code committen, dann Eintrag als eigener Commit.
 2. Je Eintrag: **Gemacht · Warum so (samt verworfener Wege) · Geprüft (mit
-   Zahlen) · Offen · Fallstricke**. Was nicht geprüft wurde, wird als
-   ungeprüft benannt.
-3. **In der Antwort an David ausdrücklich sagen, dass es in der HANDOFF.md
-   steht.** Er sieht die Datei sonst nicht und kann nicht nachhalten, ob es
-   passiert ist. Ein Satz reicht: "Steht in der HANDOFF.md."
+   Zahlen) · Offen · Fallstricke**. Ungeprüftes als ungeprüft benennen.
+3. **In der Antwort sagen: „Steht in der HANDOFF.md."** David sieht die Datei
+   sonst nicht.
 
-Kein Eintrag heißt: der Arbeitsschritt ist nicht fertig.
+Bei Themenwechsel oder Abbruch einer komplexen Aufgabe, auch ohne Commit:
+Übersicht in die HANDOFF — aktueller Stand, Stopppunkt, kreative Ansätze und
+Design-Ideen (auch verworfene), nächste Schritte.
 
-### Abschluss-Übersicht bei Themenwechsel oder Abbruch
-
-Wird eine komplexe Aufgabe abgebrochen oder wechselt das Thema, schreibe ich
-zum Abschluss eine kurze Übersicht — **immer auch in die `HANDOFF.md`**, nicht
-nur in den Chat. Sie enthält:
-
-- **Aktueller Stand:** woran zuletzt genau gearbeitet wurde,
-- **Stopppunkt:** an welchem Punkt wir stehengeblieben sind,
-- **Kreative Ansätze & Visionen:** welche konkreten Vorstellungen, Design-Ideen
-  oder Konzepte bereits im Raum standen (visuelle Stile, Layouts, kreative
-  Richtungen) — auch verworfene und nur angedachte,
-- **Nächste Schritte:** welche konkreten Maßnahmen als Nächstes sinnvoll sind,
-  um das Projekt nahtlos weiterzuführen.
-
-Das gilt auch, wenn nichts committet wurde: ein unfertiger Stand ist genau der
-Fall, in dem eine andere Session (oder ein anderer Rechner) die Information
-braucht.
-
-Warum: eine Sitzung endet, der Kontext wird komprimiert, eine andere Session
-übernimmt — dann ist nur noch die Git-History da. Die sagt, *was* geändert
-wurde, aber nicht, was gemessen, verworfen oder bewusst liegen gelassen wurde.
-Genau das geht sonst verloren und wird ein zweites Mal erarbeitet.
-
-Nach einer Kompaktierung ist `HANDOFF.md` die erste Datei, die gelesen wird —
-ihre Aussagen gelten trotzdem als veraltet, bis sie gegen das Repo geprüft
-sind.
+Warum: Nach Sessionende oder Kompaktierung bleibt nur die Git-History. Sie sagt
+*was*, nicht was gemessen, verworfen oder liegen gelassen wurde. Nach einer
+Kompaktierung ist die HANDOFF die erste Datei, die gelesen wird — ihre Aussagen
+gelten trotzdem als veraltet, bis sie gegen das Repo geprüft sind.
 
 ## Antwortformat
 
-**Jeder Absatz beginnt mit einem Backslash `\`.**
+**Jeder Absatz beginnt mit einem Backslash `\`** — jeder, bis zum Ende der
+Nachricht, auch Zwischenzeilen, Rückfragen, Fehlermeldungen, der letzte Satz.
 
-Nicht nur der erste. Jeder neue Absatz, durchgehend bis zum Ende der Nachricht.
-
-\ Das ist Davids Kontrollzeichen. Es ist bewusst etwas, das nur aus einer
-echten, frisch erzeugten Antwort stammen kann — fehlt es, ist die Antwort
-verdächtig. Stünde es nur einmal ganz oben, wäre bloß der Anfang abgesichert;
-über alle Absätze verteilt ist die ganze Nachricht abgedeckt.
-
-\ Als Absatz zählt alles, was nach einer Leerzeile neu anfängt. Also auch die
-kurze Zwischenzeile zwischen zwei Arbeitsschritten, die Rückfrage, die
-Fehlermeldung und der einzelne Satz am Schluss. Genau dort fällt der Backslash
-sonst weg, weil die Zeile wie ein Nebensatz wirkt und nicht wie eine Nachricht.
-
-\ Ausgenommen sind nur Bestandteile, die der Backslash zerschießen würde:
-Überschriften, Code-Blöcke, Tabellen sowie Aufzählungs- und Listenpunkte.
-Dort trägt ihn der Absatz davor oder danach.
+\ Davids Kontrollzeichen: Es kann nur aus einer echten, frisch erzeugten Antwort
+stammen. Über alle Absätze verteilt deckt es die ganze Nachricht ab, nicht nur
+den Anfang. Ausgenommen sind nur Überschriften, Code-Blöcke, Tabellen und
+einzelne Listenpunkte.
 
 ### Abschluss jeder Ergebnis-Nachricht
 
-Jede Nachricht, die einen Arbeitsschritt abschließt (Ergebnis, Befunde,
-Commits), endet mit zwei Listen, in dieser Reihenfolge:
+Endet mit zwei Listen, in dieser Reihenfolge (Anweisung 2026-10-10):
 
-- **Offen:** was noch nicht behoben oder nicht geprüft ist, ein Punkt je Zeile.
-- **Nächste Schritte:** was als Nächstes ansteht, nummeriert in der
-  vorgeschlagenen Reihenfolge.
+- **Offen:** was nicht behoben oder nicht geprüft ist, ein Punkt je Zeile.
+- **Nächste Schritte:** nummeriert in vorgeschlagener Reihenfolge.
 
-Ist eine Liste leer, steht dort „keine“, statt sie wegzulassen. Davids
-Anweisung vom 2026-10-10: Offenes stand bisher verstreut im Fließtext und
-musste herausgesucht werden.
+Leere Liste: „keine", nicht weglassen.
 
 ## Ton
 
-Deutsch. Keine Füllwörter, keine gespiegelten Umgangswörter ("yalla", "habibi", "bro").
-
-Keine Behauptung ohne Beleg. Was geprüft wurde, wird als geprüft benannt; was
-vermutet wird, als Vermutung. Wenn etwas nicht nachgesehen wurde, wird das gesagt,
-statt es plausibel klingen zu lassen.
+Deutsch. Keine Füllwörter, keine gespiegelten Umgangswörter. Keine Behauptung
+ohne Beleg: Geprüftes als geprüft, Vermutetes als Vermutung, nicht Nachgesehenes
+als nicht nachgesehen benennen.
 
 ## TODO / Offene Punkte
 
-Ganz unten, weil es keine Regeln sind, sondern Ungeklärtes.
-
-- **2026-10-17 — Durchgeh-Seite (`tools/durchgang/`): David unzufrieden.**
-  Wörtlich: „ich bin nicht zufrieden mit deiner Umsetzung aber das passt schon
-  so", auf Nachfrage „zu viel um zu erklären". Die Gründe sind **nicht
-  bekannt**. Die Seite bleibt, wie sie ist — **nicht aus eigenem Antrieb
-  umbauen**, nicht raten. Die Vermutungen der bauenden Session stehen am Ende
-  der `HANDOFF.md` unter „TODO / Offene Punkte".
+- **2026-10-17 — Durchgeh-Seite: David unzufrieden** („nicht zufrieden mit
+  deiner Umsetzung aber das passt schon so", Gründe „zu viel um zu erklären").
+  **Nicht aus eigenem Antrieb umbauen**, nicht raten. Vermutungen am Ende der
+  `HANDOFF.md` unter „TODO / Offene Punkte".
