@@ -12,6 +12,48 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `e321794` Jeopardy: verdeckte Bilder (Bilderreihe, Puzzle) decken wieder
+
+**David:** „in sämtlichen der Designs funktioniert bei Jeopardy das aufdecken nicht: die
+Felder sind sichtbar als wäre die oberste Ebene durchsichtig" — Screenshot zeigte eine
+**Bilderreihe** (Isaac-Items) mit den Nummern 1–5 halbdurchsichtig über den Bildern.
+
+**Gemacht (`styles.css`):**
+- `.jeopardy-series-cell:not(.shown) img { visibility: hidden; }` — verdecktes Reihenbild
+  wird gar nicht gezeichnet.
+- `.jeopardy-stage-tile` (Puzzle-Bild, gleiche Fehlerklasse): Grund `var(--bg)` deckend,
+  die Kachel-Optik (`--tile`, Innenkante) ins `::before` mit `z-index:-1` + `isolation`.
+
+**Ursache:** Beide Abdeckungen nahmen `--tile` als Hintergrund. Gemessen je Richtung:
+`--tile` ist in D, J, K, L, O, Q `transparent`, in M `rgba(255,255,255,.05)` — dort kommt
+das Feld-Aussehen aus Rand/Pseudo-Elementen. Studio-Blau und die übrigen sind deckend.
+
+**Warum so:** Ein zweiter Hintergrund-Layer unter `--tile` geht nicht — `--tile` ist oft
+eine Farbe, und eine Farbe darf nur der letzte Layer sein (sonst ist die ganze Deklaration
+ungültig). `background-color` hinterher hätte die Kachelfarbe in C, B usw. ersetzt. Bei der
+Reihe reicht Ausblenden des Bilds, die Abdeckung sieht dann aus wie vorher.
+
+**Verworfen (falsche Fährte, Zeit gekostet):** Zuerst das Frage-Overlay und den GSAP-Flug
+verdächtigt — Overlay ist in allen 19 Richtungen deckend (gemessen). Dabei gefunden, nicht
+behoben: `morphMirror` gleicht positionsweise ab; wird im Hauptfenster ein Element **vor**
+`#jeopardy-clue-ov` eingefügt, legt der Spiegel das Overlay im Beamer neu an, und
+`aufdecken.js` startet den Flug erneut (nachgewiesen, 1 Neustart je Einfügen). Kein
+sichtbarer Fehler beobachtet.
+
+**Geprüft:** Browser, Testmarkup im offenen Overlay (rotes Bild): D, K, L, M, Q, Studio-Blau
+— verdeckte Zellen/Kacheln decken, nur aufgedeckte zeigen Rot. `node check.js` „alles in
+Ordnung". `node shots.js --shows jeop,jeop-frage,jeop-antwort` keine Befunde (alle Richtungen).
+**Nicht geprüft:** echte Bilderreihe/Puzzle-Frage aus dem Editor, Beamer-Fenster live,
+J und O nicht im Bild (nur gemessen). Kein shots-Zustand enthält Reihe oder Puzzle.
+
+**Offen:** Puzzle-Kacheln haben `gap: 2px` — durch die Fugen sieht man das Bild in Linien,
+in allen Richtungen, schon vorher so. Zustand „Bilderreihe/Puzzle" in `aufbau.js` fehlt.
+
+**Fallstricke:** Testelemente in `document.body` der Hostseite werden in den Beamer
+gespiegelt (ein Test-iframe mit relativem `src` zeigte dort die 404-Seite).
+
+---
+
 ## 2026-10-22 — `9e4d134` localStorage nach Domainwechsel
 
 **Gemacht:** Hinweis in `CLAUDE.md` (Deploy): `localStorage` ist je Domain getrennt; was der
