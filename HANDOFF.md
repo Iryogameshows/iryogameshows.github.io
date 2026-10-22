@@ -12,6 +12,32 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `072e0e9` Stupide Arbeit als Codex-Prompt; `AGENTS.md` als Verweis
+
+**David:** „wenn du stupide arbeit hast die jeder dulli machen kann, dann schreib mir
+einen Prompt für diesen Teil der arbeit. dann schick ich das Codex um Tokens zu sparen."
+
+**Gemacht:** Neuer Abschnitt „Stupide Arbeit an Codex abgeben" in `CLAUDE.md` (unter
+„Projekt-Skills, Plugins, Hooks"): wann abgeben, Mindestinhalt des Prompts (Pfade,
+Vorher/Nachher-Beispiel, was nicht angefasst wird, `node check.js`, kein Commit/Push).
+`AGENTS.md` neu als kurzer Verweis auf `CLAUDE.md`.
+
+**Warum so:** Die vorher liegende `AGENTS.md` war unversioniert, laut `diff
+--strip-trailing-cr` identisch mit `CLAUDE.md` aus `7dd8727` (2026-10-13), von Codex
+angelegt (David), und gegen den heutigen Stand 132 Zeilen veraltet. Eine Kopie veraltet
+wieder; ein Verweis nicht. Verworfen: Datei löschen — David nutzt Codex, künftig mehr.
+Regel in `CLAUDE.md` statt in der lokalen Memory, weil David an mehreren Geräten arbeitet.
+
+**Geprüft:** `node check.js` — „alles in Ordnung". Ob Codex den Verweis befolgt und
+`CLAUDE.md` tatsächlich liest: **ungeprüft**.
+
+**Offen:** Die alte Kopie ist überschrieben, war aber identisch mit `git show
+7dd8727:CLAUDE.md`, also nichts verloren.
+
+**Fallstricke:** keine.
+
+---
+
 ## 2026-10-22 — `cd20075` ponytail auf diesem Gerät nachinstalliert
 
 **David:** „und ponytail?" — nach dem Nachziehen von 38 Commits auf `476f5cc`.
