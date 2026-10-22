@@ -12,6 +12,26 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-22 — `85f5b67` Codex-Prompt: „nicht committen" als erste Zeile
+
+**David:** „schreib bitte auch immer rein: nicht pushen oder comitten, erst nur lokal."
+
+**Gemacht:** Regel in `CLAUDE.md` („Stupide Arbeit an Codex abgeben") ergänzt: Jeder
+Codex-Prompt beginnt wörtlich mit „Nicht committen, nicht pushen — alles nur lokal."
+
+**Warum so:** Der erste Prompt (Struktur-Abschnitt der `CLAUDE.md` angleichen: 16 statt
+14 `js/`-Dateien, es fehlen `js/keller-ton.js`, `js/resume.js`, `tools/keller/`,
+`tools/sprites/`) hatte das nur ganz unten. Oben fällt es nicht unter den Tisch.
+
+**Geprüft:** `node check.js` — „alles in Ordnung".
+
+**Offen:** Codex-Auftrag „Struktur angleichen" an David übergeben, Ergebnis steht aus.
+`CLAUDE.md` bleibt bis dahin bei „14 Dateien".
+
+**Fallstricke:** keine.
+
+---
+
 ## 2026-10-22 — `072e0e9` Stupide Arbeit als Codex-Prompt; `AGENTS.md` als Verweis
 
 **David:** „wenn du stupide arbeit hast die jeder dulli machen kann, dann schreib mir
