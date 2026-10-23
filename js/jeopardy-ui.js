@@ -252,7 +252,8 @@ function ensureHostGate(){
     <div class="hg-row">
       <input id="hg-input" type="password" placeholder="Passwort" autocomplete="off">
       <button class="btn btn-primary" id="hg-go">OK</button>
-    </div>`;
+    </div>
+    <a class="hg-sub" href="datenschutz/" style="color:inherit">Datenschutz</a>`;
   document.body.appendChild(gate);
   const input = /** @type {HTMLInputElement} */ (gate.querySelector('#hg-input'));
   const tryUnlock = () => {

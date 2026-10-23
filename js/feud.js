@@ -584,7 +584,7 @@ function updateGamemasterFeudTie() {
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}</style></head><body>
   ${gmHeaderHtml('Gamemaster', 'Family Feud · Gleichstand um Platz 2')}
   <div class="gm-body"><div class="gm-main">
@@ -986,7 +986,7 @@ function injectBoardStyles() {
   setzen('board-fonts', () => {
     const l = doc.createElement('link');
     l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&family=Bungee&family=Tilt+Neon&family=Press+Start+2P&family=Unbounded:wght@500;900&family=Mr+Dafoe&display=swap';
+    l.href = FONT_BASE + 'bebas-neue_inter_luckiest-guy_bungee_tilt-neon_press-start-2-335996.css';
     return l;
   });
   /* Bewusst die URL aus dem eigenen Dokument statt eines festen Pfades: seit
@@ -1170,7 +1170,7 @@ function updateGamemasterOverlay() {
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>
   :root{color-scheme:dark;}
   *{margin:0;padding:0;box-sizing:border-box}
@@ -1203,7 +1203,7 @@ function updateGamemasterMenu() {
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}
   /* Schmale mittige Spalte statt des gm-body-Rasters: das ist fuer ein volles
      Spielpanel gebaut, hier blieben zwei Drittel der Flaeche leer (gesehen auf
@@ -1249,7 +1249,7 @@ function updateGamemasterTournament() {
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}</style></head><body>
   ${gmHeaderHtml('Gamemaster', tournament ? `Turnier · ${escapeHtml(tournament.name)}` : 'Turnier')}
   <div class="gm-body">
@@ -1385,7 +1385,7 @@ function updateGamemaster() {
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}
   .ff-teams{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
   .ff-team,.ff-pot{display:flex;flex-direction:column;gap:6px;padding:10px 14px;}
@@ -1502,7 +1502,7 @@ function updateGamemasterFinale() {
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}</style></head><body>
   ${gmHeaderHtml('Gamemaster', `Finale · Frage ${finaleState.currentQ+1} / ${finaleState.questions.length}`)}
   <div class="gm-body">
@@ -1541,7 +1541,7 @@ function updateGamemasterFinaleReveal() {
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}
   .team-result{padding:10px 14px;border-radius:8px;font-weight:600;font-size:.9rem;display:flex;justify-content:space-between;align-items:center;}
 </style></head><body>
@@ -1828,7 +1828,7 @@ function updateGamemasterJeopardy() {
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-ea6c01.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}
   .dd-card{background:linear-gradient(180deg,rgba(255,210,63,.14),rgba(245,158,11,.06));border:1px solid rgba(255,210,63,.4);border-radius:12px;padding:20px;text-align:center;}
   .dd-title{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;color:#FFD23F;letter-spacing:3px;}

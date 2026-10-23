@@ -337,7 +337,7 @@ function updateGamemasterWwm(){
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}
   .money{display:flex;justify-content:space-between;font-size:.85rem;}
   .money strong{color:#FFD23F;}

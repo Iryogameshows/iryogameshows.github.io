@@ -667,7 +667,7 @@ function updateGamemasterWwds(){
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}
   .money{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px;}
   .money strong{color:#FFD23F;}
@@ -719,7 +719,7 @@ function updateGamemasterResult(){
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}
   .win{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:#FFD23F;letter-spacing:2px;text-align:center;margin-bottom:10px;}
   .sc{font-size:.95rem;line-height:2;text-align:center;color:rgba(255,255,255,.75);}
@@ -777,7 +777,7 @@ function updateGamemasterTournamentBoard(){
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}
   .money{display:flex;justify-content:space-between;gap:10px;font-size:.9rem;margin-bottom:6px;}
   .money strong{color:#FFD23F;}

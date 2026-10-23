@@ -20,6 +20,12 @@
    Was core.js braucht (setHtml, escapeHtml, showScreen), laeuft erst auf
    Klick. */
 
+/* Schriften liegen seit 2026-10-23 in vendor/fonts/ statt bei Google
+   (Datenschutz, und die Show muss ohne Netz laufen; tools/fonts/hol.js).
+   Absolute Adresse aus dem Ort dieser Datei: sie stimmt in index.html,
+   buzzer/, gamepad/, im Beamer-, GM- und Popup-Fenster und bei file://. */
+const FONT_BASE = new URL('../vendor/fonts/', (document.currentScript instanceof HTMLScriptElement && document.currentScript.src) || location.href).href;
+
 /** @typedef {{key:string, name:string, hell:boolean, fonts:string, vars:Object<string,string>, gm?:string}} DesignTheme */
 
 /** @type {DesignTheme[]} */
@@ -30,7 +36,7 @@ const DESIGN_THEMES = [
      styles.css (font-stretch), Hanken Grotesk hat keine Breitenachse und
      bleibt davon unberuehrt. Material im Block "A · Studio" in styles.css. */
   { key: "A", name: "Studio", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@100..150,600..900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap",
+    fonts: FONT_BASE + 'anybody_hanken-grotesk-09f029.css',
     vars: {
       "--font-display": "'Anybody', sans-serif",
       "--font-body": "'Hanken Grotesk', sans-serif",
@@ -59,7 +65,7 @@ const DESIGN_THEMES = [
      Die Fassung "Automat 1987" (Magenta-Verlaeufe, 0f4e9e9) ist ersetzt.
      Material im Block "B · Arcade" in styles.css. */
   { key: "B", name: "Arcade", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&display=swap",
+    fonts: FONT_BASE + 'press-start-2p_space-grotesk-40cd21.css',
     vars: {
       "--font-display": "'Press Start 2P', monospace",
       "--font-body": "'Space Grotesk', sans-serif",
@@ -88,7 +94,7 @@ const DESIGN_THEMES = [
       + ".gm-btn.gold,.gm-btn.gm-gold{background:#FFE14D;color:#0B0A12;box-shadow:3px 3px 0 #8A7400;}"
       + ".panel,.answer,.score-card{border-width:2px;}.score-card.active{border-color:#FFE14D;}" },
   { key: "C", name: "Pop", hell: true,
-    fonts: "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@500;600;700&display=swap",
+    fonts: FONT_BASE + 'archivo-black_archivo-94b373.css',
     vars: {
       "--font-display": "'Archivo Black', sans-serif",
       "--font-body": "'Archivo', sans-serif",
@@ -119,7 +125,7 @@ const DESIGN_THEMES = [
      Korn ist schwach deckend statt per Blend-Mode gemischt - so sieht es im
      GM-Fenster und auf dem Handy genauso aus (die haben eigene <body>-Stile). */
   { key: "D", name: "Late Night", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Instrument+Sans:wght@400;500;600&display=swap",
+    fonts: FONT_BASE + 'big-shoulders-display_instrument-sans-2be926.css',
     vars: {
       "--font-display": "'Big Shoulders Display', sans-serif",
       "--font-body": "'Instrument Sans', sans-serif",
@@ -150,7 +156,7 @@ const DESIGN_THEMES = [
   /* 70er, Rework 2026-10-14: flache Flaechen statt Leuchten - die
      Sonnenstrahlen zeichnet styles.css (body::before), --bg-img bleibt leer. */
   { key: "E", name: "70er", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Shrikhand&family=DM+Sans:wght@500;700&display=swap",
+    fonts: FONT_BASE + 'shrikhand_dm-sans-4f0c71.css',
     vars: {
       "--font-display": "'Shrikhand', serif",
       "--font-body": "'DM Sans', sans-serif",
@@ -178,7 +184,7 @@ const DESIGN_THEMES = [
       + ".gm-title,.score-val,.sr-val{font-family:'Shrikhand',serif;font-weight:400;}"
       + ".gm-btn.gold,.gm-btn.gm-gold{background:#F2B33D;color:#2B1810;box-shadow:0 3px 0 #8C3A1A;}" },
   { key: "F", name: "Comic", hell: true,
-    fonts: "https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;800&display=swap",
+    fonts: FONT_BASE + 'bangers_nunito-87465a.css',
     vars: {
       "--font-display": "'Bangers', cursive",
       "--font-body": "'Nunito', sans-serif",
@@ -204,7 +210,7 @@ const DESIGN_THEMES = [
       "--accent-text-rgb": "180,35,24"
     } },
   { key: "H", name: "Bauhaus", hell: true,
-    fonts: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap",
+    fonts: FONT_BASE + 'bricolage-grotesque-ef63b2.css',
     vars: {
       "--font-display": "'Bricolage Grotesque', sans-serif",
       "--font-body": "'Bricolage Grotesque', sans-serif",
@@ -232,7 +238,7 @@ const DESIGN_THEMES = [
   /* Salon, Rework 2026-10-14: Filz bekommt ein feines Korn (wie Tuch),
      das Licht ueber dem Tisch bleibt wie im Entwurf. */
   { key: "I", name: "Salon", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Jost:wght@400;500&display=swap",
+    fonts: FONT_BASE + 'cormorant-garamond_jost-844d88.css',
     vars: {
       "--font-display": "'Cormorant Garamond', serif",
       "--font-body": "'Jost', sans-serif",
@@ -260,7 +266,7 @@ const DESIGN_THEMES = [
       + ".gm-title,.score-val,.sr-val{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:700;}"
       + ".gm-btn.gold,.gm-btn.gm-gold{background:#C9A54C;color:#1B1A17;box-shadow:inset 0 0 0 2px #C9A54C,inset 0 0 0 3px #F6F0E1;}" },
   { key: "J", name: "Kreide", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Patrick+Hand&display=swap",
+    fonts: FONT_BASE + 'permanent-marker_patrick-hand-ace58c.css',
     vars: {
       "--font-display": "'Permanent Marker', cursive",
       "--font-body": "'Patrick Hand', cursive",
@@ -284,7 +290,7 @@ const DESIGN_THEMES = [
       "--ink": "#26332E"
     } },
   { key: "K", name: "Neon-Bar", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Yellowtail&family=Sora:wght@400;600;700&display=swap",
+    fonts: FONT_BASE + 'yellowtail_sora-56c45b.css',
     vars: {
       "--font-display": "'Sora', sans-serif",
       "--font-body": "'Sora', sans-serif",
@@ -315,7 +321,7 @@ const DESIGN_THEMES = [
      mit Vignette - der Entwurf ist durchgehend Papier. Korn als dunkle
      Papierfasern; den Falz zeichnet styles.css (body::before). */
   { key: "L", name: "New York", hell: true,
-    fonts: "https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap",
+    fonts: FONT_BASE + 'unifrakturmaguntia_old-standard-tt_playfair-display-342c38.css',
     vars: {
       "--font-display": "'Playfair Display', serif",
       "--font-body": "'Old Standard TT', serif",
@@ -346,7 +352,7 @@ const DESIGN_THEMES = [
       + ".gm-title,.score-val,.sr-val{font-family:'Playfair Display',serif;font-weight:900;}"
       + ".gm-btn.gold,.gm-btn.gm-gold{background:#1A1712;color:#EFE8D6;box-shadow:none;}" },
   { key: "M", name: "Aurora", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap",
+    fonts: FONT_BASE + 'plus-jakarta-sans-bc02d7.css',
     vars: {
       "--font-display": "'Plus Jakarta Sans', sans-serif",
       "--font-body": "'Plus Jakarta Sans', sans-serif",
@@ -370,7 +376,7 @@ const DESIGN_THEMES = [
       "--ink": "#070A1A"
     } },
   { key: "N", name: "Papier", hell: true,
-    fonts: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Karla:wght@500;700&display=swap",
+    fonts: FONT_BASE + 'fraunces_karla-99747d.css',
     vars: {
       "--font-display": "'Fraunces', serif",
       "--font-body": "'Karla', sans-serif",
@@ -396,7 +402,7 @@ const DESIGN_THEMES = [
       "--accent-text-rgb": "168,67,44"
     } },
   { key: "O", name: "Terminal", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;500;600&display=swap",
+    fonts: FONT_BASE + 'vt323_ibm-plex-mono-ca729e.css',
     vars: {
       "--font-display": "'VT323', monospace",
       "--font-body": "'IBM Plex Mono', monospace",
@@ -425,7 +431,7 @@ const DESIGN_THEMES = [
       + ".gm-header{background:#7CFFA0;}.gm-header .gm-title,.gm-header .gm-title small{color:#031008;}"
       + ".gm-btn.gold,.gm-btn.gm-gold{background:#7CFFA0;color:#031008;box-shadow:none;}" },
   { key: "P", name: "Memphis", hell: true,
-    fonts: "https://fonts.googleapis.com/css2?family=Lilita+One&family=Rubik:wght@500;700&display=swap",
+    fonts: FONT_BASE + 'lilita-one_rubik-32e94c.css',
     vars: {
       "--font-display": "'Lilita One', sans-serif",
       "--font-body": "'Rubik', sans-serif",
@@ -451,7 +457,7 @@ const DESIGN_THEMES = [
       "--accent-text-rgb": "106,76,240"
     } },
   { key: "Q", name: "Riso", hell: true,
-    fonts: "https://fonts.googleapis.com/css2?family=Bowlby+One&family=Familjen+Grotesk:wght@500;700&display=swap",
+    fonts: FONT_BASE + 'bowlby-one_familjen-grotesk-3ed7f5.css',
     vars: {
       "--font-display": "'Bowlby One', sans-serif",
       "--font-body": "'Familjen Grotesk', sans-serif",
@@ -477,7 +483,7 @@ const DESIGN_THEMES = [
       "--accent-text-rgb": "176,31,117"
     } },
   { key: "R", name: "Jazzplatte", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Antonio:wght@400;600;700&family=Libre+Franklin:wght@400;600;800&display=swap",
+    fonts: FONT_BASE + 'antonio_libre-franklin-5da7ea.css',
     vars: {
       "--font-display": "'Antonio', sans-serif",
       "--font-body": "'Libre Franklin', sans-serif",
@@ -501,7 +507,7 @@ const DESIGN_THEMES = [
       "--ink": "#111111"
     } },
   { key: "S", name: "Art déco", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Poiret+One&family=Bodoni+Moda:ital,opsz,wght@0,6..96,600;0,6..96,800;1,6..96,600&family=Josefin+Sans:wght@400;600&display=swap",
+    fonts: FONT_BASE + 'poiret-one_bodoni-moda_josefin-sans-206320.css',
     vars: {
       "--font-display": "'Bodoni Moda', serif",
       "--font-body": "'Josefin Sans', sans-serif",
@@ -544,7 +550,7 @@ const DESIGN_THEMES = [
      #080000. Genau daran scheiterten die ersten beiden Versuche - sie
      arbeiteten mit erinnerten Farben, und die lagen daneben. */
   { key: "T", name: "Keller", hell: false,
-    fonts: "https://fonts.googleapis.com/css2?family=Bowlby+One&family=Zilla+Slab:wght@500;700&display=swap",
+    fonts: FONT_BASE + 'bowlby-one_zilla-slab-6e7f4c.css',
     vars: {
       /* Dick und gerundet, nicht duenn und schraffiert: das Logo des Spiels
          ist fett und schwarz umrandet. Die Kontur macht styles.css

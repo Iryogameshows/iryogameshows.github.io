@@ -801,7 +801,7 @@ function updateGamemasterDdf(){
   const gmHtml = `<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="${FONT_BASE}inter_bebas-neue-015060.css" rel="stylesheet">
 <style>${GM_SHARED_CSS}
   .money{display:flex;justify-content:space-between;gap:10px;font-size:.85rem;margin-bottom:3px;}
   .tm{font-size:.72rem;color:rgba(255,255,255,.5);}

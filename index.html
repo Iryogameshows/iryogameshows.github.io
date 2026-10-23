@@ -18,7 +18,7 @@
 <meta property="og:image" content="share.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;700;900&family=Luckiest+Guy&family=Bungee&family=Tilt+Neon&family=Press+Start+2P&family=Unbounded:wght@500;900&family=Mr+Dafoe&display=swap" rel="stylesheet">
+<link href="vendor/fonts/bebas-neue_inter_luckiest-guy_bungee_tilt-neon_press-start-2-335996.css" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <!-- Datenbank: normal Firebase. Mit ?stumm=1 stattdessen die Ersatz-Datenbank
      aus tools/gemeinsam/fbstub.js - nur fuer die Durchgeh-Seite (tools/durchgang/).
@@ -33,7 +33,7 @@ document.write(new URLSearchParams(location.search).has('stumm')
   ? '<scr' + 'ipt src="tools/gemeinsam/fbstub.js"><\/scr' + 'ipt>'
   : '<scr' + 'ipt src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"><\/scr' + 'ipt>');
 </script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="vendor/qrcode.min.js"></script>
 <link rel="stylesheet" href="styles.css">
 <script src="js/theme.js"></script>
 </head>
@@ -158,6 +158,7 @@ document.write(new URLSearchParams(location.search).has('stumm')
     <button class="menu-pill" id="sfx-toggle" onclick="this.textContent = SFX.toggle() ? '🔊 Sound an' : '🔇 Sound aus'"></button>
     <button class="menu-pill" id="sfx-preview" onclick="sfxPreview(this)" title="Spielt alle Geräusche nacheinander ab">🎧 Töne probehören</button>
     <button class="menu-pill" onclick="openDesigns()" title="Design der ganzen Seite und des Mainscreens einstellen">🎨 Design</button>
+    <a class="menu-pill" href="datenschutz/" target="_blank" rel="noopener" style="text-decoration:none">🔒 Datenschutz</a>
   </div>
 </div>
 

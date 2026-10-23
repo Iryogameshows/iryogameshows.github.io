@@ -149,6 +149,8 @@ nichts** — wer eine nutzt, trägt das `<script>`-Tag in `index.html` ein
 | `vendor/gsap.min.js`, `ScrollTrigger.min.js` | GSAP 3.15.0 | Animation für Host und Intro-Labor — nicht für die Leinwand |
 | `vendor/lenis.min.js`, `lenis.css` | Lenis 1.3.26 | weiches Scrollen (MIT) |
 | `vendor/reactbits.js`, `reactbits.css` | gebaut aus `tools/reactbits/` | React-Bits-Komponenten |
+| `vendor/fonts/` | geholt mit `tools/fonts/hol.js` | alle Google-Schriften, nur latin/latin-ext (OFL/Apache) |
+| `vendor/qrcode.min.js` | qrcodejs 1.0.0 (MIT) | QR-Codes für die Handy-Anmeldung |
 
 - GSAP: GreenSock-Standardlizenz. Beim Aktualisieren Version hier mitziehen.
 - **Was das Publikum sieht, wird mit CSS animiert.** `mainscreen/` bekommt nur
@@ -157,6 +159,12 @@ nichts** — wer eine nutzt, trägt das `<script>`-Tag in `index.html` ein
   (BAUPLAN 4.8). Ausnahme: Skripte, die der Beamer selbst ausführt
   (`mainscreen/aufdecken.js`, `buehne.js`). Immer `prefers-reduced-motion`.
 - `check.js` und `jsconfig.json` prüfen `vendor/` bewusst nicht.
+- **Nichts von fremden Servern laden** (seit 2026-10-23): keine Google-Fonts-,
+  CDN- oder Bild-Adressen im Code. Neue Schrift: Google-Adresse eintragen und
+  `node tools/fonts/hol.js` laufen lassen — es holt die Dateien und ersetzt die
+  Adresse (`FONT_BASE` aus `js/theme.js` in `js/`, relativer Pfad in HTML).
+  Einzige Ausnahme ist Firebase (`www.gstatic.com`, Datenbank). Wer neue Daten
+  speichert oder einen Dienst einbindet, ergänzt `datenschutz/index.html`.
 
 **React Bits** (https://reactbits.dev): vorab mit esbuild gebündelt und
 eingecheckt, enthält React 19 (~223 KB mit einer Komponente — nur laden, wo
@@ -201,6 +209,7 @@ js/
   roster.js     Teilnehmer-Auswahl (DDF, Preis ist heiß)
   resume.js     Spielstand sichern und fortsetzen
 buzzer/index.html   Handy-Buzzer
+datenschutz/index.html  Datenschutzhinweis (verlinkt: Host-Sperre, Hauptmenü, Buzzer-Login, Voting)
 gamepad/index.html  Handy-Gamepad
 mainscreen/index.html  Zuschauerfenster (bekommt den DOM gespiegelt, führt selbst nichts aus)
   aufdecken.js  Jeopardy-Flug, vom Beamer selbst gespielt (GSAP, BAUPLAN 4.8)
@@ -212,6 +221,7 @@ tools/
   reactbits/    Bauwerkzeug für vendor/reactbits.js
   shots/        Screenshot-Prüfung aller Design-Richtungen (siehe unten)
   sprites/      Pixel-Sprites für Richtung T (Keller) bauen
+  fonts/        hol.js: Google-Schriften nach vendor/fonts/ spiegeln und Adressen umstellen
   durchgang/    Durchgeh-Seite: jede Richtung × jeden Zustand anklickbar
                 ansehen, Urteil und Notiz, Bericht zum Kopieren (siehe unten)
   gemeinsam/    was Werkzeug UND ausgelieferte Seite brauchen (aufbau.js,
