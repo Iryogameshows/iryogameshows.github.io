@@ -54,6 +54,67 @@ gespiegelt (ein Test-iframe mit relativem `src` zeigte dort die 404-Seite).
 
 ---
 
+## 2026-10-23 — `9f5a863` Schriften/QR lokal, Datenschutz-Seite
+
+**David:** „brauch ich irgendwo datenschutzhinweise oder Impressum" → „bau das was du denkst
+was nötig ist".
+
+**Gemacht:**
+- `tools/fonts/hol.js` (neu, wiederholbar): findet alle `fonts.googleapis.com/css2?…`
+  in ausgelieferten `.html`/`.js`, holt CSS + woff2 (nur `latin`, `latin-ext`) nach
+  `vendor/fonts/` (43 CSS, 135 Dateien, 3,9 MB) und ersetzt die Adressen: HTML relativ je
+  Tiefe, `404.html` absolut (`/vendor/…`, weil unter jedem Pfad ausgeliefert), `js/` über
+  `FONT_BASE` (neu oben in `js/theme.js`, aus `document.currentScript.src` → absolut).
+  Entfernt auch `preconnect`-Zeilen zu Google.
+- `vendor/qrcode.min.js` (qrcodejs 1.0.0, 19 927 Bytes) statt cdnjs in `index.html`.
+- `datenschutz/index.html`: Betreiber „David, privat", was in Firebase steht
+  (`buzzer/players/*`: Name, PIN-Hash, Avatar, Farbe, Team, created, seen, stats; Show-Daten;
+  `votes/*`), `localStorage` inkl. Klartext-PIN am Handy, Dienste GitHub/Google/Cloudflare,
+  Löschung über David. Links: Host-Sperre (`ensureHostGate`, `js/jeopardy-ui.js` — das ist
+  die einzige Seite, die Fremde auf `iryo.party/` sehen), Hauptmenü (`menu-pill` als `<a>`),
+  Buzzer-Login, Voting.
+- `CLAUDE.md`: vendor-Tabelle, Struktur (`datenschutz/`, `tools/fonts/`), Regel „nichts von
+  fremden Servern laden" (Ausnahme Firebase), neue Daten/Dienste → Datenschutz-Seite ergänzen.
+
+**Warum so:**
+- Google Fonts von Google = IP an Google ohne Einwilligung (LG München I, 20.01.2022,
+  3 O 17493/20); zugleich verletzte es die Hausregel „Show läuft ohne Netz". Lokal löst beides.
+- Kein Impressum: § 18 MStV nimmt rein private/familiäre Angebote aus; keine Einnahmen. Mit
+  Impressum stünde Davids Anschrift öffentlich. Keine Rechtsberatung, Einschätzung.
+- Datenschutz-Seite trotzdem: Fremde geben Namen/PIN ein, Firebase liegt bei Google.
+- `FONT_BASE` statt fester `/vendor/…`-Pfade: der Beamer läuft unter `/mainscreen/`, GM- und
+  Popup-Fenster sind `about:blank`-Dokumente, und `index.html` per Doppelklick (file://) ist
+  ein vorgesehener Fall — nur eine aus der Skriptadresse abgeleitete absolute URL stimmt überall.
+- Verworfen: eine CSS-Datei je Schriftfamilie (hätte das `fonts`-Feld der Richtungen in
+  `theme.js` zu Listen gemacht); 1 Adresse → 1 lokale CSS hält den Code-Umbau mechanisch.
+- Selbst gemacht statt Codex: Umstellung lief per Skript, nicht von Hand.
+
+**Geprüft:**
+- `node check.js` und `node check.js --types`: „alles in Ordnung".
+- `grep` nach `fonts.googleapis|fonts.gstatic` in allen ausgelieferten Dateien: 0 Treffer.
+- Browser-Pane `localhost:3000/?stumm=1`: Schriften des Hauptfensters geladen, nach
+  `applyTheme('O')` auch VT323 + IBM Plex Mono; fremde Hosts nur `www.gstatic.com` (Firebase);
+  `typeof QRCode` = function; keine Konsolenfehler. `/datenschutz/`: nur `localhost`, Bebas Neue +
+  Inter geladen. `/buzzer/`: Link vorhanden.
+- `node shots.js` (1280×720): „keine Befunde", 504× „passt"; `turnier-host` meldet wie bisher
+  „zu hoch" (Host-Seite ohne Höhenprüfung). Kontaktbögen `menu` und `buzzer-login` angesehen:
+  jede Richtung hat ihre eigene Schrift, Datenschutz-Link sichtbar.
+
+**Offen:**
+- Kein Kontaktweg außer „persönlich" auf der Datenschutz-Seite; mit Mail-Weiterleitung
+  (`kontakt@iryo.party`, Cloudflare Email Routing) wäre es sauberer — braucht Davids Zustimmung.
+- Bilder in Fragen-Sets von fremden Seiten (Jeopardy/PIH) nicht geprüft — wären weitere
+  Drittaufrufe.
+- `shots.js --vergleich` gegen Studio-Blau-Basis nicht gelaufen (keine Basis von vorher).
+- file://-Fall nicht ausprobiert.
+
+**Fallstricke:** Erster Skriptlauf ersetzte `href="URL"` in Template-Literalen durch
+`href=FONT_BASE + '…'` (ungültiges HTML im Popup) — von Hand auf `href="${FONT_BASE}…"`
+korrigiert und im Skript gefixt. Fremde sehen auf `iryo.party/` nur die Host-Sperre, nicht das
+Menü — ein Link nur im Menü hätte für Besucher nicht gereicht.
+
+---
+
 ## 2026-10-22 — `9e4d134` localStorage nach Domainwechsel
 
 **Gemacht:** Hinweis in `CLAUDE.md` (Deploy): `localStorage` ist je Domain getrennt; was der
