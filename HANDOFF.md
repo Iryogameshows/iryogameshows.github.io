@@ -12,6 +12,37 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-25 — `52b7a98` Datenschutz-Seite neu geschrieben
+
+**David:** „die Privacy Policy die du gemacht hast macht hinten und vorne keinen sinn" →
+gab Name und Kontakt: David Mehmke, davidmehmke@gmail.com (steht jetzt öffentlich auf der Seite).
+
+**Gemacht (`datenschutz/index.html`, nur `<main>`):** Abschnitt „Verantwortlich" mit Name +
+E-Mail; je Datenart (Buzzer-Account, Show-Stand, Voting) Wozu und Wie lange; Rechtsgrundlagen
+Art. 6 Abs. 1 lit. b (Anmeldung) und lit. f (Auslieferung GitHub/Firebase-SDK/DNS);
+`localStorage` über § 25 Abs. 2 Nr. 2 TDDDG; USA-Übermittlung über Data Privacy Framework
+(Art. 45); Rechte Art. 15–21, 77. Hinweis, dass der PIN-Hash eine kurze PIN kaum schützt.
+
+**Warum so:** Die alte Fassung (`9f5a863`) hatte die Fakten richtig, aber: kein erreichbarer
+Verantwortlicher („David", „persönlich beim Spieleabend"), keine Rechtsgrundlagen, keine
+Speicherdauer, keine Grundlage für die USA, und Widerspruch „privat im Freundeskreis" (dann
+Haushaltsausnahme, DSGVO gälte nicht) gegen aufgezählte DSGVO-Rechte. Die Seite ist öffentlich
+im Netz, deshalb DSGVO-Fassung. „Privat" gestrichen. Kein Impressum ergänzt (bleibt wie in
+`9f5a863` begründet).
+
+**Geprüft:** Fakten gegen Code: `databaseURL` `europe-west1` (`js/buzzer.js:14`), `hashPin`
+SHA-256 über `keller:<key>:<pin>` (`buzzer/index.html:666`), Mindestlänge 5
+(`buzzer/index.html:708`), Klartext-PIN im `localStorage` `buzzAccount` (`:741`), Accounts
+werden nicht automatisch gelöscht (nur `team` nach Frist geleert, `js/buzzer.js:131`).
+Browser: Seite rendert. `node check.js` „alles in Ordnung".
+**Nicht geprüft:** DPF-Zertifizierung von GitHub, Google, Cloudflare aktuell nachgeschlagen
+(aus Wissen, nicht aus der DPF-Liste). Keine Rechtsberatung.
+
+**Offen:** PIN-Absicherung selbst (5 Zeichen + schneller Hash, Hashes für den Host lesbar) —
+nur offengelegt, nicht verbessert. Aufsichtsbehörde nicht namentlich genannt.
+
+---
+
 ## 2026-10-22 — `e321794` Jeopardy: verdeckte Bilder (Bilderreihe, Puzzle) decken wieder
 
 **David:** „in sämtlichen der Designs funktioniert bei Jeopardy das aufdecken nicht: die
