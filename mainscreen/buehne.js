@@ -9,6 +9,9 @@
    Moment mit eigenen Elementen (data-nur-beamer, der Spiegel laesst sie
    stehen).
 
+   Fuer ALLE Richtungen (auch Studio-Blau): der Siegermoment (SIEG), Farben
+   aus den CSS-Variablen der Richtung.
+
    Je Design-Richtung eine Regie (REGIE[key]). Bisher: D (Late Night).
    - Lebende Stadt als Hintergrund (Canvas): zwei Haeuserreihen mit
      flackernden Fenstern, Antennenlichter, zwei Suchscheinwerfer, ab und zu
@@ -254,6 +257,241 @@
     }
   };
 
+  /* ── Fuer alle Richtungen: der Siegermoment ───────────────────────────
+     David 2026-10-25: "dann mach alles" - Reihenfolge Siegermoment zuerst,
+     weil ihn jede Show hat und er die Vorlage fuer die uebrigen Momente ist.
+     Farben und Schrift kommen aus der Richtung (CSS-Variablen am <html>),
+     deshalb keine Regie je Richtung noetig.
+     Ablauf: abdunkeln, Lichtkegel, der Name schlaegt riesig in der Mitte
+     ein, Konfetti aus beiden unteren Ecken (Canvas), dann fliegt der Name
+     genau auf #winner-text (FLIP wie in aufdecken.js: das Element steht
+     von Anfang an auf dem Endplatz, animiert wird nur transform).
+     Das Konfetti des Hauptfensters (.confetti-p, js/feud.js confetti())
+     kommt ueber den Spiegel mit; solange hier das eigene fliegt, ist es
+     am Beamer ausgeblendet (mainscreen/index.html, html.bn-konfetti). */
+  function farbe(name, rueck) {
+    var v = getComputedStyle(html).getPropertyValue(name).trim();
+    return v || rueck;
+  }
+  function konfetti(stuecke) {
+    var c = el('canvas', { position: 'fixed', inset: '0', width: '100%', height: '100%', zIndex: '2600', pointerEvents: 'none' });
+    var dpr = Math.min(window.devicePixelRatio || 1, 2), W = window.innerWidth, H = window.innerHeight;
+    c.width = W * dpr; c.height = H * dpr;
+    var ctx = c.getContext('2d');
+    ctx.scale(dpr, dpr);
+    document.body.appendChild(c);
+    html.classList.add('bn-konfetti');
+    var alle = [], vorher = performance.now(), offen = stuecke.filter(function (s) { return s.ab; }).length;
+    function dazu(n) {
+      for (var i = 0; i < n.anzahl; i++) {
+        var w = n.winkel + (Math.random() - .5) * n.streuung, v = n.tempo * (.55 + Math.random() * .6);
+        alle.push({ x: n.x + (Math.random() - .5) * (n.breite || 0), y: n.y, vx: Math.cos(w) * v, vy: Math.sin(w) * v,
+          w: 7 + Math.random() * 9, h: 4 + Math.random() * 6, rot: Math.random() * 6.3, vr: (Math.random() - .5) * 12,
+          kipp: Math.random() * 6.3, vk: 4 + Math.random() * 8, f: n.farben[i % n.farben.length] });
+      }
+    }
+    stuecke.forEach(function (s) { if (s.ab) setTimeout(function () { offen--; dazu(s); }, s.ab * 1000); else dazu(s); });
+    var ende = performance.now() + 7000;
+    (function bild(jetzt) {
+      var dt = Math.min(.05, (jetzt - vorher) / 1000); vorher = jetzt;
+      ctx.clearRect(0, 0, W, H);
+      alle = alle.filter(function (p) {
+        p.vy += 1100 * dt; p.vx *= Math.pow(.35, dt); p.vy *= Math.pow(.55, dt);
+        p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; p.kipp += p.vk * dt;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, Math.cos(p.kipp));
+        ctx.fillStyle = p.f; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+        return p.y < H + 40;
+      });
+      if ((alle.length || offen > 0) && jetzt < ende) requestAnimationFrame(bild);
+      else { c.remove(); html.classList.remove('bn-konfetti'); }
+    })(vorher);
+  }
+  /* Kopie eines Textes, die genau auf ihrem Vorbild steht (gleiche Box,
+     gleiche Schrift). Animiert wird nur transform: mx/my/k bringen sie in
+     die Bildmitte und auf Groesse, x:0 y:0 scale:1 laesst sie exakt auf dem
+     Vorbild landen. Der Wackler braucht das innere Element (kern):
+     wackeln() setzt x/y absolut und wuerde die Verschiebung auf null ziehen. */
+  function kopie(ziel, text, hoehe) {
+    var r = ziel.getBoundingClientRect(), cs = getComputedStyle(ziel);
+    if (!r.width || !r.height) return null;
+    var W = window.innerWidth, H = window.innerHeight;
+    /* Mass ist der TEXT, nicht die Box: #winner-text ist so breit wie der
+       Screen, #pih-price so gross wie die ganze Buehne. Mit der Box stand
+       die Kopie dort klein und neben der Mitte. */
+    try { var rg = document.createRange(); rg.selectNodeContents(ziel); var tr = rg.getBoundingClientRect(); if (tr.width && tr.height) r = tr; } catch (e) {}
+    var zeile = el('div', { position: 'absolute', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', whiteSpace: 'nowrap',
+      /* Einzeln statt cs.font: das Kurzwort ist leer, sobald etwas wie
+         font-variant-numeric gesetzt ist - dann stand der Preis in 16 px da. */
+      fontFamily: cs.fontFamily, fontSize: cs.fontSize, fontWeight: cs.fontWeight, fontStyle: cs.fontStyle,
+      fontStretch: cs.fontStretch, fontVariantNumeric: cs.fontVariantNumeric, lineHeight: cs.lineHeight, letterSpacing: cs.letterSpacing, textTransform: cs.textTransform, color: cs.color,
+      textShadow: cs.textShadow, webkitTextStrokeWidth: cs.webkitTextStrokeWidth, webkitTextStrokeColor: cs.webkitTextStrokeColor });
+    var kern = el('div', null, text);
+    zeile.appendChild(kern);
+    return { zeile: zeile, kern: kern, r: r,
+      mx: W / 2 - (r.left + r.width / 2), my: H * .46 - (r.top + r.height / 2),
+      k: Math.max(1.4, Math.min(W * .84 / r.width, H * (hoehe || .3) / r.height)) };
+  }
+  function blitzen(tl, blitz, zeit, staerke) {
+    tl.to(blitz, { keyframes: [{ opacity: staerke || .55, duration: .03 }, { opacity: 0, duration: .4, ease: 'power2.out' }] }, zeit);
+  }
+
+  var SIEG = function (ziel) {
+    var name = ziel.textContent.trim();
+    var kp = name && kopie(ziel, name);
+    if (!kp) return null;
+    var gleich = /^unentschieden/i.test(name), heller = html.hasAttribute('data-theme-hell');
+    var W = window.innerWidth, H = window.innerHeight;
+    var akzent = farbe('--accent-text', '#FFD23F'), hell = farbe('--gold-pale', '#FFE8A0'),
+        stark = farbe('--fg-strong', '#FFFFFF'), grund = farbe('--bg', '#0b0e2c'), linie = farbe('--accent-line', akzent);
+
+    var e = ebene();
+    var schleier = el('div', { position: 'absolute', inset: '0', background: grund, opacity: '0' });
+    var kegel = el('div', { position: 'absolute', left: '50%', top: '-20vh', width: '90vw', height: '120vh', marginLeft: '-45vw',
+      background: 'radial-gradient(ellipse 38% 70% at 50% 0%, ' + (heller ? akzent : hell) + ', transparent 70%)', opacity: '0',
+      /* Auf hellem Grund verschwindet ein aufhellender Kegel - dort faerbt er. */
+      mixBlendMode: heller ? 'multiply' : 'screen' });
+    var blitz = el('div', { position: 'absolute', inset: '0', background: stark, opacity: '0' });
+    var zeile = kp.zeile, kern = kp.kern, k = kp.k, mx = kp.mx, my = kp.my;
+    e.append(schleier, kegel, zeile, blitz);
+    document.body.appendChild(e);
+    html.classList.add('bn-sieg');
+
+    /* force3D:false: die Schrift wird beim Wachsen neu gesetzt statt als
+       Bild hochgezogen - sonst steht der Name bei k=6 matschig im Bild. */
+    var tl = merke(gsap.timeline({ onComplete: function () { e.remove(); html.classList.remove('bn-sieg'); } }));
+    tl.to(schleier, { opacity: .88, duration: .3, ease: 'power1.out' }, 0)
+      .to(kegel, { opacity: gleich ? .35 : .7, duration: .5, ease: 'power2.out' }, .1)
+      .fromTo(zeile, { x: mx, y: my, scale: k * 2.6, opacity: 0, filter: 'blur(14px)', force3D: false },
+        { scale: k, opacity: 1, filter: 'blur(0px)', duration: .32, ease: 'power4.in', force3D: false }, .22)
+      .to(zeile, { scale: k * 1.05, duration: 1.6, ease: 'sine.inOut', force3D: false }, .6)
+      // Landung: transform zurueck auf null = genau #winner-text
+      .to(zeile, { x: 0, y: 0, scale: 1, duration: .62, ease: 'power3.inOut', force3D: false }, 2.25)
+      .to([schleier, kegel], { opacity: 0, duration: .55, ease: 'power1.inOut' }, 2.35);
+    blitzen(tl, blitz, .54);
+    wackeln(tl, kern, .54, 18 / k);
+    if (!gleich) setTimeout(function () {
+      var farben = [akzent, hell, stark, linie];
+      konfetti([
+        { x: 0, y: H, winkel: -1.05, streuung: .5, tempo: 1500, anzahl: 110, farben: farben },
+        { x: W, y: H, winkel: -2.09, streuung: .5, tempo: 1500, anzahl: 110, farben: farben },
+        { x: W / 2, y: -20, breite: W, winkel: 1.57, streuung: .3, tempo: 120, anzahl: 90, farben: farben, ab: .5 }
+      ]);
+    }, 540);
+    return tl;
+  };
+
+  /* ── Fuer alle Richtungen: grosse Momente der einzelnen Shows ──────────
+     Gleiches Geruest wie SIEG: Kopie des echten Textes schlaegt in der
+     Mitte ein und landet auf ihrem Vorbild. Das Vorbild bleibt waehrenddessen
+     unsichtbar: Klasse bn-ziel-<name> am <html>, die Regeln dazu stehen in
+     mainscreen/index.html. Ein Attribut am Vorbild selbst ginge nicht - der
+     Spiegel nimmt beim naechsten Durchlauf jedes Attribut weg, das im
+     Hauptfenster nicht steht. */
+  /* Einschlag + Halten + Landung, fuer WWM-Betrag, PIH-Preis, Daily Double.
+     wahl: { name, text, farbe, halten, konfetti, hoehe, vorher(tl, kp) } */
+  function einschlag(ziel, wahl) {
+    var kp = kopie(ziel, wahl.text != null ? wahl.text : ziel.textContent.trim(), wahl.hoehe);
+    if (!kp) return null;
+    var W = window.innerWidth, H = window.innerHeight;
+    var e = ebene(), schleier = el('div', { position: 'absolute', inset: '0', background: farbe('--bg', '#0b0e2c'), opacity: '0' });
+    var blitz = el('div', { position: 'absolute', inset: '0', background: wahl.farbe || farbe('--fg-strong', '#fff'), opacity: '0' });
+    if (wahl.farbe) kp.zeile.style.color = wahl.farbe;
+    e.append(schleier, kp.zeile, blitz);
+    document.body.appendChild(e);
+    html.classList.add('bn-ziel-' + wahl.name);
+    var halten = wahl.halten || 1.1, land = .5 + halten;
+    var tl = merke(gsap.timeline({ onComplete: function () { e.remove(); html.classList.remove('bn-ziel-' + wahl.name); } }));
+    tl.to(schleier, { opacity: .8, duration: .25 }, 0)
+      .fromTo(kp.zeile, { x: kp.mx, y: kp.my, scale: kp.k * 2.4, opacity: 0, filter: 'blur(12px)', force3D: false },
+        { scale: kp.k, opacity: 1, filter: 'blur(0px)', duration: .3, ease: 'power4.in', force3D: false }, .12)
+      .to(kp.zeile, { x: 0, y: 0, scale: 1, duration: .55, ease: 'power3.inOut', force3D: false }, land)
+      .to(schleier, { opacity: 0, duration: .45 }, land + .05);
+    if (wahl.vorher) wahl.vorher(tl, kp);
+    blitzen(tl, blitz, .42, .45);
+    wackeln(tl, kp.kern, .42, 16 / kp.k);
+    if (wahl.konfetti) setTimeout(function () {
+      var f = [farbe('--accent-text', '#FFD23F'), farbe('--gold-pale', '#FFE8A0'), farbe('--fg-strong', '#fff')];
+      konfetti([{ x: 0, y: H, winkel: -1.05, streuung: .5, tempo: 1500, anzahl: 120, farben: f },
+                { x: W, y: H, winkel: -2.09, streuung: .5, tempo: 1500, anzahl: 120, farben: f }]);
+    }, 420);
+    return tl;
+  }
+
+  var MOMENTE = {
+    /* WWM, richtige Antwort: der erspielte Betrag schlaegt ein und faellt
+       in seine Stufe der Leiter. Bei der letzten Stufe mit Konfetti. */
+    wwmRichtig: function () {
+      var stufe = document.querySelector('#wwm-ladder .wwm-rung.current .wwm-amt');
+      if (!stufe) return null;
+      // Letzte Stufe im DOM = oberste Gewinnstufe (WWM_LADDER, js/wwm.js)
+      var oben = stufe.parentElement === stufe.parentElement.parentElement.lastElementChild;
+      return einschlag(stufe, { name: 'wwm', farbe: farbe('--green', '#22C55E'), halten: oben ? 1.8 : 1, konfetti: oben, hoehe: .26 });
+    },
+    /* WWM, falsch: kein Einschlag - der Rand gluet rot, die Buehne zuckt. */
+    wwmFalsch: function () {
+      var e = ebene(), rot = farbe('--red', '#E8453C');
+      var rand = el('div', { position: 'absolute', inset: '0', boxShadow: 'inset 0 0 0 0 ' + rot, opacity: '0' });
+      e.appendChild(rand);
+      document.body.appendChild(e);
+      var tl = merke(gsap.timeline({ onComplete: function () { e.remove(); } }));
+      tl.to(rand, { opacity: 1, boxShadow: 'inset 0 0 120px 30px ' + rot, duration: .08 }, 0)
+        .to(rand, { opacity: 0, boxShadow: 'inset 0 0 0 0 ' + rot, duration: .9, ease: 'power2.out' }, .12);
+      return tl;
+    },
+    /* Preis ist heiss: der echte Preis rattert wie ein Zaehlwerk - alle
+       Ziffern laufen, von links nach rechts rastet eine nach der anderen
+       ein - dann faellt er auf seinen Platz. Verworfen: je Ziffer eine
+       Walze aus gestapelten Spans; die Ziffern standen verstreut im Bild,
+       weil die Box des Preises nicht die Zeilenhoehe der Schrift hat.
+       Hier bleibt es EIN Text in der Schrift des Vorbilds. */
+    pihPreis: function (ziel) {
+      var text = ziel.textContent.trim();
+      if (!/\d/.test(text)) return null;
+      return einschlag(ziel, { name: 'pih', halten: 1.5, hoehe: .24, vorher: function (tl, kp) {
+        var stellen = text.replace(/\D/g, '').length, lauf = { v: 0 };
+        kp.kern.style.fontVariantNumeric = 'tabular-nums';
+        tl.to(lauf, { v: stellen, duration: 1.3, ease: 'power1.in', onUpdate: function () {
+          var fest = Math.floor(lauf.v), n = 0;
+          kp.kern.textContent = text.replace(/\d/g, function (z) { return n++ < fest ? z : String(Math.floor(Math.random() * 10)); });
+        }, onComplete: function () { kp.kern.textContent = text; } }, .15);
+      } });
+    },
+    /* Jeopardy, Daily Double: die Karte dreht sich ins Bild und faellt auf
+       ihr Banner. Wartet den Flug des Felds ab (aufdecken.js, ~1,35 s). */
+    dailyDouble: function (banner) {
+      return einschlag(banner, { name: 'dd', farbe: farbe('--accent-text', '#FFD23F'), halten: 1.2, hoehe: .22, vorher: function (tl, kp) {
+        tl.fromTo(kp.kern, { rotationY: 540, transformPerspective: 900 }, { rotationY: 0, duration: .5, ease: 'power3.out' }, .12);
+      } });
+    },
+    /* Der Duemmste fliegt: der Name schlaegt ein, ein roter Stempel kommt
+       drueber, dann fliegt der Name aus dem Bild. */
+    ddfRaus: function (spieler) {
+      var nameEl = spieler.querySelector('.ddf-player-name');
+      var name = nameEl && nameEl.textContent.trim();
+      var kp = name && kopie(nameEl, name, .22);
+      if (!kp) return null;
+      var W = window.innerWidth, rot = farbe('--red', '#E8453C');
+      var e = ebene(), schleier = el('div', { position: 'absolute', inset: '0', background: farbe('--bg', '#0b0e2c'), opacity: '0' });
+      var stempel = el('div', { position: 'absolute', left: '50%', top: '46%', transform: 'translate(-50%,-50%)',
+        fontFamily: farbe('--font-display', 'sans-serif'), fontSize: '22vh', lineHeight: '1', color: rot, border: '1.4vh solid ' + rot,
+        padding: '0 4vh', borderRadius: '2vh', textTransform: 'uppercase', opacity: '0', mixBlendMode: 'normal' }, 'Raus');
+      e.append(schleier, kp.zeile, stempel);
+      document.body.appendChild(e);
+      var tl = merke(gsap.timeline({ onComplete: function () { e.remove(); } }));
+      tl.to(schleier, { opacity: .85, duration: .25 }, 0)
+        .fromTo(kp.zeile, { x: kp.mx, y: kp.my, scale: kp.k * 2.2, opacity: 0, force3D: false },
+          { scale: kp.k, opacity: 1, duration: .3, ease: 'power4.in', force3D: false }, .1)
+        .fromTo(stempel, { scale: 3, rotation: -28, opacity: 0 }, { scale: 1, rotation: -12, opacity: .92, duration: .22, ease: 'power4.in' }, .75)
+        .to(kp.zeile, { x: kp.mx + W, rotation: 24, duration: .6, ease: 'power3.in', force3D: false }, 1.75)
+        .to(stempel, { opacity: 0, scale: .9, duration: .35 }, 1.95)
+        .to(schleier, { opacity: 0, duration: .4 }, 2.15);
+      wackeln(tl, kp.kern, .4, 12 / kp.k);
+      wackeln(tl, kp.kern, .97, 22 / kp.k);
+      return tl;
+    }
+  };
+
   var REGIE = { D: D };
 
   function regie() { return ruhig() ? null : REGIE[thema()] || null; }
@@ -271,6 +509,46 @@
   var letzteRunde = null;
 
   new MutationObserver(function (liste) {
+    if (ruhig()) return;
+    /* Siegermoment: in jeder Richtung, auch Studio-Blau. Ausloeser ist der
+       Ergebnis-Screen, der "active" bekommt - der Name steht dann schon. */
+    var allg = null;
+    for (var i = 0; i < liste.length && !allg; i++) {
+      var m0 = liste[i], t0 = /** @type {Element} */ (m0.target);
+      if (m0.type === 'attributes' && t0.nodeType === 1) {
+        var neu0 = t0.getAttribute('class'), alt0 = m0.oldValue;
+        if (t0.id === 'result-screen' && hatKlasse(neu0, 'active') && !hatKlasse(alt0, 'active'))
+          allg = function () { var z = document.getElementById('winner-text'); if (z) SIEG(z); };
+        /* WWM: die gewaehlte Antwort wird "correct" (richtig) oder "wrong". */
+        else if (t0.classList.contains('wwm-opt') && hatKlasse(alt0, 'selected')) {
+          if (hatKlasse(neu0, 'correct')) allg = MOMENTE.wwmRichtig;
+          else if (hatKlasse(neu0, 'wrong')) allg = MOMENTE.wwmFalsch;
+        }
+        /* DDF: ein Spieler wird "out" - der Verlierer der Runde traegt "picked". */
+        else if (t0.classList.contains('ddf-player') && hatKlasse(neu0, 'out') && hatKlasse(neu0, 'picked') && !hatKlasse(alt0, 'out'))
+          allg = (function (t) { return function () { MOMENTE.ddfRaus(t); }; })(t0);
+      } else if (m0.type === 'childList') {
+        /* PIH: der Preis wird erst bei der Aufloesung eingesetzt. */
+        if (t0.id === 'pih-price' && t0.textContent.trim())
+          allg = (function (t) { return function () { MOMENTE.pihPreis(t); }; })(t0);
+        for (var j = 0; j < m0.addedNodes.length && !allg; j++) {
+          var n0 = /** @type {Element} */ (m0.addedNodes[j]);
+          var dd = n0.nodeType === 1 && n0.id === 'jeopardy-clue-ov' && n0.querySelector('.jeopardy-dd-banner');
+          /* Erst wenn der Flug des Felds (aufdecken.js) gelandet ist - der
+             verdeckt die Frage mit html.jp-flug/jp-landung. Fest 1,4 s zu
+             warten reichte nicht, sobald der Beamer ins Stocken kommt. */
+          if (dd) allg = (function (b) { return function () {
+            var bis = Date.now() + 4000;
+            (function warte() {
+              if (!b.isConnected) return;
+              if (/\bjp-(flug|landung)\b/.test(html.className) && Date.now() < bis) { setTimeout(warte, 100); return; }
+              setTimeout(function () { if (b.isConnected) MOMENTE.dailyDouble(b); }, 250);
+            })();
+          }; })(dd);
+        }
+      }
+    }
+    if (allg) { allg(); return; }
     var r = regie();
     if (!r) return;
     var antwort = null, strike = false, punkte = null, runde = null;
@@ -293,7 +571,7 @@
     if (antwort && r.antwort) r.antwort(antwort);
     else if (strike && r.strike) r.strike();
     if (punkte && r.punkte) r.punkte(punkte);
-  }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true, characterData: true, characterDataOldValue: true });
+  }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'], attributeOldValue: true, characterData: true, characterDataOldValue: true });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stadtPruefen);
   else stadtPruefen();

@@ -46,6 +46,12 @@
   [data-fliegt]{color:transparent !important;text-shadow:none !important;-webkit-text-stroke:0 !important;}
   /* Laeuft die lebende Stadt (buehne.js), ersetzt sie die feste Skyline. */
   html.bn-stadt-an body::before{display:none !important;}
+  /* Grosse Momente (buehne.js): das Vorbild erst zeigen, wenn die fliegende
+     Kopie auf ihm gelandet ist; das gespiegelte DOM-Konfetti weg, solange
+     das eigene (Canvas) fliegt - sonst doppelt und in fremden Farben. */
+  html.bn-sieg #winner-text,html.bn-ziel-wwm #wwm-ladder .wwm-rung.current .wwm-amt,
+  html.bn-ziel-pih #pih-price,html.bn-ziel-dd .jeopardy-dd-banner{visibility:hidden;}
+  html.bn-sieg .confetti-p,html.bn-konfetti .confetti-p{display:none !important;}
   /* Mit Design-Richtung traegt das <html> den Grund, der <body> ist
      durchsichtig. Sonst malt der body-Hintergrund ueber alles mit
      z-index:-1 - die Skyline (D), der Gitterboden (B), die Sonnenstrahlen
