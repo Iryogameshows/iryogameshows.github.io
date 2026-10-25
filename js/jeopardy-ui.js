@@ -209,12 +209,15 @@ function popOutQR(){
   const url = jeopardyJoinUrl();
   qrPopoutWin = window.open('', 'QRCode', 'width=380,height=480,resizable=yes');
   if (!qrPopoutWin) return; // vom Browser blockiert (kein direkter Klick als Auslöser)
+  /* QR-Bibliothek aus vendor/, absolut: das Popup ist about:blank. Bis
+     2026-10-25 kam sie hier noch von cdnjs - beim Umzug auf lokale Kopien
+     (9f5a863) übersehen, weil die Adresse im Template-String steht. */
   qrPopoutWin.document.open();
   qrPopoutWin.document.write(`<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <meta name="color-scheme" content="dark">
 <title>QR-Code</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+<script src="${escAttr(new URL('vendor/qrcode.min.js', document.baseURI).href)}"><\/script>
 <style>
   :root{color-scheme:dark;}
   *{margin:0;padding:0;box-sizing:border-box;}
