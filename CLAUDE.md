@@ -195,7 +195,6 @@ js/
                 Geburtstag), Film-Intros Arcade und Primetime (playFilmIntro,
                 reines CSS, Ton per WebAudio), Intro-Editor, Intro-Auswahl
                 je Show (INTRO_SLOTS)
-  keller-ton.js WebAudio-Töne für Design-Richtung T (Keller)
   feud.js       Family Feud
   jeopardy.js   Jeopardy-Logik
   jeopardy-ui.js Jeopardy-Board/Overlays
@@ -217,10 +216,8 @@ mainscreen/index.html  Zuschauerfenster (bekommt den DOM gespiegelt, führt selb
                 Stadt in Late Night - ebenfalls vom Beamer selbst
 tools/
   intros/       Intro-Labor: 18 Intro-Prototypen, NICHT Teil der Show
-  keller/       Keller-Assets holen und zuschneiden
   reactbits/    Bauwerkzeug für vendor/reactbits.js
   shots/        Screenshot-Prüfung aller Design-Richtungen (siehe unten)
-  sprites/      Pixel-Sprites für Richtung T (Keller) bauen
   fonts/        hol.js: Google-Schriften nach vendor/fonts/ spiegeln und Adressen umstellen
   durchgang/    Durchgeh-Seite: jede Richtung × jeden Zustand anklickbar
                 ansehen, Urteil und Notiz, Bericht zum Kopieren (siehe unten)

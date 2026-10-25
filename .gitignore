@@ -5,7 +5,6 @@ tools/reactbits/node_modules/
 tools/shots/node_modules/
 tools/shots/out/
 
-# Eigene Isaac-Sprites: bleiben lokal. Das Repo ist oeffentlich (Pages laedt
-# das ganze Verzeichnis hoch) - Spielgrafiken gehoeren nicht hinein.
-# styles.css nimmt sie vorrangig, wenn sie da sind. Siehe assets/t/LIESMICH.md.
+# Richtung T (Isaac-Sprites) ist seit 2026-10-25 entfernt. Der Eintrag bleibt,
+# damit Spielgrafiken, die auf einem Geraet noch liegen, nie eingecheckt werden.
 assets/t/eigene/
