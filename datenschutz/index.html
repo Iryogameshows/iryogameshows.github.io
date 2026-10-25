@@ -30,54 +30,76 @@
 <body>
 <main>
 <h1>Datenschutz</h1>
-<p class="muted">Stand: 23. Oktober 2026</p>
+<p class="muted">Stand: 25. Oktober 2026</p>
 
-<h2>Wer das hier betreibt</h2>
-<p>Iryo Gameshow ist ein privates Hobbyprojekt von David für Spieleabende im
-Freundeskreis: keine Werbung, kein Verkauf, keine Einnahmen. Fragen und
-Löschwünsche gehen direkt an ihn – persönlich beim Spieleabend oder über den
-Weg, auf dem du eingeladen wurdest.</p>
+<h2>Verantwortlich</h2>
+<p>David Mehmke<br>
+E-Mail: <a href="mailto:davidmehmke@gmail.com">davidmehmke@gmail.com</a></p>
+<p>Iryo Gameshow ist ein Hobbyprojekt für Spieleabende: keine Werbung, kein
+Verkauf, keine Einnahmen. Für Fragen zum Datenschutz und für Löschwünsche
+reicht eine E-Mail an die Adresse oben.</p>
 
-<h2>Was gespeichert wird</h2>
+<h2>Was gespeichert wird, wozu und wie lange</h2>
 <ul>
-  <li><b>Buzzer-Account</b> (wenn du dich am Handy anmeldest): Spielername,
-    PIN/Passwort – nur als Prüfwert (Hash), nicht im Klartext –, Avatar, Farbe,
-    Team, Zeitpunkt der Anlage und des letzten Besuchs, Spielstatistik
-    (Anzahl Buzzer, schnellster Buzzer, Siege, Spiele).</li>
+  <li><b>Buzzer-Account</b> – nur wenn du dich am Handy anmeldest:
+    Spielername, PIN/Passwort als Prüfwert (Hash), Avatar, Farbe, Team,
+    Zeitpunkt der Anlage und des letzten Besuchs, Spielstatistik (Anzahl
+    Buzzer, schnellster Buzzer, Siege, Spiele).<br>
+    <i>Wozu:</i> damit du beim nächsten Spieleabend mit demselben Namen und
+    deiner Statistik wieder einsteigen kannst.<br>
+    <i>Wie lange:</i> bis du die Löschung verlangst.</li>
   <li><b>Während einer Show</b>: wer verbunden ist, wer wann gebuzzert hat,
-    eingetippte Antworten und Schätzungen.</li>
+    eingetippte Antworten und Schätzungen.<br>
+    <i>Wozu:</i> damit das Spiel läuft.<br>
+    <i>Wie lange:</i> bis die nächste Show den Stand überschreibt.</li>
   <li><b>Design-Voting</b> (<code>/voting</code>): der Name, den du eingibst,
-    und deine Stimmen.</li>
+    und deine Stimmen.<br>
+    <i>Wozu:</i> auswerten, welches Design gewinnt.<br>
+    <i>Wie lange:</i> bis du die Löschung verlangst.</li>
 </ul>
-<p>Das liegt in einer Firebase-Echtzeitdatenbank von Google (Serverstandort
-Belgien, <code>europe-west1</code>) und wird nur für das Spiel benutzt.</p>
+<p>Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO: Du meldest dich an, um
+mitzuspielen, und dafür werden diese Daten gebraucht. Pflicht ist nichts
+davon – ohne Anmeldung kannst du nur nicht am Handy buzzern bzw. abstimmen.</p>
+<p>Gespeichert wird in einer Firebase-Echtzeitdatenbank von Google mit
+Serverstandort in Belgien (<code>europe-west1</code>).</p>
+<p><b>Zur PIN:</b> Sie steht dort nicht im Klartext, sondern als Hash. Eine
+kurze PIN lässt sich aus so einem Hash aber mit wenig Aufwand zurückrechnen.
+Nimm deshalb nichts, was du anderswo als Passwort benutzt.</p>
 
 <h2>Was dein Gerät speichert</h2>
-<p>Im Browser (<code>localStorage</code>, keine Cookies) bleiben deine
-Anmeldung – auf dem Handy <b>einschließlich der PIN</b>, damit du nicht bei jedem
-Öffnen neu tippen musst –, die gewählte Design-Richtung und beim Gastgeber die
-Fragen und der Spielstand. Abmelden im Buzzer löscht die Anmeldung vom Handy;
+<p>Die Seite setzt keine Cookies. Im Browser (<code>localStorage</code>) bleiben
+deine Anmeldung – auf dem Handy <b>einschließlich der PIN</b>, damit du nicht
+bei jedem Öffnen neu tippen musst –, die gewählte Design-Richtung und beim
+Gastgeber die Fragen und der Spielstand. Das ist für die Funktion nötig
+(§ 25 Abs. 2 Nr. 2 TDDDG). Abmelden im Buzzer löscht die Anmeldung vom Handy;
 alles andere entfernst du über die Browser-Einstellungen („Websitedaten
 löschen“).</p>
 
 <h2>Wer technisch beteiligt ist</h2>
 <ul>
   <li><b>GitHub Pages</b> (GitHub, Inc., USA) liefert die Seite aus und
-    verarbeitet dabei deine IP-Adresse in Server-Protokollen.</li>
-  <li><b>Google Firebase</b> (Google Ireland Ltd. / Google LLC, USA) für die
-    Datenbank; das Programm dafür wird von <code>www.gstatic.com</code> geladen.
-    Eine Übermittlung in die USA ist dabei nicht ausgeschlossen.</li>
-  <li><b>Cloudflare</b> (USA) beantwortet nur die DNS-Anfrage für
-    <code>iryo.party</code>; der Seitenaufruf selbst läuft nicht über Cloudflare.</li>
+    verarbeitet dabei deine IP-Adresse in Server-Protokollen – nach GitHubs
+    eigenen Regeln, Einsicht darin habe ich nicht.</li>
+  <li><b>Google Firebase</b> (Google Ireland Ltd., mit Google LLC, USA)
+    betreibt die Datenbank; das Programm dafür wird von
+    <code>www.gstatic.com</code> geladen, dabei sieht Google deine IP-Adresse.</li>
+  <li><b>Cloudflare</b> (Cloudflare, Inc., USA) beantwortet nur die DNS-Anfrage
+    für <code>iryo.party</code>; der Seitenaufruf selbst läuft nicht über
+    Cloudflare.</li>
 </ul>
+<p>Rechtsgrundlage dafür ist Art. 6 Abs. 1 lit. f DSGVO: das berechtigte
+Interesse, die Seite überhaupt ausliefern zu können. Daten können dabei in die
+USA gelangen. GitHub, Google und Cloudflare sind nach dem EU-US Data Privacy
+Framework zertifiziert; darauf stützt sich die Übermittlung (Art. 45 DSGVO).</p>
 <p>Schriften und alle übrigen Bausteine kommen von <code>iryo.party</code> selbst.
 Es gibt kein Tracking, keine Analyse und keine Werbung.</p>
 
-<h2>Löschen</h2>
-<p>Sag David Bescheid, dann wird dein Buzzer-Account samt Statistik bzw. deine
-Voting-Abgabe gelöscht. Du hast außerdem die Rechte aus der DSGVO auf Auskunft,
-Berichtigung, Löschung, Einschränkung und Widerspruch sowie auf Beschwerde bei
-einer Datenschutz-Aufsichtsbehörde.</p>
+<h2>Deine Rechte</h2>
+<p>Du kannst Auskunft über deine Daten verlangen, sie berichtigen oder löschen
+lassen, die Verarbeitung einschränken lassen, ihr widersprechen und sie in
+einem gängigen Format bekommen (Art. 15–21 DSGVO). Eine E-Mail genügt. Außerdem
+kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren
+(Art. 77 DSGVO).</p>
 
 <p style="margin-top:32px"><a href="../">← zurück</a></p>
 </main>
