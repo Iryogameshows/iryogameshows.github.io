@@ -12,6 +12,34 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-25 — `dc72e1e` QR-Popup lädt nicht mehr von cdnjs; Google-Fonts-Prüfung
+
+**David:** „es geht drum dass alles passt gerade mit den Google fonts?"
+
+**Gemacht:** `popOutQR` (`js/jeopardy-ui.js`) schrieb ins Popup noch
+`<script src="https://cdnjs.cloudflare.com/…/qrcode.min.js">`. Jetzt
+`new URL('vendor/qrcode.min.js', document.baseURI).href` (absolut, Popup ist `about:blank`).
+
+**Warum:** Beim Umzug auf lokale Kopien (`9f5a863`) übersehen — die Adresse steht in einem
+Template-String, `hol.js` suchte nur Google-Fonts-Adressen.
+
+**Geprüft:**
+- `git grep` nach `fonts.googleapis`/`fonts.gstatic` außerhalb `vendor/fonts`, `tools/shots`,
+  `tools/reactbits`, `tools/fonts`, Doku: 0 Treffer (in `vendor/fonts/*.css` nur
+  Quell-Kommentare). `url(...woff2)` mit `http` in `vendor/fonts`: 0.
+- Live per `curl`: `/`, `buzzer/`, `gamepad/`, `mainscreen/`, `voting/`, `designs/`,
+  `datenschutz/`, `tools/durchgang/`, `tools/intros/`, `404.html`, `js/theme.js` — je 0.
+- Browser lokal (`index.html?stumm=1`): alle Netzanfragen an `localhost`.
+- QR-Fix: `window.open` im Browser-Pane ohne Klick blockiert, deshalb dasselbe Template in
+  ein `about:blank`-iframe geschrieben → Skript von `http://localhost:3000/vendor/qrcode.min.js`
+  geladen, QR gezeichnet. `node check.js` „alles in Ordnung".
+
+**Offen:** Einziger fremder Host bleibt Firebase von `www.gstatic.com` (gewollt, auf der
+Datenschutz-Seite genannt). Echtes Popup per Klick nicht geöffnet. Unterseiten von
+`tools/intros/*` und `designs/s/*` nicht einzeln live geprüft (Repo-grep deckt sie ab).
+
+---
+
 ## 2026-10-25 — `52b7a98` Datenschutz-Seite neu geschrieben
 
 **David:** „die Privacy Policy die du gemacht hast macht hinten und vorne keinen sinn" →
