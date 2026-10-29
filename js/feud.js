@@ -1743,7 +1743,7 @@ function updateGamemasterJeopardy() {
         : `Einzuordnen: <b>${strahl.offen.length ? escapeHtml(dinge[strahl.offen[0]].text) : '—'}</b>
            · am Zug: <b>${escapeHtml(jeopardyState.teamNames[strahl.team] || ('Team ' + (strahl.team+1)))}</b>
            (${escapeHtml(zugName)})`;
-      strahlPanel = `<div class="panel strahl-panel">
+      strahlPanel = `<div class="panel fit strahl-panel">
         <div class="panel-head"><span>📏 Zahlenstrahl — klein ➜ groß</span><span class="badge">${strahl.reihe.length}/${strahl.reihe.length + strahl.offen.length}</span></div>
         <div class="strahl-reihe">${reiheHtml}${strahl.fertig ? '' : luecke(strahl.reihe.length)}</div>
         <div class="hint-line">${stand}</div>
@@ -1896,8 +1896,11 @@ function updateGamemasterJeopardy() {
      Plus-Minus-Knoepfe daneben. */
   .clue-box{
     background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
-    border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:26px 30px;
+    border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:20px 26px;
     box-shadow:0 10px 30px rgba(0,0,0,.25);
+    /* So breit wie die Frage, nicht so breit wie das Fenster - eine kurze
+       Frage stand sonst in einem leeren Kasten ueber 1180 px. */
+    width:fit-content;max-width:100%;min-width:min(100%,440px);
   }
   .clue-q{font-size:clamp(1.5rem,2.6vw,2.4rem);font-weight:800;line-height:1.25;letter-spacing:-.01em;margin-bottom:16px;}
   .clue-a{

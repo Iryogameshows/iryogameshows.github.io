@@ -1325,7 +1325,9 @@ const GM_SHARED_CSS = `
      komplett umstaendlich". Die Zahlenstrahl-Reihe stand in einer 280 px
      breiten Spalte und brach nach jeder Kachel um. */
   .gm-body.solo .gm-side{flex-direction:row;flex-wrap:wrap;align-items:flex-start;gap:10px;}
-  .gm-body.solo .gm-side > *{flex:1 1 220px;}
+  /* Der Status-Streifen ist so breit wie seine Beschriftung, nicht halbe
+     Fensterbreite je Kaestchen. */
+  .gm-body.solo .gm-side > *{flex:0 1 auto;min-width:200px;}
   /* Zugeklapptes ist Beiwerk: duenner Rahmen, kleine Schrift, kein
      Karten-Look. David, 2026-10-30: „die Dropdown Menues rechts sind nicht
      geil gemacht". Sie bleiben - Notizen und Verbundenen-Liste braucht man
@@ -1359,7 +1361,7 @@ const GM_SHARED_CSS = `
   @media (min-width: 900px) {
     html{font-size:clamp(16px,min(1.3vw,2.4vh),23px);}
     .gm-header{padding:16px 32px 14px;}
-    .gm-body{padding:24px 32px clamp(40px,9vh,96px);gap:26px;}
+    .gm-body{padding:24px 32px clamp(40px,9vh,96px);gap:16px;}
     .gm-main,.gm-side{gap:16px;}
     .answer-list{gap:8px;}
     .answer{padding:14px 20px;font-size:1.05rem;}
@@ -1382,7 +1384,7 @@ const GM_SHARED_CSS = `
   .score-name{font-size:.6rem;font-weight:800;letter-spacing:.5px;color:rgba(255,255,255,.55);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .score-val{font-family:'Bebas Neue',sans-serif;font-size:1.65rem;color:#FFD23F;line-height:1.1;}
   .question{font-size:1.05rem;font-weight:700;line-height:1.5;color:rgba(255,255,255,.9)}
-  .qnote{background:rgba(255,210,63,.08);border-left:3px solid #FFD23F;border-radius:0 8px 8px 0;padding:8px 12px;font-size:.8rem;color:rgba(255,240,200,.9);line-height:1.5;}
+  .qnote{background:rgba(255,210,63,.08);border-left:3px solid #FFD23F;border-radius:0 8px 8px 0;padding:8px 12px;font-size:.8rem;color:rgba(255,240,200,.9);line-height:1.5;width:fit-content;max-width:min(100%,78ch);}
   .qnote b{color:#FFD23F;font-size:.65rem;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:2px;}
 
   /* Wertung: eine Zeile pro Team. Vorher standen alle Plus-Knoepfe in einer
@@ -1464,12 +1466,16 @@ const GM_SHARED_CSS = `
   .est-list .answer .pts{font-size:1rem;white-space:nowrap;}
   /* Dasselbe fuer die Buzzer-Reihenfolge: bei zehn Handys sind es zehn
      Zeilen, und wichtig ist vor allem die erste. */
-  .buzz-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;max-height:26vh;overflow-y:auto;}
-  .buzz-liste .buzz-row.first{grid-column:1/-1;}
+  .buzz-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px;max-height:26vh;overflow-y:auto;}
   .num{color:#FFD23F;margin-right:10px;font-weight:700}
   .pts{color:#FFD23F;font-weight:700}
   .strikes-section{display:flex;gap:8px;flex-wrap:wrap;}
   .panel{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;}
+  /* Karten, die nur so breit sein muessen wie ihr Inhalt. Eine Liste mit vier
+     Buzzern oder drei Kacheln soll nicht ueber 1180 px gezogen werden, nur
+     weil Platz da ist (David, 2026-10-30: „die Dinger, die unnoetig lang
+     sind, noch ein bisschen kompakter"). */
+  .panel.fit{width:fit-content;max-width:100%;}
   .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:.62rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:8px;}
   .panel-row{display:flex;gap:6px;flex-wrap:wrap;}
   .badge{background:rgba(34,197,94,.18);color:#4ADE80;border-radius:99px;padding:1px 8px;font-size:.68rem;}
