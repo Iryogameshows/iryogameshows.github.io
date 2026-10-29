@@ -12,6 +12,96 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-29 — `1948120` Beamer: Siegermoment für alle Richtungen, große Momente für WWM, PIH, Daily Double, DDF
+
+**David 2026-10-25:** „dann mach alles" — nach der Regie für einzelne Richtungen alle
+großen Momente, die jede Show hat.
+
+**Gemacht (`mainscreen/buehne.js` +280 Zeilen, `mainscreen/index.html` +6):**
+- **SIEG** (alle Richtungen, auch Studio-Blau): abdunkeln, Lichtkegel, Siegername schlägt
+  riesig in der Bildmitte ein, Canvas-Konfetti aus beiden unteren Ecken, dann fliegt der
+  Name per FLIP genau auf `#winner-text`. Bei „Unentschieden…" ohne Konfetti, Kegel nur
+  0.35 statt 0.7.
+- **WWM richtig**: Betrag schlägt grün ein und fällt in seine Stufe; oberste Stufe mit
+  Konfetti. **WWM falsch**: roter Rand.
+- **PIH**: Preis rattert, Ziffern rasten von links nach rechts ein.
+- **Daily Double**: Karte dreht sich ein und wartet den Flug aus `aufdecken.js` ab.
+- **DDF**: Name schlägt ein, RAUS-Stempel, Name fliegt aus dem Bild.
+- Gemeinsame Helfer `kopie()` / `einschlag()` / `konfetti()` / `blitzen()`.
+
+**Warum so:**
+- Siegermoment zuerst, weil ihn jede Show hat und er die Vorlage für die übrigen ist.
+  Farben und Schrift kommen aus den CSS-Variablen der Richtung (`--accent-text`,
+  `--gold-pale`, `--fg-strong`, `--bg`, `--accent-line`) — deshalb **keine Regie je
+  Richtung** nötig.
+- Das Vorbild wird über eine Klasse am `<html>` versteckt (`html.bn-sieg #winner-text`
+  usw. in `mainscreen/index.html`), nicht über ein Attribut am Element: Attribute am
+  Vorbild nimmt die Spiegelung bei der nächsten Runde wieder weg.
+- `kopie()` maßt den **Text** per `Range`, nicht die Box: `#winner-text` ist so breit wie
+  der Screen, `#pih-price` so groß wie die Bühne — mit der Box stand die Kopie klein und
+  neben der Mitte.
+- Schrift wird einzeln kopiert (`fontFamily`, `fontSize`, …) statt über das Kurzwort
+  `font`: das ist leer, sobald `font-variant-numeric` gesetzt ist — dann stand der Preis
+  in 16 px da.
+- `force3D:false` beim Wachsen: die Schrift wird neu gesetzt statt als Bild hochgezogen,
+  sonst steht der Name bei `scale 6` matschig im Bild.
+- Landung ohne Rechnen: die Kopie steht von Anfang an auf dem Endplatz, animiert wird nur
+  `transform`; `x:0 y:0 scale:1` landet exakt auf dem Vorbild (gleiches Muster wie
+  `aufdecken.js`).
+- Das DOM-Konfetti des Hauptfensters (`.confetti-p` aus `js/feud.js`) kommt über den
+  Spiegel mit und ist am Beamer ausgeblendet, solange das eigene Canvas-Konfetti fliegt —
+  sonst doppelt und in fremden Farben.
+- Der Lichtkegel färbt auf hellen Richtungen (`mix-blend-mode: multiply`) statt
+  aufzuhellen, sonst verschwindet er.
+
+**Geprüft:** `node check.js` „alles in Ordnung" (15 js-Dateien, 442 Handler, 303 IDs,
+4497 Klammernpaare). `node tools/shots/shots.js`: 19 Kacheln (Studio + 18 Richtungen), „keine Befunde“, Exit 0. Kontaktbogen `bogen-ergebnis.png` angesehen: Siegerbildschirm in jeder Richtung vollständig, T-Kachel weg. **Nicht geprüft:** der
+echte Beamer — kein zweiter Bildschirm in dieser Session; die Momente sind nur als
+Standbild belegt, nicht als Ablauf.
+
+**Offen:**
+- Am echten Beamer einmal eine Show bis zum Siegerbildschirm spielen (Davids Schritt).
+- Regie für weitere Richtungen, lebende Hintergründe, Labor-Intros stehen noch aus.
+- Große Momente für Feud, Jeopardy (außer Daily Double), WWDS, TP: keine eigene Regie,
+  nur die gespiegelte CSS-Animation.
+
+**Fallstricke:** `buehne.js` läuft **im Beamerfenster selbst** (GSAP + Canvas) — im
+Hauptfenster dürfen diese Animationen nicht landen (BAUPLAN 4.8). Im ausgeblendeten
+Browser-Pane steht `requestAnimationFrame` still, dann fliegt weder Konfetti noch Kopie;
+das ist kein Fehler. Die Versteck-Regeln in `mainscreen/index.html` hängen an genau den
+IDs/Klassen `#winner-text`, `#wwm-ladder .wwm-rung.current .wwm-amt`, `#pih-price`,
+`.jeopardy-dd-banner` — wer eine davon umbenennt, bekommt das Vorbild doppelt zu sehen.
+
+---
+
+## 2026-10-29 — `72b4213` Design-Richtung T (Keller/Isaac) komplett entfernt
+
+**David 2026-10-25:** „nimm das isaac zeug raus" → die ganze Richtung T löschen, nicht
+nur ausblenden.
+
+**Gemacht (17 Dateien, −1177 Zeilen):** Eintrag in `js/theme.js` (−67), T-Block und
+Icon-Zeile in `styles.css` (−302), Keller-Buzzer in `buzzer/index.html`, `js/keller-ton.js`
+(−212) samt `<script>`-Tag in `index.html`, `tools/keller/` (`hol.js`, `png.js`),
+`tools/sprites/bau.js`, `assets/t/` (LIESMICH + 4 SVG), T in `tools/shots/shots.js` und
+auf der Durchgeh-Seite, Struktur-Abschnitt der `CLAUDE.md`.
+
+**Warum so:** `assets/t/eigene/` bleibt in `.gitignore`, damit Spielgrafiken von anderen
+Geräten nie eingecheckt werden — fremdes Copyright. Ein gespeichertes `designTheme` `'T'`
+fällt auf Studio-Blau zurück, weil `themeByKey` für den Schlüssel `null` liefert; kein
+Umschreiben im `localStorage` nötig.
+
+**Geprüft:** `node check.js` „alles in Ordnung". `node tools/shots/shots.js`:
+19 Kacheln (Studio + 18 Richtungen), „keine Befunde“, Exit 0. Kontaktbogen `bogen-ergebnis.png` angesehen: Siegerbildschirm in jeder Richtung vollständig, T-Kachel weg. **Nicht geprüft:** ob auf Davids Host-Browser noch `designTheme='T'`
+gespeichert ist (unter `iryo.party` ohnehin leer, Domainwechsel 2026-10-22).
+
+**Offen:** keine. Geprüft, dass die Zahl „18 Design-Richtungen" in `CLAUDE.md` und im
+Skill `design-pruefung` weiter stimmt: `DESIGN_THEMES` in `js/theme.js` hat nach dem
+Löschen 18 Einträge (A–S ohne G und T).
+
+**Fallstricke:** keine.
+
+---
+
 ## 2026-10-25 — `dc72e1e` QR-Popup lädt nicht mehr von cdnjs; Google-Fonts-Prüfung
 
 **David:** „es geht drum dass alles passt gerade mit den Google fonts?"
