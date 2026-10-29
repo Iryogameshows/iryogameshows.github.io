@@ -12,6 +12,171 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-29 — `f8799a5` Jeopardy: Zahlenstrahl — Dinge abwechselnd einordnen
+
+**David:** „mach die, dann neues feature in Jeopardy" → auf die Frage nach dem Feature:
+„ich will eine Art Zahlenstrahl Modus, verschiedene Dinge zu ordnen (die reihenfolge zu
+raten, z.b. Preis, Alter USW.) das soll über die Handys laufen, immer abwechselnd eine
+Person pro team". Drei Rückfragen, seine Antworten: **Reihe wächst, einer legt** ·
+**sofort nach jedem Zug auflösen** · **alles oder nichts**.
+
+**Gemacht:**
+- **Neue Fragensorte `strahl`** (`js/jeopardy.js`, Typdefinition oben mitgepflegt):
+  `strahlTexts`, `strahlValues`, `strahlUnit`, `strahlCount` (3–8 Dinge). Ohne Text oder
+  ohne Wert fällt eine Zeile raus; unter drei vollständigen Dingen gilt die Frage nicht
+  als Zahlenstrahl (`jeopardyIstStrahl`).
+- **Ablauf** (`jeopardyStrahlStart` … `jeopardyStrahlPlatz`): beim Aufdecken liegt das
+  erste Ding von allein, die übrigen kommen gemischt. Der Zug wandert Team für Team und
+  innerhalb des Teams reihum durch die verbundenen Handys (`jeopardyStrahlSpieler`).
+  Wer am Zug ist, bekommt auf dem Handy das Ding und die Lücken als Knöpfe; richtig
+  rastet grün ein, falsch rot — das Ding rutscht trotzdem an seinen echten Platz.
+- **Punkte:** `jeopardyStrahlSieger()` — nur bei **null Fehlern** bekommt das Team mit den
+  meisten richtigen Zügen den vollen Feldwert, bei Gleichstand beide. Gewertet wird wie
+  bei Schätzfrage/Einzelantwort: ein Plus schließt die Frage nicht, der Host beendet sie
+  mit „✔ Frage abschließen" (neuer Sammelbegriff `jeopardyOhneBuzzer`).
+- **Handy** (`buzzer/index.html`): Bildschirm `screen-strahl`, Kanal `buzzer/strahl`,
+  eigene `round` je Zug, Zug per `transaction` (zwei Finger = ein Zug).
+- **Leinwand** (`styles.css`): Reihe von klein nach groß, je Ding Name und Wert,
+  Einrast-Animationen `jstrRichtig`/`jstrFalsch` — reines CSS, dazu
+  `prefers-reduced-motion`.
+- **GM-Panel** (`js/feud.js`): eigenes Panel mit der Reihe, den Lücken als Knöpfen (der
+  Host legt, wenn ein Handy hängt oder ein Team keines hat), „Zug überspringen" und dem
+  Punktestand-Satz. Neue Klasse `.tag-red` in `GM_SHARED_CSS` (`js/core.js`).
+- **Editor** (`js/jeopardy-ui.js`): Haken 📏 Zahlenstrahl, Anzahl, Einheit, je Zeile Name
+  und Wert; Kennzeichen 📏 im Board-Raster.
+- **Prüfwerkzeuge:** Zustand `jeop-strahl` in `tools/gemeinsam/aufbau.js` (damit auch in
+  `tools/shots` und auf der Durchgeh-Seite), Testpunkte in `tools/shots/ablauf.js`
+  (Handy am Zug · Zug kommt beim Host an · danach ist das Handy wieder raus) plus Bild
+  `out/ablauf-strahl.png`.
+- **Nebenbefund behoben:** Der Punkt „Gamepad: Strike kommt beim Host an" in `ablauf.js`
+  war ein Wettlauf — `addStrike` gibt 750 ms nach dem Strike ans nächste Team weiter, die
+  Prüfung wartete 800 ms und las dann `state.teamStrikes[state.currentTeam]`, also das
+  Folge-Team. Jetzt wird das Team vor dem Klick gemerkt. Fiel auf, weil die neuen
+  Zahlenstrahl-Schritte davor das Timing um knapp zwei Sekunden verschoben haben.
+
+**Warum so:**
+- **Ein falsch gelegtes Ding rutscht an seinen Platz.** Sonst wäre „richtig eingeordnet"
+  beim nächsten Zug nicht mehr definiert: in einer bereits falschen Reihe gibt es keine
+  eindeutige Lücke. Der Fehler wird gezählt, die Reihe bleibt sortiert.
+- **Gleiche Werte**: zwei Grenzen (`sollMin`, `sollMax`) statt einer — zwei Dinge mit
+  demselben Preis sind beim Abtippen schnell passiert, und ein „falsch" wäre dort nicht
+  zu erklären.
+- **Vor dem Aufdecken geht auf den Handys nichts auf** (anders als bei Schätzfrage und
+  Einzelantwort): das erste Ding wäre schon die halbe Lösung.
+- **Kein Daily Double auf einem Zahlenstrahl** (`startJeopardyActual`): dort spielen alle
+  Teams abwechselnd, das DD lässt nur das wählende Team antworten — zusammen ergibt das
+  keine spielbare Regel.
+- **Leerer Wert wird `null`, nicht `NaN`**: `NaN` wird beim JSON-Export zu `null`, und
+  `Number(null)` ist 0 — eine geleerte Zeile stünde sonst mit 0 € ganz links.
+- **Animation nur beim echten Zug**: `renderJeopardyClueOverlay` baut bei jedem Aufruf
+  alles neu (Lösung zeigen, Undo, Bild aufdecken). Ohne den Vergleich `zugNr` gegen
+  `ov.dataset.strahlZug` rastete das Ding bei jedem Neuzeichnen wieder ein — dasselbe
+  Muster wie `data-neu` darüber.
+- **Verworfen:** die Dinge als Schätzfrage tippen zu lassen (dann ist es keine Reihe);
+  alle Dinge von Anfang an liegen zu haben und nur zu verschieben (David hat sich für die
+  wachsende Reihe entschieden); das falsch gelegte Ding sichtbar an seinen Platz fliegen
+  zu lassen (ginge nur mit JavaScript-Positionen, die auf der Leinwand stillstehen,
+  BAUPLAN 4.8).
+
+**Geprüft:**
+- `node check.js --types`: „alles in Ordnung", 15 Dateien typgeprüft, keine Meldung;
+  451 Handler-Aufrufe, 303 IDs.
+- `node tools/shots/ablauf.js`: **52 OK, 0 FEHL** (vorher 49, drei neue Punkte), keine
+  JS-Fehler auf Host, Handy und Gamepad. Darin der echte Weg Handy → Host: Sony tippt
+  eine Lücke an, beim Host wächst die Reihe von 1 auf 2 Dinge und der Zug geht an Team
+  Blau.
+- `node tools/shots/shots.js`: 19 Kacheln je Zustand, Kontaktbogen `bogen-jeop-strahl.png` angesehen: die Reihe sitzt in jeder Richtung
+- Von Hand im Browser (`index.html?stumm=1`, Chromium): Runde bis zum Ende gelegt —
+  fehlerfrei ergibt „Reihe komplett — fehlerfrei!" und im Panel „die meisten richtigen
+  Züge: Team Rot (+300)"; mit einem Fehler „Ein Fehler — keine Punkte" und `sieger` leer.
+  Reihe blieb in beiden Fällen sortiert (7 € · 12 € · 18 € · 95 €).
+
+**Offen:**
+- **Am echten Beamer und mit echten Handys nicht gespielt.** Geprüft ist nur der
+  Chromium-Durchlauf mit der Ersatz-Datenbank.
+- Bei einer fehlerfreien Reihe entscheidet „die meisten richtigen Züge" am Ende nur noch
+  darüber, **wer mehr Züge hatte** (bei 5 Dingen: 2 zu 2 plus den ersten, der von allein
+  liegt). Das ist Davids Regel, wörtlich umgesetzt — wenn es sich beim Spielen schief
+  anfühlt, ist das die Stelle (`jeopardyStrahlSieger`).
+- Kein Zeitlimit je Zug; hängt ein Handy, muss der Host „Zug überspringen" drücken oder
+  selbst legen.
+- Die Handys der Teams, die gerade nicht dran sind, zeigen den normalen Pause-Bildschirm —
+  die Reihe sehen sie nur auf der Leinwand.
+- `tools/durchgang/` zeigt den neuen Zustand, ist aber laut TODO vom 2026-10-17 nicht
+  angefasst worden.
+
+**Fallstricke:**
+- Der Kanal heißt `buzzer/strahl`; der Host hört gezielt auf `buzzer/strahl/zug`, nicht
+  auf den ganzen Knoten — sonst löste jeder eigene Schreibvorgang ihn wieder aus.
+- `jeopardyState.strahl` hält nur Indizes. Wer die Dinge einer Frage im Editor ändert,
+  während sie offen ist, verschiebt damit die Reihe.
+- Ein Undo nimmt genau einen Zug zurück und schickt den Stand neu an die Handys
+  (`jeopardyUndo` ruft `jeopardyStrahlSenden`).
+## 2026-10-30 — `f8799a5` GM-Panel: Frage und Lösung als Hauptsache, Wertung als Beiwerk
+
+**David:** „fix endlich das scheiß Layout vom Gamemaster panel, es ist wirklich nicht
+nutzbar. es is hässlich, unhandlich, und unübersichtlich." Nach den ersten Bildern
+genauer: „die Dropdown Menüs rechts sind nicht geil gemacht … Der Rest is lieblos oben in
+die Ecke geklatscht. Dann seh ich den scheiß oben rechts klein zusammengequetscht,
+komplett umständlich. mach doch die wichtigen Sachen, die speziell auf die Fragen bezogen
+sind, schöner, übersichtlicher hin. Ich muss nicht so groß die Punkte sehen, und wie +
+oder − Buttons, die nehmen genau so viel Platz ein wie die Frage und die Lösung."
+
+**Befund vorher (Bilder je Show gerendert, 1280×800):** Jeopardy 400 px leere Fläche unter
+dem Inhalt, WWM 450 px, Sowas ähnlich. Frage in 1 rem, Lösung in 0,92 rem — genauso groß
+wie die 74 px breiten Plus-/Minus-Knöpfe daneben. Knopfleiste klebte am unteren
+Fensterrand, der Inhalt oben links: zwei volle Blickwechsel je Frage.
+
+**Gemacht:**
+- **Frage-Karte ist jetzt die Hauptsache** (`js/feud.js`, Jeopardy-Vorlage): Frage
+  `clamp(1.5rem, 2.6vw, 2.4rem)`, Lösung `clamp(1.1rem, 1.5vw, 1.5rem)` in Grün, Karte mit
+  Verlauf, 26/30 px Polster.
+- **Wertung geschrumpft** (`GM_SHARED_CSS`): Zeile 6 px Polster, Name 0,74 rem, Punktestand
+  1,05 rem statt 1,5 rem, Knöpfe 56×32 px statt 74×38, Plus als gedämpftes Grün mit Rand
+  statt Vollfarbe. `max-width: 560px` — sie läuft nicht mehr über die ganze Breite.
+- **Alles zur Frage steht in der Hauptspalte**: Zahlenstrahl, Buzzer-Reihenfolge und die
+  Eingabenliste sind aus der 280-px-Nebenspalte in die volle Breite gewandert
+  (`sideHtml` → `body`). Neue Klasse `gm-body solo`: bei offener Frage gibt es keine
+  Nebenspalte mehr, Notizen und Verbunden werden zu einem leisen Streifen darunter.
+- **Zahlenstrahl-Reihe neu**: Kachel–Schlitz–Kachel wie auf der Leinwand
+  (`.strahl-chip`, `.strahl-luecke`), der Schlitz ist der Knopf zum Einordnen. Vorher
+  wechselten sich „▸ HIER"-Knöpfe und Textkacheln in einer umbrechenden Liste ab.
+- **Klapp-Panels treten zurück**: dünner Rahmen, 0,6-rem-Kopf, kein Karten-Look.
+- **Knopfleiste und Inhalt auf derselben Kante**: beide `max-width: 1180px`, mittig;
+  Knöpfe linksbündig statt rechts in der Fensterecke. Inhalt hängt über der Leiste
+  (`align-content: safe end`) — bei langem Inhalt fällt das von selbst auf oben zurück.
+- **Schrift wächst ab 900 px Fensterbreite** statt erst ab 1200, und hängt zusätzlich an
+  der Fensterhöhe (`clamp(16px, min(1.3vw, 2.4vh), 23px)`).
+- „Server verbunden" stand doppelt im Bild (Kopfzeile und Buzzer-Zeile) — in der
+  Buzzer-Zeile raus.
+
+**Warum so:**
+- Die Nebenspalte war mit 280 px zu schmal für alles, was zur Frage gehört; der
+  Zahlenstrahl brach dort nach jeder Kachel um. Sie fällt bei offener Frage ganz weg,
+  statt sie breiter zu machen — breiter hätte die Frage wieder verkleinert.
+- Die Klapp-Panels bleiben (Notizen und die Verbundenen-Liste braucht man selten und will
+  sie nicht dauernd sehen), sie treten nur zurück. Ersetzen hätte eine zweite Stelle
+  gebraucht, an der dieselben Angaben stehen.
+- `align-content: safe end` statt fester Höhen: der Inhalt sitzt direkt über der
+  Knopfleiste, und wenn er zu lang wird, verhält sich das Panel wieder wie vorher
+  (scrollen ab oben), ohne Sonderfall im Code.
+- Verworfen: Inhalt mittig (die Lücke zwischen Wertung und Knopfleiste blieb); die
+  Frage-Karte auf volle Höhe strecken (bei kurzen Fragen steht dann eine leere Karte da).
+
+**Geprüft:** `node check.js` „alles in Ordnung". `tools/shots/ablauf.js` 52 OK, 0 FEHL. GM-Panel je Show gerendert (1280×800, 1920×1080, 980×680, 390×844) und angesehen.
+
+**Offen:**
+- Nur Jeopardy bekommt `solo`. Feud, WWM, Sowas, DDF und Preis behalten ihre Nebenspalte —
+  dort steht Inhalt drin (Verlauf, Stand, Wertung), nicht nur Status. Ob David das auch
+  dort anders will, ist offen.
+- Die Fläche über der Frage-Karte bleibt bei kurzen Fragen leer.
+- Am echten zweiten Monitor nicht angesehen, nur gerendert.
+
+**Fallstricke:** `.gm-body.solo` wird in der Jeopardy-Vorlage gesetzt, die Regeln dazu
+stehen in `GM_SHARED_CSS` (`js/core.js`) — wer die Klasse in einer anderen Show setzt,
+bekommt dasselbe Verhalten geschenkt, muss aber prüfen, ob die Nebenspalte dort nur
+Status enthält.
+
 ## 2026-10-29 — `1948120` Beamer: Siegermoment für alle Richtungen, große Momente für WWM, PIH, Daily Double, DDF
 
 **David 2026-10-25:** „dann mach alles" — nach der Regie für einzelne Richtungen alle
