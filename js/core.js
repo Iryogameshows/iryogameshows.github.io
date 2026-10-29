@@ -1297,7 +1297,7 @@ const GM_SHARED_CSS = `
   .gm-header{flex-shrink:0;padding:14px 16px 12px;background:linear-gradient(180deg, rgba(15,18,50,.98), rgba(15,18,50,.9));border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .gm-title{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:2px;color:#FFD23F;}
   .gm-title small{display:block;font-family:'Inter',sans-serif;font-size:.55rem;letter-spacing:2px;color:rgba(255,255,255,.35);font-weight:700;text-transform:uppercase;}
-  .gm-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;overflow-y:auto;}
+  .gm-body{padding:16px 20px 34px;display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;overflow-y:auto;}
   .gm-main{display:flex;flex-direction:column;gap:12px;min-width:0;}
   .gm-side{display:flex;flex-direction:column;gap:12px;min-width:0;}
   .gm-actions{flex-shrink:0;padding:12px 20px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid rgba(255,255,255,.1);background:linear-gradient(0deg, rgba(15,18,50,.98), rgba(15,18,50,.85));}
@@ -1359,7 +1359,7 @@ const GM_SHARED_CSS = `
   @media (min-width: 900px) {
     html{font-size:clamp(16px,min(1.3vw,2.4vh),23px);}
     .gm-header{padding:16px 32px 14px;}
-    .gm-body{padding:24px 32px;gap:26px;}
+    .gm-body{padding:24px 32px clamp(40px,9vh,96px);gap:26px;}
     .gm-main,.gm-side{gap:16px;}
     .answer-list{gap:8px;}
     .answer{padding:14px 20px;font-size:1.05rem;}
@@ -1450,6 +1450,22 @@ const GM_SHARED_CSS = `
   .answer.shown{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);}
   .answer.shown .text{color:#22C55E}
   .answer-list{display:flex;flex-direction:column;gap:4px;}
+  /* Eingaben der Handys (Schaetzfrage, Einzelantwort): bei zehn Spielern war
+     das eine Liste ueber die volle Breite, die die Wertung und die Knoepfe aus
+     dem Bild geschoben hat - der Host musste mitten in der Show scrollen, um
+     Punkte zu geben. Jetzt mehrspaltig und in der Hoehe gedeckelt. */
+  .est-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:5px;max-height:34vh;overflow-y:auto;margin-top:8px;}
+  .est-list .answer{padding:7px 11px;font-size:.84rem;}
+  /* Eine getippte Antwort kann ein ganzer Satz sein ("keine Ahnung") - sie
+     darf die Kachel nicht auseinanderziehen, sonst steht der Name zweizeilig
+     neben dem Wert. */
+  .est-list .answer{align-items:center;gap:8px;}
+  .est-list .answer > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .est-list .answer .pts{font-size:1rem;white-space:nowrap;}
+  /* Dasselbe fuer die Buzzer-Reihenfolge: bei zehn Handys sind es zehn
+     Zeilen, und wichtig ist vor allem die erste. */
+  .buzz-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px;max-height:26vh;overflow-y:auto;}
+  .buzz-liste .buzz-row.first{grid-column:1/-1;}
   .num{color:#FFD23F;margin-right:10px;font-weight:700}
   .pts{color:#FFD23F;font-weight:700}
   .strikes-section{display:flex;gap:8px;flex-wrap:wrap;}

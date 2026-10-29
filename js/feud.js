@@ -1758,7 +1758,7 @@ function updateGamemasterJeopardy() {
             <span>${eingabeTitel}</span>
             <span class="badge">${jeopardyEstimate.answers.length}</span>
           </div>
-          <div class="answer-list" style="margin-top:8px;">${jeopardyEstimateListHtml()}</div>
+          <div class="answer-list est-list">${jeopardyEstimateListHtml()}</div>
           <div class="hint-line">${jeopardyEstimate.open
             ? 'Eingabe auf den Handys ist <b>offen</b>.'
             : 'Eingabe ist <b>geschlossen</b>.'}</div>
@@ -1766,7 +1766,7 @@ function updateGamemasterJeopardy() {
       : jeopardyBuzzer.results.length
       ? `<div class="panel">
           <div class="panel-head"><span>🔔 Buzzer-Reihenfolge</span></div>
-          ${jeopardyBuzzer.results.map((r,idx)=>`<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${escapeHtml(r.name)}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')}
+          <div class="buzz-liste">${jeopardyBuzzer.results.map((r,idx)=>`<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${escapeHtml(r.name)}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')}</div>
           ${excludedTag}
         </div>`
       // Beim Zahlenstrahl steht der Stand im eigenen Panel darüber.
