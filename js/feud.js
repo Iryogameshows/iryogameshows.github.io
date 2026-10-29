@@ -1653,7 +1653,7 @@ function updateGamemasterJeopardy() {
        zwei Teams dürfen gleich nah dranliegen und beide Punkte bekommen. Wer
        schon gewertet wurde, bekommt statt des Knopfs ein Häkchen; sonst
        klickt der Host im Eifer zweimal und zahlt doppelt. */
-    const getipptScore = jeopardyTyped(clue);
+    const getipptScore = jeopardyOhneBuzzer(clue);
     const scoreRows = `<div class="score-rows">${wertbar.map(({ name, i }) => {
       const dran = i === buzzTeam;
       const schon = getipptScore && jeopardyState.scoredTeams.includes(i);
@@ -1709,6 +1709,7 @@ function updateGamemasterJeopardy() {
       steps ? `<span class="tag tag-gold">📜 Nacheinander (${jeopardyStepItems(clue).length})</span>` : '',
       staged ? '<span class="tag tag-gold">🧩 Staffel-Bild</span>' : '',
       series ? `<span class="tag tag-gold">🎴 Bilder-Reihe (${jeopardySeriesImgs(clue).length})</span>` : '',
+      jeopardyIstStrahl(clue) ? `<span class="tag tag-gold">📏 Zahlenstrahl (${jeopardyStrahlDinge(clue).length})</span>` : '',
       clue.aImg ? `<span class="tag tag-green">${jeopardyIstVideo(clue.aImg) ? '🎬 Lösungs-Video' : '🖼 Lösungs-Bild'}</span>` : '',
       clue.sound ? '<span class="tag tag-purple">🔊 Sound</span>' : '',
     ].filter(Boolean).join(' ');
@@ -1719,6 +1720,35 @@ function updateGamemasterJeopardy() {
       : '';
     const excludedTag = jeopardyBuzzer.excluded.length
       ? `<div class="excl-tag">🚫 Gesperrt: ${jeopardyBuzzer.excluded.map(escapeHtml).join(', ')}</div>` : '';
+    /* Zahlenstrahl: das Panel ist hier das Ersatzhandy. Es zeigt die Reihe
+       mit den Lücken als Knöpfe - hängt ein Handy oder hat ein Team gar
+       keines, legt der Host an seiner Stelle, ohne dass die Runde steht. */
+    const strahl = jeopardyIstStrahl(clue) ? jeopardyState.strahl : null;
+    let strahlPanel = '';
+    if (strahl){
+      const dinge = jeopardyStrahlDinge(clue);
+      const sieger = jeopardyStrahlSieger();
+      const zugName = strahl.spieler ? strahl.spieler.name : 'niemand verbunden';
+      // Die Reihe liest sich wie auf der Leinwand: Kachel, Luecke, Kachel.
+      // Die Luecke ist ein schmaler Schlitz, keine Beschriftung - sonst ist
+      // die Zeile bei sechs Dingen breiter als das Fenster.
+      const luecke = (p) => `<button class="strahl-luecke" title="Hier einordnen" onclick="opener.jeopardyStrahlPlatz(${p},'Host')">+</button>`;
+      const reiheHtml = strahl.reihe.map((i, p) => `
+        ${strahl.fertig ? '' : luecke(p)}
+        <span class="strahl-chip${strahl.letzter && strahl.letzter.idx === i ? (strahl.letzter.richtig ? ' richtig' : ' falsch') : ''}"><b>${escapeHtml(dinge[i].text)}</b><i>${escapeHtml(jeopardyStrahlWert(dinge[i].wert, clue))}</i></span>`).join('');
+      const stand = strahl.fertig
+        ? (strahl.fehler
+            ? `<b>${strahl.fehler === 1 ? 'Ein Fehler' : strahl.fehler + ' Fehler'}</b> — nach eurer Regel bekommt <b>keiner</b> Punkte.`
+            : `Reihe <b>fehlerfrei</b> — die meisten richtigen Züge: <b>${sieger.map(i => escapeHtml(jeopardyState.teamNames[i] || ('Team ' + (i+1)))).join(' und ')}</b> (+${val}).`)
+        : `Einzuordnen: <b>${strahl.offen.length ? escapeHtml(dinge[strahl.offen[0]].text) : '—'}</b>
+           · am Zug: <b>${escapeHtml(jeopardyState.teamNames[strahl.team] || ('Team ' + (strahl.team+1)))}</b>
+           (${escapeHtml(zugName)})`;
+      strahlPanel = `<div class="panel strahl-panel">
+        <div class="panel-head"><span>📏 Zahlenstrahl — klein ➜ groß</span><span class="badge">${strahl.reihe.length}/${strahl.reihe.length + strahl.offen.length}</span></div>
+        <div class="strahl-reihe">${reiheHtml}${strahl.fertig ? '' : luecke(strahl.reihe.length)}</div>
+        <div class="hint-line">${stand}</div>
+      </div>`;
+    }
     // Schätzfrage/Einzelantwort: statt der Buzzer-Reihenfolge die Eingaben
     const getippt = jeopardyTyped(clue);
     const eingabeTitel = clue.single ? '📝 Antworten' : '📊 Schätzungen';
@@ -1739,18 +1769,23 @@ function updateGamemasterJeopardy() {
           ${jeopardyBuzzer.results.map((r,idx)=>`<div class="pr-row buzz-row ${idx===0?'first':''}"><span class="pr-rank">${idx+1}.</span>${escapeHtml(r.name)}<span class="buzz-time">${r.t.toFixed(2)}s</span></div>`).join('')}
           ${excludedTag}
         </div>`
+      // Beim Zahlenstrahl steht der Stand im eigenen Panel darüber.
+      : strahl
+      ? ''
       : jeopardyState.currentIsDaily
       // Beim Daily Double wird nicht gebuzzert - ein Hinweis auf den Buzzer
       // wäre hier schlicht falsch.
       ? `<div class="hint-line">★ Daily Double — kein Buzzer, nur <b>${escapeHtml(jeopardyState.teamNames[jeopardyState.ddTeam] || '')}</b> antwortet ${connChip}</div>`
-      : `<div class="hint-line">🔔 Buzzer ${jeopardyBuzzer.armed?'scharf — warte auf Buzz…':'aus'} ${connChip}${excludedTag}</div>`;
+      // Kein connChip hier: der steht schon in der Kopfzeile (David,
+      // 2026-10-30 - zweimal "Server verbunden" im selben Bild).
+      : `<div class="hint-line">🔔 Buzzer ${jeopardyBuzzer.armed?'scharf — warte auf Buzz…':'aus'}${excludedTag}</div>`;
     const revealed = jeopardyState.questionRevealed;
     body = `
       <div class="round-label">${revealed ? 'Frage offen' : 'Frage verdeckt'} · ${escapeHtml(cat.name)} · ${val}${ddBadge}</div>
       ${revealed ? '' : `<div class="scores-row">${scoresHtml}</div>`}
+      ${media?`<div class="media-row">${media}</div>`:''}
       <div class="clue-box">
         ${clue.q?`<div class="clue-q">${escapeHtml(clue.q)}</div>`:''}
-        ${media?`<div class="media-row">${media}</div>`:''}
         <div class="clue-a">Lösung: <strong>${escapeHtml(clue.a||'(nur Bild)')}</strong></div>
       </div>
       ${qNoteHtml(clue.note)}
@@ -1760,14 +1795,25 @@ function updateGamemasterJeopardy() {
           Frage ist noch <b>verdeckt</b> (nur du siehst sie oben).<br>${getippt
             ? `Auf den Handys steht das ${clue.single ? 'Textfeld' : 'Schätzfeld'} schon —
                <b>gesperrt</b>, mit Schloss. Beim Aufdecken geht es auf.`
+            : jeopardyIstStrahl(clue)
+            // Beim Zahlenstrahl geht auf den Handys vor dem Aufdecken nichts
+            // auf: das erste Ding waere schon die halbe Loesung.
+            ? `📏 Zahlenstrahl mit ${jeopardyStrahlDinge(clue).length} Dingen. Beim Aufdecken
+               liegt das erste von allein, dann sind die Teams abwechselnd dran.`
             : 'Buzzer sind <b>live</b> — wer jetzt buzzert, wird 3&nbsp;Sek. gesperrt.'}
         </div>
       ` : `
         ${stepsPreview}
         ${(staged||series||steps||soundBtn)?`<div class="btn-grid">${stageBtn}${seriesBtn}${stepsBtn}${soundBtn}</div>`:''}
+        ${strahlPanel}
+        ${buzzHtml}
         ${scoreRows}
       `}`;
-    sideHtml = `${buzzHtml}${connectPanel}`;
+    /* Was zur Frage gehoert - Zahlenstrahl, Buzzer-Reihenfolge, Eingaben -
+       steht in der Hauptspalte, nicht in der Nebenspalte. Dort war es auf
+       280 px zusammengequetscht (David, 2026-10-30). Rechts bleibt nur, was
+       mit der Frage nichts zu tun hat: wer verbunden ist. */
+    sideHtml = connectPanel;
     controlsHtml = !revealed ? `
           <button class="gm-btn gold" onclick="opener.jeopardyRevealQuestion()">👁 Frage aufdecken</button>
           <button class="gm-btn gray" onclick="opener.jeopardySkip()">Überspringen</button>
@@ -1777,6 +1823,10 @@ function updateGamemasterJeopardy() {
             ? (jeopardyEstimate.open
                 ? `<button class="gm-btn gray" onclick="opener.jeopardyEstimateClose()">${clue.single?'📝':'📊'} Eingabe schließen</button>`
                 : `<button class="gm-btn gray" onclick="opener.jeopardyEstimateReopen()">${clue.single?'📝':'📊'} Eingabe neu öffnen</button>`)
+            // Zahlenstrahl: kein Buzzer. Haengt ein Handy, reicht der Host
+            // den Zug weiter - legen kann er in der Reihe darueber.
+            : strahl
+            ? (strahl.fertig ? '' : `<button class="gm-btn gray" onclick="opener.jeopardyStrahlWeiter()">📏 Zug überspringen</button>`)
             : jeopardyState.currentIsDaily
             // Kein "Buzzer neu" beim Daily Double: es hat nie jemand gebuzzert,
             // und ein zweiter Versuch für die anderen wäre gegen die Regel.
@@ -1787,7 +1837,7 @@ function updateGamemasterJeopardy() {
             // aufgedeckt) darf niemand dafür büßen.
             : `<button class="gm-btn gray" onclick="opener.jeopardyBuzzReopen()">🔔 Buzzer neu (1. gesperrt)</button>
                <button class="gm-btn gray" onclick="opener.jeopardyBuzzReopenAll()">🔔 Buzzer neu (alle dürfen)</button>`}
-          ${getippt
+          ${getippt || strahl
             ? `<button class="gm-btn gold" onclick="opener.jeopardyCloseTyped()">✔ Frage abschließen${
                 jeopardyState.scoredTeams.length ? ` (${jeopardyState.scoredTeams.length} gewertet)` : ''}</button>`
             : ''}
@@ -1839,15 +1889,46 @@ function updateGamemasterJeopardy() {
   .jcell{background:linear-gradient(180deg,#1a2a8a,#111d6e);text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.25rem;color:#FFD23F;display:flex;align-items:center;justify-content:center;min-height:40px;cursor:pointer;border-radius:5px;transition:background .12s, transform .1s;}
   .jcell:hover{background:linear-gradient(180deg,#2a3eb0,#1a2e8a);transform:scale(1.03);}
   .jcell.used{background:#080c1e;cursor:default;}
-  .clue-box{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px;}
-  .clue-q{font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:10px;}
-  .clue-a{font-size:.92rem;color:#4ADE80;font-weight:700;padding-top:10px;border-top:1px dashed rgba(255,255,255,.1);}
+  /* Frage und Loesung sind die Hauptsache im Panel - der Host liest beides
+     laut ab, waehrend er steht (David, 2026-10-30: „mach die wichtigen
+     Sachen, die speziell auf die Fragen bezogen sind, schöner, übersichtlicher
+     hin"). Vorher: 1 rem Frage, 0,92 rem Loesung, beides so gross wie die
+     Plus-Minus-Knoepfe daneben. */
+  .clue-box{
+    background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:26px 30px;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  .clue-q{font-size:clamp(1.5rem,2.6vw,2.4rem);font-weight:800;line-height:1.25;letter-spacing:-.01em;margin-bottom:16px;}
+  .clue-a{
+    font-size:clamp(1.1rem,1.5vw,1.5rem);color:#4ADE80;font-weight:800;
+    padding-top:14px;border-top:1px dashed rgba(255,255,255,.14);
+  }
+  /* Das Wort "Lösung:" ist nur die Beschriftung, die Antwort zaehlt. */
+  .clue-a{color:rgba(255,255,255,.4);}
+  .clue-a strong{color:#4ADE80;}
+  /* Die Reihe des Zahlenstrahls, wie auf der Leinwand: Kachel - Schlitz -
+     Kachel. Der Schlitz ist der Knopf zum Einordnen. */
+  .strahl-panel{border-color:rgba(255,210,63,.25);}
+  .strahl-reihe{display:flex;align-items:stretch;flex-wrap:wrap;gap:5px;margin:4px 0 10px;}
+  .strahl-chip{display:flex;flex-direction:column;gap:2px;padding:9px 14px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);}
+  .strahl-chip b{font-size:.95rem;font-weight:800;}
+  .strahl-chip i{font-style:normal;font-size:.75rem;color:rgba(255,255,255,.5);}
+  .strahl-chip.richtig{border-color:rgba(34,197,94,.55);background:rgba(34,197,94,.1);}
+  .strahl-chip.falsch{border-color:rgba(232,69,60,.55);background:rgba(232,69,60,.1);}
+  .strahl-luecke{
+    width:32px;border-radius:10px;cursor:pointer;
+    border:1px dashed rgba(255,210,63,.45);background:rgba(255,210,63,.07);
+    color:#FFD23F;font-family:inherit;font-size:1rem;font-weight:800;
+    transition:background .12s;
+  }
+  .strahl-luecke:hover{background:rgba(255,210,63,.2);}
 </style></head><body>
   <div class="gm-header">
     <div class="gm-title">JEOPARDY<small>Gamemaster</small></div>
     ${connChip}
   </div>
-  <div class="gm-body">
+  <div class="gm-body${jeopardyState.currentClue && !jeopardyState.ddPending ? ' solo' : ''}">
     <div class="gm-main">${body}</div>
     <div class="gm-side">${gmNotesPanelHtml()}${sideHtml}</div>
   </div>
@@ -1951,7 +2032,7 @@ function updateGMBar() {
       const teamBtns = jeopardyState.teamNames.map((name, i) => ({ name, i }))
         .filter(t => jeopardyTeamMayAnswer(t.i))
         .map(({ name, i }) => {
-          const schon = jeopardyTyped(cc) && jeopardyState.scoredTeams.includes(i);
+          const schon = jeopardyOhneBuzzer(cc) && jeopardyState.scoredTeams.includes(i);
           return `<button class="gm-btn" ${schon ? 'disabled' : ''} style="background:linear-gradient(180deg,${['#E8453C','#3B82F6','#22C55E'][i]},${['#C62828','#1D4ED8','#16a34a'][i]});color:#fff;${schon ? 'opacity:.45;' : ''}" onclick="jeopardyScore(${i})">${schon ? '✔' : '✓'} ${escapeHtml(name)} +${jeopardyClueValue()}</button>`;
         }).join('');
       let stageBtn = '';
@@ -1974,12 +2055,18 @@ function updateGMBar() {
         ${stepsBtn}
         ${soundBtn}
         ${teamBtns}
-        ${jeopardyTyped(cc) ? `<button class="gm-btn gm-gold" onclick="jeopardyCloseTyped();updateGMBar();">✔ Frage abschließen</button>` : ''}
+        ${jeopardyOhneBuzzer(cc) ? `<button class="gm-btn gm-gold" onclick="jeopardyCloseTyped();updateGMBar();">✔ Frage abschließen</button>` : ''}
         <button class="gm-btn gm-blue" onclick="jeopardyToggleAnswer();updateGMBar();">${jeopardyState.answerShown ? 'Lösung verbergen' : 'Lösung zeigen'}</button>
         ${jeopardyTyped(cc)
           ? (jeopardyEstimate.open
               ? `<button class="gm-btn gm-gray" onclick="jeopardyEstimateClose();updateGMBar();">${cc.single?'📝':'📊'} Eingabe schließen (${jeopardyEstimate.answers.length})</button>`
               : `<button class="gm-btn gm-gray" onclick="jeopardyEstimateReopen();updateGMBar();">${cc.single?'📝':'📊'} Eingabe neu öffnen</button>`)
+          : jeopardyIstStrahl(cc)
+          // Kein Buzzer-Knopf beim Zahlenstrahl. Haengt ein Handy, reicht der
+          // Host den Zug weiter - legen kann er im GM-Panel.
+          ? (jeopardyState.strahl && !jeopardyState.strahl.fertig
+              ? `<button class="gm-btn gm-gray" onclick="jeopardyStrahlWeiter();updateGMBar();">📏 Zug überspringen</button>`
+              : '')
           : jeopardyState.currentIsDaily
           ? ''
           : `<button class="gm-btn gm-gray" onclick="jeopardyBuzzReopen();updateGMBar();">🔔 Buzzer neu (1. gesperrt)</button>

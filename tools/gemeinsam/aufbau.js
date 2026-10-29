@@ -42,6 +42,31 @@ const AUFBAU = {
     let c = 3; while (c > 0 && jeopardyIsDaily(c, 2)) c--;
     openJeopardyClue(c, 2); jeopardyRevealQuestion();
   },
+  /* Zahlenstrahl mit zwei gelegten Dingen, eins davon falsch - so sind beide
+     Rueckmeldungen (gruen, rot) im Bild. Die Dinge werden hier in das leere
+     Feld geschrieben: im mitgelieferten Board steht keine Strahl-Frage, und
+     die Pruefung soll nicht an Davids Fragen haengen.
+     Math.random bleibt die ganze Zeit auf 0 - die Reihenfolge der Dinge wird
+     gemischt, und --vergleich braucht in jedem Lauf dasselbe Bild. */
+  'jeop-strahl': () => {
+    const mr = Math.random; Math.random = () => 0;
+    startJeopardyActual();
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    showScreen('jeopardy-screen');
+    let c = 3; while (c > 0 && jeopardyIsDaily(c, 2)) c--;
+    const clue = jBoard()[c].clues[2];
+    clue.q = 'Was kostet mehr?';
+    clue.strahl = true;
+    clue.strahlUnit = '€';
+    clue.strahlCount = 4;
+    clue.strahlTexts = ['Kinokarte', 'Döner', 'Monat Streaming', 'Tankfüllung'];
+    clue.strahlValues = [12, 7, 18, 95];
+    openJeopardyClue(c, 2);
+    jeopardyRevealQuestion();
+    jeopardyStrahlPlatz(0, 'Anna');     // irgendwohin - richtig oder falsch entscheidet der Wert
+    jeopardyStrahlPlatz(2, 'Ben');
+    Math.random = mr;
+  },
   'jeop-antwort': () => {
     const mr = Math.random; Math.random = () => 0; startJeopardyActual(); Math.random = mr;
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());

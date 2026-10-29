@@ -52,7 +52,7 @@ const ALLE_RICHTUNGEN = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'H', 'I', 'J', 'K', '
 const HOST_SEITEN = new Set(['gm', 'gm-menu', 'turnier-host', 'menu', 'setup']);
 // Zustaende, deren Bild aus dem GM-iframe kommt, nicht aus der Seite.
 const GM_SHOWS = new Set(['gm', 'gm-menu']);
-const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'feud-finale-frage', 'jeop', 'jeop-frage', 'jeop-antwort', 'wwm', 'wwm-joker', 'wwds', 'wwds-frage', 'wwds-joker', 'wwds-master', 'ddf', 'ddf-ergebnis', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'gm-menu', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
+const ALLE_SHOWS = ['feud', 'feud-lang', 'feud-finale', 'feud-finale-frage', 'jeop', 'jeop-frage', 'jeop-antwort', 'jeop-strahl', 'wwm', 'wwm-joker', 'wwds', 'wwds-frage', 'wwds-joker', 'wwds-master', 'ddf', 'ddf-ergebnis', 'pih', 'pih-gebot', 'tp', 'ergebnis', 'turnier', 'turnier-host', 'gm', 'gm-menu', 'menu', 'setup', 'buzzer', 'buzzer-pause', 'buzzer-login'];
 
 // ── Argumente ──
 const args = process.argv.slice(2);

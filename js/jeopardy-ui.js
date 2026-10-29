@@ -311,7 +311,9 @@ function jeopardyToggleAnswer() {
 function jeopardyScore(teamIdx) {
   if (!jeopardyState.currentClue) return;
   if (!jeopardyTeamMayAnswer(teamIdx)) return;
-  const getippt = jeopardyTyped(jeopardyCurrentClue());
+  // Zahlenstrahl wie eine getippte Frage: bei Gleichstand bekommen zwei Teams
+  // Punkte, also schliesst ein Plus die Frage nicht.
+  const getippt = jeopardyOhneBuzzer(jeopardyCurrentClue());
   if (getippt && jeopardyState.scoredTeams.includes(teamIdx)) return;
   jeopardySnapshot();
   jeopardyState.scores[teamIdx] += jeopardyClueValue();
@@ -339,6 +341,8 @@ function jeopardyFinishClue() {
   jeopardyState.ddPending = false;
   jeopardyState.questionRevealed = false;
   jeopardyState.scoredTeams = [];
+  jeopardyState.strahl = null;
+  jeopardyStrahlClose();
   jeopardyStopSound(true);
   jeopardyBuzzClose();
   if (jeopardyEstimate.open) jeopardyEstimateClose();
@@ -588,6 +592,44 @@ function jeopardyEditSeriesImg(b,col,row,idx,input){
   };
   r.readAsDataURL(f);
 }
+/* Zahlenstrahl: Dinge, die die Teams der Reihe nach einordnen. Der Wert ist
+   Pflicht - er sortiert die Reihe und steht beim Einordnen auf der Leinwand.
+   Zeilen ohne Text oder ohne Wert fallen beim Spielen still raus
+   (jeopardyStrahlDinge), deshalb darf der Editor halb leere Zeilen zeigen. */
+function jeopardyEditStrahl(b,col,row,cb){
+  const c = jeopardyClue(b,col,row); c.strahl = cb.checked;
+  if(c.strahl){ if(!c.strahlTexts) c.strahlTexts = []; if(!c.strahlValues) c.strahlValues = []; if(!c.strahlCount) c.strahlCount = 5; }
+  renderJeopardyEditor();
+}
+function jeopardyEditStrahlCount(b,col,row,val){
+  const c = jeopardyClue(b,col,row); c.strahlCount = Math.max(3, Math.min(8, Number(val)||5));
+  renderJeopardyEditor();
+}
+function jeopardyEditStrahlUnit(b,col,row,val){
+  const c = jeopardyClue(b,col,row); c.strahlUnit = String(val||'').trim();
+}
+/** Wie jeopardyEditStepText bewusst ohne erneutes Rendern - sonst verliert das
+ *  Feld beim Tippen den Fokus.
+ *  @param {number} b @param {number} col @param {number} row
+ *  @param {number} idx @param {string} val */
+function jeopardyEditStrahlText(b,col,row,idx,val){
+  const c = jeopardyClue(b,col,row);
+  c.strahlTexts = c.strahlTexts || [];
+  c.strahlTexts[idx] = val;
+}
+/** @param {number} b @param {number} col @param {number} row
+ *  @param {number} idx @param {string} val */
+function jeopardyEditStrahlWert(b,col,row,idx,val){
+  const c = jeopardyClue(b,col,row);
+  c.strahlValues = c.strahlValues || [];
+  // Leer heisst "keine Zahl", nicht 0: ein Ding fuer 0 € waere ein gueltiger
+  // Wert und stuende ganz links in der Reihe.
+  // null statt NaN: NaN wird beim Export zu null, und Number(null) ist 0 -
+  // eine geleerte Zeile stuende sonst mit 0 ganz links in der Reihe.
+  const s = String(val||'').replace(',', '.').trim();
+  const n = Number(s);
+  c.strahlValues[idx] = (s && isFinite(n)) ? n : null;
+}
 function jeopardyClearSeriesImg(b,col,row,idx){
   const c = jeopardyClue(b,col,row);
   if(c.seriesImgs) c.seriesImgs[idx] = null;
@@ -613,6 +655,7 @@ function jeopardyCellBadges(clue){
   if (clue.staged)   b += '<span title="Staffeln">🧩</span>';
   if (clue.series)   b += '<span title="Bilder-Reihe">🎴</span>';
   if (clue.steps)    b += '<span title="Schritte nacheinander">📜</span>';
+  if (clue.strahl)   b += '<span title="Zahlenstrahl">📏</span>';
   if (clue.estimate) b += '<span title="Schätzfrage">📊</span>';
   if (clue.single)   b += '<span title="Einzelantwort">📝</span>';
   return b;
@@ -670,6 +713,15 @@ function jeopardyClueEditorHtml(b, col, row){
       <label style="${uploadLbl}background:${clue.estimate?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Kein Buzzer: alle Handys tippen eine ZAHL ein. Der Host sieht sie der Größe nach sortiert.">
         <input type="checkbox" ${clue.estimate?'checked':''} onchange="jeopardyEditTyped(${b},${col},${row},'estimate',this)" style="accent-color:#FFD23F;"> 📊 Schätzfrage
       </label>
+      <label style="${uploadLbl}background:${clue.strahl?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Kein Buzzer: die Teams ordnen die Dinge abwechselnd in eine Reihe ein (klein → groß). Wer am Zug ist, legt auf dem Handy.">
+        <input type="checkbox" ${clue.strahl?'checked':''} onchange="jeopardyEditStrahl(${b},${col},${row},this)" style="accent-color:#FFD23F;"> 📏 Zahlenstrahl
+      </label>
+      ${clue.strahl?`
+        <select onchange="jeopardyEditStrahlCount(${b},${col},${row},this.value)" title="Anzahl Dinge" style="padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
+          ${[3,4,5,6,7,8].map(n=>`<option value="${n}" ${jeopardyStrahlCount(clue)===n?'selected':''}>${n} Dinge</option>`).join('')}
+        </select>
+        <input type="text" placeholder="Einheit (€, Jahre)" value="${esc(clue.strahlUnit||'')}" onchange="jeopardyEditStrahlUnit(${b},${col},${row},this.value)" style="width:120px;padding:4px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:#fff;border:1px solid rgba(255,255,255,.12);font-size:.68rem;">
+      `:''}
       <label style="${uploadLbl}background:${clue.single?'rgba(255,210,63,.15)':'rgba(255,255,255,.08)'};" title="Kein Buzzer: auf jedem Handy geht ein Textfeld mit normaler Tastatur auf. Jeder tippt seine eine Antwort, der Host sieht sie in Eingangsreihenfolge.">
         <input type="checkbox" ${clue.single?'checked':''} onchange="jeopardyEditTyped(${b},${col},${row},'single',this)" style="accent-color:#FFD23F;"> 📝 Einzelantwort
       </label>
@@ -697,6 +749,20 @@ function jeopardyClueEditorHtml(b, col, row){
           ${img
             ? `<img class="jimg-thumb" src="${safeSrc(img)}" data-preview-name="${esc(nm)}" alt=""><button onclick="jeopardyClearStepImg(${b},${col},${row},${idx})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${esc(nm)} entfernen">✕</button>`
             : `<label style="${uploadLbl}white-space:nowrap;" title="Bild für Schritt ${idx+1}">🖼<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditStepImg(${b},${col},${row},${idx},this)"></label>`}
+        </div>`;
+      }).join('')}
+    `:''}
+    ${clue.strahl?`
+      <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:9px 0 4px;">Dinge zum Einordnen - je Zeile Name und Wert. Die Frage oben sagt, wonach sortiert wird ("Was kostet mehr?"). Zeilen ohne Wert werden übersprungen; unter drei vollständigen Zeilen läuft die Runde nicht.</label>
+      ${Array.from({length: jeopardyStrahlCount(clue)}, (_,idx)=>{
+        // unknown, siehe jeopardyStrahlDinge: hier kann auch null oder ""
+        // stehen, obwohl der Typ number sagt.
+        const wert = /** @type {unknown} */ ((clue.strahlValues||[])[idx]);
+        return `
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <span style="font-size:.7rem;font-weight:800;color:#FFD23F;width:14px;text-align:right;">${idx+1}</span>
+          <input type="text" placeholder="Ding ${idx+1}" value="${esc((clue.strahlTexts||[])[idx]||'')}" oninput="jeopardyEditStrahlText(${b},${col},${row},${idx},this.value)" style="${inp}font-size:.82rem;">
+          <input type="text" inputmode="decimal" placeholder="Wert" value="${wert===null||wert===undefined||wert===''?'':esc(String(wert))}" oninput="jeopardyEditStrahlWert(${b},${col},${row},${idx},this.value)" style="${inp}width:110px;flex:0 0 110px;font-size:.82rem;">
         </div>`;
       }).join('')}
     `:''}

@@ -141,7 +141,42 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   });
   await warte(400);
   check('Jeopardy-Schaetzfrage: Handy im Eingabefeld', feld2 && (await screen()) === 'screen-estimate', { feld2, screen: await screen() });
-  await host.evaluate(() => { jeopardyEstimateClose(); closeJeopardyClue(); jeopardyBuzzClose(); showScreen('menu-screen'); });
+  // Zahlenstrahl: nur die Person am Zug bekommt einen Bildschirm, und ihr
+  // Tipp muss beim Host ankommen. Sony ist das einzige Handy in Team Rot und
+  // damit im ersten Zug dran.
+  const feld3 = await host.evaluate(() => {
+    jeopardyEstimateClose(); closeJeopardyClue();
+    jeopardyState.currentClue = null; jeopardyState.ddPending = false;
+    const b = jeopardyState.currentBoard, cats = jeopardyData.boards[b].categories;
+    for (let c = 0; c < cats.length; c++) for (let r = 0; r < cats[c].clues.length; r++){
+      if (jeopardyIsDaily(c, r) || jeopardyState.used[c][r]) continue;
+      const cl = jeopardyClue(b, c, r);
+      if (cl.estimate || cl.single || jeopardyState.currentClue) continue;
+      cl.q = 'Was kostet mehr?';
+      cl.strahl = true; cl.strahlCount = 4; cl.strahlUnit = '€';
+      cl.strahlTexts = ['Kinokarte', 'Döner', 'Monat Streaming', 'Tankfüllung'];
+      cl.strahlValues = [12, 7, 18, 95];
+      openJeopardyClue(c, r); jeopardyRevealQuestion();
+      return [c, r];
+    }
+    return null;
+  });
+  await warte(600);
+  check('Jeopardy-Zahlenstrahl: Handy am Zug', feld3 && (await screen()) === 'screen-strahl', { feld3, screen: await screen() });
+  await handy.screenshot({ path: OUT + '/ablauf-strahl.png' });
+  const strahlVor = await host.evaluate(() => jeopardyState.strahl && jeopardyState.strahl.reihe.length);
+  await handy.click('#strahl-list .strahl-gap');
+  await warte(700);
+  const strahlNach = await host.evaluate(() => jeopardyState.strahl && {
+    n: jeopardyState.strahl.reihe.length, team: jeopardyState.strahl.team,
+    zuege: jeopardyState.strahl.fehler + jeopardyState.strahl.richtig.reduce((a, b) => a + b, 0),
+  });
+  check('Zahlenstrahl: Zug vom Handy kommt beim Host an',
+    !!strahlNach && strahlNach.n === strahlVor + 1 && strahlNach.zuege === 1, { strahlVor, strahlNach });
+  // Danach ist Team Blau dran - dort haengt kein Handy, also bekommt Sony
+  // keinen Zug-Bildschirm mehr.
+  check('Zahlenstrahl: nach dem Zug ist das Handy wieder raus', (await screen()) !== 'screen-strahl', await screen());
+  await host.evaluate(() => { jeopardyCloseTyped(); jeopardyBuzzClose(); showScreen('menu-screen'); });
   await warte(300);
 
   // ── Show 4: Der Duemmste fliegt ──
@@ -274,10 +309,18 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   await host.evaluate(() => { showScreen('game-screen'); loadRound(); updateGamemaster(); });
   await warte(800);
   check('Gamepad: Spielpanel mit Beenden in der Kopfzeile', (await zaehle(gp.locator('.gm-header .gm-quit'))) === 1);
-  const strikeVor = await host.evaluate(() => state.teamStrikes[state.currentTeam]);
+  /* Das Team MITZAEHLEN, nicht state.currentTeam zweimal lesen: addStrike
+     gibt 750 ms nach dem Strike ans naechste Team weiter (js/feud.js), die
+     Pruefung wartet 800 ms. Wer danach state.teamStrikes[state.currentTeam]
+     liest, liest das FOLGE-Team und bekommt 0 statt 1 - ein Wettlauf, der
+     je nach Laufzeit der Schritte davor mal durchging und mal nicht. */
+  const teamVor = await host.evaluate(() => state.currentTeam);
+  const strikeVor = await host.evaluate(t => state.teamStrikes[t], teamVor);
   await gpKnopf('Strike').first().click();
   await warte(800);
-  check('Gamepad: Strike kommt beim Host an', await host.evaluate(n => state.teamStrikes[state.currentTeam] === n + 1, strikeVor));
+  check('Gamepad: Strike kommt beim Host an',
+    await host.evaluate(([t, n]) => state.teamStrikes[t] === n + 1, [teamVor, strikeVor]),
+    { teamVor, strikeVor, jetzt: await host.evaluate(() => state.teamStrikes) });
   await pad.screenshot({ path: OUT + '/ablauf-gamepad.png' });
   await gp.locator('.gm-quit').click();
   await warte(900);

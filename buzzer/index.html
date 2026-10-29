@@ -198,6 +198,32 @@
   .vote-opt:active { transform:scale(.97); background:rgba(var(--fg-rgb),.12); border-color:rgba(var(--gold-rgb),.45); }
   .vote-opt .av { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex:0 0 34px; }
 
+  /* Zahlenstrahl: die schon liegenden Dinge untereinander, dazwischen die
+     Lücken als Knöpfe. Senkrecht statt waagerecht - auf der Leinwand liegt
+     die Reihe nebeneinander, auf dem Handy ist dafür kein Platz. Deshalb
+     sagt jeder Knopf in Worten, wohin er legt ("kleiner als …"), statt sich
+     auf eine Richtung zu verlassen. */
+  #strahl-list { display:flex; flex-direction:column; gap:8px; width:100%; margin:14px 0; }
+  .strahl-ding {
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:10px 14px; border-radius:12px;
+    background:rgba(var(--fg-rgb),.05); border:1px solid rgba(var(--fg-rgb),.12);
+    font-size:.98rem; font-weight:700; color:rgba(var(--fg-rgb),.8);
+  }
+  .strahl-ding .w { font-weight:900; color:rgba(var(--fg-rgb),.55); white-space:nowrap; }
+  .strahl-gap {
+    width:100%; padding:13px 14px; border-radius:12px; cursor:pointer;
+    background:rgba(var(--gold-rgb),.1); border:2px dashed rgba(var(--gold-rgb),.45);
+    color:var(--accent-text); font-size:.92rem; font-weight:800; text-align:left;
+    transition:background .18s var(--ease-out),transform .12s var(--ease-out);
+  }
+  .strahl-gap:active { transform:scale(.97); background:rgba(var(--gold-rgb),.2); }
+  #strahl-ding {
+    padding:12px 18px; border-radius:14px; margin-top:6px;
+    background:rgba(var(--gold-rgb),.12); border:2px solid rgba(var(--gold-rgb),.4);
+    font-size:1.25rem; font-weight:900; color:var(--accent-text); text-align:center;
+  }
+
   /* Verbindungsbanner: liegt fest oben und schiebt nichts, damit der Buzzer
      nicht springt, wenn das WLAN kurz wegbricht. */
   #conn{
@@ -596,6 +622,19 @@
     <div class="lobby-sub" id="tpspin-sub">Dreh das Rad!</div>
     <button class="btn" id="tpspin-btn">🎡 Rad drehen</button>
     <div class="lobby-sub" id="tpspin-hint" style="color:rgba(var(--fg-rgb),.3);"></div>
+  </div>
+
+  <!-- ZAHLENSTRAHL (Jeopardy)
+       Nur die Person, die gerade am Zug ist, bekommt diesen Bildschirm.
+       Der Host reicht den Zug weiter - Team für Team, innerhalb des Teams
+       reihum durch die Handys. -->
+  <div id="screen-strahl" class="screen">
+    <div class="team-chip" id="strahl-team-chip">Team</div>
+    <div class="lobby-title">📏 Du bist dran</div>
+    <div class="lobby-sub" id="strahl-frage"></div>
+    <div id="strahl-ding"></div>
+    <div id="strahl-list"></div>
+    <div class="lobby-sub" id="strahl-hint" style="color:rgba(var(--fg-rgb),.3);"></div>
   </div>
 
   <!-- ABSTIMMUNG (Der Dümmste fliegt) -->
@@ -1019,6 +1058,8 @@
     // Rad drehen: nur das Team am Zug. Die anderen warten in der Lobby -
     // ein Knopf, der nichts tut, ist schlimmer als kein Knopf.
     if (myTeamSpins()) { showTpSpin(); return; }
+    // Zahlenstrahl: nur die eine Person, die gerade einordnen darf.
+    if (myStrahl()) { showStrahl(); return; }
     // Der Buzzer hängt nicht mehr am Team: sobald der Host eine Frage
     // vorbereitet, bekommt ihn jeder - mit Team wie ohne. buzzedThisRound
     // haelt den Screen noch kurz, damit man seinen Platz sieht, wenn der Host
@@ -1206,6 +1247,74 @@
     if (navigator.vibrate) navigator.vibrate(60);
   }
   document.getElementById('tpspin-btn').addEventListener('click', sendSpin);
+
+  // ── ZAHLENSTRAHL (Jeopardy) ──
+  /* Der Host schreibt nach buzzer/strahl, wer am Zug ist, welches Ding
+     einzuordnen ist und wie die Reihe gerade aussieht. Nur dieses eine Handy
+     zeigt den Bildschirm - ein Knopf, der nichts tut, ist schlimmer als kein
+     Knopf (wie beim Rad in Trivial Pursuit).
+
+     Jeder Zug hat eine eigene round: daran erkennt das Handy, dass es wieder
+     losgeht, und setzt seine Sperre zurueck (BAUPLAN 3.6). */
+  let strahlActive=false, strahlRound=0, strahlKey=null, strahlFrage='', strahlEinheit='',
+      strahlDing='', strahlReihe=[], strahlSending=false;
+  ref.child('strahl').on('value', s2 => {
+    const v = s2.val() || {};
+    const r = v.round || 0;
+    if (r !== strahlRound) { strahlRound = r; strahlSending = false; }
+    strahlActive = !!v.active;
+    if (strahlActive) markActive();
+    strahlKey = v.key || null;
+    strahlFrage = v.frage || '';
+    strahlEinheit = v.einheit || '';
+    strahlDing = v.ding || '';
+    strahlReihe = Array.isArray(v.reihe) ? v.reihe : [];
+    refreshRoot();
+  });
+  /** Bin ich am Zug? */
+  function myStrahl(){ return strahlActive && !!acc && strahlKey === acc.key && !!strahlDing; }
+
+  function strahlWert(d){
+    const n = Number(d && d.wert);
+    const z = isFinite(n) ? n.toLocaleString('de-DE') : '';
+    return z + (strahlEinheit ? ' ' + strahlEinheit : '');
+  }
+
+  function showStrahl(){
+    showScreen('screen-strahl');
+    fillTeamChip(document.getElementById('strahl-team-chip'));
+    document.getElementById('strahl-frage').textContent = strahlFrage;
+    document.getElementById('strahl-ding').textContent = strahlDing;
+    document.getElementById('strahl-hint').textContent = strahlSending
+      ? 'Wird eingeordnet …' : 'Tippe die Lücke an, in die es gehört.';
+    const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    const list = document.getElementById('strahl-list');
+    let html = '';
+    strahlReihe.forEach((d, i) => {
+      const vor = i === 0 ? `kleiner als ${esc(d.text)}` : `zwischen ${esc(strahlReihe[i-1].text)} und ${esc(d.text)}`;
+      html += `<button class="strahl-gap" data-p="${i}" ${strahlSending?'disabled':''}>▸ ${vor}</button>
+               <div class="strahl-ding"><span>${esc(d.text)}</span><span class="w">${esc(strahlWert(d))}</span></div>`;
+    });
+    const letzte = strahlReihe[strahlReihe.length - 1];
+    html += `<button class="strahl-gap" data-p="${strahlReihe.length}" ${strahlSending?'disabled':''}>▸ größer als ${esc(letzte ? letzte.text : '')}</button>`;
+    list.innerHTML = html;
+    list.querySelectorAll('.strahl-gap').forEach(b => {
+      b.addEventListener('click', () => sendStrahl(Number(b.dataset.p)), { once:true });
+    });
+  }
+
+  function sendStrahl(platz){
+    if (!myStrahl() || strahlSending) return;
+    strahlSending = true;
+    showStrahl();
+    // transaction wie beim Rad: zwei gleichzeitige Finger (oder ein doppelter
+    // Druck) duerfen nur EINEN Zug ergeben.
+    ref.child('strahl/zug').transaction(
+      cur => (cur === null ? { key: acc.key, name: myName(), platz: platz, round: strahlRound, ts: Date.now() } : undefined),
+      () => { strahlSending = false; refreshRoot(); }
+    );
+    if (navigator.vibrate) navigator.vibrate(60);
+  }
 
   // ── ABSTIMMUNG (Der Dümmste fliegt) ──
   // Der Host öffnet sie über buzzer/ddfvote. Jede Runde hat eine eigene

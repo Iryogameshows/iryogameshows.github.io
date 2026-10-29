@@ -51,6 +51,16 @@ const JEOPARDY_BOARDS = 2;
  *  @property {(string|null)[]} [seriesImgs]
  *  @property {string[]} [seriesNames]
  *  @property {number} [seriesCount]
+ *  @property {boolean} [strahl]    Zahlenstrahl: die Teams ordnen Dinge der
+ *                                  Reihe nach ein (Preis, Alter, Jahreszahl).
+ *                                  Kein Buzzer - wer am Zug ist, legt auf dem
+ *                                  Handy
+ *  @property {string[]} [strahlTexts]  Beschriftung je Ding
+ *  @property {number[]} [strahlValues] echter Wert je Ding - er bestimmt die
+ *                                  richtige Reihenfolge, das Publikum sieht
+ *                                  ihn erst beim Einordnen
+ *  @property {string} [strahlUnit] Einheit hinter dem Wert ("€", "Jahre")
+ *  @property {number} [strahlCount] wie viele Dinge der Editor anbietet (3-8)
  *  @property {string} [sound]      Ton als Data-URL
  *  @property {string} [soundName]
  *  @property {MediaSlot[]} [media] */
@@ -110,6 +120,16 @@ let jeopardyState = {
      abschliesst. Beim Buzzern ist sie mit der ersten Wertung ohnehin vorbei.
      @type {number[]} */
   scoredTeams: [],
+  /* Der laufende Zahlenstrahl, oder null. Haelt nur INDIZES in die Dinge der
+     Frage - die Texte und Werte stehen im Board und werden nicht verdoppelt.
+     `reihe` ist immer richtig sortiert (ein falsch gelegtes Ding rutscht an
+     seinen Platz), `fehler` zaehlt die falschen Zuege.
+     @type {null|{reihe:number[], offen:number[], team:number,
+                  spieler:{key:string,name:string}|null, zeiger:number[],
+                  fehler:number, richtig:number[], zugNr:number, fertig:boolean,
+                  letzter:null|{idx:number,platz:number,soll:number,
+                                richtig:boolean,team:number,wer:string}}} */
+  strahl: null,
 };
 
 // Returns the categories array for the active board
@@ -143,7 +163,7 @@ function jeopardyClueHasContent(c) {
   if (!c) return false;
   return !!(String(c.q || '').trim() || c.qImg || c.stageImg || c.sound
     || (c.seriesImgs || []).some(Boolean) || (c.stepTexts || []).some(t => String(t || '').trim())
-    || (c.stepImgs || []).some(Boolean));
+    || (c.stepImgs || []).some(Boolean) || (c.strahlTexts || []).some(t => String(t || '').trim()));
 }
 function jeopardyCellValue(col, row) {
   const cat = jBoard()[col];
@@ -167,6 +187,9 @@ function jeopardySnapshot() {
     stepsRevealed: jeopardyState.stepsRevealed,
     questionRevealed: jeopardyState.questionRevealed,
     scoredTeams: [...jeopardyState.scoredTeams],
+    // Tiefe Kopie: der Zahlenstrahl hat Felder in Feldern, eine flache liesse
+    // das Undo in die gerade geaenderte Reihe zeigen.
+    strahl: jeopardyState.strahl ? JSON.parse(JSON.stringify(jeopardyState.strahl)) : null,
   });
 }
 
@@ -186,6 +209,10 @@ function jeopardyUndo() {
   jeopardyState.stepsRevealed = prev.stepsRevealed || 0;
   jeopardyState.questionRevealed = prev.questionRevealed;
   jeopardyState.scoredTeams = prev.scoredTeams || [];
+  jeopardyState.strahl = prev.strahl || null;
+  // Die Handys hoeren am Kanal mit: ohne diese Zeile stuende dort nach einem
+  // Undo weiter das naechste Ding, obwohl der Host zurueckgegangen ist.
+  jeopardyStrahlSenden();
   renderJeopardyScores();
   renderJeopardyBoard();
   // Steht ein Daily Double noch vor seiner Ansage, bleibt das Board zu sehen -
@@ -227,7 +254,10 @@ function startJeopardyActual() {
       cat.clues.forEach((clue, row) => {
         // Nur Felder mit Inhalt - ein DD auf einem leeren Feld waere eine leere Ansage.
         const hatFrage = jeopardyClueHasContent(clue);
-        if (hatFrage && jeopardyValueOf(clue, row) >= 300) spots.push({ col, row });
+        /* Kein Daily Double auf einem Zahlenstrahl: dort spielen ALLE Teams
+           abwechselnd, das DD laesst aber nur das waehlende Team antworten.
+           Beides zusammen ergibt keine spielbare Regel. */
+        if (hatFrage && !jeopardyIstStrahl(clue) && jeopardyValueOf(clue, row) >= 300) spots.push({ col, row });
       });
     });
     return spots.length ? { ...spots[Math.floor(Math.random() * spots.length)], done: false } : null;
@@ -382,6 +412,10 @@ function openJeopardyClue(col, row) {
   jeopardyEstimate.locked = false;
   jeopardyEstimate.answers = [];
   jeopardyEstimate.single = jeopardySingle(jeopardyClue(jeopardyState.currentBoard, col, row));
+  // Der Zahlenstrahl der vorigen Frage muss weg, bevor das Overlay zeichnet -
+  // sonst stuende die alte Reihe unter der neuen Frage.
+  jeopardyState.strahl = null;
+  jeopardyStrahlSenden();
   resetMediaOverlay();
   if (jeopardyIsDaily(col, row)) {
     // Daily Double: the question does NOT pop yet. The GM gets a private
@@ -404,6 +438,10 @@ function openJeopardyClue(col, row) {
        Frage selbst geht dabei NICHT mit - sie steht ja noch nicht auf der
        Leinwand, und ein Handy, das sie vorher zeigt, waere ein Leck. */
     if (jeopardyTyped(jeopardyCurrentClue())) { jeopardyBuzzClose(); jeopardyEstimatePrepare(); }
+    /* Zahlenstrahl: auch hier wird nicht gebuzzert. Anders als beim Eingabe-
+       feld geht auf den Handys aber noch NICHTS auf - der erste Zug braucht
+       das erste Ding, und das waere vor dem Aufdecken die halbe Loesung. */
+    else if (jeopardyIstStrahl(jeopardyCurrentClue())) jeopardyBuzzClose();
     else jeopardyBuzzPrepare();   // buzzers live but NOT armed → early buzz = 3s lock
   }
   updateGamemaster();
@@ -436,6 +474,7 @@ function jeopardyRevealQuestion() {
   // Das Daily Double ebenso wenig - dort antwortet ausschliesslich das Team,
   // das das Feld gewählt hat, ein scharfer Buzzer würde die anderen einladen.
   if (jeopardyTyped(jeopardyCurrentClue())) jeopardyEstimateOpen();
+  else if (jeopardyIstStrahl(jeopardyCurrentClue())) jeopardyStrahlStart();
   else if (jeopardyState.currentIsDaily) jeopardyBuzzClose();
   else jeopardyBuzzArm();
   updateGamemaster();
@@ -566,6 +605,270 @@ function jeopardyEstimateListHtml(){
   }).join('');
 }
 
+// ── ZAHLENSTRAHL (Dinge der Reihe nach einordnen, auf den Handys) ──
+/* Die Teams sortieren Dinge in eine wachsende Reihe: Preis, Alter, Jahreszahl.
+   Wer am Zug ist, bekommt auf dem Handy das naechste Ding und die Luecken der
+   Reihe als Knoepfe.
+
+   Drei Festlegungen von David (2026-10-29), an denen der Rest haengt:
+
+   - "immer abwechselnd eine Person pro Team": der Zug wandert von Team zu
+     Team, und INNERHALB des Teams reihum durch die verbundenen Handys. Sonst
+     legt der Lauteste alles allein.
+   - Die Reihe WAECHST. Das erste Ding liegt von allein - ein erster "Zug" auf
+     die leere Reihe waere keine Entscheidung.
+   - Sofort aufdecken, und "alles oder nichts": nach jedem Zug steht der echte
+     Wert da. Ein falsch gelegtes Ding rutscht trotzdem an seinen richtigen
+     Platz, sonst waere "richtig eingeordnet" beim naechsten Zug nicht mehr
+     definiert. Gezahlt wird nur eine fehlerfreie Reihe.
+
+   Der Kanal ist buzzer/strahl, eine eigene Rundennummer je Zug (BAUPLAN 3.6).
+   Verworfen: die Dinge schon beim Oeffnen der Frage an die Handys schicken -
+   wer sie vor dem Aufdecken liest, hat die halbe Loesung. */
+
+/** Wie viele Dinge der Editor anbietet (3-8).  @param {JeopardyClue} clue */
+function jeopardyStrahlCount(clue){ return Math.max(3, Math.min(8, Number(clue.strahlCount) || 5)); }
+
+/** Die fertigen Dinge einer Zahlenstrahl-Frage: nur Zeilen mit Text UND Wert.
+ *  Eine halb ausgefuellte Zeile faellt still raus - der Strahl kann sie nicht
+ *  einsortieren.
+ *  @param {JeopardyClue|null|undefined} clue
+ *  @returns {{text:string, wert:number}[]} */
+function jeopardyStrahlDinge(clue){
+  if (!clue || !clue.strahl) return [];
+  const out = [];
+  for (let i = 0; i < jeopardyStrahlCount(clue); i++){
+    const text = String((clue.strahlTexts || [])[i] || '').trim();
+    // Number(null) und Number('') sind 0 - eine leere Zeile stuende damit mit
+    // 0 ganz links in der Reihe. Deshalb erst auf "leer" pruefen.
+    // unknown: eine importierte Datei darf hier auch "" oder null tragen,
+    // der Typ sagt number - ohne die Zusicherung meldet tsc den Vergleich.
+    const roh = /** @type {unknown} */ ((clue.strahlValues || [])[i]);
+    const wert = (roh === null || roh === undefined || roh === '') ? NaN : Number(roh);
+    if (text && isFinite(wert)) out.push({ text, wert });
+  }
+  return out;
+}
+
+/** Ist das eine spielbare Zahlenstrahl-Frage? Unter drei Dingen gibt es nur
+ *  einen einzigen Zug - das ist keine Runde.
+ *  @param {JeopardyClue|null|undefined} clue */
+function jeopardyIstStrahl(clue){ return jeopardyStrahlDinge(clue).length >= 3; }
+
+/** Felder ohne Buzzer, bei denen mehrere Teams Punkte bekommen koennen und der
+ *  Host die Frage selbst abschliesst: getippte Fragen und der Zahlenstrahl.
+ *  @param {JeopardyClue|null|undefined} clue */
+function jeopardyOhneBuzzer(clue){ return jeopardyTyped(clue) || jeopardyIstStrahl(clue); }
+
+/** Wert mit Einheit, wie er am Ding steht.
+ *  @param {number} wert @param {JeopardyClue} clue */
+function jeopardyStrahlWert(wert, clue){
+  const e = String(clue.strahlUnit || '').trim();
+  return wert.toLocaleString('de-DE') + (e ? ' ' + e : '');
+}
+
+// `offen` merkt sich, ob auf den Handys gerade ein Zahlenstrahl steht. Ohne
+// das schriebe jedes geoeffnete Feld ein "active:false" in die Datenbank.
+let jeopardyStrahlKanal = { ref: null, round: 0, offen: false };
+
+/* Der Kanal zu den Handys. Der Listener haengt an buzzer/strahl/zug, nicht am
+   ganzen Knoten: sonst loeste jeder eigene Schreibvorgang ihn wieder aus. */
+function jeopardyStrahlRef(){
+  if (!jeopardyStrahlKanal.ref){
+    if (!jeopardyBuzzInitFirebase()) return null;
+    jeopardyStrahlKanal.ref = firebase.database().ref('buzzer/strahl');
+    jeopardyStrahlKanal.ref.child('zug').on('value', s => {
+      const z = s.val();
+      if (!z || typeof z.platz !== 'number') return;
+      // Zug aus einer alten Runde (Nachzuegler, zweiter Finger): weg damit.
+      if (z.round !== jeopardyStrahlKanal.round) return;
+      jeopardyStrahlPlatz(z.platz, z.name || '');
+    });
+  }
+  return jeopardyStrahlKanal.ref;
+}
+
+/* Den Stand an die Handys schicken. Immer ganz (set), nie in Teilen: ein
+   halber Stand waere ein Handy, das ein Ding zur falschen Reihe anzeigt.
+   Jeder Zug bekommt eine eigene round - daran erkennt das Handy, dass es
+   wieder losgeht (BAUPLAN 3.6). */
+function jeopardyStrahlSenden(){
+  const s = jeopardyState.strahl;
+  const clue = jeopardyCurrentClue();
+  const nichts = !s || s.fertig || !s.offen.length || !clue;
+  if (nichts && !jeopardyStrahlKanal.offen) return;
+  const r = jeopardyStrahlRef();
+  if (!r) return;
+  if (nichts){ jeopardyStrahlClose(); return; }
+  const dinge = jeopardyStrahlDinge(clue);
+  jeopardyStrahlKanal.round = nextRoundId(jeopardyStrahlKanal.round);
+  r.set({
+    active: true,
+    round: jeopardyStrahlKanal.round,
+    team: s.team,
+    key: s.spieler ? s.spieler.key : null,
+    name: s.spieler ? s.spieler.name : null,
+    frage: clue.q || '',
+    einheit: String(clue.strahlUnit || ''),
+    ding: dinge[s.offen[0]].text,
+    reihe: s.reihe.map(i => ({ text: dinge[i].text, wert: dinge[i].wert })),
+    zug: null,
+  }).catch(()=>{});
+  jeopardyStrahlKanal.offen = true;
+}
+
+function jeopardyStrahlClose(){
+  if (!jeopardyStrahlKanal.offen) return;
+  const r = jeopardyStrahlRef();
+  if (r) r.update({ active: false, zug: null }).catch(()=>{});
+  jeopardyStrahlKanal.offen = false;
+}
+
+/** Wer aus dem Team am Zug ist: reihum durch die verbundenen Handys dieses
+ *  Teams, nach Namen sortiert (die Reihenfolge der Presence wechselt mit
+ *  jedem Neuladen). Ohne Handy bleibt der Platz leer - dann legt der Host.
+ *  @param {number} team @param {number} zeiger */
+function jeopardyStrahlSpieler(team, zeiger){
+  const leute = (jeopardyBuzzer.presence || [])
+    .filter(p => p && p.name && cleanTeamIdx(p.team) === team)
+    .sort((a, b) => String(a.name).localeCompare(String(b.name), 'de'));
+  if (!leute.length) return null;
+  const p = leute[((zeiger % leute.length) + leute.length) % leute.length];
+  return { key: String(p.id), name: String(p.name) };
+}
+
+/* Runde aufbauen und den ersten Zug vergeben. Das erste Ding wird ohne Zug
+   gelegt (siehe oben), die uebrigen kommen gemischt - sonst liefe jede Runde
+   in der Reihenfolge des Editors. */
+function jeopardyStrahlStart(){
+  const clue = jeopardyCurrentClue();
+  const dinge = jeopardyStrahlDinge(clue);
+  if (dinge.length < 3) return;
+  const mix = dinge.map((_, i) => i);
+  for (let i = mix.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const h = mix[i]; mix[i] = mix[j]; mix[j] = h;
+  }
+  const teams = Math.max(1, jeopardyState.teamCount);
+  jeopardyState.strahl = {
+    reihe: [Number(mix.shift())],
+    offen: mix,
+    team: 0,
+    spieler: null,
+    zeiger: new Array(teams).fill(0),
+    fehler: 0,
+    richtig: new Array(teams).fill(0),
+    zugNr: 0,
+    fertig: false,
+    letzter: null,
+  };
+  jeopardyStrahlZugVergeben();
+}
+
+/** Nächster Spieler am Zug, Kanal und Anzeigen auffrischen. */
+function jeopardyStrahlZugVergeben(){
+  const s = jeopardyState.strahl;
+  if (!s) return;
+  s.spieler = jeopardyStrahlSpieler(s.team, s.zeiger[s.team] || 0);
+  jeopardyStrahlSenden();
+  renderJeopardyClueOverlay();
+  updateGamemaster();
+}
+
+/** Zug weiterreichen: innerhalb des Teams eine Person weiter, dann das
+ *  nächste Team. Auch der Knopf "Zug überspringen" im GM-Panel. */
+function jeopardyStrahlWeiter(){
+  const s = jeopardyState.strahl;
+  if (!s || s.fertig) return;
+  s.zeiger[s.team] = (s.zeiger[s.team] || 0) + 1;
+  s.team = (s.team + 1) % Math.max(1, jeopardyState.teamCount);
+  jeopardyStrahlZugVergeben();
+}
+
+/* Das naechste Ding an Platz `platz` einsortieren (0 = ganz links).
+
+   Gleiche Werte: jeder Platz zwischen ihnen ist richtig, deshalb zwei
+   Grenzen statt einer. Zwei Dinge mit demselben Preis sind beim Abtippen
+   schnell passiert, und ein "falsch" waere dort nicht zu erklaeren.
+   @param {number} platz @param {string} [wer] */
+function jeopardyStrahlPlatz(platz, wer){
+  const s = jeopardyState.strahl;
+  const clue = jeopardyCurrentClue();
+  if (!s || s.fertig || !s.offen.length || !clue) return;
+  const dinge = jeopardyStrahlDinge(clue);
+  const idx = s.offen[0];
+  const wert = dinge[idx].wert;
+  const sollMin = s.reihe.filter(i => dinge[i].wert < wert).length;
+  const sollMax = s.reihe.filter(i => dinge[i].wert <= wert).length;
+  const p = Math.max(0, Math.min(s.reihe.length, Math.round(Number(platz) || 0)));
+  const richtig = p >= sollMin && p <= sollMax;
+  jeopardySnapshot();
+  s.offen.shift();
+  s.reihe.splice(sollMin, 0, idx);
+  s.zugNr++;
+  if (richtig) s.richtig[s.team] = (s.richtig[s.team] || 0) + 1;
+  else s.fehler++;
+  s.letzter = { idx, platz: p, soll: sollMin, richtig, team: s.team,
+                wer: String(wer || (s.spieler && s.spieler.name) || '') };
+  if (richtig) SFX.correct(); else SFX.wrong();
+  if (!s.offen.length){
+    s.fertig = true;
+    s.spieler = null;
+    jeopardyStrahlSenden();
+    renderJeopardyClueOverlay();
+    updateGamemaster();
+    return;
+  }
+  jeopardyStrahlWeiter();
+}
+
+/** Teams mit den meisten richtigen Zügen - bei Gleichstand mehrere.
+ *  Nur sie bekommen Punkte, und nur wenn die Reihe fehlerfrei blieb.
+ *  @returns {number[]} */
+function jeopardyStrahlSieger(){
+  const s = jeopardyState.strahl;
+  if (!s || !s.fertig || s.fehler > 0) return [];
+  const best = Math.max(...s.richtig);
+  if (!best) return [];
+  return s.richtig.map((n, i) => n === best ? i : -1).filter(i => i >= 0);
+}
+
+/** Die Reihe auf der Leinwand: links klein, rechts groß.
+ *  `zugNeu` sagt, ob seit dem letzten Zeichnen ein Zug dazugekommen ist - nur
+ *  dann bekommt das Ding seine Einrast-Animation. Ohne das lief sie bei jedem
+ *  Neuzeichnen wieder (Lösung zeigen, Bild aufdecken, Undo), wie bei data-neu
+ *  weiter oben.
+ *  @param {JeopardyClue} clue @param {boolean} zugNeu */
+function jeopardyStrahlHtml(clue, zugNeu){
+  const s = jeopardyState.strahl;
+  if (!s) return '';
+  const dinge = jeopardyStrahlDinge(clue);
+  const l = s.letzter;
+  const items = s.reihe.map(i => {
+    const neu = zugNeu && !!l && l.idx === i;
+    const cls = 'jeopardy-strahl-item' + (neu ? (l.richtig ? ' richtig' : ' falsch') : '');
+    return `<div class="${cls}">
+      <span class="jstr-t">${escapeHtml(dinge[i].text)}</span>
+      <span class="jstr-w">${escapeHtml(jeopardyStrahlWert(dinge[i].wert, clue))}</span>
+    </div>`;
+  }).join('');
+  const naechstes = s.offen.length ? dinge[s.offen[0]].text : '';
+  const dran = s.fertig
+    ? (s.fehler ? `${s.fehler === 1 ? 'Ein Fehler' : s.fehler + ' Fehler'} — keine Punkte`
+                : 'Reihe komplett — fehlerfrei!')
+    : `${escapeHtml(jeopardyState.teamNames[s.team] || ('Team ' + (s.team + 1)))}${
+        s.spieler ? ' · ' + escapeHtml(s.spieler.name) : ''} ist dran`;
+  return `<div class="jeopardy-strahl" data-fertig="${s.fertig ? '1' : ''}">
+    ${naechstes ? `<div class="jeopardy-strahl-ding">${escapeHtml(naechstes)}</div>` : ''}
+    <div class="jeopardy-strahl-reihe">
+      <span class="jstr-ende">klein</span>
+      ${items}
+      <span class="jstr-ende">groß</span>
+    </div>
+    <div class="jeopardy-strahl-zug${s.fertig && !s.fehler ? ' gut' : ''}${s.fertig && s.fehler ? ' schlecht' : ''}">${dran}</div>
+  </div>`;
+}
+
 // Staged image helpers
 /** @param {JeopardyClue} clue */
 function jeopardyStageGrid(clue){
@@ -687,18 +990,25 @@ function renderJeopardyClueOverlay() {
   const staged = clue.staged && clue.stageImg;
   const series = clue.series && jeopardySeriesImgs(clue).length > 0;
   const steps = clue.steps && jeopardyStepItems(clue).length > 0;
+  const strahl = !!jeopardyState.strahl && jeopardyIstStrahl(clue);
 
   const qImgHtml = jeopardyMedienTag(clue.qImg, 'jeopardy-clue-img');
   const aImgHtml = jeopardyMedienTag(clue.aImg, 'jeopardy-answer-img' + (jeopardyState.answerShown ? ' visible' : ''));
 
   const revealed = jeopardyState.questionRevealed;
+  let ov = document.getElementById('jeopardy-clue-ov');
+  /* Ist seit dem letzten Zeichnen ein Zug dazugekommen? Die Antwort steht im
+     DOM, nicht im Zustand: renderJeopardyClueOverlay laeuft auch aus anderen
+     Gruenden, und nur der echte Zug darf die Animation spielen. */
+  const zugNeu = !!jeopardyState.strahl
+    && String(jeopardyState.strahl.zugNr) !== String((ov && ov.dataset.strahlZug) || '');
   const questionArea = revealed
     ? `${clue.q ? `<div class="jeopardy-clue-text">${jeopardyWoerter(clue.q)}</div>` : ''}
        ${steps ? jeopardyStepsHtml(clue) : ''}
+       ${strahl ? jeopardyStrahlHtml(clue, zugNeu) : ''}
        ${series ? jeopardySeriesHtml(clue) : staged ? jeopardyStageHtml(clue) : qImgHtml}`
     : `<div class="jeopardy-clue-blank">Frage verdeckt</div>`;
 
-  let ov = document.getElementById('jeopardy-clue-ov');
   if (!ov) {
     ov = document.createElement('div');
     ov.className = 'jeopardy-clue-overlay';
@@ -719,6 +1029,7 @@ function renderJeopardyClueOverlay() {
   const vorher = ov.dataset.stand || '';
   ov.dataset.neu = stand === vorher ? '' : stand === 'antwort' ? (vorher === 'frage' ? 'antwort' : 'frage antwort') : stand;
   ov.dataset.stand = stand;
+  ov.dataset.strahlZug = jeopardyState.strahl ? String(jeopardyState.strahl.zugNr) : '';
   /* Laufende Videos weiterlaufen lassen: innerHTML baut auch das <video> neu,
      und ein neues Element startet bei 0. Ohne das sprang das Frage-Video an
      den Anfang, sobald die Loesung gezeigt wurde (oder ein Staffelbild, ein

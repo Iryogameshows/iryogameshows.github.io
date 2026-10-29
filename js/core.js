@@ -1301,14 +1301,50 @@ const GM_SHARED_CSS = `
   .gm-main{display:flex;flex-direction:column;gap:12px;min-width:0;}
   .gm-side{display:flex;flex-direction:column;gap:12px;min-width:0;}
   .gm-actions{flex-shrink:0;padding:12px 20px;display:flex;flex-wrap:wrap;gap:8px;border-top:1px solid rgba(255,255,255,.1);background:linear-gradient(0deg, rgba(15,18,50,.98), rgba(15,18,50,.85));}
+  /* Arbeitsflaeche statt verteilter Flaeche (David, 2026-10-29: „hässlich,
+     unhandlich, unübersichtlich").
+
+     Vorher klebte alles an drei Raendern: Frage oben links, Wertung darunter,
+     die Knoepfe ganz unten am Fensterrand - dazwischen bei Jeopardy, WWM und
+     Sowas 400 bis 450 px Leere. Der Host schaut links oben, klickt links
+     mitte und sucht dann unten rechts; bei 1280x800 sind das zwei volle
+     Blickwechsel je Frage.
+
+     Jetzt haengen Inhalt UND Knopfleiste in derselben, mittig stehenden
+     Spalte: "safe center" rueckt kurze Inhalte in die Fenstermitte und faellt
+     bei langen von selbst auf oben zurueck (kein Abschneiden). Die Knopfleiste
+     bleibt unten angeheftet - sie soll nie hinter einem Panel verschwinden -,
+     steht aber auf derselben Kante wie der Inhalt darueber. */
+  .gm-body{align-content:safe end;}
+  /* "solo": kein Nebenspalten-Layout. Was zur Frage gehoert, steht in voller
+     Breite untereinander; der Status (Notizen, Verbunden, Buzzer) wird zu
+     einem leisen Streifen darunter.
+
+     Anlass (David, 2026-10-30): „die Dropdown Menues rechts sind nicht geil
+     gemacht ... dann seh ich den Scheiss oben rechts klein zusammengequetscht,
+     komplett umstaendlich". Die Zahlenstrahl-Reihe stand in einer 280 px
+     breiten Spalte und brach nach jeder Kachel um. */
+  .gm-body.solo .gm-side{flex-direction:row;flex-wrap:wrap;align-items:flex-start;gap:10px;}
+  .gm-body.solo .gm-side > *{flex:1 1 220px;}
+  /* Zugeklapptes ist Beiwerk: duenner Rahmen, kleine Schrift, kein
+     Karten-Look. David, 2026-10-30: „die Dropdown Menues rechts sind nicht
+     geil gemacht". Sie bleiben - Notizen und Verbundenen-Liste braucht man
+     selten und will sie nicht dauernd sehen -, treten aber zurueck. */
+  details.panel{background:rgba(255,255,255,.02);border-color:rgba(255,255,255,.055);padding:7px 11px;}
+  details.panel > summary.panel-head{margin-bottom:0;font-size:.6rem;}
+  details.panel[open] > summary.panel-head{margin-bottom:8px;}
   /* Auf breiten Bildschirmen (Mainscreen: volle Monitorbreite) zwei Spalten
      statt einer einzigen, monitorbreit gestreckten Liste - links die eigentliche
      Aufgabe (Frage/Antworten), rechts Status & Nebensächliches (Notizen,
      Buzzer, Verbunden). Auf dem schmalen Gamepad-Handy bleibt es einspaltig,
      .gm-main/.gm-side stapeln sich dort einfach normal übereinander. */
   @media (min-width: 760px) {
-    .gm-body{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr);align-items:start;gap:20px;}
-    .gm-actions{padding-left:20px;justify-content:flex-end;}
+    .gm-body{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(250px,.85fr);align-items:start;gap:20px;}
+    .gm-body.solo{grid-template-columns:minmax(0,1fr);gap:14px;}
+    /* Dieselbe Breite und dieselbe linke Kante wie der Inhalt: die Knoepfe
+       stehen damit unter der Frage, nicht in der Fensterecke. */
+    .gm-body,.gm-actions{max-width:1180px;margin-inline:auto;width:100%;}
+    .gm-actions{justify-content:flex-start;}
     .gm-actions .gm-btn{flex:0 0 auto;}
   }
   /* Grosses Fenster (GM am zweiten Monitor, maximiert): vorher blieb alles
@@ -1316,10 +1352,14 @@ const GM_SHARED_CSS = `
      leer. Fast alles hier haengt an rem, also waechst die Grundschrift mit
      der Breite; Antworten, Knoepfe und Abstaende bekommen mehr Luft. Das
      Gamepad-Handy liegt weit darunter und bleibt unveraendert. */
-  @media (min-width: 1200px) {
-    html{font-size:clamp(16px,1.15vw,22px);}
+  /* Ab 900 px statt erst ab 1200: der GM steht am Laptop, oft in einem Fenster
+     von 1000 bis 1300 px - genau dort blieb vorher alles auf Handy-Groesse.
+     Die Schrift haengt zusaetzlich an der HOEHE (vh): ein flaches Fenster
+     soll den Inhalt nicht so weit aufblasen, dass die Knopfleiste wegscrollt. */
+  @media (min-width: 900px) {
+    html{font-size:clamp(16px,min(1.3vw,2.4vh),23px);}
     .gm-header{padding:16px 32px 14px;}
-    .gm-body{padding:24px 32px;gap:28px;}
+    .gm-body{padding:24px 32px;gap:26px;}
     .gm-main,.gm-side{gap:16px;}
     .answer-list{gap:8px;}
     .answer{padding:14px 20px;font-size:1.05rem;}
@@ -1327,7 +1367,7 @@ const GM_SHARED_CSS = `
     .panel{padding:14px 16px;}
     .panel-head{font-size:.68rem;color:rgba(255,255,255,.62);}
     .gm-actions{padding:14px 32px;gap:10px;}
-    .gm-btn{padding:12px 22px;font-size:.85rem;}
+    .gm-btn{padding:13px 22px;font-size:.85rem;}
   }
   .chip{font-size:.62rem;font-weight:800;letter-spacing:.5px;padding:4px 9px;border-radius:99px;white-space:nowrap;}
   .chip-ok{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.35);}
@@ -1382,7 +1422,19 @@ const GM_SHARED_CSS = `
   }
   .sr-btn:hover{filter:brightness(1.12);}
   .sr-btn:active{transform:translateY(1px);}
-  .sr-btn.plus{background:linear-gradient(180deg,#22C55E,#16a34a);color:#06210f;}
+  /* Die Wertung ist Beiwerk, nicht die Hauptsache (David, 2026-10-30:
+     „Ich muss nicht so groß die Punkte sehen, und + oder - Buttons, die nehmen
+     genau so viel Platz ein wie die Frage und die Lösung").
+
+     Also: schmale Zeile, kleine Knoepfe, gedaempftes Gruen - treffsicher
+     bleibt sie trotzdem (32 px hoch, das ist ueber der Fingerbreite am
+     Trackpad), aber sie zieht den Blick nicht mehr von der Frage weg. */
+  .score-rows{max-width:560px;}
+  .score-row{padding:6px 10px 6px 12px;gap:10px;}
+  .score-row .sr-name{flex:0 0 118px;font-size:.74rem;}
+  .score-row .sr-val{min-width:50px;font-size:1.05rem;padding:3px 8px 2px;color:rgba(255,210,63,.85);}
+  .sr-btn{min-width:56px;min-height:32px;padding:6px 9px;font-size:.76rem;}
+  .sr-btn.plus{background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.5);color:#86EFAC;}
   .sr-btn.minus{background:rgba(232,69,60,.12);border:1px solid rgba(232,69,60,.5);color:#FF8A80;}
   @media (max-width:420px){
     .score-row{flex-wrap:wrap;}
@@ -1442,6 +1494,8 @@ const GM_SHARED_CSS = `
   .tag-gold{background:rgba(255,210,63,.15);color:#FFD23F;}
   .tag-green{background:rgba(34,197,94,.15);color:#86EFAC;}
   .tag-purple{background:rgba(139,92,246,.18);color:#C4B5FD;}
+  /* Rot fuer "falsch eingeordnet" im Zahlenstrahl-Panel. */
+  .tag-red{background:rgba(232,69,60,.18);color:#FCA5A5;}
   .media-row{display:flex;flex-wrap:wrap;gap:5px;}
   .gm-tabs{display:flex;gap:6px;}
   .gm-tab{flex:1;padding:8px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(255,255,255,.04);color:rgba(255,255,255,.6);font-family:'Inter',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}

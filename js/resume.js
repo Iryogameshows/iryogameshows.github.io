@@ -170,6 +170,10 @@ function resumeGame(ohneKlick){
       // Offene Frage bleibt offen; Buzzer/Eingabe oeffnet der Host neu
       // ("Buzzer neu" bzw. "Eingabe neu öffnen").
       if (jeopardyState.currentClue && !jeopardyState.ddPending) renderJeopardyClueOverlay();
+      /* Ein laufender Zahlenstrahl geht dagegen von selbst weiter: der
+         gesicherte Stand sagt, wer am Zug ist, und ohne diese Zeile stuende
+         auf dem Handy noch das Ding von vor dem Neuladen. */
+      jeopardyStrahlSenden();
     }
     if (d.show === 'wwm'){
       Object.assign(wwmState, s);
@@ -236,6 +240,8 @@ function gmQuitShow(){
   else if (show === 'pih') pihQuit();
   if (show === 'wwds') wwdsStopTimer();
   try { jeopardyEstimateClose(); } catch {}
+  // Sonst bliebe nach "Beenden" auf einem Handy der Zahlenstrahl stehen.
+  try { jeopardyState.strahl = null; jeopardyStrahlClose(); } catch {}
   try { jeopardyBuzzClose(); } catch {}
   try { feudBuzzEndRound(); } catch {}
   jeopardyState.active = false;

@@ -1453,6 +1453,65 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
    2026-10-22, Screenshot). Aufgedeckt kommt es ohnehin mit ddPop. */
 .jeopardy-series-cell:not(.shown) img { visibility: hidden; }
 .jeopardy-series-cell.shown img { animation: ddPop .4s ease; }
+/* Zahlenstrahl: die Dinge liegen von links (klein) nach rechts (groß) auf
+   einer Linie, je Ding Name und echter Wert. Das Ding, das gerade eingeordnet
+   werden soll, steht darüber.
+
+   Alles mit CSS animiert, nicht mit JavaScript: die Leinwand bekommt nur den
+   DOM gespiegelt, GSAP-Schreibungen stünden dort still (BAUPLAN 4.8). Die
+   Klasse `richtig`/`falsch` setzt js/jeopardy.js nur an dem Ding, das gerade
+   dazugekommen ist - und nur einmal, siehe `zugNeu` dort. */
+.jeopardy-strahl { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+.jeopardy-strahl-ding {
+  font-family: var(--font-display); font-size: 2.4rem; letter-spacing: 1px;
+  color: var(--accent-text); text-align: center;
+  padding: 8px 26px; border-radius: 12px;
+  background: rgba(var(--gold-rgb),.08); box-shadow: inset 0 0 0 2px rgba(var(--gold-rgb),.35);
+  animation: ddPop .4s var(--ease-pop);
+}
+.jeopardy-strahl-reihe {
+  display: flex; align-items: stretch; justify-content: center; flex-wrap: wrap; gap: 10px;
+  max-width: min(94vw, 1250px);
+  padding: 14px 18px; border-radius: 14px;
+  background: rgba(var(--fg-rgb),.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.07);
+}
+.jeopardy-strahl-reihe .jstr-ende {
+  align-self: center; font-size: .8rem; font-weight: 800; letter-spacing: 3px;
+  text-transform: uppercase; color: rgba(var(--fg-rgb),.3);
+}
+.jeopardy-strahl-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 10px 16px; border-radius: 10px;
+  background: rgba(var(--fg-rgb),.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
+}
+.jeopardy-strahl-item .jstr-t { font-family: var(--font-display); font-size: 1.5rem; color: var(--fg); line-height: 1.1; }
+.jeopardy-strahl-item .jstr-w { font-size: 1rem; font-weight: 800; color: rgba(var(--fg-rgb),.55); }
+/* Eingerastet: kurzer Schlag und ein farbiger Rand, der wieder verblasst.
+   Der Endzustand ist in beiden Fällen der normale - das Standbild bleibt
+   ruhig, auch wenn jemand erst später hinsieht. */
+.jeopardy-strahl-item.richtig { animation: jstrRichtig .7s cubic-bezier(.2,.9,.3,1.2) both; }
+.jeopardy-strahl-item.falsch { animation: jstrFalsch .7s cubic-bezier(.3,.9,.3,1.1) both; }
+@keyframes jstrRichtig {
+  0% { transform: scale(.55) translateY(-28px); opacity: 0; box-shadow: inset 0 0 0 2px var(--green); }
+  55% { transform: scale(1.1) translateY(0); opacity: 1; box-shadow: inset 0 0 0 3px var(--green); }
+  100% { transform: scale(1); opacity: 1; box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+}
+@keyframes jstrFalsch {
+  0% { transform: scale(.55); opacity: 0; box-shadow: inset 0 0 0 3px var(--red); }
+  30% { transform: scale(1.06) translateX(-9px); opacity: 1; }
+  45% { transform: scale(1.06) translateX(9px); }
+  60% { transform: scale(1.03) translateX(-5px); }
+  75% { transform: scale(1) translateX(0); box-shadow: inset 0 0 0 3px var(--red); }
+  100% { transform: scale(1); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1); }
+}
+.jeopardy-strahl-zug { font-size: 1.1rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(var(--fg-rgb),.5); }
+.jeopardy-strahl-zug.gut { color: var(--green); }
+.jeopardy-strahl-zug.schlecht { color: var(--red); }
+@media (prefers-reduced-motion: reduce) {
+  .jeopardy-strahl-ding,
+  .jeopardy-strahl-item.richtig,
+  .jeopardy-strahl-item.falsch { animation: none !important; }
+}
 /* Schritt-Frage: bis zu 5 Schritte untereinander, die der Host einzeln
    einblendet. Ein Schritt ist eine Zeile, ein Bild oder beides. Noch nicht
    gezeigte Schritte halten ihren Platz frei, damit die Frage beim Aufdecken
