@@ -12,6 +12,53 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-30 — `2430664` · `5747fa1` GM-Panel: höher, mehrspaltig, kompakter
+
+**David:** „das soll nicht alles an den unteren Rand, mach das bisschen höher. außerdem,
+zeig mir wie das aussehen würde mit ner vollen Lobby mit Buzzern und ner Schätzfrage.
+simulier das" — danach: „und jetzt machst du die Dinger, die unnötig lang sind, noch ein
+bisschen kompakter".
+
+**Gemacht:**
+- `2430664`: `.gm-body` bekommt unten `clamp(40px, 9vh, 96px)` Polster — der Block klebt
+  nicht mehr auf der Knopfleiste. Eingabenliste (`.est-list`) und Buzzer-Reihenfolge
+  (`.buzz-liste`) sind Raster mit `auto-fill` und gedeckelter Höhe (34 vh / 26 vh). Eine
+  getippte Antwort („keine Ahnung") schneidet ab, statt die Kachel auseinanderzuziehen.
+- `5747fa1`: Frage-Karte, Frage-Notiz, Zahlenstrahl-Panel (`.panel.fit`) und der
+  Status-Streifen wachsen mit dem Inhalt statt auf 1180 px. Abstand der Blöcke 26 → 16 px,
+  Polster der Frage-Karte 26/30 → 20/26.
+
+**Warum so:** Die volle Lobby war nicht gedacht, sondern **simuliert** — eigenes
+Wegwerf-Skript (`gmvoll.js`, im Scratchpad, nicht im Repo), das zehn Handys in
+`jeopardyBuzzer.presence` schreibt, vier Buzz-Ergebnisse setzt und neun Schätzungen in
+`jeopardyEstimate.answers` legt. Erst da fiel auf, dass neun Schätzungen bei 1280×800 die
+Wertung und die Knopfleiste aus dem Bild schieben: der Host hätte mitten in der Show
+scrollen müssen, um Punkte zu geben. Mit vier Spalten passen zehn Eingaben in eine
+Bildhöhe.
+
+**Verworfen:** `width: fit-content` auch für die Eingaben- und Buzzer-Panels. Beides sind
+Raster mit `repeat(auto-fill, …)`, und `fit-content` klappt die Spalten auf eine zusammen —
+die Liste wurde dadurch länger statt kürzer. Einmal gebaut, am Bild gesehen, zurückgenommen.
+
+**Geprüft:** `node check.js` „alles in Ordnung" vor beiden Commits. GM-Panel je Show
+gerendert und angesehen (1280×800, dazu 1920×1080, 980×680 und 390×844 für den
+Gamepad-Fall). `tools/shots/ablauf.js` 52 OK, 0 FEHL vor `2430664`. Der `shots.js`-Lauf
+über alle Richtungen lief zum Zeitpunkt des Commits noch — **Ergebnis steht aus**.
+
+**Offen:**
+- `shots.js` nach `5747fa1` noch nicht ausgewertet.
+- Einspaltig (`gm-body solo`) ist bisher nur Jeopardy. Feud, Millionär, Sowas, Dümmste und
+  Preis behalten ihre Nebenspalte.
+- Simuliert sind Buzzerfrage und Schätzfrage mit zwei Teams; Einzelantwort, Daily Double
+  und drei Teams nicht.
+- Nur gerendert, nicht am echten zweiten Monitor angesehen.
+
+**Fallstricke:** Das Simulations-Skript liegt im Scratchpad und ist nach der Sitzung weg.
+Wer die volle Lobby wieder sehen will, baut es neu oder nimmt `tools/shots/ablauf.js` als
+Vorlage (dort steht die gemeinsame Ersatz-Datenbank schon).
+
+---
+
 ## 2026-10-29 — `f8799a5` Jeopardy: Zahlenstrahl — Dinge abwechselnd einordnen
 
 **David:** „mach die, dann neues feature in Jeopardy" → auf die Frage nach dem Feature:
