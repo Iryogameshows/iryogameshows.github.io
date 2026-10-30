@@ -2760,158 +2760,267 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
    Lack, Birnenkette, gruenes Licht aus der Einfahrt, Kuerbisgold fuer den
    Titel. Zeiten kommen aus INTRO_GB (js/intro.js).
 
-   Alles ist CSS - das Zuschauerfenster bekommt nur den DOM gespiegelt
+   Zweiter Anlauf (David: "das ist nicht so hochwertig wie der Rest"). Was
+   dem ersten fehlte und jetzt drin ist - gemessen an Tresor und Outrun:
+     - Material statt Flaeche: Holzmaserung, gerippte Kuerbisse, Metall am
+       Schild, Glas mit Gluehfaden in den Birnen.
+     - Licht, das irgendwo hinfaellt: Lichtpfuetzen am Boden, Schein der
+       Birnen auf dem Holz, gruener Kegel aus der Einfahrt.
+     - Tiefe: Sternhimmel, Wolken vor dem Mond, Zaun und kahle Baeume als
+       Silhouette, Boden mit Nebel - die Fassade steht in einer Szene statt
+       frei im Schwarz.
+   Alles CSS, das Zuschauerfenster bekommt nur den DOM gespiegelt
    (BAUPLAN 4.8). Die Fratzen sind SVG, weil ein geklontes <canvas> leer
    ankaeme. */
-#kgu{position:relative;width:100%;height:100%;overflow:hidden;background:#07040C;color:#F3E7CF;font-family:'Rye',serif;}
+#kgu{position:relative;width:100%;height:100%;overflow:hidden;color:#F3E7CF;font-family:'Rye',serif;
+  background:linear-gradient(180deg,#0A0616 0%,#120A22 42%,#1A0E1E 68%,#07040C 100%);}
 #kgu i{font-style:normal;}
 
-/* Der Mond: Scheibe mit Kratern, steigt langsam. Gross im Kuerbisfeld. */
-#kgu .gb-mond{position:absolute;left:62%;top:9%;width:17vh;height:17vh;border-radius:50%;
-  background:radial-gradient(circle at 38% 34%,#FFF7E6 0%,#F0DFB4 45%,#C8AE78 100%);
-  box-shadow:0 0 9vh rgba(255,236,190,.45),0 0 22vh rgba(255,200,120,.22);
+/* Sternhimmel: kleine Punkte, die langsam atmen. */
+#kgu .gb-sterne{position:absolute;inset:0;}
+#kgu .gb-sterne i{position:absolute;width:.32vh;height:.32vh;border-radius:50%;background:#FFF7E6;
+  box-shadow:0 0 .6vh rgba(255,247,230,.8);animation:gbStern var(--u) ease-in-out var(--d) infinite;}
+@keyframes gbStern{0%,100%{opacity:var(--o)}50%{opacity:calc(var(--o) * .25)}}
+
+/* Der Mond: Scheibe mit Kratern und Hof, dazu Wolken, die davorziehen. */
+#kgu .gb-mond{position:absolute;left:62%;top:8%;width:17vh;height:17vh;border-radius:50%;
+  background:radial-gradient(circle at 36% 32%,#FFFDF2 0%,#FFF3CE 38%,#E7D09A 72%,#B99C62 100%);
+  box-shadow:0 0 10vh rgba(255,240,200,.5),0 0 26vh rgba(255,190,110,.2),inset -1.6vh -1.2vh 4vh rgba(90,70,40,.45);
   animation:gbMondAuf 7s ease-out var(--t) backwards;}
-#kgu .gb-mond::before,#kgu .gb-mond::after{content:'';position:absolute;border-radius:50%;background:rgba(150,128,92,.35);}
-#kgu .gb-mond::before{left:24%;top:46%;width:22%;height:22%;}
-#kgu .gb-mond::after{left:56%;top:22%;width:14%;height:14%;box-shadow:-1.6vh 2.6vh 0 .4vh rgba(150,128,92,.28);}
-#kgu .gb-mond.gross{left:14%;top:8%;width:26vh;height:26vh;margin-left:0;
-  background:radial-gradient(circle at 38% 34%,#FFFDF2 0%,#FFEFB8 42%,#E8C06A 100%);
-  box-shadow:0 0 14vh rgba(255,240,200,.55),0 0 30vh rgba(255,200,120,.25);
+#kgu .gb-mond::before,#kgu .gb-mond::after{content:'';position:absolute;border-radius:50%;
+  background:radial-gradient(circle at 40% 36%,rgba(120,100,70,.4),rgba(120,100,70,.12));}
+#kgu .gb-mond::before{left:22%;top:44%;width:24%;height:24%;}
+#kgu .gb-mond::after{left:54%;top:20%;width:15%;height:15%;box-shadow:-1.8vh 2.8vh 0 .3vh rgba(120,100,70,.25);}
+#kgu .gb-mond.gross{left:12%;top:7%;width:27vh;height:27vh;
   animation:gbMondGross 6s ease-out var(--t) backwards;}
 @keyframes gbMondAuf{from{transform:translateY(8vh) scale(.9);opacity:0}30%{opacity:1}to{transform:none}}
-@keyframes gbMondGross{from{transform:scale(1.5);opacity:0}25%{opacity:1}to{transform:scale(1)}}
+@keyframes gbMondGross{from{transform:scale(1.4);opacity:0}25%{opacity:1}to{transform:scale(1)}}
+#kgu .gb-wolken{position:absolute;left:0;right:0;top:0;height:46%;overflow:hidden;}
+#kgu .gb-wolken i{position:absolute;left:-40%;width:52%;height:7vh;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(40,28,52,.9) 0%,rgba(30,20,40,.55) 55%,transparent 75%);
+  filter:blur(.4vh);animation:gbWolke var(--u) linear var(--d) infinite backwards;}
+@keyframes gbWolke{from{transform:translateX(0)}to{transform:translateX(230%)}}
 
-/* Die Fassade: Giebel, Birnenkette, Schild, zwei Fenster, das Tor. */
-/* Mitte ueber margin-left, nicht ueber translateX: die Einfahrt-Animation
-   belegt transform schon. min() in beiden Zeilen, sonst stimmt die Haelfte
-   bei schmalen Fenstern nicht. */
-#kgu .gb-haus{position:absolute;left:50%;bottom:0;width:min(92vw,120vh);height:78%;margin-left:calc(min(92vw,120vh) / -2);
-  /* Senkrecht genagelte Bretter, schwarz lackiert. */
-  background:repeating-linear-gradient(90deg,rgba(0,0,0,.45) 0 .3vh,transparent .3vh 4vh),
-             linear-gradient(180deg,#1A1026 0%,#0C0814 100%);
-  border-top:.6vh solid #4A2A12;border-radius:6vh 6vh 0 0;
-  box-shadow:inset 0 0 12vh rgba(0,0,0,.9);
+/* Boden, Zaun, kahle Baeume: die Fassade steht in einer Landschaft. */
+#kgu .gb-boden{position:absolute;left:0;right:0;bottom:0;height:22%;
+  background:linear-gradient(180deg,#120B16 0%,#0A0610 60%,#07040C 100%);
+  box-shadow:0 -1px 0 rgba(243,231,207,.07);}
+#kgu .gb-pfuetze{position:absolute;left:0;right:0;bottom:0;height:34%;
+  background:radial-gradient(ellipse 26% 70% at 50% 100%,rgba(124,255,61,.3) 0%,transparent 70%),
+             radial-gradient(ellipse 60% 55% at 50% 102%,rgba(255,122,24,.22) 0%,transparent 72%);}
+#kgu .gb-zaun{position:absolute;left:-2%;right:-2%;bottom:14%;height:7vh;
+  background:repeating-linear-gradient(90deg,#0B0712 0 1.1vh,transparent 1.1vh 3.4vh);
+  -webkit-mask:linear-gradient(180deg,transparent 0,#000 12%);mask:linear-gradient(180deg,transparent 0,#000 12%);
+  opacity:.9;}
+#kgu .gb-zaun::after{content:'';position:absolute;left:0;right:0;top:2.2vh;height:.5vh;background:#0B0712;}
+#kgu .gb-baum{position:absolute;bottom:12%;width:30vh;opacity:.92;}
+#kgu .gb-baum svg{width:100%;height:auto;display:block;fill:#060310;}
+#kgu .gb-baum.l{left:-3vh;transform-origin:bottom center;animation:gbWiegen 6s ease-in-out infinite;}
+#kgu .gb-baum.r{right:-3vh;transform:scaleX(-1);transform-origin:bottom center;animation:gbWiegenR 7s ease-in-out infinite;}
+@keyframes gbWiegen{0%,100%{transform:rotate(-.5deg)}50%{transform:rotate(.6deg)}}
+@keyframes gbWiegenR{0%,100%{transform:scaleX(-1) rotate(.5deg)}50%{transform:scaleX(-1) rotate(-.6deg)}}
+
+/* Die Fassade: lackiertes Holz mit Maserung, Giebelzacken, Birnenkette,
+   Schild in Metallfassung, zwei Fenster, das Tor. */
+#kgu .gb-haus{position:absolute;left:50%;bottom:16%;width:min(92vw,120vh);height:62%;margin-left:calc(min(92vw,120vh) / -2);
+  background:
+    radial-gradient(ellipse 80% 22% at 50% 2%,rgba(255,150,60,.3) 0%,transparent 70%),
+    repeating-linear-gradient(90deg,rgba(0,0,0,.5) 0 .18vh,transparent .18vh 1.1vh),
+    repeating-linear-gradient(90deg,rgba(255,200,150,.045) 0 .12vh,transparent .12vh 4.6vh),
+    linear-gradient(180deg,#1B0F28 0%,#110A1A 45%,#070410 100%);
+  border-radius:7vh 7vh 0 0;
+  box-shadow:inset 0 0 14vh rgba(0,0,0,.85),inset 0 .5vh 0 rgba(255,200,150,.12),0 0 18vh rgba(255,122,24,.12);
   animation:gbHaus .9s cubic-bezier(.2,.9,.3,1) .05s backwards;}
-@keyframes gbHaus{from{transform:translateY(6vh) scale(1.06);opacity:0}to{transform:none;opacity:1}}
-#kgu .gb-dach{position:absolute;left:-2%;right:-2%;top:-5vh;height:10vh;
-  background:repeating-linear-gradient(90deg,#4A2A12 0 3vh,#2E1A0B 3vh 6vh);
-  clip-path:polygon(0 100%,4% 0,8% 100%,12% 0,16% 100%,20% 0,24% 100%,28% 0,32% 100%,36% 0,40% 100%,44% 0,48% 100%,52% 0,56% 100%,60% 0,64% 100%,68% 0,72% 100%,76% 0,80% 100%,84% 0,88% 100%,92% 0,96% 100%,100% 0,100% 100%);}
-#kgu .gb-kette{position:absolute;left:3%;right:3%;top:3.5vh;display:flex;justify-content:space-between;}
-#kgu .gb-kette i{width:1.5vh;height:1.5vh;border-radius:50%;background:#2A1A10;
+@keyframes gbHaus{from{transform:translateY(6vh) scale(1.05);opacity:0}to{transform:none;opacity:1}}
+#kgu .gb-dach{position:absolute;left:-1.5%;right:-1.5%;top:-4.4vh;height:9vh;
+  background:linear-gradient(180deg,#3E2410 0%,#281607 55%,#180C05 100%);
+  clip-path:polygon(0 100%,3.5% 10%,7% 100%,10.5% 10%,14% 100%,17.5% 10%,21% 100%,24.5% 10%,28% 100%,31.5% 10%,35% 100%,38.5% 10%,42% 100%,45.5% 10%,49% 100%,52.5% 10%,56% 100%,59.5% 10%,63% 100%,66.5% 10%,70% 100%,73.5% 10%,77% 100%,80.5% 10%,84% 100%,87.5% 10%,91% 100%,94.5% 10%,98% 100%,100% 40%,100% 100%);
+  filter:drop-shadow(0 .4vh .6vh rgba(0,0,0,.7));}
+/* Birnen: Glas mit Gluehfaden, Hof und Schein nach unten. */
+#kgu .gb-kette{position:absolute;left:2.5%;right:2.5%;top:3vh;display:flex;justify-content:space-between;}
+#kgu .gb-kette i{position:relative;width:1.7vh;height:1.7vh;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#3A2A1E 0%,#1A1208 70%);
+  box-shadow:inset 0 0 .4vh rgba(0,0,0,.8);
   animation:gbBirne .35s ease-out var(--d) forwards,gbBirneFlacker 2.6s steps(1) calc(var(--d) + 1s) infinite;}
-@keyframes gbBirne{to{background:#FFE2B8;box-shadow:0 0 1.4vh #FF7A18,0 0 3.4vh rgba(255,122,24,.6)}}
-@keyframes gbBirneFlacker{0%,92%{opacity:1}94%{opacity:.45}96%{opacity:1}98%{opacity:.6}}
-#kgu .gb-schild{position:absolute;left:50%;top:9vh;transform:translateX(-50%);text-align:center;
-  padding:1.4vh 4vh;border:.5vh solid #4A2A12;border-radius:2vh;background:#120A1A;
-  font-size:4.2vh;line-height:1.1;letter-spacing:.3vh;color:#FF7A18;white-space:nowrap;
-  text-shadow:0 0 2vh rgba(255,122,24,.8);
+#kgu .gb-kette i::after{content:'';position:absolute;left:50%;top:50%;width:9vh;height:9vh;margin:-4.5vh 0 0 -4.5vh;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,150,60,.3) 0%,transparent 65%);opacity:0;
+  animation:gbBirneHof .35s ease-out var(--d) forwards;}
+@keyframes gbBirne{to{background:radial-gradient(circle at 40% 32%,#FFFDF0 0%,#FFD08A 45%,#FF7A18 100%);
+  box-shadow:0 0 1.6vh #FF7A18,0 0 4vh rgba(255,122,24,.7),inset 0 0 .4vh rgba(255,255,255,.9)}}
+@keyframes gbBirneHof{to{opacity:1}}
+@keyframes gbBirneFlacker{0%,92%{opacity:1}94%{opacity:.5}96%{opacity:1}98%{opacity:.65}}
+/* Das Schild: Metallfassung mit Nieten, Neon-Schrift, Glanzkante. */
+#kgu .gb-schild{position:absolute;left:50%;top:8.5vh;transform:translateX(-50%);text-align:center;
+  padding:1.6vh 4.4vh;border-radius:2.2vh;white-space:nowrap;
+  background:linear-gradient(180deg,#1C1226 0%,#0E0818 100%);
+  box-shadow:inset 0 0 0 .45vh #6A3C14,inset 0 0 0 .75vh #0B0712,inset 0 .5vh 1vh rgba(255,180,100,.12),
+             0 0 5vh rgba(255,122,24,.35),0 1vh 3vh rgba(0,0,0,.7);
+  font-size:4.4vh;line-height:1.08;letter-spacing:.3vh;color:#FFB45A;
+  text-shadow:0 0 1vh #FF7A18,0 0 3vh rgba(255,122,24,.9),0 .3vh 0 #5A2400;
   animation:gbSchild .5s ease-out var(--t) backwards,gbSchildSummen 3.1s steps(1) calc(var(--t) + .5s) infinite;}
-#kgu .gb-schild small{display:block;font-size:2.2vh;letter-spacing:.9vh;color:#F3E7CF;text-shadow:0 0 1.6vh rgba(124,255,61,.5);}
+#kgu .gb-schild::before{content:'';position:absolute;inset:.9vh;border-radius:1.4vh;pointer-events:none;
+  background:repeating-radial-gradient(circle at 0 0,rgba(255,200,150,.5) 0 .2vh,transparent .2vh 2.4vh);
+  opacity:.25;}
+#kgu .gb-schild small{display:block;font-size:2.1vh;letter-spacing:.9vh;color:#F3E7CF;
+  text-shadow:0 0 1.4vh rgba(124,255,61,.6);}
 @keyframes gbSchild{from{opacity:0;filter:brightness(.2)}60%{opacity:1;filter:brightness(2.2)}to{opacity:1;filter:none}}
-@keyframes gbSchildSummen{0%,90%{opacity:1}92%{opacity:.35}94%{opacity:1}97%{opacity:.6}}
-#kgu .gb-fenster{position:absolute;top:26vh;width:12vh;height:8vh;border-radius:1vh;
-  background:#07040C;box-shadow:inset 0 0 0 .4vh #4A2A12;display:flex;align-items:center;justify-content:space-around;}
-#kgu .gb-fenster.l{left:9%;}
-#kgu .gb-fenster.r{right:9%;}
-#kgu .gb-fenster i{width:3.4vh;height:2.2vh;border-radius:50%;background:#7CFF3D;opacity:0;
-  box-shadow:0 0 2vh rgba(124,255,61,.8);
+@keyframes gbSchildSummen{0%,90%{opacity:1}92%{opacity:.4}94%{opacity:1}97%{opacity:.65}}
+/* Fenster: dunkles Glas, dahinter gehen Augen auf. */
+#kgu .gb-fenster{position:absolute;top:23vh;width:13vh;height:8.6vh;border-radius:1vh;
+  background:radial-gradient(ellipse at 50% 40%,#0E0A18 0%,#05030A 100%);
+  box-shadow:inset 0 0 0 .45vh #4A2A12,inset 0 0 2vh rgba(0,0,0,.9),0 0 2vh rgba(0,0,0,.6);
+  display:flex;align-items:center;justify-content:space-around;}
+#kgu .gb-fenster::after{content:'';position:absolute;inset:0;border-radius:1vh;pointer-events:none;
+  background:linear-gradient(118deg,transparent 42%,rgba(255,255,255,.07) 48%,transparent 54%);}
+#kgu .gb-fenster.l{left:8%;}
+#kgu .gb-fenster.r{right:8%;}
+#kgu .gb-fenster i{position:relative;width:3.6vh;height:2.3vh;border-radius:50%;opacity:0;
+  background:radial-gradient(circle at 45% 40%,#D9FFC0 0%,#7CFF3D 45%,#2E7A12 100%);
+  box-shadow:0 0 2.4vh rgba(124,255,61,.9);
   animation:gbAuge .4s ease-out var(--t) forwards,gbBlinzeln 3.4s steps(1) calc(var(--t) + 1.2s) infinite;}
-#kgu .gb-fenster i::after{content:'';position:absolute;width:1.2vh;height:1.2vh;margin:.5vh 0 0 1.1vh;border-radius:50%;background:#07040C;}
+#kgu .gb-fenster i::after{content:'';position:absolute;left:38%;top:26%;width:1.3vh;height:1.3vh;border-radius:50%;background:#07040C;}
 @keyframes gbAuge{to{opacity:1}}
-@keyframes gbBlinzeln{0%,88%{transform:none}90%{transform:scaleY(.1)}92%{transform:none}}
+@keyframes gbBlinzeln{0%,88%{transform:none}90%{transform:scaleY(.08)}92%{transform:none}}
 /* Das Tor: zwei bemalte Fluegel, dahinter das gruene Licht der Einfahrt. */
-#kgu .gb-tor{position:absolute;left:50%;bottom:0;width:38vh;height:34vh;margin-left:-19vh;
-  border-radius:19vh 19vh 0 0;overflow:hidden;background:#05030A;box-shadow:inset 0 0 0 .6vh #4A2A12;}
+#kgu .gb-tor{position:absolute;left:50%;bottom:0;width:44vh;height:40vh;margin-left:-22vh;
+  border-radius:22vh 22vh 0 0;overflow:hidden;background:#05030A;
+  box-shadow:inset 0 0 0 .7vh #6A3C14,inset 0 0 0 1.1vh #0B0712,0 0 6vh rgba(124,255,61,.25);}
 #kgu .gb-innen{position:absolute;inset:0;
-  background:radial-gradient(ellipse 70% 80% at 50% 100%,rgba(124,255,61,.75) 0%,rgba(20,90,20,.35) 45%,transparent 75%);}
-#kgu .gb-fluegel{position:absolute;top:0;bottom:0;width:50%;background:linear-gradient(180deg,#241633,#0D0816);
-  box-shadow:inset 0 0 0 .4vh #4A2A12;display:flex;align-items:center;justify-content:center;}
-#kgu .gb-fluegel svg{width:70%;height:auto;opacity:.85;}
-#kgu .gb-fluegel.a{left:0;border-radius:19vh 0 0 0;transform-origin:left center;animation:gbTuerA .7s cubic-bezier(.4,0,.2,1) var(--t) forwards;}
-#kgu .gb-fluegel.b{right:0;border-radius:0 19vh 0 0;transform-origin:right center;animation:gbTuerB .7s cubic-bezier(.4,0,.2,1) var(--t) forwards;}
-@keyframes gbTuerA{to{transform:perspective(90vh) rotateY(105deg)}}
-@keyframes gbTuerB{to{transform:perspective(90vh) rotateY(-105deg)}}
-/* Kuerbisse vor der Fassade. */
-#kgu .gb-kuerbisse{position:absolute;left:0;right:0;bottom:0;height:12vh;}
-#kgu .gb-kuerbisse i{position:absolute;bottom:1vh;width:7vh;height:5.4vh;border-radius:50%;
-  background:radial-gradient(ellipse at 40% 30%,#FF9A3C,#C7490A 70%,#7A2A02 100%);
-  transform:scale(var(--s));animation:gbKuerbis .5s ease-out var(--d) backwards;}
-#kgu .gb-kuerbisse i::before{content:'';position:absolute;left:46%;top:-1.2vh;width:.8vh;height:1.6vh;background:#3F6B1E;border-radius:.4vh;}
+  background:radial-gradient(ellipse 70% 85% at 50% 100%,rgba(190,255,150,.85) 0%,rgba(60,180,40,.4) 35%,rgba(20,70,20,.2) 60%,transparent 80%);}
+/* Lichtkegel, der aus dem Tor auf den Boden faellt. */
+#kgu .gb-kegel{position:absolute;left:50%;bottom:0;width:72vh;height:30vh;margin-left:-36vh;
+  background:linear-gradient(180deg,rgba(124,255,61,.28) 0%,transparent 78%);
+  clip-path:polygon(32% 0,68% 0,100% 100%,0 100%);opacity:0;
+  animation:gbKegel .8s ease-out var(--t) forwards;}
+@keyframes gbKegel{to{opacity:1}}
+#kgu .gb-fluegel{position:absolute;top:0;bottom:0;width:50%;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.45) 0 .18vh,transparent .18vh 1.3vh),
+             linear-gradient(180deg,#2A1A3C,#120B1C);
+  box-shadow:inset 0 0 0 .4vh #4A2A12,inset 0 0 4vh rgba(0,0,0,.8);
+  display:flex;align-items:center;justify-content:center;}
+#kgu .gb-fluegel svg{width:62%;height:auto;filter:drop-shadow(0 0 2vh rgba(255,122,24,.45));}
+#kgu .gb-fluegel.a{left:0;border-radius:22vh 0 0 0;transform-origin:left center;animation:gbTuerA .7s cubic-bezier(.4,0,.2,1) var(--t) forwards;}
+#kgu .gb-fluegel.b{right:0;border-radius:0 22vh 0 0;transform-origin:right center;animation:gbTuerB .7s cubic-bezier(.4,0,.2,1) var(--t) forwards;}
+@keyframes gbTuerA{to{transform:perspective(90vh) rotateY(108deg)}}
+@keyframes gbTuerB{to{transform:perspective(90vh) rotateY(-108deg)}}
+
+/* Kuerbis als Material: Rippen, Innenglut, Schatten. Dreimal gebraucht -
+   vor der Fassade, im Feld, als Riese. */
+#kgu .gb-kbs{position:absolute;border-radius:50% 50% 46% 46%/52% 52% 48% 48%;
+  /* Rippen als duenne Ellipsen-Umrisse: sie folgen der Woelbung, waehrend
+     gerade Linien den Kuerbis platt aussehen liessen. */
+  background:
+    radial-gradient(ellipse 21% 97% at 50% 50%,transparent 94%,rgba(90,30,0,.3) 95%),
+    radial-gradient(ellipse 43% 97% at 50% 50%,transparent 95%,rgba(90,30,0,.26) 96%),
+    radial-gradient(ellipse 66% 97% at 50% 50%,transparent 96%,rgba(90,30,0,.2) 97%),
+    radial-gradient(ellipse 86% 97% at 50% 50%,transparent 97%,rgba(90,30,0,.16) 98%),
+    radial-gradient(ellipse 22% 80% at 50% 50%,rgba(255,200,130,.25) 0%,transparent 70%),
+    radial-gradient(ellipse at 36% 26%,#FFBE6E 0%,#F07914 38%,#B44405 70%,#5E1C00 100%);
+  box-shadow:inset -1.4vh -1.2vh 3.4vh rgba(50,12,0,.65),inset 1vh .6vh 2vh rgba(255,200,130,.18),
+             0 1vh 3vh rgba(0,0,0,.6),0 0 4vh rgba(255,122,24,.25);}
+#kgu .gb-kbs::before{content:'';position:absolute;left:46%;top:-16%;width:9%;height:22%;border-radius:.6vh;
+  background:linear-gradient(180deg,#6E9B30,#2E5212);box-shadow:0 .2vh .4vh rgba(0,0,0,.5);}
+#kgu .gb-kuerbisse{position:absolute;left:0;right:0;bottom:14%;height:14vh;}
+#kgu .gb-kuerbisse .gb-kbs{bottom:0;width:8vh;height:6.4vh;transform:scale(var(--s));
+  animation:gbKuerbis .5s ease-out var(--d) backwards;}
 @keyframes gbKuerbis{from{transform:scale(0)}to{transform:scale(var(--s))}}
-/* Im Feld stehen dieselben Kuerbisse, nur groesser und im Nebel. */
-#kgu .gb-kuerbisse.feld{height:26vh;}
-#kgu .gb-kuerbisse.feld i{bottom:3vh;width:11vh;height:8.4vh;opacity:.85;animation-delay:0s;}
+#kgu .gb-kuerbisse.feld{bottom:6%;height:30vh;}
+#kgu .gb-kuerbisse.feld .gb-kbs{width:13vh;height:10vh;animation-delay:0s;}
 
 /* Fledermaeuse: fliegen quer durchs Bild, Fluegel schlagen. */
 #kgu .gb-fleder{position:absolute;inset:0;pointer-events:none;}
 #kgu .gb-fleder i{position:absolute;left:-12vh;width:9vh;transform:scale(var(--s));
   animation:gbFlug var(--u) linear var(--d) backwards;}
-#kgu .gb-fleder i svg{width:100%;height:auto;display:block;fill:#0B0712;animation:gbFlattern var(--f) ease-in-out infinite;}
-#kgu .gb-fleder.weit i svg{fill:#120A16;}
-#kgu .gb-fleder.nah i svg{fill:#0B0712;filter:drop-shadow(0 0 1.2vh rgba(255,122,24,.45));}
+#kgu .gb-fleder i svg{width:100%;height:auto;display:block;fill:#07040C;animation:gbFlattern var(--f) ease-in-out infinite;}
+#kgu .gb-fleder.weit i{filter:blur(.2vh);opacity:.85;}
+#kgu .gb-fleder.nah i svg{filter:drop-shadow(0 0 1.4vh rgba(255,122,24,.5));}
 @keyframes gbFlug{from{transform:translate(0,0) scale(var(--s))}to{transform:translate(124vw,var(--y)) scale(var(--s))}}
 @keyframes gbFlattern{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.42)}}
 
-/* Tunnel: Ringe rasen auf die Kamera zu, Spinnweben in den Ecken. */
-#kgu .gb-tunnel{background:radial-gradient(ellipse 60% 60% at 50% 50%,#10210F 0%,#070410 70%);perspective:70vh;}
+/* Tunnel: Waende laufen auf den Fluchtpunkt zu, Ringe rasen vorbei,
+   Staub steht im Licht. */
+#kgu .gb-tunnel{background:radial-gradient(ellipse 45% 55% at 50% 50%,#17300F 0%,#0A1408 38%,#060310 78%);perspective:70vh;}
+#kgu .gb-wand{position:absolute;top:0;bottom:0;width:42%;
+  background:repeating-linear-gradient(176deg,rgba(124,255,61,.05) 0 .3vh,transparent .3vh 4.2vh),
+             linear-gradient(90deg,#0B1A08 0%,rgba(8,16,6,0) 100%);}
+#kgu .gb-wand.l{left:0;clip-path:polygon(0 0,100% 34%,100% 66%,0 100%);}
+#kgu .gb-wand.r{right:0;clip-path:polygon(100% 0,0 34%,0 66%,100% 100%);}
+/* Boden der Fahrt: dunkle Flaeche im Fluchtpunkt, darauf zwei Schienen, die
+   nach vorn auseinanderlaufen. Vorher war es ein breiter grauer Streifen in
+   der Mitte - das sah aus wie eine Saeule, nicht wie Gleise. */
+#kgu .gb-schiene{position:absolute;left:0;right:0;bottom:0;height:34%;
+  background:linear-gradient(180deg,transparent,rgba(124,255,61,.1));
+  clip-path:polygon(40% 0,60% 0,100% 100%,0 100%);}
+#kgu .gb-schiene::before,#kgu .gb-schiene::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(243,231,207,.08),rgba(220,205,175,.22));}
+#kgu .gb-schiene::before{clip-path:polygon(46% 0,47.4% 0,30% 100%,25% 100%);}
+#kgu .gb-schiene::after{clip-path:polygon(53.9% 0,55.3% 0,80% 100%,75% 100%);}
 #kgu .gb-ringe{position:absolute;inset:0;transform-style:preserve-3d;}
 #kgu .gb-ringe i{position:absolute;left:50%;top:50%;width:52vh;height:52vh;margin:-26vh 0 0 -26vh;border-radius:50%;
-  box-shadow:0 0 0 .5vh rgba(124,255,61,.4),0 0 4vh rgba(124,255,61,.25);
+  box-shadow:0 0 0 .35vh rgba(124,255,61,.5),0 0 3vh rgba(124,255,61,.35),inset 0 0 4vh rgba(124,255,61,.12);
   animation:gbRing var(--u) linear var(--d) infinite backwards;}
 @keyframes gbRing{from{transform:translateZ(-180vh) scale(.1);opacity:0}15%{opacity:1}to{transform:translateZ(60vh) scale(2.6);opacity:0}}
-#kgu .gb-netz{position:absolute;top:0;width:26vh;height:26vh;opacity:.5;
-  background:repeating-conic-gradient(from 0deg at 0 0,rgba(243,231,207,.45) 0deg 1deg,transparent 1deg 15deg),
-             repeating-radial-gradient(circle at 0 0,transparent 0 3.4vh,rgba(243,231,207,.4) 3.4vh 3.6vh);}
+#kgu .gb-staub{position:absolute;inset:0;pointer-events:none;}
+#kgu .gb-staub i{position:absolute;width:.4vh;height:.4vh;border-radius:50%;background:rgba(220,255,200,.75);
+  box-shadow:0 0 .8vh rgba(124,255,61,.6);animation:gbStaub var(--u) linear var(--d) infinite backwards;}
+@keyframes gbStaub{from{transform:translate(0,0) scale(.3);opacity:0}20%{opacity:1}to{transform:translate(var(--x),var(--y)) scale(1.8);opacity:0}}
+#kgu .gb-netz{position:absolute;top:0;width:28vh;height:28vh;opacity:.45;
+  background:repeating-conic-gradient(from 0deg at 0 0,rgba(243,231,207,.5) 0deg 1deg,transparent 1deg 15deg),
+             repeating-radial-gradient(circle at 0 0,transparent 0 3.4vh,rgba(243,231,207,.45) 3.4vh 3.6vh);
+  filter:drop-shadow(0 0 .6vh rgba(255,255,255,.25));}
 #kgu .gb-netz.l{left:0;}
 #kgu .gb-netz.r{right:0;transform:scaleX(-1);}
-/* Schreckmoment: die Fratze springt ins Bild und ist sofort wieder weg. */
+/* Schreckmoment: die Fratze springt ins Bild, von unten angeleuchtet. */
 #kgu .gb-schreck{display:flex;align-items:center;justify-content:center;z-index:12;}
-#kgu .gb-schreck svg{width:62vh;height:62vh;animation:gbSchreck .3s cubic-bezier(.2,1.6,.4,1) var(--a) backwards;}
-#kgu .gb-schreck.fratze svg{filter:drop-shadow(0 0 6vh rgba(255,122,24,.8));}
-#kgu .gb-schreck.schaedel svg{filter:drop-shadow(0 0 6vh rgba(124,255,61,.6));}
-#kgu .gb-schreck.spinne svg{filter:drop-shadow(0 0 5vh rgba(255,59,48,.6));}
+#kgu .gb-schreck::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 45% 55% at 50% 60%,rgba(255,122,24,.25) 0%,transparent 70%);}
+#kgu .gb-schreck svg{width:64vh;height:64vh;animation:gbSchreck .3s cubic-bezier(.2,1.6,.4,1) var(--a) backwards;}
+#kgu .gb-schreck.fratze svg{filter:drop-shadow(0 0 7vh rgba(255,122,24,.9)) drop-shadow(0 0 2vh rgba(255,60,0,.6));}
+#kgu .gb-schreck.schaedel svg{filter:drop-shadow(0 0 7vh rgba(124,255,61,.7)) drop-shadow(0 .6vh 1vh rgba(0,0,0,.8));}
+#kgu .gb-schreck.spinne svg{filter:drop-shadow(0 0 5vh rgba(255,59,48,.7));}
 @keyframes gbSchreck{from{transform:scale(.2) rotate(-14deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
-/* Graeber: zwei Steine, die an der Kamera vorbeirasen. */
-#kgu .gb-graeber{display:flex;align-items:center;justify-content:center;gap:10vh;z-index:11;}
-#kgu .gb-grab{position:relative;width:26vh;height:32vh;border-radius:13vh 13vh 1vh 1vh;
-  background:linear-gradient(180deg,#5A5A62 0%,#32323A 60%,#1C1C22 100%);
-  box-shadow:inset 0 .6vh 0 rgba(255,255,255,.18),0 2vh 5vh rgba(0,0,0,.7);
+/* Graeber: Stein mit Kante, Maserung und Schatten. */
+#kgu .gb-graeber{display:flex;align-items:flex-end;justify-content:center;gap:12vh;padding-bottom:12vh;z-index:11;}
+#kgu .gb-grab{position:relative;width:27vh;height:34vh;border-radius:13.5vh 13.5vh 1vh 1vh;
+  background:
+    repeating-linear-gradient(96deg,rgba(0,0,0,.08) 0 .3vh,transparent .3vh 2.2vh),
+    linear-gradient(180deg,#6E6E78 0%,#4A4A54 38%,#2C2C34 78%,#1A1A20 100%);
+  box-shadow:inset 0 .7vh 0 rgba(255,255,255,.22),inset -1.4vh -1vh 3vh rgba(0,0,0,.6),0 2vh 5vh rgba(0,0,0,.75);
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh;
   animation:gbGrab 1s cubic-bezier(.2,.8,.3,1) var(--t) backwards;}
-#kgu .gb-grab span{font-size:3.2vh;line-height:1.1;color:#0B0712;text-align:center;padding:0 2vh;text-shadow:0 .2vh 0 rgba(255,255,255,.2);}
-#kgu .gb-grab small{font-family:'Alegreya Sans',sans-serif;font-size:1.6vh;letter-spacing:.3vh;color:rgba(11,7,18,.6);}
+#kgu .gb-grab::after{content:'';position:absolute;left:8%;right:8%;bottom:-1.6vh;height:3vh;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,0,0,.75),transparent 70%);}
+#kgu .gb-grab span{font-size:3.3vh;line-height:1.1;color:#15151A;text-align:center;padding:0 2vh;
+  text-shadow:0 .18vh 0 rgba(255,255,255,.28),0 -.1vh .1vh rgba(0,0,0,.5);}
+#kgu .gb-grab small{font-family:'Alegreya Sans',sans-serif;font-size:1.6vh;letter-spacing:.3vh;color:rgba(21,21,26,.65);}
 #kgu .gb-grab.l{transform:rotate(-4deg);}
 #kgu .gb-grab.r{transform:rotate(3deg);}
 @keyframes gbGrab{from{transform:translateY(60vh) scale(.3);opacity:0}60%{opacity:1}to{opacity:1}}
 
-/* Kuerbisfeld: Nebel, ein Riese waechst heran, sein Maul reisst auf. */
-#kgu .gb-feld{background:radial-gradient(ellipse 80% 60% at 50% 100%,#15200E 0%,#07040C 70%);}
-/* Im Feld steht der Mond frei und hell - er ist dort die einzige Lichtquelle
-   ausser den Kuerbissen. */
-#kgu .gb-feld .gb-mond.gross{filter:brightness(1.25);}
-#kgu .gb-nebel{position:absolute;left:0;right:0;bottom:0;height:40%;overflow:hidden;}
-#kgu .gb-nebel i{position:absolute;left:-30%;width:70%;height:16vh;border-radius:50%;
-  background:radial-gradient(ellipse,rgba(200,255,190,var(--o)) 0%,transparent 70%);
+/* Kuerbisfeld: Nebelbaenke, ein Riese waechst heran. */
+#kgu .gb-feld{background:linear-gradient(180deg,#0A0616 0%,#13091F 45%,#0E1410 72%,#060A06 100%);}
+#kgu .gb-nebel{position:absolute;left:0;right:0;bottom:0;height:46%;overflow:hidden;}
+#kgu .gb-nebel i{position:absolute;left:-30%;width:70%;height:18vh;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(205,255,195,var(--o)) 0%,transparent 70%);filter:blur(.6vh);
   animation:gbNebel var(--u) linear var(--d) infinite backwards;}
 @keyframes gbNebel{from{transform:translateX(0)}to{transform:translateX(190%)}}
-#kgu .gb-riese{position:absolute;left:50%;bottom:2vh;width:70vh;height:56vh;margin-left:-35vh;
+#kgu .gb-riese{position:absolute;left:50%;bottom:4vh;width:70vh;height:56vh;margin-left:-35vh;
   animation:gbRiese 1.4s cubic-bezier(.3,.8,.3,1) var(--t) backwards,gbRiesePlatz .6s cubic-bezier(.4,0,.2,1) var(--m) forwards;}
 @keyframes gbRiese{from{transform:translateY(40vh) scale(.5)}to{transform:none}}
 @keyframes gbRiesePlatz{to{transform:scale(5.5) translateY(2vh)}}
-#kgu .gb-riese-leib{position:absolute;inset:0;border-radius:50%;
-  background:radial-gradient(ellipse at 38% 28%,#FF9A3C 0%,#D8550A 45%,#7A2A02 85%,#3E1400 100%);
-  box-shadow:0 0 8vh rgba(255,122,24,.5),inset -4vh -3vh 8vh rgba(0,0,0,.5);}
-#kgu .gb-riese-leib::before{content:'';position:absolute;left:47%;top:-5vh;width:3vh;height:7vh;background:#3F6B1E;border-radius:1vh;}
+#kgu .gb-riese .gb-kbs{inset:0;}
 /* Augen und Maul sind Loecher: dahinter steht das Licht, in das wir fahren. */
-#kgu .gb-riese-augen{position:absolute;left:16%;right:16%;top:18%;height:16%;display:flex;justify-content:space-between;}
-#kgu .gb-riese-augen i{width:34%;height:100%;background:#07040C;
-  clip-path:polygon(0 100%,100% 42%,86% 100%);box-shadow:0 0 4vh rgba(124,255,61,.5);
+/* Klassische Kuerbisaugen: Dreiecke mit der Spitze nach oben, nach innen
+   geneigt. Vorher waren es duenne Keile - die sahen aus wie Augenbrauen. */
+#kgu .gb-riese-augen{position:absolute;left:14%;right:14%;top:20%;height:21%;display:flex;justify-content:space-between;z-index:2;}
+#kgu .gb-riese-augen i{width:30%;height:100%;background:#07040C;transform-origin:center bottom;
+  clip-path:polygon(100% 0,100% 100%,0 100%);filter:drop-shadow(0 0 3.4vh rgba(255,190,60,.85));
   animation:gbAugeAuf .5s ease-out var(--t) backwards;}
-#kgu .gb-riese-augen i:last-child{clip-path:polygon(100% 100%,0 42%,14% 100%);}
+#kgu .gb-riese-augen i:last-child{clip-path:polygon(0 0,100% 100%,0 100%);}
 @keyframes gbAugeAuf{from{transform:scaleY(0);opacity:0}to{transform:none;opacity:1}}
-#kgu .gb-maul{position:absolute;left:0;right:0;top:44%;bottom:14%;}
+#kgu .gb-maul{position:absolute;left:0;right:0;top:44%;bottom:14%;z-index:2;}
 #kgu .gb-maul i{position:absolute;left:14%;right:14%;background:#07040C;
-  box-shadow:0 0 5vh rgba(124,255,61,.6) inset;}
+  filter:drop-shadow(0 0 3vh rgba(255,200,60,.7));}
 #kgu .gb-maul i.o{top:0;height:46%;clip-path:polygon(0 100%,8% 0,16% 100%,26% 10%,36% 100%,48% 0,60% 100%,72% 8%,84% 100%,94% 0,100% 100%);
   transform-origin:center bottom;animation:gbMaulO .5s cubic-bezier(.3,1.4,.4,1) var(--t) backwards;}
 #kgu .gb-maul i.u{bottom:0;height:46%;clip-path:polygon(0 0,8% 100%,18% 0,30% 92%,42% 0,54% 100%,66% 0,78% 92%,90% 0,100% 100%);
@@ -2919,18 +3028,29 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 @keyframes gbMaulO{from{transform:scaleY(.1)}to{transform:scaleY(1)}}
 @keyframes gbMaulU{from{transform:scaleY(.1)}to{transform:scaleY(1)}}
 
-/* Schlussbild: Kerzenreihe am unteren Rand, Licht von unten. */
-#kgu .gb-halle{background:radial-gradient(ellipse 70% 60% at 50% 86%,rgba(255,122,24,.3) 0%,transparent 65%),
-  radial-gradient(ellipse 60% 50% at 50% 10%,rgba(124,255,61,.14) 0%,transparent 70%),#07040C;}
-#kgu .gb-halle-licht{position:absolute;inset:0;background:radial-gradient(ellipse 40% 45% at 50% 50%,rgba(255,226,184,.22) 0%,transparent 70%);}
-#kgu .gb-kerzen{position:absolute;left:0;right:0;bottom:3vh;height:12vh;}
-#kgu .gb-kerzen i{position:absolute;bottom:0;width:1.6vh;height:7vh;border-radius:.4vh;background:linear-gradient(180deg,#F3E7CF,#C9B68C);
+/* Schlussbild: Kerzenreihe, Glut in der Luft, Licht von unten. */
+#kgu .gb-halle{background:radial-gradient(ellipse 70% 55% at 50% 88%,rgba(255,122,24,.35) 0%,transparent 65%),
+  radial-gradient(ellipse 60% 50% at 50% 8%,rgba(124,255,61,.16) 0%,transparent 70%),
+  linear-gradient(180deg,#0A0616 0%,#12091C 60%,#07040C 100%);}
+#kgu .gb-halle-licht{position:absolute;inset:0;background:radial-gradient(ellipse 42% 46% at 50% 48%,rgba(255,226,184,.2) 0%,transparent 70%);}
+#kgu .gb-glut{position:absolute;inset:0;pointer-events:none;}
+#kgu .gb-glut i{position:absolute;bottom:-2vh;width:.5vh;height:.5vh;border-radius:50%;background:#FFB45A;
+  box-shadow:0 0 1.2vh rgba(255,122,24,.9);animation:gbGlut var(--u) linear var(--d) infinite backwards;}
+@keyframes gbGlut{from{transform:translate(0,0);opacity:0}15%{opacity:1}to{transform:translate(var(--x),-80vh);opacity:0}}
+#kgu .gb-kerzen{position:absolute;left:0;right:0;bottom:3vh;height:13vh;}
+#kgu .gb-kerzen i{position:absolute;bottom:0;width:1.7vh;height:7.4vh;border-radius:.4vh .4vh 0 0;
+  background:linear-gradient(90deg,#B8A478 0%,#F7ECD6 32%,#FFFDF6 46%,#D9C9A4 72%,#8E7C56 100%);
+  box-shadow:0 .6vh 2vh rgba(0,0,0,.6);
   transform:scale(var(--s));transform-origin:bottom center;animation:gbKerze .4s ease-out var(--d) backwards;}
-#kgu .gb-kerzen i::after{content:'';position:absolute;left:50%;top:-2.6vh;width:1.4vh;height:2.6vh;margin-left:-.7vh;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
-  background:radial-gradient(ellipse at 50% 70%,#FFF7E6 0%,#FFB13C 45%,rgba(255,122,24,0) 80%);
+#kgu .gb-kerzen i::before{content:'';position:absolute;left:0;right:0;top:0;height:1.2vh;border-radius:50%;
+  background:radial-gradient(ellipse,#FFF6E0,#C8B68E);}
+#kgu .gb-kerzen i::after{content:'';position:absolute;left:50%;top:-3vh;width:1.6vh;height:3.2vh;margin-left:-.8vh;
+  border-radius:50% 50% 50% 50%/62% 62% 38% 38%;
+  background:radial-gradient(ellipse at 50% 72%,#FFFDF2 0%,#FFD08A 32%,#FF8A1E 62%,rgba(255,122,24,0) 85%);
+  filter:drop-shadow(0 0 1.6vh rgba(255,140,30,.8));
   animation:gbFlamme var(--f) ease-in-out infinite;}
 @keyframes gbKerze{from{transform:scaleY(0)}to{transform:scale(var(--s))}}
-@keyframes gbFlamme{0%,100%{transform:scale(1) translateX(0)}35%{transform:scale(1.18,.92) translateX(.2vh)}70%{transform:scale(.9,1.12) translateX(-.2vh)}}
+@keyframes gbFlamme{0%,100%{transform:scale(1) translateX(0)}35%{transform:scale(1.2,.9) translateX(.22vh)}70%{transform:scale(.88,1.14) translateX(-.22vh)}}
 
 /* Blitze: Donnerschlag am Anfang, je Schreckmoment einer, und der
    Einschlag beim Titel. */

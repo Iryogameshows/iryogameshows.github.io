@@ -1633,8 +1633,25 @@ const INTRO_GB = {
 const INTRO_GB_FRATZE = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 8c-4 0-7 3-8 7C24 17 10 32 10 53c0 23 18 39 40 39s40-16 40-39c0-21-14-36-32-38-1-4-4-7-8-7z" fill="#FF7A18"/><path d="M26 46l18-10 4 18z" fill="#140A02"/><path d="M74 46L56 36l-4 18z" fill="#140A02"/><path d="M22 66h56l-8 12-8-6-6 8-6-8-8 6z" fill="#140A02"/></svg>';
 const INTRO_GB_SCHAEDEL = '<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50 6c22 0 36 16 36 36 0 12-5 21-12 27v13H26V69C19 63 14 54 14 42 14 22 28 6 50 6z" fill="#F3E7CF"/><circle cx="34" cy="45" r="11" fill="#0B0712"/><circle cx="66" cy="45" r="11" fill="#0B0712"/><path d="M50 58l-7 13h14z" fill="#0B0712"/><path d="M36 82v9M50 82v9M64 82v9" stroke="#0B0712" stroke-width="5"/></svg>';
 const INTRO_GB_SPINNE = '<svg viewBox="0 0 100 100" aria-hidden="true"><g stroke="#0B0712" stroke-width="5" fill="none" stroke-linecap="round"><path d="M38 44 14 26 4 36M38 52 10 52 2 64M40 60 16 74 10 88M44 66 32 88 36 96M62 44 86 26 96 36M62 52 90 52 98 64M60 60 84 74 90 88M56 66 68 88 64 96"/></g><ellipse cx="50" cy="58" rx="18" ry="22" fill="#0B0712"/><circle cx="50" cy="38" r="12" fill="#0B0712"/><circle cx="45" cy="36" r="3.5" fill="#FF3B30"/><circle cx="55" cy="36" r="3.5" fill="#FF3B30"/></svg>';
+/** Kahler Baum als Silhouette: Stamm, der sich viermal gabelt. Gezeichnet
+ *  statt als festes Pfad-Bild, damit links und rechts verschieden gewachsene
+ *  Baeume stehen - zwei identische Silhouetten am Bildrand faellt sofort auf.
+ *  @returns {string} */
+function introGbBaum(){
+  const R = introZufall, aeste = [];
+  const zweig = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ laenge,
+                 /** @type {number} */ winkel, /** @type {number} */ breite, /** @type {number} */ tiefe) => {
+    const x2 = x + Math.sin(winkel) * laenge, y2 = y - Math.cos(winkel) * laenge;
+    aeste.push(`<path d="M${x.toFixed(1)} ${y.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}" stroke-width="${breite.toFixed(1)}"/>`);
+    if (tiefe <= 0) return;
+    zweig(x2, y2, laenge * R(.62, .78), winkel - R(.3, .62), breite * .62, tiefe - 1);
+    zweig(x2, y2, laenge * R(.62, .78), winkel + R(.3, .62), breite * .62, tiefe - 1);
+  };
+  zweig(100, 260, 70, R(-.08, .08), 14, 4);
+  return `<svg viewBox="0 0 200 260" aria-hidden="true"><g stroke="#060310" fill="none" stroke-linecap="round">${aeste.join('')}</g></svg>`;
+}
 /* Die Fledermaus fliegt als Silhouette, die Fluegel schlagen per CSS. */
-const INTRO_GB_FLEDER = '<svg viewBox="0 0 64 28" aria-hidden="true"><path d="M32 5c2.4 0 4 2.2 4 4.6 3.6-5.4 9.4-8 16.6-8-3.8 3-5 7.4-4 11.2 2.8-1.8 6.6-1.8 9.4 0-5.6 1-8.6 4.6-9.6 9.4-4.8-2.8-10.6-2.8-14.4 1-.8-2.6-1.4-4.2-2-4.2s-1.2 1.6-2 4.2c-3.8-3.8-9.6-3.8-14.4-1C14 17.4 11 13.8 5.4 12.8c2.8-1.8 6.6-1.8 9.4 0 1-3.8-.2-8.2-4-11.2 7.2 0 13 2.6 16.6 8C28 7.2 29.6 5 32 5z"/></svg>';
+const INTRO_GB_FLEDER ='<svg viewBox="0 0 64 28" aria-hidden="true"><path d="M32 5c2.4 0 4 2.2 4 4.6 3.6-5.4 9.4-8 16.6-8-3.8 3-5 7.4-4 11.2 2.8-1.8 6.6-1.8 9.4 0-5.6 1-8.6 4.6-9.6 9.4-4.8-2.8-10.6-2.8-14.4 1-.8-2.6-1.4-4.2-2-4.2s-1.2 1.6-2 4.2c-3.8-3.8-9.6-3.8-14.4-1C14 17.4 11 13.8 5.4 12.8c2.8-1.8 6.6-1.8 9.4 0 1-3.8-.2-8.2-4-11.2 7.2 0 13 2.6 16.6 8C28 7.2 29.6 5 32 5z"/></svg>';
 
 /** @param {IntroTexte} tx
  *  @returns {string} */
@@ -1647,7 +1664,22 @@ function introGeisterbahnHtml(tx){
   const birnen = Array.from({ length: 22 }, (_, k) =>
     `<i style="--d:${F(P.lichter + Math.abs(10.5 - k) * .045)}s"></i>`).join('');
   const kuerbisse = Array.from({ length: 7 }, (_, k) =>
-    `<i style="left:${4 + k * 15}%;--s:${F(R(.7, 1.25))};--d:${F(P.lichter + k * .08)}s"></i>`).join('');
+    `<div class="gb-kbs" style="left:${4 + k * 15}%;--s:${F(R(.7, 1.25))};--d:${F(P.lichter + k * .08)}s"></div>`).join('');
+  /* Himmel, Wolken, Staub, Glut: viele kleine Teile, die dem Bild Tiefe
+     geben. Mengen bewusst klein gehalten - jedes i ist ein Element, das der
+     Spiegel mitkopiert. */
+  const sterne = Array.from({ length: 70 }, () =>
+    `<i style="left:${F(R(0, 100))}%;top:${F(R(0, 62))}%;--o:${F(R(.35, 1))};--u:${F(R(2.4, 5))}s;--d:${F(R(0, 3))}s"></i>`).join('');
+  const wolken = Array.from({ length: 4 }, (_, k) =>
+    `<i style="top:${F(R(2, 30))}%;--u:${F(R(26, 46))}s;--d:${F(-k * 9)}s"></i>`).join('');
+  const staub = Array.from({ length: 26 }, () => {
+    const u = R(1.4, 2.6), w = R(0, Math.PI * 2);
+    return `<i style="left:${F(R(38, 62))}%;top:${F(R(38, 62))}%;--x:${F(Math.cos(w) * R(20, 60))}vw;--y:${F(Math.sin(w) * R(16, 44))}vh;--u:${F(u)}s;--d:${F(P.fahrt + R(0, u))}s"></i>`;
+  }).join('');
+  const glut = Array.from({ length: 22 }, () => {
+    const u = R(4, 8);
+    return `<i style="left:${F(R(2, 98))}%;--x:${F(R(-8, 8))}vw;--u:${F(u)}s;--d:${F(P.hit + R(0, u))}s"></i>`;
+  }).join('');
   const fleder = (/** @type {number} */ n, /** @type {number} */ t0, /** @type {number} */ dauer) =>
     Array.from({ length: n }, () => {
       const u = R(dauer * .7, dauer * 1.3);
@@ -1673,8 +1705,14 @@ function introGeisterbahnHtml(tx){
     <div class="pt-cam" style="--s0:${s(P.schreck[0])};--s1:${s(P.schreck[1])};--s2:${s(P.schreck[2])};--te:${s(P.tuer)};--vs:${s(P.maul)};--h:${s(P.hit)};--l:${s(P.landung)}">
 
       <div class="ifw gb-nacht" style="--a:0s;--b:${s(P.fahrt)}">
+        <div class="gb-sterne">${sterne}</div>
         <div class="gb-mond" style="--t:0s"></div>
+        <div class="gb-wolken">${wolken}</div>
         <div class="gb-fleder weit">${fleder(9, P.fleder, 2.4)}</div>
+        <div class="gb-boden"></div>
+        <div class="gb-baum l">${introGbBaum()}</div>
+        <div class="gb-baum r">${introGbBaum()}</div>
+        <div class="gb-zaun"></div>
         <div class="gb-haus">
           <div class="gb-dach"></div>
           <div class="gb-kette">${birnen}</div>
@@ -1688,24 +1726,34 @@ function introGeisterbahnHtml(tx){
             <div class="gb-fluegel b" style="--t:${s(P.tuer)}">${INTRO_GB_SCHAEDEL}</div>
           </div>
         </div>
+        <div class="gb-kegel" style="--t:${s(P.tuer + .3)}"></div>
+        <div class="gb-pfuetze"></div>
         <div class="gb-kuerbisse">${kuerbisse}</div>
       </div>
 
       <div class="ifw gb-tunnel" style="--a:${s(P.fahrt)};--b:${s(P.feld)}">
+        <div class="gb-wand l"></div><div class="gb-wand r"></div>
+        <div class="gb-schiene"></div>
         <div class="gb-ringe">${ringe}</div>
+        <div class="gb-staub">${staub}</div>
         <div class="gb-netz l"></div><div class="gb-netz r"></div>
         ${schreck}
         <div class="ifw gb-graeber" style="--a:${s(P.grab)};--b:${s(P.feld)}">${grab(0)}${grab(1)}</div>
       </div>
 
       <div class="ifw gb-feld" style="--a:${s(P.feld)};--b:${s(P.hit)}">
+        <div class="gb-sterne">${sterne}</div>
         <div class="gb-mond gross" style="--t:${s(P.feld)}"></div>
+        <div class="gb-wolken">${wolken}</div>
+        <div class="gb-boden"></div>
+        <div class="gb-baum r">${introGbBaum()}</div>
+        <div class="gb-zaun"></div>
         <div class="gb-kuerbisse feld">${kuerbisse}</div>
         <div class="gb-nebel">${nebel}</div>
         <div class="gb-riese" style="--t:${s(P.feld)};--m:${s(P.maul)}">
-          <div class="gb-riese-leib"></div>
-          <div class="gb-riese-augen" style="--t:${s(P.feld + .5)}"><i></i><i></i></div>
-          <div class="gb-maul" style="--t:${s(P.maul)}"><i class="o"></i><i class="u"></i></div>
+          <div class="gb-kbs"></div>
+          <div class="gb-riese-augen" style="--t:${s(P.feld + .25)}"><i></i><i></i></div>
+          <div class="gb-maul" style="--t:${s(P.maul - .3)}"><i class="o"></i><i class="u"></i></div>
         </div>
       </div>
 
@@ -1714,6 +1762,7 @@ function introGeisterbahnHtml(tx){
         <i class="pt-ring" style="--t:${s(P.hit)}"></i><i class="pt-ring" style="--t:${s(P.landung)}"></i>
         ${introFilmLogo(tx, P, { spiegel: true, preisWort: 'Zu gewinnen' })}
         <div class="pt-funken">${introFunken(90, P.hit, ['#FFE2B8', '#FF7A18', '#7CFF3D', '#FFFFFF'])}</div>
+        <div class="gb-glut">${glut}</div>
         <div class="gb-kerzen">${kerzen}</div>
         <div class="gb-fleder nah">${fleder(14, P.hit, 2.2)}</div>
         <div class="pt-glitzer">${introGlitzer(8, P.preis)}</div>
