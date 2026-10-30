@@ -465,6 +465,14 @@
   :root[data-theme="S"] #buzz{font-weight:400;font-size:2.6rem;letter-spacing:8px;padding-left:8px;
     box-shadow:0 10px 0 var(--buzz-shadow,#7a140e),0 0 0 6px #D9B66B,0 0 0 11px #0E0C08,0 0 0 13px #D9B66B;}
 
+  /* U Geisterbahn: der Knopf ist die nackte Gluehbirne ueber der Einfahrt -
+     Fassung aus lackiertem Holz, Glas darin. Gedrueckt leuchtet sie. */
+  :root[data-theme="U"] #buzz{font-family:'Rye',serif;font-weight:400;font-size:2.5rem;letter-spacing:4px;padding-left:4px;
+    background:radial-gradient(circle at 50% 32%,#FFE2B8 0%,#FF9A3C 34%,#D8550A 70%,#7A2A02 100%);color:#2A1000;
+    box-shadow:0 10px 0 #4A2A12,0 0 0 7px #4A2A12,0 0 0 10px #0B0712,0 0 46px rgba(255,122,24,.55);}
+  :root[data-theme="U"] #buzz.armed{box-shadow:0 10px 0 #4A2A12,0 0 0 7px #4A2A12,0 0 0 10px #0B0712,0 0 70px rgba(255,122,24,.9),0 0 120px rgba(124,255,61,.35);}
+  :root[data-theme="U"] #status{font-family:'Rye',serif;font-size:1.1rem;letter-spacing:1px;}
+
   /* ── Komposition (2026-10-16): das Handy folgt der Leinwand ──
      Bisher sass in jeder Richtung derselbe 340-px-Knopf in der Mitte, der
      Rest der Flaeche blieb leer. Jetzt fuellt der Knopf die Breite und die

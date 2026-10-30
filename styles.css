@@ -2755,6 +2755,197 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 @keyframes orSpur{from{transform:translateY(0);opacity:1}to{transform:translateY(112vh);opacity:1}}
 #kgo .or-licht{position:absolute;inset:0;z-index:20;background:#fff;opacity:0;pointer-events:none;animation:ptBlitzK .25s linear var(--vs),ptBlitzG 1.1s ease-out var(--h);}
 
+/* ── Geisterbahn ──
+   Halloween als Fahrgeschaeft vom Jahrmarkt (David, 2026-10-30): schwarzer
+   Lack, Birnenkette, gruenes Licht aus der Einfahrt, Kuerbisgold fuer den
+   Titel. Zeiten kommen aus INTRO_GB (js/intro.js).
+
+   Alles ist CSS - das Zuschauerfenster bekommt nur den DOM gespiegelt
+   (BAUPLAN 4.8). Die Fratzen sind SVG, weil ein geklontes <canvas> leer
+   ankaeme. */
+#kgu{position:relative;width:100%;height:100%;overflow:hidden;background:#07040C;color:#F3E7CF;font-family:'Rye',serif;}
+#kgu i{font-style:normal;}
+
+/* Der Mond: Scheibe mit Kratern, steigt langsam. Gross im Kuerbisfeld. */
+#kgu .gb-mond{position:absolute;left:62%;top:9%;width:17vh;height:17vh;border-radius:50%;
+  background:radial-gradient(circle at 38% 34%,#FFF7E6 0%,#F0DFB4 45%,#C8AE78 100%);
+  box-shadow:0 0 9vh rgba(255,236,190,.45),0 0 22vh rgba(255,200,120,.22);
+  animation:gbMondAuf 7s ease-out var(--t) backwards;}
+#kgu .gb-mond::before,#kgu .gb-mond::after{content:'';position:absolute;border-radius:50%;background:rgba(150,128,92,.35);}
+#kgu .gb-mond::before{left:24%;top:46%;width:22%;height:22%;}
+#kgu .gb-mond::after{left:56%;top:22%;width:14%;height:14%;box-shadow:-1.6vh 2.6vh 0 .4vh rgba(150,128,92,.28);}
+#kgu .gb-mond.gross{left:14%;top:8%;width:26vh;height:26vh;margin-left:0;
+  background:radial-gradient(circle at 38% 34%,#FFFDF2 0%,#FFEFB8 42%,#E8C06A 100%);
+  box-shadow:0 0 14vh rgba(255,240,200,.55),0 0 30vh rgba(255,200,120,.25);
+  animation:gbMondGross 6s ease-out var(--t) backwards;}
+@keyframes gbMondAuf{from{transform:translateY(8vh) scale(.9);opacity:0}30%{opacity:1}to{transform:none}}
+@keyframes gbMondGross{from{transform:scale(1.5);opacity:0}25%{opacity:1}to{transform:scale(1)}}
+
+/* Die Fassade: Giebel, Birnenkette, Schild, zwei Fenster, das Tor. */
+/* Mitte ueber margin-left, nicht ueber translateX: die Einfahrt-Animation
+   belegt transform schon. min() in beiden Zeilen, sonst stimmt die Haelfte
+   bei schmalen Fenstern nicht. */
+#kgu .gb-haus{position:absolute;left:50%;bottom:0;width:min(92vw,120vh);height:78%;margin-left:calc(min(92vw,120vh) / -2);
+  /* Senkrecht genagelte Bretter, schwarz lackiert. */
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.45) 0 .3vh,transparent .3vh 4vh),
+             linear-gradient(180deg,#1A1026 0%,#0C0814 100%);
+  border-top:.6vh solid #4A2A12;border-radius:6vh 6vh 0 0;
+  box-shadow:inset 0 0 12vh rgba(0,0,0,.9);
+  animation:gbHaus .9s cubic-bezier(.2,.9,.3,1) .05s backwards;}
+@keyframes gbHaus{from{transform:translateY(6vh) scale(1.06);opacity:0}to{transform:none;opacity:1}}
+#kgu .gb-dach{position:absolute;left:-2%;right:-2%;top:-5vh;height:10vh;
+  background:repeating-linear-gradient(90deg,#4A2A12 0 3vh,#2E1A0B 3vh 6vh);
+  clip-path:polygon(0 100%,4% 0,8% 100%,12% 0,16% 100%,20% 0,24% 100%,28% 0,32% 100%,36% 0,40% 100%,44% 0,48% 100%,52% 0,56% 100%,60% 0,64% 100%,68% 0,72% 100%,76% 0,80% 100%,84% 0,88% 100%,92% 0,96% 100%,100% 0,100% 100%);}
+#kgu .gb-kette{position:absolute;left:3%;right:3%;top:3.5vh;display:flex;justify-content:space-between;}
+#kgu .gb-kette i{width:1.5vh;height:1.5vh;border-radius:50%;background:#2A1A10;
+  animation:gbBirne .35s ease-out var(--d) forwards,gbBirneFlacker 2.6s steps(1) calc(var(--d) + 1s) infinite;}
+@keyframes gbBirne{to{background:#FFE2B8;box-shadow:0 0 1.4vh #FF7A18,0 0 3.4vh rgba(255,122,24,.6)}}
+@keyframes gbBirneFlacker{0%,92%{opacity:1}94%{opacity:.45}96%{opacity:1}98%{opacity:.6}}
+#kgu .gb-schild{position:absolute;left:50%;top:9vh;transform:translateX(-50%);text-align:center;
+  padding:1.4vh 4vh;border:.5vh solid #4A2A12;border-radius:2vh;background:#120A1A;
+  font-size:4.2vh;line-height:1.1;letter-spacing:.3vh;color:#FF7A18;white-space:nowrap;
+  text-shadow:0 0 2vh rgba(255,122,24,.8);
+  animation:gbSchild .5s ease-out var(--t) backwards,gbSchildSummen 3.1s steps(1) calc(var(--t) + .5s) infinite;}
+#kgu .gb-schild small{display:block;font-size:2.2vh;letter-spacing:.9vh;color:#F3E7CF;text-shadow:0 0 1.6vh rgba(124,255,61,.5);}
+@keyframes gbSchild{from{opacity:0;filter:brightness(.2)}60%{opacity:1;filter:brightness(2.2)}to{opacity:1;filter:none}}
+@keyframes gbSchildSummen{0%,90%{opacity:1}92%{opacity:.35}94%{opacity:1}97%{opacity:.6}}
+#kgu .gb-fenster{position:absolute;top:26vh;width:12vh;height:8vh;border-radius:1vh;
+  background:#07040C;box-shadow:inset 0 0 0 .4vh #4A2A12;display:flex;align-items:center;justify-content:space-around;}
+#kgu .gb-fenster.l{left:9%;}
+#kgu .gb-fenster.r{right:9%;}
+#kgu .gb-fenster i{width:3.4vh;height:2.2vh;border-radius:50%;background:#7CFF3D;opacity:0;
+  box-shadow:0 0 2vh rgba(124,255,61,.8);
+  animation:gbAuge .4s ease-out var(--t) forwards,gbBlinzeln 3.4s steps(1) calc(var(--t) + 1.2s) infinite;}
+#kgu .gb-fenster i::after{content:'';position:absolute;width:1.2vh;height:1.2vh;margin:.5vh 0 0 1.1vh;border-radius:50%;background:#07040C;}
+@keyframes gbAuge{to{opacity:1}}
+@keyframes gbBlinzeln{0%,88%{transform:none}90%{transform:scaleY(.1)}92%{transform:none}}
+/* Das Tor: zwei bemalte Fluegel, dahinter das gruene Licht der Einfahrt. */
+#kgu .gb-tor{position:absolute;left:50%;bottom:0;width:38vh;height:34vh;margin-left:-19vh;
+  border-radius:19vh 19vh 0 0;overflow:hidden;background:#05030A;box-shadow:inset 0 0 0 .6vh #4A2A12;}
+#kgu .gb-innen{position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 80% at 50% 100%,rgba(124,255,61,.75) 0%,rgba(20,90,20,.35) 45%,transparent 75%);}
+#kgu .gb-fluegel{position:absolute;top:0;bottom:0;width:50%;background:linear-gradient(180deg,#241633,#0D0816);
+  box-shadow:inset 0 0 0 .4vh #4A2A12;display:flex;align-items:center;justify-content:center;}
+#kgu .gb-fluegel svg{width:70%;height:auto;opacity:.85;}
+#kgu .gb-fluegel.a{left:0;border-radius:19vh 0 0 0;transform-origin:left center;animation:gbTuerA .7s cubic-bezier(.4,0,.2,1) var(--t) forwards;}
+#kgu .gb-fluegel.b{right:0;border-radius:0 19vh 0 0;transform-origin:right center;animation:gbTuerB .7s cubic-bezier(.4,0,.2,1) var(--t) forwards;}
+@keyframes gbTuerA{to{transform:perspective(90vh) rotateY(105deg)}}
+@keyframes gbTuerB{to{transform:perspective(90vh) rotateY(-105deg)}}
+/* Kuerbisse vor der Fassade. */
+#kgu .gb-kuerbisse{position:absolute;left:0;right:0;bottom:0;height:12vh;}
+#kgu .gb-kuerbisse i{position:absolute;bottom:1vh;width:7vh;height:5.4vh;border-radius:50%;
+  background:radial-gradient(ellipse at 40% 30%,#FF9A3C,#C7490A 70%,#7A2A02 100%);
+  transform:scale(var(--s));animation:gbKuerbis .5s ease-out var(--d) backwards;}
+#kgu .gb-kuerbisse i::before{content:'';position:absolute;left:46%;top:-1.2vh;width:.8vh;height:1.6vh;background:#3F6B1E;border-radius:.4vh;}
+@keyframes gbKuerbis{from{transform:scale(0)}to{transform:scale(var(--s))}}
+/* Im Feld stehen dieselben Kuerbisse, nur groesser und im Nebel. */
+#kgu .gb-kuerbisse.feld{height:26vh;}
+#kgu .gb-kuerbisse.feld i{bottom:3vh;width:11vh;height:8.4vh;opacity:.85;animation-delay:0s;}
+
+/* Fledermaeuse: fliegen quer durchs Bild, Fluegel schlagen. */
+#kgu .gb-fleder{position:absolute;inset:0;pointer-events:none;}
+#kgu .gb-fleder i{position:absolute;left:-12vh;width:9vh;transform:scale(var(--s));
+  animation:gbFlug var(--u) linear var(--d) backwards;}
+#kgu .gb-fleder i svg{width:100%;height:auto;display:block;fill:#0B0712;animation:gbFlattern var(--f) ease-in-out infinite;}
+#kgu .gb-fleder.weit i svg{fill:#120A16;}
+#kgu .gb-fleder.nah i svg{fill:#0B0712;filter:drop-shadow(0 0 1.2vh rgba(255,122,24,.45));}
+@keyframes gbFlug{from{transform:translate(0,0) scale(var(--s))}to{transform:translate(124vw,var(--y)) scale(var(--s))}}
+@keyframes gbFlattern{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.42)}}
+
+/* Tunnel: Ringe rasen auf die Kamera zu, Spinnweben in den Ecken. */
+#kgu .gb-tunnel{background:radial-gradient(ellipse 60% 60% at 50% 50%,#10210F 0%,#070410 70%);perspective:70vh;}
+#kgu .gb-ringe{position:absolute;inset:0;transform-style:preserve-3d;}
+#kgu .gb-ringe i{position:absolute;left:50%;top:50%;width:52vh;height:52vh;margin:-26vh 0 0 -26vh;border-radius:50%;
+  box-shadow:0 0 0 .5vh rgba(124,255,61,.4),0 0 4vh rgba(124,255,61,.25);
+  animation:gbRing var(--u) linear var(--d) infinite backwards;}
+@keyframes gbRing{from{transform:translateZ(-180vh) scale(.1);opacity:0}15%{opacity:1}to{transform:translateZ(60vh) scale(2.6);opacity:0}}
+#kgu .gb-netz{position:absolute;top:0;width:26vh;height:26vh;opacity:.5;
+  background:repeating-conic-gradient(from 0deg at 0 0,rgba(243,231,207,.45) 0deg 1deg,transparent 1deg 15deg),
+             repeating-radial-gradient(circle at 0 0,transparent 0 3.4vh,rgba(243,231,207,.4) 3.4vh 3.6vh);}
+#kgu .gb-netz.l{left:0;}
+#kgu .gb-netz.r{right:0;transform:scaleX(-1);}
+/* Schreckmoment: die Fratze springt ins Bild und ist sofort wieder weg. */
+#kgu .gb-schreck{display:flex;align-items:center;justify-content:center;z-index:12;}
+#kgu .gb-schreck svg{width:62vh;height:62vh;animation:gbSchreck .3s cubic-bezier(.2,1.6,.4,1) var(--a) backwards;}
+#kgu .gb-schreck.fratze svg{filter:drop-shadow(0 0 6vh rgba(255,122,24,.8));}
+#kgu .gb-schreck.schaedel svg{filter:drop-shadow(0 0 6vh rgba(124,255,61,.6));}
+#kgu .gb-schreck.spinne svg{filter:drop-shadow(0 0 5vh rgba(255,59,48,.6));}
+@keyframes gbSchreck{from{transform:scale(.2) rotate(-14deg);opacity:0}to{transform:scale(1) rotate(0);opacity:1}}
+/* Graeber: zwei Steine, die an der Kamera vorbeirasen. */
+#kgu .gb-graeber{display:flex;align-items:center;justify-content:center;gap:10vh;z-index:11;}
+#kgu .gb-grab{position:relative;width:26vh;height:32vh;border-radius:13vh 13vh 1vh 1vh;
+  background:linear-gradient(180deg,#5A5A62 0%,#32323A 60%,#1C1C22 100%);
+  box-shadow:inset 0 .6vh 0 rgba(255,255,255,.18),0 2vh 5vh rgba(0,0,0,.7);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1vh;
+  animation:gbGrab 1s cubic-bezier(.2,.8,.3,1) var(--t) backwards;}
+#kgu .gb-grab span{font-size:3.2vh;line-height:1.1;color:#0B0712;text-align:center;padding:0 2vh;text-shadow:0 .2vh 0 rgba(255,255,255,.2);}
+#kgu .gb-grab small{font-family:'Alegreya Sans',sans-serif;font-size:1.6vh;letter-spacing:.3vh;color:rgba(11,7,18,.6);}
+#kgu .gb-grab.l{transform:rotate(-4deg);}
+#kgu .gb-grab.r{transform:rotate(3deg);}
+@keyframes gbGrab{from{transform:translateY(60vh) scale(.3);opacity:0}60%{opacity:1}to{opacity:1}}
+
+/* Kuerbisfeld: Nebel, ein Riese waechst heran, sein Maul reisst auf. */
+#kgu .gb-feld{background:radial-gradient(ellipse 80% 60% at 50% 100%,#15200E 0%,#07040C 70%);}
+/* Im Feld steht der Mond frei und hell - er ist dort die einzige Lichtquelle
+   ausser den Kuerbissen. */
+#kgu .gb-feld .gb-mond.gross{filter:brightness(1.25);}
+#kgu .gb-nebel{position:absolute;left:0;right:0;bottom:0;height:40%;overflow:hidden;}
+#kgu .gb-nebel i{position:absolute;left:-30%;width:70%;height:16vh;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(200,255,190,var(--o)) 0%,transparent 70%);
+  animation:gbNebel var(--u) linear var(--d) infinite backwards;}
+@keyframes gbNebel{from{transform:translateX(0)}to{transform:translateX(190%)}}
+#kgu .gb-riese{position:absolute;left:50%;bottom:2vh;width:70vh;height:56vh;margin-left:-35vh;
+  animation:gbRiese 1.4s cubic-bezier(.3,.8,.3,1) var(--t) backwards,gbRiesePlatz .6s cubic-bezier(.4,0,.2,1) var(--m) forwards;}
+@keyframes gbRiese{from{transform:translateY(40vh) scale(.5)}to{transform:none}}
+@keyframes gbRiesePlatz{to{transform:scale(5.5) translateY(2vh)}}
+#kgu .gb-riese-leib{position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(ellipse at 38% 28%,#FF9A3C 0%,#D8550A 45%,#7A2A02 85%,#3E1400 100%);
+  box-shadow:0 0 8vh rgba(255,122,24,.5),inset -4vh -3vh 8vh rgba(0,0,0,.5);}
+#kgu .gb-riese-leib::before{content:'';position:absolute;left:47%;top:-5vh;width:3vh;height:7vh;background:#3F6B1E;border-radius:1vh;}
+/* Augen und Maul sind Loecher: dahinter steht das Licht, in das wir fahren. */
+#kgu .gb-riese-augen{position:absolute;left:16%;right:16%;top:18%;height:16%;display:flex;justify-content:space-between;}
+#kgu .gb-riese-augen i{width:34%;height:100%;background:#07040C;
+  clip-path:polygon(0 100%,100% 42%,86% 100%);box-shadow:0 0 4vh rgba(124,255,61,.5);
+  animation:gbAugeAuf .5s ease-out var(--t) backwards;}
+#kgu .gb-riese-augen i:last-child{clip-path:polygon(100% 100%,0 42%,14% 100%);}
+@keyframes gbAugeAuf{from{transform:scaleY(0);opacity:0}to{transform:none;opacity:1}}
+#kgu .gb-maul{position:absolute;left:0;right:0;top:44%;bottom:14%;}
+#kgu .gb-maul i{position:absolute;left:14%;right:14%;background:#07040C;
+  box-shadow:0 0 5vh rgba(124,255,61,.6) inset;}
+#kgu .gb-maul i.o{top:0;height:46%;clip-path:polygon(0 100%,8% 0,16% 100%,26% 10%,36% 100%,48% 0,60% 100%,72% 8%,84% 100%,94% 0,100% 100%);
+  transform-origin:center bottom;animation:gbMaulO .5s cubic-bezier(.3,1.4,.4,1) var(--t) backwards;}
+#kgu .gb-maul i.u{bottom:0;height:46%;clip-path:polygon(0 0,8% 100%,18% 0,30% 92%,42% 0,54% 100%,66% 0,78% 92%,90% 0,100% 100%);
+  transform-origin:center top;animation:gbMaulU .5s cubic-bezier(.3,1.4,.4,1) var(--t) backwards;}
+@keyframes gbMaulO{from{transform:scaleY(.1)}to{transform:scaleY(1)}}
+@keyframes gbMaulU{from{transform:scaleY(.1)}to{transform:scaleY(1)}}
+
+/* Schlussbild: Kerzenreihe am unteren Rand, Licht von unten. */
+#kgu .gb-halle{background:radial-gradient(ellipse 70% 60% at 50% 86%,rgba(255,122,24,.3) 0%,transparent 65%),
+  radial-gradient(ellipse 60% 50% at 50% 10%,rgba(124,255,61,.14) 0%,transparent 70%),#07040C;}
+#kgu .gb-halle-licht{position:absolute;inset:0;background:radial-gradient(ellipse 40% 45% at 50% 50%,rgba(255,226,184,.22) 0%,transparent 70%);}
+#kgu .gb-kerzen{position:absolute;left:0;right:0;bottom:3vh;height:12vh;}
+#kgu .gb-kerzen i{position:absolute;bottom:0;width:1.6vh;height:7vh;border-radius:.4vh;background:linear-gradient(180deg,#F3E7CF,#C9B68C);
+  transform:scale(var(--s));transform-origin:bottom center;animation:gbKerze .4s ease-out var(--d) backwards;}
+#kgu .gb-kerzen i::after{content:'';position:absolute;left:50%;top:-2.6vh;width:1.4vh;height:2.6vh;margin-left:-.7vh;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+  background:radial-gradient(ellipse at 50% 70%,#FFF7E6 0%,#FFB13C 45%,rgba(255,122,24,0) 80%);
+  animation:gbFlamme var(--f) ease-in-out infinite;}
+@keyframes gbKerze{from{transform:scaleY(0)}to{transform:scale(var(--s))}}
+@keyframes gbFlamme{0%,100%{transform:scale(1) translateX(0)}35%{transform:scale(1.18,.92) translateX(.2vh)}70%{transform:scale(.9,1.12) translateX(-.2vh)}}
+
+/* Blitze: Donnerschlag am Anfang, je Schreckmoment einer, und der
+   Einschlag beim Titel. */
+#kgu .gb-blitz{position:absolute;inset:0;z-index:20;pointer-events:none;background:#fff;opacity:0;
+  animation:gbBlitzD .9s ease-out var(--b1),ptBlitzK .22s linear var(--s0),ptBlitzK .22s linear var(--s1),
+            ptBlitzK .22s linear var(--s2),ptBlitzG 1.1s ease-out var(--h);}
+@keyframes gbBlitzD{0%{opacity:0}4%{opacity:.95}10%{opacity:.1}16%{opacity:.8}26%{opacity:0}100%{opacity:0}}
+
+/* Kuerbisgold fuer die Titelschrift: dieselbe Mechanik wie mat-silber. */
+#kg-overlay.film .mat-kuerbis .pl .fc{background-image:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.95) 50%,transparent 62%),
+  linear-gradient(180deg,#FFF3D0 0%,#FFC266 24%,#FF7A18 48%,#A33A02 52%,#FF9A3C 64%,#FFE2B8 100%);}
+#kg-overlay.film .mat-kuerbis .pl .ex{color:#3E1400;
+  text-shadow:0 .012em 0 #A33A02,0 .024em 0 #8A3400,0 .036em 0 #742C00,0 .048em 0 #5E2400,0 .06em 0 #4A1C00,
+              0 .072em 0 #3A1600,0 .084em 0 #2A1000,0 .096em 0 #1E0B00,0 .14em .12em rgba(0,0,0,.7),0 0 .4em rgba(124,255,61,.35);}
+
 /* Wer weniger Bewegung eingestellt hat, bekommt bei allen Film-Intros
    gleich das Schlussbild: alle Animationen aus, nur die Einstellungen mit
    .fin stehen. Die Grundstile oben sind so gesetzt, dass ohne Animation das
@@ -2764,6 +2955,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   #kg-overlay.film .ifw.fin{opacity:1;visibility:visible;}
   #kg-overlay.film .pt-funken,#kg-overlay.film .pt-pyro,#kg-overlay.film .pt-konfetti,#kg-overlay.film .pt-glitzer,#kg-overlay.film .pt-flare,#kg-overlay.film .pt-ring{display:none;}
   #kgt .tr-muenzen,#kgo .or-palmen,#kgo .or-vhs,#kgo .or-spur{display:none;}
+  #kgu .gb-fleder,#kgu .gb-kerzen,#kgu .gb-nebel,#kgu .gb-ringe{display:none;}
   #kg-overlay.film .ifw2{opacity:0;visibility:hidden;}
 }
 
@@ -3898,6 +4090,8 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="Q"] { --ico-fill:#3255A4; --ico-cut:#F2EEE4; --ico-dim:rgba(50,85,164,.3); --ico-filter:drop-shadow(3px 2px 0 rgba(255,72,176,.85)); --ico-blend:multiply; }
 :root[data-theme="R"] { --ico-fill:#F2A900; --ico-line:#F4F1EA; --ico-cut:#111; --ico-dim:#3A3A3A; }
 :root[data-theme="S"] { --ico-fill:url(#ico-deco); --ico-fstroke:#FBEBC0; --ico-fsw:.8; --ico-line:#D9B66B; --ico-cut:#0B0A08; --ico-dim:rgba(217,182,107,.25); }
+/* Geisterbahn: Kuerbisfarbene Flaeche, Knochenkontur, gruener Schein. */
+:root[data-theme="U"] { --ico-fill:#FF7A18; --ico-fstroke:#F3E7CF; --ico-fsw:1.2; --ico-line:#F3E7CF; --ico-cut:#0B0712; --ico-dim:rgba(243,231,207,.25); --ico-filter:drop-shadow(0 0 9px rgba(255,122,24,.65)) drop-shadow(0 0 18px rgba(124,255,61,.25)); }
 
 /* Bauhaus und Memphis: reihum mehrere Farben statt einer. */
 :root[data-theme="H"] .show-icon [fill^="url"]:nth-child(3n+1) { fill: #D7372B; }
@@ -8644,6 +8838,72 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 @keyframes thSTueren {
   0%   { clip-path: inset(0 50% 0 50%); filter: brightness(1.6); }
   100% { clip-path: inset(0 0 0 0); filter: none; }
+}
+
+/* ── U · Geisterbahn: schwarzer Lack, Gluehbirnen, Licht von innen ──────────
+   Das Fahrgeschaeft vom Jahrmarkt, nicht die Gruselseite: Sperrholz in
+   schwarzem Lack, aussen eine Kette nackter Birnen (--tile-tex setzt je Feld
+   eine darauf), handgemalte Holzlettern. Gruen ist ausschliesslich Licht -
+   es kommt aus dem aufgeklappten Feld, nie als Schrift auf dunklem Grund.
+   Rot bleibt Rot: falsch ist eine Aussage, kein Material. */
+:root[data-theme="U"] {
+  --brd-surface: linear-gradient(180deg, #1A0F24 0%, #0C0813 100%);
+  /* Sperrholzlatten, senkrecht genagelt. */
+  --brd-tex: repeating-linear-gradient(90deg, rgba(0,0,0,.45) 0 2px, transparent 2px 28px);
+  --brd-frame: 0 0 0 4px #4A2A12, 0 0 0 7px #0B0712, 0 0 0 9px rgba(255,122,24,.35), 0 26px 60px rgba(0,0,0,.7);
+  --brd-well: #070410;
+  --brd-inner: rgba(124,255,61,.28);
+  --brd-radius: 14px;
+  --tile: linear-gradient(180deg, #241633 0%, #150D20 60%, #0D0816 100%);
+  --tile-hover: linear-gradient(180deg, #321F46 0%, #1D1130 60%, #120A1E 100%);
+  --tile-edge: inset 0 0 0 2px #4A2A12, inset 0 2px 0 rgba(255,210,150,.16), 0 8px 18px rgba(0,0,0,.6);
+  /* Die nackte Birne ueber jedem Feld. */
+  --tile-tex: radial-gradient(circle at 50% 13%, rgba(255,226,184,.95) 0 2px, rgba(255,122,24,.55) 4px, rgba(255,122,24,.12) 8px, transparent 14px);
+  --tile-fg: #F3E7CF;
+  --tile-font: 'Rye', serif;
+  --tile-num: #FF7A18;
+  --tile-num-glow: 0 0 16px rgba(255,122,24,.8);
+  --tile-dim-fg: rgba(243,231,207,.45);
+  --tile-head: linear-gradient(180deg, #2C1B12, #160D0A);
+  --tile-head-fg: #FFD08A;
+  /* Verbraucht heisst: die Birne ist durchgebrannt. */
+  --tile-used: #0A0611;
+  --tile-rule: rgba(255,122,24,.25);
+  --tile-bar: #0B0712;
+  --tile-open: linear-gradient(180deg, #16451A 0%, #0A2A10 100%);
+  --tile-open-edge: inset 0 0 0 2px rgba(124,255,61,.5), 0 0 34px rgba(124,255,61,.35);
+  --tile-open-fg: #DDFFC4;
+  --tile-open-dim: rgba(124,255,61,.6);
+  --tile-pts-bg: rgba(255,122,24,.12);
+  --tile-pts-rule: rgba(255,122,24,.4);
+  --tile-pick: rgba(124,255,61,.16);
+  --tile-pick-fg: #DDFFC4;
+  --tile-right: linear-gradient(180deg, #1E6118, #0E3410);
+  --tile-right-fg: #EAFFD9;
+  --tile-radius: 10px;
+  --tile-reveal: thUKlappe .7s cubic-bezier(.3,.9,.3,1.05);
+}
+/* Holzlettern nur, wo wenige Zeichen stehen: Kategorie, Zahl, Knopf. Die
+   Frage selbst bleibt in der Brotschrift - Rye ist eine Plakatschrift und
+   aus drei Metern als Fliesstext nicht zu lesen (BAUPLAN 4.2). */
+:root[data-theme="U"] .q-text { color: #FFF7E6; font-family: 'Alegreya Sans', sans-serif; font-weight: 800; font-size: 1.75rem; letter-spacing: .5px; }
+:root[data-theme="U"] .tile-num { font-family: 'Rye', serif; font-size: 1.15rem; }
+:root[data-theme="U"] .tile.open .tile-answer { text-transform: none; letter-spacing: .5px; font-weight: 700; }
+:root[data-theme="U"] .jeopardy-board { gap: clamp(5px, 1.6vh - 6px, 9px); padding: 12px; }
+:root[data-theme="U"] .jeopardy-cat { font-family: 'Rye', serif; font-size: .74rem; letter-spacing: 2px; border-bottom: 2px solid #4A2A12; }
+:root[data-theme="U"] .jeopardy-cell { font-family: 'Rye', serif; font-size: 1.9rem; letter-spacing: 1px; }
+:root[data-theme="U"] .wwm-q { color: #FFF7E6; font-family: 'Alegreya Sans', sans-serif; font-weight: 800; font-size: 1.95rem; line-height: 1.2; }
+:root[data-theme="U"] .wwm-opt { background: var(--tile); box-shadow: var(--tile-edge); font-family: 'Alegreya Sans', sans-serif; font-weight: 700; font-size: 1.35rem; }
+:root[data-theme="U"] .wwm-opt .wwm-letter { color: #FF7A18; font-family: 'Rye', serif; }
+:root[data-theme="U"] .wwm-opt.selected { box-shadow: var(--tile-edge), 0 0 26px rgba(255,122,24,.5); }
+:root[data-theme="U"] .wwm-opt.correct { background: var(--tile-right); color: var(--tile-right-fg); box-shadow: inset 0 0 0 2px rgba(124,255,61,.5), 0 0 30px rgba(124,255,61,.35); }
+:root[data-theme="U"] .wwm-opt.correct .wwm-letter { color: #DDFFC4; }
+/* Das Feld ist eine Fassadenklappe: es schwingt am linken Scharnier auf,
+   dahinter steht das gruene Licht der Einfahrt. */
+@keyframes thUKlappe {
+  0%   { transform: perspective(900px) rotateY(-96deg); transform-origin: left center; filter: brightness(.25); }
+  65%  { transform: perspective(900px) rotateY(10deg); filter: brightness(1.5); }
+  100% { transform: perspective(900px) rotateY(0); transform-origin: left center; filter: none; }
 }
 
 /* Art deco: die Messingplatte ist hell, die Richtung dunkel. Was auf der

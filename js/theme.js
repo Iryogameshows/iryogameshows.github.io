@@ -530,6 +530,35 @@ const DESIGN_THEMES = [
       "--gold-pale": "#F6E2AE",
       "--ink": "#0B0A08"
     } },
+  /* Geisterbahn statt Gruselklischee (David 2026-10-30: "Halloween Design").
+     Vorbild ist das Fahrgeschaeft vom Jahrmarkt: schwarzer Lack auf Sperrholz,
+     handgemalte Knochenschrift, eine Kette nackter Gluehbirnen aussen - und
+     das giftgruene Licht, das von INNEN aus der Einfahrt kommt. Orange traegt
+     die Zahlen, Gruen ist nur Licht, nie Schrift. */
+  { key: "U", name: "Geisterbahn", hell: false,
+    fonts: FONT_BASE + 'rye_nosifer_alegreya-sans-d808cc.css',
+    vars: {
+      "--font-display": "'Rye', serif",
+      "--font-body": "'Alegreya Sans', sans-serif",
+      "--font-logo": "'Nosifer', cursive",
+      "--bg": "#0B0712",
+      "--bg-img": "radial-gradient(ellipse 60% 45% at 50% 108%, rgba(124,255,61,.16) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 8% -8%, rgba(255,122,24,.16) 0%, transparent 70%), radial-gradient(ellipse 40% 30% at 92% -8%, rgba(255,122,24,.16) 0%, transparent 70%)",
+      "--bg-size": "auto",
+      "--panel": "#150D1E",
+      "--panel-hi": "#1E1329",
+      "--line": "#4A2A12",
+      "--fg": "#F3E7CF",
+      "--fg-rgb": "243,231,207",
+      "--fg-strong": "#FFF7E6",
+      "--muted": "#9B86A6",
+      "--pill-fg": "#D8B98C",
+      "--accent-line": "#FF7A18",
+      "--gold-rgb": "255,122,24",
+      "--gold-deep": "#D8550A",
+      "--gold-dark": "#8A3400",
+      "--gold-pale": "#FFD08A",
+      "--ink": "#0B0712"
+    } },
 ];
 
 /* ── Logo je Richtung ─────────────────────────────────────────────────────
@@ -562,6 +591,7 @@ const DESIGN_LOGOS = {
   P: `<div style="position:relative;display:flex;flex-direction:column;align-items:center;padding:10px 0"><span style="position:absolute;left:56px;top:-4px;width:100px;height:100px;border-radius:50%;background:#FFD23F;border:5px solid #141414"></span><span style="position:absolute;right:96px;top:30px;width:0;height:0;border-left:44px solid transparent;border-right:44px solid transparent;border-bottom:76px solid #3FD0C9"></span><span style="position:relative;font-family:'Lilita One',sans-serif;font-size:150px;line-height:1;color:#141414;text-shadow:8px 8px 0 #FF6FA8">IRYO</span><span style="position:relative;display:flex;align-items:center;justify-content:center;gap:18px;width:440px"><svg viewBox="0 0 200 34" style="width:150px;height:26px"><path d="M0 26 L10 8 L20 26 L30 8 L40 26 L50 8 L60 26 L70 8 L80 26 L90 8 L100 26 L110 8 L120 26 L130 8 L140 26 L150 8 L160 26 L170 8 L180 26 L190 8 L200 26" fill="none" stroke="#FF6FA8" stroke-width="7" stroke-linejoin="round"/></svg><span style="font-family:'Lilita One',sans-serif;font-size:50px;line-height:1;color:#7B5CFF">Gameshow</span></span></div>`,
   Q: `<div style="display:flex;flex-direction:column;align-items:center;gap:8px"><span style="font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:17px;letter-spacing:6px;padding-left:6px;color:#3255A4">IRYO GAMESHOW PRÄSENTIERT</span><span style="display:inline-grid"><span style="grid-area:1/1;transform:translate(7px,5px);font-family:'Bowlby One',sans-serif;font-size:150px;line-height:.92;color:#FF48B0;mix-blend-mode:multiply;white-space:nowrap">IRYO</span><span style="grid-area:1/1;font-family:'Bowlby One',sans-serif;font-size:150px;line-height:.92;color:#3255A4;mix-blend-mode:multiply;white-space:nowrap">IRYO</span></span><span style="font-family:'Familjen Grotesk',sans-serif;font-weight:700;font-size:17px;letter-spacing:6px;padding-left:6px;color:#FF48B0">AUSGABE 8 · IM KELLER</span></div>`,
   R: `<div style="display:flex;justify-content:center;align-items:center;gap:30px"><span style="position:relative;flex:none;width:200px;height:200px;border-radius:50%;background:repeating-radial-gradient(circle,#0A0A0A 0px,#0A0A0A 2px,#1B1B1B 2px,#1B1B1B 3px);box-shadow:0 14px 34px rgba(0,0,0,.6)"><span style="position:absolute;left:65px;top:65px;width:70px;height:70px;border-radius:50%;background:#F2A900;display:flex;align-items:center;justify-content:center"><span style="width:10px;height:10px;border-radius:50%;background:#111111"></span></span></span><span style="display:flex;flex-direction:column"><span style="font-family:'Antonio',sans-serif;font-weight:700;font-size:170px;line-height:.82;letter-spacing:-2px;text-transform:uppercase;color:#F4F1EA">Iryo</span><span style="margin-top:10px;font-family:'Antonio',sans-serif;font-weight:600;font-size:24px;letter-spacing:7px;color:#F2A900">GAMESHOW RECORDS</span></span></div>`,
+  U: `<div style="display:flex;justify-content:center;padding:6px 0"><div style="position:relative;padding:40px 56px 44px;background:linear-gradient(180deg,#1C1026 0%,#0B0712 100%);border:7px solid #4A2A12;border-radius:18px;box-shadow:0 0 70px rgba(255,122,24,.22),inset 0 0 60px rgba(0,0,0,.85)"><span style="position:absolute;left:16px;right:16px;top:12px;height:16px;background:radial-gradient(circle at 8px 8px,#FFE2B8 0px,#FF7A18 4px,rgba(255,122,24,.25) 7px,rgba(255,122,24,0) 11px) 0 0/32px 16px"></span><span style="position:absolute;left:16px;right:16px;bottom:12px;height:16px;background:radial-gradient(circle at 8px 8px,#FFE2B8 0px,#FF7A18 4px,rgba(255,122,24,.25) 7px,rgba(255,122,24,0) 11px) 0 0/32px 16px"></span><span style="display:block;text-align:center;font-family:'Nosifer',cursive;font-size:104px;line-height:1.25;color:#FF7A18;text-shadow:0 0 30px rgba(255,122,24,.55),0 6px 0 #5A2400">IRYO</span><span style="display:block;margin-top:10px;text-align:center;font-family:'Rye',serif;font-size:30px;letter-spacing:9px;padding-left:9px;color:#F3E7CF;text-shadow:0 0 18px rgba(124,255,61,.45)">GEISTERBAHN</span></div></div>`,
   S: `<div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0"><span style="position:absolute;left:200px;top:-10px;width:240px;height:240px;border-radius:50%;background:repeating-conic-gradient(from 0deg,#D9B66B 0deg 2deg,transparent 2deg 15deg);-webkit-mask:radial-gradient(circle,transparent 70px,#000 71px,#000 118px,transparent 119px);mask:radial-gradient(circle,transparent 70px,#000 71px,#000 118px,transparent 119px);opacity:.16"></span><span style="position:relative;display:inline-flex;align-items:center;gap:10px"><span style="width:9px;height:9px;background:#D9B66B;transform:rotate(45deg)"></span><span style="width:60px;height:5px;border-top:1px solid #D9B66B;border-bottom:1px solid #D9B66B"></span><span style="width:9px;height:9px;background:#D9B66B;transform:rotate(45deg)"></span></span><span style="position:relative;font-family:'Poiret One',sans-serif;font-size:120px;line-height:1;background:linear-gradient(180deg,#FBEBC0 0%,#E3C47F 40%,#9C7A3A 52%,#E9CF8F 70%,#FBEBC0 100%);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:20px;padding-left:20px">IRYO</span><span style="position:relative;font-family:'Josefin Sans',sans-serif;font-weight:600;font-size:18px;letter-spacing:6px;padding-left:6px;text-transform:uppercase;color:#EFE6D2">Gameshow</span></div>`
 };
 
