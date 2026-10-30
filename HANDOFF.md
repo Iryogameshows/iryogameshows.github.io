@@ -12,6 +12,79 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-30 — `7319293` Halloween: Richtung „Geisterbahn" (U) und Film-Intro Geisterbahn
+
+**David:** „mach ein Halloween style Intro, auch wieder geisteskrank übertrieben du weißt
+wies läuft, und ein Halloween design".
+
+**Gestaltung:** Nicht die Gruselseite, sondern das **Fahrgeschäft vom Jahrmarkt** —
+schwarzer Lack auf Sperrholz, eine Kette nackter Glühbirnen außen, handgemalte
+Kirmeslettern, und das giftgrüne Licht, das von innen aus der Einfahrt kommt. Daraus
+die Regel der Richtung: **Orange trägt die Zahlen, Grün ist ausschließlich Licht, nie
+Schrift auf dunklem Grund.** Knochenweiß für Text.
+
+**Gemacht:**
+- **Richtung U „Geisterbahn"** (`js/theme.js`, `styles.css`): Variablensatz, Logo
+  (Leuchtschild mit Birnenkette, IRYO tropfend in Nosifer), Icon-Satz (`--ico-*`),
+  Material-Block (`--brd-*`, `--tile-*`), Feld-Aufdecker `thUKlappe` — das Feld ist
+  eine Fassadenklappe und schwingt am linken Scharnier auf. Buzzer-Knopf am Handy ist
+  die Glühbirne über der Einfahrt (`buzzer/index.html`).
+- **Schriften** Rye (Kirmeslettern, Zahlen und Kategorien), Nosifer (nur das Logo),
+  Alegreya Sans (Fließtext) — mit `node tools/fonts/hol.js` lokal gespiegelt, keine
+  Google-Adresse im Code.
+- **Film-Intro `geisterbahn`** (`js/intro.js`, `styles.css`, 13 s): Donner reißt die
+  Fassade aus dem Dunkel → Birnenkette läuft an → Augen in den Fenstern → Fledermäuse
+  vor dem Mond → die bemalten Flügeltüren schlagen auf → Fahrt durch den Tunnel mit
+  drei Schreckmomenten (Fratze, Totenkopf, Spinne, je mit Blitz und Schrei) →
+  Grabsteine mit den Teamnamen → Kürbisfeld im Nebel → Flug in das Maul eines
+  Riesenkürbis → Titel in Kürbisgold mit Kerzenreihe und Fledermausschwarm.
+  Ton: Bachs Toccata als Orgel, Herzschlag, Kettenratschen, Schreie, Hexenlachen —
+  alles synthetisch über `INTRO_TON`.
+- Eintrag in der Intro-Auswahl (`index.html`) und in `ALLE_RICHTUNGEN`
+  (`tools/shots/shots.js`).
+
+**Warum so:**
+- **Rye nur für Kurzes.** Als Fließtext ist die Plakatschrift aus drei Metern nicht zu
+  lesen (BAUPLAN 4.2) — Frage und Antwortzeilen laufen in Alegreya Sans.
+- **Nosifer nur für das Logo.** Eine tropfende Schrift zweimal im Bild wäre Kostüm,
+  nicht Gestaltung.
+- **Die Fratzen sind SVG, nicht clip-path.** Der Spiegel klont den DOM; ein `<canvas>`
+  käme leer an, SVG kommt mit (BAUPLAN 4.8). Aus demselben Grund ist das ganze Intro
+  CSS-animiert, ohne JavaScript-Zeitleiste.
+- **Die Schreckmomente sind eigene `.ifw` im Tunnel**: sie blitzen über `--a`/`--b`
+  auf und sind wieder weg, ohne dass irgendwo ein Timer läuft.
+- **Verworfen:** Creepster als Logo-Schrift (die Standard-Halloween-Schrift, überall
+  gesehen); ein Gruselhaus mit Spinnweben-Tapete (hätte wie jede Halloween-Seite
+  ausgesehen); die Richtung auf den freien Schlüssel T zu legen — ein gespeichertes
+  `designTheme='T'` aus der gelöschten Keller-Richtung hätte sonst still die
+  Geisterbahn aufgemacht.
+
+**Geprüft:**
+- `node check.js --types`: „alles in Ordnung", 15 Dateien typgeprüft, keine Meldung.
+- `node tools/shots/shots.js --themes U`: alle 28 Zustände gerendert, **keine Befunde**;
+  Menü, Feud-Tafel, Jeopardy-Brett und Handy angesehen.
+- Intro an zwölf festen Sekunden abfotografiert (eigenes Wegwerf-Skript, das die
+  CSS-Animationen anhält und auf eine Zeit setzt) und Bild für Bild geprüft; dabei
+  gefunden und behoben: die Fassade stand außermittig (`margin-left` ohne `min()`),
+  der Riesenkürbis hing unter dem Bildrand, der Mond war im Feld zu dunkel.
+
+**Offen:**
+- Der volle `shots.js`-Lauf über alle 20 Richtungen lief zum Zeitpunkt des Commits noch —
+  Ergebnis steht aus.
+- **Kein Eintrag in `voting/data.js` und keine Entwurfsseiten unter `designs/s/U-*.html`.**
+  Die Abstimmungsseite zeigt die Richtung deshalb nicht; ein Eintrag ohne die zwölf
+  Entwurfsseiten liefe dort ins 404.
+- Das Intro ist nur als Standbild geprüft, nicht am Stück abgespielt, und der Ton
+  wurde nicht gehört (Chromium ohne Audio im Prüflauf).
+- Nicht am echten Beamer gesehen.
+
+**Fallstricke:** Die Richtung heißt **U**, nicht T — T war die gelöschte Keller-Richtung
+(`72b4213`). Wer das Intro ändert: die Zeiten stehen in `INTRO_GB` (js/intro.js), das
+Bild dazu am Block `#kgu` in `styles.css`; beide müssen zusammenpassen, es gibt keine
+gemeinsame Quelle.
+
+---
+
 ## 2026-10-30 — `2430664` · `5747fa1` GM-Panel: höher, mehrspaltig, kompakter
 
 **David:** „das soll nicht alles an den unteren Rand, mach das bisschen höher. außerdem,
