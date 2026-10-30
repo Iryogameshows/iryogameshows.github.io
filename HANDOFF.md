@@ -12,6 +12,58 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-30 — `547f423` Geisterbahn-Intro: Material, Licht und Tiefe nachgezogen
+
+**David:** „Das Intro gefällt mir nicht, das ist nicht so hochwertig wie der Rest."
+
+**Befund:** Stimmt. Zum Vergleich Standbilder aus Tresor (Zahlenschloss: Metall mit
+Rändelung, feine Striche, Glanzlichter) und Outrun (Perspektivgitter, Neon mit Schein,
+geschichteter Himmel) gerendert — daneben bestand die Geisterbahn aus einfarbigen
+Flächen: Kürbisse als glatte Ellipsen, Fassade als Rechteck, kein Licht, das irgendwo
+hinfällt, keine Tiefenebenen.
+
+**Gemacht (alles in `#kgu`, `styles.css` + Markup in `js/intro.js`):**
+- **Material:** Holzmaserung in zwei Lagen auf der Fassade, Metallfassung mit Nietenraster
+  am Schild, Birnen als Glas mit Glühfaden statt farbiger Punkte, Kürbisrippen als
+  Ellipsen-Umrisse (gerade Linien ließen den Kürbis platt aussehen), Grabsteine mit
+  Kante, Maserung und Bodenschatten.
+- **Licht:** Hof um jede Birne (eigenes `::after` mit Radialverlauf), Schein der Kette
+  auf dem Holz, grüner Lichtkegel aus der Einfahrt auf den Boden, Lichtpfütze davor,
+  aufsteigende Glut im Schlussbild, Kerzen mit Docht und Flammenschein.
+- **Tiefe:** Sternhimmel (70 Punkte, die atmen), Wolken, die vor dem Mond durchziehen,
+  Boden mit Zaun, zwei **gezeichnete** kahle Bäume — `introGbBaum()` gabelt einen Stamm
+  viermal mit Zufallswinkeln, damit links und rechts nicht derselbe Baum steht —,
+  Nebelbänke im Kürbisfeld, im Tunnel Wände und zwei Schienen, die auf den Fluchtpunkt
+  zulaufen.
+- **Riesenkürbis:** hat jetzt ein Gesicht. Dreiecksaugen und Zackenmaul gehen auf
+  (8,05 s und 8,10 s), bevor die Fahrt um 8,4 s hineingeht.
+
+**Warum so:**
+- Die Bäume sind gezeichnet statt ein fester SVG-Pfad: zwei identische Silhouetten am
+  Bildrand fallen sofort auf. Ein erster Versuch mit handgeschriebenem Pfad sah aus wie
+  ein Grasbüschel — am Bild gesehen und ersetzt.
+- Die Schienen waren zuerst ein `repeating-linear-gradient` im Trapez. Das ergab einen
+  breiten grauen Streifen in der Mitte, der wie eine Säule aussah; jetzt zwei
+  `clip-path`-Streifen, die wirklich auseinanderlaufen.
+- Kürbisaugen waren dünne Keile und sahen aus wie Augenbrauen → klassische Dreiecke mit
+  der Spitze nach oben, nach innen geneigt.
+
+**Geprüft:** `node check.js --types` ohne Meldung. `tools/shots/shots.js --themes U,Studio`:
+keine Befunde. Das Intro an sieben Sekunden abfotografiert und Bild für Bild gegen die
+Referenzbilder aus Tresor und Outrun gehalten.
+
+**Offen:**
+- Weiter nur als Standbild geprüft; am Stück abgespielt und mit Ton gehört hat es
+  niemand.
+- Der Mond wirkt im Kürbisfeld hinter den Wolken grau — gewollt, aber wenn David ihn
+  strahlender will, sitzt die Stelle bei `#kgu .gb-mond.gross`.
+- Nicht am echten Beamer gesehen.
+
+**Fallstricke:** Die Fratzen und der Baum sind SVG im DOM — der Spiegel klont sie mit.
+Wer dort ein `<canvas>` einbaut, bekommt auf dem Beamer ein leeres Bild (BAUPLAN 4.8).
+
+---
+
 ## 2026-10-30 — `7319293` Halloween: Richtung „Geisterbahn" (U) und Film-Intro Geisterbahn
 
 **David:** „mach ein Halloween style Intro, auch wieder geisteskrank übertrieben du weißt
