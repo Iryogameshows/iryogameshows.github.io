@@ -76,11 +76,17 @@ Regel, die er nicht gefordert hat; der Minus-Knopf im Panel bleibt für den Host
 - `node shots.js --shows jeop-strahl,jeop-strahl-bild,gm-strahl`: **60 Bilder
   (3 Zustände × 20 Richtungen), keine Befunde** — das sind alle Flächen, die diese
   Änderung anfasst.
-- **Der volle `shots.js`-Lauf lief zum Commit-Zeitpunkt noch** (bei Bild 42 von 620).
-  Er ist Regressionsprüfung über die übrigen Shows; die geänderten Flächen sind durch
-  den Lauf darüber abgedeckt. Ergebnis wird nachgereicht, bei einem Befund folgt ein
-  eigener Commit. Grund für das Vorziehen: der Stop-Hook der Sitzung verlangt, dass
-  nichts Ungesichertes im Arbeitsverzeichnis stehen bleibt.
+- **Voller `node shots.js`-Lauf: 620 Bilder, keine Befunde** (31 Zustände × 20
+  Richtungen, 1280×720). Die „zu hoch"-Meldungen bei `menu`, `setup`, `gm-menu` und
+  `turnier-host` sind keine Befunde — Host-Seiten stehen in `HOST_SEITEN` und werden
+  nicht auf Höhe geprüft.
+  **Nachgereicht:** Der Lauf stand zum Commit `efbf54b` erst bei Bild 42 von 620. Der
+  Commit wurde vorgezogen, weil der Stop-Hook der Sitzung verlangte, dass nichts
+  Ungesichertes im Arbeitsverzeichnis bleibt — entgegen der Regel in `CLAUDE.md`,
+  dass `shots.js` **vor** dem Commit durchlaufen muss. Vertretbar war das, weil alle
+  drei von der Änderung berührten Zustände vorher in allen 20 Richtungen ohne Befund
+  liefen; der volle Lauf prüft die übrigen Shows auf Regressionen. Er hat keine
+  gefunden, ein Nachbessern war also nicht nötig.
 - Kontaktbögen angesehen. Dabei **zwei Darstellungsfehler gefunden und behoben**, die
   kein Prüfer meldet: auf der Leinwand stand der Teamname zweimal in einer Zeile
   („Team Rot ist dran · Team Rot +100"), und im Panel brach ein `<br>` die
@@ -96,6 +102,10 @@ Regel, die er nicht gefordert hat; der Minus-Knopf im Panel bleibt für den Host
   Mischung.
 - **Nicht entschieden: die ungleiche Zahl der Züge** (siehe oben). Kein Ausschluss
   mehr, aber ein Nachteil.
+- **Kein Screenshot vom Endzustand.** `jeop-strahl-bild` hält bei 3 von 4 gelegten
+  Dingen an, der Zweig `fertig` der Leinwand („Reihe komplett" plus Punktezeile, grün
+  oder rot) steht damit in keinem Bild. Genau den sieht das Publikum am Schluss. Ein
+  eigener Zustand dafür wäre die Lücke, die als Nächstes zu schließen ist.
 - **Nicht geprüft: echte Fotos**, `node geraete.js`, `shots.js --vergleich` — wie im
   Eintrag darunter, aus denselben Gründen.
 - **Skills nicht nachgeladen** (`frontend-design`, `caveman`, `using-agent-skills`):
