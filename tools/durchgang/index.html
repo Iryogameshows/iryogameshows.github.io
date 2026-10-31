@@ -313,6 +313,7 @@ const ZUSTAENDE = [
   ['jeop-frage',       'Jeopardy — Frage',       1, 'Antwort aufdecken → in Late Night als Bauchbinde'],
   ['jeop-antwort',     'Jeopardy — Antwort',     1],
   ['jeop-strahl',      'Jeopardy — Zahlenstrahl',1, 'neu: Dinge einordnen, grün/rot beim Einrasten'],
+  ['jeop-strahl-bild', 'Jeopardy — Zahlenstrahl mit Bildern',1, 'Bild-Kacheln und beschriftete Kacheln in einer Reihe'],
   ['wwm',              'Millionär',              0],
   ['wwm-joker',        'Millionär — Publikum',   0],
   ['wwds',             'Sowas — Einsatz',        0],
@@ -329,11 +330,12 @@ const ZUSTAENDE = [
   ['turnier-host',     'Turnier — Hostseite',    0],
   ['gm',               'GM-Panel — im Spiel',    1, 'nur Hostseite — der Beamer bleibt im Wartebild'],
   ['gm-menu',          'GM-Panel — nach Beenden',1, 'nur Hostseite — nach „Beenden" darf hier keine Jeopardy-Steuerung mehr stehen'],
+  ['gm-strahl',        'GM-Panel — Zahlenstrahl', 1, 'nur Hostseite — Reihe mit Bildern, Lückenknöpfe, richtig/falsch'],
 ];
 
 /* Zustände, die das GM-Panel zeigen (wie GM_SHOWS in shots.js): dort muss das
    Panel eingeblendet werden, sonst sieht man die Hostseite dahinter. */
-const GM_ZUSTAENDE = new Set(['gm', 'gm-menu']);
+const GM_ZUSTAENDE = new Set(['gm', 'gm-menu', 'gm-strahl']);
 
 const SCHLUESSEL = 'durchgangStand.v1';
 

@@ -223,6 +223,24 @@
     background:rgba(var(--gold-rgb),.12); border:2px solid rgba(var(--gold-rgb),.4);
     font-size:1.25rem; font-weight:900; color:var(--accent-text); text-align:center;
   }
+  /* Bilder kommen als 128-px-Briefmarke aus Firebase (STRAHL_BILD_BUDGET in
+     js/jeopardy.js) - deshalb hier nicht groesser ziehen als nötig, sonst
+     wird das Bild matschig. Das einzuordnende Ding darf hoch sein, die
+     liegenden Dinge bleiben klein: die Liste muss auf ein Handy passen,
+     ohne dass die Lücken-Knöpfe aus dem Bild rutschen. */
+  #strahl-ding.mit-bild { display:flex; flex-direction:column; align-items:center; gap:8px; }
+  #strahl-ding.mit-bild img {
+    width:128px; height:128px; object-fit:cover;
+    border-radius:12px; background:rgba(0,0,0,.25);
+  }
+  #strahl-ding.mit-bild span { font-size:1.05rem; }
+  .strahl-ding.mit-bild { gap:10px; }
+  .strahl-ding.mit-bild img {
+    width:44px; height:44px; flex:0 0 44px; object-fit:cover;
+    border-radius:8px; background:rgba(0,0,0,.25);
+  }
+  /* Der Name schiebt sich sonst gegen den Wert, sobald ein Bild davor liegt. */
+  .strahl-ding.mit-bild > span:not(.w) { flex:1 1 auto; min-width:0; }
 
   /* Verbindungsbanner: liegt fest oben und schiebt nichts, damit der Buzzer
      nicht springt, wenn das WLAN kurz wegbricht. */
@@ -1265,7 +1283,7 @@
      Jeder Zug hat eine eigene round: daran erkennt das Handy, dass es wieder
      losgeht, und setzt seine Sperre zurueck (BAUPLAN 3.6). */
   let strahlActive=false, strahlRound=0, strahlKey=null, strahlFrage='', strahlEinheit='',
-      strahlDing='', strahlReihe=[], strahlSending=false;
+      strahlDing='', strahlDingBild='', strahlReihe=[], strahlSending=false;
   ref.child('strahl').on('value', s2 => {
     const v = s2.val() || {};
     const r = v.round || 0;
@@ -1276,6 +1294,7 @@
     strahlFrage = v.frage || '';
     strahlEinheit = v.einheit || '';
     strahlDing = v.ding || '';
+    strahlDingBild = v.dingBild || '';
     strahlReihe = Array.isArray(v.reihe) ? v.reihe : [];
     refreshRoot();
   });
@@ -1288,20 +1307,39 @@
     return z + (strahlEinheit ? ' ' + strahlEinheit : '');
   }
 
+  /* Quelle fuer src="..." aus Firebase. Dieselbe Schranke wie safeSrc in
+     js/core.js, nur hier noch einmal: die Handy-Seite laedt core.js nicht.
+     Durch gehen ausschliesslich Daten-URLs mit Bild - kein javascript:,
+     kein Ausbruch aus dem Attribut. */
+  function strahlBild(v){
+    const s = String(v == null ? '' : v);
+    return /^data:image[/]/i.test(s)
+      ? s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')
+      : '';
+  }
+
   function showStrahl(){
     showScreen('screen-strahl');
     fillTeamChip(document.getElementById('strahl-team-chip'));
     document.getElementById('strahl-frage').textContent = strahlFrage;
-    document.getElementById('strahl-ding').textContent = strahlDing;
+    const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    /* Das einzuordnende Ding: mit Bild ist das Bild die Hauptsache, der Name
+       steht darunter. Ohne Bild bleibt es die blosse Zeile wie vorher. */
+    const dingEl = document.getElementById('strahl-ding');
+    const dingBild = strahlBild(strahlDingBild);
+    dingEl.classList.toggle('mit-bild', !!dingBild);
+    dingEl.innerHTML = dingBild
+      ? `<img src="${dingBild}" alt=""><span>${esc(strahlDing)}</span>`
+      : esc(strahlDing);
     document.getElementById('strahl-hint').textContent = strahlSending
       ? 'Wird eingeordnet …' : 'Tippe die Lücke an, in die es gehört.';
-    const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
     const list = document.getElementById('strahl-list');
     let html = '';
     strahlReihe.forEach((d, i) => {
       const vor = i === 0 ? `kleiner als ${esc(d.text)}` : `zwischen ${esc(strahlReihe[i-1].text)} und ${esc(d.text)}`;
+      const b = strahlBild(d.bild);
       html += `<button class="strahl-gap" data-p="${i}" ${strahlSending?'disabled':''}>▸ ${vor}</button>
-               <div class="strahl-ding"><span>${esc(d.text)}</span><span class="w">${esc(strahlWert(d))}</span></div>`;
+               <div class="strahl-ding${b?' mit-bild':''}">${b?`<img src="${b}" alt="">`:''}<span>${esc(d.text)}</span><span class="w">${esc(strahlWert(d))}</span></div>`;
     });
     const letzte = strahlReihe[strahlReihe.length - 1];
     html += `<button class="strahl-gap" data-p="${strahlReihe.length}" ${strahlSending?'disabled':''}>▸ größer als ${esc(letzte ? letzte.text : '')}</button>`;

@@ -630,6 +630,45 @@ function jeopardyEditStrahlWert(b,col,row,idx,val){
   const n = Number(s);
   c.strahlValues[idx] = (s && isFinite(n)) ? n : null;
 }
+/* Bild fuer ein Ding. Es wird ZWEIMAL verkleinert:
+
+   - 640 px fuer Leinwand und Panel. In der Reihe liegen bis zu acht Kacheln
+     nebeneinander, eine davon ist auf 1920 px keine 400 px breit - mehr
+     Pixel sieht niemand. Bei 1280 px (wie beim Preis ist heiss, wo ein Bild
+     den halben Schirm fuellt) waeren acht Dinge gut ein Megabyte, und der
+     ganze Spielstand geht in den localStorage, der bei rund 5 MB endet.
+   - 128 px als Briefmarke fuer die Handys. Nur die geht durch Firebase,
+     siehe STRAHL_BILD_BUDGET in js/jeopardy.js.
+
+   Verworfen: nur ein Bild speichern und das Handy mit demselben beliefern.
+   Acht Bilder a 50 KB sind bei JEDEM Zug ein Schreibvorgang von 400 KB -
+   ueber eine Runde das Zehnfache dessen, was die Briefmarken kosten.
+   @param {number} b @param {number} col @param {number} row
+   @param {number} idx @param {HTMLInputElement} input */
+async function jeopardyEditStrahlImg(b,col,row,idx,input){
+  const f = input.files && input.files[0]; if(!f) return;
+  const gross = await shrinkImageToDataUrl(f, 640, 0.82);
+  if (!gross){
+    alert(`"${f.name}" liess sich nicht als Bild lesen.`);
+    input.value = '';
+    return;
+  }
+  const klein = await shrinkImageToDataUrl(f, 128, 0.62);
+  const c = jeopardyClue(b,col,row);
+  c.strahlImgs = c.strahlImgs || []; c.strahlImgs[idx] = gross;
+  // Rueckfall auf das grosse Bild: ohne Briefmarke zeigte das Handy nichts.
+  c.strahlThumbs = c.strahlThumbs || []; c.strahlThumbs[idx] = klein || gross;
+  c.strahlNames = c.strahlNames || []; c.strahlNames[idx] = f.name;
+  renderJeopardyEditor();
+}
+/** @param {number} b @param {number} col @param {number} row @param {number} idx */
+function jeopardyClearStrahlImg(b,col,row,idx){
+  const c = jeopardyClue(b,col,row);
+  if(c.strahlImgs) c.strahlImgs[idx] = null;
+  if(c.strahlThumbs) c.strahlThumbs[idx] = null;
+  if(c.strahlNames) c.strahlNames[idx] = null;
+  renderJeopardyEditor();
+}
 function jeopardyClearSeriesImg(b,col,row,idx){
   const c = jeopardyClue(b,col,row);
   if(c.seriesImgs) c.seriesImgs[idx] = null;
@@ -647,7 +686,8 @@ function jeopardyCellBadges(clue){
   // zur Loesung zeigte vorher nur 🎬, das Bild war im Raster nicht zu sehen.
   const istBild = (/** @type {string|undefined} */ s) => !!s && !jeopardyIstVideo(s);
   const hasVid = jeopardyIstVideo(clue.qImg) || jeopardyIstVideo(clue.aImg);
-  const hasImg = istBild(clue.qImg) || istBild(clue.aImg) || clue.stageImg || (clue.seriesImgs || []).some(Boolean);
+  const hasImg = istBild(clue.qImg) || istBild(clue.aImg) || clue.stageImg
+    || (clue.seriesImgs || []).some(Boolean) || (clue.strahlImgs || []).some(Boolean);
   let b = '';
   if (hasVid)        b += '<span title="Video">🎬</span>';
   if (hasImg)        b += '<span title="Bild">🖼</span>';
@@ -753,15 +793,20 @@ function jeopardyClueEditorHtml(b, col, row){
       }).join('')}
     `:''}
     ${clue.strahl?`
-      <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:9px 0 4px;">Dinge zum Einordnen - je Zeile Name und Wert. Die Frage oben sagt, wonach sortiert wird ("Was kostet mehr?"). Zeilen ohne Wert werden übersprungen; unter drei vollständigen Zeilen läuft die Runde nicht.</label>
+      <label style="display:block;font-size:.65rem;color:rgba(255,255,255,.4);margin:9px 0 4px;">Dinge zum Einordnen - je Zeile Wert und entweder Name, Bild oder beides. Die Frage oben sagt, wonach sortiert wird ("Was kostet mehr?", "Was ist älter?"). Zeilen ohne Wert werden übersprungen; unter drei vollständigen Zeilen läuft die Runde nicht. Ein Bild ohne Namen heißt auf dem Handy "Bild 1", "Bild 2" …</label>
       ${Array.from({length: jeopardyStrahlCount(clue)}, (_,idx)=>{
         // unknown, siehe jeopardyStrahlDinge: hier kann auch null oder ""
         // stehen, obwohl der Typ number sagt.
         const wert = /** @type {unknown} */ ((clue.strahlValues||[])[idx]);
+        const bild = (clue.strahlImgs||[])[idx];
+        const bnm = (clue.strahlNames||[])[idx] || ('Bild ' + (idx+1));
         return `
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
           <span style="font-size:.7rem;font-weight:800;color:#FFD23F;width:14px;text-align:right;">${idx+1}</span>
-          <input type="text" placeholder="Ding ${idx+1}" value="${esc((clue.strahlTexts||[])[idx]||'')}" oninput="jeopardyEditStrahlText(${b},${col},${row},${idx},this.value)" style="${inp}font-size:.82rem;">
+          <input type="text" placeholder="Ding ${idx+1} (oder nur Bild)" value="${esc((clue.strahlTexts||[])[idx]||'')}" oninput="jeopardyEditStrahlText(${b},${col},${row},${idx},this.value)" style="${inp}font-size:.82rem;">
+          ${bild
+            ? `<img class="jimg-thumb" src="${safeSrc(bild)}" data-preview-name="${esc(bnm)}" alt=""><button onclick="jeopardyClearStrahlImg(${b},${col},${row},${idx})" style="background:none;border:none;color:#FF8A80;cursor:pointer;font-size:.8rem;padding:0 2px;" title="${esc(bnm)} entfernen">✕</button>`
+            : `<label style="${uploadLbl}white-space:nowrap;" title="Bild für Ding ${idx+1} - zum Zuordnen auf Leinwand und Handy">🖼<input type="file" accept="image/*" style="display:none;" onchange="jeopardyEditStrahlImg(${b},${col},${row},${idx},this)"></label>`}
           <input type="text" inputmode="decimal" placeholder="Wert" value="${wert===null||wert===undefined||wert===''?'':esc(String(wert))}" oninput="jeopardyEditStrahlWert(${b},${col},${row},${idx},this.value)" style="${inp}width:110px;flex:0 0 110px;font-size:.82rem;">
         </div>`;
       }).join('')}

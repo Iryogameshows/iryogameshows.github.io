@@ -1735,17 +1735,37 @@ function updateGamemasterJeopardy() {
       const luecke = (p) => `<button class="strahl-luecke" title="Hier einordnen" onclick="opener.jeopardyStrahlPlatz(${p},'Host')">+</button>`;
       const reiheHtml = strahl.reihe.map((i, p) => `
         ${strahl.fertig ? '' : luecke(p)}
-        <span class="strahl-chip${strahl.letzter && strahl.letzter.idx === i ? (strahl.letzter.richtig ? ' richtig' : ' falsch') : ''}"><b>${escapeHtml(dinge[i].text)}</b><i>${escapeHtml(jeopardyStrahlWert(dinge[i].wert, clue))}</i></span>`).join('');
+        <span class="strahl-chip${strahl.letzter && strahl.letzter.idx === i ? (strahl.letzter.richtig ? ' richtig' : ' falsch') : ''}">${
+          dinge[i].img ? `<img src="${safeSrc(dinge[i].img)}" alt="">` : ''
+        }<b>${escapeHtml(dinge[i].text)}</b><i>${escapeHtml(jeopardyStrahlWert(dinge[i].wert, clue))}</i></span>`).join('');
       const stand = strahl.fertig
         ? (strahl.fehler
             ? `<b>${strahl.fehler === 1 ? 'Ein Fehler' : strahl.fehler + ' Fehler'}</b> — nach eurer Regel bekommt <b>keiner</b> Punkte.`
             : `Reihe <b>fehlerfrei</b> — die meisten richtigen Züge: <b>${sieger.map(i => escapeHtml(jeopardyState.teamNames[i] || ('Team ' + (i+1)))).join(' und ')}</b> (+${val}).`)
-        : `Einzuordnen: <b>${strahl.offen.length ? escapeHtml(dinge[strahl.offen[0]].text) : '—'}</b>
+        : `Einzuordnen: ${strahl.offen.length && dinge[strahl.offen[0]].img
+             ? `<img class="su-mini" src="${safeSrc(dinge[strahl.offen[0]].img)}" alt="">` : ''}<b>${
+             strahl.offen.length ? escapeHtml(dinge[strahl.offen[0]].text) : '—'}</b>
            · am Zug: <b>${escapeHtml(jeopardyState.teamNames[strahl.team] || ('Team ' + (strahl.team+1)))}</b>
            (${escapeHtml(zugName)})`;
+      /* Der letzte Zug mit Urteil zum Umstellen. Die Seite hat ihn schon
+         bewertet (sie kennt die Werte) - der angeklickte Knopf zeigt, wie es
+         gerade zaehlt, der andere stellt um. Warum es den Knopf gibt, steht
+         bei jeopardyStrahlUrteil: an einem einzigen "falsch" haengt die
+         Wertung der ganzen Reihe, und Undo nimmt den Zug selbst zurueck. */
+      const l = strahl.letzter;
+      const urteilHtml = !l ? '' : `
+        <div class="strahl-urteil">
+          <span class="su-txt">${dinge[l.idx].img
+              ? `<img class="su-mini" src="${safeSrc(dinge[l.idx].img)}" alt="">` : ''}<b>${escapeHtml(dinge[l.idx].text)}</b>${
+            l.wer ? ` von ${escapeHtml(l.wer)}` : ''} — ${l.richtig ? 'richtig' : 'falsch'}${
+            l.vomHost ? ', von dir gesetzt' : ''}</span>
+          <button class="su-btn gut${l.richtig ? ' an' : ''}" onclick="opener.jeopardyStrahlUrteil(true)" title="Diesen Zug als richtig zählen">✓ richtig</button>
+          <button class="su-btn schlecht${l.richtig ? '' : ' an'}" onclick="opener.jeopardyStrahlUrteil(false)" title="Diesen Zug als falsch zählen">✗ falsch</button>
+        </div>`;
       strahlPanel = `<div class="panel fit strahl-panel">
         <div class="panel-head"><span>📏 Zahlenstrahl — klein ➜ groß</span><span class="badge">${strahl.reihe.length}/${strahl.reihe.length + strahl.offen.length}</span></div>
         <div class="strahl-reihe">${reiheHtml}${strahl.fertig ? '' : luecke(strahl.reihe.length)}</div>
+        ${urteilHtml}
         <div class="hint-line">${stand}</div>
       </div>`;
     }
@@ -1914,7 +1934,10 @@ function updateGamemasterJeopardy() {
      Kachel. Der Schlitz ist der Knopf zum Einordnen. */
   .strahl-panel{border-color:rgba(255,210,63,.25);}
   .strahl-reihe{display:flex;align-items:stretch;flex-wrap:wrap;gap:5px;margin:4px 0 10px;}
-  .strahl-chip{display:flex;flex-direction:column;gap:2px;padding:9px 14px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);}
+  /* justify-content: die Reihe zieht alle Chips auf dieselbe Hoehe. Ohne das
+     klebte der Name eines Chips ohne Bild oben, darunter stand Leere in
+     Bildhoehe (Screenshot 2026-10-31, wie auf der Leinwand). */
+  .strahl-chip{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:9px 14px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);}
   .strahl-chip b{font-size:.95rem;font-weight:800;}
   .strahl-chip i{font-style:normal;font-size:.75rem;color:rgba(255,255,255,.5);}
   .strahl-chip.richtig{border-color:rgba(34,197,94,.55);background:rgba(34,197,94,.1);}
@@ -1926,6 +1949,35 @@ function updateGamemasterJeopardy() {
     transition:background .12s;
   }
   .strahl-luecke:hover{background:rgba(255,210,63,.2);}
+  /* Bilder im Panel klein halten: der Host braucht sie zum Wiedererkennen,
+     nicht zum Ansehen - gross gezogen passte die Reihe bei acht Dingen nicht
+     mehr ins Fenster, und angeschnitten sieht aus wie kaputt (BAUPLAN 4.6). */
+  .strahl-chip img{
+    width:100%;max-width:92px;height:52px;object-fit:cover;
+    border-radius:6px;margin-bottom:3px;background:rgba(0,0,0,.35);
+  }
+  .su-mini{
+    width:26px;height:26px;object-fit:cover;border-radius:5px;
+    vertical-align:middle;margin-right:5px;background:rgba(0,0,0,.35);
+  }
+  /* Urteilszeile: zwei Knoepfe, der geltende ist gefuellt. Mindestens 32 px
+     hoch, der Host trifft sie im Halbdunkel (BAUPLAN 4.2). */
+  .strahl-urteil{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    margin:2px 0 8px;padding:8px 10px;border-radius:10px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  }
+  .strahl-urteil .su-txt{flex:1 1 150px;font-size:.78rem;color:rgba(255,255,255,.65);}
+  .strahl-urteil .su-txt b{color:#fff;}
+  .su-btn{
+    min-height:32px;padding:0 13px;border-radius:9px;cursor:pointer;
+    font-family:inherit;font-size:.78rem;font-weight:800;
+    border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);
+    color:rgba(255,255,255,.6);transition:background .12s,color .12s,border-color .12s;
+  }
+  .su-btn:hover{background:rgba(255,255,255,.12);color:#fff;}
+  .su-btn.gut.an{background:rgba(34,197,94,.22);border-color:rgba(34,197,94,.65);color:#4ADE80;}
+  .su-btn.schlecht.an{background:rgba(232,69,60,.22);border-color:rgba(232,69,60,.65);color:#FF8A80;}
 </style></head><body>
   <div class="gm-header">
     <div class="gm-title">JEOPARDY<small>Gamemaster</small></div>

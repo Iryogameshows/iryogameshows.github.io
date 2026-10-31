@@ -61,6 +61,16 @@ const JEOPARDY_BOARDS = 2;
  *                                  ihn erst beim Einordnen
  *  @property {string} [strahlUnit] Einheit hinter dem Wert ("€", "Jahre")
  *  @property {number} [strahlCount] wie viele Dinge der Editor anbietet (3-8)
+ *  @property {(string|null)[]} [strahlImgs] Bild je Ding, auf Leinwandgroesse
+ *                                  gerechnet - fuer Leinwand, GM-Panel und
+ *                                  Handy-Briefmarke. Ein Ding darf ein Bild
+ *                                  STATT eines Namens haben
+ *  @property {(string|null)[]} [strahlThumbs] dasselbe Bild als Briefmarke
+ *                                  (128 px, ~4 KB). Nur das geht an die
+ *                                  Handys - der Kanal darf keine Nutzlast in
+ *                                  Megabyte tragen (BAUPLAN 3.6)
+ *  @property {(string|null)[]} [strahlNames] Dateiname je Ding-Bild, damit der
+ *                                  Editor ein Bild wiedererkennt
  *  @property {string} [sound]      Ton als Data-URL
  *  @property {string} [soundName]
  *  @property {MediaSlot[]} [media] */
@@ -163,7 +173,8 @@ function jeopardyClueHasContent(c) {
   if (!c) return false;
   return !!(String(c.q || '').trim() || c.qImg || c.stageImg || c.sound
     || (c.seriesImgs || []).some(Boolean) || (c.stepTexts || []).some(t => String(t || '').trim())
-    || (c.stepImgs || []).some(Boolean) || (c.strahlTexts || []).some(t => String(t || '').trim()));
+    || (c.stepImgs || []).some(Boolean) || (c.strahlTexts || []).some(t => String(t || '').trim())
+    || (c.strahlImgs || []).some(Boolean));
 }
 function jeopardyCellValue(col, row) {
   const cat = jBoard()[col];
@@ -629,23 +640,35 @@ function jeopardyEstimateListHtml(){
 /** Wie viele Dinge der Editor anbietet (3-8).  @param {JeopardyClue} clue */
 function jeopardyStrahlCount(clue){ return Math.max(3, Math.min(8, Number(clue.strahlCount) || 5)); }
 
-/** Die fertigen Dinge einer Zahlenstrahl-Frage: nur Zeilen mit Text UND Wert.
- *  Eine halb ausgefuellte Zeile faellt still raus - der Strahl kann sie nicht
- *  einsortieren.
+/** Die fertigen Dinge einer Zahlenstrahl-Frage: jede Zeile mit Wert UND
+ *  entweder Name oder Bild. Eine halb ausgefuellte Zeile faellt still raus -
+ *  der Strahl kann sie nicht einsortieren.
+ *
+ *  Bilder: ein Ding darf ein Bild STATT eines Namens haben ("ordne die Fotos
+ *  nach Baujahr"). Damit alles, was die Reihe zeichnet, weiter mit `.text`
+ *  arbeiten kann, bekommt so ein Ding hier eine Ersatzbeschriftung
+ *  ("Bild 3"). Die steht nur da, wo kein Bild hinpasst - in der Lueckenzeile
+ *  auf dem Handy, im Tooltip, in der Fehlersuche.
  *  @param {JeopardyClue|null|undefined} clue
- *  @returns {{text:string, wert:number}[]} */
+ *  @returns {{text:string, wert:number, img:string, thumb:string}[]} */
 function jeopardyStrahlDinge(clue){
   if (!clue || !clue.strahl) return [];
   const out = [];
   for (let i = 0; i < jeopardyStrahlCount(clue); i++){
     const text = String((clue.strahlTexts || [])[i] || '').trim();
+    const img = String((clue.strahlImgs || [])[i] || '');
+    // Das verkleinerte Bild fehlt bei Fragen, die vor den Bildern angelegt
+    // wurden, und bei importierten Dateien. Dann geht das grosse ans Handy -
+    // besser ein zu grosser Schreibvorgang als ein leeres Kaestchen.
+    const thumb = String((clue.strahlThumbs || [])[i] || '') || img;
     // Number(null) und Number('') sind 0 - eine leere Zeile stuende damit mit
     // 0 ganz links in der Reihe. Deshalb erst auf "leer" pruefen.
     // unknown: eine importierte Datei darf hier auch "" oder null tragen,
     // der Typ sagt number - ohne die Zusicherung meldet tsc den Vergleich.
     const roh = /** @type {unknown} */ ((clue.strahlValues || [])[i]);
     const wert = (roh === null || roh === undefined || roh === '') ? NaN : Number(roh);
-    if (text && isFinite(wert)) out.push({ text, wert });
+    const label = text || (img ? 'Bild ' + (i + 1) : '');
+    if (label && isFinite(wert)) out.push({ text: label, wert, img, thumb });
   }
   return out;
 }
@@ -666,6 +689,13 @@ function jeopardyStrahlWert(wert, clue){
   const e = String(clue.strahlUnit || '').trim();
   return wert.toLocaleString('de-DE') + (e ? ' ' + e : '');
 }
+
+/* Wie viele Zeichen Bilddaten ein Zug hoechstens an die Handys schicken darf.
+   150 000 Zeichen Base64 sind rund 110 KB - bei acht Dingen etwa 14 KB je
+   Briefmarke, also mehr als die 128-px-Bilder brauchen. Reisst der Deckel
+   (sehr grosse Briefmarken aus einer importierten Datei), laeuft die Runde
+   ohne Bilder auf dem Handy weiter. */
+const STRAHL_BILD_BUDGET = 150000;
 
 // `offen` merkt sich, ob auf den Handys gerade ein Zahlenstrahl steht. Ohne
 // das schriebe jedes geoeffnete Feld ein "active:false" in die Datenbank.
@@ -702,6 +732,20 @@ function jeopardyStrahlSenden(){
   if (nichts){ jeopardyStrahlClose(); return; }
   const dinge = jeopardyStrahlDinge(clue);
   jeopardyStrahlKanal.round = nextRoundId(jeopardyStrahlKanal.round);
+  /* Bilder ans Handy: NUR die 128-px-Briefmarken, und nur solange sie
+     zusammen unter STRAHL_BILD_BUDGET bleiben.
+
+     BAUPLAN 3.6 sagt "nur Verweise nach Firebase, keine Nutzlast" - gemeint
+     sind die mehreren Megabyte eines eingebetteten Boards. Ein Verweis geht
+     hier aber nicht: das Handy ist ein fremdes Geraet und kommt an den
+     localStorage des Hosts nicht heran. Ohne Bild muesste der Spieler die
+     Dinge auf der Leinwand suchen, waehrend er auf das Handy tippt - genau
+     das soll das Bild ersparen. Also die kleinste Form, die noch erkennbar
+     ist, mit hartem Deckel: reisst der, geht die Runde mit Namen weiter statt
+     an einem zu grossen Schreibvorgang zu haengen. */
+  const platte = [dinge[s.offen[0]]].concat(s.reihe.map(i => dinge[i]));
+  const budget = platte.reduce((n, d) => n + (d.thumb || '').length, 0);
+  const bilder = budget > 0 && budget <= STRAHL_BILD_BUDGET;
   r.set({
     active: true,
     round: jeopardyStrahlKanal.round,
@@ -711,7 +755,13 @@ function jeopardyStrahlSenden(){
     frage: clue.q || '',
     einheit: String(clue.strahlUnit || ''),
     ding: dinge[s.offen[0]].text,
-    reihe: s.reihe.map(i => ({ text: dinge[i].text, wert: dinge[i].wert })),
+    // null, nicht '': ein leerer String laesst den alten Knoten stehen und
+    // das Handy zeigte das Bild des vorigen Dinges weiter.
+    dingBild: (bilder && dinge[s.offen[0]].thumb) || null,
+    reihe: s.reihe.map(i => ({
+      text: dinge[i].text, wert: dinge[i].wert,
+      bild: (bilder && dinge[i].thumb) || null,
+    })),
     zug: null,
   }).catch(()=>{});
   jeopardyStrahlKanal.offen = true;
@@ -759,6 +809,11 @@ function jeopardyStrahlStart(){
     fehler: 0,
     richtig: new Array(teams).fill(0),
     zugNr: 0,
+    /* Zaehlt die Urteile, die der Host von Hand geaendert hat. Steckt neben
+       zugNr im Overlay-Datensatz, damit die Einrast-Animation auch bei einer
+       Korrektur noch einmal laeuft - sonst blieb die Kachel gruen, obwohl im
+       Panel schon "falsch" stand. */
+    urteilNr: 0,
     fertig: false,
     letzter: null,
   };
@@ -809,7 +864,10 @@ function jeopardyStrahlPlatz(platz, wer){
   if (richtig) s.richtig[s.team] = (s.richtig[s.team] || 0) + 1;
   else s.fehler++;
   s.letzter = { idx, platz: p, soll: sollMin, richtig, team: s.team,
-                wer: String(wer || (s.spieler && s.spieler.name) || '') };
+                wer: String(wer || (s.spieler && s.spieler.name) || ''),
+                // true, sobald der Host das Urteil von Hand umgestellt hat
+                // (jeopardyStrahlUrteil) - dann steht es so im Panel.
+                vomHost: false };
   if (richtig) SFX.correct(); else SFX.wrong();
   if (!s.offen.length){
     s.fertig = true;
@@ -820,6 +878,44 @@ function jeopardyStrahlPlatz(platz, wer){
     return;
   }
   jeopardyStrahlWeiter();
+}
+
+/* Der Host stellt das Urteil des letzten Zuges um.
+
+   Warum es das gibt, obwohl die Seite die Loesung kennt: die Reihenfolge
+   steht fest, die Absicht nicht immer. Zwei Dinge mit demselben Wert sind
+   schon abgedeckt (sollMin/sollMax), aber ein Tippfehler im Wert, ein Bild,
+   das zwei Dinge zeigt, oder eine Frage, die der Host anders meint als sie
+   dasteht, sind es nicht - und beim Zahlenstrahl haengt an einem einzigen
+   "falsch" die Wertung der GANZEN Reihe (jeopardyStrahlSieger). Ohne Korrektur
+   bliebe nur Undo, und das nimmt den Zug selbst zurueck.
+
+   Bewusst nur der letzte Zug: ein Urteil von vor fuenf Zuegen nachtraeglich
+   zu drehen waere fuer das Publikum nicht mehr nachvollziehbar.
+   @param {boolean} richtig */
+function jeopardyStrahlUrteil(richtig){
+  const s = jeopardyState.strahl;
+  if (!s || !s.letzter) return;
+  const neu = !!richtig;
+  if (s.letzter.richtig === neu) return;
+  jeopardySnapshot();
+  const t = s.letzter.team;
+  if (neu){
+    s.richtig[t] = (s.richtig[t] || 0) + 1;
+    // Relativ rechnen, nicht gegen null (BAUPLAN 3.8): fehler kann durch
+    // mehrere Korrekturen hintereinander laufen.
+    s.fehler = Math.max(0, s.fehler - 1);
+    SFX.correct();
+  } else {
+    s.richtig[t] = Math.max(0, (s.richtig[t] || 0) - 1);
+    s.fehler++;
+    SFX.wrong();
+  }
+  s.letzter.richtig = neu;
+  s.letzter.vomHost = true;
+  s.urteilNr = (s.urteilNr || 0) + 1;
+  renderJeopardyClueOverlay();
+  updateGamemaster();
 }
 
 /** Teams mit den meisten richtigen Zügen - bei Gleichstand mehrere.
@@ -833,6 +929,16 @@ function jeopardyStrahlSieger(){
   return s.richtig.map((n, i) => n === best ? i : -1).filter(i => i >= 0);
 }
 
+/** Woran das Overlay erkennt, dass sich am letzten Zug etwas geaendert hat:
+ *  Zugnummer UND Zahl der Host-Korrekturen. Eine Quelle fuer beide Stellen
+ *  (schreiben und vergleichen), sonst laeuft die Animation irgendwann bei
+ *  jedem Neuzeichnen - genau der Fehler, den `zugNeu` verhindern soll.
+ *  @returns {string} */
+function jeopardyStrahlZugKey(){
+  const s = jeopardyState.strahl;
+  return s ? s.zugNr + ':' + (s.urteilNr || 0) : '';
+}
+
 /** Die Reihe auf der Leinwand: links klein, rechts groß.
  *  `zugNeu` sagt, ob seit dem letzten Zeichnen ein Zug dazugekommen ist - nur
  *  dann bekommt das Ding seine Einrast-Animation. Ohne das lief sie bei jedem
@@ -844,22 +950,39 @@ function jeopardyStrahlHtml(clue, zugNeu){
   if (!s) return '';
   const dinge = jeopardyStrahlDinge(clue);
   const l = s.letzter;
+  /* Mit Bild tragen die Kacheln die Klasse `bild`: dann schrumpfen sie von
+     selbst mit, sobald acht davon in der Reihe liegen (styles.css). Der Name
+     steht trotzdem darunter - auf drei Metern ist ein Foto allein oft nicht
+     eindeutig, und bei Bildern ohne Namen ist es die Ersatzbeschriftung. */
   const items = s.reihe.map(i => {
     const neu = zugNeu && !!l && l.idx === i;
-    const cls = 'jeopardy-strahl-item' + (neu ? (l.richtig ? ' richtig' : ' falsch') : '');
+    const d = dinge[i];
+    const cls = 'jeopardy-strahl-item' + (d.img ? ' bild' : '')
+      + (neu ? (l.richtig ? ' richtig' : ' falsch') : '');
     return `<div class="${cls}">
-      <span class="jstr-t">${escapeHtml(dinge[i].text)}</span>
-      <span class="jstr-w">${escapeHtml(jeopardyStrahlWert(dinge[i].wert, clue))}</span>
+      ${d.img ? `<img class="jstr-b" src="${safeSrc(d.img)}" alt="">` : ''}
+      <span class="jstr-t">${escapeHtml(d.text)}</span>
+      <span class="jstr-w">${escapeHtml(jeopardyStrahlWert(d.wert, clue))}</span>
     </div>`;
   }).join('');
-  const naechstes = s.offen.length ? dinge[s.offen[0]].text : '';
+  const naechstesDing = s.offen.length ? dinge[s.offen[0]] : null;
+  const naechstes = naechstesDing ? naechstesDing.text : '';
   const dran = s.fertig
     ? (s.fehler ? `${s.fehler === 1 ? 'Ein Fehler' : s.fehler + ' Fehler'} — keine Punkte`
                 : 'Reihe komplett — fehlerfrei!')
     : `${escapeHtml(jeopardyState.teamNames[s.team] || ('Team ' + (s.team + 1)))}${
         s.spieler ? ' · ' + escapeHtml(s.spieler.name) : ''} ist dran`;
+  /* Das einzuordnende Ding gross darueber. Mit Bild ist das Bild die
+     Hauptsache und der Name die Beschriftung darunter - danach wird
+     eingeordnet, nicht nach dem Wort. */
+  const dingHtml = !naechstesDing ? '' : naechstesDing.img
+    ? `<div class="jeopardy-strahl-ding mit-bild">
+         <img src="${safeSrc(naechstesDing.img)}" alt="">
+         <span>${escapeHtml(naechstesDing.text)}</span>
+       </div>`
+    : `<div class="jeopardy-strahl-ding">${escapeHtml(naechstes)}</div>`;
   return `<div class="jeopardy-strahl" data-fertig="${s.fertig ? '1' : ''}">
-    ${naechstes ? `<div class="jeopardy-strahl-ding">${escapeHtml(naechstes)}</div>` : ''}
+    ${dingHtml}
     <div class="jeopardy-strahl-reihe">
       <span class="jstr-ende">klein</span>
       ${items}
@@ -1001,7 +1124,7 @@ function renderJeopardyClueOverlay() {
      DOM, nicht im Zustand: renderJeopardyClueOverlay laeuft auch aus anderen
      Gruenden, und nur der echte Zug darf die Animation spielen. */
   const zugNeu = !!jeopardyState.strahl
-    && String(jeopardyState.strahl.zugNr) !== String((ov && ov.dataset.strahlZug) || '');
+    && jeopardyStrahlZugKey() !== String((ov && ov.dataset.strahlZug) || '');
   const questionArea = revealed
     ? `${clue.q ? `<div class="jeopardy-clue-text">${jeopardyWoerter(clue.q)}</div>` : ''}
        ${steps ? jeopardyStepsHtml(clue) : ''}
@@ -1029,7 +1152,7 @@ function renderJeopardyClueOverlay() {
   const vorher = ov.dataset.stand || '';
   ov.dataset.neu = stand === vorher ? '' : stand === 'antwort' ? (vorher === 'frage' ? 'antwort' : 'frage antwort') : stand;
   ov.dataset.stand = stand;
-  ov.dataset.strahlZug = jeopardyState.strahl ? String(jeopardyState.strahl.zugNr) : '';
+  ov.dataset.strahlZug = jeopardyStrahlZugKey();
   /* Laufende Videos weiterlaufen lassen: innerHTML baut auch das <video> neu,
      und ein neues Element startet bei 0. Ohne das sprang das Frage-Video an
      den Anfang, sobald die Loesung gezeigt wurde (oder ein Staffelbild, ein

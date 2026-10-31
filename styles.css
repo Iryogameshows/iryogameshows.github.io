@@ -1469,6 +1469,20 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   background: rgba(var(--gold-rgb),.08); box-shadow: inset 0 0 0 2px rgba(var(--gold-rgb),.35);
   animation: ddPop .4s var(--ease-pop);
 }
+/* Mit Bild ist das Bild die Hauptsache, der Name die Beschriftung darunter -
+   eingeordnet wird nach dem, was zu sehen ist. Die Hoehe in vh, nicht in px:
+   die Reihe darunter waechst mit jedem Zug, und beides zusammen darf nicht
+   aus dem Bild laufen (BAUPLAN 4.6). */
+.jeopardy-strahl-ding.mit-bild {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 18px;
+}
+.jeopardy-strahl-ding.mit-bild img {
+  max-height: 26vh; max-width: min(42vw, 460px);
+  width: auto; height: auto; object-fit: contain;
+  border-radius: 10px; background: rgba(0,0,0,.25);
+}
+.jeopardy-strahl-ding.mit-bild span { font-size: 1.6rem; line-height: 1.1; }
 .jeopardy-strahl-reihe {
   display: flex; align-items: stretch; justify-content: center; flex-wrap: wrap; gap: 10px;
   max-width: min(94vw, 1250px);
@@ -1480,12 +1494,32 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   text-transform: uppercase; color: rgba(var(--fg-rgb),.3);
 }
 .jeopardy-strahl-item {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  /* justify-content, seit Kacheln mit Bild daneben liegen koennen: die Reihe
+     zieht alle Kacheln auf dieselbe Hoehe (align-items:stretch darueber).
+     Ohne das klebte der Name einer Kachel ohne Bild oben, darunter stand ein
+     leeres Feld in Bildhoehe - angeschnitten sieht aus wie kaputt, leer
+     genauso (BAUPLAN 4.6, Screenshot 2026-10-31). */
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 2px;
   padding: 10px 16px; border-radius: 10px;
   background: rgba(var(--fg-rgb),.06); box-shadow: inset 0 0 0 1px rgba(255,255,255,.1);
 }
 .jeopardy-strahl-item .jstr-t { font-family: var(--font-display); font-size: 1.5rem; color: var(--fg); line-height: 1.1; }
 .jeopardy-strahl-item .jstr-w { font-size: 1rem; font-weight: 800; color: rgba(var(--fg-rgb),.55); }
+/* Kacheln mit Bild: bis zu acht liegen nebeneinander, deshalb rechnet die
+   Breite gegen den Bildschirm (min()) statt auf einen festen Wert. Das Bild
+   ist beschnitten (cover), nicht eingepasst - eingepasst standen Hoch- und
+   Querformat in verschieden hohen Kacheln, und eine Reihe mit Treppe darin
+   liest sich wie ein Fehler. Der Name bleibt darunter: ein Foto allein ist
+   auf drei Metern oft nicht eindeutig (BAUPLAN 4.2). */
+.jeopardy-strahl-item.bild { padding: 8px 10px; }
+.jeopardy-strahl-item.bild .jstr-b {
+  width: min(16vw, 190px); height: min(11vw, 128px);
+  object-fit: cover; border-radius: 8px;
+  background: rgba(0,0,0,.25); margin-bottom: 3px;
+}
+.jeopardy-strahl-item.bild .jstr-t { font-size: 1.15rem; }
+.jeopardy-strahl-item.bild .jstr-w { font-size: .9rem; }
 /* Eingerastet: kurzer Schlag und ein farbiger Rand, der wieder verblasst.
    Der Endzustand ist in beiden Fällen der normale - das Standbild bleibt
    ruhig, auch wenn jemand erst später hinsieht. */
@@ -1509,6 +1543,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 .jeopardy-strahl-zug.schlecht { color: var(--red); }
 @media (prefers-reduced-motion: reduce) {
   .jeopardy-strahl-ding,
+  .jeopardy-strahl-ding.mit-bild,
   .jeopardy-strahl-item.richtig,
   .jeopardy-strahl-item.falsch { animation: none !important; }
 }

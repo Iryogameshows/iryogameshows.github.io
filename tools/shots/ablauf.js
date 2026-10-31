@@ -156,6 +156,12 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
       cl.strahl = true; cl.strahlCount = 4; cl.strahlUnit = '€';
       cl.strahlTexts = ['Kinokarte', 'Döner', 'Monat Streaming', 'Tankfüllung'];
       cl.strahlValues = [12, 7, 18, 95];
+      /* Zwei der vier Dinge tragen ein Bild: nur so laeuft die Briefmarke
+         einmal wirklich durch Firebase bis auf das Handy. Daten-URLs inline,
+         nicht als Konstante daneben - evaluate() gibt nur den Rumpf in den
+         Browser (derselbe Fehler wie in tools/gemeinsam/aufbau.js). */
+      cl.strahlImgs = ['data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27120%27%3E%3Crect%20width%3D%27160%27%20height%3D%27120%27%20fill%3D%27%231f4ea8%27%2F%3E%3Ctext%20x%3D%2780%27%20y%3D%2778%27%20font-size%3D%2764%27%20text-anchor%3D%27middle%27%20fill%3D%27%23fff%27%20font-family%3D%27sans-serif%27%3EA%3C%2Ftext%3E%3C%2Fsvg%3E', 'data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27120%27%3E%3Crect%20width%3D%27160%27%20height%3D%27120%27%20fill%3D%27%23a8471f%27%2F%3E%3Ctext%20x%3D%2780%27%20y%3D%2778%27%20font-size%3D%2764%27%20text-anchor%3D%27middle%27%20fill%3D%27%23fff%27%20font-family%3D%27sans-serif%27%3EB%3C%2Ftext%3E%3C%2Fsvg%3E', null, null];
+      cl.strahlThumbs = cl.strahlImgs.slice();
       openJeopardyClue(c, r); jeopardyRevealQuestion();
       return [c, r];
     }
@@ -164,6 +170,19 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   await warte(600);
   check('Jeopardy-Zahlenstrahl: Handy am Zug', feld3 && (await screen()) === 'screen-strahl', { feld3, screen: await screen() });
   await handy.screenshot({ path: OUT + '/ablauf-strahl.png' });
+  /* Das Bild muss den ganzen Weg gegangen sein: Editor -> Briefmarke ->
+     Firebase -> Handy. Geprueft wird am gerenderten <img>, nicht am
+     Datenstand - ein Bild, das ankommt und nicht gezeichnet wird, nuetzt
+     niemandem. Mindestens eins der vier Dinge hat keins, deshalb ist auch
+     die Mischung im Bild. */
+  const bildAufHandy = await handy.evaluate(() => {
+    const d = document.querySelector('#strahl-ding img');
+    const reihe = document.querySelectorAll('#strahl-list .strahl-ding img').length;
+    const ohne = document.querySelectorAll('#strahl-list .strahl-ding:not(.mit-bild)').length;
+    return { ding: !!d && /^data:image\//.test(d.getAttribute('src') || ''), reihe, ohne };
+  });
+  check('Zahlenstrahl: Bild des einzuordnenden Dings steht auf dem Handy',
+    bildAufHandy.ding, bildAufHandy);
   const strahlVor = await host.evaluate(() => jeopardyState.strahl && jeopardyState.strahl.reihe.length);
   await handy.click('#strahl-list .strahl-gap');
   await warte(700);
@@ -173,6 +192,25 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   });
   check('Zahlenstrahl: Zug vom Handy kommt beim Host an',
     !!strahlNach && strahlNach.n === strahlVor + 1 && strahlNach.zuege === 1, { strahlVor, strahlNach });
+  /* Der Host stellt das Urteil des letzten Zuges um. Geprueft wird, dass die
+     Zaehler mitgehen - an ihnen haengt die Wertung der ganzen Reihe
+     (jeopardyStrahlSieger). Zweimal umstellen muss wieder im Ausgangsstand
+     enden, sonst laufen fehler/richtig bei mehreren Korrekturen auseinander. */
+  const urteil = await host.evaluate(() => {
+    const s = jeopardyState.strahl;
+    const vor = { r: s.richtig.slice(), f: s.fehler, ok: s.letzter.richtig };
+    jeopardyStrahlUrteil(!vor.ok);
+    const um = { r: jeopardyState.strahl.richtig.slice(), f: jeopardyState.strahl.fehler,
+                 ok: jeopardyState.strahl.letzter.richtig, host: jeopardyState.strahl.letzter.vomHost };
+    jeopardyStrahlUrteil(vor.ok);
+    const zurueck = { r: jeopardyState.strahl.richtig.slice(), f: jeopardyState.strahl.fehler,
+                      ok: jeopardyState.strahl.letzter.richtig };
+    return { vor, um, zurueck };
+  });
+  check('Zahlenstrahl: Host stellt das Urteil um und wieder zurueck',
+    urteil.um.ok !== urteil.vor.ok && urteil.um.host === true
+    && urteil.zurueck.ok === urteil.vor.ok && urteil.zurueck.f === urteil.vor.f
+    && String(urteil.zurueck.r) === String(urteil.vor.r), urteil);
   // Danach ist Team Blau dran - dort haengt kein Handy, also bekommt Sony
   // keinen Zug-Bildschirm mehr.
   check('Zahlenstrahl: nach dem Zug ist das Handy wieder raus', (await screen()) !== 'screen-strahl', await screen());

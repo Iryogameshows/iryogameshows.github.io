@@ -67,6 +67,47 @@ const AUFBAU = {
     jeopardyStrahlPlatz(2, 'Ben');
     Math.random = mr;
   },
+  /* Zahlenstrahl mit Bildern: dieselbe Lage wie oben, nur tragen zwei der
+     vier Dinge ein Bild. So stehen beschriftete und bebilderte Kacheln
+     NEBENEINANDER in einem Bild - genau die Mischung, an der die Reihe
+     frueher eine Treppe bekam (verschieden hohe Kacheln, styles.css
+     .jeopardy-strahl-item.bild).
+
+     Die Bilder sind eingebettete SVG, keine Dateien: der Prueflauf soll ohne
+     Beiwerk auskommen, und zwei Rechtecke zeigen die Groesse und den
+     Beschnitt genauso wie ein Foto. Echte Fotos kommen aus dem Editor als
+     JPEG-Daten-URL - fuer die Anzeige ist das derselbe Weg. 160x120 quer
+     gegen den Beschnitt in der quadratischen Handy-Briefmarke.
+
+     Die beiden Daten-URLs stehen IN der Funktion, nicht daneben: shots.js
+     gibt den Aufbau mit page.evaluate(AUFBAU[show]) in den Browser, und
+     dabei geht nur der Rumpf mit. Eine Konstante aus dem Dateikopf ist dort
+     nicht definiert ("BILD_A is not defined", 20 Befunde). */
+  'jeop-strahl-bild': () => {
+    const bildA = 'data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27120%27%3E%3Crect%20width%3D%27160%27%20height%3D%27120%27%20fill%3D%27%231f4ea8%27%2F%3E%3Ctext%20x%3D%2780%27%20y%3D%2778%27%20font-size%3D%2764%27%20text-anchor%3D%27middle%27%20fill%3D%27%23fff%27%20font-family%3D%27sans-serif%27%3EA%3C%2Ftext%3E%3C%2Fsvg%3E';
+    const bildB = 'data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27160%27%20height%3D%27120%27%3E%3Crect%20width%3D%27160%27%20height%3D%27120%27%20fill%3D%27%23a8471f%27%2F%3E%3Ctext%20x%3D%2780%27%20y%3D%2778%27%20font-size%3D%2764%27%20text-anchor%3D%27middle%27%20fill%3D%27%23fff%27%20font-family%3D%27sans-serif%27%3EB%3C%2Ftext%3E%3C%2Fsvg%3E';
+    const mr = Math.random; Math.random = () => 0;
+    startJeopardyActual();
+    document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
+    showScreen('jeopardy-screen');
+    let c = 3; while (c > 0 && jeopardyIsDaily(c, 2)) c--;
+    const clue = jBoard()[c].clues[2];
+    clue.q = 'Welches Bauwerk ist älter?';
+    clue.strahl = true;
+    clue.strahlUnit = 'Jahre';
+    clue.strahlCount = 4;
+    // Ding 2 hat KEINEN Namen, nur ein Bild - es muss als "Bild 2" auftauchen
+    // (jeopardyStrahlDinge), sonst faellt die Zeile still aus der Runde.
+    clue.strahlTexts = ['Kolosseum', '', 'Eiffelturm', 'Brandenburger Tor'];
+    clue.strahlValues = [1945, 800, 136, 234];
+    clue.strahlImgs = [bildA, bildB, null, null];
+    clue.strahlThumbs = [bildA, bildB, null, null];
+    openJeopardyClue(c, 2);
+    jeopardyRevealQuestion();
+    jeopardyStrahlPlatz(0, 'Anna');
+    jeopardyStrahlPlatz(2, 'Ben');
+    Math.random = mr;
+  },
   'jeop-antwort': () => {
     const mr = Math.random; Math.random = () => 0; startJeopardyActual(); Math.random = mr;
     document.querySelectorAll('.intro-overlay,.black-backdrop,.welcome-overlay').forEach(e => e.remove());
@@ -246,6 +287,17 @@ const AUFBAU = {
 AUFBAU.gm = AUFBAU.feud;
 // gm-menu baut Jeopardy auf; beendet wird danach in hostSeite().
 AUFBAU['gm-menu'] = AUFBAU.jeop;
+/* gm-strahl zeigt dasselbe Spiel wie jeop-strahl-bild, nur wird davon das
+   GM-Panel abgelichtet statt der Leinwand: 'gm' baut Feud auf, die
+   Strahl-Reihe mit Bildern, die Lueckenknoepfe und richtig/falsch standen
+   deshalb in keinem Bild.
+
+   Als Alias, nicht als eigene Funktion, die die andere aufruft: shots.js
+   gibt den Aufbau mit page.evaluate(AUFBAU[show]) in den Browser, und dabei
+   geht nur der Rumpf mit - ein Aufruf von AUFBAU[...] darin faende dort
+   nichts. Ein Alias zeigt auf dieselbe Funktion und ist damit genauso
+   geschlossen wie das Original. */
+AUFBAU['gm-strahl'] = AUFBAU['jeop-strahl-bild'];
 
 // Node (shots.js) und Browser (Durchgeh-Seite) aus einer Datei bedienen.
 // Im Browser muss AUFBAU ausdruecklich ans window: ein const auf oberster
