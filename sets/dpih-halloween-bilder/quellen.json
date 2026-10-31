@@ -3,6 +3,17 @@
   "breite": 640,
   "bilder": [
     {
+      "nr": 1,
+      "artikel": "Ein Speisekürbis, 3 kg, vom Hofladen",
+      "datei": "01_Ein Speisekürbis, 3 kg, vom Hofladen_4,50.jpg",
+      "bytes": 228961,
+      "begriff": "Category:Pumpkins",
+      "commons": "File:2014 Kürbisfestival - Jucker Farm (Juckerhof) - Hofladen 2014-10-31 15-09-50.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:2014_K%C3%BCrbisfestival_-_Jucker_Farm_(Juckerhof)_-_Hofladen_2014-10-31_15-09-50.JPG",
+      "autor": "Roland zh",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
       "nr": 2,
       "artikel": "Ein Hokkaido-Kürbis aus dem Supermarkt",
       "datei": "02_Ein Hokkaido-Kürbis aus dem Supermarkt_2,99.jpg",
@@ -56,6 +67,17 @@
       "seite": "https://commons.wikimedia.org/wiki/File:Pumpkin_Seeds_macro_1.jpg",
       "autor": "Daniel Schwen",
       "lizenz": "CC BY 3.0"
+    },
+    {
+      "nr": 9,
+      "artikel": "Ein Großpack Halloween-Süßigkeiten, 1 kg",
+      "datei": "09_Ein Großpack Halloween-Süßigkeiten, 1 kg_11,99.jpg",
+      "bytes": 136221,
+      "begriff": "Category:Halloween candy",
+      "commons": "File:Candy Corn from Sweden.jpeg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Candy_Corn_from_Sweden.jpeg",
+      "autor": "Toyah Anette B",
+      "lizenz": "Public domain"
     },
     {
       "nr": 10,
@@ -146,6 +168,17 @@
       "lizenz": "Public domain"
     },
     {
+      "nr": 20,
+      "artikel": "Eine Silikonmaske in Hollywood-Qualität",
+      "datei": "20_Eine Silikonmaske in Hollywood-Qualität_420,00.jpg",
+      "bytes": 49871,
+      "begriff": "Category:Latex masks",
+      "commons": "File:Latex mask.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Latex_mask.jpg",
+      "autor": "Kodi pup at English Wikipedia",
+      "lizenz": "Public domain"
+    },
+    {
       "nr": 21,
       "artikel": "Eine weiße Hockeymaske",
       "datei": "21_Eine weiße Hockeymaske_9,99.jpg",
@@ -201,6 +234,17 @@
       "lizenz": "CC BY-SA 4.0"
     },
     {
+      "nr": 27,
+      "artikel": "Eine Plastikspinne, handtellergroß",
+      "datei": "27_Eine Plastikspinne, handtellergroß_1,99.jpg",
+      "bytes": 280394,
+      "begriff": "Category:Toy spiders",
+      "commons": "File:USMC-10855.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:USMC-10855.jpg",
+      "autor": "Cpl. Meloney R. Moses",
+      "lizenz": "Public domain"
+    },
+    {
       "nr": 28,
       "artikel": "Eine echte Vogelspinne aus der Zoohandlung",
       "datei": "28_Eine echte Vogelspinne aus der Zoohandlung_45,00.jpg",
@@ -209,6 +253,17 @@
       "commons": "File:Brachypelma edit.jpg",
       "seite": "https://commons.wikimedia.org/wiki/File:Brachypelma_edit.jpg",
       "autor": "User:Fir0002",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 29,
+      "artikel": "Ein Terrarium für die Vogelspinne",
+      "datei": "29_Ein Terrarium für die Vogelspinne_89,00.jpg",
+      "bytes": 124447,
+      "begriff": "Category:Terrariums",
+      "commons": "File:Gillenibaumann 03.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:Gillenibaumann_03.JPG",
+      "autor": "Christoph Baumann",
       "lizenz": "CC BY-SA 3.0"
     },
     {
@@ -243,6 +298,28 @@
       "seite": "https://commons.wikimedia.org/wiki/File:Gravestone_of_John_Fyfe_(1830_-1906),_Granite_Merchant,_Aberdeen.jpg",
       "autor": "watty62",
       "lizenz": "CC BY-SA 4.0"
+    },
+    {
+      "nr": 38,
+      "artikel": "Eine Grabstelle, 25 Jahre Pacht in einer Mittelstadt",
+      "datei": "38_Eine Grabstelle, 25 Jahre Pacht in einer Mittelstadt_2400,00.jpg",
+      "bytes": 528911,
+      "begriff": "Category:Graves in Germany",
+      "commons": "File:Cemetery of Berkheim (Friedrich Wiest).jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Cemetery_of_Berkheim_(Friedrich_Wiest).jpg",
+      "autor": "Wald-Burger8",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 39,
+      "artikel": "Eine einfache Bestattung mit Sarg",
+      "datei": "39_Eine einfache Bestattung mit Sarg_4300,00.jpg",
+      "bytes": 36475,
+      "begriff": "Category:Coffins",
+      "commons": "File:Cercueil Écologique en Cellulose.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Cercueil_%C3%89cologique_en_Cellulose.jpg",
+      "autor": "Georges Braissant",
+      "lizenz": "CC BY 3.0"
     },
     {
       "nr": 40,
@@ -300,6 +377,17 @@
       "lizenz": "CC BY-SA 4.0"
     },
     {
+      "nr": 47,
+      "artikel": "Eine Hexenbesen-Deko",
+      "datei": "47_Eine Hexenbesen-Deko_8,99.jpg",
+      "bytes": 44587,
+      "begriff": "Category:Brooms",
+      "commons": "File:Admin-tool.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Admin-tool.jpg",
+      "autor": "Rama; Thomas Schmidt (Schmidti; File:Broom.jpg); Mattes (File:Tonfa.Kunststoff.JPG)",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
       "nr": 48,
       "artikel": "Ein echter Reisigbesen vom Baumarkt",
       "datei": "48_Ein echter Reisigbesen vom Baumarkt_14,95.jpg",
@@ -322,6 +410,17 @@
       "lizenz": "CC BY 2.5"
     },
     {
+      "nr": 50,
+      "artikel": "Ein aufblasbares Dinosaurier-Ganzkörperkostüm",
+      "datei": "50_Ein aufblasbares Dinosaurier-Ganzkörperkostüm_44,90.jpg",
+      "bytes": 111216,
+      "begriff": "Category:Inflatable costumes",
+      "commons": "File:Begemot.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Begemot.jpg",
+      "autor": "Uputnik",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
       "nr": 51,
       "artikel": "Ein weißes Bettlaken, 180 × 290 cm",
       "datei": "51_Ein weißes Bettlaken, 180 × 290 cm_12,99.jpg",
@@ -342,6 +441,17 @@
       "seite": "https://commons.wikimedia.org/wiki/File:2015_Hallowenn_dog_costume_party_10.jpg",
       "autor": "Can Kamiloğlu",
       "lizenz": "Public domain"
+    },
+    {
+      "nr": 55,
+      "artikel": "Ein Paar Teufelshörner mit Glitzer",
+      "datei": "55_Ein Paar Teufelshörner mit Glitzer_5,99.jpg",
+      "bytes": 228932,
+      "begriff": "Category:Devil costumes",
+      "commons": "File:Castle Party p 181.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Castle_Party_p_181.jpg",
+      "autor": "Przykuta",
+      "lizenz": "CC BY-SA 3.0"
     },
     {
       "nr": 56,
@@ -397,6 +507,17 @@
       "seite": "https://commons.wikimedia.org/wiki/File:Adventkalender_andrea.JPG",
       "autor": "Andrea Schaufler",
       "lizenz": "CC BY 2.5"
+    },
+    {
+      "nr": 62,
+      "artikel": "Ein Jahr Pornhub Premium",
+      "datei": "62_Ein Jahr Pornhub Premium_119,88.jpg",
+      "bytes": 141149,
+      "begriff": "Category:Pornhub",
+      "commons": "File:Escudo del Pornhub Football Club.png",
+      "seite": "https://commons.wikimedia.org/wiki/File:Escudo_del_Pornhub_Football_Club.png",
+      "autor": "LaLeshuja1",
+      "lizenz": "CC BY-SA 4.0"
     },
     {
       "nr": 63,
@@ -476,6 +597,17 @@
       "lizenz": "CC BY 2.0"
     },
     {
+      "nr": 72,
+      "artikel": "Ein Silberkettchen, 925er, 45 cm",
+      "datei": "72_Ein Silberkettchen, 925er, 45 cm_29,00.jpg",
+      "bytes": 323973,
+      "begriff": "Category:Silver necklaces",
+      "commons": "File:Bijou Miao.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Bijou_Miao.jpg",
+      "autor": "Vassil",
+      "lizenz": "Public domain"
+    },
+    {
       "nr": 74,
       "artikel": "Ein Nachtsichtgerät, Einsteigerklasse",
       "datei": "74_Ein Nachtsichtgerät, Einsteigerklasse_229,00.jpg",
@@ -518,6 +650,28 @@
       "seite": "https://commons.wikimedia.org/wiki/File:Efteling_Entrance.jpg",
       "autor": "Stefan Scheer",
       "lizenz": "CC BY 2.5"
+    },
+    {
+      "nr": 79,
+      "artikel": "Ein Ticket fürs Gruselkabinett",
+      "datei": "79_Ein Ticket fürs Gruselkabinett_12,00.jpg",
+      "bytes": 159407,
+      "begriff": "Category:Wax museums",
+      "commons": "File:Museu de Cera.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:Museu_de_Cera.JPG",
+      "autor": "No machine-readable author provided. Juntas assumed (based on copyright claims).",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 80,
+      "artikel": "Eine Führung durch Schloss Bran in Rumänien",
+      "datei": "80_Eine Führung durch Schloss Bran in Rumänien_18,00.jpg",
+      "bytes": 363657,
+      "begriff": "Category:Bran Castle",
+      "commons": "File:Adler - Castelul Bran 2.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Adler_-_Castelul_Bran_2.jpg",
+      "autor": "Leopold Adler",
+      "lizenz": "Public domain"
     },
     {
       "nr": 82,
@@ -621,205 +775,123 @@
   ],
   "fehlend": [
     {
-      "nr": 1,
-      "name": "Ein Speisekürbis, 3 kg, vom Hofladen",
-      "begriff": "pumpkin vegetable",
-      "grund": "Riesen-Steckruebe im Vordergrund, Kuerbisse nur daneben"
-    },
-    {
-      "nr": 14,
-      "name": "Ein Satz Vampirzähne zum Aufstecken",
-      "begriff": "vampire teeth costume",
-      "grund": "gemaltes Vampirgesicht, kein Gebiss zum Aufstecken"
-    },
-    {
-      "nr": 19,
-      "name": "Eine Latex-Zombiemaske",
-      "begriff": "zombie mask",
-      "grund": "Gasmaske auf einer Demo, keine Zombiemaske"
-    },
-    {
-      "nr": 27,
-      "name": "Eine Plastikspinne, handtellergroß",
-      "begriff": "toy spider plastic",
-      "grund": "Kinderspielzeug auf einem Holzboden, keine Spinne"
-    },
-    {
-      "nr": 32,
-      "name": "Ein Plastikskelett, 1,70 m",
-      "begriff": "halloween skeleton decoration",
-      "grund": "Strassenzug mit Motorrad, Skelett nur als Beiwerk"
-    },
-    {
-      "nr": 34,
-      "name": "Ein anatomisches Lehrskelett für die Uni",
-      "begriff": "anatomical skeleton model",
-      "grund": "anatomische Wachsfigur, kein Lehrskelett"
-    },
-    {
-      "nr": 38,
-      "name": "Eine Grabstelle, 25 Jahre Pacht in einer Mittelstadt",
-      "begriff": "cemetery headstones churchyard",
-      "grund": "Grabplatten an einer Mauer, keine Grabstelle"
-    },
-    {
-      "nr": 39,
-      "name": "Eine einfache Bestattung mit Sarg",
-      "begriff": "wooden coffin",
-      "grund": "aegyptische Mumienmaske, kein Sarg"
-    },
-    {
-      "nr": 43,
-      "name": "Eine Lichterkette mit Geistern, 10 Meter",
-      "begriff": "halloween string lights",
-      "grund": "Landschaft mit Vogelscheuche, keine Lichterkette"
-    },
-    {
-      "nr": 47,
-      "name": "Eine Hexenbesen-Deko",
-      "begriff": "witch broom halloween",
-      "grund": "Kind im Hexenkostuem, Besen kaum zu sehen (Nr. 49 zeigt das besser)"
-    },
-    {
-      "nr": 54,
-      "name": "Ein Katzenkostüm für die Katze",
-      "begriff": "cat costume pet",
-      "grund": "Hunde mit Kuerbissen, keine Katze"
-    },
-    {
-      "nr": 62,
-      "name": "Ein Jahr Pornhub Premium",
-      "begriff": "pornhub logo",
-      "grund": "Wikipedia-Logo in Pornhub-Farben, sagt zum Preis nichts"
-    },
-    {
-      "nr": 69,
-      "name": "Eine Sitzung bei der Wahrsagerin, 30 Minuten",
-      "begriff": "fortune teller crystal ball",
-      "grund": "Cartoon mit Wasserzeichen einer fremden Seite"
-    },
-    {
-      "nr": 72,
-      "name": "Ein Silberkettchen, 925er, 45 cm",
-      "begriff": "silver necklace chain",
-      "grund": "Zierkette aus dem Kreml-Museum, kein Kettchen"
-    },
-    {
-      "nr": 78,
-      "name": "Ein Escape-Room für vier Personen, 60 Minuten",
-      "begriff": "escape room",
-      "grund": "Hausfassade, vom Escape-Room nichts zu sehen"
-    },
-    {
-      "nr": 79,
-      "name": "Ein Ticket fürs Gruselkabinett",
-      "begriff": "wax museum figures",
-      "grund": "Wachsfiguren einer Vertragsunterzeichnung, kein Gruselkabinett"
-    },
-    {
-      "nr": 80,
-      "name": "Eine Führung durch Schloss Bran in Rumänien",
-      "begriff": "bran castle",
-      "grund": "Blick vom Schloss ins Dorf, das Schloss selbst fehlt"
-    },
-    {
-      "nr": 81,
-      "name": "Eine Übernachtung in einem englischen Spukhotel-Zimmer",
-      "begriff": "haunted manor house england",
-      "grund": "Backsteinruine ohne Hotelbezug"
-    },
-    {
       "nr": 4,
       "name": "Ein Kürbisschnitzset, 10 Teile",
-      "begriff": "pumpkin carving kit",
-      "grund": "Spendenaktion in einem Frauenhaus, kein Schnitzset"
+      "begriff": "Category:Pumpkin carving",
+      "grund": "Kuerbisse auf Regalen, kein Schnitzset"
     },
     {
       "nr": 8,
       "name": "Eine LED-Kerze für den Kürbis",
-      "begriff": "electric tea light candle",
-      "grund": "Buchscan \"American homes and gardens\" 1910"
+      "begriff": "Category:Electric candles",
+      "grund": "schwedischer Lichterbogen, keine LED-Kerze fuer den Kuerbis"
     },
     {
-      "nr": 9,
-      "name": "Ein Großpack Halloween-Süßigkeiten, 1 kg",
-      "begriff": "halloween candy bowl",
-      "grund": "Marine-Veranstaltung, keine Suessigkeiten erkennbar"
+      "nr": 14,
+      "name": "Ein Satz Vampirzähne zum Aufstecken",
+      "begriff": "Category:Vampire costumes",
+      "grund": "Strassenszene mit Dracula-Kostuem, kein Gebiss"
     },
     {
-      "nr": 22,
-      "name": "Ein Freddy-Krueger-Handschuh als Replik",
-      "begriff": "costume claw gloves",
-      "grund": "Brief von 1841 - Volltextsuche traf den Text, nicht das Bild"
+      "nr": 19,
+      "name": "Eine Latex-Zombiemaske",
+      "begriff": "Category:Zombie costumes",
+      "grund": "geschminktes Zombie-Paar, keine Maske"
     },
     {
       "nr": 30,
       "name": "Ein ausgestopfter Rabe vom Präparator",
-      "begriff": "stuffed crow taxidermy",
-      "grund": "lebende Kraehen, kein Praeparat"
+      "begriff": "Category:Taxidermied birds",
+      "grund": "Schulklasse 1947, der ausgestopfte Vogel ist Beiwerk"
     },
     {
-      "nr": 50,
-      "name": "Ein aufblasbares Dinosaurier-Ganzkörperkostüm",
-      "begriff": "inflatable t-rex costume",
-      "grund": "Umzugsfoto, Kostuem nicht erkennbar"
-    },
-    {
-      "nr": 52,
-      "name": "Ein Vampirumhang mit Stehkragen",
-      "begriff": "dracula costume cape",
-      "grund": "Grabstein von Bela Lugosi, kein Umhang"
-    },
-    {
-      "nr": 85,
-      "name": "Ein Satz Fake-Wunden zum Aufkleben",
-      "begriff": "prosthetic makeup wound",
-      "grund": "Studio-Aufnahme ohne erkennbare Wunde"
-    },
-    {
-      "nr": 20,
-      "name": "Eine Silikonmaske in Hollywood-Qualität",
-      "begriff": "silicone mask head"
-    },
-    {
-      "nr": 29,
-      "name": "Ein Terrarium für die Vogelspinne",
-      "begriff": "glass terrarium enclosure"
+      "nr": 32,
+      "name": "Ein Plastikskelett, 1,70 m",
+      "begriff": "Category:Halloween decorations",
+      "grund": "Schaufenster mit Halloween-Figuren, kein 1,70-m-Skelett"
     },
     {
       "nr": 33,
       "name": "Ein Gartenskelett, 3,60 m hoch",
-      "begriff": "halloween skeleton garden tall"
-    },
-    {
-      "nr": 36,
-      "name": "Ein Grabstein aus Styropor",
-      "begriff": "halloween graveyard decoration tombstone"
+      "begriff": "Category:Skeleton decorations",
+      "grund": "dunkle Gruselkabinett-Aufnahme, kein Gartenskelett"
     },
     {
       "nr": 41,
       "name": "Fünf Liter Nebelfluid",
-      "begriff": "plastic bottle five litre"
-    },
-    {
-      "nr": 55,
-      "name": "Ein Paar Teufelshörner mit Glitzer",
-      "begriff": "devil horns headband"
+      "begriff": "Category:Plastic containers",
+      "grund": "Abwurfbox aus der Praxis, kein Nebelfluid"
     },
     {
       "nr": 59,
       "name": "Ein Paar Plüschhandschellen aus dem Scherzartikelladen",
-      "begriff": "novelty handcuffs pink"
+      "begriff": "Category:Handcuffs",
+      "grund": "Polizei-Handschellen auf einer Schutzweste, kein Scherzartikel"
     },
     {
       "nr": 65,
       "name": "Ein Feuerwehr-Nacktkalender aus dem Nachbardorf",
-      "begriff": "firefighter charity calendar"
+      "begriff": "Category:Calendars",
+      "grund": "technische Zeichnung, kein Kalender"
+    },
+    {
+      "nr": 69,
+      "name": "Eine Sitzung bei der Wahrsagerin, 30 Minuten",
+      "begriff": "Category:Fortune-telling",
+      "grund": "Zeitungsanzeige mit echter Telefonnummer"
     },
     {
       "nr": 73,
       "name": "Ein EMF-Messgerät für Geisterjäger",
-      "begriff": "gaussmeter electromagnetic field meter"
+      "begriff": "Category:Measuring instruments",
+      "grund": "Stich eines Acetometers, kein EMF-Messgeraet"
+    },
+    {
+      "nr": 78,
+      "name": "Ein Escape-Room für vier Personen, 60 Minuten",
+      "begriff": "Category:Escape rooms",
+      "grund": "Schaubild zu Escape-Room-Anbietern, kein Raum"
+    },
+    {
+      "nr": 81,
+      "name": "Eine Übernachtung in einem englischen Spukhotel-Zimmer",
+      "begriff": "Category:Haunted houses",
+      "grund": "altes Schwarzweissfoto eines Hauses, kein Hotelbezug"
+    },
+    {
+      "nr": 22,
+      "name": "Ein Freddy-Krueger-Handschuh als Replik",
+      "begriff": "costume claw gloves"
+    },
+    {
+      "nr": 34,
+      "name": "Ein anatomisches Lehrskelett für die Uni",
+      "begriff": "Category:Anatomical models of skeletons"
+    },
+    {
+      "nr": 36,
+      "name": "Ein Grabstein aus Styropor",
+      "begriff": "Category:Tombstone props"
+    },
+    {
+      "nr": 43,
+      "name": "Eine Lichterkette mit Geistern, 10 Meter",
+      "begriff": "Category:Fairy lights"
+    },
+    {
+      "nr": 52,
+      "name": "Ein Vampirumhang mit Stehkragen",
+      "begriff": "Category:Dracula costumes"
+    },
+    {
+      "nr": 54,
+      "name": "Ein Katzenkostüm für die Katze",
+      "begriff": "Category:Cats in costumes"
+    },
+    {
+      "nr": 85,
+      "name": "Ein Satz Fake-Wunden zum Aufkleben",
+      "begriff": "Category:Special effects makeup"
     }
   ]
 }

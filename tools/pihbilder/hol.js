@@ -161,34 +161,71 @@ const NACHSUCHE = {
 // Bild auf der Leinwand ist schlechter als keins - die Nummern hier fliegen
 // samt Datei raus, der Artikel bleibt ohne Bild.
 const WEG = {
-  4:  'Spendenaktion in einem Frauenhaus, kein Schnitzset',
-  8:  'Buchscan "American homes and gardens" 1910',
-  9:  'Marine-Veranstaltung, keine Suessigkeiten erkennbar',
-  22: 'Brief von 1841 - Volltextsuche traf den Text, nicht das Bild',
-  30: 'lebende Kraehen, kein Praeparat',
-  50: 'Umzugsfoto, Kostuem nicht erkennbar',
-  52: 'Grabstein von Bela Lugosi, kein Umhang',
-  85: 'Studio-Aufnahme ohne erkennbare Wunde',
-  // Zweite Runde: jedes Bild einzeln angesehen, diese zeigen etwas anderes
-  // als der Artikel. Der Dateititel allein reichte als Pruefung nicht.
-  1:  'Riesen-Steckruebe im Vordergrund, Kuerbisse nur daneben',
-  14: 'gemaltes Vampirgesicht, kein Gebiss zum Aufstecken',
-  19: 'Gasmaske auf einer Demo, keine Zombiemaske',
-  27: 'Kinderspielzeug auf einem Holzboden, keine Spinne',
-  32: 'Strassenzug mit Motorrad, Skelett nur als Beiwerk',
+  // Runde 1+2 (Volltextsuche), Runde 3 (Kategorie) brachte nichts Besseres.
+  // Jede Nummer einzeln angesehen; ein falsches Bild auf der Leinwand ist
+  // schlechter als keins, der Artikel bleibt dann ohne.
+  4:  'Kuerbisse auf Regalen, kein Schnitzset',
+  8:  'schwedischer Lichterbogen, keine LED-Kerze fuer den Kuerbis',
+  14: 'Strassenszene mit Dracula-Kostuem, kein Gebiss',
+  19: 'geschminktes Zombie-Paar, keine Maske',
+  22: 'Brief von 1841 - die Volltextsuche traf den Text, nicht das Bild',
+  30: 'Schulklasse 1947, der ausgestopfte Vogel ist Beiwerk',
+  32: 'Schaufenster mit Halloween-Figuren, kein 1,70-m-Skelett',
+  33: 'dunkle Gruselkabinett-Aufnahme, kein Gartenskelett',
   34: 'anatomische Wachsfigur, kein Lehrskelett',
-  38: 'Grabplatten an einer Mauer, keine Grabstelle',
-  39: 'aegyptische Mumienmaske, kein Sarg',
+  41: 'Abwurfbox aus der Praxis, kein Nebelfluid',
   43: 'Landschaft mit Vogelscheuche, keine Lichterkette',
-  47: 'Kind im Hexenkostuem, Besen kaum zu sehen (Nr. 49 zeigt das besser)',
+  52: 'Grabstein von Bela Lugosi, kein Umhang',
   54: 'Hunde mit Kuerbissen, keine Katze',
-  62: 'Wikipedia-Logo in Pornhub-Farben, sagt zum Preis nichts',
-  69: 'Cartoon mit Wasserzeichen einer fremden Seite',
-  72: 'Zierkette aus dem Kreml-Museum, kein Kettchen',
-  78: 'Hausfassade, vom Escape-Room nichts zu sehen',
-  79: 'Wachsfiguren einer Vertragsunterzeichnung, kein Gruselkabinett',
-  80: 'Blick vom Schloss ins Dorf, das Schloss selbst fehlt',
-  81: 'Backsteinruine ohne Hotelbezug',
+  59: 'Polizei-Handschellen auf einer Schutzweste, kein Scherzartikel',
+  65: 'technische Zeichnung, kein Kalender',
+  69: 'Zeitungsanzeige mit echter Telefonnummer',
+  73: 'Stich eines Acetometers, kein EMF-Messgeraet',
+  78: 'Schaubild zu Escape-Room-Anbietern, kein Raum',
+  81: 'altes Schwarzweissfoto eines Hauses, kein Hotelbezug',
+  85: 'Studio-Aufnahme ohne erkennbare Wunde',
+};
+
+// Dritte Runde (`--kategorien`): statt Volltextsuche eine Commons-Kategorie.
+// Grund: die Volltextsuche rankt nach Text, nicht nach Motiv - deshalb kamen
+// Briefe und Buchscans. In einer Kategorie liegt per Definition das Motiv.
+// Openverse (Flickr-CC) waere die bessere Quelle fuer Konsumartikel, die API
+// antwortete am 2026-10-31 aber mit 504 bzw. gar nicht.
+const KATEGORIE = {
+  1:  'Pumpkins',
+  4:  'Pumpkin carving',
+  8:  'Electric candles',
+  9:  'Halloween candy',
+  14: 'Vampire costumes',
+  19: 'Zombie costumes',
+  20: 'Latex masks',
+  27: 'Toy spiders',
+  29: 'Terrariums',
+  30: 'Taxidermied birds',
+  32: 'Halloween decorations',
+  33: 'Skeleton decorations',
+  34: 'Anatomical models of skeletons',
+  36: 'Tombstone props',
+  38: 'Graves in Germany',
+  39: 'Coffins',
+  41: 'Plastic containers',
+  43: 'Fairy lights',
+  47: 'Brooms',
+  50: 'Inflatable costumes',
+  52: 'Dracula costumes',
+  54: 'Cats in costumes',
+  55: 'Devil costumes',
+  59: 'Handcuffs',
+  62: 'Pornhub',
+  65: 'Calendars',
+  69: 'Fortune-telling',
+  72: 'Silver necklaces',
+  73: 'Measuring instruments',
+  78: 'Escape rooms',
+  79: 'Wax museums',
+  80: 'Bran Castle',
+  81: 'Haunted houses',
+  85: 'Special effects makeup',
 };
 
 /** @param {string} url @param {boolean} binaer */
@@ -238,6 +275,32 @@ async function suche(begriff){
   return null;
 }
 
+/** Erste brauchbare Datei aus einer Commons-Kategorie.
+ *  @param {string} kat */
+async function ausKategorie(kat){
+  const q = new URLSearchParams({
+    action: 'query', format: 'json', formatversion: '2',
+    generator: 'categorymembers', gcmtitle: 'Category:' + kat,
+    gcmtype: 'file', gcmlimit: '30',
+    prop: 'imageinfo', iiprop: 'url|mime|extmetadata', iiurlwidth: String(BREITE),
+  });
+  const d = JSON.parse(await hol('https://commons.wikimedia.org/w/api.php?' + q, false));
+  const seiten = (d.query && d.query.pages) || [];
+  for (const s of seiten){
+    const ii = s.imageinfo && s.imageinfo[0];
+    if (!ii || !ii.thumburl) continue;
+    if (!/^image\/(jpeg|png)$/.test(ii.mime)) continue;
+    const em = ii.extmetadata || {};
+    const feld = k => (em[k] && em[k].value ? String(em[k].value) : '');
+    return {
+      titel: s.title, thumb: ii.thumburl, seite: ii.descriptionurl,
+      autor: feld('Artist').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() || 'unbekannt',
+      lizenz: feld('LicenseShortName') || 'siehe Dateiseite',
+    };
+  }
+  return null;
+}
+
 /** Dateiname, aus dem pihImportFolder() Name und Preis liest. */
 function dateiname(i, artikel){
   const nr = String(i + 1).padStart(2, '0');
@@ -266,9 +329,10 @@ async function main(){
   // lassen, wie es in quellen.json steht. Spart 65 unnoetige Abfragen und
   // haelt die Treffer, die beim ersten Lauf gepasst haben.
   const nurNach = process.argv.includes('--nachsuche');
+  const nurKat = process.argv.includes('--kategorien');
   const aufraeumen = process.argv.includes('--aufraeumen');
   const altPfad = path.join(ziel, 'quellen.json');
-  const alt = ((nurNach || aufraeumen) && fs.existsSync(altPfad))
+  const alt = ((nurNach || nurKat || aufraeumen) && fs.existsSync(altPfad))
     ? JSON.parse(fs.readFileSync(altPfad, 'utf8')) : { bilder: [] };
   const altNach = new Map(alt.bilder.map(b => [b.nr, b]));
 
@@ -296,14 +360,16 @@ async function main(){
 
   if (!aufraeumen) for (let i = 0; i < set.items.length; i++){
     const it = set.items[i];
-    const begriff = NACHSUCHE[i + 1] || SUCHE[i];
-    if (nurNach && !NACHSUCHE[i + 1]) {
+    const kat = KATEGORIE[i + 1];
+    const begriff = nurKat && kat ? 'Category:' + kat : (NACHSUCHE[i + 1] || SUCHE[i]);
+    if ((nurNach && !NACHSUCHE[i + 1]) || (nurKat && !kat)) {
       const b = altNach.get(i + 1);
       if (b) quellen.push(b);
+      else fehlend.push({ nr: i + 1, name: it.name, begriff });
       continue;
     }
     let t = null;
-    try { t = await suche(begriff); }
+    try { t = nurKat && kat ? await ausKategorie(kat) : await suche(begriff); }
     catch (e) { console.log(`${i + 1}\tSUCHE FEHL\t${begriff}\t${e.message}`); }
     if (!t){ fehlend.push({ nr: i + 1, name: it.name, begriff }); if (!quellen.length) {} console.log(`${i + 1}\tkein Treffer\t${begriff}`); continue; }
     const datei = dateiname(i, it);
