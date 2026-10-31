@@ -165,10 +165,14 @@ werden.**
   dieselbe Funktion) und — diesmal zufällig im Positivfall — die Punktevergabe:
   `[0,0]` → `[100,0]`. Damit ist der offene Punkt aus dem Eintrag darüber erledigt.
 - `node shots.js --shows jeop-strahl-bild,gm-strahl`: **keine Befunde**.
-- **Der volle `shots.js`-Lauf lief zum Commit noch** (Bild 26 von 620). `js/core.js`
-  ist angefasst, also ist er fällig; die berührten Zustände sind durch den Lauf
-  darüber abgedeckt. Ergebnis wird nachgetragen, bei einem Befund folgt ein eigener
-  Commit.
+- **Voller `node shots.js`-Lauf: 620 Bilder, keine Befunde** (31 Zustände × 20
+  Richtungen). Keine Regression durch den Eingriff in `js/core.js`.
+  **Nachgereicht:** Er stand zum Commit `b63815d` erst bei Bild 26 von 620; der
+  Commit wurde vorgezogen, weil die Reihe bis dahin nach falschen Zahlen sortierte
+  und das nicht länger live stehen sollte. Die berührten Zustände liefen vorher
+  ohne Befund.
+- **Deploy** `41242089583` zu `58e4082`: `conclusion: success`. Die Seite selbst
+  wurde **nicht** abgerufen — der Proxy der Umgebung lehnt `iryo.party` mit `403` ab.
 
 ### Offen
 
