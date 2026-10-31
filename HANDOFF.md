@@ -12,6 +12,133 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-31 — `6310e51` Jeopardy-Zahlenstrahl: Bilder zum Zuordnen, Urteil beim Host
+
+**David:** „Die Zahlenstrahl funktion soll auch Bilder unterstützen. Dass man die Bilder
+zuordnen kann. Und stell sicher dass die Spieler auf ihrem Handy zu ordnen können, das
+wird dann auf dem Mainscreen so angezeigt, und der Host clickt dann an richtig oder
+Falsch."
+
+### Gemacht
+
+- **Bild je Ding** (`js/jeopardy-ui.js`): im Editor steht neben Name und Wert ein
+  🖼-Knopf. `jeopardyEditStrahlImg` legt das Bild **zweimal** ab —
+  `strahlImgs[i]` mit 640 px für Leinwand und Panel, `strahlThumbs[i]` mit 128 px als
+  Briefmarke fürs Handy. `strahlNames[i]` hält den Dateinamen für die Hover-Vorschau.
+  `jeopardyClearStrahlImg` nimmt alle drei wieder weg.
+- **Ein Ding darf ein Bild STATT eines Namens haben** (`jeopardyStrahlDinge`): fehlt der
+  Name, bekommt es „Bild 3". Damit arbeitet alles, was die Reihe zeichnet, weiter mit
+  `.text` — Lückenbeschriftung auf dem Handy, Tooltip, Fehlersuche.
+- **Leinwand** (`jeopardyStrahlHtml` + `styles.css`): das einzuordnende Ding zeigt das
+  Bild groß mit Namen darunter (`.jeopardy-strahl-ding.mit-bild`), die liegenden Dinge
+  tragen es als Kachelbild (`.jeopardy-strahl-item.bild`).
+- **Handy** (`buzzer/index.html`): `dingBild` und `reihe[].bild` kommen über den
+  bestehenden Kanal `buzzer/strahl` an. `#strahl-ding` zeigt das Bild 128 px groß, die
+  schon liegenden Dinge als 44-px-Marke neben dem Namen. Neue Funktion `strahlBild()`
+  lässt nur `data:image/`-URLs durch — die Handy-Seite lädt `core.js` und damit
+  `safeSrc` nicht.
+- **Host-Urteil** (`jeopardyStrahlUrteil`, Knöpfe im GM-Panel): die Seite bewertet jeden
+  Zug weiter selbst, aber der Host kann das Urteil des **letzten** Zuges umstellen. Der
+  geltende Knopf ist gefüllt. Zähler `richtig[team]` und `fehler` gehen mit.
+- **GM-Panel** (`js/feud.js`): Bilder in den Chips der Reihe, Briefmarke in der Zeile
+  „Einzuordnen", neue Urteilszeile `.strahl-urteil`.
+- **Prüf-Zustände**: `jeop-strahl-bild` (Leinwand) und `gm-strahl` (Panel) in
+  `tools/gemeinsam/aufbau.js`, angemeldet in `tools/shots/shots.js` und
+  `tools/durchgang/index.html`. `tools/shots/ablauf.js` prüft zusätzlich, dass das Bild
+  bis auf das Handy durchkommt und dass das Host-Urteil umstellbar und umkehrbar ist.
+
+### Warum so
+
+**Zwei Bildgrößen statt einer.** BAUPLAN 3.6 sagt „nur Verweise nach Firebase, keine
+Nutzlast". Ein Verweis geht hier nicht: das Handy ist ein fremdes Gerät und kommt an den
+`localStorage` des Hosts nicht heran. Ohne Bild müsste der Spieler die Dinge auf der
+Leinwand suchen, während er aufs Handy tippt — genau das soll das Bild ersparen. Also die
+kleinste erkennbare Form mit hartem Deckel: `STRAHL_BILD_BUDGET = 150 000` Zeichen
+(~110 KB). Reißt er, läuft die Runde mit Namen weiter statt an einem zu großen
+Schreibvorgang zu hängen. **Verworfen:** nur ein Bild speichern und dasselbe ans Handy
+schicken — acht Bilder à 50 KB wären bei *jedem* Zug ein Schreibvorgang von 400 KB, über
+eine Runde das Zehnfache der Briefmarken.
+
+**640 px, nicht 1280 wie beim Preis ist heiß.** Dort füllt ein Bild den halben Schirm,
+hier liegen bis zu acht Kacheln nebeneinander — eine davon ist auf 1920 px keine 400 px
+breit. Bei 1280 px wären acht Dinge gut ein Megabyte, und der ganze Spielstand geht in den
+`localStorage`, der bei rund 5 MB endet.
+
+**Das Urteil bleibt automatisch, der Host korrigiert nur.** David wollte „der Host clickt
+dann an richtig oder Falsch" und sagte im selben Satz „die Lösung hat ja die Website selber
+auch". Beides zusammen geht nur so: die Seite rechnet weiter (`p >= sollMin && p <= sollMax`,
+sofort grün/rot, kein Warten auf den Host), der Knopf ist die Korrektur. **Verworfen:** die
+automatische Prüfung abschalten und nach jedem Zug auf einen Host-Klick warten — das
+bremst jeden der bis zu sieben Züge und macht einen Vertipper möglich, wo die Maschine es
+sicher weiß. Dass es den Knopf überhaupt braucht: am einzigen „falsch" hängt die Wertung
+der **ganzen** Reihe (`jeopardyStrahlSieger`), und Undo nimmt den Zug selbst zurück, nicht
+nur das Urteil.
+
+**`urteilNr` neben `zugNr`.** Die Einrast-Animation hängt an `zugNeu`, und das vergleicht
+den Zustand gegen `ov.dataset.strahlZug`. Nach einer Korrektur ändert sich die Zugnummer
+nicht — die Kachel wäre grün geblieben, obwohl im Panel „falsch" steht. Der Schlüssel ist
+jetzt `zugNr:urteilNr`, gebaut an **einer** Stelle (`jeopardyStrahlZugKey`), sonst läuft die
+Animation irgendwann bei jedem Neuzeichnen.
+
+### Geprüft
+
+- `node check.js`: 15 js-Dateien, 455 Handler gegen 976 Namen, 303 IDs, 4762
+  Klammernpaare — **alles in Ordnung**.
+- `node check.js --types`: 15 Dateien typgeprüft — **keine Meldung**.
+- `node ablauf.js`: **54 OK, 0 FEHL** (vorher 52 — zwei neue Punkte). Darunter:
+  „Bild des einzuordnenden Dings steht auf dem Handy" `{ding:true}` und „Host stellt das
+  Urteil um und wieder zurück" — `richtig [1,0] fehler 0` → `[0,0] fehler 1` →
+  zurück `[1,0] fehler 0`. Keine JS-Fehler auf Host, Handy, Gamepad.
+- `node shots.js`: **620 Bilder, keine Befunde** (31 Zustände × 20 Richtungen, 1280×720). Die „zu hoch"-Meldungen bei `menu`, `setup`, `gm-menu` und `turnier-host` sind keine Befunde — Host-Seiten stehen in `HOST_SEITEN` und werden nicht auf Höhe geprüft.
+- Kontaktbögen angesehen, nicht nur Befunde gelesen. Dabei **zwei echte Fehler
+  gefunden**, die kein Prüfer meldet: in der Reihe zieht `align-items:stretch` alle
+  Kacheln auf Bildhöhe, und in den Kacheln **ohne** Bild klebte der Name oben, darunter
+  stand ein leeres Feld. Behoben mit `justify-content:center`, auf der Leinwand
+  (`.jeopardy-strahl-item`) und im Panel (`.strahl-chip`). Vorher/nachher in
+  `tools/shots/out/jeop-strahl-bild-A.png` und `gm-strahl-Studio.png`.
+
+### Offen
+
+- **Nicht geprüft: echte Fotos.** Alle Läufe nutzen eingebettete SVG als Platzhalter. Wie
+  ein JPEG-Foto bei 640 px auf dem Beamer und bei 128 px auf dem Handy aussieht, ist nicht
+  angesehen worden.
+- **Nicht geprüft: `node geraete.js`** (echte Geräteprofile, iPhones in WebKit). Braucht
+  `npx playwright install webkit`, und Installationen von außen sind in dieser Umgebung
+  gesperrt.
+- **Nicht geprüft: `shots.js --vergleich`.** Dafür fehlt der `--basis`-Lauf von *vor* der
+  Änderung.
+- **In `ablauf.js` hatte die Reihe beim Prüfzeitpunkt nur ein Ding, und das ohne Bild**
+  (`{ding:true, reihe:0, ohne:1}`). Dass Bilder auch in den schon *liegenden* Dingen auf
+  dem Handy ankommen, ist nur auf der Leinwand und im Panel belegt, nicht auf dem Handy.
+- **Skills nicht nachgeladen.** `frontend-design`, `caveman`, `using-agent-skills` fehlen;
+  `npx skills add` wird in dieser Umgebung als „Code von außen" abgewiesen. Die
+  Gestaltung lief ohne `frontend-design`.
+- **Die Punktevergabe des Zahlenstrahls hat einen Fehler, der nicht angefasst wurde** —
+  siehe „TODO / Offene Punkte" unten.
+
+### Fallstricke
+
+- **`page.evaluate(AUFBAU[show])` überträgt nur den Funktionsrumpf.** Die beiden
+  Platzhalterbilder standen zuerst als `const BILD_A` im Dateikopf von `aufbau.js` — das
+  gab 20 Befunde „BILD_A is not defined". Daten-URLs gehören **in** die Zustandsfunktion.
+  Aus demselben Grund ist `gm-strahl` ein **Alias** (`AUFBAU['gm-strahl'] =
+  AUFBAU['jeop-strahl-bild']`) und keine Funktion, die die andere aufruft — ein Alias zeigt
+  auf dieselbe Funktion und ist genauso geschlossen. Dasselbe Muster gibt es schon bei
+  `AUFBAU.gm = AUFBAU.feud`.
+- **`null`, nicht `''`, für ein fehlendes Bild im Firebase-Knoten.** Ein leerer String
+  lässt den alten Knoten stehen; das Handy hätte das Bild des vorigen Dinges weitergezeigt
+  (derselbe Fallstrick wie `excluded: {}` in BAUPLAN 3.6).
+- **Die Handy-Seite hat kein `safeSrc`.** Sie lädt `core.js` nicht, also steht die
+  Schranke dort noch einmal als `strahlBild()`.
+- **`tools/shots` braucht `playwright-core`.** In dieser Umgebung lag es nicht in
+  `tools/shots/node_modules`; `npm install` geht nicht. Behelf: Verweis auf das global
+  vorhandene Paket legen und `CHROME` auf den mitgelieferten Chromium setzen —
+  `ln -sfn /opt/node-tools/node_modules/playwright-core tools/shots/node_modules/playwright-core`
+  und `CHROME=/opt/pw-browsers/chromium node shots.js`. `tools/shots/node_modules/` ist in
+  `.gitignore`, der Verweis geht also nicht mit ein.
+
+---
+
 ## 2026-10-30 — `547f423` Geisterbahn-Intro: Material, Licht und Tiefe nachgezogen
 
 **David:** „Das Intro gefällt mir nicht, das ist nicht so hochwertig wie der Rest."
@@ -1710,6 +1837,49 @@ also nicht.
 
 Ganz unten, weil es keine Einträge zu Änderungen sind, sondern Dinge, die noch
 geklärt werden müssen. Neueste oben.
+
+## 2026-10-31 — Zahlenstrahl: die Punktevergabe benachteiligt Teams strukturell
+
+Beim Bilder-Umbau (`6310e51`) aufgefallen, **nicht behoben** — David hat auf die
+Rückfrage „soll ich das mitfixen?" keine Vorgabe gemacht, und eine Spielregel
+ändert man nicht nebenbei.
+
+**Der Befund.** Die Reihe wächst um `Anzahl Dinge − 1` Züge: das erste Ding
+liegt von allein (`jeopardyStrahlStart`). Bei 5 Dingen sind das 4 Züge. Sie
+gehen reihum, beginnend bei Team 1 (`jeopardyStrahlWeiter`).
+
+Bei **3 Teams** macht Team 1 zwei Züge, Team 2 und 3 je einen. Sieger ist, wer
+die **meisten richtigen** Züge hat (`jeopardyStrahlSieger`). Team 1 kann
+höchstens 2 richtige haben, Team 2 und 3 höchstens 1. Damit gibt es nur zwei
+Ausgänge:
+
+- Team 1 legt beide Züge richtig → 2 gegen höchstens 1, Team 1 gewinnt.
+- Team 1 legt einmal falsch → `fehler > 0` → **niemand** bekommt Punkte.
+
+Einen dritten Fall gibt es nicht. **Team 2 und 3 können nicht gewinnen**, egal
+wie gut sie spielen.
+
+Fair ist es nur, wenn `Anzahl Dinge − 1` ohne Rest durch die Teamzahl teilbar
+ist: 5 Dinge bei 2 Teams (4 Züge, 2:2), 7 bei 3 Teams (6 Züge, 2:2:2), 5 bei
+4 Teams (4 Züge, 1:1:1:1). Der Editor lässt 3–8 Dinge zu und warnt nicht.
+
+**Dazu kommt „alles oder nichts":** ein einziger Fehler irgendeines Teams setzt
+die Wertung der ganzen Reihe auf null. Das ist eine bewusste Festlegung von
+David (2026-10-29, Kommentar in `js/jeopardy.js`) — aber bei 4 bis 7 Zügen über
+mehrere Teams endet das Feld in der Praxis oft mit 0 Punkten für alle.
+
+**Drei Wege, keiner umgesetzt:**
+
+1. **Züge gleich verteilen** — Anzahl Dinge an die Teamzahl anpassen oder
+   überzählige Züge weglassen. Kleinster Eingriff, Regel bleibt.
+2. **Punkte je richtigem Zug** statt „Sieger bekommt alles" — Feldwert geteilt
+   durch Anzahl Züge. Dann ist die Zugverteilung egal, und eine Reihe mit
+   Fehlern zahlt noch etwas aus.
+3. **Nur eine Warnung im Editor**, wenn `Dinge − 1` nicht durch die Teamzahl
+   teilbar ist. Ändert nichts am Spiel, macht die Falle aber sichtbar.
+
+Das Host-Urteil (`jeopardyStrahlUrteil`, seit `6310e51`) entschärft das **nicht**:
+es korrigiert ein falsch bewertetes Ding, nicht die ungleiche Zahl der Züge.
 
 ## 2026-10-17 — David unzufrieden mit der Durchgeh-Seite (`tools/durchgang/`)
 
