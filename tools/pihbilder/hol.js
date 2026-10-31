@@ -27,206 +27,87 @@ const BREITE = 640;        // reicht auf 1280x720, haelt die Dateien klein
 // Englisch, weil Commons-Dateinamen und -Beschreibungen ueberwiegend englisch
 // sind; deutsche Begriffe fanden in Stichproben deutlich seltener etwas.
 const SUCHE = [
-  'pumpkin vegetable',            // 1  Speisekuerbis
-  'hokkaido pumpkin',             // 2
-  'giant pumpkin competition',    // 3
-  'pumpkin carving knife',        // 4
-  'latte paper cup coffee',       // 5
-  'syrup bottle',                 // 6
-  'pumpkin seeds',                // 7
-  'led candle',                   // 8
-  'halloween candy',              // 9
-  'gummy bears',                  // 10
-  'candy cane',                   // 11
-  'trick or treat bucket',        // 12
-  'dental hygienist cleaning',    // 13
-  'vampire teeth costume',        // 14
-  'dental technician prosthesis', // 15
-  'contact lens',                 // 16
-  'fake blood',                   // 17
-  'jerrycan canister',            // 18
-  'zombie mask',                  // 19
-  'silicone prosthetic mask',     // 20
-  'ice hockey goalie mask',       // 21
-  'claw glove costume',           // 22
-  'plague doctor mask',           // 23
-  'scythe tool',                  // 24
-  'spray can aerosol',            // 25
-  'halloween cobweb decoration',  // 26
-  'toy spider plastic',           // 27
-  'tarantula spider',             // 28
-  'terrarium glass tank',         // 29
-  'taxidermy raven crow',         // 30
-  'bat box roost',                // 31
-  'halloween skeleton decoration',// 32
-  'giant skeleton halloween yard',// 33
-  'anatomical skeleton model',    // 34
-  'human skull',                  // 35
-  'halloween tombstone prop',     // 36
-  'granite gravestone',           // 37
-  'cemetery grave row',           // 38
-  'coffin funeral',               // 39
-  'fog machine stage',            // 40
-  'fluid canister plastic',       // 41
-  'strobe light',                 // 42
-  'halloween string lights',      // 43
-  'inflatable halloween decoration', // 44
-  'motion sensor detector',       // 45
-  'loudspeaker module electronics',  // 46
-  'witch broom halloween',        // 47
-  'besom broom twig',             // 48
-  'witch costume hat',            // 49
-  'inflatable dinosaur costume',  // 50
-  'white bed sheet',              // 51
-  'vampire cape costume',         // 52
-  'dog halloween costume',        // 53
-  'cat costume pet',              // 54
-  'devil horns costume',          // 55
-  'bunny ears costume',           // 56
-  'nurse costume',                // 57
-  'corset',                       // 58
-  'handcuffs fur',                // 59
-  'condom package',               // 60
-  'advent calendar',              // 61
-  'pornhub logo',                 // 62
-  'inflatable doll',              // 63
-  'pole dancing',                 // 64
-  'wall calendar firefighters',   // 65
-  'pasta noodles dry',            // 66
-  'ouija board',                  // 67
-  'tarot cards',                  // 68
-  'fortune teller crystal ball',  // 69
-  'holy water bottle',            // 70
-  'garlic bulbs',                 // 71
-  'silver necklace chain',        // 72
-  'emf meter',                    // 73
-  'night vision device',          // 74
-  'thermal imaging camera',       // 75
-  'ghost train funfair ride',     // 76
-  'amusement park entrance',      // 77
-  'escape room',                  // 78
-  'wax museum chamber of horrors',// 79
-  'bran castle',                  // 80
-  'haunted manor house england',  // 81
-  'zombie walk',                  // 82
-  'special effects makeup artist',// 83
-  'makeup palette',               // 84
-  'wound special effects makeup', // 85
-  'blu-ray disc',                 // 86
-  'jägermeister bottle',          // 87
-  'doner kebab',                  // 88
-  'aspirin tablets blister',      // 89
-  'breakfast cafe table',         // 90
-  'hearse car',                   // 91
+  "Category:Pumpkins",                  // 1 Ein Speisekürbis, 3 kg, vom Hofladen
+  "hokkaido pumpkin",                   // 2 Ein Hokkaido-Kürbis aus dem Supermarkt
+  "giant pumpkin competition",          // 3 Ein Zuchtkürbis für den Wettbewerb, 50
+  "latte paper cup coffee",             // 4 Ein Pumpkin Spice Latte to go, groß
+  "syrup bottle",                       // 5 Ein Liter Kürbisgewürz-Sirup
+  "pumpkin seeds",                      // 6 Ein Kilo Kürbiskerne, geschält
+  "Category:Halloween candy",           // 7 Ein Großpack Halloween-Süßigkeiten, 1 
+  "gummy bears",                        // 8 Ein Eimer Gummibärchen, 1,8 kg
+  "candy cane",                         // 9 Eine einzelne Zuckerstange
+  "halloween pumpkin candy bucket",     // 10 Ein Kürbis-Eimer zum Süßigkeiten-Samme
+  "dental hygienist cleaning",          // 11 Eine professionelle Zahnreinigung
+  "dental technician prosthesis",       // 12 Ein Satz maßgefertigte Vampirzähne vom
+  "contact lens",                       // 13 Ein Paar Zombie-Kontaktlinsen ohne Stä
+  "fake blood",                         // 14 Ein Fläschchen Kunstblut, 100 ml
+  "plastic jerrycan container",         // 15 Ein Kanister Kunstblut, 5 Liter
+  "Category:Latex masks",               // 16 Eine Silikonmaske in Hollywood-Qualitä
+  "ice hockey goalie mask",             // 17 Eine weiße Hockeymaske
+  "plague doctor mask",                 // 18 Eine Pest-Doktor-Maske aus Leder
+  "scythe mowing grass",                // 19 Eine echte Sense vom Baumarkt
+  "spray can aerosol",                  // 20 Ein Spinnennetz-Spray, 150 ml
+  "halloween cobweb decoration",        // 21 Zehn Meter Deko-Spinnennetz
+  "Category:Toy spiders",               // 22 Eine Plastikspinne, handtellergroß
+  "tarantula spider",                   // 23 Eine echte Vogelspinne aus der Zoohand
+  "Category:Terrariums",                // 24 Ein Terrarium für die Vogelspinne
+  "bat box roost",                      // 25 Ein Fledermauskasten für den Garten
+  "human skull specimen museum",        // 26 Ein echter menschlicher Schädel als Sa
+  "granite gravestone",                 // 27 Ein Grabstein aus Granit, mit Gravur
+  "Category:Graves in Germany",         // 28 Eine Grabstelle, 25 Jahre Pacht in ein
+  "Category:Coffins",                   // 29 Eine einfache Bestattung mit Sarg
+  "fog machine stage",                  // 30 Eine Nebelmaschine, 700 Watt
+  "strobe light",                       // 31 Ein Stroboskop-Licht
+  "inflatable ghost halloween",         // 32 Ein aufblasbarer Geist für den Vorgart
+  "motion sensor detector",             // 33 Ein Bewegungsmelder mit Schrei-Sound
+  "audio amplifier module board",       // 34 Ein Soundmodul mit Kettenrasseln
+  "Category:Brooms",                    // 35 Eine Hexenbesen-Deko
+  "besom broom twig",                   // 36 Ein echter Reisigbesen vom Baumarkt
+  "witch costume hat",                  // 37 Ein Hexenkostüm, dreiteilig
+  "Category:Inflatable costumes",       // 38 Ein aufblasbares Dinosaurier-Ganzkörpe
+  "white bed sheet",                    // 39 Ein weißes Bettlaken, 180 × 290 cm
+  "dog halloween costume",              // 40 Ein Hundekostüm als Kürbis, Größe M
+  "Category:Devil costumes",            // 41 Ein Paar Teufelshörner mit Glitzer
+  "bunny ears costume",                 // 42 Ein Paar Hasenohren in Playboy-Optik
+  "nurse costume",                      // 43 Ein Kostüm „sexy Krankenschwester“, dr
+  "corset",                             // 44 Ein Vampir-Korsett mit Schnürung
+  "condom package",                     // 45 Eine Großpackung Kondome, 144 Stück
+  "advent calendar",                    // 46 Ein Erotik-Adventskalender
+  "Category:Pornhub",                   // 47 Ein Jahr Pornhub Premium
+  "inflatable doll",                    // 48 Eine aufblasbare Partnerpuppe, Scherza
+  "pole dancing",                       // 49 Ein Striptease-Kurs für Paare, ein Abe
+  "pasta noodles dry",                  // 50 Ein Nudel-Scherzartikel in anstößiger 
+  "ouija board",                        // 51 Ein Ouija-Brett aus Holz
+  "tarot cards",                        // 52 Ein Tarotkartendeck
+  "holy water bottle",                  // 53 Eine Flasche Weihwasser aus Lourdes
+  "garlic bulbs",                       // 54 Ein Kilo Knoblauch
+  "Category:Silver necklaces",          // 55 Ein Silberkettchen, 925er, 45 cm
+  "night vision device",                // 56 Ein Nachtsichtgerät, Einsteigerklasse
+  "thermal imaging camera",             // 57 Eine Wärmebildkamera fürs Handy
+  "ghost train funfair ride",           // 58 Eine Fahrt in der Geisterbahn auf dem 
+  "amusement park entrance",            // 59 Ein Tagesticket im Movie Park am Hallo
+  "Category:Wax museums",               // 60 Ein Ticket fürs Gruselkabinett
+  "Category:Bran Castle",               // 61 Eine Führung durch Schloss Bran in Rum
+  "zombie walk",                        // 62 Eine Startgebühr für einen Zombie-Lauf
+  "special effects makeup artist",      // 63 Ein Horror-Schminkkurs, ein Tag
+  "makeup palette",                     // 64 Eine Horror-Make-up-Palette, 12 Farben
+  "blu-ray disc",                       // 65 Eine Blu-ray-Box mit zehn Horror-Klass
+  "jägermeister bottle",                // 66 Ein Liter Jägermeister
+  "doner kebab",                        // 67 Ein Döner um drei Uhr nachts
+  "aspirin tablets blister",            // 68 Eine Packung Kopfschmerztabletten, 20 
+  "breakfast cafe table",               // 69 Ein Kater-Frühstück im Café, zwei Pers
+  "hearse car",                         // 70 Ein gebrauchter Leichenwagen mit 180 0
 ];
 
-// Zweiter Versuch fuer Artikel, deren erster Treffer sichtbar nicht passte
-// (Nr. aus quellen.json). Die Titel der ersten Runde standen in der Konsole;
-// daneben lagen u. a. ein Brief von 1850 als "Krallenhandschuh", ein
-// Wehrmachtskanister als Kunstblut-Kanister und zwei Aufnahmen, die in einem
-// Partyspiel nichts zu suchen haben (Gedenkstaette, Sklavenfesseln).
-const NACHSUCHE = {
-  4:  'pumpkin carving kit',
-  8:  'electric tea light candle',
-  9:  'halloween candy bowl',
-  12: 'halloween pumpkin candy bucket',
-  18: 'plastic jerrycan container',
-  22: 'costume claw gloves',
-  24: 'scythe mowing grass',
-  29: 'glass terrarium enclosure',
-  30: 'stuffed crow taxidermy',
-  35: 'human skull specimen museum',
-  38: 'cemetery headstones churchyard',
-  39: 'wooden coffin',
-  44: 'inflatable ghost halloween',
-  46: 'audio amplifier module board',
-  50: 'inflatable t-rex costume',
-  52: 'dracula costume cape',
-  55: 'devil horns headband',
-  59: 'novelty handcuffs pink',
-  73: 'gaussmeter electromagnetic field meter',
-  79: 'wax museum figures',
-  85: 'prosthetic makeup wound',
-  // Erste Runde ohne Treffer:
-  20: 'silicone mask head',
-  33: 'halloween skeleton garden tall',
-  36: 'halloween graveyard decoration tombstone',
-  41: 'plastic bottle five litre',
-  65: 'firefighter charity calendar',
-};
+// Leer seit `%s`: das Set enthaelt nur noch die 70 Artikel, zu denen es ein
+// Bild gibt - die 21 ohne sind auf Davids Ansage raus. Wer neue Artikel
+// aufnimmt, traegt hier wieder ein; was frueher drinstand (Nachsuche,
+// Kategorien, aussortierte Treffer samt Grund) steht in der HANDOFF.
+const NACHSUCHE = {};
 
-// Nach Sicht aussortiert (`--aufraeumen`). Commons findet zu Konsumartikeln
-// oft irgendetwas, das das Suchwort im Text hat: ein Brief von 1841, ein
-// Buchscan von 1910, Bela Lugosis Grabstein als "Vampirumhang". Ein falsches
-// Bild auf der Leinwand ist schlechter als keins - die Nummern hier fliegen
-// samt Datei raus, der Artikel bleibt ohne Bild.
-const WEG = {
-  // Runde 1+2 (Volltextsuche), Runde 3 (Kategorie) brachte nichts Besseres.
-  // Jede Nummer einzeln angesehen; ein falsches Bild auf der Leinwand ist
-  // schlechter als keins, der Artikel bleibt dann ohne.
-  4:  'Kuerbisse auf Regalen, kein Schnitzset',
-  8:  'schwedischer Lichterbogen, keine LED-Kerze fuer den Kuerbis',
-  14: 'Strassenszene mit Dracula-Kostuem, kein Gebiss',
-  19: 'geschminktes Zombie-Paar, keine Maske',
-  22: 'Brief von 1841 - die Volltextsuche traf den Text, nicht das Bild',
-  30: 'Schulklasse 1947, der ausgestopfte Vogel ist Beiwerk',
-  32: 'Schaufenster mit Halloween-Figuren, kein 1,70-m-Skelett',
-  33: 'dunkle Gruselkabinett-Aufnahme, kein Gartenskelett',
-  34: 'anatomische Wachsfigur, kein Lehrskelett',
-  41: 'Abwurfbox aus der Praxis, kein Nebelfluid',
-  43: 'Landschaft mit Vogelscheuche, keine Lichterkette',
-  52: 'Grabstein von Bela Lugosi, kein Umhang',
-  54: 'Hunde mit Kuerbissen, keine Katze',
-  59: 'Polizei-Handschellen auf einer Schutzweste, kein Scherzartikel',
-  65: 'technische Zeichnung, kein Kalender',
-  69: 'Zeitungsanzeige mit echter Telefonnummer',
-  73: 'Stich eines Acetometers, kein EMF-Messgeraet',
-  78: 'Schaubild zu Escape-Room-Anbietern, kein Raum',
-  81: 'altes Schwarzweissfoto eines Hauses, kein Hotelbezug',
-  85: 'Studio-Aufnahme ohne erkennbare Wunde',
-};
+const WEG = {};
 
-// Dritte Runde (`--kategorien`): statt Volltextsuche eine Commons-Kategorie.
-// Grund: die Volltextsuche rankt nach Text, nicht nach Motiv - deshalb kamen
-// Briefe und Buchscans. In einer Kategorie liegt per Definition das Motiv.
-// Openverse (Flickr-CC) waere die bessere Quelle fuer Konsumartikel, die API
-// antwortete am 2026-10-31 aber mit 504 bzw. gar nicht.
-const KATEGORIE = {
-  1:  'Pumpkins',
-  4:  'Pumpkin carving',
-  8:  'Electric candles',
-  9:  'Halloween candy',
-  14: 'Vampire costumes',
-  19: 'Zombie costumes',
-  20: 'Latex masks',
-  27: 'Toy spiders',
-  29: 'Terrariums',
-  30: 'Taxidermied birds',
-  32: 'Halloween decorations',
-  33: 'Skeleton decorations',
-  34: 'Anatomical models of skeletons',
-  36: 'Tombstone props',
-  38: 'Graves in Germany',
-  39: 'Coffins',
-  41: 'Plastic containers',
-  43: 'Fairy lights',
-  47: 'Brooms',
-  50: 'Inflatable costumes',
-  52: 'Dracula costumes',
-  54: 'Cats in costumes',
-  55: 'Devil costumes',
-  59: 'Handcuffs',
-  62: 'Pornhub',
-  65: 'Calendars',
-  69: 'Fortune-telling',
-  72: 'Silver necklaces',
-  73: 'Measuring instruments',
-  78: 'Escape rooms',
-  79: 'Wax museums',
-  80: 'Bran Castle',
-  81: 'Haunted houses',
-  85: 'Special effects makeup',
-};
+const KATEGORIE = {};
 
 /** @param {string} url @param {boolean} binaer */
 function hol(url, binaer){
