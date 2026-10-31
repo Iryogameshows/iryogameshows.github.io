@@ -94,6 +94,104 @@ ZU VIEL. lustig gerne mehr".
 
 ---
 
+## 2026-10-31 (noch später) — `b63815d` Zahlenstrahl: getippte Werte wurden zu Kommazahlen
+
+**David:** „WAS ZUR HÖLLE HEIßT DIE WERTE SIND IN DEZIMALZAHLEN BIST DU DUMM"
+
+Zu Recht. Zwei verschiedene Stellen, die beide dasselbe Missverständnis erzeugen.
+
+### Der Fehler
+
+**Eins — das Einlesen.** `jeopardyEditStrahlWert` machte
+`String(val).replace(',', '.')` und gab das an `Number()`. Reproduziert:
+
+| eingetippt | gespeichert | angezeigt |
+|---|---|---|
+| `1945` | 1945 | 1.945 |
+| `1.945` | **1,945** | **1,945** |
+| `2.500` | **2,5** | **2,5** |
+| `1.299` | **1,299** | **1,299** |
+| `1.234.567` | **(leer)** | — |
+
+Wer eine Jahreszahl oder einen Preis deutsch mit Tausenderpunkt tippt, bekam eine
+Kommazahl — und **die Reihe sortierte nach ihr**. Ein Zahlenstrahl aus Preisen
+`1.299 / 2.500 / 890` lag damit in völlig falscher Reihenfolge, ohne dass irgendwo
+eine Fehlermeldung kam.
+
+**Zwei — die Anzeige.** `jeopardyStrahlWert` setzte `toLocaleString('de-DE')` auf
+**jede** Zahl, also auch auf Jahreszahlen: 1945 stand als `1.945` auf der Leinwand.
+Das ist als Tausenderpunkt formal richtig, liest sich aber für viele als
+Dezimalzeichen — und für eine Jahreszahl ist es auch typografisch falsch.
+
+### Gemacht
+
+- **`parseZahlDe(s)` neu in `js/core.js`.** Erkennt an der Gruppierung, nicht an der
+  Herkunft: `1.299,90` → 1299.9, `1,299.90` → 1299.9, `12,5` → 12.5, `12.5` → 12.5,
+  `1.945` → 1945, `1.299 €` → 1299. Ungültiges → `null`.
+- **`jeopardyEditStrahlWert`** benutzt sie statt der halben Eigenbau-Fassung.
+- **`pihParsePrice`** in `js/pih.js` reicht nur noch durch. Der Name bleibt — sieben
+  Aufrufstellen, und „Preis" sagt dort mehr als „Zahl".
+- **`strahlZahl(w)`** neu in `js/jeopardy.js`: ganze Zahlen unter 10000 ohne
+  Tausenderpunkt (1945, 2500), ab fünf Stellen wie bisher (12.345, 1.234.567),
+  Kommazahlen behalten ihr Komma. Dieselbe Regel in `buzzer/index.html` ein zweites
+  Mal, weil die Handy-Seite `js/` nicht lädt.
+
+### Warum so
+
+**Die Regeln standen schon zweimal im Haus** — `pihParsePrice` (`js/pih.js`) und
+`parseEstimate` (`buzzer/index.html`). Der Zahlenstrahl hatte eine dritte, kaputte
+Fassung. Jetzt eine Quelle für die Host-Seite (BAUPLAN 3.9). Die Handy-Fassung bleibt
+getrennt, weil `buzzer/` `js/` nicht lädt; das ist dieselbe bewusste Doppelung wie
+vorher.
+
+**`1.945` wird als 1945 gelesen, nicht als 1,945.** Rechnerisch ist beides möglich.
+Bei Preisen, Jahreszahlen und Einwohnerzahlen — wofür der Zahlenstrahl da ist — ist es
+nie 1,945. Die Dreiergruppe entscheidet: `1.945` hat eine, `12.5` nicht, also ist das
+zweite eine Kommazahl.
+
+**Verworfen: schon gespeicherte Werte automatisch reparieren.** Aus 2,5 wieder 2500 zu
+machen wäre geraten — 2,5 kg kann genau so gemeint sein. **Folge: Werte, die vor
+diesem Commit falsch eingelesen wurden, bleiben falsch und müssen neu eingetippt
+werden.**
+
+### Geprüft
+
+- **`parseZahlDe` gegen 14 Fälle**, darunter alle fünf aus der Tabelle oben plus
+  `390.000,5`, `-5,5`, `0`, `abc`, leer — **alle richtig**.
+- **`strahlZahl`** gegen 12 Werte: 1945→`1945`, 2500→`2500`, 9999→`9999`,
+  10000→`10.000`, 12345→`12.345`, 1234567→`1.234.567`, 12.5→`12,5`, 1299.9→`1.299,9`.
+- `node check.js` und `--types`: **ohne Meldung**.
+- `node ablauf.js`: **56 OK, 0 FEHL**. Darunter das PIH-Gebot (läuft jetzt durch
+  dieselbe Funktion) und — diesmal zufällig im Positivfall — die Punktevergabe:
+  `[0,0]` → `[100,0]`. Damit ist der offene Punkt aus dem Eintrag darüber erledigt.
+- `node shots.js --shows jeop-strahl-bild,gm-strahl`: **keine Befunde**.
+- **Der volle `shots.js`-Lauf lief zum Commit noch** (Bild 26 von 620). `js/core.js`
+  ist angefasst, also ist er fällig; die berührten Zustände sind durch den Lauf
+  darüber abgedeckt. Ergebnis wird nachgetragen, bei einem Befund folgt ein eigener
+  Commit.
+
+### Offen
+
+- **Bereits eingetippte Werte sind nicht repariert** (siehe oben).
+- **`parseEstimate` auf dem Handy und `wwds.js:462`** wurden nicht angefasst.
+  `wwds.js` macht noch `replace(',', '.')` ohne Gruppenerkennung — dort steht derselbe
+  Fehler, aber für Schätzfragen und nicht gefragt. **Nicht geprüft, ob er dort
+  wehtut.**
+- **Nicht geprüft: echte Fotos**, `node geraete.js`, `shots.js --vergleich`.
+- **Live-Seite nicht abgerufen** — Proxy lehnt `iryo.party` mit `403` ab.
+
+### Fallstricke
+
+- **`Number("1.945")` ist 1.945, nicht 1945.** Das ist kein Sonderfall, sondern der
+  Normalfall für jeden, der deutsch tippt. Eine Zahl aus einem Eingabefeld geht nie
+  direkt in `Number()`.
+- **Der Fehler war seit dem ersten Zahlenstrahl drin** (`f8799a5`, 2026-10-29) und ist
+  mir bei zwei Arbeitsschritten an genau dieser Funktion nicht aufgefallen — ich habe
+  die Zeile beide Male im Diff gesehen und als Kontext gelesen. Was im Kontext einer
+  Änderung steht, wird nicht geprüft; das muss man sich vornehmen.
+
+---
+
 ## 2026-10-31 (später) — `efbf54b` Zahlenstrahl: 100 Punkte je richtig eingeordnetem Ding
 
 **David:** „Dann soll es pro richtig eingeordnetem Item 100 Punkte geben."
