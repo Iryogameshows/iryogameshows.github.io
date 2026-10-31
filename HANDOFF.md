@@ -12,6 +12,112 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-31 (später) — `efbf54b` Zahlenstrahl: 100 Punkte je richtig eingeordnetem Ding
+
+**David:** „Dann soll es pro richtig eingeordnetem Item 100 Punkte geben."
+
+Das ersetzt die bisherige Wertung vollständig und erledigt damit den TODO-Eintrag
+von heute früh (Punktevergabe benachteiligt Teams strukturell) — er ist aus der
+TODO-Liste raus, die Begründung steht hier.
+
+### Gemacht
+
+- **`STRAHL_PUNKTE = 100`** in `js/jeopardy.js`, neben `STRAHL_BILD_BUDGET`.
+- **`jeopardyStrahlPlatz`**: richtig eingeordnet → `scores[team] += STRAHL_PUNKTE`,
+  **sofort**, dazu `renderJeopardyScores()`. Falsch eingeordnet → nichts, kein Abzug.
+- **`jeopardyStrahlUrteil`** (Host-Korrektur): die Punkte gehen mit, in beide Richtungen.
+- **`jeopardyStrahlSieger` ist weg.** Dafür `jeopardyStrahlPunkte(team)` und
+  `jeopardyStrahlStandText()`.
+- **Leinwand**: eigene Zeile `.jeopardy-strahl-punkte` unter „wer ist dran", in
+  Bebas und Gold — während der Runde wie am Ende.
+- **GM-Panel** (`js/feud.js`): `strahlKonto` je Team, eigene Hinweiszeile „Bisher: …
+  je richtigem Ding +100, sofort gutgeschrieben". Am Ende steht dort ausdrücklich
+  **„Schon gutgeschrieben, die Plus-Knöpfe unten sind hier nicht nötig."**
+- **`tools/shots/ablauf.js`**: zwei neue Prüfpunkte (Punkte beim Zug, Punkte bei der
+  Host-Korrektur) und der Bild-Prüfpunkt von heute früh gegen die Mischung abgesichert.
+
+### Warum so
+
+**Fester Betrag, nicht der Feldwert.** Bei „Feldwert je Ding" wären auf einem
+500er-Feld mit acht Dingen 3500 Punkte zu holen — mehr als in der halben Runde
+sonst. Ein Zahlenstrahl ist über die **Zahl der Dinge** gewichtet, nicht über die
+Board-Zeile. **Folge, die man wissen muss:** der Feldwert steht beim Zahlenstrahl
+weiter auf dem Board, zählt aber nicht mehr. Ein 100er- und ein 500er-Feld mit je
+fünf Dingen bringen dasselbe.
+
+**Verworfen: Feldwert geteilt durch Anzahl Züge** (Weg 2 aus dem TODO-Eintrag von
+heute früh). Das hätte den Feldwert erhalten, gibt aber krumme Beträge (300 ÷ 4 = 75)
+und ist am Tisch nicht vorzurechnen. David hat eine Zahl genannt, also eine Zahl.
+
+**Sofort statt am Ende.** Der Punktestand bewegt sich mit jedem Zug, und das Publikum
+sieht wofür. Vorher wurde erst am Schluss gewertet, und nur eine fehlerfreie Reihe
+zahlte überhaupt — bei vier bis sieben Zügen über mehrere Teams endete das Feld meist
+mit 0 für alle.
+
+**Damit ist auch die strukturelle Ungleichheit weg.** Die Züge sind nicht gleich
+verteilt: bei 5 Dingen und 3 Teams macht Team 1 zwei Züge, die anderen je einen. Unter
+„die meisten richtigen Züge gewinnen" konnte deshalb **nur Team 1** gewinnen. Je
+richtigem Ding ein fester Betrag hat dieses Problem nicht — wer mehr Züge hat, kann
+mehr holen, aber niemand ist vom Gewinnen ausgeschlossen. **Die ungleiche Zugzahl
+selbst bleibt**: bei 5 Dingen und 3 Teams hat Team 1 zwei Chancen, die anderen je eine.
+Das ist jetzt ein Nachteil, kein Ausschluss. Ob die Zugzahl angeglichen werden soll,
+ist nicht entschieden und nicht gefragt worden.
+
+**Kein Abzug bei falsch.** David hat nur den Gewinn genannt. Ein Abzug wäre eine zweite
+Regel, die er nicht gefordert hat; der Minus-Knopf im Panel bleibt für den Host da.
+
+### Geprüft
+
+- `node check.js`: **alles in Ordnung**. `node check.js --types`: **keine Meldung**.
+- `node ablauf.js`: **56 OK, 0 FEHL** (vorher 54). Die neuen Punkte:
+  - „richtig eingeordnet gibt sofort Punkte, nur dem Team am Zug"
+  - „die Punkte gehen mit dem Host-Urteil mit": `[0,0]` → Urteil auf richtig →
+    `[100,0]` → zurück auf falsch → `[0,0]`.
+- `node shots.js --shows jeop-strahl,jeop-strahl-bild,gm-strahl`: **60 Bilder
+  (3 Zustände × 20 Richtungen), keine Befunde** — das sind alle Flächen, die diese
+  Änderung anfasst.
+- **Der volle `shots.js`-Lauf lief zum Commit-Zeitpunkt noch** (bei Bild 42 von 620).
+  Er ist Regressionsprüfung über die übrigen Shows; die geänderten Flächen sind durch
+  den Lauf darüber abgedeckt. Ergebnis wird nachgereicht, bei einem Befund folgt ein
+  eigener Commit. Grund für das Vorziehen: der Stop-Hook der Sitzung verlangt, dass
+  nichts Ungesichertes im Arbeitsverzeichnis stehen bleibt.
+- Kontaktbögen angesehen. Dabei **zwei Darstellungsfehler gefunden und behoben**, die
+  kein Prüfer meldet: auf der Leinwand stand der Teamname zweimal in einer Zeile
+  („Team Rot ist dran · Team Rot +100"), und im Panel brach ein `<br>` die
+  Hinweiszeile mitten im Satz um, weil die Zeile mit der Briefmarke ohnehin schon
+  umbricht.
+
+### Offen
+
+- **Der Prüfpunkt „richtig eingeordnet gibt sofort Punkte" lief in diesem Durchlauf
+  im Negativfall**: das Handy hatte falsch gelegt, geprüft wurde also „kein Punkt bei
+  falsch". Die Vergabe von +100 ist durch den Urteils-Prüfpunkt belegt, nicht durch
+  diesen. Der Prüfpunkt rechnet beide Fälle korrekt, welcher läuft, entscheidet die
+  Mischung.
+- **Nicht entschieden: die ungleiche Zahl der Züge** (siehe oben). Kein Ausschluss
+  mehr, aber ein Nachteil.
+- **Nicht geprüft: echte Fotos**, `node geraete.js`, `shots.js --vergleich` — wie im
+  Eintrag darunter, aus denselben Gründen.
+- **Skills nicht nachgeladen** (`frontend-design`, `caveman`, `using-agent-skills`):
+  `npx skills add` wird in dieser Umgebung als „Code von außen" abgewiesen.
+- **Live-Seite nicht abgerufen**: die Netzwerkregel der Umgebung lehnt `iryo.party`
+  und `iryogameshows.github.io` ab (`CONNECT tunnel failed, response 403`). Der
+  Deploy-Nachweis ist der Action-Lauf, nicht ein `curl` gegen die ausgelieferte Datei.
+
+### Fallstricke
+
+- **Zwei Zeilen statt einer auf der Leinwand.** „Wer ist dran" und „wer hat wieviel"
+  in dieselbe Zeile zu legen, setzt den Teamnamen zweimal hintereinander. Auf drei
+  Metern liest sich das wie ein Fehler.
+- **Kein `<br>` in eine Hinweiszeile, die eine Briefmarke trägt.** Die Zeile bricht
+  selbst schon um; „Bisher:" landete dadurch mitten im Satz davor.
+- **Der Bild-Prüfpunkt von heute früh war unzuverlässig.** Er setzte voraus, dass das
+  erste Ding eines der beiden mit Bild ist — `jeopardyStrahlStart` mischt aber. Einmal
+  grün, einmal rot. Jetzt wird gegen den Stand des Hosts verglichen statt gegen eine
+  feste Erwartung.
+
+---
+
 ## 2026-10-31 — `6310e51` Jeopardy-Zahlenstrahl: Bilder zum Zuordnen, Urteil beim Host
 
 **David:** „Die Zahlenstrahl funktion soll auch Bilder unterstützen. Dass man die Bilder
@@ -1837,49 +1943,6 @@ also nicht.
 
 Ganz unten, weil es keine Einträge zu Änderungen sind, sondern Dinge, die noch
 geklärt werden müssen. Neueste oben.
-
-## 2026-10-31 — Zahlenstrahl: die Punktevergabe benachteiligt Teams strukturell
-
-Beim Bilder-Umbau (`6310e51`) aufgefallen, **nicht behoben** — David hat auf die
-Rückfrage „soll ich das mitfixen?" keine Vorgabe gemacht, und eine Spielregel
-ändert man nicht nebenbei.
-
-**Der Befund.** Die Reihe wächst um `Anzahl Dinge − 1` Züge: das erste Ding
-liegt von allein (`jeopardyStrahlStart`). Bei 5 Dingen sind das 4 Züge. Sie
-gehen reihum, beginnend bei Team 1 (`jeopardyStrahlWeiter`).
-
-Bei **3 Teams** macht Team 1 zwei Züge, Team 2 und 3 je einen. Sieger ist, wer
-die **meisten richtigen** Züge hat (`jeopardyStrahlSieger`). Team 1 kann
-höchstens 2 richtige haben, Team 2 und 3 höchstens 1. Damit gibt es nur zwei
-Ausgänge:
-
-- Team 1 legt beide Züge richtig → 2 gegen höchstens 1, Team 1 gewinnt.
-- Team 1 legt einmal falsch → `fehler > 0` → **niemand** bekommt Punkte.
-
-Einen dritten Fall gibt es nicht. **Team 2 und 3 können nicht gewinnen**, egal
-wie gut sie spielen.
-
-Fair ist es nur, wenn `Anzahl Dinge − 1` ohne Rest durch die Teamzahl teilbar
-ist: 5 Dinge bei 2 Teams (4 Züge, 2:2), 7 bei 3 Teams (6 Züge, 2:2:2), 5 bei
-4 Teams (4 Züge, 1:1:1:1). Der Editor lässt 3–8 Dinge zu und warnt nicht.
-
-**Dazu kommt „alles oder nichts":** ein einziger Fehler irgendeines Teams setzt
-die Wertung der ganzen Reihe auf null. Das ist eine bewusste Festlegung von
-David (2026-10-29, Kommentar in `js/jeopardy.js`) — aber bei 4 bis 7 Zügen über
-mehrere Teams endet das Feld in der Praxis oft mit 0 Punkten für alle.
-
-**Drei Wege, keiner umgesetzt:**
-
-1. **Züge gleich verteilen** — Anzahl Dinge an die Teamzahl anpassen oder
-   überzählige Züge weglassen. Kleinster Eingriff, Regel bleibt.
-2. **Punkte je richtigem Zug** statt „Sieger bekommt alles" — Feldwert geteilt
-   durch Anzahl Züge. Dann ist die Zugverteilung egal, und eine Reihe mit
-   Fehlern zahlt noch etwas aus.
-3. **Nur eine Warnung im Editor**, wenn `Dinge − 1` nicht durch die Teamzahl
-   teilbar ist. Ändert nichts am Spiel, macht die Falle aber sichtbar.
-
-Das Host-Urteil (`jeopardyStrahlUrteil`, seit `6310e51`) entschärft das **nicht**:
-es korrigiert ein falsch bewertetes Ding, nicht die ungleiche Zahl der Züge.
 
 ## 2026-10-17 — David unzufrieden mit der Durchgeh-Seite (`tools/durchgang/`)
 
