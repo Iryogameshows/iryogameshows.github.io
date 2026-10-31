@@ -12,6 +12,56 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-01 — `db7155f` Preis ist heiß: Knopf „Alle löschen" im Artikel-Editor
+
+**David:** „bau bei dpih SCHNELL einen: alle artikel löschen button".
+
+### Gemacht
+
+- **`pihDeleteAllItems()`** in `js/pih.js`: leert `pihData.items`, setzt
+  `pihEditOpen` auf -1, schließt das Mehrfach-Feld, löscht die Import-Zeile,
+  rendert neu und speichert.
+- **Knopf** in der Editor-Leiste neben „Ordner einlesen", `btn btn-danger
+  btn-xs`, erscheint nur bei `n > 0`.
+- **Zwei Rückfragen**: die erste nennt die Zahl und verweist auf „JSON
+  exportieren", die zweite kommt nur, wenn Artikel Bilder oder Videos haben,
+  und nennt deren Zahl.
+
+### Warum so
+
+- **Zweite Rückfrage nur bei Medien**: Bilder sind die Arbeit, die beim
+  Versehen verloren geht — ein Satz aus Namen und Preisen ist in Minuten
+  wieder eingetippt, 70 eingebettete Bilder nicht. Verworfen: immer zweimal
+  fragen (nervt beim Austauschen eines reinen Textsatzes) und ein
+  Rückgängig-Puffer (dafür müsste der alte Satz irgendwo liegen — genau das
+  macht `exportPih()` schon, und zuverlässiger).
+- **Kein neues CSS**: `btn-danger` und `btn-xs` gibt es, der Knopf setzt sich
+  dadurch von „Mehrere einfügen" und „Ordner einlesen" ab.
+
+### Geprüft
+
+- `node check.js`: fehlerfrei (der Prüfer deckt genau diesen Fall ab — der
+  Name im `onclick` muss global existieren).
+- `node check.js --types`: ohne Meldung.
+- **Nicht geprüft**: im Browser durchgeklickt wurde nichts. `tools/shots`
+  nicht gelaufen — kein CSS geändert, und der Editor ist eine Host-Seite, die
+  nicht auf den Beamer kommt.
+
+### Offen
+
+- Klick im Browser steht aus (Knopf sichtbar? Rückfragen in der richtigen
+  Reihenfolge?).
+- Der Knopf löscht nur die Artikel. Einstellungen (`pihSettings`: Runden,
+  Zeit, Regel) bleiben stehen — gewollt.
+
+### Fallstricke
+
+- `pihSave()` schreibt sofort in den `localStorage`. Nach dem Klick ist der
+  alte Satz auch nach einem Neuladen weg; die einzige Sicherung ist ein
+  vorheriger Export.
+
+---
+
 ## 2026-11-01 (nachts) — `fd2189c` Preis ist heiß: Set auf die 70 Artikel mit Bild gekürzt
 
 **David:** auf die Frage, ob die 21 Artikel ohne Bild im Set bleiben sollen:
