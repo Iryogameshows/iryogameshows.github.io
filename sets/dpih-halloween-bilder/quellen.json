@@ -1,0 +1,825 @@
+{
+  "geholt": "2026-10-31",
+  "breite": 640,
+  "bilder": [
+    {
+      "nr": 2,
+      "artikel": "Ein Hokkaido-Kürbis aus dem Supermarkt",
+      "datei": "02_Ein Hokkaido-Kürbis aus dem Supermarkt_2,99.jpg",
+      "bytes": 94850,
+      "begriff": "hokkaido pumpkin",
+      "commons": "File:Potimarron01.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Potimarron01.jpg",
+      "autor": "The original uploader was Spedona at French Wikipedia.",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 3,
+      "artikel": "Ein Zuchtkürbis für den Wettbewerb, 500 kg",
+      "datei": "03_Ein Zuchtkürbis für den Wettbewerb, 500 kg_450,00.jpg",
+      "bytes": 183575,
+      "begriff": "giant pumpkin competition",
+      "commons": "File:Tanunda Show 2007 giant pumpkins.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:Tanunda_Show_2007_giant_pumpkins.JPG",
+      "autor": "Fairv8",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 5,
+      "artikel": "Ein Pumpkin Spice Latte to go, groß",
+      "datei": "05_Ein Pumpkin Spice Latte to go, groß_5,90.jpg",
+      "bytes": 169836,
+      "begriff": "latte paper cup coffee",
+      "commons": "File:Whole Latte Love.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Whole_Latte_Love.jpg",
+      "autor": "Biskuit",
+      "lizenz": "CC BY-SA 2.0"
+    },
+    {
+      "nr": 6,
+      "artikel": "Ein Liter Kürbisgewürz-Sirup",
+      "datei": "06_Ein Liter Kürbisgewürz-Sirup_12,90.jpg",
+      "bytes": 136901,
+      "begriff": "syrup bottle",
+      "commons": "File:Syrup grades large.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:Syrup_grades_large.JPG",
+      "autor": "Dvortygirl",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 7,
+      "artikel": "Ein Kilo Kürbiskerne, geschält",
+      "datei": "07_Ein Kilo Kürbiskerne, geschält_9,80.jpg",
+      "bytes": 141089,
+      "begriff": "pumpkin seeds",
+      "commons": "File:Pumpkin Seeds macro 1.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Pumpkin_Seeds_macro_1.jpg",
+      "autor": "Daniel Schwen",
+      "lizenz": "CC BY 3.0"
+    },
+    {
+      "nr": 10,
+      "artikel": "Ein Eimer Gummibärchen, 1,8 kg",
+      "datei": "10_Ein Eimer Gummibärchen, 1,8 kg_14,99.jpg",
+      "bytes": 119491,
+      "begriff": "gummy bears",
+      "commons": "File:Gummy-bear 2006-06-02.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Gummy-bear_2006-06-02.jpg",
+      "autor": "Daniel Tibi (Dti)",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 11,
+      "artikel": "Eine einzelne Zuckerstange",
+      "datei": "11_Eine einzelne Zuckerstange_0,59.jpg",
+      "bytes": 355800,
+      "begriff": "candy cane",
+      "commons": "File:Peppermint candy cane 01.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Peppermint_candy_cane_01.jpg",
+      "autor": "Mikereichold",
+      "lizenz": "CC BY 3.0"
+    },
+    {
+      "nr": 12,
+      "artikel": "Ein Kürbis-Eimer zum Süßigkeiten-Sammeln",
+      "datei": "12_Ein Kürbis-Eimer zum Süßigkeiten-Sammeln_3,99.jpg",
+      "bytes": 66555,
+      "begriff": "halloween pumpkin candy bucket",
+      "commons": "File:Chocolate Candies in Pumpkin Pail (5076897960).jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Chocolate_Candies_in_Pumpkin_Pail_(5076897960).jpg",
+      "autor": "TheCulinaryGeek from Chicago, USA",
+      "lizenz": "CC BY 2.0"
+    },
+    {
+      "nr": 13,
+      "artikel": "Eine professionelle Zahnreinigung",
+      "datei": "13_Eine professionelle Zahnreinigung_110,00.jpg",
+      "bytes": 254898,
+      "begriff": "dental hygienist cleaning",
+      "commons": "File:US Navy 050427-N-9693B-004 Dental Hygienist Liza Siwa conducts a routine cleaning.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:US_Navy_050427-N-9693B-004_Dental_Hygienist_Liza_Siwa_conducts_a_routine_cleaning.jpg",
+      "autor": "U.S. Navy photo",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 15,
+      "artikel": "Ein Satz maßgefertigte Vampirzähne vom Zahntechniker",
+      "datei": "15_Ein Satz maßgefertigte Vampirzähne vom Zahntechniker_350,00.jpg",
+      "bytes": 101111,
+      "begriff": "dental technician prosthesis",
+      "commons": "File:U.S. Air Force Tech. Sgt. Joshuwa Steel, a dental technician with the 628th Medical Group, adds enamel porcelain to a mold while making a crown for a patient at the dental lab at Joint Base Charleston, S.C 110922-F-AV409-036.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:U.S._Air_Force_Tech._Sgt._Joshuwa_Steel,_a_dental_technician_with_the_628th_Medical_Group,_adds_enamel_porcelain_to_a_mold_while_making_a_crown_for_a_patient_at_the_dental_lab_at_Joint_Base_Charleston,_S.C_110922-F-AV409-036.jpg",
+      "autor": "A1C Ashlee Galloway",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 16,
+      "artikel": "Ein Paar Zombie-Kontaktlinsen ohne Stärke",
+      "datei": "16_Ein Paar Zombie-Kontaktlinsen ohne Stärke_24,90.jpg",
+      "bytes": 99390,
+      "begriff": "contact lens",
+      "commons": "File:Contact lens.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:Contact_lens.JPG",
+      "autor": "unbekannt",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 17,
+      "artikel": "Ein Fläschchen Kunstblut, 100 ml",
+      "datei": "17_Ein Fläschchen Kunstblut, 100 ml_6,50.jpg",
+      "bytes": 142502,
+      "begriff": "fake blood",
+      "commons": "File:Fake blood.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Fake_blood.jpg",
+      "autor": "U.S. Air Force photo/Staff Sgt. Kristin Ruleau",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 18,
+      "artikel": "Ein Kanister Kunstblut, 5 Liter",
+      "datei": "18_Ein Kanister Kunstblut, 5 Liter_89,00.jpg",
+      "bytes": 228146,
+      "begriff": "plastic jerrycan container",
+      "commons": "File:Jerrycan type cheap fermentationVessel.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:Jerrycan_type_cheap_fermentationVessel.JPG",
+      "autor": "KVDP",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 21,
+      "artikel": "Eine weiße Hockeymaske",
+      "datei": "21_Eine weiße Hockeymaske_9,99.jpg",
+      "bytes": 550644,
+      "begriff": "ice hockey goalie mask",
+      "commons": "File:Brent Johnson Goalie Mask.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:Brent_Johnson_Goalie_Mask.JPG",
+      "autor": "Michael Miller",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 23,
+      "artikel": "Eine Pest-Doktor-Maske aus Leder",
+      "datei": "23_Eine Pest-Doktor-Maske aus Leder_79,00.jpg",
+      "bytes": 189861,
+      "begriff": "plague doctor mask",
+      "commons": "File:Beak doctor mask.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Beak_doctor_mask.jpg",
+      "autor": "Flickr: Tracy",
+      "lizenz": "CC BY 2.0"
+    },
+    {
+      "nr": 24,
+      "artikel": "Eine echte Sense vom Baumarkt",
+      "datei": "24_Eine echte Sense vom Baumarkt_44,95.jpg",
+      "bytes": 582482,
+      "begriff": "scythe mowing grass",
+      "commons": "File:Scythe against hedge.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Scythe_against_hedge.jpg",
+      "autor": "Richard New Forest",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 25,
+      "artikel": "Ein Spinnennetz-Spray, 150 ml",
+      "datei": "25_Ein Spinnennetz-Spray, 150 ml_4,49.jpg",
+      "bytes": 397292,
+      "begriff": "spray can aerosol",
+      "commons": "File:Aerosol.png",
+      "seite": "https://commons.wikimedia.org/wiki/File:Aerosol.png",
+      "autor": "PiccoloNamek",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 26,
+      "artikel": "Zehn Meter Deko-Spinnennetz",
+      "datei": "26_Zehn Meter Deko-Spinnennetz_3,99.jpg",
+      "bytes": 186353,
+      "begriff": "halloween cobweb decoration",
+      "commons": "File:New Orleans October 2017 Prytania Street Halloween Cobwebs.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:New_Orleans_October_2017_Prytania_Street_Halloween_Cobwebs.jpg",
+      "autor": "Infrogmation of New Orleans",
+      "lizenz": "CC BY-SA 4.0"
+    },
+    {
+      "nr": 28,
+      "artikel": "Eine echte Vogelspinne aus der Zoohandlung",
+      "datei": "28_Eine echte Vogelspinne aus der Zoohandlung_45,00.jpg",
+      "bytes": 146709,
+      "begriff": "tarantula spider",
+      "commons": "File:Brachypelma edit.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Brachypelma_edit.jpg",
+      "autor": "User:Fir0002",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 31,
+      "artikel": "Ein Fledermauskasten für den Garten",
+      "datei": "31_Ein Fledermauskasten für den Garten_29,90.jpg",
+      "bytes": 93324,
+      "begriff": "bat box roost",
+      "commons": "File:Warleigh Point Bat Boxes - geograph.org.uk - 347656.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Warleigh_Point_Bat_Boxes_-_geograph.org.uk_-_347656.jpg",
+      "autor": "David Brinicombe",
+      "lizenz": "CC BY-SA 2.0"
+    },
+    {
+      "nr": 35,
+      "artikel": "Ein echter menschlicher Schädel als Sammlerstück",
+      "datei": "35_Ein echter menschlicher Schädel als Sammlerstück_1200,00.jpg",
+      "bytes": 222669,
+      "begriff": "human skull specimen museum",
+      "commons": "File:Human skull.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Human_skull.jpg",
+      "autor": "Chris Dodds",
+      "lizenz": "CC BY-SA 2.0"
+    },
+    {
+      "nr": 37,
+      "artikel": "Ein Grabstein aus Granit, mit Gravur",
+      "datei": "37_Ein Grabstein aus Granit, mit Gravur_1450,00.jpg",
+      "bytes": 236982,
+      "begriff": "granite gravestone",
+      "commons": "File:Gravestone of John Fyfe (1830 -1906), Granite Merchant, Aberdeen.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Gravestone_of_John_Fyfe_(1830_-1906),_Granite_Merchant,_Aberdeen.jpg",
+      "autor": "watty62",
+      "lizenz": "CC BY-SA 4.0"
+    },
+    {
+      "nr": 40,
+      "artikel": "Eine Nebelmaschine, 700 Watt",
+      "datei": "40_Eine Nebelmaschine, 700 Watt_54,90.jpg",
+      "bytes": 112627,
+      "begriff": "fog machine stage",
+      "commons": "File:Smoke and light beams (Unsplash).jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Smoke_and_light_beams_(Unsplash).jpg",
+      "autor": "Daniel Robert danielrobertdinu",
+      "lizenz": "CC0"
+    },
+    {
+      "nr": 42,
+      "artikel": "Ein Stroboskop-Licht",
+      "datei": "42_Ein Stroboskop-Licht_29,99.jpg",
+      "bytes": 204751,
+      "begriff": "strobe light",
+      "commons": "File:StrobeLight.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:StrobeLight.jpg",
+      "autor": "Scoreed",
+      "lizenz": "CC BY 2.5"
+    },
+    {
+      "nr": 44,
+      "artikel": "Ein aufblasbarer Geist für den Vorgarten, 3 m",
+      "datei": "44_Ein aufblasbarer Geist für den Vorgarten, 3 m_69,00.jpg",
+      "bytes": 238260,
+      "begriff": "inflatable ghost halloween",
+      "commons": "File:Halloween Decorations (15493322098).jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Halloween_Decorations_(15493322098).jpg",
+      "autor": "Celine Marsolais",
+      "lizenz": "CC BY 2.0"
+    },
+    {
+      "nr": 45,
+      "artikel": "Ein Bewegungsmelder mit Schrei-Sound",
+      "datei": "45_Ein Bewegungsmelder mit Schrei-Sound_12,99.jpg",
+      "bytes": 178491,
+      "begriff": "motion sensor detector",
+      "commons": "File:Fence motion sensor gold base.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Fence_motion_sensor_gold_base.jpg",
+      "autor": "Angry Gay Pope",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 46,
+      "artikel": "Ein Soundmodul mit Kettenrasseln",
+      "datei": "46_Ein Soundmodul mit Kettenrasseln_19,90.jpg",
+      "bytes": 160698,
+      "begriff": "audio amplifier module board",
+      "commons": "File:FM Radio with Calendar and Calculator - Radio module with loudspeaker-9760.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:FM_Radio_with_Calendar_and_Calculator_-_Radio_module_with_loudspeaker-9760.jpg",
+      "autor": "Raimond Spekking",
+      "lizenz": "CC BY-SA 4.0"
+    },
+    {
+      "nr": 48,
+      "artikel": "Ein echter Reisigbesen vom Baumarkt",
+      "datei": "48_Ein echter Reisigbesen vom Baumarkt_14,95.jpg",
+      "bytes": 388644,
+      "begriff": "besom broom twig",
+      "commons": "File:Русский веник.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9_%D0%B2%D0%B5%D0%BD%D0%B8%D0%BA.jpg",
+      "autor": "George Shuklin",
+      "lizenz": "CC BY 2.5"
+    },
+    {
+      "nr": 49,
+      "artikel": "Ein Hexenkostüm, dreiteilig",
+      "datei": "49_Ein Hexenkostüm, dreiteilig_39,99.jpg",
+      "bytes": 244426,
+      "begriff": "witch costume hat",
+      "commons": "File:MGD07FQWickedWitchFlyingMonkey.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:MGD07FQWickedWitchFlyingMonkey.jpg",
+      "autor": "Infrogmation",
+      "lizenz": "CC BY 2.5"
+    },
+    {
+      "nr": 51,
+      "artikel": "Ein weißes Bettlaken, 180 × 290 cm",
+      "datei": "51_Ein weißes Bettlaken, 180 × 290 cm_12,99.jpg",
+      "bytes": 85790,
+      "begriff": "white bed sheet",
+      "commons": "File:Bed in Seattle hotel.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Bed_in_Seattle_hotel.jpg",
+      "autor": "Liz Lawley",
+      "lizenz": "CC BY-SA 2.0"
+    },
+    {
+      "nr": 53,
+      "artikel": "Ein Hundekostüm als Kürbis, Größe M",
+      "datei": "53_Ein Hundekostüm als Kürbis, Größe M_17,99.jpg",
+      "bytes": 162720,
+      "begriff": "dog halloween costume",
+      "commons": "File:2015 Hallowenn dog costume party 10.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:2015_Hallowenn_dog_costume_party_10.jpg",
+      "autor": "Can Kamiloğlu",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 56,
+      "artikel": "Ein Paar Hasenohren in Playboy-Optik",
+      "datei": "56_Ein Paar Hasenohren in Playboy-Optik_9,99.jpg",
+      "bytes": 95387,
+      "begriff": "bunny ears costume",
+      "commons": "File:Bunny girl outfit 20060131.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Bunny_girl_outfit_20060131.jpg",
+      "autor": "Photography person : MASA Photography place : MASA’s Home",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 57,
+      "artikel": "Ein Kostüm „sexy Krankenschwester“, dreiteilig",
+      "datei": "57_Ein Kostüm sexy Krankenschwester, dreiteilig_29,99.jpg",
+      "bytes": 262566,
+      "begriff": "nurse costume",
+      "commons": "File:NurseWolfie.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:NurseWolfie.jpg",
+      "autor": "Infrogmation",
+      "lizenz": "CC BY 2.5"
+    },
+    {
+      "nr": 58,
+      "artikel": "Ein Vampir-Korsett mit Schnürung",
+      "datei": "58_Ein Vampir-Korsett mit Schnürung_49,90.jpg",
+      "bytes": 308163,
+      "begriff": "corset",
+      "commons": "File:Le Corset de Toilette - 58 a.png",
+      "seite": "https://commons.wikimedia.org/wiki/File:Le_Corset_de_Toilette_-_58_a.png",
+      "autor": "Mme &amp; M, F. Lacroix",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 60,
+      "artikel": "Eine Großpackung Kondome, 144 Stück",
+      "datei": "60_Eine Großpackung Kondome, 144 Stück_32,90.jpg",
+      "bytes": 95370,
+      "begriff": "condom package",
+      "commons": "File:Lifestyles condom package.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Lifestyles_condom_package.jpg",
+      "autor": "Self",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 61,
+      "artikel": "Ein Erotik-Adventskalender",
+      "datei": "61_Ein Erotik-Adventskalender_59,95.jpg",
+      "bytes": 230490,
+      "begriff": "advent calendar",
+      "commons": "File:Adventkalender andrea.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:Adventkalender_andrea.JPG",
+      "autor": "Andrea Schaufler",
+      "lizenz": "CC BY 2.5"
+    },
+    {
+      "nr": 63,
+      "artikel": "Eine aufblasbare Partnerpuppe, Scherzartikel",
+      "datei": "63_Eine aufblasbare Partnerpuppe, Scherzartikel_19,99.jpg",
+      "bytes": 432905,
+      "begriff": "inflatable doll",
+      "commons": "File:Sex-dolls.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Sex-dolls.jpg",
+      "autor": "Artem Kuznetsov",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 64,
+      "artikel": "Ein Striptease-Kurs für Paare, ein Abend",
+      "datei": "64_Ein Striptease-Kurs für Paare, ein Abend_89,00.jpg",
+      "bytes": 74194,
+      "begriff": "pole dancing",
+      "commons": "File:Woman performs the pole dance (2).jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Woman_performs_the_pole_dance_(2).jpg",
+      "autor": "Raul Lanus",
+      "lizenz": "CC BY-SA 4.0"
+    },
+    {
+      "nr": 66,
+      "artikel": "Ein Nudel-Scherzartikel in anstößiger Form, 500 g",
+      "datei": "66_Ein Nudel-Scherzartikel in anstößiger Form, 500 g_6,99.jpg",
+      "bytes": 154187,
+      "begriff": "pasta noodles dry",
+      "commons": "File:Macaroni closeup.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Macaroni_closeup.jpg",
+      "autor": "unbekannt",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 67,
+      "artikel": "Ein Ouija-Brett aus Holz",
+      "datei": "67_Ein Ouija-Brett aus Holz_34,90.jpg",
+      "bytes": 100974,
+      "begriff": "ouija board",
+      "commons": "File:Original ouija board.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Original_ouija_board.jpg",
+      "autor": "unbekannt",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 68,
+      "artikel": "Ein Tarotkartendeck",
+      "datei": "68_Ein Tarotkartendeck_19,90.jpg",
+      "bytes": 196597,
+      "begriff": "tarot cards",
+      "commons": "File:Консультация по картам таро - Tarot cards spread for reading.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:%D0%9A%D0%BE%D0%BD%D1%81%D1%83%D0%BB%D1%8C%D1%82%D0%B0%D1%86%D0%B8%D1%8F_%D0%BF%D0%BE_%D0%BA%D0%B0%D1%80%D1%82%D0%B0%D0%BC_%D1%82%D0%B0%D1%80%D0%BE_-_Tarot_cards_spread_for_reading.jpg",
+      "autor": "Таролог Альбина",
+      "lizenz": "CC BY-SA 4.0"
+    },
+    {
+      "nr": 70,
+      "artikel": "Eine Flasche Weihwasser aus Lourdes",
+      "datei": "70_Eine Flasche Weihwasser aus Lourdes_8,50.jpg",
+      "bytes": 94415,
+      "begriff": "holy water bottle",
+      "commons": "File:Holy Well bottle.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Holy_Well_bottle.jpg",
+      "autor": "Kudpung",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 71,
+      "artikel": "Ein Kilo Knoblauch",
+      "datei": "71_Ein Kilo Knoblauch_6,90.jpg",
+      "bytes": 33264,
+      "begriff": "garlic bulbs",
+      "commons": "File:Opened garlic bulb with garlic clove.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Opened_garlic_bulb_with_garlic_clove.jpg",
+      "autor": "Dubravko Sorić SoraZG on Flickr",
+      "lizenz": "CC BY 2.0"
+    },
+    {
+      "nr": 74,
+      "artikel": "Ein Nachtsichtgerät, Einsteigerklasse",
+      "datei": "74_Ein Nachtsichtgerät, Einsteigerklasse_229,00.jpg",
+      "bytes": 166943,
+      "begriff": "night vision device",
+      "commons": "File:Night vision goggles experimental.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Night_vision_goggles_experimental.jpg",
+      "autor": "unbekannt",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 75,
+      "artikel": "Eine Wärmebildkamera fürs Handy",
+      "datei": "75_Eine Wärmebildkamera fürs Handy_349,00.jpg",
+      "bytes": 182347,
+      "begriff": "thermal imaging camera",
+      "commons": "File:Thermal imaging camera side.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Thermal_imaging_camera_side.jpg",
+      "autor": "Jonathan Clemens (Jclemens (talk))",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 76,
+      "artikel": "Eine Fahrt in der Geisterbahn auf dem Rummel",
+      "datei": "76_Eine Fahrt in der Geisterbahn auf dem Rummel_4,50.jpg",
+      "bytes": 204798,
+      "begriff": "ghost train funfair ride",
+      "commons": "File:Funfairs H2196 Dark Ride ym C.JPG",
+      "seite": "https://commons.wikimedia.org/wiki/File:Funfairs_H2196_Dark_Ride_ym_C.JPG",
+      "autor": "Anneli Salo",
+      "lizenz": "CC BY-SA 3.0"
+    },
+    {
+      "nr": 77,
+      "artikel": "Ein Tagesticket im Movie Park am Halloween-Wochenende",
+      "datei": "77_Ein Tagesticket im Movie Park am Halloween-Wochenende_54,90.jpg",
+      "bytes": 206639,
+      "begriff": "amusement park entrance",
+      "commons": "File:Efteling Entrance.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Efteling_Entrance.jpg",
+      "autor": "Stefan Scheer",
+      "lizenz": "CC BY 2.5"
+    },
+    {
+      "nr": 82,
+      "artikel": "Eine Startgebühr für einen Zombie-Lauf über 10 km",
+      "datei": "82_Eine Startgebühr für einen Zombie-Lauf über 10 km_42,00.jpg",
+      "bytes": 135656,
+      "begriff": "zombie walk",
+      "commons": "File:Zombie Walk 2016 (29560783686).jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Zombie_Walk_2016_(29560783686).jpg",
+      "autor": "GoToVan",
+      "lizenz": "CC BY 2.0"
+    },
+    {
+      "nr": 83,
+      "artikel": "Ein Horror-Schminkkurs, ein Tag",
+      "datei": "83_Ein Horror-Schminkkurs, ein Tag_149,00.jpg",
+      "bytes": 164219,
+      "begriff": "special effects makeup artist",
+      "commons": "File:Make-up artist.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Make-up_artist.jpg",
+      "autor": "Charlie Brewer from Sydney, Australia",
+      "lizenz": "CC BY-SA 2.0"
+    },
+    {
+      "nr": 84,
+      "artikel": "Eine Horror-Make-up-Palette, 12 Farben",
+      "datei": "84_Eine Horror-Make-up-Palette, 12 Farben_24,90.jpg",
+      "bytes": 138564,
+      "begriff": "makeup palette",
+      "commons": "File:Bought a new makeup palette yesterday. (6117830100).jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Bought_a_new_makeup_palette_yesterday._(6117830100).jpg",
+      "autor": "Tiffany Bailey from New Orleans, USA",
+      "lizenz": "CC BY 2.0"
+    },
+    {
+      "nr": 86,
+      "artikel": "Eine Blu-ray-Box mit zehn Horror-Klassikern",
+      "datei": "86_Eine Blu-ray-Box mit zehn Horror-Klassikern_44,99.jpg",
+      "bytes": 789218,
+      "begriff": "blu-ray disc",
+      "commons": "File:BluRayDiscBack.png",
+      "seite": "https://commons.wikimedia.org/wiki/File:BluRayDiscBack.png",
+      "autor": "Cdnomad at English Wikipedia",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 87,
+      "artikel": "Ein Liter Jägermeister",
+      "datei": "87_Ein Liter Jägermeister_18,99.jpg",
+      "bytes": 58172,
+      "begriff": "jägermeister bottle",
+      "commons": "File:Jagermeister bottle.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Jagermeister_bottle.jpg",
+      "autor": "No machine-readable author provided. Pieter1 assumed (based on copyright claims).",
+      "lizenz": "Public domain"
+    },
+    {
+      "nr": 88,
+      "artikel": "Ein Döner um drei Uhr nachts",
+      "datei": "88_Ein Döner um drei Uhr nachts_8,50.jpg",
+      "bytes": 191008,
+      "begriff": "doner kebab",
+      "commons": "File:Döner Kebab, Berlin, 2010 (01).jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:D%C3%B6ner_Kebab,_Berlin,_2010_(01).jpg",
+      "autor": "AleGranholm",
+      "lizenz": "CC BY 2.0"
+    },
+    {
+      "nr": 89,
+      "artikel": "Eine Packung Kopfschmerztabletten, 20 Stück",
+      "datei": "89_Eine Packung Kopfschmerztabletten, 20 Stück_7,95.jpg",
+      "bytes": 308543,
+      "begriff": "aspirin tablets blister",
+      "commons": "File:ЦИТРАМОН П.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:%D0%A6%D0%98%D0%A2%D0%A0%D0%90%D0%9C%D0%9E%D0%9D_%D0%9F.jpg",
+      "autor": "Schekinov Alexey Victorovich",
+      "lizenz": "CC BY-SA 4.0"
+    },
+    {
+      "nr": 90,
+      "artikel": "Ein Kater-Frühstück im Café, zwei Personen",
+      "datei": "90_Ein Kater-Frühstück im Café, zwei Personen_32,00.jpg",
+      "bytes": 236370,
+      "begriff": "breakfast cafe table",
+      "commons": "File:Full English breakfast at the Chalet Cafe, Cowfold, West Sussex, England.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Full_English_breakfast_at_the_Chalet_Cafe,_Cowfold,_West_Sussex,_England.jpg",
+      "autor": "Acabashi",
+      "lizenz": "CC BY-SA 4.0"
+    },
+    {
+      "nr": 91,
+      "artikel": "Ein gebrauchter Leichenwagen mit 180 000 km",
+      "datei": "91_Ein gebrauchter Leichenwagen mit 180 000 km_24900,00.jpg",
+      "bytes": 192309,
+      "begriff": "hearse car",
+      "commons": "File:Cadillac Fleetwood hearse 1990s.jpg",
+      "seite": "https://commons.wikimedia.org/wiki/File:Cadillac_Fleetwood_hearse_1990s.jpg",
+      "autor": "Alison Chan",
+      "lizenz": "CC BY-SA 3.0"
+    }
+  ],
+  "fehlend": [
+    {
+      "nr": 1,
+      "name": "Ein Speisekürbis, 3 kg, vom Hofladen",
+      "begriff": "pumpkin vegetable",
+      "grund": "Riesen-Steckruebe im Vordergrund, Kuerbisse nur daneben"
+    },
+    {
+      "nr": 14,
+      "name": "Ein Satz Vampirzähne zum Aufstecken",
+      "begriff": "vampire teeth costume",
+      "grund": "gemaltes Vampirgesicht, kein Gebiss zum Aufstecken"
+    },
+    {
+      "nr": 19,
+      "name": "Eine Latex-Zombiemaske",
+      "begriff": "zombie mask",
+      "grund": "Gasmaske auf einer Demo, keine Zombiemaske"
+    },
+    {
+      "nr": 27,
+      "name": "Eine Plastikspinne, handtellergroß",
+      "begriff": "toy spider plastic",
+      "grund": "Kinderspielzeug auf einem Holzboden, keine Spinne"
+    },
+    {
+      "nr": 32,
+      "name": "Ein Plastikskelett, 1,70 m",
+      "begriff": "halloween skeleton decoration",
+      "grund": "Strassenzug mit Motorrad, Skelett nur als Beiwerk"
+    },
+    {
+      "nr": 34,
+      "name": "Ein anatomisches Lehrskelett für die Uni",
+      "begriff": "anatomical skeleton model",
+      "grund": "anatomische Wachsfigur, kein Lehrskelett"
+    },
+    {
+      "nr": 38,
+      "name": "Eine Grabstelle, 25 Jahre Pacht in einer Mittelstadt",
+      "begriff": "cemetery headstones churchyard",
+      "grund": "Grabplatten an einer Mauer, keine Grabstelle"
+    },
+    {
+      "nr": 39,
+      "name": "Eine einfache Bestattung mit Sarg",
+      "begriff": "wooden coffin",
+      "grund": "aegyptische Mumienmaske, kein Sarg"
+    },
+    {
+      "nr": 43,
+      "name": "Eine Lichterkette mit Geistern, 10 Meter",
+      "begriff": "halloween string lights",
+      "grund": "Landschaft mit Vogelscheuche, keine Lichterkette"
+    },
+    {
+      "nr": 47,
+      "name": "Eine Hexenbesen-Deko",
+      "begriff": "witch broom halloween",
+      "grund": "Kind im Hexenkostuem, Besen kaum zu sehen (Nr. 49 zeigt das besser)"
+    },
+    {
+      "nr": 54,
+      "name": "Ein Katzenkostüm für die Katze",
+      "begriff": "cat costume pet",
+      "grund": "Hunde mit Kuerbissen, keine Katze"
+    },
+    {
+      "nr": 62,
+      "name": "Ein Jahr Pornhub Premium",
+      "begriff": "pornhub logo",
+      "grund": "Wikipedia-Logo in Pornhub-Farben, sagt zum Preis nichts"
+    },
+    {
+      "nr": 69,
+      "name": "Eine Sitzung bei der Wahrsagerin, 30 Minuten",
+      "begriff": "fortune teller crystal ball",
+      "grund": "Cartoon mit Wasserzeichen einer fremden Seite"
+    },
+    {
+      "nr": 72,
+      "name": "Ein Silberkettchen, 925er, 45 cm",
+      "begriff": "silver necklace chain",
+      "grund": "Zierkette aus dem Kreml-Museum, kein Kettchen"
+    },
+    {
+      "nr": 78,
+      "name": "Ein Escape-Room für vier Personen, 60 Minuten",
+      "begriff": "escape room",
+      "grund": "Hausfassade, vom Escape-Room nichts zu sehen"
+    },
+    {
+      "nr": 79,
+      "name": "Ein Ticket fürs Gruselkabinett",
+      "begriff": "wax museum figures",
+      "grund": "Wachsfiguren einer Vertragsunterzeichnung, kein Gruselkabinett"
+    },
+    {
+      "nr": 80,
+      "name": "Eine Führung durch Schloss Bran in Rumänien",
+      "begriff": "bran castle",
+      "grund": "Blick vom Schloss ins Dorf, das Schloss selbst fehlt"
+    },
+    {
+      "nr": 81,
+      "name": "Eine Übernachtung in einem englischen Spukhotel-Zimmer",
+      "begriff": "haunted manor house england",
+      "grund": "Backsteinruine ohne Hotelbezug"
+    },
+    {
+      "nr": 4,
+      "name": "Ein Kürbisschnitzset, 10 Teile",
+      "begriff": "pumpkin carving kit",
+      "grund": "Spendenaktion in einem Frauenhaus, kein Schnitzset"
+    },
+    {
+      "nr": 8,
+      "name": "Eine LED-Kerze für den Kürbis",
+      "begriff": "electric tea light candle",
+      "grund": "Buchscan \"American homes and gardens\" 1910"
+    },
+    {
+      "nr": 9,
+      "name": "Ein Großpack Halloween-Süßigkeiten, 1 kg",
+      "begriff": "halloween candy bowl",
+      "grund": "Marine-Veranstaltung, keine Suessigkeiten erkennbar"
+    },
+    {
+      "nr": 22,
+      "name": "Ein Freddy-Krueger-Handschuh als Replik",
+      "begriff": "costume claw gloves",
+      "grund": "Brief von 1841 - Volltextsuche traf den Text, nicht das Bild"
+    },
+    {
+      "nr": 30,
+      "name": "Ein ausgestopfter Rabe vom Präparator",
+      "begriff": "stuffed crow taxidermy",
+      "grund": "lebende Kraehen, kein Praeparat"
+    },
+    {
+      "nr": 50,
+      "name": "Ein aufblasbares Dinosaurier-Ganzkörperkostüm",
+      "begriff": "inflatable t-rex costume",
+      "grund": "Umzugsfoto, Kostuem nicht erkennbar"
+    },
+    {
+      "nr": 52,
+      "name": "Ein Vampirumhang mit Stehkragen",
+      "begriff": "dracula costume cape",
+      "grund": "Grabstein von Bela Lugosi, kein Umhang"
+    },
+    {
+      "nr": 85,
+      "name": "Ein Satz Fake-Wunden zum Aufkleben",
+      "begriff": "prosthetic makeup wound",
+      "grund": "Studio-Aufnahme ohne erkennbare Wunde"
+    },
+    {
+      "nr": 20,
+      "name": "Eine Silikonmaske in Hollywood-Qualität",
+      "begriff": "silicone mask head"
+    },
+    {
+      "nr": 29,
+      "name": "Ein Terrarium für die Vogelspinne",
+      "begriff": "glass terrarium enclosure"
+    },
+    {
+      "nr": 33,
+      "name": "Ein Gartenskelett, 3,60 m hoch",
+      "begriff": "halloween skeleton garden tall"
+    },
+    {
+      "nr": 36,
+      "name": "Ein Grabstein aus Styropor",
+      "begriff": "halloween graveyard decoration tombstone"
+    },
+    {
+      "nr": 41,
+      "name": "Fünf Liter Nebelfluid",
+      "begriff": "plastic bottle five litre"
+    },
+    {
+      "nr": 55,
+      "name": "Ein Paar Teufelshörner mit Glitzer",
+      "begriff": "devil horns headband"
+    },
+    {
+      "nr": 59,
+      "name": "Ein Paar Plüschhandschellen aus dem Scherzartikelladen",
+      "begriff": "novelty handcuffs pink"
+    },
+    {
+      "nr": 65,
+      "name": "Ein Feuerwehr-Nacktkalender aus dem Nachbardorf",
+      "begriff": "firefighter charity calendar"
+    },
+    {
+      "nr": 73,
+      "name": "Ein EMF-Messgerät für Geisterjäger",
+      "begriff": "gaussmeter electromagnetic field meter"
+    }
+  ]
+}

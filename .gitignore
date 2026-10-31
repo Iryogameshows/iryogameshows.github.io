@@ -8,3 +8,9 @@ tools/shots/out/
 # Richtung T (Isaac-Sprites) ist seit 2026-10-25 entfernt. Der Eintrag bleibt,
 # damit Spielgrafiken, die auf einem Geraet noch liegen, nie eingecheckt werden.
 assets/t/eigene/
+
+# Bilder zu PIH-Sets: fremdes Material unter freier Lizenz, bleibt lokal.
+# quellen.json und LIESMICH.md (Urheber, Lizenz) kommen mit.
+sets/*-bilder/*.jpg
+sets/*-bilder/*.jpeg
+sets/*-bilder/*.png
