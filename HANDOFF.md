@@ -12,6 +12,84 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-31 (nachts) — `ab2ae14` Preis ist heiß: Bilder zum Halloween-Set, von Commons geholt und aussortiert
+
+**David:** „hol mir die Bilder" — die 91 Artikel aus `59d9218` hatten alle
+`media: []`.
+
+### Gemacht
+
+- **`tools/pihbilder/hol.js`** (neu): sucht je Artikel auf Wikimedia Commons,
+  lädt den Treffer in 640 px und legt ihn unter `sets/<set>-bilder/` ab. Der
+  Dateiname ist so gebaut, dass `pihImportFolder()` Artikel und Preis daraus
+  liest (`01_Name_4,50.jpg`; die `01_`-Nummer streift `pihParseFileName` ab).
+  Drei Schalter: ohne Argument alles holen, `--nachsuche` nur die Nummern aus
+  `NACHSUCHE`, `--aufraeumen` wirft die Nummern aus `WEG` samt Datei hinaus.
+- **`sets/dpih-halloween-bilder/`**: 56 Bilder, 11,0 MB, dazu `quellen.json`
+  und `LIESMICH.md` mit Datei, Commons-Seite, **Urheber und Lizenz** je Bild.
+- **`.gitignore`**: `sets/*-bilder/*.jpg|jpeg|png`. Die Bilddateien bleiben
+  lokal, die beiden Nachweis-Dateien sind eingecheckt.
+
+### Warum so
+
+- **Commons statt Bildersuche oder Shop-Fotos**: die Lizenz steht je Datei
+  maschinenlesbar in `extmetadata` (Artist, LicenseShortName) und wandert damit
+  automatisch in die Quellenliste. Produktfotos aus einem Shop wären fremdes
+  Material ohne Freigabe — das gehört nicht auf eine Leinwand vor Publikum.
+  **Verworfen:** Pexels/Unsplash (API-Schlüssel nötig, Urheber nicht in der
+  Antwort) und 91 selbst gezeichnete SVG (Aufwand, und ein Piktogramm hilft
+  beim Preisschätzen nicht).
+- **Dateien statt Daten-URLs in der JSON**: ein Bild steckt im Spiel als
+  Daten-URL (`setMediaSlot`, `js/core.js:1145`). 56 Bilder à ~200 KB wären als
+  Base64 rund 15 MB im `localStorage` — `pihSave()` würde scheitern und der
+  Satz wäre nach dem Neuladen weg. Als Ordner-Import verkleinert
+  `shrinkImageToDataUrl` ohnehin auf 1280 px.
+- **Bilder nicht ins Repo**, wie `assets/t/eigene/`: fremdes Material bleibt
+  draußen, der Nachweis bleibt drin.
+- **640 px**: reicht auf 1280×720 und hält den Ordner klein.
+
+### Geprüft
+
+- **Jedes Bild einzeln angesehen** — das war nötig: die Volltextsuche auf
+  Commons findet zu Konsumartikeln oft nur etwas, das das Suchwort im *Text*
+  hat. Erste Runde 86 Treffer; beim Ansehen fielen u. a. auf: ein **Brief von
+  1841** als „Freddy-Handschuh", eine **Gasmaske** als Zombiemaske, **Hunde**
+  als Katzenkostüm, ein **Buchscan von 1910** als LED-Kerze, Bela Lugosis
+  **Grabstein** als Vampirumhang. Zwei Treffer waren für ein Partyspiel
+  unpassend (Gedenkstätten-Aufnahme beim Schädel, Sklavenfesseln bei den
+  Plüschhandschellen) und sind raus.
+- Nachsuche mit anderen Begriffen für 26 Nummern, danach **26 Bilder
+  aussortiert** (`WEG`, jede Nummer mit Grund im Code).
+- **Ergebnis: 56 von 91 Artikeln haben ein Bild, 35 keins.** Preisspanne und
+  Artikelzahl des Sets sind unverändert.
+- `node check.js`: fehlerfrei. `tools/` wird davon ohnehin nicht geprüft, die
+  Änderung berührt keinen Spielcode.
+
+### Offen
+
+- **35 Artikel ohne Bild**, darunter alle, zu denen Commons schlicht nichts
+  Passendes hat (Silikonmaske, Gartenskelett, Styropor-Grabstein, Nebelfluid,
+  Teufelshörner, Plüschhandschellen, EMF-Messgerät, Feuerwehr-Kalender).
+- **Der Ordner-Import ist nicht im Spiel durchgeklickt worden** — nur das
+  Dateinamen-Format gegen `pihParseFileName()` gelesen.
+- Einige der 56 sind thematisch nur nah dran (Ahornsirup für Kürbisgewürz-
+  Sirup, Efteling-Eingang für den Movie Park, ein blaues Rundumlicht fürs
+  Stroboskop). Für eine Schätzrunde reicht es, für einen perfekten Satz nicht.
+- `node check.js --types` und `tools/shots` nicht gelaufen (kein Code, kein CSS).
+
+### Fallstricke
+
+- **Ordner-Import legt NEUE Artikel an.** Er hängt die Bilder nicht an die 91
+  schon importierten. Entweder den Ordner einlesen **statt** der JSON (dann
+  fehlen die Notizen) oder die Bilder einzeln im Editor zuordnen.
+- Ein zweiter Lauf ohne `--nachsuche`/`--aufraeumen` holt alles neu und
+  **überschreibt** die Auswahl.
+- Scheitert eine Nachsuche, bleibt die **alte** Datei liegen; erst
+  `--aufraeumen` räumt die verwaisten Dateien weg.
+- Commons liefert PNG unverkleinert groß (eine Blu-ray-Aufnahme war 771 KB).
+
+---
+
 ## 2026-10-31 (noch später) — `59d9218` Preis ist heiß: Halloween-Set mit 91 Artikeln
 
 **David:** „mach mir bitte eine datei mit 91 einträgen für DPIH, das meiste
