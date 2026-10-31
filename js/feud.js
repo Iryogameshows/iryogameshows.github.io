@@ -1727,7 +1727,12 @@ function updateGamemasterJeopardy() {
     let strahlPanel = '';
     if (strahl){
       const dinge = jeopardyStrahlDinge(clue);
-      const sieger = jeopardyStrahlSieger();
+      /* Was jedes Team in diesem Zahlenstrahl schon auf dem Konto hat. Seit
+         2026-10-31 wird je richtig eingeordnetem Ding sofort gutgeschrieben
+         (STRAHL_PUNKTE) - der Host muss am Ende nichts mehr verteilen. */
+      const strahlKonto = jeopardyState.teamNames
+        .map((n, i) => jeopardyStrahlPunkte(i) ? `<b>${escapeHtml(n || ('Team ' + (i+1)))} +${jeopardyStrahlPunkte(i)}</b>` : '')
+        .filter(Boolean).join(' · ');
       const zugName = strahl.spieler ? strahl.spieler.name : 'niemand verbunden';
       // Die Reihe liest sich wie auf der Leinwand: Kachel, Luecke, Kachel.
       // Die Luecke ist ein schmaler Schlitz, keine Beschriftung - sonst ist
@@ -1739,9 +1744,9 @@ function updateGamemasterJeopardy() {
           dinge[i].img ? `<img src="${safeSrc(dinge[i].img)}" alt="">` : ''
         }<b>${escapeHtml(dinge[i].text)}</b><i>${escapeHtml(jeopardyStrahlWert(dinge[i].wert, clue))}</i></span>`).join('');
       const stand = strahl.fertig
-        ? (strahl.fehler
-            ? `<b>${strahl.fehler === 1 ? 'Ein Fehler' : strahl.fehler + ' Fehler'}</b> — nach eurer Regel bekommt <b>keiner</b> Punkte.`
-            : `Reihe <b>fehlerfrei</b> — die meisten richtigen Züge: <b>${sieger.map(i => escapeHtml(jeopardyState.teamNames[i] || ('Team ' + (i+1)))).join(' und ')}</b> (+${val}).`)
+        ? (strahlKonto
+            ? `Reihe komplett — ${strahlKonto}. <b>Schon gutgeschrieben</b>, die Plus-Knöpfe unten sind hier nicht nötig.`
+            : `Reihe komplett — <b>kein Ding</b> richtig eingeordnet, also keine Punkte.`)
         : `Einzuordnen: ${strahl.offen.length && dinge[strahl.offen[0]].img
              ? `<img class="su-mini" src="${safeSrc(dinge[strahl.offen[0]].img)}" alt="">` : ''}<b>${
              strahl.offen.length ? escapeHtml(dinge[strahl.offen[0]].text) : '—'}</b>
@@ -1767,6 +1772,12 @@ function updateGamemasterJeopardy() {
         <div class="strahl-reihe">${reiheHtml}${strahl.fertig ? '' : luecke(strahl.reihe.length)}</div>
         ${urteilHtml}
         <div class="hint-line">${stand}</div>
+        ${!strahl.fertig && strahlKonto
+          /* Eigene Zeile, kein <br> in der Zeile darueber: die traegt eine
+             Briefmarke und bricht selbst schon um - "Bisher:" landete dann
+             mitten im Satz (Screenshot 2026-10-31). */
+          ? `<div class="hint-line">Bisher: ${strahlKonto} — je richtigem Ding <b>+${STRAHL_PUNKTE}</b>, sofort gutgeschrieben.</div>`
+          : ''}
       </div>`;
     }
     // Schätzfrage/Einzelantwort: statt der Buzzer-Reihenfolge die Eingaben

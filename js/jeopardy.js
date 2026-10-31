@@ -690,6 +690,16 @@ function jeopardyStrahlWert(wert, clue){
   return wert.toLocaleString('de-DE') + (e ? ' ' + e : '');
 }
 
+/* Punkte je richtig eingeordnetem Ding (David, 2026-10-31: "pro richtig
+   eingeordnetem Item 100 Punkte").
+
+   Ein fester Wert, NICHT der Feldwert: auf einem 500er-Feld waeren bei acht
+   Dingen 3500 Punkte zu holen, mehr als in der halben Runde sonst. Der
+   Feldwert steht beim Zahlenstrahl weiter auf dem Board, zaehlt aber nicht -
+   ein Zahlenstrahl ist ueber die Zahl der Dinge gewichtet, nicht ueber die
+   Zeile. Wer das aendern will, aendert diese eine Zahl. */
+const STRAHL_PUNKTE = 100;
+
 /* Wie viele Zeichen Bilddaten ein Zug hoechstens an die Handys schicken darf.
    150 000 Zeichen Base64 sind rund 110 KB - bei acht Dingen etwa 14 KB je
    Briefmarke, also mehr als die 128-px-Bilder brauchen. Reisst der Deckel
@@ -861,14 +871,27 @@ function jeopardyStrahlPlatz(platz, wer){
   s.offen.shift();
   s.reihe.splice(sollMin, 0, idx);
   s.zugNr++;
-  if (richtig) s.richtig[s.team] = (s.richtig[s.team] || 0) + 1;
-  else s.fehler++;
+  /* Punkte sofort, nicht am Ende: der Punktestand bewegt sich mit jedem Zug,
+     und das Publikum sieht, wofuer. Vorher wurde erst am Schluss gewertet,
+     und nur die fehlerfreie Reihe zahlte ueberhaupt - bei vier bis sieben
+     Zuegen ueber mehrere Teams endete das Feld meist mit 0 fuer alle.
+     Dazu kam, dass die Zuege nicht gleich verteilt sind: bei 5 Dingen und
+     3 Teams macht Team 1 zwei Zuege, die anderen je einen, und "die meisten
+     richtigen" konnte damit nur Team 1 gewinnen (HANDOFF 2026-10-31).
+     Je richtigem Ding ein fester Betrag hat beide Fehler nicht mehr. */
+  if (richtig){
+    s.richtig[s.team] = (s.richtig[s.team] || 0) + 1;
+    jeopardyState.scores[s.team] += STRAHL_PUNKTE;
+  } else s.fehler++;
   s.letzter = { idx, platz: p, soll: sollMin, richtig, team: s.team,
                 wer: String(wer || (s.spieler && s.spieler.name) || ''),
                 // true, sobald der Host das Urteil von Hand umgestellt hat
                 // (jeopardyStrahlUrteil) - dann steht es so im Panel.
                 vomHost: false };
   if (richtig) SFX.correct(); else SFX.wrong();
+  // Der Punktestand hat sich gerade geaendert - auch das Board dahinter und
+  // die Team-Zeilen im Panel muessen ihn tragen, nicht erst beim Abschluss.
+  renderJeopardyScores();
   if (!s.offen.length){
     s.fertig = true;
     s.spieler = null;
@@ -886,9 +909,9 @@ function jeopardyStrahlPlatz(platz, wer){
    steht fest, die Absicht nicht immer. Zwei Dinge mit demselben Wert sind
    schon abgedeckt (sollMin/sollMax), aber ein Tippfehler im Wert, ein Bild,
    das zwei Dinge zeigt, oder eine Frage, die der Host anders meint als sie
-   dasteht, sind es nicht - und beim Zahlenstrahl haengt an einem einzigen
-   "falsch" die Wertung der GANZEN Reihe (jeopardyStrahlSieger). Ohne Korrektur
-   bliebe nur Undo, und das nimmt den Zug selbst zurueck.
+   dasteht, sind es nicht - und an jedem Urteil haengen seit 2026-10-31
+   bare STRAHL_PUNKTE. Ohne Korrektur bliebe nur Undo, und das nimmt den Zug
+   selbst zurueck.
 
    Bewusst nur der letzte Zug: ein Urteil von vor fuenf Zuegen nachtraeglich
    zu drehen waere fuer das Publikum nicht mehr nachvollziehbar.
@@ -900,33 +923,47 @@ function jeopardyStrahlUrteil(richtig){
   if (s.letzter.richtig === neu) return;
   jeopardySnapshot();
   const t = s.letzter.team;
+  /* Die Punkte gehen mit. Ohne das stuende im Panel "falsch", und die 100
+     vom Zug lagen trotzdem auf dem Konto. */
   if (neu){
     s.richtig[t] = (s.richtig[t] || 0) + 1;
+    jeopardyState.scores[t] += STRAHL_PUNKTE;
     // Relativ rechnen, nicht gegen null (BAUPLAN 3.8): fehler kann durch
     // mehrere Korrekturen hintereinander laufen.
     s.fehler = Math.max(0, s.fehler - 1);
     SFX.correct();
   } else {
     s.richtig[t] = Math.max(0, (s.richtig[t] || 0) - 1);
+    jeopardyState.scores[t] -= STRAHL_PUNKTE;
     s.fehler++;
     SFX.wrong();
   }
   s.letzter.richtig = neu;
   s.letzter.vomHost = true;
   s.urteilNr = (s.urteilNr || 0) + 1;
+  renderJeopardyScores();
   renderJeopardyClueOverlay();
   updateGamemaster();
 }
 
-/** Teams mit den meisten richtigen Zügen - bei Gleichstand mehrere.
- *  Nur sie bekommen Punkte, und nur wenn die Reihe fehlerfrei blieb.
- *  @returns {number[]} */
-function jeopardyStrahlSieger(){
+/** Was ein Team in diesem Zahlenstrahl schon verdient hat.
+ *  @param {number} team @returns {number} */
+function jeopardyStrahlPunkte(team){
   const s = jeopardyState.strahl;
-  if (!s || !s.fertig || s.fehler > 0) return [];
-  const best = Math.max(...s.richtig);
-  if (!best) return [];
-  return s.richtig.map((n, i) => n === best ? i : -1).filter(i => i >= 0);
+  return s ? (s.richtig[team] || 0) * STRAHL_PUNKTE : 0;
+}
+
+/** Der Stand als eine Zeile: nur Teams, die etwas geholt haben.
+ *  Leer, solange niemand richtig lag - eine Reihe aus lauter Nullen sagt
+ *  nichts und nimmt auf der Leinwand Platz weg (BAUPLAN 4.5).
+ *  @returns {string} */
+function jeopardyStrahlStandText(){
+  const s = jeopardyState.strahl;
+  if (!s) return '';
+  return s.richtig
+    .map((n, i) => n ? `${jeopardyState.teamNames[i] || ('Team ' + (i + 1))} +${n * STRAHL_PUNKTE}` : '')
+    .filter(Boolean)
+    .join(' · ');
 }
 
 /** Woran das Overlay erkennt, dass sich am letzten Zug etwas geaendert hat:
@@ -967,9 +1004,18 @@ function jeopardyStrahlHtml(clue, zugNeu){
   }).join('');
   const naechstesDing = s.offen.length ? dinge[s.offen[0]] : null;
   const naechstes = naechstesDing ? naechstesDing.text : '';
+  /* Zwei Zeilen unter der Reihe, nicht eine: oben wer dran ist, darunter wer
+     wieviel geholt hat. In einer Zeile stand der Teamname zweimal ("Team Rot
+     ist dran · Team Rot +100", Screenshot 2026-10-31) - auf drei Metern liest
+     sich das wie ein Fehler.
+
+     Die Punktezeile gilt waehrend der Runde wie am Ende. Das ist seit
+     2026-10-31 die ganze Wertung: je richtig eingeordnetem Ding
+     STRAHL_PUNKTE, sofort gutgeschrieben. Solange niemand richtig lag,
+     faellt die Zeile ganz weg statt lauter Nullen zu zeigen (BAUPLAN 4.5). */
+  const stand = jeopardyStrahlStandText();
   const dran = s.fertig
-    ? (s.fehler ? `${s.fehler === 1 ? 'Ein Fehler' : s.fehler + ' Fehler'} — keine Punkte`
-                : 'Reihe komplett — fehlerfrei!')
+    ? (stand ? 'Reihe komplett' : 'Reihe komplett — keine Punkte')
     : `${escapeHtml(jeopardyState.teamNames[s.team] || ('Team ' + (s.team + 1)))}${
         s.spieler ? ' · ' + escapeHtml(s.spieler.name) : ''} ist dran`;
   /* Das einzuordnende Ding gross darueber. Mit Bild ist das Bild die
@@ -988,7 +1034,8 @@ function jeopardyStrahlHtml(clue, zugNeu){
       ${items}
       <span class="jstr-ende">groß</span>
     </div>
-    <div class="jeopardy-strahl-zug${s.fertig && !s.fehler ? ' gut' : ''}${s.fertig && s.fehler ? ' schlecht' : ''}">${dran}</div>
+    <div class="jeopardy-strahl-zug${s.fertig && stand ? ' gut' : ''}${s.fertig && !stand ? ' schlecht' : ''}">${dran}</div>
+    ${stand ? `<div class="jeopardy-strahl-punkte">${escapeHtml(stand)}</div>` : ''}
   </div>`;
 }
 

@@ -173,44 +173,85 @@ const warte = ms => new Promise(r => setTimeout(r, ms));
   /* Das Bild muss den ganzen Weg gegangen sein: Editor -> Briefmarke ->
      Firebase -> Handy. Geprueft wird am gerenderten <img>, nicht am
      Datenstand - ein Bild, das ankommt und nicht gezeichnet wird, nuetzt
-     niemandem. Mindestens eins der vier Dinge hat keins, deshalb ist auch
-     die Mischung im Bild. */
+     niemandem.
+
+     Verglichen wird gegen den Stand des Hosts, nicht gegen eine feste
+     Erwartung: die Dinge werden gemischt (jeopardyStrahlStart), und ob das
+     erste Ding eins der beiden mit Bild ist, entscheidet der Zufall. Eine
+     feste Erwartung war genau deshalb mal gruen und mal rot. */
+  const bildSoll = await host.evaluate(() => {
+    const s = jeopardyState.strahl;
+    const dinge = jeopardyStrahlDinge(jeopardyCurrentClue());
+    return {
+      ding: !!(s.offen.length && dinge[s.offen[0]].thumb),
+      reihe: s.reihe.filter(i => dinge[i].thumb).length,
+      ohne: s.reihe.filter(i => !dinge[i].thumb).length,
+    };
+  });
   const bildAufHandy = await handy.evaluate(() => {
     const d = document.querySelector('#strahl-ding img');
     const reihe = document.querySelectorAll('#strahl-list .strahl-ding img').length;
     const ohne = document.querySelectorAll('#strahl-list .strahl-ding:not(.mit-bild)').length;
     return { ding: !!d && /^data:image\//.test(d.getAttribute('src') || ''), reihe, ohne };
   });
-  check('Zahlenstrahl: Bild des einzuordnenden Dings steht auf dem Handy',
-    bildAufHandy.ding, bildAufHandy);
-  const strahlVor = await host.evaluate(() => jeopardyState.strahl && jeopardyState.strahl.reihe.length);
+  check('Zahlenstrahl: Bilder stehen auf dem Handy, genau wo der Host sie hat',
+    bildAufHandy.ding === bildSoll.ding
+    && bildAufHandy.reihe === bildSoll.reihe
+    && bildAufHandy.ohne === bildSoll.ohne, { bildSoll, bildAufHandy });
+  const strahlVor = await host.evaluate(() => jeopardyState.strahl && {
+    n: jeopardyState.strahl.reihe.length,
+    team: jeopardyState.strahl.team,
+    punkte: jeopardyState.scores.slice(),
+  });
   await handy.click('#strahl-list .strahl-gap');
   await warte(700);
   const strahlNach = await host.evaluate(() => jeopardyState.strahl && {
     n: jeopardyState.strahl.reihe.length, team: jeopardyState.strahl.team,
     zuege: jeopardyState.strahl.fehler + jeopardyState.strahl.richtig.reduce((a, b) => a + b, 0),
+    ok: jeopardyState.strahl.letzter.richtig,
+    punkte: jeopardyState.scores.slice(),
+    proDing: STRAHL_PUNKTE,
   });
   check('Zahlenstrahl: Zug vom Handy kommt beim Host an',
-    !!strahlNach && strahlNach.n === strahlVor + 1 && strahlNach.zuege === 1, { strahlVor, strahlNach });
-  /* Der Host stellt das Urteil des letzten Zuges um. Geprueft wird, dass die
-     Zaehler mitgehen - an ihnen haengt die Wertung der ganzen Reihe
-     (jeopardyStrahlSieger). Zweimal umstellen muss wieder im Ausgangsstand
-     enden, sonst laufen fehler/richtig bei mehreren Korrekturen auseinander. */
+    !!strahlNach && strahlNach.n === strahlVor.n + 1 && strahlNach.zuege === 1, { strahlVor, strahlNach });
+  /* Seit 2026-10-31 gibt es je richtig eingeordnetem Ding sofort
+     STRAHL_PUNKTE - nicht erst am Ende und nicht nur bei fehlerfreier Reihe.
+     Geprueft wird am Punktestand des Teams, das gerade gezogen hat, und
+     dass KEIN anderes Team dabei etwas bekommt. */
+  const legerTeam = strahlVor.team;
+  const erwartet = strahlVor.punkte.map((p, i) =>
+    p + (i === legerTeam && strahlNach.ok ? strahlNach.proDing : 0));
+  check('Zahlenstrahl: richtig eingeordnet gibt sofort Punkte, nur dem Team am Zug',
+    String(strahlNach.punkte) === String(erwartet),
+    { legerTeam, ok: strahlNach.ok, vor: strahlVor.punkte, nach: strahlNach.punkte, erwartet });
+  /* Der Host stellt das Urteil des letzten Zuges um. Geprueft wird, dass
+     Zaehler UND Punkte mitgehen: an jedem Urteil haengen seit 2026-10-31
+     bare STRAHL_PUNKTE. Zweimal umstellen muss wieder im Ausgangsstand
+     enden, sonst laufen fehler/richtig/Punkte bei mehreren Korrekturen
+     auseinander. */
   const urteil = await host.evaluate(() => {
-    const s = jeopardyState.strahl;
-    const vor = { r: s.richtig.slice(), f: s.fehler, ok: s.letzter.richtig };
+    const stand = () => ({
+      r: jeopardyState.strahl.richtig.slice(), f: jeopardyState.strahl.fehler,
+      ok: jeopardyState.strahl.letzter.richtig, p: jeopardyState.scores.slice(),
+      host: jeopardyState.strahl.letzter.vomHost, team: jeopardyState.strahl.letzter.team,
+    });
+    const vor = stand();
     jeopardyStrahlUrteil(!vor.ok);
-    const um = { r: jeopardyState.strahl.richtig.slice(), f: jeopardyState.strahl.fehler,
-                 ok: jeopardyState.strahl.letzter.richtig, host: jeopardyState.strahl.letzter.vomHost };
+    const um = stand();
     jeopardyStrahlUrteil(vor.ok);
-    const zurueck = { r: jeopardyState.strahl.richtig.slice(), f: jeopardyState.strahl.fehler,
-                      ok: jeopardyState.strahl.letzter.richtig };
-    return { vor, um, zurueck };
+    return { vor, um, zurueck: stand(), proDing: STRAHL_PUNKTE };
   });
+  const t = urteil.vor.team;
+  const umErwartet = urteil.vor.p.map((p, i) =>
+    i === t ? p + (urteil.vor.ok ? -urteil.proDing : urteil.proDing) : p);
   check('Zahlenstrahl: Host stellt das Urteil um und wieder zurueck',
     urteil.um.ok !== urteil.vor.ok && urteil.um.host === true
     && urteil.zurueck.ok === urteil.vor.ok && urteil.zurueck.f === urteil.vor.f
     && String(urteil.zurueck.r) === String(urteil.vor.r), urteil);
+  check('Zahlenstrahl: die Punkte gehen mit dem Host-Urteil mit',
+    String(urteil.um.p) === String(umErwartet)
+    && String(urteil.zurueck.p) === String(urteil.vor.p),
+    { team: t, vor: urteil.vor.p, um: urteil.um.p, umErwartet, zurueck: urteil.zurueck.p });
   // Danach ist Team Blau dran - dort haengt kein Handy, also bekommt Sony
   // keinen Zug-Bildschirm mehr.
   check('Zahlenstrahl: nach dem Zug ist das Handy wieder raus', (await screen()) !== 'screen-strahl', await screen());

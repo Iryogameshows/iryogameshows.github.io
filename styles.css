@@ -1541,6 +1541,14 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 .jeopardy-strahl-zug { font-size: 1.1rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(var(--fg-rgb),.5); }
 .jeopardy-strahl-zug.gut { color: var(--green); }
 .jeopardy-strahl-zug.schlecht { color: var(--red); }
+/* Der laufende Punktestand des Zahlenstrahls, eine Zeile unter "wer ist
+   dran". Groesser und in Gold: das ist die Wertung, nicht eine Fussnote -
+   je richtig eingeordnetem Ding gibt es STRAHL_PUNKTE, sofort. Mit der
+   Zeile darueber zusammengelegt stand der Teamname zweimal da. */
+.jeopardy-strahl-punkte {
+  font-family: var(--font-display); font-size: 1.5rem; letter-spacing: 2px;
+  color: var(--accent-text);
+}
 @media (prefers-reduced-motion: reduce) {
   .jeopardy-strahl-ding,
   .jeopardy-strahl-ding.mit-bild,
