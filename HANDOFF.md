@@ -12,6 +12,88 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-10-31 (noch später) — `59d9218` Preis ist heiß: Halloween-Set mit 91 Artikeln
+
+**David:** „mach mir bitte eine datei mit 91 einträgen für DPIH, das meiste
+Halloween angelehnt, auch EIN WENIG anzügliches, lustiges, +18 zeug. ABER NICHT
+ZU VIEL. lustig gerne mehr".
+
+### Gemacht
+
+- **Neue Datei `sets/dpih-halloween.json`** — 91 Artikel im Format von
+  `exportPih()` / `importPih()` (`js/pih.js`): `{ items: [{ name, price, note,
+  media: [] }] }`. Lädt der Host über **Spiel „Der Preis ist heiß" → JSON
+  importieren**.
+- **Ein Superpreis**: „Ein gebrauchter Leichenwagen mit 180 000 km", 24 900 €,
+  `"final": true`. `startPih()` nimmt ihn aus der Mischung und spielt ihn zuletzt.
+- **Mischung**: etwa 55 Artikel Halloween im engeren Sinn (Kürbis vom Hofladen bis
+  500-kg-Zuchtkürbis, Deko, Nebelmaschine, Masken von 9,99 € bis 420 €,
+  Grabstein Styropor gegen Granit, Bestattung, Geisterjagd-Technik,
+  Geisterbahn/Movie Park/Escape-Room/Schloss Bran), der Rest Spaß-Artikel und
+  Folgekosten (Zahnreinigung am 1. November, Kopfschmerztabletten,
+  Kater-Frühstück, Döner um drei).
+- **+18 bewusst klein gehalten**: zehn Einträge, alle als Produkt mit Preis und
+  ohne Explizites — Kostüm „sexy Krankenschwester", Korsett, Hasenohren,
+  Plüschhandschellen, Kondome 144er, Erotik-Adventskalender, Pornhub-Jahr,
+  aufblasbare Puppe, Striptease-Kurs, Nudel-Scherzartikel. Das ist das „EIN
+  WENIG", nicht mehr.
+- **Preisspanne 0,59 € bis 24 900 €**, damit sowohl „nur drunter zählt" als auch
+  „nächstdran gewinnt" spielbar bleibt und nicht alles im Zehn-Euro-Bereich liegt.
+
+### Warum so
+
+- **Eigene Datei statt Startwerte in `js/pih.js`**: `pihData` in der Spieldatei
+  sind die sechs Beispielartikel und werden beim ersten Speichern vom
+  `localStorage`-Stand überschrieben. Ein Set als JSON ist austauschbar, kommt per
+  Git mit und lässt die Beispiele in Ruhe. Verworfen: Einträge direkt in
+  `js/pih.js` ergänzen — hätte die Datei um 91 Zeilen Daten verlängert und wäre
+  pro Anlass (Halloween, Geburtstag) nicht umschaltbar.
+- **Neuer Ordner `sets/`** statt `assets/`: `assets/` hält Grafiken, hier liegen
+  Spieldaten. `pages.yml` entfernt nur `tools/shots` und `tools/reactbits`, der
+  Ordner geht also mit live — die Datei ist nach dem Deploy unter
+  `https://iryo.party/sets/dpih-halloween.json` abrufbar, falls sie auf einem
+  anderen Gerät gebraucht wird.
+- **`note` kurz und sachlich**, der Witz steckt im Artikelnamen. Die Notiz wird
+  beim Auflösen gezeigt und soll in strittigen Runden den Preis begründen
+  („Durchschnitt Deutschland, 2025"), nicht eine zweite Pointe setzen.
+- **Keine Bilder** (`media: []`). Bilder aus fremden Quellen in Fragen-Sets sind
+  in der HANDOFF schon als ungeprüfter Punkt vermerkt; wer welche will, nimmt
+  `pihImportFolder()` mit eigenen Dateien („Name_Preis.jpg").
+
+### Geprüft
+
+- `node -e` über die Datei: **91 Artikel**, genau **1** mit `final: true`,
+  **0** ohne gültigen Zahlenpreis, **0** doppelte Namen, **0** leere Namen,
+  Preise von **0,59** bis **24 900**.
+- `node check.js`: fehlerfrei (15 js-Dateien, 455 Handler, 303 IDs,
+  4763 Klammernpaare) — die Datei berührt keinen Code.
+- **Nicht gelaufen**: `tools/shots` (kein CSS, kein Layout berührt),
+  `check.js --types` (keine js-Änderung).
+
+### Offen
+
+- **Preise sind nicht einzeln belegt**, sondern plausible Schätzwerte für
+  Deutschland 2025/26. Vor einer Show, in der es um Punkte geht, die extremen
+  Artikel (Zuchtkürbis 450 €, Schädel 1 200 €, Leichenwagen 24 900 €)
+  gegenprüfen oder austauschen.
+- **Nicht im Spiel getestet**: der Import ist nicht einmal durchgeklickt worden,
+  nur das Format gegen `importPih()` gelesen.
+- Der Ordner `sets/` ist in keiner Anleitung erwähnt (BAUPLAN, CLAUDE.md).
+
+### Fallstricke
+
+- `importPih()` **ersetzt** `pihData` komplett und übernimmt höchstens **einen**
+  `final`-Eintrag. Wer eigene Artikel im Browser hat, verliert sie beim Import —
+  vorher `exportPih()`.
+- Beim Import landet alles im `localStorage` (`pihData`). `localStorage` gilt je
+  Domain: unter `iryogameshows.github.io` importierte Sets sind unter
+  `iryo.party` nicht da.
+- „Artikel pro Spiel" (`pih-rounds`) zählt den Superpreis nicht mit. Bei 91
+  Artikeln also eine Zahl setzen, sonst läuft die Runde durch alle 90 plus
+  Finale.
+
+---
+
 ## 2026-10-31 (später) — `efbf54b` Zahlenstrahl: 100 Punkte je richtig eingeordnetem Ding
 
 **David:** „Dann soll es pro richtig eingeordnetem Item 100 Punkte geben."
