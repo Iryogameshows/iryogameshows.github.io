@@ -12,6 +12,62 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-01 (nachts) — `fd2189c` Preis ist heiß: Set auf die 70 Artikel mit Bild gekürzt
+
+**David:** auf die Frage, ob die 21 Artikel ohne Bild im Set bleiben sollen:
+„nein, dann mach die ganz raus".
+
+### Gemacht
+
+- **`sets/dpih-halloween.json` hat jetzt 70 Artikel statt 91.** Raus sind genau
+  die, für die Commons in drei Runden nichts Brauchbares hatte (Liste im
+  Commit `fd2189c`). Der Superpreis (Leichenwagen, `final: true`) ist dabei.
+- **Bilddateien auf `01`..`70` neu numeriert**, `quellen.json` und
+  `LIESMICH.md` mitgezogen.
+- **`SUCHE` in `tools/pihbilder/hol.js`** auf die 70 verbliebenen Begriffe
+  gekürzt, je Zeile der Artikelname als Kommentar. **`NACHSUCHE`, `KATEGORIE`
+  und `WEG` sind leer** — sie gehörten zur 91er-Fassung.
+
+### Warum so
+
+- **Artikelzeilen wörtlich übernommen** statt `JSON.stringify` über das Objekt:
+  sonst wäre aus `4.50` ein `4.5` geworden und der Diff hätte alle 70 Zeilen
+  angefasst. So steht im Diff nur, was wirklich weg ist.
+- **Neu numeriert statt Lücken gelassen**: `pihParseFileName()` streift die
+  führende Nummer zwar ab, aber die Nummer ist der einzige Anker zwischen
+  Datei, `quellen.json` und Position im Set. Mit Lücken hätte der nächste Lauf
+  von `hol.js` (`SUCHE.length !== items.length`) abgebrochen.
+- **Tabellen geleert, nicht gelöscht**: die Schalter `--nachsuche`,
+  `--kategorien`, `--aufraeumen` bleiben benutzbar, wenn später Artikel
+  dazukommen. Die Begründungen zu den 26 aussortierten Treffern stehen in den
+  beiden Einträgen darüber.
+
+### Geprüft
+
+- 70 Artikel, **1** mit `final`, **0** ohne Preis, **70** Bilddateien,
+  `quellen.json` deckt sich **Position für Position** mit den Artikelnamen
+  (`items.every((it,i) => bilder[i].artikel === it.name)` → true).
+- `node check.js`: fehlerfrei. `node tools/pihbilder/hol.js … --aufraeumen`
+  meldet „70 Bilder, 0 ohne Treffer, 13,63 MB".
+
+### Offen
+
+- Der **Ordner-Import ist weiterhin nicht im Spiel durchgeklickt**.
+- Die 21 gestrichenen Artikel stehen nur noch in der Git-History
+  (`59d9218`..`8c34a7d`). Wer sie zurückholt, muss `SUCHE` wieder anpassen.
+- Einige Bilder sind thematisch nur nah dran (Ahornsirup für Kürbissirup,
+  Efteling-Eingang für den Movie Park, Rundumlicht fürs Stroboskop).
+
+### Fallstricke
+
+- Das Einmal-Skript lag im Scratchpad und ist **nicht** im Repo. Ein zweiter
+  Lauf wäre folgenlos gewesen (nichts mehr zu streichen), aber nachvollziehbar
+  ist der Schritt nur über diesen Eintrag und den Diff.
+- Dateinamen sind jetzt an die Position gebunden: wer im Set umsortiert, muss
+  die Bilder mit umbenennen, sonst zeigt der Ordner-Import andere Preise.
+
+---
+
 ## 2026-11-01 (nachts) — `8c34a7d` Preis ist heiß: Bilder-Lücken über Commons-Kategorien gefüllt
 
 **David:** „Ja, weitersuchen" — nach `ab2ae14` hatten 35 der 91 Artikel kein Bild.
