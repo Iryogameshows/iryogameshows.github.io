@@ -687,7 +687,24 @@ function jeopardyOhneBuzzer(clue){ return jeopardyTyped(clue) || jeopardyIstStra
  *  @param {number} wert @param {JeopardyClue} clue */
 function jeopardyStrahlWert(wert, clue){
   const e = String(clue.strahlUnit || '').trim();
-  return wert.toLocaleString('de-DE') + (e ? ' ' + e : '');
+  return strahlZahl(wert) + (e ? ' ' + e : '');
+}
+
+/** Eine Zahl des Zahlenstrahls, wie sie auf der Leinwand steht.
+ *
+ *  Vierstellige ganze Zahlen bekommen KEINEN Tausenderpunkt: eine Jahreszahl
+ *  schreibt man 1945, nicht 1.945 - und ein Punkt mitten in der Zahl liest
+ *  sich fuer viele als Dezimalzeichen (David, 2026-10-31: "DIE WERTE SIND IN
+ *  DEZIMALZAHLEN"). Ab fuenf Stellen wird gruppiert, weil 1234567 sonst nicht
+ *  mehr zu lesen ist. Kommazahlen behalten ihr Komma.
+ *
+ *  Dieselbe Regel steht in buzzer/index.html (strahlWert) - die Handy-Seite
+ *  laedt js/ nicht.
+ *  @param {number} w @returns {string} */
+function strahlZahl(w){
+  return (Number.isInteger(w) && Math.abs(w) < 10000)
+    ? String(w)
+    : w.toLocaleString('de-DE');
 }
 
 /* Punkte je richtig eingeordnetem Ding (David, 2026-10-31: "pro richtig

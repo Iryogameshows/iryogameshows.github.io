@@ -622,13 +622,17 @@ function jeopardyEditStrahlText(b,col,row,idx,val){
 function jeopardyEditStrahlWert(b,col,row,idx,val){
   const c = jeopardyClue(b,col,row);
   c.strahlValues = c.strahlValues || [];
-  // Leer heisst "keine Zahl", nicht 0: ein Ding fuer 0 € waere ein gueltiger
-  // Wert und stuende ganz links in der Reihe.
-  // null statt NaN: NaN wird beim Export zu null, und Number(null) ist 0 -
-  // eine geleerte Zeile stuende sonst mit 0 ganz links in der Reihe.
-  const s = String(val||'').replace(',', '.').trim();
-  const n = Number(s);
-  c.strahlValues[idx] = (s && isFinite(n)) ? n : null;
+  /* Leer heisst "keine Zahl", nicht 0: ein Ding fuer 0 € waere ein gueltiger
+     Wert und stuende ganz links in der Reihe.
+     null statt NaN: NaN wird beim Export zu null, und Number(null) ist 0 -
+     eine geleerte Zeile stuende sonst mit 0 ganz links in der Reihe.
+
+     parseZahlDe statt replace(',','.')+Number: hier stand bis 2026-10-31 die
+     halbe Fassung, die aus "1.945" die Zahl 1,945 machte und aus "2.500" die
+     Zahl 2,5 (David: "WAS ZUR HOELLE HEISST DIE WERTE SIND IN
+     DEZIMALZAHLEN"). Wer deutsch mit Tausenderpunkt tippt, bekam eine
+     Kommazahl - und die Reihe sortierte danach. */
+  c.strahlValues[idx] = parseZahlDe(val);
 }
 /* Bild fuer ein Ding. Es wird ZWEIMAL verkleinert:
 

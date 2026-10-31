@@ -1167,6 +1167,40 @@ function escAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').re
 // dabei entstehenden " fürs HTML-Attribut.
 function escJsArg(v) { return escAttr(JSON.stringify(v == null ? '' : v)); }
 
+/* Eine getippte Zahl lesen, deutsch ODER englisch geschrieben.
+
+   Der Anlass (David, 2026-10-31, zum Zahlenstrahl): "WAS ZUR HOELLE HEISST
+   DIE WERTE SIND IN DEZIMALZAHLEN". Der Zahlenstrahl-Editor machte aus
+   "1.945" die Zahl 1,945 und aus "2.500" die Zahl 2,5 - er ersetzte nur das
+   Komma durch einen Punkt und gab den Rest an Number(). Wer einen Preis oder
+   eine Jahreszahl deutsch mit Tausenderpunkt eintippt, bekam damit eine
+   Kommazahl, und die Reihe sortierte nach ihr.
+
+   Dieselben Regeln standen schon zweimal im Haus (pihParsePrice in js/pih.js,
+   parseEstimate in buzzer/index.html) - der Zahlenstrahl benutzte sie nur
+   nicht. Jetzt stehen sie hier, einmal (BAUPLAN 3.9).
+
+   Erkannt wird an der Gruppierung, nicht an der Herkunft:
+     "1.299,90" -> 1299.9   Punkt gruppiert, Komma trennt die Nachkommastellen
+     "1,299.90" -> 1299.9   umgekehrt, englisch
+     "12,5"     -> 12.5     ein Komma ohne Dreiergruppen ist ein Dezimalkomma
+     "12.5"     -> 12.5     ein Punkt ohne Dreiergruppen ebenso
+     "1.945"    -> 1945     Dreiergruppe: Tausenderpunkt
+   "1.945" koennte rechnerisch auch 1,945 sein. Bei Preisen, Jahreszahlen und
+   Einwohnerzahlen - wofuer der Zahlenstrahl da ist - ist es das nie.
+
+   Waehrung und Leerzeichen fliegen vorher raus, damit "1.299 €" durchgeht.
+   @param {unknown} s @returns {number|null} null, wenn es keine Zahl ist */
+function parseZahlDe(s){
+  let t = String(s == null ? '' : s).trim().replace(/[€\s]/g, '');
+  if (!t) return null;
+  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(t))      t = t.replace(/\./g, '').replace(',', '.');
+  else if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) t = t.replace(/,/g, '');
+  else                                              t = t.replace(',', '.');
+  const n = Number(t);
+  return isFinite(n) ? n : null;
+}
+
 // Schwebende Bild-Vorschau: jedes Element mit data-preview-name (und optional
 // einem inneren img/video oder data-preview-src) zeigt beim Hover ein
 // vergrößertes Bild samt Dateiname an - so lässt sich jedes eingebaute Bild

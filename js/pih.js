@@ -146,17 +146,13 @@ function pihUndo(){ if (pihUndoStack.undo()) SFX.tick(); }
 
 function pihByUid(uid){ return pihState.players.find(p => p.uid === uid) || null; }
 
-// Zahl aus einer Eingabe lesen. Dieselben Regeln wie parseEstimate auf dem
-// Handy, damit "1.299,90", "1,299.90" und "1299.9" alle dasselbe ergeben.
-function pihParsePrice(s){
-  s = String(s == null ? '' : s).trim().replace(/[€\s]/g, '');
-  if (!s) return null;
-  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s))      s = s.replace(/\./g,'').replace(',','.');  // 1.299,90
-  else if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g,'');                    // 1,299.90
-  else                                             s = s.replace(',','.');                    // 12,5
-  const n = Number(s);
-  return isFinite(n) ? n : null;
-}
+/* Preis aus einer Eingabe lesen. Die Regeln stehen seit 2026-10-31 in
+   parseZahlDe (js/core.js) - sie standen vorher hier und noch einmal auf dem
+   Handy, und der Zahlenstrahl-Editor hatte eine dritte, kaputte Fassung.
+   Der Name bleibt: sieben Aufrufstellen in dieser Datei, und "Preis" sagt
+   hier mehr als "Zahl".
+   @param {unknown} s @returns {number|null} */
+function pihParsePrice(s){ return parseZahlDe(s); }
 
 /* ── Teams ────────────────────────────────────────────────────────────────
    "Der Preis ist heiss" wird bei uns in zwei Teams gespielt, das Spiel selbst

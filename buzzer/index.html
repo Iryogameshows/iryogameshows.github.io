@@ -1301,9 +1301,15 @@
   /** Bin ich am Zug? */
   function myStrahl(){ return strahlActive && !!acc && strahlKey === acc.key && !!strahlDing; }
 
+  /* Wie strahlZahl in js/jeopardy.js - dieselbe Regel, weil dieselbe Zahl
+     auf Leinwand und Handy nicht verschieden aussehen darf. Vierstellige
+     ganze Zahlen ohne Tausenderpunkt: 1945, nicht 1.945 (David, 2026-10-31:
+     "DIE WERTE SIND IN DEZIMALZAHLEN"). Die Handy-Seite laedt js/ nicht,
+     deshalb steht sie hier ein zweites Mal. */
   function strahlWert(d){
     const n = Number(d && d.wert);
-    const z = isFinite(n) ? n.toLocaleString('de-DE') : '';
+    if (!isFinite(n)) return strahlEinheit || '';
+    const z = (Number.isInteger(n) && Math.abs(n) < 10000) ? String(n) : n.toLocaleString('de-DE');
     return z + (strahlEinheit ? ' ' + strahlEinheit : '');
   }
 
