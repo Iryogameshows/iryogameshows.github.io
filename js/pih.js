@@ -773,6 +773,7 @@ function renderPihEditor(){
       📁 Ordner einlesen
       <input type="file" webkitdirectory directory multiple style="display:none;" onchange="pihImportFolder(this)">
     </label>
+    ${n ? `<button class="btn btn-danger btn-xs" onclick="pihDeleteAllItems()" title="Alle ${n} Artikel löschen — vorher exportieren!">🗑 Alle löschen</button>` : ''}
   </div>
   <div id="pih-import-info" class="hint-line" style="${pihImportInfo ? '' : 'display:none;'}">${escapeHtml(pihImportInfo)}</div>
   <div class="hint-line">${pihData.items.some(it => it && it.final)
@@ -885,6 +886,26 @@ function pihDeleteItem(i){
   pihData.items.splice(i,1);
   if (pihEditOpen === i) pihEditOpen = -1;
   renderPihEditor(); pihSave();
+}
+
+/* Alle Artikel auf einmal weg - zum Austauschen eines ganzen Satzes, ohne 70
+   Mal das Mülleimer-Symbol zu treffen. Zweimal fragen ist hier kein Zieren:
+   der Schritt ist nicht rückgängig zu machen, und was im Browser liegt, ist
+   oft die einzige Fassung. Deshalb nennt die erste Frage die Zahl und den
+   Export, die zweite kommt nur, wenn Bilder dranhängen (die sind die Arbeit,
+   die beim Versehen verloren geht). */
+function pihDeleteAllItems(){
+  const n = pihData.items.length;
+  if (!n) return;
+  const mitBild = pihData.items.filter(it => (it.media || []).filter(Boolean).length).length;
+  if (!confirm(`Alle ${n} Artikel löschen?\n\nDas lässt sich nicht rückgängig machen. Wenn du den Satz noch brauchst: abbrechen und erst „JSON exportieren".`)) return;
+  if (mitBild && !confirm(`${mitBild} Artikel ${mitBild === 1 ? 'hat' : 'haben'} ein Bild oder Video. Wirklich löschen?`)) return;
+  pihData.items = [];
+  pihEditOpen = -1;
+  pihBulkVisible = false;
+  pihSetImportInfo('');
+  renderPihEditor();
+  pihSave();
 }
 
 function exportPih(){ downloadJSON(pihData, 'der-preis-ist-heiss.json'); }
