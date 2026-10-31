@@ -12,6 +12,76 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-01 (nachts) — `8c34a7d` Preis ist heiß: Bilder-Lücken über Commons-Kategorien gefüllt
+
+**David:** „Ja, weitersuchen" — nach `ab2ae14` hatten 35 der 91 Artikel kein Bild.
+
+### Gemacht
+
+- **Neuer Modus `node tools/pihbilder/hol.js <set> --kategorien`**: fragt statt
+  der Volltextsuche eine **Commons-Kategorie** je Artikel ab (Tabelle
+  `KATEGORIE`, 34 Einträge) und nimmt die erste JPEG/PNG-Datei daraus.
+- **14 neue Bilder** behalten: Kürbis-Hofladen, Halloween-Süßigkeiten,
+  Latexmaske, Spielzeugspinne, Terrarium, Grabplatte, Holzsarg, Hexenbesen,
+  aufblasbares Kostüm, Teufelshörner, Pornhub-Wappen, Silberkette,
+  Wachsmuseum, Schloss Bran.
+- **`WEG` neu geschrieben**: eine Liste mit Grund je Nummer, Stand nach
+  Runde 3 (20 Nummern).
+- **Stand: 70 von 91 Artikeln mit Bild, 21 ohne**, 13,6 MB.
+
+### Warum so
+
+- **Kategorie statt Volltextsuche**: CirrusSearch rankt nach Text. Ein Brief von
+  1841 gewinnt gegen „claw glove", weil die Wörter im Transkript stehen. In
+  einer Kategorie liegt per Definition das Motiv — das hat die Trefferquote von
+  rund einem Drittel auf die Hälfte gehoben.
+- **Openverse (Flickr-CC) verworfen, nicht aus Überzeugung**: wäre für
+  Konsumartikel die bessere Quelle (echte Produktfotos, CC-BY), die API
+  antwortete am 2026-10-31 aber mit `error code: 504` und danach gar nicht mehr.
+  Wenn die Lücken irgendwann geschlossen werden sollen: dort noch einmal
+  ansetzen, `https://api.openverse.org/v1/images/?q=…`.
+- **Pornhub-Wappen behalten**: Commons hat kein Produktfoto eines Abos; das
+  Wappen transportiert wenigstens die Marke. Das vorige Bild (Wikipedia-Logo in
+  Pornhub-Farben) tat das nicht.
+
+### Geprüft
+
+- **Alle 28 neuen Treffer einzeln angesehen**, 14 aussortiert. Wieder dieselbe
+  Sorte Fehlgriff: ein **Schaubild aller deutschen Escape-Room-Anbieter**, ein
+  **Stich eines Acetometers** als EMF-Messgerät, **Polizei-Handschellen auf
+  einer Schutzweste** als Plüschhandschellen, eine **Schulklasse von 1947** als
+  Präparat. Eine Anzeige einer Wahrsagerin mit **echter Telefonnummer** ist
+  ebenfalls raus.
+- `node check.js`: fehlerfrei.
+- Zahlen: 34 Kategorien abgefragt, 28 Treffer, 14 behalten → 70 Bilder gesamt.
+
+### Offen
+
+- **21 Artikel ohne Bild**: 4 Kürbisschnitzset, 8 LED-Kerze, 14 Vampirzähne,
+  19 Zombiemaske, 22 Freddy-Handschuh, 30 Rabenpräparat, 32 Plastikskelett,
+  33 Gartenskelett, 34 Lehrskelett, 36 Styropor-Grabstein, 41 Nebelfluid,
+  43 Lichterkette, 52 Vampirumhang, 54 Katzenkostüm, 59 Plüschhandschellen,
+  65 Feuerwehr-Kalender, 69 Wahrsagerin, 73 EMF-Messgerät, 78 Escape-Room,
+  81 Spukhotel, 85 Fake-Wunden. Das sind durchweg Konsumartikel, die auf
+  Commons niemand fotografiert.
+- Weg dahin, falls gewünscht: Openverse erneut versuchen, oder die Bilder
+  selbst fotografieren/zeichnen und per Ordner-Import einlesen.
+- Der Ordner-Import ist weiterhin **nicht im Spiel durchgeklickt**.
+
+### Fallstricke
+
+- `--kategorien` nimmt die **erste** Datei der Kategorie (alphabetisch). Bei
+  großen Kategorien ist das Zufall — „Admin-tool.jpg" war zufällig ein
+  brauchbarer Hexenbesen, „Aberration3.png" ein unbrauchbares Diagramm.
+- Sechs Kategorien gibt es auf Commons gar nicht (`Anatomical models of
+  skeletons`, `Tombstone props`, `Fairy lights`, `Dracula costumes`,
+  `Cats in costumes`, `Special effects makeup`) — die API antwortet dann
+  einfach leer, ohne Fehler.
+- Kategorie-Treffer landen unter demselben Dateinamen wie der vorige Versuch
+  und **überschreiben** ihn.
+
+---
+
 ## 2026-10-31 (nachts) — `ab2ae14` Preis ist heiß: Bilder zum Halloween-Set, von Commons geholt und aussortiert
 
 **David:** „hol mir die Bilder" — die 91 Artikel aus `59d9218` hatten alle
