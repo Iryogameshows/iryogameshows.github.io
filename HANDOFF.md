@@ -12,6 +12,68 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-24 — `0ad70ff` Drachenflug: Leistung und Drache im Jump-'n'-Run-Typ
+
+**David:** „mach dass er wirklich n bisschen aussieht wie spyro. außerdem sind die FPS
+drops KATASTROPHAL".
+
+### Gemacht
+
+- **Leistung** (`styles.css` `#kgv`, `js/intro.js`):
+  - fertige Szenen ab `--b` per `display:none` aus dem Baum
+    (`#kg-overlay #kgv .ifw` + `@keyframes drWeg`) — vorher liefen ihre
+    Endlos-Animationen unsichtbar weiter. Geprüft: bei 5 s `.dr-welt`/`.dr-tor` `none`.
+  - gemeinsame Körnung `.grain` im Drachenflug aus: 200 % groß, `mix-blend-mode:overlay`,
+    läuft endlos — mischt in jedem Bild den ganzen Schirm neu.
+  - keine animierten `filter` mehr (Steine funkelten per `brightness`), kein
+    `mix-blend-mode` (Feuer, Brust, Strudel, Blitz), keine `blur` (Polarlicht, ferne
+    Inseln, Rauch, Grasglanz), kein `drop-shadow` auf Drachen, Bogen, Steinen (bleibt
+    nur am Zähler und an den statischen Runen), kein Flügelschlag in der Nahaufnahme.
+  - Sterne als zwei Elemente mit je 35 box-shadow-Punkten statt 70 einzelner.
+  - Teilchen reduziert: 2043 → 1239 Elemente im Intro (Spur 30→16, Sog 34→16, Warp
+    46→20, Flieger 22→12, Ringe 12→8, Feuer 44→24, Funken 110→60, Konfetti 56→28,
+    Fontänen weg, Feuerwerk 7×26→4×18 im Titel). Titel-Feuerwerk in
+    `INTRO_DR_TITELBUM`, Bild und Ton lesen dieselbe Liste.
+  - Sonnenstrahlen-Ebene 220 → 150 vmax (Maske angepasst), `will-change:transform`.
+- **Drache** (`INTRO_DR_DRACHE`): Typ „junger Comic-Drache aus dem Jump-'n'-Run" —
+  Kopf so groß wie der Rumpf, große Augen mit zwei Glanzpunkten und frecher Braue,
+  kurze Schnauze mit Grinsen, kompakter Rumpf, kurze Beine, große Hörner nach hinten,
+  kleine Flügel, Pfeilspitze. Keine Kopie der Spielfigur (geschützt) — das wurde
+  David so gesagt. Maul jetzt (232,62): Feuer 34,4vw/62,7vh, Pusten 25,3vw/77,2vh,
+  Rauch, Brust, `bahnX(t, 19.4)` nachgezogen.
+
+### Warum so
+
+- Messung headless (Wegwerf-Skript `fps.js`, rAF-Abstände + CDP `Performance.getMetrics`)
+  ist auf diesem Rechner **unbrauchbar**: derselbe Stand lieferte 3–21 fps, und die
+  Geisterbahn (unverändert) ebenfalls nur 16 fps. A/B-Versuche einzelner Effekte gingen
+  darin unter. Deshalb nach Prinzip umgebaut: was jedes Bild neu malen oder mischen
+  lässt (animierter filter, Mischmodi, Unschärfe auf bewegten Ebenen, ganzflächiger
+  Overlay-Blend) und unsichtbar weiterlaufende Szenen.
+- `display:none` erst ab `--b`, nicht vor `--a`: die Kinder zählen ihre Verzögerung
+  ab dem Einfügen und würden beim Einblenden neu starten.
+
+### Geprüft
+
+- `node check.js --types`: „alles in Ordnung".
+- Standbilder 2,3 / 7,35 / 12,6 s, Seitenfehler 0.
+- `display` der Szenen bei 2 / 5 / 10 s per Skript gelesen: wie erwartet.
+- **Nicht gemessen mit echter GPU** — Browser-Pane war ausgeblendet.
+
+### Offen
+
+- FPS auf Davids Rechner / am Beamer messen; die Grenze des Headless-Messwerts liegt
+  am Rechner, nicht am Intro.
+- Gilt die Körnung auch bei den anderen Film-Intros als Bremse? Ungeprüft, nicht
+  angefasst.
+
+### Fallstricke
+
+- `display` in `@keyframes` braucht Chrome ≥ 116; ältere ignorieren es (dann wie vorher).
+- Maulposition steckt in fünf Stellen (s. Eintrag `31f5a40`).
+
+---
+
 ## 2026-11-24 — `31f5a40` Drachenflug: Drache neu gezeichnet
 
 **David:** „ich meinte dass du den Drachen z.b. besser machen sollst, der sieht halt sehr
