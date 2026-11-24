@@ -1862,9 +1862,12 @@ const INTRO_DR_FARBEN = ['#FF3B5C', '#3BE07A', '#3B9BFF', '#FFC83B', '#C46BFF'];
 /* Feuerwerk im Titel: x %, y %, Zeit - Bild und Ton lesen dieselbe Liste. */
 const INTRO_DR_TITELBUM = [[16, 20, 9.9], [84, 16, 10.6], [30, 12, 11.4], [72, 22, 12.2]];
 
-/* Der Drache, Blick nach rechts. Dritte Fassung (David: "mach dass er
-   wirklich n bisschen aussieht wie spyro"): keine Kopie der Spielfigur,
-   aber deren Typ - junger Comic-Drache aus dem Jump-'n'-Run. Grosser Kopf
+/* Der Drache, Blick nach rechts. Vierte Fassung als Fanart (David:
+   "stell es dir vor als waer's ein Fanart"): eigene Zeichnung, keine
+   Originalgrafik, aber die Erkennungsmerkmale des klassischen Designs -
+   violette Augen, goldener Zackenkamm auf dem Kopf, lange goldene Hoerner,
+   goldgelbe Fluegel, grosse Pfeilspitze, Grinsen mit Zahn.
+   Dritte Fassung davor: junger Comic-Drache aus dem Jump-'n'-Run. Grosser Kopf
    (so gross wie der Rumpf), grosse Augen mit frecher Braue, kurze Schnauze
    mit Grinsen, kompakter Koerper, kurze Beine, grosse Hoerner nach hinten,
    kleine Fluegel, Pfeilspitze am Schwanz. Davor (31f5a40) ein schlanker
@@ -1879,10 +1882,10 @@ const INTRO_DR_ZACKEN = [[164, 46, 1], [154, 58, 1], [138, 61, .95], [120, 65, .
 const INTRO_DR_DRACHE = '<svg viewBox="-10 -20 250 170" aria-hidden="true">'
   + '<g stroke="#2A0B4A" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">'
   // hinterer Fluegel, dunkler
-  + '<g class="dr-flg hinten"><path d="M144 60 L130 20 L108 8 Q110 18 100 24 Q110 32 106 42 Q118 46 128 62Z" fill="#B8661E"/>'
-  + '<path d="M130 20 L108 8M130 20 L100 24M130 20 L106 42" fill="none" stroke="#7A3E0E" stroke-width="2"/></g>'
+  + '<g class="dr-flg hinten"><path d="M144 60 L130 20 L108 8 Q110 18 100 24 Q110 32 106 42 Q118 46 128 62Z" fill="#D49A1E"/>'
+  + '<path d="M130 20 L108 8M130 20 L100 24M130 20 L106 42" fill="none" stroke="#9A6A0C" stroke-width="2"/></g>'
   // Schwanzspitze, hinteres Bein
-  + '<path d="M14 66 L-4 52 L4 67 L-6 82Z" fill="#F5B83D"/><path d="M12 65 L-1 55 L5 66Z" fill="#FFE6A0" stroke="none"/>'
+  + '<path d="M18 66 L-6 45 L3 65 L-10 90Z" fill="#F5B83D"/><path d="M15 65 L-2 50 L4 64Z" fill="#FFE6A0" stroke="none"/>'
   + '<path d="M110 116 C114 128 108 136 98 138 L92 136 C98 132 100 124 96 118Z" fill="#5A2494"/>'
   // Silhouette: Schaedel, Stirn, Schnauze, Kehle, Brust, Bauch, Schwanz, Ruecken, Nacken
   + '<path d="M170 30 C180 14 206 12 220 24 C228 30 234 40 236 50 C238 58 234 64 228 64 L212 66 '
@@ -1904,28 +1907,31 @@ const INTRO_DR_DRACHE = '<svg viewBox="-10 -20 250 170" aria-hidden="true">'
   + '<path d="M160 112 C164 124 160 132 150 134 L142 133 C148 128 150 120 146 114Z" fill="#7B35C2"/>'
   + '<path d="M142 133l-4 4M146 134l-2 5M150 133l1 5" fill="none" stroke="#FFF6E0" stroke-width="2"/>'
   // grosse Hoerner nach hinten, Zacken an der Wange
-  + '<path d="M196 16 C194 0 186 -12 172 -18 C182 -6 188 6 188 20Z" fill="#E09A22"/>'
-  + '<path d="M182 22 C176 6 164 -6 146 -10 C160 0 168 12 172 28Z" fill="#F5B83D"/>'
-  + '<path d="M178 18 C172 6 162 -2 152 -6M192 12 C190 0 184 -8 176 -13" fill="none" stroke="#FFE6A0" stroke-width="1.8"/>'
+  + '<path d="M196 16 C196 -2 188 -16 170 -26 C182 -10 188 4 188 20Z" fill="#E09A22"/>'
+  + '<path d="M182 22 C176 2 162 -10 138 -18 C156 -4 166 10 172 28Z" fill="#F5B83D"/>'
+  + '<path d="M178 18 C172 4 160 -6 146 -13M192 12 C191 -2 184 -12 175 -19" fill="none" stroke="#FFE6A0" stroke-width="1.8"/>'
+  // goldener Zackenkamm auf dem Kopf, zwischen den Hoernern bis in den Nacken
+  + '<path d="M212 19 l-3 -11 l10 7zM201 15 l-4 -12 l11 8zM189 17 l-5 -11 l11 7zM176 25 l-7 -9 l11 4zM168 36 l-8 -6 l10 1z" fill="#F5B83D"/>'
   + '<path d="M186 72 L170 70 L180 80Z" fill="#F5B83D"/><path d="M176 64 L162 60 L170 70Z" fill="#F5B83D"/>'
   // Unterkiefer, Grinsen, Schnauzenglanz, Nasenloch
   + '<g class="dr-kiefer"><path d="M212 66 C220 68 228 67 232 63 C230 72 220 78 210 76 C206 74 206 70 212 66Z" fill="#6A2DAA"/>'
   + '<path d="M216 67l2 4 2-4M224 66l2 4 2-4" fill="#fff" stroke="none"/></g>'
   + '<path d="M208 63 C216 68 226 66 233 59" fill="none"/>'
+  + '<path d="M221 66 l2 5 2.6 -5.6z" fill="#fff" stroke-width="1.6"/>'
   + '<path d="M214 20 C226 26 234 38 236 48" fill="none" stroke="#C99AF7" stroke-width="2.5"/>'
   + '<path d="M229 50 q3 -1.5 4.5 1.5" fill="none" stroke-width="2"/>'
   // grosses Auge: Mandel, Iris mit Lichthof, Schlitz, zwei Glanzpunkte, Lid, freche Braue
   + '<path d="M192 42 C196 28 214 26 222 38 C218 50 200 54 192 42Z" fill="#fff"/>'
-  + '<ellipse cx="210" cy="40" rx="6.4" ry="8.4" fill="#2BA35E" stroke="none"/>'
-  + '<ellipse cx="210" cy="43" rx="4.4" ry="4.4" fill="#7EE0A0" stroke="none" opacity=".6"/>'
-  + '<ellipse cx="210.6" cy="40" rx="2" ry="6.2" fill="#0B2A16" stroke="none"/>'
+  + '<ellipse cx="210" cy="40" rx="6.4" ry="8.4" fill="#7A2FD0" stroke="none"/>'
+  + '<ellipse cx="210" cy="43" rx="4.4" ry="4.4" fill="#C79BFF" stroke="none" opacity=".7"/>'
+  + '<ellipse cx="210.6" cy="40" rx="2" ry="6.2" fill="#1A0636" stroke="none"/>'
   + '<circle cx="213.4" cy="35.4" r="2.4" fill="#fff" stroke="none"/><circle cx="207.4" cy="45" r="1.1" fill="#fff" stroke="none"/>'
   + '<path d="M190 41 C196 26 214 23 224 37" fill="none" stroke-width="3.6"/>'
   + '<path d="M186 30 C196 20 212 16 226 24" fill="none" stroke="#4A1A80" stroke-width="3.6"/>'
   // vorderer Fluegel: Arm in Koerperfarbe, Fingerknochen, Daumenkralle
-  + '<g class="dr-flg vorn"><path d="M150 62 L134 18 L104 2 Q108 14 96 22 Q106 30 100 44 Q116 48 126 66Z" fill="#F2A23A"/>'
-  + '<path d="M134 18 L104 2 Q108 14 96 22Z" fill="#FFC064" stroke="none" opacity=".7"/>'
-  + '<path d="M134 18 L104 2M134 18 L96 22M134 18 L100 44" fill="none" stroke="#9A5414" stroke-width="2.5"/>'
+  + '<g class="dr-flg vorn"><path d="M150 62 L134 18 L104 2 Q108 14 96 22 Q106 30 100 44 Q116 48 126 66Z" fill="#F7C948"/>'
+  + '<path d="M134 18 L104 2 Q108 14 96 22Z" fill="#FFE38A" stroke="none" opacity=".8"/>'
+  + '<path d="M134 18 L104 2M134 18 L96 22M134 18 L100 44" fill="none" stroke="#A8740F" stroke-width="2.5"/>'
   + '<path d="M150 62 L134 18" fill="none" stroke="#8E44D9" stroke-width="6"/>'
   + '<path d="M134 18 l-3 -7 5 3z" fill="#FFF6E0"/></g>'
   + '</g></svg>';
