@@ -1824,64 +1824,82 @@ function introGeisterbahnTon(t0, A){
 
 /* ── Drachenflug ──────────────────────────────────────────────────────────
    Geburtstags-Intro im Stil der Drachen-Plattformer der spaeten 90er
-   (David, 2026-11-24: "Spyrothemed intro fuer den Geburtstag von Jonas").
+   (David, 2026-11-24: "Spyrothemed intro fuer den Geburtstag von Jonas",
+   danach: "besser, hochwertiger, upgrades, uebertreib es wieder").
    Bewusst eigene Zeichnungen: ein kleiner lila Drache, Edelsteine,
    schwebende Inseln, ein Portal - keine Figur, kein Logo, keine Musik aus
    dem Spiel. Der Name kommt aus dem Geburtstagsfeld (getBdayName), nicht
    aus den Film-Texten: das Intro gehoert einem Geburtstagskind.
 
-     0,00  Morgen      Himmel, Sonne, schwebende Inseln, Edelsteine funkeln
-     1,40  Flug        der Drache fliegt durchs Bild und sammelt vier Steine,
-                       der Zaehler oben links zaehlt mit
+     0,00  Morgen      Sonnenstrahlen, ferne und nahe Inseln, Wasserfall,
+                       Ranken, Lichtstaub, Edelsteine funkeln
+     1,40  Flug        der Drache zieht eine Funkenspur durchs Bild und
+                       sammelt vier Steine (Splitter, "+25", Zaehler pulst)
      3,60  Sturm       Tempo-Streifen, Schnitt
-     3,80  Portal      Steinbogen mit Wirbel, die Kamera faehrt hinein
-     4,80  Wirbel      Ringe in Edelsteinfarben, Steine fliegen vorbei
-     6,60  Torte       Insel mit Geburtstagstorte, der Drache schiebt sich
-                       ins Bild und speit Feuer - die Kerzen gehen an
-     8,60  Titel       Einschlag, HAPPY BIRTHDAY, der Name in Drachengold,
-                       Edelsteinregen, der Drache schwebt daneben - bleibt
-    11,60  Hinweis
+     3,80  Portal      Steinbogen aus Quadern mit leuchtenden Runen,
+                       Energie wird in den Wirbel gesogen, Kamera faehrt rein
+     4,80  Wirbel      Warp-Streifen, Ringe in Edelsteinfarben, Steine
+     6,60  Torte       Nacht, Mond, Polarlicht; der Drache schiebt sich ins
+                       Bild, holt Luft (Brust gluet), speit Feuer - Kerzen
+                       gehen an, Feuerwerk ueber der Torte, Glut fuellt alles
+     8,60  Titel       Einschlag, Riesenkristall hinter dem Namen, Banner
+                       HAPPY BIRTHDAY, Name in Drachengold, Steine kreisen,
+                       Fontaenen, Feuerwerk, der Drache landet und pustet
+                       eine Flamme - bleibt stehen
+    12,00  Hinweis
 
    Wie bei allen Film-Intros steht alles von Anfang an im Dokument, die
-   Zeiten gehen als --a/--b/--t ins Markup (BAUPLAN 4.8). Drache, Steine
-   und Torte sind SVG ohne ids (der Spiegel klont den DOM, doppelte ids
+   Zeiten gehen als --a/--b/--t ins Markup (BAUPLAN 4.8). Drache, Steine,
+   Bogen sind SVG ohne ids (der Spiegel klont den DOM, doppelte ids
    wuerden sich gegenseitig die Verlaeufe wegnehmen) - deshalb flache
-   Farben mit Glanzflaechen statt SVG-Verlaeufen. */
+   Farben mit Glanz- und Schattenflaechen statt SVG-Verlaeufen. */
 const INTRO_DR = {
   flug: 1.4, sammeln: [1.9, 2.25, 2.6, 2.95], sturm: 3.6, portal: 3.8, wirbel: 4.8,
-  torte: 6.6, drache: 6.7, feuer: 7.2, kerzen: 7.55, glut: 8.1, hit: 8.6,
-  landung: 9.4, zeile: 9.6, preis: 10.4, hinweis: 11.6,
+  torte: 6.6, drache: 6.7, atem: 6.95, feuer: 7.2, kerzen: 7.55, glut: 8.1, hit: 8.6,
+  landung: 9.4, zeile: 9.6, puste: 10.6, preis: 10.4, hinweis: 12,
 };
 const INTRO_DR_FARBEN = ['#FF3B5C', '#3BE07A', '#3B9BFF', '#FFC83B', '#C46BFF'];
 
 /* Der Drache, Blick nach rechts. Fluegel (.dr-flg) und Unterkiefer
-   (.dr-kiefer) sind eigene Gruppen, damit CSS sie bewegen kann. */
+   (.dr-kiefer) sind eigene Gruppen, damit CSS sie bewegen kann. Schatten
+   und Glanz als halbtransparente Flaechen in denselben Farben. */
 const INTRO_DR_DRACHE = '<svg viewBox="0 0 210 150" aria-hidden="true">'
-  + '<path class="dr-flg hinten" d="M112 70 L98 12 Q110 24 120 20 Q124 34 136 34 Q130 52 122 68Z" fill="#B8661E"/>'
-  + '<path d="M72 92 Q44 108 30 90 Q22 78 12 76" stroke="#7B35C2" stroke-width="10" fill="none" stroke-linecap="round"/>'
-  + '<path d="M16 77 L3 63 L7 79 L1 91Z" fill="#F5B83D"/>'
-  + '<ellipse cx="80" cy="112" rx="9" ry="13" fill="#6A2DAA"/><ellipse cx="122" cy="112" rx="8" ry="13" fill="#6A2DAA"/>'
+  + '<g class="dr-flg hinten"><path d="M112 70 L98 12 Q110 24 120 20 Q124 34 136 34 Q130 52 122 68Z" fill="#B8661E"/><path d="M112 70 L98 12M116 68 L120 20" stroke="#8A4A12" stroke-width="2" fill="none"/></g>'
+  + '<path d="M72 92 Q44 108 30 90 Q22 78 12 76" stroke="#6A2DAA" stroke-width="11" fill="none" stroke-linecap="round"/>'
+  + '<path d="M72 90 Q46 102 32 88 Q24 78 14 75" stroke="#9B52E3" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/>'
+  + '<path d="M16 77 L3 63 L7 79 L1 91Z" fill="#F5B83D"/><path d="M16 77 L3 63 L7 79Z" fill="#FFE6A0"/>'
+  + '<ellipse cx="80" cy="112" rx="9" ry="13" fill="#5A2494"/><ellipse cx="122" cy="112" rx="8" ry="13" fill="#5A2494"/>'
+  + '<path d="M74 123l2 4 2-4M80 124l2 4 2-4M116 123l2 4 2-4M122 124l2 4 2-4" fill="#FFF6E0"/>'
   + '<ellipse cx="100" cy="92" rx="40" ry="25" fill="#8E44D9"/>'
-  + '<ellipse cx="96" cy="82" rx="28" ry="9" fill="#C08AF5" opacity=".5"/>'
+  + '<ellipse cx="102" cy="104" rx="36" ry="12" fill="#5A2494" opacity=".55"/>'
+  + '<ellipse cx="94" cy="80" rx="28" ry="9" fill="#C08AF5" opacity=".55"/>'
   + '<ellipse cx="104" cy="104" rx="26" ry="9" fill="#F5C45A"/>'
+  + '<path d="M86 101v8M96 98v13M106 98v13M116 99v10" stroke="#D89A2E" stroke-width="2" opacity=".8"/>'
   + '<path d="M80 70l6-9 4 9zM94 67l6-9 4 9zM108 68l6-8 4 8z" fill="#F5B83D"/>'
   + '<path d="M124 86 Q136 62 146 50 L164 58 Q150 76 140 98Z" fill="#8E44D9"/>'
+  + '<path d="M128 84 Q138 64 147 54 L152 57 Q142 72 134 92Z" fill="#C08AF5" opacity=".45"/>'
   + '<ellipse cx="156" cy="48" rx="20" ry="17" fill="#8E44D9"/>'
-  + '<g class="dr-kiefer"><path d="M158 54 Q182 56 192 54 Q186 65 166 65Z" fill="#6A2DAA"/><path d="M168 56l3 4 3-4zM178 56l3 4 3-4z" fill="#fff"/></g>'
+  + '<ellipse cx="150" cy="42" rx="10" ry="6" fill="#C08AF5" opacity=".6"/>'
+  + '<g class="dr-kiefer"><path d="M158 54 Q182 56 192 54 Q186 65 166 65Z" fill="#5A2494"/><path d="M168 56l3 4 3-4zM178 56l3 4 3-4z" fill="#fff"/></g>'
   + '<path d="M160 39 Q186 36 197 47 Q193 55 168 55Z" fill="#9B52E3"/>'
+  + '<path d="M166 41 Q184 39 192 45" stroke="#D2A8FA" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
   + '<circle cx="190" cy="44" r="1.6" fill="#3A1260"/>'
   + '<path d="M146 36 Q134 14 116 10 Q132 22 138 41Z" fill="#F5B83D"/><path d="M156 33 Q150 10 134 2 Q146 18 148 36Z" fill="#E09A22"/>'
-  + '<ellipse cx="166" cy="42" rx="6" ry="7" fill="#fff"/><ellipse cx="168" cy="43" rx="3" ry="4.5" fill="#1F6E3A"/><circle cx="169.3" cy="41" r="1.2" fill="#fff"/>'
+  + '<path d="M143 33 Q133 17 120 12M152 30 Q147 14 137 5" stroke="#FFE6A0" stroke-width="2" fill="none" stroke-linecap="round"/>'
+  + '<ellipse cx="166" cy="42" rx="6.5" ry="7.5" fill="#fff"/><ellipse cx="168" cy="43" rx="3.4" ry="5" fill="#1F6E3A"/><ellipse cx="168.4" cy="44" rx="1.6" ry="3" fill="#0B2A16"/><circle cx="169.6" cy="40.6" r="1.4" fill="#fff"/>'
   + '<path d="M158 34 Q166 29 175 35" stroke="#4A1A80" stroke-width="3" fill="none" stroke-linecap="round"/>'
   + '<g class="dr-flg vorn"><path d="M108 72 L84 6 Q100 22 112 16 Q118 32 132 30 Q128 50 122 70Z" fill="#F2A23A"/>'
-  + '<path d="M108 72 L84 6M110 70 L112 16M115 70 L132 30" stroke="#B86A1C" stroke-width="2.5" fill="none"/></g>'
+  + '<path d="M108 72 L84 6 Q100 22 112 16Z" fill="#FFC064" opacity=".6"/>'
+  + '<path d="M108 72 L84 6M110 70 L112 16M115 70 L132 30" stroke="#B86A1C" stroke-width="2.5" fill="none"/>'
+  + '<path d="M84 6 L88 18" stroke="#FFE6A0" stroke-width="2.5" stroke-linecap="round"/></g>'
   + '</svg>';
 
 /* Edelstein: Grundfarbe ueber currentColor, Facetten als Weiss/Schwarz
    darueber - so reicht eine Form fuer alle fuenf Farben. */
 const INTRO_DR_STEIN = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 15 15 6h10l7 9-12 21z" fill="currentColor"/>'
   + '<path d="M8 15h24L20 36z" fill="#000" opacity=".25"/><path d="M15 6l5 9 5-9z" fill="#fff" opacity=".6"/>'
-  + '<path d="M8 15 15 6l5 9z" fill="#fff" opacity=".3"/><path d="M20 15v21L8 15z" fill="#fff" opacity=".14"/></svg>';
+  + '<path d="M8 15 15 6l5 9z" fill="#fff" opacity=".3"/><path d="M20 15v21L8 15z" fill="#fff" opacity=".14"/>'
+  + '<path d="M13 9l2-2" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
 /** @param {number} k
  *  @returns {string} */
@@ -1889,13 +1907,49 @@ function introDrStein(k){
   return `<span class="dr-stein" style="color:${INTRO_DR_FARBEN[k % INTRO_DR_FARBEN.length]}">${INTRO_DR_STEIN}</span>`;
 }
 
-/** Schwebende Insel: Graskappe, Felsunterseite, ein paar Steine darauf.
- *  @param {string} cls @param {number} steine
+/** Schwebende Insel: Graskappe mit Halmen, Felsunterseite, Ranken,
+ *  wahlweise ein Wasserfall, ein paar Steine darauf.
+ *  @param {string} cls @param {number} steine @param {boolean} [fall]
  *  @returns {string} */
-function introDrInsel(cls, steine){
+function introDrInsel(cls, steine, fall){
+  const R = introZufall, F = introF;
   const st = Array.from({ length: steine }, (_, k) =>
-    `<i style="left:${introF(18 + k * (64 / Math.max(1, steine - 1)))}%;--d:${introF(introZufall(0, 2))}s">${introDrStein(k + 1)}</i>`).join('');
-  return `<div class="dr-insel ${cls}"><div class="dr-fels"></div><div class="dr-gras"></div><div class="dr-steine">${st}</div></div>`;
+    `<i style="left:${F(18 + k * (64 / Math.max(1, steine - 1)))}%;--d:${F(R(0, 2))}s">${introDrStein(k + 1)}</i>`).join('');
+  const ranken = Array.from({ length: 4 }, (_, k) =>
+    `<i style="left:${F(14 + k * 22 + R(-4, 4))}%;height:${F(R(5, 11))}vh;--d:${F(R(0, 3))}s"></i>`).join('');
+  return `<div class="dr-insel ${cls}"><div class="dr-fels"></div>${fall ? '<div class="dr-fall"></div>' : ''}<div class="dr-ranken">${ranken}</div>`
+    + `<div class="dr-gras"></div><div class="dr-steine">${st}</div></div>`;
+}
+
+/** Steinbogen als SVG: elf Keilsteine, Pfeiler aus Quadern, Runen auf den
+ *  Pfeilern. Oeffnung 44..316 x 44..480 (passt zu .dr-strudel).
+ *  @returns {string} */
+function introDrBogen(){
+  const cx = 180, cy = 180, ra = 180, ri = 136, n = 11, teile = [];
+  for (let k = 0; k < n; k++){
+    const w1 = Math.PI + k * Math.PI / n, w2 = Math.PI + (k + 1) * Math.PI / n;
+    const p = (/** @type {number} */ r, /** @type {number} */ w) => `${introF(cx + Math.cos(w) * r)} ${introF(cy + Math.sin(w) * r)}`;
+    teile.push(`<path d="M${p(ri, w1)}L${p(ra, w1)}L${p(ra, w2)}L${p(ri, w2)}Z" fill="${k % 2 ? '#7E6C94' : '#8F7EA6'}"/>`);
+  }
+  for (let y = 180; y < 480; y += 50) [0, 316].forEach((x, s) =>
+    teile.push(`<rect x="${x}" y="${y}" width="44" height="50" fill="${(y / 50 + s) % 2 ? '#7E6C94' : '#8F7EA6'}"/>`));
+  const rune = 'M0 0v16M0 5l7-5M0 10l7 6M10 2v14M10 2l6 6-6 6';
+  const runen = [210, 290, 370].map(y => `<path d="${rune}" transform="translate(14 ${y})"/><path d="${rune}" transform="translate(330 ${y}) scale(-1 1)"/>`).join('');
+  return `<svg class="dr-bogen-svg" viewBox="0 0 360 480" aria-hidden="true"><g stroke="#3A2C4A" stroke-width="3">${teile.join('')}</g>`
+    + `<path d="M160 -6h40l-6 46h-28z" fill="#A493BA" stroke="#3A2C4A" stroke-width="3"/>`
+    + `<g class="dr-runen" stroke="#7CF3FF" stroke-width="3" fill="none" stroke-linecap="round">${runen}</g></svg>`;
+}
+
+/** Kleiner Feuerwerkskoerper: Funken nach allen Seiten, Radius in vh.
+ *  Nutzt die gemeinsame Funken-Mechanik (.pt-fk), nur mit kleinem Radius.
+ *  @param {number} n @param {number} t @param {number} weite @param {string[]} farben
+ *  @returns {string} */
+function introDrBum(n, t, weite, farben){
+  const R = introZufall, F = introF;
+  return Array.from({ length: n }, (_, k) => {
+    const w = k / n * Math.PI * 2 + R(-.1, .1), r = R(.7, 1) * weite;
+    return `<i class="pt-fk" style="--x:${F(Math.cos(w) * r)}vh;--y:${F(Math.sin(w) * r)}vh;--g:${F(R(3, 7))}vh;--d:${F(t)}s;--u:${F(R(1, 1.5))}s;--c:${farben[k % farben.length]}"><b></b></i>`;
+  }).join('');
 }
 
 /** @param {IntroTexte} tx
@@ -1907,31 +1961,65 @@ function introDracheHtml(tx){
   const logoTx = { ...tx, titelKlein: 'Happy Birthday', titel1: name, titel2: '', titelZeile: 'Die große Geburtstagsshow', preis: '' };
 
   const wolken = Array.from({ length: 6 }, (_, k) =>
-    `<i style="top:${F(R(6, 46))}%;--s:${F(R(.7, 1.4))};--u:${F(R(30, 50))}s;--d:${F(-k * 8)}s"></i>`).join('');
-  const sterne = Array.from({ length: 50 }, () =>
-    `<i style="left:${F(R(0, 100))}%;top:${F(R(0, 55))}%;--o:${F(R(.3, 1))};--u:${F(R(2, 4.5))}s;--d:${F(R(0, 3))}s"></i>`).join('');
+    `<i style="top:${F(R(6, 40))}%;--s:${F(R(.7, 1.4))};--u:${F(R(30, 50))}s;--d:${F(-k * 8)}s"></i>`).join('');
+  const sterne = Array.from({ length: 70 }, () =>
+    `<i style="left:${F(R(0, 100))}%;top:${F(R(0, 60))}%;--o:${F(R(.3, 1))};--u:${F(R(2, 4.5))}s;--d:${F(R(0, 3))}s"></i>`).join('');
+  const staub = (/** @type {number} */ n) => Array.from({ length: n }, () =>
+    `<i style="left:${F(R(0, 100))}%;top:${F(R(30, 100))}%;--x:${F(R(-6, 6))}vw;--u:${F(R(5, 9))}s;--d:${F(-R(0, 9))}s;--s:${F(R(.5, 1.4))}"></i>`).join('');
   /* Die vier Steine auf der Flugbahn: dort, wo das Maul des Drachen zur
      jeweiligen Sammelzeit steht (linear von -20vw bis 110vw in 2,2 s,
-     Maul 18vw rechts von der linken Kante des Drachen). */
+     Maul 18vw rechts von der linken Kante des Drachen). Beim Einsammeln
+     fliegen Splitter, "+25" steigt auf. */
+  const bahnX = (/** @type {number} */ t, /** @type {number} */ vorn) => -20 + (t - P.flug) / 2.2 * 130 + vorn;
   const bahn = P.sammeln.map((t, k) => {
-    const x = -20 + (t - P.flug) / 2.2 * 130 + 18;
-    return `<div class="dr-beute" style="left:${F(x)}vw;top:${F(44 + Math.sin(k * 1.7) * 4)}vh;--t:${s(t)}">${introDrStein(k)}<b></b></div>`;
+    const splitter = Array.from({ length: 8 }, (_, j) => {
+      const w = j / 8 * Math.PI * 2;
+      return `<i style="--x:${F(Math.cos(w) * R(6, 10))}vh;--y:${F(Math.sin(w) * R(6, 10))}vh"></i>`;
+    }).join('');
+    return `<div class="dr-beute" style="left:${F(bahnX(t, 18))}vw;top:${F(44 + Math.sin(k * 1.7) * 4)}vh;--t:${s(t)};color:${INTRO_DR_FARBEN[k]}">`
+      + `${introDrStein(k)}<b></b><span class="dr-splitter">${splitter}</span><em>+25</em></div>`;
+  }).join('');
+  /* Funkenspur hinter dem Schwanz: jeder Funke erscheint, wenn der Schwanz
+     an seiner Stelle vorbeikommt, und verglimmt dort. */
+  const spur = Array.from({ length: 30 }, (_, k) => {
+    const t = P.flug + .25 + k * .065;
+    return `<i style="left:${F(bahnX(t, 1))}vw;top:${F(42 + R(-3, 3))}vh;--t:${s(+t.toFixed(2))};--c:${INTRO_DR_FARBEN[k % 5]}"></i>`;
   }).join('');
   /* Der Zaehler: jede Zahl ist ein eigenes Fenster zwischen zwei Sammelzeiten. */
   const zeiten = [0, ...P.sammeln, P.portal];
   const zahlen = zeiten.slice(0, -1).map((t, k) =>
     `<span class="ifw" style="--a:${s(t)};--b:${s(zeiten[k + 1])}">${k * 25}</span>`).join('');
+  const sog = Array.from({ length: 34 }, () => {
+    const w = R(0, Math.PI * 2), r = R(30, 60);
+    return `<i style="--x:${F(Math.cos(w) * r)}vh;--y:${F(Math.sin(w) * r)}vh;--u:${F(R(.6, 1.1))}s;--d:${F(-R(0, 1.1))}s;--c:${INTRO_DR_FARBEN[Math.floor(R(0, 5))]}"></i>`;
+  }).join('');
   const ringe = Array.from({ length: 12 }, (_, k) =>
     `<i style="--d:${F(P.wirbel - .2 + k * .16)}s;--u:${F(R(1.3, 1.7))}s;--c:${INTRO_DR_FARBEN[k % 5]}"></i>`).join('');
+  const warp = Array.from({ length: 46 }, () =>
+    `<i style="--w:${F(R(0, 360))}deg;--u:${F(R(.35, .6))}s;--d:${F(P.wirbel + R(-.4, 0))}s"></i>`).join('');
   const flieger = Array.from({ length: 22 }, (_, k) => {
     const w = R(0, Math.PI * 2), u = R(.9, 1.5);
     return `<i style="--x:${F(Math.cos(w) * R(40, 70))}vw;--y:${F(Math.sin(w) * R(34, 56))}vh;--u:${F(u)}s;--d:${F(P.wirbel + R(0, 1.8 - u * .6))}s;--r:${F(R(-400, 400))}deg">${introDrStein(k)}</i>`;
   }).join('');
   const kerzen = Array.from({ length: 5 }, (_, k) =>
-    `<i style="left:${14 + k * 17}%;--t:${s(P.kerzen + k * .07)};--h:${F(R(.85, 1.15))}"><b></b></i>`).join('');
-  const feuer = Array.from({ length: 34 }, () => {
+    `<i style="left:${14 + k * 17}%;--t:${s(+(P.kerzen + k * .07).toFixed(2))};--h:${F(R(.85, 1.15))}"><b></b></i>`).join('');
+  const feuer = Array.from({ length: 44 }, () => {
     const u = R(.45, .8);
     return `<i style="--x:${F(R(38, 56))}vw;--y:${F(R(-24, -8))}vh;--s:${F(R(2.5, 5))};--u:${F(u)}s;--d:${F(P.feuer + R(0, P.glut + .3 - P.feuer - u * .5))}s"></i>`;
+  }).join('');
+  const rauch = Array.from({ length: 8 }, () =>
+    `<i style="--x:${F(R(4, 12))}vw;--y:${F(R(-16, -8))}vh;--u:${F(R(.9, 1.4))}s;--d:${F(P.glut - .1 + R(0, .4))}s"></i>`).join('');
+  /* Feuerwerk ueber der Torte (kurz nach den Kerzen) und im Titel. */
+  const bum = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ t, /** @type {number} */ w, /** @type {number} */ n) =>
+    `<div class="dr-bum" style="left:${x}%;top:${y}%;--t:${s(t)}"><i class="dr-blume"></i>${introDrBum(n, t, w, INTRO_DR_FARBEN.concat(['#FFFFFF']))}</div>`;
+  const tortBum = bum(62, 16, 7.7, 11, 22) + bum(86, 10, 7.85, 9, 18) + bum(74, 6, 8.0, 13, 24);
+  const titelBum = [[16, 20, 9.9], [84, 16, 10.5], [26, 12, 11.2], [72, 22, 11.8], [50, 8, 12.4], [12, 30, 13.1], [88, 28, 13.6]]
+    .map(([x, y, t]) => bum(x, y, t, R(10, 15), 26)).join('');
+  const orbit = Array.from({ length: 5 }, (_, k) =>
+    `<i style="--d:${F(-k * 1.6)}s">${introDrStein(k)}</i>`).join('');
+  const puste = Array.from({ length: 16 }, () => {
+    const u = R(.4, .7);
+    return `<i style="--x:${F(R(8, 16))}vw;--y:${F(R(-10, -3))}vh;--s:${F(R(1.5, 3))};--u:${F(u)}s;--d:${F(P.puste + R(0, .35))}s"></i>`;
   }).join('');
 
   return `<div id="kgv" class="mat-drache" style="--hit:${s(P.hit)};--oy:42%">
@@ -1939,58 +2027,85 @@ function introDracheHtml(tx){
 
       <div class="ifw dr-welt" style="--a:0s;--b:${s(P.portal)}">
         <div class="dr-himmel"></div>
+        <div class="dr-strahl"></div>
         <div class="dr-sonne"></div>
         <div class="dr-wolken">${wolken}</div>
+        ${introDrInsel('fern f1', 0)}${introDrInsel('fern f2', 0)}${introDrInsel('fern f3', 0)}
         <div class="dr-berge fern"></div><div class="dr-berge nah"></div>
-        ${introDrInsel('i1', 3)}${introDrInsel('i2', 2)}${introDrInsel('i3', 4)}
+        ${introDrInsel('i1', 3)}${introDrInsel('i2', 2)}${introDrInsel('i3', 4, true)}
+        <div class="dr-staub">${staub(30)}</div>
+        <div class="dr-spur">${spur}</div>
         <div class="dr-bahn">${bahn}</div>
         <div class="dr-flug" style="--t:${s(P.flug)}"><div class="dr-wipp">${INTRO_DR_DRACHE}</div></div>
-        <div class="dr-hud">${introDrStein(4)}<span class="dr-zahl">${zahlen}</span></div>
+        <div class="dr-hud" style="${P.sammeln.map((t, k) => `--p${k}:${s(t)}`).join(';')}">${introDrStein(4)}<span class="dr-zahl">${zahlen}</span></div>
         <div class="dr-tempo" style="--t:${s(P.sturm - .15)}"></div>
       </div>
 
       <div class="ifw dr-tor" style="--a:${s(P.portal)};--b:${s(P.wirbel)}">
         <div class="dr-himmel abend"></div>
+        <div class="dr-sterne halb">${sterne}</div>
+        ${introDrInsel('fern f1', 0)}${introDrInsel('fern f3', 0)}
         <div class="dr-berge nah"></div>
-        <div class="dr-bogen" style="--t:${s(P.portal)}"><div class="dr-strudel"></div><div class="dr-mauer"></div></div>
+        <div class="dr-bodenlicht"></div>
+        <div class="dr-bogen" style="--t:${s(P.portal)}">
+          <div class="dr-halo"></div>
+          <div class="dr-strudel"></div>
+          ${introDrBogen()}
+          <div class="dr-sog">${sog}</div>
+        </div>
       </div>
 
       <div class="ifw dr-tunnel" style="--a:${s(P.wirbel)};--b:${s(P.torte)}">
         <div class="dr-strudel gross"></div>
+        <div class="dr-warp">${warp}</div>
         <div class="dr-ringe">${ringe}</div>
         <div class="dr-flieger">${flieger}</div>
+        <div class="dr-kern"></div>
       </div>
 
       <div class="ifw dr-fest" style="--a:${s(P.torte)};--b:${s(P.hit)}">
         <div class="dr-himmel nacht"></div>
         <div class="dr-sterne">${sterne}</div>
+        <div class="dr-aurora"><i></i><i></i></div>
+        <div class="dr-mond"></div>
+        ${introDrInsel('fern f2', 0)}
         <div class="dr-berge fern"></div>
+        <div class="dr-feuerwerk">${tortBum}</div>
         <div class="dr-tortinsel">
           <div class="dr-insel i4"><div class="dr-fels"></div><div class="dr-gras"></div></div>
-          <div class="dr-torte">
+          <div class="dr-torte" style="--t:${s(P.kerzen)}">
+            <div class="dr-tortlicht"></div>
             <div class="dr-etage u"></div><div class="dr-etage o"></div>
             <div class="dr-kerzen">${kerzen}</div>
           </div>
         </div>
-        <div class="dr-kopf" style="--t:${s(P.drache)};--f:${s(P.feuer)};--g:${s(P.glut)}">${INTRO_DR_DRACHE}</div>
+        <div class="dr-kopf" style="--t:${s(P.drache)};--at:${s(P.atem)};--f:${s(P.feuer)};--g:${s(P.glut)}">${INTRO_DR_DRACHE}<i class="dr-brust"></i></div>
         <div class="dr-feuer">${feuer}</div>
+        <div class="dr-rauch">${rauch}</div>
         <div class="dr-glut" style="--t:${s(P.glut)}"></div>
       </div>
 
       <div class="ifw fin dr-titel" style="--a:${s(P.hit)}">
         <div class="dr-himmel titel"></div>
         <div class="dr-strahlen"></div>
+        ${introDrInsel('fern f1', 0)}${introDrInsel('fern f3', 0)}
+        <div class="dr-feuerwerk">${titelBum}</div>
+        <div class="dr-kristall" style="--t:${s(P.hit)}">${introDrStein(4)}</div>
+        <div class="dr-orbit" style="--t:${s(P.landung)}">${orbit}</div>
         <i class="pt-ring" style="--t:${s(P.hit)}"></i><i class="pt-ring" style="--t:${s(P.landung)}"></i>
         ${introFilmLogo(logoTx, P, { spiegel: true })}
-        <div class="pt-funken">${introFunken(90, P.hit, ['#FFE9A8', '#FFC83B', '#C46BFF', '#3B9BFF', '#FFFFFF'])}</div>
-        <div class="pt-konfetti">${introKonfetti(46, P.hit + .2, INTRO_DR_FARBEN)}</div>
+        <div class="pt-pyro">${introPyro(P.landung, [6, 94])}</div>
+        <div class="pt-funken">${introFunken(110, P.hit, ['#FFE9A8', '#FFC83B', '#C46BFF', '#3B9BFF', '#FFFFFF'])}</div>
+        <div class="pt-konfetti">${introKonfetti(56, P.hit + .2, INTRO_DR_FARBEN)}</div>
+        <div class="dr-staub titel">${staub(24)}</div>
         <div class="dr-begleiter" style="--t:${s(P.landung)}"><div class="dr-wipp">${INTRO_DR_DRACHE}</div></div>
-        <div class="pt-glitzer">${introGlitzer(8, P.preis)}</div>
+        <div class="dr-feuer klein">${puste}</div>
+        <div class="pt-glitzer">${introGlitzer(10, P.preis)}</div>
         <i class="pt-flare" style="--t:${s(P.hit)}"></i>
       </div>
     </div>
 
-    <div class="dr-blitz" style="--s0:${s(P.portal)};--h:${s(P.hit)}"></div>
+    <div class="dr-blitz" style="--s0:${s(P.portal)};--s1:${s(P.wirbel)};--h:${s(P.hit)}"></div>
     <div class="vig"></div>
     <div class="grain"></div>
     <div class="ifw fin" style="--a:${s(P.hinweis)}"><div class="kg-hint">Klicken um fortzufahren</div></div>
@@ -2000,38 +2115,66 @@ function introDracheHtml(tx){
 /** @param {number} t0 @param {IntroTon} A */
 function introDracheTon(t0, A){
   const P = INTRO_DR, n = introNote, R = introZufall;
-  // Morgen: weiche Flaeche in C-Dur, darueber eine Harfe aufwaerts
+  // Morgen: weiche Flaeche in C-Dur, Harfe aufwaerts, darueber eine kleine
+  // Floeten-Melodie (pentatonisch, Dreieckswelle) und ein ruhiger Bass
   A.flaeche(t0, [n(48), n(55), n(60), n(64)], P.sturm, .05, 1400, 1.2);
   [60, 64, 67, 72, 76, 79, 84].forEach((m, i) => A.ping(t0 + .3 + i * .11, n(m), .07, 1.2));
-  // Fluegelschlaege beim Flug, je Stein ein Glockenpaar - jedes hoeher
+  [[76, .2], [79, .2], [81, .4], [79, .2], [76, .2], [72, .4], [74, .2], [76, .6]].reduce((t, [m, d]) => {
+    A.piep(t0 + t, n(m), d * .9, .05, 'triangle'); return t + d;
+  }, 1.4);
+  [[36, 1.4], [43, 2.0], [41, 2.6], [43, 3.1]].forEach(([m, t]) => A.bass(t0 + t, n(m), .5, .12));
+  // Fluegelschlaege, Funkenspur, je Stein ein Glockenpaar - jedes hoeher
   A.wisch(t0 + P.flug, .8, .25, 500, 1800);
   for (let t = P.flug; t < P.sturm; t += .32) A.wisch(t0 + t, .22, .06, 300, 700);
-  P.sammeln.forEach((t, k) => { A.ping(t0 + t, n(84 + k * 2), .09, .5); A.ping(t0 + t + .07, n(91 + k * 2), .07, .7); });
-  // Sturm und Portal: Anlauf, Luftzug, tiefes Wabern
+  for (let k = 0; k < 10; k++) A.ping(t0 + P.flug + .3 + k * .18, n(Math.round(R(96, 103))), .015, .3);
+  P.sammeln.forEach((t, k) => {
+    A.ping(t0 + t, n(84 + k * 2), .09, .5); A.ping(t0 + t + .07, n(91 + k * 2), .07, .7);
+    A.klick(t0 + t, .12, 5000);
+  });
+  // Sturm und Portal: Anlauf, Luftzug, tiefes Wabern, Runen klingen an
   A.anstieg(t0 + P.sturm - .5, .7, .4);
   A.wisch(t0 + P.sturm, .5, .45, 400, 3000);
   A.kick(t0 + P.portal, .8); A.becken(t0 + P.portal, .2);
   A.gleit(t0 + P.portal, 110, 420, 1, .12, 'triangle');
   A.flaeche(t0 + P.portal, [n(45), n(52), n(57), n(63)], P.torte - P.portal, .05, 1800, .3);
-  // Wirbel: Luftzuege und vorbeifliegende Steine
-  for (let t = P.wirbel; t < P.torte; t += .4) A.wisch(t0 + t, .35, .16, 900, 2600);
-  for (let k = 0; k < 14; k++) A.ping(t0 + P.wirbel + R(0, 1.7), n(Math.round(R(84, 100))), .03, .35);
-  // Torte: Trommelwirbel bis zum Einschlag, Feuerstoss, Kerzen zuenden
+  [69, 72, 76, 81, 84, 88].forEach((m, i) => A.ping(t0 + P.portal + .15 + i * .08, n(m), .04, .8));
+  // Wirbel: Sog, Luftzuege, vorbeifliegende Steine, Bass-Puls
+  A.anstieg(t0 + P.wirbel - .3, 1.2, .3);
+  for (let t = P.wirbel; t < P.torte; t += .4) { A.wisch(t0 + t, .35, .16, 900, 2600); A.kick(t0 + t, .35); }
+  for (let k = 0; k < 18; k++) A.ping(t0 + P.wirbel + R(0, 1.7), n(Math.round(R(84, 100))), .03, .35);
+  // Torte: Trommelwirbel bis zum Einschlag, Einatmen, Feuerstoss, Kerzen,
+  // Feuerwerk ueber der Torte
   A.wirbel(t0 + P.drache, P.hit - P.drache, .4);
-  A.wisch(t0 + P.feuer, P.glut + .4 - P.feuer, .55, 250, 1400);
-  A.aufprall(t0 + P.feuer, .4);
+  A.wisch(t0 + P.atem, .3, .2, 2400, 500);
+  A.wisch(t0 + P.feuer, P.glut + .4 - P.feuer, .6, 250, 1400);
+  A.gleit(t0 + P.feuer, 160, 60, .9, .2, 'sawtooth');
+  A.aufprall(t0 + P.feuer, .5);
   for (let k = 0; k < 5; k++) A.ping(t0 + P.kerzen + k * .07, n(88 + k), .05, .5);
+  [7.7, 7.85, 8.0].forEach(t => { A.kick(t0 + t, .4); for (let j = 0; j < 6; j++) A.klick(t0 + t + .1 + j * .05, .06, R(1800, 3600)); });
   A.anstieg(t0 + P.glut, P.hit - P.glut, .5);
-  // Einschlag, Fanfare, dann "Happy Birthday" (gemeinfrei) auf Glocken
-  A.aufprall(t0 + P.hit, 1.3); A.becken(t0 + P.hit, .45);
+  // Einschlag, Fanfare, dann "Happy Birthday" (gemeinfrei) auf Glocken mit
+  // Akkorden darunter; Feuerwerk im Titel, das Pusten des Drachen
+  A.aufprall(t0 + P.hit, 1.4); A.becken(t0 + P.hit, .5);
   A.stoss(t0 + P.hit, [n(48), n(55), n(60), n(64), n(67)], .16, 2.4);
+  A.stoss(t0 + P.hit + .45, [n(53), n(60), n(65), n(69)], .12, .5);
+  A.stoss(t0 + P.hit + .6, [n(55), n(62), n(67), n(71), n(74)], .14, 1.4);
   A.flaeche(t0 + P.hit, [n(48), n(60), n(64), n(67)], 7, .045, 2200, .8);
+  A.wisch(t0 + P.landung - .5, .6, .25, 400, 1600);
   const b = .36;
   /** @type {Array<[number, number]>} */
   const lied = [[67, .75], [67, .25], [69, 1], [67, 1], [72, 1], [71, 2], [67, .75], [67, .25], [69, 1], [67, 1], [74, 1], [72, 2]];
-  let z = P.landung + .2;
+  /** @type {Array<[number, number[]]>} Takt in Schlaegen, Akkord */
+  const akk = [[0, [48, 55, 64]], [3, [43, 55, 62]], [6, [43, 53, 59]], [9, [48, 55, 64]]];
+  const start = P.landung + .2;
+  let z = start;
   lied.forEach(([m, d]) => { A.ping(t0 + z, n(m + 12), .1, d * b + .5); A.ping(t0 + z, n(m), .05, d * b + .3); z += d * b; });
-  for (let k = 0; k < 16; k++) A.klick(t0 + P.hit + .3 + R(0, 3), .05, R(1400, 3200));
+  akk.forEach(([schlag, ms]) => A.flaeche(t0 + start + schlag * b, ms.map(n), 3 * b + .3, .03, 1600, .05));
+  A.wisch(t0 + P.puste, .7, .3, 300, 1200);
+  [9.9, 10.5, 11.2, 11.8, 12.4, 13.1, 13.6].forEach(t => {
+    A.gleit(t0 + t - .5, 600, 2400, .45, .03, 'sine');
+    A.kick(t0 + t, .45); A.becken(t0 + t, .12);
+    for (let j = 0; j < 8; j++) A.klick(t0 + t + .15 + j * .06, .05, R(1600, 3800));
+  });
 }
 
 const INTRO_FILME = {
