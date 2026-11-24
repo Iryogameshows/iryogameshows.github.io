@@ -9,19 +9,18 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  # deploy-pages@v5 sucht das Artefakt ueber die Actions-API; ohne dieses
-  # Recht fand es am 2026-11-24 dreimal "0 artifacts" (Lauf 45349036267).
-  actions: read
 
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
+# Zwei Jobs statt einem: laufen Upload und Deploy im selben Job, findet
+# deploy-pages das eben hochgeladene Artefakt oft nicht ("Found 0 artifact(s)",
+# actions/deploy-pages#451). Am 2026-11-24 viermal hintereinander; ein
+# Neustart hilft nicht (zweites Artefakt gleichen Namens). Der eigene
+# Build-Job ist der Aufbau der uebrigen Pages-Vorlagen.
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -67,6 +66,14 @@ jobs:
           # Seite durch einen Generator schicken, der Dateien mit _ oder . am
           # Anfang verwirft.
           include-hidden-files: true
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
