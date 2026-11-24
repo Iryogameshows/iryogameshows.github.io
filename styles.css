@@ -3109,6 +3109,165 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   text-shadow:0 .012em 0 #A33A02,0 .024em 0 #8A3400,0 .036em 0 #742C00,0 .048em 0 #5E2400,0 .06em 0 #4A1C00,
               0 .072em 0 #3A1600,0 .084em 0 #2A1000,0 .096em 0 #1E0B00,0 .14em .12em rgba(0,0,0,.7),0 0 .4em rgba(124,255,61,.35);}
 
+/* ── Drachenflug ──
+   Geburtstag im Stil der Drachen-Plattformer der spaeten 90er (David,
+   2026-11-24, fuer Jonas). Palette: Morgenhimmel Lila bis Pfirsich, Gras
+   #7BE05A, Fels braun, Drache #8E44D9 mit Gold #F5B83D, fuenf
+   Edelsteinfarben (INTRO_DR_FARBEN). Schrift Luckiest Guy (liegt global in
+   index.html). Zeiten aus INTRO_DR (js/intro.js). Eigene Zeichnungen, keine
+   Figur und kein Logo aus dem Spiel. */
+#kgv{position:relative;width:100%;height:100%;overflow:hidden;color:#fff;font-family:'Luckiest Guy','Bungee',sans-serif;background:#1A0B3A;}
+#kgv i{font-style:normal;}
+#kgv svg{display:block;width:100%;height:auto;overflow:visible;}
+#kgv .dr-himmel{position:absolute;inset:0;background:linear-gradient(180deg,#2B1266 0%,#6E35A6 34%,#E07D6A 66%,#FFD27A 100%);}
+#kgv .dr-himmel.abend{background:linear-gradient(180deg,#140838 0%,#3E1A78 45%,#A8467A 80%,#F08A5D 100%);}
+#kgv .dr-himmel.nacht{background:linear-gradient(180deg,#07031A 0%,#1B0B44 50%,#43206E 100%);}
+#kgv .dr-himmel.titel{background:radial-gradient(ellipse 70% 60% at 50% 44%,#8A4BE0 0%,#43188E 42%,#170638 80%,#0C031F 100%);}
+#kgv .dr-sonne{position:absolute;left:50%;bottom:24%;width:34vh;height:34vh;margin-left:-17vh;border-radius:50%;
+  background:radial-gradient(circle,#FFFBE6 0%,#FFE7A0 26%,rgba(255,190,110,.55) 46%,rgba(255,160,110,0) 70%);
+  animation:drSonne 3.2s cubic-bezier(.2,.7,.3,1) .1s both;}
+@keyframes drSonne{from{transform:translateY(14vh) scale(.8);opacity:.3}to{transform:none;opacity:1}}
+#kgv .dr-wolken i{position:absolute;left:0;width:30vw;height:9vh;scale:var(--s);opacity:.75;
+  /* Ellipsen kleiner als die Box: sonst schneidet der Rand sie gerade ab. */
+  background:radial-gradient(ellipse 24% 38% at 30% 60%,#FFE3EC 92%,transparent 100%),radial-gradient(ellipse 26% 48% at 54% 50%,#FFEFF4 92%,transparent 100%),
+             radial-gradient(ellipse 20% 34% at 76% 64%,#FBD6E4 92%,transparent 100%);
+  animation:drWolke var(--u) linear var(--d) infinite;}
+@keyframes drWolke{from{transform:translateX(110vw)}to{transform:translateX(-40vw)}}
+#kgv .dr-berge{position:absolute;left:0;right:0;bottom:0;}
+#kgv .dr-berge.fern{height:48%;background:linear-gradient(180deg,#7A48AE,#3C1E66);opacity:.85;
+  clip-path:polygon(0 60%,8% 34%,15% 50%,24% 12%,33% 44%,41% 30%,50% 58%,58% 20%,67% 46%,75% 28%,84% 52%,92% 18%,100% 40%,100% 100%,0 100%);}
+#kgv .dr-berge.nah{height:30%;
+  background:radial-gradient(ellipse 34% 70% at 12% 100%,#2F7A38 98%,transparent 100%),radial-gradient(ellipse 42% 58% at 55% 100%,#3A8C3F 98%,transparent 100%),
+             radial-gradient(ellipse 32% 82% at 96% 100%,#2A6E33 98%,transparent 100%);}
+
+/* Schwebende Inseln: Graskappe ueber einem Felskeil, wippen langsam. */
+#kgv .dr-insel{position:absolute;width:26vw;height:24vh;animation:drSchweb 6s ease-in-out infinite;}
+#kgv .dr-insel.i1{left:3%;top:56%;}
+#kgv .dr-insel.i2{left:39%;top:68%;scale:.75;animation-delay:-2s;}
+#kgv .dr-insel.i3{right:3%;top:50%;animation-delay:-4s;}
+@keyframes drSchweb{0%,100%{transform:translateY(-1vh)}50%{transform:translateY(1.2vh)}}
+#kgv .dr-gras{position:absolute;left:0;right:0;top:0;height:5vh;border-radius:50%;
+  background:linear-gradient(180deg,#9BF07A 0%,#5BC24A 50%,#3E9A3A 100%);box-shadow:inset 0 -.9vh 0 #2E7A2E,0 .4vh 1vh rgba(0,0,0,.25);}
+#kgv .dr-fels{position:absolute;left:6%;right:6%;top:2.6vh;height:20vh;
+  background:repeating-linear-gradient(170deg,rgba(0,0,0,.14) 0 .5vh,transparent .5vh 2.6vh),linear-gradient(180deg,#9A6844 0%,#64391F 55%,#3A2014 100%);
+  clip-path:polygon(0 0,100% 0,84% 38%,66% 70%,50% 100%,36% 68%,16% 44%);}
+#kgv .dr-steine{position:absolute;left:0;right:0;top:-3.4vh;height:4vh;}
+#kgv .dr-steine i{position:absolute;width:3.6vh;margin-left:-1.8vh;animation:drFunkel 2.2s ease-in-out var(--d) infinite;}
+@keyframes drFunkel{0%,100%{filter:brightness(1);transform:translateY(0)}50%{filter:brightness(1.6);transform:translateY(-.7vh)}}
+#kgv .dr-stein{display:block;width:100%;}
+#kgv .dr-stein svg{filter:drop-shadow(0 0 .9vh currentColor);}
+
+/* Flugbahn: Steine schweben, bis das Maul vorbeikommt, dann Plopp. */
+#kgv .dr-beute{position:absolute;width:5vh;margin:-2.5vh 0 0 -2.5vh;animation:drPlopp .4s ease-out var(--t) forwards;}
+#kgv .dr-beute .dr-stein{animation:drFunkel 1.6s ease-in-out infinite;}
+#kgv .dr-beute b{position:absolute;inset:-2vh;border-radius:50%;border:.5vh solid #FFF6C8;box-shadow:0 0 2vh #FFE07A;opacity:0;
+  animation:drKlang .5s ease-out var(--t) both;}
+@keyframes drPlopp{0%{transform:none;opacity:1}40%{transform:translateY(-2vh) scale(1.7);opacity:1}100%{transform:translateY(-6vh) scale(.2);opacity:0}}
+@keyframes drKlang{0%{opacity:0;transform:scale(.3)}15%{opacity:1}100%{opacity:0;transform:scale(2.6)}}
+
+/* Der Drache: aussen die Fahrt durchs Bild, innen das Wippen, im SVG die
+   Fluegel. */
+#kgv .dr-flug{position:absolute;left:0;top:34vh;width:20vw;z-index:3;animation:drFlug 2.2s linear var(--t) both;}
+@keyframes drFlug{from{transform:translateX(-20vw)}to{transform:translateX(110vw)}}
+#kgv .dr-wipp{animation:drWipp .9s ease-in-out infinite alternate;}
+@keyframes drWipp{from{transform:translateY(-1.4vh) rotate(-3deg)}to{transform:translateY(1.4vh) rotate(3deg)}}
+#kgv .dr-flg{transform-box:fill-box;transform-origin:30% 100%;animation:drFlap .34s ease-in-out infinite alternate;}
+@keyframes drFlap{from{transform:rotate(-6deg)}to{transform:scaleY(.45) rotate(10deg)}}
+#kgv .dr-kiefer{transform-box:fill-box;transform-origin:0 0;}
+
+#kgv .dr-hud{position:absolute;left:3vw;top:4vh;z-index:6;display:flex;align-items:center;gap:1.2vh;animation:drHud .5s ease-out .6s both;}
+#kgv .dr-hud > .dr-stein{width:5.4vh;}
+#kgv .dr-zahl{position:relative;width:12vh;height:6vh;font-size:5.4vh;line-height:6vh;color:#FFF6D0;
+  text-shadow:0 .4vh 0 #6A2DAA,0 0 1.6vh rgba(255,214,110,.6);}
+@keyframes drHud{from{opacity:0;transform:translateX(-4vw)}to{opacity:1;transform:none}}
+#kgv .dr-tempo{position:absolute;inset:0;z-index:5;opacity:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent 0 2.6vh,rgba(255,255,255,.55) 2.6vh 2.9vh,transparent 2.9vh 4.4vh);
+  -webkit-mask-image:radial-gradient(ellipse 60% 50% at 50% 50%,transparent 25%,#000 70%);mask-image:radial-gradient(ellipse 60% 50% at 50% 50%,transparent 25%,#000 70%);
+  animation:drTempo .35s linear var(--t) both;}
+@keyframes drTempo{0%{opacity:0;transform:none}30%{opacity:1}100%{opacity:1;transform:translateX(-30vw) scaleX(1.6)}}
+
+/* Portal: Steinbogen mit Wirbel, die Kamera faehrt hinein. */
+#kgv .dr-bogen{position:absolute;left:50%;bottom:20%;width:36vh;height:48vh;margin-left:-18vh;transform-origin:50% 60%;
+  animation:drRein 1s cubic-bezier(.55,0,.9,.45) calc(var(--t) + .1s) both;}
+@keyframes drRein{from{transform:none}to{transform:scale(9)}}
+#kgv .dr-mauer{position:absolute;inset:0;border:4.4vh solid #85739A;border-bottom:0;border-radius:18vh 18vh 0 0;
+  box-shadow:inset 0 0 0 .5vh #4A3B5A,0 0 0 .5vh #4A3B5A,0 0 7vh rgba(196,107,255,.65);}
+#kgv .dr-mauer::after{content:'';position:absolute;left:50%;top:-5vh;width:7vh;height:6vh;margin-left:-3.5vh;background:#A08FB4;
+  clip-path:polygon(0 0,100% 0,80% 100%,20% 100%);box-shadow:inset 0 0 0 .4vh #4A3B5A;}
+#kgv .dr-strudel{position:absolute;inset:4.4vh 4.4vh 0;border-radius:14vh 14vh 0 0;overflow:hidden;background:#2A0E6E;}
+#kgv .dr-strudel::before{content:'';position:absolute;inset:-60%;
+  background:radial-gradient(circle,#FFFFFF 0%,rgba(190,240,255,.9) 6%,transparent 26%),
+             repeating-conic-gradient(from 0deg,#3B1A8C 0deg 18deg,#7A3BFF 18deg 34deg,#3BD1FF 34deg 42deg,#3B1A8C 42deg 52deg);
+  animation:ptDreh 1.4s linear infinite;}
+#kgv .dr-strudel.gross{inset:0;border-radius:0;}
+#kgv .dr-strudel.gross::before{inset:-40%;animation-duration:2.2s;}
+
+#kgv .dr-ringe i{position:absolute;left:50%;top:50%;width:20vmin;height:20vmin;margin:-10vmin 0 0 -10vmin;border-radius:50%;opacity:0;
+  border:1.4vmin solid var(--c);box-shadow:0 0 3vmin var(--c),inset 0 0 3vmin var(--c);
+  animation:drRing var(--u) cubic-bezier(.5,0,1,.6) var(--d) both;}
+@keyframes drRing{0%{transform:scale(.05);opacity:0}20%{opacity:1}100%{transform:scale(9);opacity:.2}}
+#kgv .dr-flieger i{position:absolute;left:50%;top:50%;width:5vh;margin:-2.5vh 0 0 -2.5vh;opacity:0;
+  animation:drFlieg var(--u) cubic-bezier(.55,0,1,.5) var(--d) both;}
+@keyframes drFlieg{0%{transform:scale(.1);opacity:0}15%{opacity:1}100%{transform:translate(var(--x),var(--y)) scale(3.5) rotate(var(--r));opacity:1}}
+
+/* Torte auf der Insel, der Drache speit Feuer, die Kerzen gehen an. */
+#kgv .dr-sterne i{position:absolute;width:.34vh;height:.34vh;border-radius:50%;background:#FFF7E6;box-shadow:0 0 .7vh rgba(255,247,230,.8);
+  animation:drStern var(--u) ease-in-out var(--d) infinite;}
+@keyframes drStern{0%,100%{opacity:var(--o)}50%{opacity:calc(var(--o) * .25)}}
+#kgv .dr-tortinsel{position:absolute;right:8%;top:22%;width:36vw;height:62vh;animation:drSchweb 6s ease-in-out infinite;}
+#kgv .dr-insel.i4{position:absolute;left:0;top:34vh;width:100%;height:28vh;animation:none;}
+#kgv .dr-torte{position:absolute;left:22%;width:56%;top:9vh;height:26vh;}
+#kgv .dr-etage{position:absolute;border-radius:1.6vh;}
+#kgv .dr-etage.u{left:0;right:0;bottom:0;height:13vh;
+  background:radial-gradient(circle 1.5vh at 50% 0,#FFF3F8 96%,transparent 100%) 0 1.6vh/4.4vh 3vh repeat-x,linear-gradient(#FFF3F8,#FFF3F8) 0 0/100% 2.2vh no-repeat,
+             radial-gradient(circle .7vh,#FFC83B 96%,transparent 100%) 0 8vh/5vh 3vh repeat-x,linear-gradient(180deg,#FF8FC0,#D84A8E);
+  box-shadow:inset 0 -1vh 0 rgba(0,0,0,.15),0 1vh 2vh rgba(0,0,0,.35);}
+#kgv .dr-etage.o{left:16%;right:16%;bottom:12.6vh;height:10vh;
+  background:radial-gradient(circle 1.3vh at 50% 0,#FFF3F8 96%,transparent 100%) 0 1.4vh/3.8vh 2.6vh repeat-x,linear-gradient(#FFF3F8,#FFF3F8) 0 0/100% 1.9vh no-repeat,
+             linear-gradient(180deg,#B57BF0,#7A35C2);box-shadow:inset 0 -.8vh 0 rgba(0,0,0,.15);}
+#kgv .dr-kerzen{position:absolute;left:16%;right:16%;bottom:22.4vh;height:7vh;}
+#kgv .dr-kerzen i{position:absolute;bottom:0;width:1.5vh;height:calc(6vh * var(--h));margin-left:-.75vh;border-radius:.3vh;
+  background:repeating-linear-gradient(135deg,#FFFFFF 0 .6vh,#FF5C8A .6vh 1.2vh);}
+#kgv .dr-kerzen b{position:absolute;bottom:100%;left:50%;width:2.2vh;height:3.4vh;margin-left:-1.1vh;transform-origin:50% 100%;
+  border-radius:50% 50% 50% 50%/62% 62% 38% 38%;background:radial-gradient(circle at 50% 70%,#FFFFFF 0 18%,#FFE066 40%,#FF8A1E 72%,transparent 74%);
+  box-shadow:0 0 3vh #FFB13B;animation:drZuend .3s ease-out var(--t) both,drFlacker .16s ease-in-out calc(var(--t) + .3s) infinite alternate;}
+@keyframes drZuend{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
+@keyframes drFlacker{from{transform:scale(1,1)}to{transform:scale(.88,1.12) translateX(.15vh)}}
+#kgv .dr-kopf{position:absolute;left:0;bottom:6vh;width:50vw;z-index:3;animation:drKopf .5s cubic-bezier(.2,.9,.3,1.1) var(--t) both;}
+@keyframes drKopf{from{transform:translateX(-60vw)}to{transform:translateX(-14vw)}}
+#kgv .dr-kopf .dr-kiefer{animation:drMaulAuf .25s ease-out var(--f) both,drMaulZu .3s ease-in var(--g) forwards;}
+@keyframes drMaulAuf{from{transform:none}to{transform:rotate(24deg)}}
+@keyframes drMaulZu{from{transform:rotate(24deg)}to{transform:none}}
+/* Feuer: Glutballen aus dem Maul (31vw/54vh), additiv gemischt. */
+#kgv .dr-feuer{position:absolute;inset:0;z-index:4;pointer-events:none;}
+#kgv .dr-feuer i{position:absolute;left:31vw;top:54vh;width:7vh;height:7vh;margin:-3.5vh 0 0 -3.5vh;border-radius:50%;opacity:0;mix-blend-mode:screen;
+  background:radial-gradient(circle,#FFF7C2 0%,#FFD23B 30%,#FF7A1E 58%,rgba(255,60,20,0) 72%);
+  animation:drFeuer var(--u) cubic-bezier(.2,.7,.4,1) var(--d) both;}
+@keyframes drFeuer{0%{transform:scale(.3);opacity:0}12%{opacity:1}100%{transform:translate(var(--x),var(--y)) scale(var(--s));opacity:0}}
+#kgv .dr-glut{position:absolute;inset:0;z-index:7;opacity:0;pointer-events:none;
+  background:radial-gradient(circle at 64% 42%,#FFF7C2 0%,#FFB13B 30%,#FF5A1E 62%,#8A1A00 100%);
+  animation:drGlut .5s ease-in var(--t) both;}
+@keyframes drGlut{from{opacity:0}to{opacity:1}}
+
+/* Titel */
+#kgv .dr-strahlen{position:absolute;inset:-40%;
+  background:repeating-conic-gradient(from 0deg at 50% 47%,rgba(255,214,110,.16) 0deg 5deg,transparent 5deg 15deg);
+  -webkit-mask-image:radial-gradient(circle at 50% 47%,#000 0,rgba(0,0,0,.5) 18%,transparent 42%);mask-image:radial-gradient(circle at 50% 47%,#000 0,rgba(0,0,0,.5) 18%,transparent 42%);
+  animation:ptDreh 80s linear infinite;}
+#kgv .pt-konfetti i{width:2.4vh;height:2.4vh;clip-path:polygon(20% 35%,38% 10%,62% 10%,80% 35%,50% 95%);}
+#kgv .pt-klein{color:#FFE9A8;text-shadow:0 .3vh 0 #4A1A80,0 0 2vh rgba(196,107,255,.7);}
+#kgv .dr-begleiter{position:absolute;left:4vw;bottom:9vh;width:22vw;z-index:4;animation:drBegleit .9s cubic-bezier(.2,.9,.3,1.1) var(--t) both;}
+@keyframes drBegleit{from{transform:translate(-40vw,-34vh) rotate(-18deg)}to{transform:none}}
+#kgv .dr-blitz{position:absolute;inset:0;z-index:20;pointer-events:none;background:#fff;opacity:0;
+  animation:ptBlitzK .25s linear var(--s0),ptBlitzG 1.1s ease-out var(--h);}
+
+/* Drachengold: Gold oben, lila Tiefe darunter. */
+#kg-overlay.film .mat-drache .pl .fc{background-image:linear-gradient(105deg,transparent 38%,rgba(255,255,255,.95) 50%,transparent 62%),
+  linear-gradient(180deg,#FFFBE0 0%,#FFE070 25%,#FFB020 46%,#A85A00 50%,#FF9A1E 62%,#FFE9A0 100%);}
+#kg-overlay.film .mat-drache .pl .ex{color:#2A0E5A;
+  text-shadow:0 .012em 0 #7B35C2,0 .024em 0 #6A2DAA,0 .036em 0 #5A2494,0 .048em 0 #4A1C80,0 .06em 0 #3C166C,
+              0 .072em 0 #301158,0 .084em 0 #240C46,0 .096em 0 #1A0836,0 .14em .12em rgba(0,0,0,.7),0 0 .4em rgba(196,107,255,.5);}
+
 /* Wer weniger Bewegung eingestellt hat, bekommt bei allen Film-Intros
    gleich das Schlussbild: alle Animationen aus, nur die Einstellungen mit
    .fin stehen. Die Grundstile oben sind so gesetzt, dass ohne Animation das
@@ -3119,6 +3278,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   #kg-overlay.film .pt-funken,#kg-overlay.film .pt-pyro,#kg-overlay.film .pt-konfetti,#kg-overlay.film .pt-glitzer,#kg-overlay.film .pt-flare,#kg-overlay.film .pt-ring{display:none;}
   #kgt .tr-muenzen,#kgo .or-palmen,#kgo .or-vhs,#kgo .or-spur{display:none;}
   #kgu .gb-fleder,#kgu .gb-kerzen,#kgu .gb-nebel,#kgu .gb-ringe{display:none;}
+  #kgv .dr-feuer,#kgv .dr-ringe,#kgv .dr-flieger,#kgv .dr-wolken{display:none;}
   #kg-overlay.film .ifw2{opacity:0;visibility:hidden;}
 }
 
@@ -4255,6 +4415,8 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="S"] { --ico-fill:url(#ico-deco); --ico-fstroke:#FBEBC0; --ico-fsw:.8; --ico-line:#D9B66B; --ico-cut:#0B0A08; --ico-dim:rgba(217,182,107,.25); }
 /* Geisterbahn: Kuerbisfarbene Flaeche, Knochenkontur, gruener Schein. */
 :root[data-theme="U"] { --ico-fill:#FF7A18; --ico-fstroke:#F3E7CF; --ico-fsw:1.2; --ico-line:#F3E7CF; --ico-cut:#0B0712; --ico-dim:rgba(243,231,207,.25); --ico-filter:drop-shadow(0 0 9px rgba(255,122,24,.65)) drop-shadow(0 0 18px rgba(124,255,61,.25)); }
+/* Drachenwelt: Gold gefuellt, Lila Schein. */
+:root[data-theme="V"] { --ico-fill:#FFC83B; --ico-fstroke:#FFF6E0; --ico-fsw:1.2; --ico-line:#FFF6E0; --ico-cut:#1A0840; --ico-dim:rgba(255,246,224,.25); --ico-filter:drop-shadow(0 0 9px rgba(196,107,255,.65)) drop-shadow(0 0 18px rgba(59,224,122,.25)); }
 
 /* Bauhaus und Memphis: reihum mehrere Farben statt einer. */
 :root[data-theme="H"] .show-icon [fill^="url"]:nth-child(3n+1) { fill: #D7372B; }
@@ -9067,6 +9229,71 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   0%   { transform: perspective(900px) rotateY(-96deg); transform-origin: left center; filter: brightness(.25); }
   65%  { transform: perspective(900px) rotateY(10deg); filter: brightness(1.5); }
   100% { transform: perspective(900px) rotateY(0); transform-origin: left center; filter: none; }
+}
+
+/* ── V · Drachenwelt: Edelstein-Platten, Gold, Lila ─────────────────────────
+   Jedes Feld ist eine geschliffene Amethyst-Platte mit Facettenglanz oben
+   links, die Zahl in Gold mit lila Tiefe. Aufgedeckt wird ein Smaragd -
+   das Feld "schluepft" wie aus einem Drachenei. Rot bleibt Rot. */
+:root[data-theme="V"] {
+  --brd-surface: linear-gradient(180deg, #2A1558 0%, #140832 100%);
+  --brd-tex: radial-gradient(circle at 20% 30%, rgba(255,255,255,.05) 0 2px, transparent 3px) 0 0/34px 34px;
+  --brd-frame: 0 0 0 4px #F5B83D, 0 0 0 8px #4A1A80, 0 0 0 10px rgba(196,107,255,.45), 0 26px 60px rgba(0,0,0,.6);
+  --brd-well: #0E0526;
+  --brd-inner: rgba(196,107,255,.35);
+  --brd-radius: 22px;
+  --tile: linear-gradient(160deg, #5B2DAA 0%, #3A1A78 55%, #26105A 100%);
+  --tile-hover: linear-gradient(160deg, #6E3BC6 0%, #4A2290 55%, #2E1468 100%);
+  --tile-edge: inset 0 0 0 2px #7B4BD0, inset 0 3px 0 rgba(255,255,255,.18), inset 0 -4px 0 rgba(0,0,0,.3), 0 8px 18px rgba(0,0,0,.5);
+  --tile-tex: linear-gradient(135deg, rgba(255,255,255,.12) 0 18%, transparent 18% 100%);
+  --tile-fg: #FFF6E0;
+  --tile-font: 'Luckiest Guy', cursive;
+  --tile-num: #FFC83B;
+  --tile-num-glow: 0 3px 0 #7B35C2, 0 0 16px rgba(255,200,59,.6);
+  --tile-dim-fg: rgba(255,246,224,.45);
+  --tile-head: linear-gradient(180deg, #F5B83D, #C9821A);
+  --tile-head-fg: #2A0E5A;
+  --tile-used: #170A36;
+  --tile-rule: rgba(255,200,59,.3);
+  --tile-bar: #1A0840;
+  --tile-open: linear-gradient(180deg, #1E7A4A 0%, #0F4A2C 100%);
+  --tile-open-edge: inset 0 0 0 2px rgba(59,224,122,.6), 0 0 34px rgba(59,224,122,.4);
+  --tile-open-fg: #E6FFF0;
+  --tile-open-dim: rgba(59,224,122,.65);
+  --tile-pts-bg: rgba(255,200,59,.14);
+  --tile-pts-rule: rgba(255,200,59,.45);
+  --tile-pick: rgba(196,107,255,.22);
+  --tile-pick-fg: #FFE9A8;
+  --tile-right: linear-gradient(180deg, #2BA35E, #14603A);
+  --tile-right-fg: #EFFFF5;
+  --tile-radius: 14px;
+  --tile-reveal: thVSchluepf .65s cubic-bezier(.2,1.4,.4,1);
+}
+/* Luckiest Guy nur fuer Kurzes: Kategorie, Zahl, Knopf. Die Frage selbst
+   bleibt in Nunito - die Displayschrift ist aus drei Metern als Fliesstext
+   nicht zu lesen (BAUPLAN 4.2). */
+:root[data-theme="V"] .q-text { color: #FFFFFF; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.75rem; letter-spacing: .5px; }
+:root[data-theme="V"] .tile-num { font-family: 'Luckiest Guy', cursive; font-size: 1.15rem; }
+:root[data-theme="V"] .tile.open .tile-answer { text-transform: none; letter-spacing: .5px; font-weight: 700; }
+:root[data-theme="V"] .jeopardy-board { gap: clamp(5px, 1.6vh - 6px, 9px); padding: 12px; }
+:root[data-theme="V"] .jeopardy-cat { font-family: 'Luckiest Guy', cursive; font-size: .74rem; letter-spacing: 2px; border-bottom: 2px solid #7B4BD0; }
+:root[data-theme="V"] .jeopardy-cell { font-family: 'Luckiest Guy', cursive; font-size: 1.9rem; letter-spacing: 1px; }
+:root[data-theme="V"] .wwm-q { color: #FFFFFF; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.95rem; line-height: 1.2; }
+:root[data-theme="V"] .wwm-opt { background: var(--tile); box-shadow: var(--tile-edge); font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 1.35rem; }
+:root[data-theme="V"] .wwm-opt .wwm-letter { color: #FFC83B; font-family: 'Luckiest Guy', cursive; }
+:root[data-theme="V"] .wwm-opt.selected { box-shadow: var(--tile-edge), 0 0 26px rgba(255,200,59,.5); }
+:root[data-theme="V"] .wwm-opt.correct { background: var(--tile-right); color: var(--tile-right-fg); box-shadow: inset 0 0 0 2px rgba(59,224,122,.5), 0 0 30px rgba(59,224,122,.35); }
+:root[data-theme="V"] .wwm-opt.correct .wwm-letter { color: #E6FFF0; }
+/* Jeopardy-Frage und -Antwort sind Saetze: Luckiest Guy hat keine echten
+   Kleinbuchstaben und war im Kontaktbogen als Fliesstext schwer zu lesen. */
+:root[data-theme="V"] :is(.jeopardy-clue-text, .jeopardy-answer-text) { font-family: 'Nunito', sans-serif; font-weight: 900; letter-spacing: .3px; }
+/* Feud bei 1280x720: zweizeilige Frage in Nunito schob das Brett 4 px heraus (tools/shots). */
+@media (max-height: 900px) { :root[data-theme="V"] .q-text { line-height: 1.25; } }
+/* Das Feld schluepft wie aus einem Drachenei: klein, Lichtblitz, Ueberschwinger. */
+@keyframes thVSchluepf {
+  0%   { transform: scale(.2) rotate(-8deg); filter: brightness(2.2); }
+  55%  { transform: scale(1.08) rotate(3deg); filter: brightness(1.3); }
+  100% { transform: none; filter: none; }
 }
 
 /* Art deco: die Messingplatte ist hell, die Richtung dunkel. Was auf der
