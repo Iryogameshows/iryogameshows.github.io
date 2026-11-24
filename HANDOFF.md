@@ -12,6 +12,80 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-24 — `a78c106` Geburtstag Jonas: Film-Intro „Drachenflug" und Richtung V „Drachenwelt"
+
+**David:** „animiere mir bitte ein neues Spyrothemed intro für den Geburstag von Jonas,
+und bau mir ein Spyrothemed design für Jeopardy".
+
+### Gemacht
+
+- **Film-Intro `drache`** (`js/intro.js` Block „Drachenflug", `styles.css` `#kgv`,
+  Option in `index.html`, ~12 s): Morgenhimmel mit schwebenden Inseln und
+  funkelnden Edelsteinen → lila Drache fliegt durchs Bild, sammelt vier Steine,
+  Zähler oben links → Tempo-Streifen → Steinportal mit Wirbel, Kamera fährt hinein →
+  Ringe in Edelsteinfarben, Steine fliegen vorbei → Insel mit Geburtstagstorte, der
+  Drache speit Feuer, Kerzen gehen an, Glut füllt das Bild → Einschlag, „HAPPY BIRTHDAY",
+  Name in Drachengold (`mat-drache`), Edelsteinregen, Drache schwebt daneben.
+  Ton synthetisch über `INTRO_TON`: Harfe, Sammel-Glocken, Luftzüge, Trommelwirbel,
+  Feuerstoß, Fanfare, „Happy Birthday" auf Glocken.
+- Der Name kommt aus dem **Geburtstagsfeld** (`getBdayName`), nicht aus den Film-Texten.
+  `INTRO_FILME.drache.bday = true`; `toggleIntroPicker` zeigt dafür das Namensfeld
+  und blendet „Intro bearbeiten" aus.
+- **Richtung V „Drachenwelt"** (`js/theme.js` Variablen + Logo, `styles.css` Icons +
+  Material-Block, `buzzer/index.html`, `ALLE_RICHTUNGEN` in `tools/shots/shots.js`):
+  Jeopardy-Felder als geschliffene Amethyst-Platten mit Facettenglanz, Zahlen in Gold
+  mit lila Tiefe, Kategorien auf Goldbalken, aufgedecktes Feld wird Smaragd und
+  „schlüpft" (`thVSchluepf`: klein, Lichtblitz, Überschwinger). Schriften Luckiest Guy
+  (Kurzes) + Nunito (Sätze), lokal in `vendor/fonts/luckiest-guy_nunito-bd657c.css`.
+- Gestaltung von Claude, das Eintragen der Richtung V hat Codex nach festem Prompt
+  gemacht (bis auf die Prüfungen, dann Kontingent leer). Nachgezogen von Claude:
+  Jeopardy-Frage/-Antwort in Nunito, Feud-Zeilenhöhe bei ≤ 900 px.
+
+### Warum so
+
+- **Eigene Zeichnungen statt Spielfigur:** kein Logo, keine Figur, keine Musik aus
+  dem Spiel — nur das Genre (lila Drache, Edelsteine, schwebende Inseln, Portal).
+- **SVG ohne ids, flache Farben statt SVG-Verläufe:** der Spiegel klont den DOM; der
+  Drache steht bis zu dreimal im Dokument, doppelte Verlauf-ids hätten sich
+  gegenseitig gestört. Ganzes Intro CSS-animiert (BAUPLAN 4.8).
+- **Luckiest Guy nur für Kurzes:** im Kontaktbogen stand die Jeopardy-Frage zuerst in
+  der Comicschrift („FRAGE FÜR 300") — keine echten Kleinbuchstaben, als Satz schlecht
+  lesbar. Jetzt Nunito 900.
+- Die Wolken waren zuerst Ellipsen größer als ihre Box und wurden gerade abgeschnitten
+  — verkleinert.
+- Verworfen: Spyro-ähnliche Libelle als Begleiter (zu nah an einer Spielfigur).
+
+### Geprüft
+
+- `node check.js --types`: „alles in Ordnung", 15 Dateien typgeprüft, keine Meldung.
+- Intro an 13 Zeitpunkten (0,5–12 s) bei 1280×720 abfotografiert (Wegwerf-Skript im
+  Scratchpad, hält die CSS-Animationen an), Seitenfehler: 0, Bild für Bild angesehen.
+- `node shots.js --themes V,Studio`: alle Zustände gerendert; 2 Befunde (feud,
+  feud-lang V 4 px zu hoch) → behoben, Nachlauf `--themes V --shows
+  feud,feud-lang,jeop-antwort,jeop-frage`: keine Befunde. Menü, Jeopardy-Brett,
+  Jeopardy-Frage, Feud angesehen. Studio-Blau: nur V-Selektoren und `#kgv`
+  geändert, `--vergleich` nicht gelaufen.
+- `node tools/fonts/hol.js` (Codex): 1 Adresse umgestellt, keine Google-Adresse mehr
+  in `js/theme.js`; alle in der Schrift-CSS genannten Dateien liegen in
+  `vendor/fonts/files/` (geprüft).
+
+### Offen
+
+- Intro nicht am Stück mit Ton gehört, nicht am Beamer gesehen.
+- Namensfeld steht standardmäßig auf „Ajdin" — vor der Show „Jonas" eintragen.
+- Steinbogen des Portals ohne Fugen, wirkt etwas flach.
+- Handy-Buzzer V nur im Kontaktbogen gesehen, nicht auf einem echten Telefon.
+- `tools/pihbilder/hol.js` hat fremde lokale Änderungen — nicht angefasst, nicht committet.
+
+### Fallstricke
+
+- Das Standbild-Skript muss `#host-gate` ausblenden, sonst fotografiert es nur die
+  Passwortsperre (erster Lauf: 11 Bilder vom Sperrbildschirm).
+- `git checkout HANDOFF.md` (Codex-Entwurf verwerfen) wurde vom Auto-Modus gesperrt;
+  der Entwurf ist in diesen Eintrag eingearbeitet.
+
+---
+
 ## 2026-11-01 — `db7155f` Preis ist heiß: Knopf „Alle löschen" im Artikel-Editor
 
 **David:** „bau bei dpih SCHNELL einen: alle artikel löschen button".
