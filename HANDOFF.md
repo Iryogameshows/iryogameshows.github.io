@@ -12,6 +12,52 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-24 — `31f5a40` Drachenflug: Drache neu gezeichnet
+
+**David:** „ich meinte dass du den Drachen z.b. besser machen sollst, der sieht halt sehr
+nach KI aus".
+
+### Gemacht
+
+- `INTRO_DR_DRACHE` (`js/intro.js`) komplett neu: **eine** Silhouette als S-Kurve von
+  Hinterkopf über Schnauze, Kehle, Brust, Bauch bis zur Schwanzspitze und zurück über
+  den Rücken, mit Tusche-Kontur (`#2A0B4A`, 2,5, runde Ecken) wie im Zeichentrick.
+  Zellschatten unten, Lichtkante am Rücken und auf dem Kopf, segmentierte Bauchplatten,
+  Mandelauge mit Iris, Schlitzpupille, Glanzpunkt, schwerem Oberlid und Braue,
+  Rückenzacken in zehn Stufen kleiner werdend (`INTRO_DR_ZACKEN`), Flügel mit Arm in
+  Körperfarbe, drei Fingerknochen, Bogenkante und Daumenkralle, Krallen an den Füßen.
+- viewBox jetzt `-10 -20 250 170`, Maul bei (226,60). Umgerechnet in `styles.css`:
+  Feuer 33vw/61vh, Pusten im Titel 24,8vw/76,9vh, Rauch, Brustglut; in `js/intro.js`
+  Feuer-Zielhöhe (−30…−14 vh) und Funkenspur (46 vh). Flügel-Drehpunkt an der
+  Schulter (`transform-origin:95% 95%`).
+
+### Warum so
+
+- Der alte Drache bestand aus Ellipsen für Rumpf, Kopf, Beine und Bauch, flach
+  nebeneinander, ohne Kontur — Grundformen ohne Linienführung lesen sich als Generator.
+  Eine durchgehende Linie mit Kontur und Zellschatten ist, was eine Zeichnung ausmacht.
+- Weiter ohne SVG-Verläufe und ohne ids (der Spiegel klont den DOM).
+- Auge nach dem ersten Standbild vergrößert: in der Nahaufnahme (Tortenszene) wirkte es
+  zu klein und mürrisch.
+
+### Geprüft
+
+- `node check.js --types`: „alles in Ordnung".
+- Standbilder 2,3 / 7,35 / 7,9 / 12,6 s bei 1280×720, Seitenfehler 0: Feuer kommt aus
+  dem neuen Maul, Funkenspur am Schwanz, Begleiter im Titel.
+
+### Offen
+
+- Flügelschlag (scaleY) nur im Standbild gesehen, nicht in Bewegung.
+- Weiterhin nicht mit Ton am Stück und nicht am Beamer gesehen.
+
+### Fallstricke
+
+- Wer den Drachen wieder ändert: die Maulposition steckt in fünf Stellen
+  (`.dr-feuer i`, `.dr-feuer.klein i`, `.dr-rauch i`, `.dr-brust`, `bahnX(t, 18)`).
+
+---
+
 ## 2026-11-24 — `00a1862` Drachenflug-Intro: zweite Fassung („übertreib es")
 
 **David:** „bitte mach das intro besser, hochwertiger, upgrades, übertreib es wieder".
