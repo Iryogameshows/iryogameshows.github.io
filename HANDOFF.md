@@ -12,6 +12,45 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-24 — `c06b436` Drachenflug: Konfetti ohne clip-path (Titel wieder 60 fps)
+
+### Gemacht
+
+- `styles.css`: Edelstein-Konfetti im Drachenflug per `border-radius` + Glanz-`inset`
+  statt `clip-path`.
+
+### Warum so
+
+- Erstmals mit echter GPU gemessen (Browser-Pane der Desktop-App, 1280×720,
+  `?stumm=1`, rAF-Abstände je Sekunde über 13 s). Stand `0ad70ff`: **52,8–53,0 fps**,
+  Titel bei 11–12 s 32–39 fps. A/B je Gruppe im Titel ausgeblendet:
+  Strahlen 53,7 · Kristall 55,6 · Logo-3D 54,7 · Feuerwerk 57,2 ·
+  **Konfetti+Funken 59,8** (Titel durchgehend 57–60). `clip-path` auf endlos
+  3D-drehenden Teilen ließ jedes Bild neu malen.
+- Verworfen: Konfetti ganz weglassen — mit `border-radius` kostet es nichts mehr.
+
+### Geprüft
+
+- Nach der Änderung zwei Läufe: **58,4 fps** (3 Bilder > 34 ms) und **59,2 fps**
+  (1 Bild > 34 ms). Je Sekunde 55–60, einzig 8 s (Einschlag) einmal 50–117 ms.
+- Standbild 11,5 s: Konfetti als Steinchen, Seitenfehler 0.
+- `node check.js`: „alles in Ordnung".
+
+### Offen
+
+- Mit geöffnetem Zuschauerfenster (gespiegelter DOM) nicht gemessen.
+- Der Stocker beim Einschlag (8,6 s, bis 117 ms) liegt unter dem weißen Blitz;
+  nicht weiter verfolgt.
+- Die headless-Messung (`fps.js`) taugt auf diesem Rechner nicht — für FPS das
+  Browser-Pane nehmen (muss eingeblendet sein, sonst 0×0 und keine Bilder).
+
+### Fallstricke
+
+- `javascript_tool` bricht nach 45 s ab: Messreihen im Hintergrund starten
+  (`window.__out`) und in Häppchen abfragen.
+
+---
+
 ## 2026-11-24 — `0ad70ff` Drachenflug: Leistung und Drache im Jump-'n'-Run-Typ
 
 **David:** „mach dass er wirklich n bisschen aussieht wie spyro. außerdem sind die FPS
