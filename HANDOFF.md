@@ -12,6 +12,64 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-24 — `00a1862` Drachenflug-Intro: zweite Fassung („übertreib es")
+
+**David:** „bitte mach das intro besser, hochwertiger, upgrades, übertreib es wieder".
+
+### Gemacht (`js/intro.js` Block „Drachenflug", `styles.css` `#kgv`)
+
+- **Licht:** Sonnenstrahlen (drehender Kegelverlauf), Glanz auf den Graskappen und
+  Felsen, Bodenlicht und pulsierender Halo am Portal, Tortenschein mit den Kerzen,
+  Brustglut beim Luftholen.
+- **Tiefe:** drei ferne Inseln im Dunst (in Welt, Portal, Torte, Titel), Lichtstaub,
+  Mond und Polarlicht in der Tortenszene, Sterne am Portal.
+- **Material:** Portalbogen als SVG aus 11 Keilsteinen und Quaderpfeilern mit
+  leuchtenden Runen (`introDrBogen`), Wasserfall an Insel 3, Ranken, Grashalme,
+  Schatten/Glanz/Krallen/Hornglanz am Drachen, Facettenglanz an den Steinen.
+- **Ereignisse:** Funkenspur hinter dem Schwanz, beim Sammeln Splitter und „+25",
+  Zähler in Goldfassung pulst je Stein, Energie wird ins Portal gesogen, Warp-Striche
+  und heller Kern im Wirbel, der Drache holt Luft vor dem Feuer, Rauch danach,
+  Feuerwerk über der Torte (3) und im Titel (7, `introDrBum`), Riesenkristall hinter
+  dem Namen, fünf Steine kreisen auf einer Ellipse, Fontänen, Edelstein-Konfetti,
+  Band „HAPPY BIRTHDAY", der Begleiter pustet eine Flamme.
+- **Ton:** Flötenmelodie und Bass im Morgen, Funkenklingeln, Runenklang am Portal,
+  Bass-Puls im Wirbel, Einatmen, Feuerwerk mit Pfeifen und Knistern, Akkorde unter
+  „Happy Birthday".
+- Hinweis jetzt bei 12 s statt 11,6 s, sonst gleiche Zeiten.
+
+### Warum so
+
+- Maßstab wie beim Geisterbahn-Rework (547f423): Licht, das irgendwo herkommt, Tiefe,
+  Material — nicht nur mehr Teilchen.
+- **Spezifität:** `#kgv .pt-klein` / `.pt-konfetti i` verloren gegen
+  `#kg-overlay.film .pt-…` (1,2,0 > 1,1,0) — Band und Edelstein-Konfetti griffen erst
+  mit `#kg-overlay.film #kgv …`. Gesehen im Standbild (H abgeschnitten, Konfetti als
+  Streifen).
+- Feuerwerk liegt in Behältern, die bis `--t` unsichtbar sind: `.pt-fk` füllt mit
+  `both` rückwärts und hätte vor dem Zünden einen Punkt an der Startstelle gezeigt.
+- Wasserfall zuerst mit Querstreifen — sah aus wie eine Leiter, jetzt Längsstreifen
+  mit laufendem Schwall.
+- Bogen als SVG statt CSS-Rand: Fugen und Runen sind sonst nicht zu machen.
+
+### Geprüft
+
+- `node check.js --types`: „alles in Ordnung".
+- Standbilder bei 0,8 / 2,3 / 3,2 / 4,3 / 5,4 / 7,05 / 7,9 / 10,2 / 12,6 s, 1280×720:
+  Seitenfehler 0, jedes Bild angesehen, drei Mängel gefunden und behoben (s. o.).
+
+### Offen
+
+- Nicht am Stück mit Ton gehört; Dichte der Töne im Titel (Lied + 7 Feuerwerke) ungehört.
+- Nicht am Beamer und nicht im Zuschauerfenster gesehen (viele Teilchen: ~600
+  Elemente mehr im gespiegelten DOM — Leistung ungeprüft).
+- Brustglut nur im Ansatz im Standbild gesehen.
+
+### Fallstricke
+
+- Overrides von `pt-*`-Bausteinen brauchen `#kg-overlay.film #kgv …`.
+
+---
+
 ## 2026-11-24 — `4e33a3e`, `e9c032e` Pages-Deploy: Upload in eigenen Build-Job
 
 ### Gemacht
