@@ -3397,7 +3397,11 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 #kgv .dr-orbit i{position:absolute;width:5vh;margin:-2.5vh;animation:drKreis 8s linear var(--d) infinite;}
 @keyframes drKreis{from{transform:rotate(0deg) translateX(40vw) rotate(0deg) scaleY(3.85)}to{transform:rotate(360deg) translateX(40vw) rotate(-360deg) scaleY(3.85)}}
 /* Spezifitaet wie die gemeinsamen Regeln (#kg-overlay.film .pt-…), sonst gewinnen die. */
-#kg-overlay.film #kgv .pt-konfetti i{width:2.4vh;height:2.4vh;clip-path:polygon(20% 35%,38% 10%,62% 10%,80% 35%,50% 95%);}
+/* Edelstein-Form ueber border-radius, nicht clip-path: clip-path auf endlos
+   3D-drehenden Teilen liess den Titel auf 32-39 fps fallen (gemessen im
+   Browser-Pane mit GPU, 2026-11-24; ohne Konfetti 60 fps). */
+#kg-overlay.film #kgv .pt-konfetti i{width:1.8vh;height:2.4vh;border-radius:30% 30% 50% 50%/20% 20% 80% 80%;
+  box-shadow:inset .5vh .4vh 0 rgba(255,255,255,.45);}
 /* HAPPY BIRTHDAY als Band mit Kerben, Gold auf Lila. */
 #kg-overlay.film #kgv .pt-klein{color:#FFE9A8;padding:.9vh 6vw;background:linear-gradient(180deg,#8E44D9,#4A1A80);
   clip-path:polygon(0 0,100% 0,96% 50%,100% 100%,0 100%,4% 50%);text-shadow:0 .3vh 0 #2A0E5A,0 0 2vh rgba(255,214,110,.6);
