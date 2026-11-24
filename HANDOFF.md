@@ -12,6 +12,44 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-24 — `4e33a3e`, `e9c032e` Pages-Deploy: Upload in eigenen Build-Job
+
+### Gemacht
+
+- `.github/workflows/pages.yml`: zwei Jobs statt einem. `build` (Checkout,
+  Cache-Buster, Aufräumen, `upload-pages-artifact`) und `deploy` (`needs: build`,
+  nur `deploy-pages`). Schritte selbst unverändert.
+- `4e33a3e` hatte `actions: read` ergänzt — half nicht, in `e9c032e` wieder entfernt.
+
+### Warum so
+
+- Der Deploy zu `5a59b1a` scheiterte viermal (Lauf 45349036267 dreimal, 45349405193):
+  Upload meldet „Artifact github-pages successfully finalized", 0,3–0,6 s später
+  `deploy-pages` „Found 0 artifact(s)". Laut API war das Artefakt da (28 MB).
+  Bekannter Fehler actions/deploy-pages#451: im selben Job ein Wettlauf, ein
+  Neustart rettet es nicht. Abhilfe dort: Upload in einen früheren Job, wie in
+  allen anderen Pages-Vorlagen.
+- Verworfen: `sleep` zwischen Upload und Deploy (laut #451 reichten 2 s bald nicht mehr).
+
+### Geprüft
+
+- Lauf 45349532012: success, 26 s.
+- `https://iryo.party/js/intro.js` enthält `introDracheHtml` (2 Treffer),
+  `vendor/fonts/luckiest-guy_nunito-bd657c.css` 200, `tools/gemeinsam/aufbau.js` 200.
+- Damit ist auch `a78c106` (Drachenflug, Richtung V) live.
+
+### Offen
+
+- Wird deploy-pages#455 („retry artifact discovery") veröffentlicht, ginge wieder
+  ein Job — kein Grund zurückzubauen.
+
+### Fallstricke
+
+- Push von `pages.yml` braucht das `workflow`-Recht (David hat es am 2026-11-24 per
+  `gh auth refresh -s workflow` geholt) und den gh-Credential-Helper aus der CLAUDE.md.
+
+---
+
 ## 2026-11-24 — `a78c106` Geburtstag Jonas: Film-Intro „Drachenflug" und Richtung V „Drachenwelt"
 
 **David:** „animiere mir bitte ein neues Spyrothemed intro für den Geburstag von Jonas,
