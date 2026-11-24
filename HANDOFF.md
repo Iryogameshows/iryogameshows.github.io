@@ -12,6 +12,36 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-24 — `74a3eae` Drachenflug: Drache als Fanart mit Erkennungsmerkmalen
+
+**David:** „bring den so nah an Spyro wie möglich" → nach Rückfrage „stell es dir vor als
+wär's ein Fanart".
+
+### Gemacht
+
+- `INTRO_DR_DRACHE` (`js/intro.js`): violette Augen (Iris `#7A2FD0`), goldener
+  Zackenkamm auf dem Kopf (5 Zacken vom Stirnansatz bis in den Nacken), längere goldene
+  Hörner, goldgelbe Flügel (`#F7C948`/`#D49A1E`), größere Pfeilspitze am Schwanz,
+  ein Zahn im Grinsen. Silhouette, Maulposition und alle Feuerpunkte unverändert.
+
+### Warum so
+
+- Erst abgelehnt (Kopie einer geschützten Figur), als Fanart dann gemacht: eigene
+  Zeichnung, keine Originalgrafik, kein Logo, keine Musik aus dem Spiel, Name taucht
+  nirgends auf. Die Erkennung kommt aus Farben und Merkmalen, nicht aus Nachzeichnen.
+
+### Geprüft
+
+- `node check.js --types`: „alles in Ordnung".
+- Standbilder 2,3 / 7,35 / 11,5 s, Seitenfehler 0. Feuer kommt weiter aus dem Maul.
+- FPS nicht neu gemessen — nur Farben und fünf kleine Pfade dazu.
+
+### Offen
+
+- Ob David den Drachen jetzt wiedererkennt, steht aus.
+
+---
+
 ## 2026-11-24 — `c06b436` Drachenflug: Konfetti ohne clip-path (Titel wieder 60 fps)
 
 ### Gemacht
