@@ -1859,71 +1859,75 @@ const INTRO_DR = {
   landung: 9.4, zeile: 9.6, puste: 10.6, preis: 10.4, hinweis: 12,
 };
 const INTRO_DR_FARBEN = ['#FF3B5C', '#3BE07A', '#3B9BFF', '#FFC83B', '#C46BFF'];
+/* Feuerwerk im Titel: x %, y %, Zeit - Bild und Ton lesen dieselbe Liste. */
+const INTRO_DR_TITELBUM = [[16, 20, 9.9], [84, 16, 10.6], [30, 12, 11.4], [72, 22, 12.2]];
 
-/* Der Drache, Blick nach rechts, als Zeichnung statt aus Grundformen
-   (David nach der zweiten Fassung: "der sieht halt sehr nach KI aus").
-   Eine durchgehende Silhouette in S-Kurve - Kopf, Hals, Rumpf, Schwanz in
-   einem Pfad - mit Tusche-Kontur wie im Zeichentrick, Zellschatten unten,
-   Lichtkante am Ruecken, segmentierte Bauchplatten, Mandelauge mit Lid und
-   Schlitzpupille, Rueckenzacken, die zum Schwanz hin kleiner werden,
-   Fluegel mit Fingerknochen und Bogenkante. Vorher: Ellipsen fuer Rumpf,
-   Kopf und Beine, flach nebeneinander - genau das las sich als Generator.
+/* Der Drache, Blick nach rechts. Dritte Fassung (David: "mach dass er
+   wirklich n bisschen aussieht wie spyro"): keine Kopie der Spielfigur,
+   aber deren Typ - junger Comic-Drache aus dem Jump-'n'-Run. Grosser Kopf
+   (so gross wie der Rumpf), grosse Augen mit frecher Braue, kurze Schnauze
+   mit Grinsen, kompakter Koerper, kurze Beine, grosse Hoerner nach hinten,
+   kleine Fluegel, Pfeilspitze am Schwanz. Davor (31f5a40) ein schlanker
+   Eidechsen-Drache, davor Ellipsen ("sieht nach KI aus").
+   Eine Silhouette mit Tusche-Kontur, Zellschatten, Lichtkanten.
    Fluegel (.dr-flg) und Unterkiefer (.dr-kiefer) sind eigene Gruppen.
-   Maul bei (226,60) im viewBox -10 -20 250 170: x 94,4 %, y 47 % - die
+   Maul bei (232,62) im viewBox -10 -20 250 170: x 96,8 %, y 48,2 % - die
    Feuer-Startpunkte in styles.css haengen daran. */
-const INTRO_DR_ZACKEN = [[162, 44, 1], [152, 55, 1.05], [137, 61, 1], [120, 66, .95], [103, 71, .9],
-  [86, 77, .8], [69, 81, .7], [52, 81, .6], [36, 77, .5], [24, 72, .4]]
+const INTRO_DR_ZACKEN = [[164, 46, 1], [154, 58, 1], [138, 61, .95], [120, 65, .9], [102, 71, .85],
+  [84, 78, .75], [66, 81, .65], [48, 80, .55], [32, 76, .45], [20, 70, .35]]
   .map(([x, y, g]) => `M${x} ${y}l${introF(-3 * g)} ${introF(-10 * g)}l${introF(10 * g)} ${introF(5 * g)}z`).join('');
 const INTRO_DR_DRACHE = '<svg viewBox="-10 -20 250 170" aria-hidden="true">'
   + '<g stroke="#2A0B4A" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">'
   // hinterer Fluegel, dunkler
-  + '<g class="dr-flg hinten"><path d="M140 60 L122 10 L96 -8 Q100 4 88 12 Q100 20 96 34 Q110 40 120 62Z" fill="#B8661E"/>'
-  + '<path d="M122 10 L96 -8M122 10 L88 12M122 10 L96 34" fill="none" stroke="#7A3E0E" stroke-width="2"/></g>'
+  + '<g class="dr-flg hinten"><path d="M144 60 L130 20 L108 8 Q110 18 100 24 Q110 32 106 42 Q118 46 128 62Z" fill="#B8661E"/>'
+  + '<path d="M130 20 L108 8M130 20 L100 24M130 20 L106 42" fill="none" stroke="#7A3E0E" stroke-width="2"/></g>'
   // Schwanzspitze, hinteres Bein
-  + '<path d="M16 68 L-4 55 L4 70 L-6 85Z" fill="#F5B83D"/><path d="M14 67 L0 58 L5 69Z" fill="#FFE6A0" stroke="none"/>'
-  + '<path d="M100 106 C104 120 98 130 86 134 L80 131 C86 126 90 116 86 108Z" fill="#5A2494"/>'
-  // Silhouette: Hinterkopf, Stirn, Schnauze, Kehle, Brust, Bauch, Schwanz unten, Spitze, Schwanz oben, Ruecken, Nacken
-  + '<path d="M168 34 C176 24 196 26 206 34 C214 38 226 40 232 46 C235 50 233 56 228 58 L206 60 C200 66 190 70 180 70 '
-  + 'C172 72 166 80 162 90 C158 102 148 110 134 112 C118 114 104 112 92 108 C80 104 68 100 56 96 C40 92 24 84 14 72 L12 64 '
-  + 'C26 76 42 82 58 82 C72 82 84 78 96 74 C116 68 134 64 148 60 C156 52 160 42 168 34Z" fill="#8E44D9"/>'
-  // Zellschatten unten, Lichtkante am Ruecken und auf dem Kopf
-  + '<path d="M162 90 C158 102 148 110 134 112 C118 114 104 112 92 108 C80 104 68 100 56 96 C40 92 24 84 14 72 '
-  + 'C30 84 50 90 66 92 C84 96 100 102 118 104 C136 106 152 100 162 90Z" fill="#6A2DAA" stroke="none"/>'
-  + '<path d="M166 38 C160 48 154 56 146 62 C130 66 112 70 96 76 C80 80 66 82 52 82 C70 78 88 72 104 68 '
-  + 'C122 62 138 58 150 52 C158 46 162 42 166 38Z" fill="#B57BF0" stroke="none" opacity=".75"/>'
-  + '<path d="M176 32 C186 28 198 30 206 36 C196 34 186 34 178 38Z" fill="#C99AF7" stroke="none"/>'
+  + '<path d="M14 66 L-4 52 L4 67 L-6 82Z" fill="#F5B83D"/><path d="M12 65 L-1 55 L5 66Z" fill="#FFE6A0" stroke="none"/>'
+  + '<path d="M110 116 C114 128 108 136 98 138 L92 136 C98 132 100 124 96 118Z" fill="#5A2494"/>'
+  // Silhouette: Schaedel, Stirn, Schnauze, Kehle, Brust, Bauch, Schwanz, Ruecken, Nacken
+  + '<path d="M170 30 C180 14 206 12 220 24 C228 30 234 40 236 50 C238 58 234 64 228 64 L212 66 '
+  + 'C206 76 194 82 182 80 C178 86 176 92 176 98 C176 112 160 122 140 122 C120 122 104 118 94 110 '
+  + 'C78 104 54 98 34 88 C24 82 16 74 12 66 C24 72 40 78 56 80 C72 82 86 80 98 74 '
+  + 'C114 64 134 60 150 60 C158 58 164 50 166 42 C166 38 168 34 170 30Z" fill="#8E44D9"/>'
+  // Zellschatten unten, Lichtkanten Ruecken und Kopf
+  + '<path d="M176 98 C176 112 160 122 140 122 C120 122 104 118 94 110 C78 104 54 98 34 88 '
+  + 'C56 96 80 102 100 106 C124 112 156 112 176 98Z" fill="#6A2DAA" stroke="none"/>'
+  + '<path d="M166 42 C160 54 150 60 134 62 C114 66 98 72 82 78 C100 70 118 62 140 58 C154 56 162 50 166 42Z" fill="#B57BF0" stroke="none" opacity=".75"/>'
+  + '<path d="M178 22 C192 14 208 14 218 22 C204 20 190 22 180 30Z" fill="#C99AF7" stroke="none"/>'
+  + '<path d="M184 72 C192 74 202 72 208 68 C202 76 192 80 184 78Z" fill="#6A2DAA" stroke="none"/>'
   // Bauchplatten
-  + '<path d="M182 69 C172 72 166 80 162 90 C158 102 148 110 134 112 C120 114 106 112 96 109 '
-  + 'C108 108 122 106 134 102 C146 98 152 90 156 82 C162 74 170 70 182 69Z" fill="#F5C45A"/>'
-  + '<path d="M170 72l-5-4M162 82l-8-3M156 93l-9-2M146 103l-7-4M132 108l-4-5M118 110l-2-5M106 110l-1-4" fill="none" stroke="#C98A22" stroke-width="2"/>'
+  + '<path d="M184 80 C180 86 178 92 178 98 C178 112 162 122 140 122 C122 122 106 118 96 111 '
+  + 'C110 112 126 112 140 108 C156 104 164 96 166 88 C168 82 174 80 184 80Z" fill="#F5C45A"/>'
+  + '<path d="M172 84l-5-3M168 96l-8-2M160 106l-8-3M148 113l-6-4M134 116l-3-5M120 116l-2-5M108 114l-1-4" fill="none" stroke="#C98A22" stroke-width="2"/>'
   // Rueckenzacken, vorderes Bein mit Krallen
   + `<path d="${INTRO_DR_ZACKEN}" fill="#F5B83D"/>`
-  + '<path d="M152 100 C156 114 152 124 142 130 L136 128 C142 122 144 112 140 104Z" fill="#7B35C2"/>'
-  + '<path d="M136 128l-4 4M140 130l-2 5M144 129l1 5" fill="none" stroke="#FFF6E0" stroke-width="2"/>'
-  // Hoerner mit Glanzlinie, Zacke am Kiefer
-  + '<path d="M188 28 C184 14 176 4 160 -2 C170 8 176 18 178 30Z" fill="#E09A22"/>'
-  + '<path d="M176 32 C168 18 156 10 138 8 C152 16 160 24 166 38Z" fill="#F5B83D"/>'
-  + '<path d="M172 28 C164 19 154 13 144 10M184 24 C180 14 172 6 164 1" fill="none" stroke="#FFE6A0" stroke-width="1.6"/>'
-  + '<path d="M184 62 L171 59 L178 70Z" fill="#F5B83D"/>'
-  // Unterkiefer, Maullinie, Schnauzenglanz, Nasenloch
-  + '<g class="dr-kiefer"><path d="M206 60 C214 61 222 61 228 59 C226 66 218 70 206 70 C200 70 196 66 200 62Z" fill="#6A2DAA"/>'
-  + '<path d="M210 61l2 4 2-4M218 61l2 4 2-4" fill="#fff" stroke="none"/></g>'
-  + '<path d="M200 60 C208 62 218 61 228 58" fill="none"/>'
-  + '<path d="M200 31 C212 32 224 39 230 46" fill="none" stroke="#C99AF7" stroke-width="2.5"/>'
-  + '<path d="M223 46 q3 -1.5 4.5 1.5" fill="none" stroke-width="2"/>'
-  // Auge: Mandel, Iris, Schlitz, Glanz, schweres Oberlid, Braue
-  + '<path d="M189 43 C194 33 207 32 215 41 C209 50 196 51 189 43Z" fill="#fff"/>'
-  + '<ellipse cx="203" cy="42" rx="4.6" ry="5.8" fill="#2BA35E" stroke="none"/><ellipse cx="203" cy="44" rx="3.2" ry="3" fill="#7EE0A0" stroke="none" opacity=".6"/>'
-  + '<ellipse cx="203.6" cy="42" rx="1.5" ry="4.4" fill="#0B2A16" stroke="none"/>'
-  + '<circle cx="205.6" cy="38.6" r="1.6" fill="#fff" stroke="none"/>'
-  + '<path d="M187 42 C194 32 207 30 216 39" fill="none" stroke-width="3.4"/>'
-  + '<path d="M186 31 C195 24 207 23 217 29" fill="none" stroke="#4A1A80" stroke-width="3"/>'
+  + '<path d="M160 112 C164 124 160 132 150 134 L142 133 C148 128 150 120 146 114Z" fill="#7B35C2"/>'
+  + '<path d="M142 133l-4 4M146 134l-2 5M150 133l1 5" fill="none" stroke="#FFF6E0" stroke-width="2"/>'
+  // grosse Hoerner nach hinten, Zacken an der Wange
+  + '<path d="M196 16 C194 0 186 -12 172 -18 C182 -6 188 6 188 20Z" fill="#E09A22"/>'
+  + '<path d="M182 22 C176 6 164 -6 146 -10 C160 0 168 12 172 28Z" fill="#F5B83D"/>'
+  + '<path d="M178 18 C172 6 162 -2 152 -6M192 12 C190 0 184 -8 176 -13" fill="none" stroke="#FFE6A0" stroke-width="1.8"/>'
+  + '<path d="M186 72 L170 70 L180 80Z" fill="#F5B83D"/><path d="M176 64 L162 60 L170 70Z" fill="#F5B83D"/>'
+  // Unterkiefer, Grinsen, Schnauzenglanz, Nasenloch
+  + '<g class="dr-kiefer"><path d="M212 66 C220 68 228 67 232 63 C230 72 220 78 210 76 C206 74 206 70 212 66Z" fill="#6A2DAA"/>'
+  + '<path d="M216 67l2 4 2-4M224 66l2 4 2-4" fill="#fff" stroke="none"/></g>'
+  + '<path d="M208 63 C216 68 226 66 233 59" fill="none"/>'
+  + '<path d="M214 20 C226 26 234 38 236 48" fill="none" stroke="#C99AF7" stroke-width="2.5"/>'
+  + '<path d="M229 50 q3 -1.5 4.5 1.5" fill="none" stroke-width="2"/>'
+  // grosses Auge: Mandel, Iris mit Lichthof, Schlitz, zwei Glanzpunkte, Lid, freche Braue
+  + '<path d="M192 42 C196 28 214 26 222 38 C218 50 200 54 192 42Z" fill="#fff"/>'
+  + '<ellipse cx="210" cy="40" rx="6.4" ry="8.4" fill="#2BA35E" stroke="none"/>'
+  + '<ellipse cx="210" cy="43" rx="4.4" ry="4.4" fill="#7EE0A0" stroke="none" opacity=".6"/>'
+  + '<ellipse cx="210.6" cy="40" rx="2" ry="6.2" fill="#0B2A16" stroke="none"/>'
+  + '<circle cx="213.4" cy="35.4" r="2.4" fill="#fff" stroke="none"/><circle cx="207.4" cy="45" r="1.1" fill="#fff" stroke="none"/>'
+  + '<path d="M190 41 C196 26 214 23 224 37" fill="none" stroke-width="3.6"/>'
+  + '<path d="M186 30 C196 20 212 16 226 24" fill="none" stroke="#4A1A80" stroke-width="3.6"/>'
   // vorderer Fluegel: Arm in Koerperfarbe, Fingerknochen, Daumenkralle
-  + '<g class="dr-flg vorn"><path d="M146 62 L126 8 L90 -14 Q96 0 80 10 Q94 18 84 34 Q104 40 118 66Z" fill="#F2A23A"/>'
-  + '<path d="M126 8 L90 -14 Q96 0 80 10Z" fill="#FFC064" stroke="none" opacity=".7"/>'
-  + '<path d="M126 8 L90 -14M126 8 L80 10M126 8 L84 34" fill="none" stroke="#9A5414" stroke-width="2.5"/>'
-  + '<path d="M146 62 L126 8" fill="none" stroke="#8E44D9" stroke-width="6"/>'
-  + '<path d="M126 8 l-3 -7 5 3z" fill="#FFF6E0"/></g>'
+  + '<g class="dr-flg vorn"><path d="M150 62 L134 18 L104 2 Q108 14 96 22 Q106 30 100 44 Q116 48 126 66Z" fill="#F2A23A"/>'
+  + '<path d="M134 18 L104 2 Q108 14 96 22Z" fill="#FFC064" stroke="none" opacity=".7"/>'
+  + '<path d="M134 18 L104 2M134 18 L96 22M134 18 L100 44" fill="none" stroke="#9A5414" stroke-width="2.5"/>'
+  + '<path d="M150 62 L134 18" fill="none" stroke="#8E44D9" stroke-width="6"/>'
+  + '<path d="M134 18 l-3 -7 5 3z" fill="#FFF6E0"/></g>'
   + '</g></svg>';
 
 /* Edelstein: Grundfarbe ueber currentColor, Facetten als Weiss/Schwarz
@@ -1994,8 +1998,11 @@ function introDracheHtml(tx){
 
   const wolken = Array.from({ length: 6 }, (_, k) =>
     `<i style="top:${F(R(6, 40))}%;--s:${F(R(.7, 1.4))};--u:${F(R(30, 50))}s;--d:${F(-k * 8)}s"></i>`).join('');
-  const sterne = Array.from({ length: 70 }, () =>
-    `<i style="left:${F(R(0, 100))}%;top:${F(R(0, 60))}%;--o:${F(R(.3, 1))};--u:${F(R(2, 4.5))}s;--d:${F(R(0, 3))}s"></i>`).join('');
+  /* Sterne als zwei Elemente mit je 35 box-shadow-Punkten statt 70
+     einzeln animierter: das funkelt genauso, kostet aber zwei Animationen
+     statt siebzig (FPS-Einbruch, David 2026-11-24). */
+  const sterne = [0, 1].map(k => `<i style="--u:${3 + k * 1.4}s;--d:${k * 1.5}s;box-shadow:${Array.from({ length: 35 }, () =>
+    `${F(R(0, 100))}vw ${F(R(0, 60))}vh 0 ${F(R(0, .08))}vh rgba(255,247,230,${F(R(.35, 1))})`).join(',')}"></i>`).join('');
   const staub = (/** @type {number} */ n) => Array.from({ length: n }, () =>
     `<i style="left:${F(R(0, 100))}%;top:${F(R(30, 100))}%;--x:${F(R(-6, 6))}vw;--u:${F(R(5, 9))}s;--d:${F(-R(0, 9))}s;--s:${F(R(.5, 1.4))}"></i>`).join('');
   /* Die vier Steine auf der Flugbahn: dort, wo das Maul des Drachen zur
@@ -2004,49 +2011,48 @@ function introDracheHtml(tx){
      fliegen Splitter, "+25" steigt auf. */
   const bahnX = (/** @type {number} */ t, /** @type {number} */ vorn) => -20 + (t - P.flug) / 2.2 * 130 + vorn;
   const bahn = P.sammeln.map((t, k) => {
-    const splitter = Array.from({ length: 8 }, (_, j) => {
-      const w = j / 8 * Math.PI * 2;
+    const splitter = Array.from({ length: 6 }, (_, j) => {
+      const w = j / 6 * Math.PI * 2;
       return `<i style="--x:${F(Math.cos(w) * R(6, 10))}vh;--y:${F(Math.sin(w) * R(6, 10))}vh"></i>`;
     }).join('');
-    return `<div class="dr-beute" style="left:${F(bahnX(t, 18))}vw;top:${F(44 + Math.sin(k * 1.7) * 4)}vh;--t:${s(t)};color:${INTRO_DR_FARBEN[k]}">`
+    return `<div class="dr-beute" style="left:${F(bahnX(t, 19.4))}vw;top:${F(44 + Math.sin(k * 1.7) * 4)}vh;--t:${s(t)};color:${INTRO_DR_FARBEN[k]}">`
       + `${introDrStein(k)}<b></b><span class="dr-splitter">${splitter}</span><em>+25</em></div>`;
   }).join('');
   /* Funkenspur hinter dem Schwanz: jeder Funke erscheint, wenn der Schwanz
      an seiner Stelle vorbeikommt, und verglimmt dort. */
-  const spur = Array.from({ length: 30 }, (_, k) => {
-    const t = P.flug + .25 + k * .065;
+  const spur = Array.from({ length: 16 }, (_, k) => {
+    const t = P.flug + .25 + k * .12;
     return `<i style="left:${F(bahnX(t, 1))}vw;top:${F(46 + R(-3, 3))}vh;--t:${s(+t.toFixed(2))};--c:${INTRO_DR_FARBEN[k % 5]}"></i>`;
   }).join('');
   /* Der Zaehler: jede Zahl ist ein eigenes Fenster zwischen zwei Sammelzeiten. */
   const zeiten = [0, ...P.sammeln, P.portal];
   const zahlen = zeiten.slice(0, -1).map((t, k) =>
     `<span class="ifw" style="--a:${s(t)};--b:${s(zeiten[k + 1])}">${k * 25}</span>`).join('');
-  const sog = Array.from({ length: 34 }, () => {
+  const sog = Array.from({ length: 16 }, () => {
     const w = R(0, Math.PI * 2), r = R(30, 60);
     return `<i style="--x:${F(Math.cos(w) * r)}vh;--y:${F(Math.sin(w) * r)}vh;--u:${F(R(.6, 1.1))}s;--d:${F(-R(0, 1.1))}s;--c:${INTRO_DR_FARBEN[Math.floor(R(0, 5))]}"></i>`;
   }).join('');
-  const ringe = Array.from({ length: 12 }, (_, k) =>
-    `<i style="--d:${F(P.wirbel - .2 + k * .16)}s;--u:${F(R(1.3, 1.7))}s;--c:${INTRO_DR_FARBEN[k % 5]}"></i>`).join('');
-  const warp = Array.from({ length: 46 }, () =>
+  const ringe = Array.from({ length: 8 }, (_, k) =>
+    `<i style="--d:${F(P.wirbel - .2 + k * .22)}s;--u:${F(R(1.3, 1.7))}s;--c:${INTRO_DR_FARBEN[k % 5]}"></i>`).join('');
+  const warp = Array.from({ length: 20 }, () =>
     `<i style="--w:${F(R(0, 360))}deg;--u:${F(R(.35, .6))}s;--d:${F(P.wirbel + R(-.4, 0))}s"></i>`).join('');
-  const flieger = Array.from({ length: 22 }, (_, k) => {
+  const flieger = Array.from({ length: 12 }, (_, k) => {
     const w = R(0, Math.PI * 2), u = R(.9, 1.5);
     return `<i style="--x:${F(Math.cos(w) * R(40, 70))}vw;--y:${F(Math.sin(w) * R(34, 56))}vh;--u:${F(u)}s;--d:${F(P.wirbel + R(0, 1.8 - u * .6))}s;--r:${F(R(-400, 400))}deg">${introDrStein(k)}</i>`;
   }).join('');
   const kerzen = Array.from({ length: 5 }, (_, k) =>
     `<i style="left:${14 + k * 17}%;--t:${s(+(P.kerzen + k * .07).toFixed(2))};--h:${F(R(.85, 1.15))}"><b></b></i>`).join('');
-  const feuer = Array.from({ length: 44 }, () => {
+  const feuer = Array.from({ length: 24 }, () => {
     const u = R(.45, .8);
     return `<i style="--x:${F(R(38, 56))}vw;--y:${F(R(-30, -14))}vh;--s:${F(R(2.5, 5))};--u:${F(u)}s;--d:${F(P.feuer + R(0, P.glut + .3 - P.feuer - u * .5))}s"></i>`;
   }).join('');
-  const rauch = Array.from({ length: 8 }, () =>
+  const rauch = Array.from({ length: 5 }, () =>
     `<i style="--x:${F(R(4, 12))}vw;--y:${F(R(-16, -8))}vh;--u:${F(R(.9, 1.4))}s;--d:${F(P.glut - .1 + R(0, .4))}s"></i>`).join('');
   /* Feuerwerk ueber der Torte (kurz nach den Kerzen) und im Titel. */
   const bum = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ t, /** @type {number} */ w, /** @type {number} */ n) =>
     `<div class="dr-bum" style="left:${x}%;top:${y}%;--t:${s(t)}"><i class="dr-blume"></i>${introDrBum(n, t, w, INTRO_DR_FARBEN.concat(['#FFFFFF']))}</div>`;
-  const tortBum = bum(62, 16, 7.7, 11, 22) + bum(86, 10, 7.85, 9, 18) + bum(74, 6, 8.0, 13, 24);
-  const titelBum = [[16, 20, 9.9], [84, 16, 10.5], [26, 12, 11.2], [72, 22, 11.8], [50, 8, 12.4], [12, 30, 13.1], [88, 28, 13.6]]
-    .map(([x, y, t]) => bum(x, y, t, R(10, 15), 26)).join('');
+  const tortBum = bum(62, 16, 7.7, 11, 14) + bum(86, 10, 7.85, 9, 12) + bum(74, 6, 8.0, 13, 14);
+  const titelBum = INTRO_DR_TITELBUM.map(([x, y, t]) => bum(x, y, t, R(10, 15), 18)).join('');
   const orbit = Array.from({ length: 5 }, (_, k) =>
     `<i style="--d:${F(-k * 1.6)}s">${introDrStein(k)}</i>`).join('');
   const puste = Array.from({ length: 16 }, () => {
@@ -2062,10 +2068,10 @@ function introDracheHtml(tx){
         <div class="dr-strahl"></div>
         <div class="dr-sonne"></div>
         <div class="dr-wolken">${wolken}</div>
-        ${introDrInsel('fern f1', 0)}${introDrInsel('fern f2', 0)}${introDrInsel('fern f3', 0)}
+        ${introDrInsel('fern f1', 0)}${introDrInsel('fern f3', 0)}
         <div class="dr-berge fern"></div><div class="dr-berge nah"></div>
         ${introDrInsel('i1', 3)}${introDrInsel('i2', 2)}${introDrInsel('i3', 4, true)}
-        <div class="dr-staub">${staub(30)}</div>
+        <div class="dr-staub">${staub(12)}</div>
         <div class="dr-spur">${spur}</div>
         <div class="dr-bahn">${bahn}</div>
         <div class="dr-flug" style="--t:${s(P.flug)}"><div class="dr-wipp">${INTRO_DR_DRACHE}</div></div>
@@ -2126,10 +2132,9 @@ function introDracheHtml(tx){
         <div class="dr-orbit" style="--t:${s(P.landung)}">${orbit}</div>
         <i class="pt-ring" style="--t:${s(P.hit)}"></i><i class="pt-ring" style="--t:${s(P.landung)}"></i>
         ${introFilmLogo(logoTx, P, { spiegel: true })}
-        <div class="pt-pyro">${introPyro(P.landung, [6, 94])}</div>
-        <div class="pt-funken">${introFunken(110, P.hit, ['#FFE9A8', '#FFC83B', '#C46BFF', '#3B9BFF', '#FFFFFF'])}</div>
-        <div class="pt-konfetti">${introKonfetti(56, P.hit + .2, INTRO_DR_FARBEN)}</div>
-        <div class="dr-staub titel">${staub(24)}</div>
+        <div class="pt-funken">${introFunken(60, P.hit, ['#FFE9A8', '#FFC83B', '#C46BFF', '#3B9BFF', '#FFFFFF'])}</div>
+        <div class="pt-konfetti">${introKonfetti(28, P.hit + .2, INTRO_DR_FARBEN)}</div>
+        <div class="dr-staub titel">${staub(12)}</div>
         <div class="dr-begleiter" style="--t:${s(P.landung)}"><div class="dr-wipp">${INTRO_DR_DRACHE}</div></div>
         <div class="dr-feuer klein">${puste}</div>
         <div class="pt-glitzer">${introGlitzer(10, P.preis)}</div>
@@ -2202,7 +2207,7 @@ function introDracheTon(t0, A){
   lied.forEach(([m, d]) => { A.ping(t0 + z, n(m + 12), .1, d * b + .5); A.ping(t0 + z, n(m), .05, d * b + .3); z += d * b; });
   akk.forEach(([schlag, ms]) => A.flaeche(t0 + start + schlag * b, ms.map(n), 3 * b + .3, .03, 1600, .05));
   A.wisch(t0 + P.puste, .7, .3, 300, 1200);
-  [9.9, 10.5, 11.2, 11.8, 12.4, 13.1, 13.6].forEach(t => {
+  INTRO_DR_TITELBUM.forEach(([, , t]) => {
     A.gleit(t0 + t - .5, 600, 2400, .45, .03, 'sine');
     A.kick(t0 + t, .45); A.becken(t0 + t, .12);
     for (let j = 0; j < 8; j++) A.klick(t0 + t + .15 + j * .06, .05, R(1600, 3800));
