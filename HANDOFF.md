@@ -12,6 +12,32 @@ Erst `git fetch origin && git status -sb`, dann lesen.
 
 ---
 
+## 2026-11-28 — `ee6c653` DDF-Set Gaming + Allgemeinwissen
+
+**David:** Tabelle mit 500 Fragen (Nr, Frage, Antwort, Kategorie, Bereich) eingefügt —
+„mach das bitte zu ner passenden ddf datei".
+
+**Gemacht:** `sets/ddf-gaming-allgemeinwissen.json`, 500 Fragen (250 Gaming, 250
+Allgemeinwissen) im Format, das `importDdf` (`js/ddf.js`) liest:
+`{"questions":[{q, answer, note, qMedia:[], aMedia:[]}]}`. Kategorie und Bereich als
+Host-Notiz, z. B. „Nintendo · Gaming". Laden: DDF-Editor → JSON importieren.
+
+**Warum so:** `sets/` ist der Ort für fertige Sets (wie `dpih-halloween.json`). Reihenfolge
+wie geliefert, weil DDF beim Start selbst mischt (`shuffledIndices`). Die Nr.-Spalte fällt
+weg, das Format kennt keine. Inhalte nicht umformuliert; Fakten nur stichprobenhaft gelesen.
+
+**Geprüft:** JSON parst, 500 Einträge, 0 doppelte Fragen, 0 leere Fragen/Antworten nach
+derselben Abbildung wie `importDdf` (in Node nachgebaut). `node check.js` „alles in
+Ordnung". Import im Browser **nicht** geklickt.
+
+**Offen:** Das Set liegt im öffentlichen Repo — die Antworten sind unter
+`iryo.party/sets/…` abrufbar (wie beim PIH-Set). Fremde Änderung
+`tools/pihbilder/hol.js` lag uncommittet im Arbeitsverzeichnis, nicht angefasst.
+
+**Fallstricke:** keine.
+
+---
+
 ## 2026-11-24 — `74a3eae` Drachenflug: Drache als Fanart mit Erkennungsmerkmalen
 
 **David:** „bring den so nah an Spyro wie möglich" → nach Rückfrage „stell es dir vor als
