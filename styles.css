@@ -9384,10 +9384,23 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 /* ── V · Drachenwelt: Edelstein-Platten, Gold, Lila ─────────────────────────
    Jedes Feld ist eine geschliffene Amethyst-Platte mit Facettenglanz oben
    links, die Zahl in Gold mit lila Tiefe. Aufgedeckt wird ein Smaragd -
-   das Feld "schluepft" wie aus einem Drachenei. Rot bleibt Rot. */
+   das Feld "schluepft" wie aus einem Drachenei. Rot bleibt Rot.
+
+   Zweite Fassung (David 2026-11-28: "billig/generisch, aus der Ferne
+   schlecht lesbar, zu statisch, Layout"):
+     - Schrift: Titan One fuer Kurzes (rund, kraeftig, MIT Kleinbuchstaben),
+       Luckiest Guy nur noch fuer Zahlen und Logo, Nunito fuer Saetze.
+       Luckiest Guy stand als --tile-font auf Feud-Antworten, DDF-, PIH- und
+       TP-Texten und lief dort zu Brei.
+     - Szene statt leerem Verlauf: Sterne, Berge, schwebende Inseln als SVG
+       im Hintergrund (js/theme.js --bg-img), fest stehend.
+     - Material: Edelstein-Nieten in den Ecken jedes Bretts (in --brd-tex,
+       keine Pseudo-Elemente), Teamkarten als Rubin/Saphir/Smaragd-Platten.
+     - Bewegung nur transform/opacity: Glanzstrich ueber Brett und Tafel,
+       funkelnde Sterne (eine Ebene). */
 :root[data-theme="V"] {
   --brd-surface: linear-gradient(180deg, #2A1558 0%, #140832 100%);
-  --brd-tex: radial-gradient(circle at 20% 30%, rgba(255,255,255,.05) 0 2px, transparent 3px) 0 0/34px 34px;
+  --brd-tex: radial-gradient(circle, #FFFFFF 0 1.5px, #E9B8FF 2px, #C46BFF 4px, #6A2DAA 6px, #F5B83D 6.5px 8.5px, #8A5200 9px, transparent 10px) left 6px top 6px/22px 22px no-repeat, radial-gradient(circle, #FFFFFF 0 1.5px, #E9B8FF 2px, #C46BFF 4px, #6A2DAA 6px, #F5B83D 6.5px 8.5px, #8A5200 9px, transparent 10px) right 6px top 6px/22px 22px no-repeat, radial-gradient(circle, #FFFFFF 0 1.5px, #E9B8FF 2px, #C46BFF 4px, #6A2DAA 6px, #F5B83D 6.5px 8.5px, #8A5200 9px, transparent 10px) left 6px bottom 6px/22px 22px no-repeat, radial-gradient(circle, #FFFFFF 0 1.5px, #E9B8FF 2px, #C46BFF 4px, #6A2DAA 6px, #F5B83D 6.5px 8.5px, #8A5200 9px, transparent 10px) right 6px bottom 6px/22px 22px no-repeat, radial-gradient(circle at 20% 30%, rgba(255,255,255,.05) 0 2px, transparent 3px) 0 0/34px 34px;
   --brd-frame: 0 0 0 4px #F5B83D, 0 0 0 8px #4A1A80, 0 0 0 10px rgba(196,107,255,.45), 0 26px 60px rgba(0,0,0,.6);
   --brd-well: #0E0526;
   --brd-inner: rgba(196,107,255,.35);
@@ -9397,7 +9410,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
   --tile-edge: inset 0 0 0 2px #7B4BD0, inset 0 3px 0 rgba(255,255,255,.18), inset 0 -4px 0 rgba(0,0,0,.3), 0 8px 18px rgba(0,0,0,.5);
   --tile-tex: linear-gradient(135deg, rgba(255,255,255,.12) 0 18%, transparent 18% 100%);
   --tile-fg: #FFF6E0;
-  --tile-font: 'Luckiest Guy', cursive;
+  --tile-font: 'Titan One', cursive;
   --tile-num: #FFC83B;
   --tile-num-glow: 0 3px 0 #7B35C2, 0 0 16px rgba(255,200,59,.6);
   --tile-dim-fg: rgba(255,246,224,.45);
@@ -9426,7 +9439,7 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="V"] .tile-num { font-family: 'Luckiest Guy', cursive; font-size: 1.15rem; }
 :root[data-theme="V"] .tile.open .tile-answer { text-transform: none; letter-spacing: .5px; font-weight: 700; }
 :root[data-theme="V"] .jeopardy-board { gap: clamp(5px, 1.6vh - 6px, 9px); padding: 12px; }
-:root[data-theme="V"] .jeopardy-cat { font-family: 'Luckiest Guy', cursive; font-size: .74rem; letter-spacing: 2px; border-bottom: 2px solid #7B4BD0; }
+:root[data-theme="V"] .jeopardy-cat { font-family: 'Titan One', cursive; font-weight: 400; font-size: 1.05rem; letter-spacing: .5px; line-height: 1.15; border-bottom: 2px solid #7B4BD0; }
 :root[data-theme="V"] .jeopardy-cell { font-family: 'Luckiest Guy', cursive; font-size: 1.9rem; letter-spacing: 1px; }
 :root[data-theme="V"] .wwm-q { color: #FFFFFF; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.95rem; line-height: 1.2; }
 :root[data-theme="V"] .wwm-opt { background: var(--tile); box-shadow: var(--tile-edge); font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 1.35rem; }
@@ -9439,6 +9452,48 @@ body:has(:is(#jeopardy-screen, #game-screen, #wwm-screen, #finale-screen, #ddf-s
 :root[data-theme="V"] :is(.jeopardy-clue-text, .jeopardy-answer-text) { font-family: 'Nunito', sans-serif; font-weight: 900; letter-spacing: .3px; }
 /* Feud bei 1280x720: zweizeilige Frage in Nunito schob das Brett 4 px heraus (tools/shots). */
 @media (max-height: 900px) { :root[data-theme="V"] .q-text { line-height: 1.25; } }
+/* Saetze in Nunito, Kurzes in Titan One, Zahlen in Luckiest Guy. */
+:root[data-theme="V"] :is(.ddf-question, .pih-item, .tp-question) { font-family: 'Nunito', sans-serif; font-weight: 900; letter-spacing: .3px; }
+:root[data-theme="V"] .tile.open .tile-answer { font-size: 1.3rem; text-shadow: 0 .12em 0 rgba(0,40,20,.55); }
+:root[data-theme="V"] .wwds-cat .wc-name { font-family: 'Titan One', cursive; font-weight: 400; font-size: 1rem; text-transform: none; letter-spacing: .3px; }
+:root[data-theme="V"] .wwds-cat .wc-num { font-family: 'Luckiest Guy', cursive; font-size: 1.5rem; color: #FFC83B; }
+:root[data-theme="V"] :is(.team-panel .t-score, .jeopardy-team .jt-score, .wwds-team .wt-money, .winner-text) { font-family: 'Luckiest Guy', cursive; letter-spacing: 1px; }
+:root[data-theme="V"] :is(.team-panel .t-name, .jeopardy-team .jt-name, .wwds-team .wt-name) { font-family: 'Titan One', cursive; font-weight: 400; font-size: .85rem; letter-spacing: 1px; color: rgba(255,255,255,.85); }
+
+/* Szene: steht fest, auch wenn die Seite laenger ist als das Fenster. */
+:root[data-theme="V"] body { background-position: center bottom, 0 0; background-attachment: fixed; }
+/* Funkelnde Sterne: eine Ebene, nur opacity. */
+:root[data-theme="V"] body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1600 900%22 preserveAspectRatio=%22xMidYMax slice%22%3E%3Cpath transform=%22translate(515 108) scale(0.8)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1026 123) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(667 132) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(858 427) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(124 465) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(724 459) scale(0.8)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1356 298) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(861 423) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(267 272) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1072 261) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(901 397) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1246 2) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(352 72) scale(0.8)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1267 371) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1139 31) scale(0.8)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1397 265) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1137 247) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1147 29) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(391 141) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1581 50) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(926 287) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1556 457) scale(0.6)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(907 166) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(1035 310) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(408 354) scale(0.8)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3Cpath transform=%22translate(926 260) scale(1)%22 d=%22M0 -7 L1.4 -1.4 L7 0 L1.4 1.4 L0 7 L-1.4 1.4 L-7 0 L-1.4 -1.4Z%22 fill=%22%23FFE9A8%22/%3E%3C/svg%3E') center bottom/cover no-repeat; animation: thVFunkel 5s ease-in-out infinite alternate;
+}
+@keyframes thVFunkel { from { opacity: .25; } to { opacity: 1; } }
+
+/* Teamkarten als geschliffene Steine in den festen Teamfarben (BAUPLAN 4.4). */
+:root[data-theme="V"] :is(.team-panel, .jeopardy-team, .wwds-team) {
+  --stein: #E8453C; --stein-tief: #7A1712;
+  background: linear-gradient(135deg, rgba(255,255,255,.24) 0 13%, transparent 13% 100%),
+              linear-gradient(160deg, var(--stein) 0%, color-mix(in srgb, var(--stein) 55%, var(--stein-tief)) 55%, var(--stein-tief) 100%);
+  box-shadow: inset 0 0 0 2px #F5B83D, inset 0 3px 0 rgba(255,255,255,.25), inset 0 -4px 0 rgba(0,0,0,.25), 0 8px 18px rgba(0,0,0,.45);
+}
+:root[data-theme="V"] :is(.team-panel, .jeopardy-team, .wwds-team).blue { --stein: #3B82F6; --stein-tief: #142F70; }
+:root[data-theme="V"] :is(.team-panel, .jeopardy-team, .wwds-team).green { --stein: #22C55E; --stein-tief: #0A5228; }
+
+/* Jeopardy-Brett: Nieten wie bei den anderen Brettern, die Fuge bleibt dunkel. */
+:root[data-theme="V"] .jeopardy-board { position: relative; background: radial-gradient(circle, #FFFFFF 0 1.5px, #E9B8FF 2px, #C46BFF 4px, #6A2DAA 6px, #F5B83D 6.5px 8.5px, #8A5200 9px, transparent 10px) left 6px top 6px/22px 22px no-repeat, radial-gradient(circle, #FFFFFF 0 1.5px, #E9B8FF 2px, #C46BFF 4px, #6A2DAA 6px, #F5B83D 6.5px 8.5px, #8A5200 9px, transparent 10px) right 6px top 6px/22px 22px no-repeat, radial-gradient(circle, #FFFFFF 0 1.5px, #E9B8FF 2px, #C46BFF 4px, #6A2DAA 6px, #F5B83D 6.5px 8.5px, #8A5200 9px, transparent 10px) left 6px bottom 6px/22px 22px no-repeat, radial-gradient(circle, #FFFFFF 0 1.5px, #E9B8FF 2px, #C46BFF 4px, #6A2DAA 6px, #F5B83D 6.5px 8.5px, #8A5200 9px, transparent 10px) right 6px bottom 6px/22px 22px no-repeat, var(--brd-well); }
+/* Glanzstrich: alle sieben Sekunden einmal ueber Brett und Tafel. Ein
+   Element je Brett, nur transform. */
+:root[data-theme="V"] :is(.jeopardy-board, .board)::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; z-index: 2;
+  background: linear-gradient(105deg, transparent 42%, rgba(255,246,224,.16) 50%, transparent 58%);
+  transform: translateX(-110%); animation: thVGlanz 7s ease-in-out 1s infinite; will-change: transform;
+}
+:root[data-theme="V"] .board { overflow: hidden; }
+@keyframes thVGlanz { 0%, 70% { transform: translateX(-110%); } 92%, 100% { transform: translateX(110%); } }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="V"] body::before, :root[data-theme="V"] :is(.jeopardy-board, .board)::after { animation: none; }
+  :root[data-theme="V"] :is(.jeopardy-board, .board)::after { display: none; }
+}
 /* Das Feld schluepft wie aus einem Drachenei: klein, Lichtblitz, Ueberschwinger. */
 @keyframes thVSchluepf {
   0%   { transform: scale(.2) rotate(-8deg); filter: brightness(2.2); }
