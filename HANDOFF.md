@@ -38,6 +38,59 @@ Ordnung". Import im Browser **nicht** geklickt.
 
 ---
 
+## 2026-11-28 — `a51b143` Richtung V „Drachenwelt": zweite Fassung
+
+**David:** „ich bin so insgesamt nicht ganz zufrieden mit den generellen Designs der Boards"
+→ Rückfrage: alle Shows, Richtung V, „billig/generisch, aus der Ferne schlecht lesbar,
+zu statisch, Layout/Platz". Plan gezeigt, „Ja, umbauen".
+
+### Gemacht
+
+- **Schrift** (`js/theme.js`, `styles.css`): Titan One für Kurzes (Kategorien, Antworten,
+  Teamnamen), Luckiest Guy nur für Zahlen und Logo, Nunito 900 für Sätze (DDF-Frage,
+  PIH-Artikel, TP-Frage). Schriftdatei neu mit `node tools/fonts/hol.js`:
+  `vendor/fonts/titan-one_luckiest-guy_nunito-27d0e3.css` (0 neue woff2, alle lagen
+  schon lokal). Jeopardy-Kategorien `.74rem` → `1.05rem`, WWDS-Kacheln größer,
+  Feud-Antworten `1.3rem` mit harter Schattenkante.
+- **Szene statt Verlauf:** `--bg-img` ist jetzt ein Inline-SVG (Sterne, Berge, drei
+  schwebende Inseln, Hügel), fest stehend (`background-attachment:fixed`), dazu eine
+  Funkelebene als `body::before` (nur opacity).
+- **Material:** Edelstein-Nieten in den vier Ecken jedes Bretts, eingebaut in
+  `--brd-tex` (keine Pseudo-Elemente nötig); Jeopardy-Brett bekommt sie explizit.
+  Teamkarten (Feud, Jeopardy, WWDS) als geschliffene Steine in den festen Teamfarben
+  (Facette oben links, Goldkante), Farbe über `--stein`/`--stein-tief` und `color-mix`.
+- **Bewegung:** Glanzstrich alle 7 s über Jeopardy-Brett und Feud-Tafel (`::after`, nur
+  transform), Sterne funkeln. `prefers-reduced-motion` schaltet beides ab.
+
+### Warum so
+
+- Luckiest Guy stand als `--tile-font` auf allen langen Texten und lief zu Brei — das war
+  der größte Lesbarkeitsfehler, nicht die Größe.
+- Keine Verlaufs-/Glow-Schichten als Ersatz (Memory „kein Verlaufs-Slop"): Identität
+  Amethyst/Gold/Edelstein bleibt, veredelt über Schrift, Szene, Nieten, Steinplatten.
+- Szene als SVG im Hintergrund statt Elementen: kostet nichts pro Frame, kommt im
+  Zuschauerfenster mit an (dieselbe styles.css / Variablen).
+
+### Geprüft
+
+- `node check.js --types`: „alles in Ordnung".
+- `node shots.js --themes V`: alle Zustände, **keine Befunde**; Kontaktbogen von 12
+  Zuständen vorher/nachher angesehen, Feud groß angesehen.
+- Studio-Blau: nur `data-theme="V"`-Selektoren und der V-Eintrag in `theme.js` geändert;
+  `--vergleich` nicht gelaufen.
+- **FPS nicht gemessen** — die Session war in keinem Fenster offen, Browser-Pane nicht
+  verfügbar.
+
+### Offen
+
+- FPS mit V am Beamer/im Pane messen (Glanzstrich, Funkelebene, fixed background).
+- `vendor/fonts/luckiest-guy_nunito-bd657c.css` wird nicht mehr benutzt (nirgends
+  referenziert) — nicht gelöscht, Rückfrage bei David.
+- WWM-Leiter, PIH-Gebotsliste und TP-Rad haben noch kein eigenes V-Material.
+- Ferne Inseln im Hintergrund wirken bei kleinen Fenstern wie dunkle Dreiecke.
+
+---
+
 ## 2026-11-24 — `74a3eae` Drachenflug: Drache als Fanart mit Erkennungsmerkmalen
 
 **David:** „bring den so nah an Spyro wie möglich" → nach Rückfrage „stell es dir vor als
